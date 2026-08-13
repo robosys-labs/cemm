@@ -10,7 +10,6 @@ import json
 import os
 from pathlib import Path
 import shutil
-import stat
 import sys
 import tempfile
 from types import MappingProxyType
@@ -103,8 +102,8 @@ def _authenticate_snapshot_files(root: Path, source_ref: str) -> None:
     validation_gate._authenticate_complete_source_snapshot(root, manifest, blobs)
 
 
-def _set_snapshot_writable(root: Path, writable: bool) -> None:
-    """Seal/unseal every regular source file while keeping directories usable."""
+def _restore_snapshot_write_bits(root: Path) -> None:
+    """Make Git-created files removable by strict Windows cleanup."""
 
     for directory, _names, filenames in os.walk(root):
         for filename in filenames:
@@ -112,10 +111,7 @@ def _set_snapshot_writable(root: Path, writable: bool) -> None:
             if path.is_symlink():
                 raise ActiveSuiteError("authenticated snapshot contains a symlink")
             mode = path.stat().st_mode
-            if writable:
-                path.chmod(mode | stat.S_IWRITE)
-            else:
-                path.chmod(mode & ~(stat.S_IWRITE | stat.S_IWGRP | stat.S_IWOTH))
+            path.chmod(mode | 0o200)
 
 
 def _git_worktree_command(root: Path, arguments: Sequence[str]):
@@ -324,7 +320,7 @@ def _detached_git_snapshot(
         if add_attempted:
             if added and worktree.exists():
                 try:
-                    _set_snapshot_writable(worktree, True)
+                    _restore_snapshot_write_bits(worktree)
                 except (OSError, ActiveSuiteError):
                     cleanup_errors.append("restore-write")
             try:
@@ -487,9 +483,8 @@ def run_authenticated_suite(
     snapshot_provider: Callable[[Path, str, Path | None], ContextManager[Path]] = _detached_git_snapshot,
     source_identity_provider: Callable[[Path], tuple[str, bool, str]] = _git_source_identity,
     snapshot_authenticator: Callable[[Path, str], None] = _authenticate_snapshot_files,
-    snapshot_sealer: Callable[[Path, bool], None] = _set_snapshot_writable,
 ) -> dict[str, object]:
-    """Run one immutable, manifest-bound pytest process and return only a summary."""
+    """Run one exact-commit, pre/post-authenticated pytest process."""
 
     root_path = root.resolve()
     if str(root_path) != contract.root_path:
@@ -517,7 +512,6 @@ def run_authenticated_suite(
                 snapshot_path / "configs" / "validation_gates.json"
             )
             limits = graph.limits
-            snapshot_sealer(snapshot_path, False)
             snapshot_authenticator(snapshot_path, contract.source_ref)
 
             control_root = run_root / "control"
@@ -535,17 +529,19 @@ def run_authenticated_suite(
                 )
             except validation_gate.ProcessControlError as exc:
                 reason = getattr(exc.reason, "value", str(exc.reason))
+                if exc.termination_confirmed:
+                    snapshot_authenticator(snapshot_path, contract.source_ref)
                 raise ActiveSuiteError(
                     f"bounded pytest process error: {reason}; "
                     f"termination_confirmed={exc.termination_confirmed}"
                 ) from exc
+            snapshot_authenticator(snapshot_path, contract.source_ref)
             parsed = report_parser(
                 report_path,
                 max_bytes=limits["max_report_bytes"],
                 expected_selector=selector,
             )
             _validate_passed_report(contract, selector, process_result, parsed)
-            snapshot_authenticator(snapshot_path, contract.source_ref)
             report_ref = getattr(parsed, "report_ref", None)
             if (
                 type(report_ref) is not str

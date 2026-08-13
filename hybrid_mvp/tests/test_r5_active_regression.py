@@ -4,8 +4,9 @@ import ast
 import hashlib
 import json
 from pathlib import Path
-import stat
+import shutil
 import subprocess
+import tempfile
 from contextlib import contextmanager
 from dataclasses import replace
 from types import SimpleNamespace
@@ -79,10 +80,6 @@ def _same_root_snapshot(root: Path, source_ref: str, temporary_parent: Path | No
 
 def _noop_snapshot_authenticator(root: Path, source_ref: str) -> None:
     del root, source_ref
-
-
-def _noop_snapshot_sealer(root: Path, writable: bool) -> None:
-    del root, writable
 
 
 def _parsed_report(disposition: str, payload: dict[str, object]):
@@ -428,7 +425,6 @@ def test_r5_runner_selects_no_known_raw_inactive_error_and_spawns_once(
         snapshot_provider=_same_root_snapshot,
         source_identity_provider=_unit_source_identity,
         snapshot_authenticator=_noop_snapshot_authenticator,
-        snapshot_sealer=_noop_snapshot_sealer,
     )
 
     assert len(calls) == 1
@@ -480,7 +476,6 @@ def test_r5_runner_rejects_tampered_report_and_removes_temporary_root(
             snapshot_provider=_same_root_snapshot,
             source_identity_provider=_unit_source_identity,
             snapshot_authenticator=_noop_snapshot_authenticator,
-            snapshot_sealer=_noop_snapshot_sealer,
         )
     assert all(not path.exists() for path in run_roots)
 
@@ -534,7 +529,6 @@ def test_r5_runner_failure_names_bounded_failed_nodes_and_cleans(
             snapshot_provider=_same_root_snapshot,
             source_identity_provider=_unit_source_identity,
             snapshot_authenticator=_noop_snapshot_authenticator,
-            snapshot_sealer=_noop_snapshot_sealer,
         )
     assert all(not path.exists() for path in run_roots)
 
@@ -548,7 +542,6 @@ def test_r5_runner_rejects_contract_root_substitution(tmp_path: Path) -> None:
             snapshot_provider=_same_root_snapshot,
             source_identity_provider=_unit_source_identity,
             snapshot_authenticator=_noop_snapshot_authenticator,
-            snapshot_sealer=_noop_snapshot_sealer,
         )
 
 
@@ -585,9 +578,81 @@ def test_r5_runner_translates_process_control_failure_and_cleans(
             snapshot_provider=_same_root_snapshot,
             source_identity_provider=_unit_source_identity,
             snapshot_authenticator=_noop_snapshot_authenticator,
-            snapshot_sealer=_noop_snapshot_sealer,
         )
     assert all(not path.exists() for path in run_roots)
+
+
+def test_r5_runner_authenticates_mutated_snapshot_after_confirmed_timeout(
+    tmp_path: Path,
+) -> None:
+    contract = _contract()
+    authentication_count = 0
+
+    def mutation_detector(root: Path, source_ref: str) -> None:
+        nonlocal authentication_count
+        del root, source_ref
+        authentication_count += 1
+        if authentication_count == 3:
+            raise ActiveSuiteError("post-exit source mutation")
+
+    def timed_out_runner(**kwargs):
+        del kwargs
+        raise validation_gate.ProcessControlError(
+            validation_gate.ProcessErrorReason.TIMEOUT,
+            "bounded timeout",
+            termination_confirmed=True,
+        )
+
+    with pytest.raises(ActiveSuiteError, match="post-exit source mutation"):
+        run_authenticated_suite(
+            ROOT,
+            contract,
+            process_runner=timed_out_runner,
+            temporary_parent=tmp_path,
+            snapshot_provider=_same_root_snapshot,
+            source_identity_provider=_unit_source_identity,
+            snapshot_authenticator=mutation_detector,
+        )
+    assert authentication_count == 3
+
+
+def test_r5_runner_authenticates_mutated_snapshot_before_report_parsing(
+    tmp_path: Path,
+) -> None:
+    contract = _contract()
+    authentication_count = 0
+    parser_called = False
+
+    def mutation_detector(root: Path, source_ref: str) -> None:
+        nonlocal authentication_count
+        del root, source_ref
+        authentication_count += 1
+        if authentication_count == 3:
+            raise ActiveSuiteError("post-exit source mutation")
+
+    def completed_runner(**kwargs):
+        del kwargs
+        return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+
+    def malformed_parser(*args, **kwargs):
+        nonlocal parser_called
+        del args, kwargs
+        parser_called = True
+        raise ActiveSuiteError("malformed report")
+
+    with pytest.raises(ActiveSuiteError, match="post-exit source mutation"):
+        run_authenticated_suite(
+            ROOT,
+            contract,
+            process_runner=completed_runner,
+            report_parser=malformed_parser,
+            temporary_parent=tmp_path,
+            snapshot_provider=_same_root_snapshot,
+            source_identity_provider=_unit_source_identity,
+            snapshot_authenticator=mutation_detector,
+        )
+    assert authentication_count == 3
+    assert parser_called is False
 
 
 def test_r5_runner_rejects_live_source_drift_after_authentication(
@@ -607,7 +672,6 @@ def test_r5_runner_rejects_live_source_drift_after_authentication(
             snapshot_provider=_same_root_snapshot,
             source_identity_provider=drifted_source,
             snapshot_authenticator=_noop_snapshot_authenticator,
-            snapshot_sealer=_noop_snapshot_sealer,
         )
 
 
@@ -640,7 +704,6 @@ def test_r5_runner_rejects_snapshot_swap_before_pytest(
             snapshot_provider=_same_root_snapshot,
             source_identity_provider=_unit_source_identity,
             snapshot_authenticator=_noop_snapshot_authenticator,
-            snapshot_sealer=_noop_snapshot_sealer,
         )
     assert called is False
 
@@ -692,51 +755,44 @@ def test_r5_snapshot_cleanup_attempts_prune_after_remove_exception(
     )
     # Git stores object files read-only on Windows; restore fixture write bits so
     # the governing validation run-root can perform its strict cleanup.
-    active_suite._set_snapshot_writable(repository, True)
+    active_suite._restore_snapshot_write_bits(repository)
     assert "source-worktree" not in worktrees
 
 
-def test_r5_snapshot_is_sealed_before_pytest_spawn(tmp_path: Path) -> None:
-    contract = _contract()
-    snapshot = tmp_path / "snapshot"
-    (snapshot / "configs").mkdir(parents=True)
-    config = snapshot / "configs" / "validation_gates.json"
-    config.write_bytes((ROOT / "configs" / "validation_gates.json").read_bytes())
-    marker = snapshot / "tracked.py"
-    marker.write_text("VALUE = 1\n", encoding="utf-8")
+def test_r5_authenticated_snapshot_preserves_writable_fixture_copy_semantics() -> None:
+    source_ref = subprocess.check_output(
+        ["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True
+    ).strip()
+    common_dir = Path(
+        subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(ROOT),
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-common-dir",
+            ],
+            text=True,
+        ).strip()
+    ).resolve()
+    external_parent = common_dir.parent.parent
 
-    @contextmanager
-    def snapshot_provider(root: Path, source_ref: str, temporary_parent: Path | None):
-        del root, source_ref, temporary_parent
-        yield snapshot
-
-    def snapshot_contract(*args, **kwargs):
-        del args, kwargs
-        return replace(contract, root_path=str(snapshot.resolve()))
-
-    def sealed_runner(**kwargs):
-        assert marker.stat().st_mode & stat.S_IWRITE == 0
-        raise validation_gate.ProcessControlError(
-            validation_gate.ProcessErrorReason.TIMEOUT,
-            "stop after seal check",
-            termination_confirmed=True,
-        )
-
-    try:
-        with pytest.MonkeyPatch.context() as patcher:
-            patcher.setattr(active_suite, "authenticate_r5_active_suite", snapshot_contract)
-            with pytest.raises(ActiveSuiteError, match="timeout"):
-                run_authenticated_suite(
-                    ROOT,
-                    contract,
-                    process_runner=sealed_runner,
-                    temporary_parent=tmp_path,
-                    snapshot_provider=snapshot_provider,
-                    source_identity_provider=_unit_source_identity,
-                    snapshot_authenticator=_noop_snapshot_authenticator,
-                )
-    finally:
-        active_suite._set_snapshot_writable(snapshot, True)
+    with tempfile.TemporaryDirectory(
+        prefix="cemm-r5-fixture-", dir=external_parent
+    ) as temporary:
+        control = Path(temporary) / "control"
+        control.mkdir()
+        copied = Path(temporary) / "copied-receipt.json"
+        with active_suite._detached_git_snapshot(
+            ROOT, source_ref, control
+        ) as snapshot:
+            shutil.copy2(
+                snapshot / "artifacts" / "r4" / "BUILD_RECEIPT.json", copied
+            )
+            original = copied.read_bytes()
+            copied.write_bytes(original + b"\n")
+            assert copied.read_bytes() == original + b"\n"
 
 
 def test_r5_task10_uses_governed_active_suite_as_release_gate() -> None:
@@ -841,70 +897,84 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r5-active-suite-runs-one-process-without-inactive-errors",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": 'd47fe10c19dd5de3193e3699d85a0549d7fea0e13f7329739d9327b82b7f9074',
+        "source_ast_sha256": 'f1656b368f616a239631ab21cecc180e53c8e65b06180fb1e16ad894b321b310',
     },
     "tests/test_r5_active_regression.py::test_r5_runner_rejects_tampered_report_and_removes_temporary_root": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-report-is-authenticated-and-ephemeral",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": 'c4e773b7dc5e681a2c7bd248931325678c0ed8baa62a52bcf2d8c70c02c1e41b',
+        "source_ast_sha256": 'd163dda3eba9d27803080d1c1fb405ff078ca547efb6f6cf977fcdab1635c28b',
     },
     "tests/test_r5_active_regression.py::test_r5_runner_failure_names_bounded_failed_nodes_and_cleans": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-failure-summary-is-bounded",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": 'c0759e2301a46c0e130d5866a15c6f74c3ccb9563cefa7e737191c7b112227af',
+        "source_ast_sha256": 'c93b98f6abb02bfe339198374da8632a095ded2a00edaf6f3e125fc131f81c35',
     },
     "tests/test_r5_active_regression.py::test_r5_runner_rejects_contract_root_substitution": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-contract-binds-root",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": 'fc8b163bfcd1bcef72956d23f93863da99a98923bf1ef2360047dcb35ddfa75a',
+        "source_ast_sha256": '8ac439d16efc03ed00e37fe0950e29c2b381515b5983ac53de63e96d4d674a8e',
     },
     "tests/test_r5_active_regression.py::test_r5_runner_translates_process_control_failure_and_cleans[timeout]": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-timeout-is-controlled",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": '5891d1c9e434fb0cacc993530851c95f4e91bf460ce2a1136eaf575e87629719',
+        "source_ast_sha256": 'a5e8a34210ceae71fbc7b2650683dfee80186b11e306c1874fcfb49aa172b5e4',
     },
     "tests/test_r5_active_regression.py::test_r5_runner_translates_process_control_failure_and_cleans[output-limit]": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-output-limit-is-controlled",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": '5891d1c9e434fb0cacc993530851c95f4e91bf460ce2a1136eaf575e87629719',
+        "source_ast_sha256": 'a5e8a34210ceae71fbc7b2650683dfee80186b11e306c1874fcfb49aa172b5e4',
+    },
+    "tests/test_r5_active_regression.py::test_r5_runner_authenticates_mutated_snapshot_after_confirmed_timeout": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-active-suite-authenticates-source-after-timeout",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-10-Topology-Correction",
+        "source_ast_sha256": '812f03d52a8512168b46563d5db8b6a234bbff8fb02f05692fa17b12295ba0ff',
+    },
+    "tests/test_r5_active_regression.py::test_r5_runner_authenticates_mutated_snapshot_before_report_parsing": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-active-suite-authenticates-source-before-report-parse",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-10-Topology-Correction",
+        "source_ast_sha256": '90a367719cdd0d9d0b1b8f47c81fc258b59aa64b087329ae5e85c2e0b57bb49b',
     },
     "tests/test_r5_active_regression.py::test_r5_runner_rejects_live_source_drift_after_authentication": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-rejects-live-source-drift",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": '3d7d99751adcb9017740199ffc3dff86527c05df9022d5fc839946d1467a8615',
+        "source_ast_sha256": '6a6b2f90b89b39c8b901f6e90d11f80ce65402771b4e7485dd1c6df9f4e86f85',
     },
     "tests/test_r5_active_regression.py::test_r5_runner_rejects_snapshot_swap_before_pytest": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-rejects-snapshot-swap",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": '6d99d9a455cfe59c0c0a6269faebec7c2f5dcd1cf02254a80907470325722efd',
+        "source_ast_sha256": 'd6a6dfb17b6762a148a57f4639c587209b1a771502f4aa7900a6f1a057ed4685',
     },
     "tests/test_r5_active_regression.py::test_r5_snapshot_cleanup_attempts_prune_after_remove_exception": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-active-suite-cleanup-prunes-after-remove-error",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": 'cdd315ccc86527978efee15251ef309fe5a26bec98bda050532b9acb92cf832d',
+        "source_ast_sha256": '0c145e7de1ccc6e8ce13f358871a92bba8a9be19b26457baa68012b93749536e',
     },
-    "tests/test_r5_active_regression.py::test_r5_snapshot_is_sealed_before_pytest_spawn": {
+    "tests/test_r5_active_regression.py::test_r5_authenticated_snapshot_preserves_writable_fixture_copy_semantics": {
         "activation_phase": "R5",
-        "assertion_ref": "assertion:r5-active-suite-source-is-sealed-before-spawn",
+        "assertion_ref": "assertion:r5-active-suite-preserves-writable-fixture-copies",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": 'd2c49202f2a634a65f073218e9bc38e2e55029457dfe6c63ee44de39fce4b49e',
+        "source_ast_sha256": '7d74fa8a9146bd67496cbff6acc230a5798d62340c20c54a12d3ad112bf7a3e6',
     },
     "tests/test_r5_active_regression.py::test_r5_task10_uses_governed_active_suite_as_release_gate": {
         "activation_phase": "R5",
