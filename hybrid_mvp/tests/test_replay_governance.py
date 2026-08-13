@@ -754,7 +754,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r5-active-docs-publish-truthful-foundation-boundary",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-9",
-        "source_ast_sha256": "71ef37036ddd5cf2131df5f02159e501dab571d57e4add13586d645cda4e124d"
+        "source_ast_sha256": "6854ac97c28b1334d8ef959322c67f7513e901b7da949543a43e9a6db9290d68"
     }
 }
 
@@ -1061,6 +1061,8 @@ def test_r5_active_docs_publish_truthful_foundation_boundary() -> None:
     assert "Deferral is not admission" in master
     assert "zero-collection" in r5_plan
     assert "separate reviewed immutable-inventory migration" in r5_plan
+    assert "python scripts/update_replay_status.py --verify-chain" in r5_plan
+    assert "--show-effective" not in r5_plan
     assert (
         "tests/test_replay_governance.py::test_r5_active_docs_publish_truthful_foundation_boundary"
         in gate_config["steps"]["r5_phase_tests"]["exact_nodes"]

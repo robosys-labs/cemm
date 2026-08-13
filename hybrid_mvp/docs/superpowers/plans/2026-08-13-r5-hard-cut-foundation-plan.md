@@ -596,7 +596,7 @@ Expected: all pass.
 
 ```powershell
 python scripts/validate_mvp.py --tier admission --phase R5
-python scripts/update_replay_status.py --show-effective
+python scripts/update_replay_status.py --verify-chain
 git status --short
 ```
 
