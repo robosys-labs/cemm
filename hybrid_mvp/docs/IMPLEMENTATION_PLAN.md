@@ -6,9 +6,8 @@
 > the [R5 hard-cut foundation plan](superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md),
 > and the machine-readable [document authority map](DOCUMENT_AUTHORITY.json).
 > Replay status is derived only from
-> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl): its
-> current navigation snapshot is G0-R4 are green; R5-R8 are red. The phase
-> outline below remains historical and does not redefine that ledger.
+> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl). The
+> phase outline below remains historical and does not redefine that ledger.
 
 ## Phase 1 — Evaluation expansion
 

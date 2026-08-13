@@ -3,8 +3,8 @@
 > **Historical supersession notice (2026-08-13):** This plan's paths, status,
 > and execution instructions are retained as historical evidence, not current
 > routing. Status is derived only from
-> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl):
-> G0-R4 are green; R5-R8 are red. Continue with the R5 hard-cut foundation plan.
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> Continue with the plan selected by `docs/DOCUMENT_AUTHORITY.json`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

@@ -38,11 +38,10 @@ architecture is superseded.
 
 Replay status is derived only from the append-only
 [`governance/replay_status.jsonl`](governance/replay_status.jsonl) ledger; this
-navigation snapshot is not a second authority. The effective ledger state is
-G0-R4 are green; R5-R8 are red. The latest admitted R3 run is
-`run:596863b3fb95f7bc247a4f57`, and the admitted R4 repository-owned artifact
-integrity run is `run:300579c997da31e29d1c1a06`. Current implementation work
-begins at the R5 neural proposal and realization boundary.
+page is not a second authority. Read phase state and exact admission-run
+identities directly from that ledger. Use
+[`docs/DOCUMENT_AUTHORITY.json`](docs/DOCUMENT_AUTHORITY.json) for current
+execution-plan routing.
 
 `SemanticSwitchProgram` is a construction procedure, not canonical meaning.
 Program identity is ordered and includes every dynamic pointer and binding.

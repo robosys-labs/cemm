@@ -3,10 +3,9 @@
 > **Historical completion notice (2026-08-13):** R2 has been admitted; this
 > remaining-work plan is retained for historical implementation provenance.
 > Status is derived only from
-> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl):
-> G0-R4 are green; R5-R8 are red.
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
 
-**Status:** implementation-ready remaining-work specification  
+**Status at publication:** implementation-ready remaining-work specification
 **Date:** 2026-08-04  
 **Scope:** `hybrid_mvp/` only  
 **Audited branch:** `main`  

@@ -3,14 +3,12 @@
 > **Historical completion notice (2026-08-13):** R3 has been admitted; this
 > plan's branch, head, gaps, and execution steps are historical snapshots.
 > Status is derived only from
-> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl):
-> G0-R4 are green; R5-R8 are red. Latest R3 admission:
-> `run:596863b3fb95f7bc247a4f57`.
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
 
 **Reviewed source:** `robosys-labs/cemm`
 **Branch:** `codex/hybrid-mvp-r2`
 **Reviewed head:** `68c8c04` (R2 green admission)
-**Plan status:** Proposed governing implementation plan
+**Plan status at publication:** Proposed governing implementation plan
 **Scope:** `hybrid_mvp/` only
 **Predecessor:** R2 recursive semantic composition and exact verification
 **Successors:** R5 neural proposal/realization activation and later evaluation/release phases

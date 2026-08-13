@@ -25,11 +25,9 @@ hybrid_mvp/
 Inherited milestone receipts and generated artifacts are historical evidence,
 not current admission authority. Replay status is derived only from
 [`governance/replay_status.jsonl`](governance/replay_status.jsonl). This note
-does not own a parallel status table: its current navigation snapshot is G0-R4
-are green; R5-R8 are red, with latest R3 admission
-`run:596863b3fb95f7bc247a4f57` and repository-owned R4 artifact-integrity
-admission `run:300579c997da31e29d1c1a06`. If the ledger is absent or fails
-validation, no prose summary or inherited receipt can promote a replay phase.
+does not own a parallel status table or admission-run pointer. Read both
+directly from the ledger. If the ledger is absent or fails validation, no prose
+summary or inherited receipt can promote a replay phase.
 
 The corrective investigation found upstream contract, data and runtime drift,
 not insufficient training:

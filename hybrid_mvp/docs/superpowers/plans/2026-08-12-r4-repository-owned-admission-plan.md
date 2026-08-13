@@ -3,9 +3,7 @@
 > **Historical completion notice (2026-08-13):** R4 has been admitted; worktree
 > paths, cleanup commands, and task state in the body are historical, not current
 > routing. Status is derived only from
-> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl):
-> G0-R4 are green; R5-R8 are red. Latest R4 admission:
-> `run:300579c997da31e29d1c1a06`.
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

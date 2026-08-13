@@ -1,9 +1,8 @@
 # CEMM Authoritative Hybrid MVP Architecture
 
 > **Activation note:** Replay status is derived only from
-> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl). Its
-> current navigation snapshot is G0-R4 are green; R5-R8 are red; this document
-> describes architecture and does not own phase status.
+> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl). This
+> document describes architecture and does not own phase status.
 
 ## Purpose
 

@@ -3,11 +3,11 @@
 > **Historical completion notice (2026-08-13):** R3 and R4 are admitted; the
 > body records their implementation-time procedure and is not current status.
 > Status is derived only from
-> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl):
-> G0-R4 are green; R5-R8 are red. R4 external review was superseded by
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> R4 external review was superseded by
 > repository-owned artifact integrity.
 
-**Status:** implementation source complete; R3 and R4 remain red until separately admitted  
+**Status at publication:** implementation source complete; R3 and R4 remain red until separately admitted
 **Date:** 2026-08-05  
 **Scope:** `hybrid_mvp/` only  
 **Required predecessor:** admitted R2 source lineage at or after `68c8c041376bcd1b0d17b7a51a676442418b26d3`

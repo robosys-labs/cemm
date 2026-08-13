@@ -21,9 +21,7 @@ or test receipts into semantic or release authority.
 Corrective-replay status is a separate concern. Replay status is derived only
 from the append-only, machine-validated
 [`governance/replay_status.jsonl`](../governance/replay_status.jsonl) ledger
-introduced by G0 Task 2. Its effective state is currently G0-R4 are green;
-R5-R8 are red. The latest R3 and R4 admission runs are respectively
-`run:596863b3fb95f7bc247a4f57` and `run:300579c997da31e29d1c1a06`; R4 is
-repository-owned artifact integrity, not external review. These values are a
-navigation snapshot of the ledger, not a second status authority. Prose
-summaries and inherited receipts remain non-authoritative.
+introduced by G0 Task 2. Phase state and exact admission-run identities must be
+read from that ledger, not copied into routing prose. R4 admission uses
+repository-owned artifact integrity, not external review. Prose summaries and
+inherited receipts remain non-authoritative.

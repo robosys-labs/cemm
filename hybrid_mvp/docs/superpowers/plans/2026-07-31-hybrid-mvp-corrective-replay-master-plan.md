@@ -3,8 +3,8 @@
 > **Historical progress notice (2026-08-13):** The phase allocation remains a
 > governing design, but status, paths, and completed execution steps in the body
 > are historical snapshots. Status is derived only from
-> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl):
-> G0-R4 are green; R5-R8 are red. R4 now uses repository-owned artifact integrity.
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> R4 now uses repository-owned artifact integrity.
 
 > **For Codex:** REQUIRED SUB-SKILL: Use `subagent-driven-development` to execute each detailed phase plan task-by-task, with test-first implementation, contract review, code-quality review, and controller verification.
 
