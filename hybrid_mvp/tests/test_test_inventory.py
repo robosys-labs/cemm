@@ -1610,8 +1610,8 @@ def test_r5_successor_uses_normal_lineage_to_current_executable_leaf(
 def test_r5_real_overlay_is_exact_and_g0_through_r4_are_unchanged() -> None:
     expected_refs = {
         "G0": "active_test_nodes:312d4c08c90e95c624b5204b",
-        "R1": "active_test_nodes:48b9bc007ca7f2d149d89c83",
-        "R2": "active_test_nodes:46bd475e038bdde60083c14d",
+        "R1": "active_test_nodes:614d9a53a12a2af9f8521553",
+        "R2": "active_test_nodes:99397e3af1310ae238ebfada",
         "R3": "active_test_nodes:d207e42b5546fbcfb7f19a03",
         "R4": "active_test_nodes:a6b4bb6c542f13ffe4e70188",
     }
@@ -2220,7 +2220,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3",
-        "source_ast_sha256": "2d5b5c69243c8e6ac0a25e3ca7be52dde8687ae140ca0a7d4e0056c7e1b7e534",
+        "source_ast_sha256": "32fed530b7f490ef4fa748f9066a969d0e59618a4a4a7362a8c450e8085bfdbc",
     },
     "tests/test_test_inventory.py::test_r5_real_disposition_partition_rejects_missing_or_extra_rows": {
         "assertion_ref": "assertion:r5-test-inventory-real-partition-is-exact",

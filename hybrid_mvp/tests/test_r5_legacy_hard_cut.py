@@ -11,6 +11,7 @@ import pytest
 
 
 ROOT = Path(__file__).parents[1]
+AUDITOR_PATH = ROOT / "scripts" / "audit_legacy_test_hard_cut.py"
 GENERATOR_PATH = ROOT / "scripts" / "generate_r5_test_dispositions.py"
 REFRESHER_PATH = ROOT / "scripts" / "refresh_r5_test_metadata.py"
 RECEIPT_PATH = ROOT / "artifacts" / "validation" / "R5_TEST_DISPOSITIONS.json"
@@ -321,6 +322,80 @@ def test_r5_metadata_refresher_rejects_reparse_boundary_before_writes(
     assert sentinel.read_bytes() == b"external-must-not-change"
 
 
+def test_r5_legacy_hard_cut_auditor_accepts_current_source() -> None:
+    auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_auditor_current")
+
+    assert auditor.audit(ROOT) == ()
+
+
+def test_r5_legacy_auditor_distinguishes_scanner_data_from_dynamic_load(
+    tmp_path: Path,
+) -> None:
+    auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_auditor_loads")
+    for name in ("tests", "scripts", "src"):
+        (tmp_path / name).mkdir()
+    (tmp_path / "scripts" / "scanner.py").write_text(
+        "FORBIDDEN = ('legacy_propositions', 'legacy_runtime_fixtures')\n",
+        encoding="utf-8",
+    )
+
+    assert auditor._support_reference_findings(tmp_path) == ()
+
+    (tmp_path / "tests" / "conftest.py").write_text(
+        "load_support('legacy_propositions')\n",
+        encoding="utf-8",
+    )
+    assert auditor._support_reference_findings(tmp_path) == (
+        "forbidden_support_load:tests/conftest.py:legacy_propositions",
+    )
+
+
+def test_r5_legacy_auditor_checks_every_pre_r5_replay_phase() -> None:
+    auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_auditor_phases")
+
+    assert auditor.REPLAY_PHASES == ("G0", "R1", "R2", "R3", "R4")
+
+
+def test_r5_legacy_auditor_rejects_retired_support_in_gate_inputs(
+    tmp_path: Path,
+) -> None:
+    auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_auditor_gate_inputs")
+    config = {
+        "steps": {
+            "current": {"inputs": ["tests/current.py"]},
+            "stale": {"inputs": ["tests/legacy_propositions.py"]},
+        }
+    }
+
+    assert auditor._gate_input_findings(config) == (
+        "retired_gate_input:stale:tests/legacy_propositions.py",
+    )
+
+
+def test_r5_legacy_auditor_accepts_only_exact_lineage_carrier(
+    tmp_path: Path,
+) -> None:
+    auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_auditor_carrier")
+    carrier = tmp_path / "tests" / "test_six_phase_runtime.py"
+    carrier.parent.mkdir()
+    carrier.write_bytes((ROOT / auditor.REVIEWED_CARRIER_PATH).read_bytes())
+
+    assert auditor._carrier_findings(tmp_path) == ()
+
+    carrier.write_text(
+        carrier.read_text(encoding="utf-8") + "\nimport pytest\n",
+        encoding="utf-8",
+    )
+    assert auditor._carrier_findings(tmp_path)
+
+    carrier.write_bytes((ROOT / auditor.REVIEWED_CARRIER_PATH).read_bytes())
+    carrier.write_text(
+        carrier.read_text(encoding="utf-8") + "\nEXTRA = True\n",
+        encoding="utf-8",
+    )
+    assert "lineage_carrier_has_extra_content" in auditor._carrier_findings(tmp_path)
+
+
 __cemm_test_inventory__ = {
     "tests/test_r5_legacy_hard_cut.py::test_r5_disposition_receipt_is_deterministic_and_checked_in": {
         "activation_phase": "R5",
@@ -441,5 +516,45 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "legacy-hard-cut",
         "source_ast_sha256": '86813bb9387392d292386088d7ed7d93b0223d4cdcd84447a8e468bdcd920d5f',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_hard_cut_auditor_accepts_current_source": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-legacy-hard-cut-auditor-accepts-current-source",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '804d9a55429830ce14479897232192de97de85bd12bb6e8167dd507648b3cdf4',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_distinguishes_scanner_data_from_dynamic_load": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-legacy-auditor-distinguishes-data-from-load",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": 'ee1f64afc8a086668397a1d567e86c2abfa2e3d4fb1288eb1bd95ca66bd416bb',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_checks_every_pre_r5_replay_phase": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-legacy-auditor-checks-every-pre-r5-phase",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": "ab8f0c6ff1c7edf6b39887e7a1fcefaec13d9ecd2fa3df4b7f525c5db3ddc155",
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_rejects_retired_support_in_gate_inputs": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-legacy-auditor-rejects-retired-gate-inputs",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": 'a2fc724c1bb3569092d39f58a8b342033584f473227768b3c8b9fea2128e3bd0',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_accepts_only_exact_lineage_carrier": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-legacy-auditor-requires-exact-lineage-carrier",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '7cb1eba107eb298e873352c27586fe177a9d99641ff0430b134e9faff1485188',
     },
 }

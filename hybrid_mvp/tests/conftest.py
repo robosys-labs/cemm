@@ -1,8 +1,6 @@
-import importlib.util
 import json
 from dataclasses import dataclass as _fixture_dataclass
 from pathlib import Path
-import sys
 
 import pytest
 
@@ -13,21 +11,6 @@ from cemm_authoritative_hybrid.persistence import (
 )
 
 ROOT = Path(__file__).parents[1]
-
-def _load_legacy_test_support(module_name: str) -> None:
-    """Expose retired fixtures only while collecting old test modules."""
-
-    path = Path(__file__).with_name(f"{module_name}.py")
-    spec = importlib.util.spec_from_file_location(module_name, path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"{module_name} test support is unavailable")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-
-
-_load_legacy_test_support("legacy_propositions")
-_load_legacy_test_support("legacy_runtime_fixtures")
 
 AUTHORITY_GENERATION = "authority:generation-1"
 
@@ -450,95 +433,6 @@ def gap_classifier():
     from cemm_authoritative_hybrid.gaps import GapClassifier
 
     return GapClassifier()
-
-
-# ---------------------------------------------------------------------------
-# Six-phase runtime fixtures
-# ---------------------------------------------------------------------------
-
-SIX_PHASES = ("ORIENT", "PROPOSE", "VERIFY", "EVALUATE", "EFFECT", "REALIZE")
-
-
-@pytest.fixture
-def verified_observation_program():
-    """A minimal SemanticSwitchProgram fixture for the development profile.
-
-    This is a typed observation program that the fixture proposal owner returns
-    unchanged. It uses a single ``op:event`` application in OBSERVE mode.
-    """
-    from legacy_propositions import (
-        Application,
-        PropositionGraph,
-        SemanticSwitchProgram,
-    )
-
-    app = Application.create(
-        "op:event",
-        {
-            "role:event": "event-instance:test-1",
-            "role:type": "event:observation",
-            "role:actor": "participant:user",
-        },
-    )
-    graph = PropositionGraph.create([app], app.application_ref)
-    return SemanticSwitchProgram.create("OBSERVE", "event:context:test", graph)
-
-
-@pytest.fixture
-def runtime_factory(memory_stores_fixture, linked_authority):
-    """Callable that takes ``proposal_fixture=...`` and returns a HybridRuntime.
-
-    The runtime is configured with fixture owners for the development profile.
-    The proposal owner returns the injected program; verification always passes;
-    evaluation always resolves; effects and realization are no-ops.
-    """
-    from cemm_authoritative_hybrid.config import RuntimeConfig
-    from cemm_authoritative_hybrid.runtime import (
-        FixtureEffectOwner,
-        FixtureEvaluationOwner,
-        FixtureProposalOwner,
-        FixtureRealizationOwner,
-        FixtureVerificationOwner,
-        HybridRuntime,
-    )
-
-    def _factory(*, proposal_fixture=None):
-        if proposal_fixture is None:
-            from legacy_propositions import (
-                Application,
-                PropositionGraph,
-                SemanticSwitchProgram,
-            )
-
-            app = Application.create(
-                "op:event",
-                {
-                    "role:event": "event-instance:default",
-                    "role:type": "event:observation",
-                    "role:actor": "participant:user",
-                },
-            )
-            graph = PropositionGraph.create([app], app.application_ref)
-            proposal_fixture = SemanticSwitchProgram.create(
-                "OBSERVE", "event:context:default", graph
-            )
-
-        owners = {
-            "proposal": FixtureProposalOwner(proposal_fixture),
-            "verification": FixtureVerificationOwner(),
-            "evaluation": FixtureEvaluationOwner(),
-            "effect": FixtureEffectOwner(memory_stores_fixture),
-            "realization": FixtureRealizationOwner(),
-        }
-        return HybridRuntime(
-            config=RuntimeConfig.release(),
-            authority=linked_authority,
-            stores=memory_stores_fixture,
-            owners=owners,
-            profile="development",
-        )
-
-    return _factory
 
 
 # ---------------------------------------------------------------------------
