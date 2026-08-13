@@ -1,0 +1,21 @@
+{
+  "schema": "cemm-r5-foundation-contract-v1",
+  "phase": "R5",
+  "increment": "hard-cut-foundation",
+  "effective_replay_status": "red",
+  "admission_available": false,
+  "owners": [
+    "artifact-contract",
+    "data-isolation",
+    "legacy-hard-cut",
+    "proposal-contract",
+    "realization-contract"
+  ],
+  "data_access_classes": [
+    "calibration",
+    "frozen_test",
+    "selection",
+    "train"
+  ],
+  "neural_activation_task_ref": "R5-Neural-Activation"
+}
