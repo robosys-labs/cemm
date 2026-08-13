@@ -1339,7 +1339,185 @@ def test_r5_deferred_and_retired_nodes_cannot_satisfy_due_rewrites(
         [_overlay_row(target_source_ref, target_assertion, disposition)],
     )
 
-    with pytest.raises(CORE.InventoryError, match="rewrite|non-executable"):
+    with pytest.raises(
+        CORE.InventoryError,
+        match="rewrite|non-executable|executable descendant",
+    ):
+        _verify(root, inventory_path, phase="R5")
+
+
+def test_r5_deferred_predecessor_rejects_literal_executable_descendant(
+    tmp_path: Path,
+) -> None:
+    root, inventory_path, payload = _one_retained_project(
+        tmp_path,
+        activation_phase="R5",
+    )
+    predecessor = "tests/test_frozen.py::test_frozen"
+    descendant = "tests/test_later.py::test_descendant"
+    (root / "tests" / "test_frozen.py").unlink()
+    _write_later_module(
+        root,
+        [
+            (
+                "test_descendant",
+                _later_metadata(
+                    assertion_ref="assertion:frozen",
+                    activation_phase="R5",
+                    supersedes_node_id=predecessor,
+                ),
+            )
+        ],
+    )
+    _write_r5_overlay(
+        root,
+        payload,
+        [_overlay_row(predecessor, "assertion:frozen", "deferred")],
+    )
+
+    with pytest.raises(
+        CORE.InventoryError,
+        match=(
+            "deferred R5 predecessor .*test_frozen has executable descendant "
+            ".*test_descendant"
+        ),
+    ):
+        _verify(root, inventory_path, phase="R5")
+
+
+def test_r5_retired_predecessor_rejects_multihop_executable_descendant(
+    tmp_path: Path,
+) -> None:
+    predecessor = (
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::"
+        "test_failure_meaning_uses_safe_fallback"
+    )
+    assertion_ref = (
+        "assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-"
+        "failure-meaning-uses-safe-fallback"
+    )
+    source = (
+        "class TestNeuralRealizerWeightUse:\n"
+        "    def test_failure_meaning_uses_safe_fallback(self) -> None:\n"
+        "        assert True\n"
+    )
+    root = tmp_path / "retired-descendant"
+    root.mkdir()
+    _write_pytest_collection_contract(root)
+    source_path = "tests/test_neural_realizer_weight_use.py"
+    _write_frozen_module(root, source, relative_path=source_path)
+    record = _retained_record(
+        source_path,
+        source,
+        "test_failure_meaning_uses_safe_fallback",
+        assertion_ref=assertion_ref,
+        activation_phase="R5",
+    )
+    record["source_test_ref"] = predecessor
+    record["case_node_ids"] = [predecessor]
+    payload = _inventory_payload(root, [record])
+    inventory_path = _write_inventory(root, payload)
+    (root / source_path).unlink()
+    intermediate = "tests/test_later.py::test_intermediate"
+    leaf = "tests/test_later.py::test_current_leaf"
+    _write_later_module(
+        root,
+        [
+            (
+                "test_intermediate",
+                _later_metadata(
+                    assertion_ref=assertion_ref,
+                    activation_phase="R5",
+                    supersedes_node_id=predecessor,
+                ),
+            ),
+            (
+                "test_current_leaf",
+                _later_metadata(
+                    assertion_ref=assertion_ref,
+                    activation_phase="R5",
+                    supersedes_node_id=intermediate,
+                ),
+            ),
+        ],
+    )
+    _write_r5_overlay(
+        root,
+        payload,
+        [_overlay_row(predecessor, assertion_ref, "retired")],
+    )
+
+    with pytest.raises(
+        CORE.InventoryError,
+        match=(
+            "retired R5 predecessor .*safe_fallback has executable descendant "
+            ".*test_intermediate"
+        ),
+    ):
+        _verify(root, inventory_path, phase="R5")
+
+
+def test_r5_due_rewrite_cannot_use_descendant_of_deferred_predecessor(
+    tmp_path: Path,
+) -> None:
+    predecessor_source = "def test_predecessor() -> None:\n    assert True\n"
+    rewritten_source = "def test_rewritten() -> None:\n    assert True\n"
+    predecessor = "tests/test_predecessor.py::test_predecessor"
+    descendant = "tests/test_later.py::test_descendant"
+    root = tmp_path / "rewrite-descendant"
+    root.mkdir()
+    _write_pytest_collection_contract(root)
+    _write_frozen_module(
+        root,
+        predecessor_source,
+        relative_path="tests/test_predecessor.py",
+    )
+    _write_frozen_module(root, rewritten_source)
+    rewritten, rewrite_ref = _rewritten_record(
+        "tests/test_frozen.py",
+        rewritten_source,
+        "test_rewritten",
+        assertion_ref="assertion:rewritten",
+        replacement_phase="R5",
+        required_successor_node_ids=[descendant],
+    )
+    predecessor_record = _retained_record(
+        "tests/test_predecessor.py",
+        predecessor_source,
+        "test_predecessor",
+        assertion_ref="assertion:predecessor",
+        activation_phase="R5",
+    )
+    payload = _inventory_payload(root, [rewritten, predecessor_record])
+    inventory_path = _write_inventory(root, payload)
+    (root / "tests" / "test_predecessor.py").unlink()
+    _write_later_module(
+        root,
+        [
+            (
+                "test_descendant",
+                _later_metadata(
+                    assertion_ref="assertion:predecessor",
+                    activation_phase="R5",
+                    supersedes_node_id=predecessor,
+                    contributes_to_rewrite_refs=[rewrite_ref],
+                ),
+            )
+        ],
+    )
+    _write_r5_overlay(
+        root,
+        payload,
+        [_overlay_row(predecessor, "assertion:predecessor", "deferred")],
+    )
+
+    with pytest.raises(
+        CORE.InventoryError,
+        match=(
+            "deferred R5 predecessor .*test_predecessor has executable descendant "
+            ".*test_descendant"
+        ),
+    ):
         _verify(root, inventory_path, phase="R5")
 
 
@@ -1972,7 +2150,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3",
-        "source_ast_sha256": "73f44762624d4ab2f0e9024ae4ed9e475466112ca42f7ad7addc6531eab7e24e",
+        "source_ast_sha256": "d48f7666094ca7cd899e28c55c605961d0683acaf1f7ad30b10558336286c606",
     },
     "tests/test_test_inventory.py::test_r5_deferred_and_retired_nodes_cannot_satisfy_due_rewrites[retired]": {
         "assertion_ref": "assertion:r5-test-inventory-retired-cannot-satisfy-rewrite",
@@ -1980,7 +2158,31 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3",
-        "source_ast_sha256": "73f44762624d4ab2f0e9024ae4ed9e475466112ca42f7ad7addc6531eab7e24e",
+        "source_ast_sha256": "d48f7666094ca7cd899e28c55c605961d0683acaf1f7ad30b10558336286c606",
+    },
+    "tests/test_test_inventory.py::test_r5_deferred_predecessor_rejects_literal_executable_descendant": {
+        "assertion_ref": "assertion:r5-test-inventory-deferred-lineage-has-no-descendant",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3-Review-Fix",
+        "source_ast_sha256": "10b168270cb070a7a84cb3621563d5f650f8b4ce2fcca0546eef77bd8171b3a5",
+    },
+    "tests/test_test_inventory.py::test_r5_retired_predecessor_rejects_multihop_executable_descendant": {
+        "assertion_ref": "assertion:r5-test-inventory-retired-lineage-has-no-descendant",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3-Review-Fix",
+        "source_ast_sha256": "e8f4df77bdf85a8dc06fe5b6bcb3dba487eb37c26d2b8cafe7d87e8c1705a72c",
+    },
+    "tests/test_test_inventory.py::test_r5_due_rewrite_cannot_use_descendant_of_deferred_predecessor": {
+        "assertion_ref": "assertion:r5-test-inventory-deferred-descendant-cannot-satisfy-rewrite",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3-Review-Fix",
+        "source_ast_sha256": "79e466abaf1d4098ed2ea3588aa20e4785d09659b641946946bcdbb6d92266c2",
     },
     "tests/test_test_inventory.py::test_r5_successor_requires_literal_executable_metadata": {
         "assertion_ref": "assertion:r5-test-inventory-successor-metadata-is-literal",

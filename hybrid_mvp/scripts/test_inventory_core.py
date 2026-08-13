@@ -1475,10 +1475,24 @@ def _validate_r5_disposition_overlay(
         if source is None:
             raise InventoryError(f"R5 disposition predecessor is unknown: {predecessor}")
         if row.disposition == "deferred":
+            for predecessor_node in source.case_node_ids:
+                descendant = successor_by_node.get(predecessor_node)
+                if descendant is not None:
+                    raise InventoryError(
+                        f"deferred R5 predecessor {predecessor_node} has executable "
+                        f"descendant {descendant}"
+                    )
             excluded_nodes.update(source.case_node_ids)
             deferred_assertions.append(row.assertion_ref)
             continue
         if row.disposition == "retired":
+            for predecessor_node in source.case_node_ids:
+                descendant = successor_by_node.get(predecessor_node)
+                if descendant is not None:
+                    raise InventoryError(
+                        f"retired R5 predecessor {predecessor_node} has executable "
+                        f"descendant {descendant}"
+                    )
             excluded_nodes.update(source.case_node_ids)
             retired_assertions.append(row.assertion_ref)
             continue
