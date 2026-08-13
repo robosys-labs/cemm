@@ -11,12 +11,14 @@ from pathlib import Path
 import subprocess
 import sys
 from typing import Any, Callable
+from unittest.mock import patch
 
 import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 CORE_PATH = ROOT / "scripts" / "test_inventory_core.py"
+CHECK_INVENTORY_PATH = ROOT / "scripts" / "check_test_inventory.py"
 R5_DISPOSITIONS_PATH = ROOT / "scripts" / "r5_test_dispositions.py"
 R5_DISPOSITIONS_SCHEMA_PATH = (
     ROOT / "schemas" / "r5_test_dispositions.schema.json"
@@ -50,6 +52,26 @@ def _load_r5_dispositions() -> Any:
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
+    return module
+
+
+def _load_check_inventory() -> Any:
+    spec = importlib.util.spec_from_file_location(
+        "_cemm_check_test_inventory_for_tests",
+        CHECK_INVENTORY_PATH,
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load inventory CLI from {CHECK_INVENTORY_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    previous = sys.modules.get("test_inventory_core")
+    sys.modules["test_inventory_core"] = CORE
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        if previous is None:
+            sys.modules.pop("test_inventory_core", None)
+        else:
+            sys.modules["test_inventory_core"] = previous
     return module
 
 
@@ -338,6 +360,48 @@ def _verify(
         enforce_reviewed_counts=False,
         parse_source=parse_source,
     )
+
+
+def _write_r5_overlay(
+    root: Path,
+    inventory_payload: dict[str, object],
+    rows: list[dict[str, object]],
+) -> None:
+    payload = {
+        "schema": "cemm-r5-test-dispositions-v1",
+        "phase": "R5",
+        "inventory_ref": inventory_payload["inventory_ref"],
+        "rows": rows,
+    }
+    (root / "governance" / "r5_test_dispositions.json").write_bytes(
+        _canonical_bytes(payload) + b"\n"
+    )
+
+
+def _overlay_row(
+    predecessor: str,
+    assertion_ref: str,
+    disposition: str,
+    *,
+    successor_node_ids: list[str] | None = None,
+) -> dict[str, object]:
+    row: dict[str, object] = {
+        "predecessor_source_test_ref": predecessor,
+        "assertion_ref": assertion_ref,
+        "disposition": disposition,
+    }
+    if disposition == "successor":
+        row["successor_node_ids"] = successor_node_ids or []
+    elif disposition == "deferred":
+        row["future_task_ref"] = "R5-Neural-Activation"
+        row["future_owner_ref"] = "test-owner"
+    else:
+        row["retirement_reason"] = (
+            "hybrid_mvp/AGENTS.md section 7 requires zero fallback paths in final "
+            "release gates; preserving this requirement would reintroduce forbidden "
+            "fallback behavior."
+        )
+    return row
 
 
 def _one_retained_project(
@@ -1100,6 +1164,395 @@ def test_source_only_verification_parses_each_module_once_without_heavy_paths(
     )
 
 
+def test_r5_overlay_requires_a_disposition_for_each_missing_r5_leaf(
+    tmp_path: Path,
+) -> None:
+    root, inventory_path, _payload = _one_retained_project(
+        tmp_path,
+        activation_phase="R5",
+    )
+    (root / "tests" / "test_frozen.py").unlink()
+
+    with pytest.raises(CORE.InventoryError, match="disposition|coverage"):
+        _verify(root, inventory_path, phase="R5")
+
+
+def test_r5_overlay_defers_absent_leaf_without_admitting_it(
+    tmp_path: Path,
+) -> None:
+    root, inventory_path, payload = _one_retained_project(
+        tmp_path,
+        activation_phase="R5",
+    )
+    predecessor = "tests/test_frozen.py::test_frozen"
+    (root / "tests" / "test_frozen.py").unlink()
+    _write_r5_overlay(
+        root,
+        payload,
+        [_overlay_row(predecessor, "assertion:frozen", "deferred")],
+    )
+
+    verified = _verify(root, inventory_path, phase="R5")
+
+    assert predecessor not in verified.active_node_ids
+    assert predecessor not in verified.collectable_node_ids
+    assert verified.deferred_r5_assertion_refs == ("assertion:frozen",)
+    assert verified.retired_r5_assertion_refs == ()
+    assert verified.r5_disposition_receipt_ref.startswith(
+        "r5_test_disposition_receipt:"
+    )
+    assert not verified.owner_node_ids
+    assert not verified.phase_node_ids
+    assert not verified.admission_only_node_ids
+
+    without_overlay = _verify(root, inventory_path, phase="R4")
+    assert without_overlay.deferred_r5_assertion_refs == ()
+    assert without_overlay.retired_r5_assertion_refs == ()
+    assert without_overlay.r5_disposition_receipt_ref is None
+
+
+def test_r5_overlay_retires_only_the_exact_absent_fallback_leaf(
+    tmp_path: Path,
+) -> None:
+    source_ref = (
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::"
+        "test_failure_meaning_uses_safe_fallback"
+    )
+    assertion_ref = (
+        "assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-"
+        "failure-meaning-uses-safe-fallback"
+    )
+    source = (
+        "class TestNeuralRealizerWeightUse:\n"
+        "    def test_failure_meaning_uses_safe_fallback(self) -> None:\n"
+        "        assert True\n"
+    )
+
+    def records(text: str) -> list[dict[str, object]]:
+        record = _retained_record(
+            "tests/test_neural_realizer_weight_use.py",
+            text,
+            "test_failure_meaning_uses_safe_fallback",
+            assertion_ref=assertion_ref,
+            activation_phase="R5",
+        )
+        record["source_test_ref"] = source_ref
+        record["case_node_ids"] = [source_ref]
+        return [record]
+
+    root = tmp_path / "retired"
+    root.mkdir()
+    _write_pytest_collection_contract(root)
+    _write_frozen_module(
+        root,
+        source,
+        relative_path="tests/test_neural_realizer_weight_use.py",
+    )
+    payload = _inventory_payload(root, records(source))
+    inventory_path = _write_inventory(root, payload)
+    (root / "tests" / "test_neural_realizer_weight_use.py").unlink()
+    _write_r5_overlay(
+        root,
+        payload,
+        [_overlay_row(source_ref, assertion_ref, "retired")],
+    )
+
+    verified = _verify(root, inventory_path, phase="R5")
+
+    assert source_ref not in verified.active_node_ids
+    assert source_ref not in verified.collectable_node_ids
+    assert verified.deferred_r5_assertion_refs == ()
+    assert verified.retired_r5_assertion_refs == (assertion_ref,)
+    assert not verified.owner_node_ids
+    assert not verified.phase_node_ids
+    assert not verified.admission_only_node_ids
+
+
+@pytest.mark.parametrize(
+    "disposition",
+    ["deferred", "retired"],
+    ids=["deferred", "retired"],
+)
+def test_r5_deferred_and_retired_nodes_cannot_satisfy_due_rewrites(
+    tmp_path: Path,
+    disposition: str,
+) -> None:
+    target_source_ref = "tests/test_target.py::test_target"
+    target_assertion = "assertion:target"
+    target_source = "def test_target() -> None:\n    assert True\n"
+    if disposition == "retired":
+        target_source_ref = (
+            "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::"
+            "test_failure_meaning_uses_safe_fallback"
+        )
+        target_assertion = (
+            "assertion:neural-realizer-weight-use-test-neural-realizer-weight-use-"
+            "failure-meaning-uses-safe-fallback"
+        )
+        target_source = (
+            "class TestNeuralRealizerWeightUse:\n"
+            "    def test_failure_meaning_uses_safe_fallback(self) -> None:\n"
+            "        assert True\n"
+        )
+    rewritten_source = "def test_rewritten() -> None:\n    assert True\n"
+    root = tmp_path / disposition
+    root.mkdir()
+    _write_pytest_collection_contract(root)
+    _write_frozen_module(root, rewritten_source)
+    target_path = target_source_ref.split("::", 1)[0]
+    _write_frozen_module(root, target_source, relative_path=target_path)
+    rewritten, _rewrite_ref = _rewritten_record(
+        "tests/test_frozen.py",
+        rewritten_source,
+        "test_rewritten",
+        assertion_ref="assertion:rewritten",
+        replacement_phase="R5",
+        required_successor_node_ids=[target_source_ref],
+    )
+    target_record = _retained_record(
+        target_path,
+        target_source,
+        target_source_ref.rsplit("::", 1)[-1],
+        assertion_ref=target_assertion,
+        activation_phase="R5",
+    )
+    target_record["source_test_ref"] = target_source_ref
+    target_record["case_node_ids"] = [target_source_ref]
+    payload = _inventory_payload(root, [rewritten, target_record])
+    inventory_path = _write_inventory(root, payload)
+    _write_later_module(
+        root,
+        [
+            (
+                "test_replacement",
+                _later_metadata(
+                    assertion_ref=target_assertion,
+                    activation_phase="R5",
+                    supersedes_node_id=target_source_ref,
+                ),
+            )
+        ],
+    )
+    _write_r5_overlay(
+        root,
+        payload,
+        [_overlay_row(target_source_ref, target_assertion, disposition)],
+    )
+
+    with pytest.raises(CORE.InventoryError, match="rewrite|non-executable"):
+        _verify(root, inventory_path, phase="R5")
+
+
+def test_r5_successor_requires_literal_executable_metadata(tmp_path: Path) -> None:
+    root, inventory_path, payload = _one_retained_project(
+        tmp_path,
+        activation_phase="R5",
+    )
+    predecessor = "tests/test_frozen.py::test_frozen"
+    successor = "tests/test_later.py::test_replacement"
+    (root / "tests" / "test_frozen.py").unlink()
+    _write_r5_overlay(
+        root,
+        payload,
+        [
+            _overlay_row(
+                predecessor,
+                "assertion:frozen",
+                "successor",
+                successor_node_ids=[successor],
+            )
+        ],
+    )
+
+    with pytest.raises(CORE.InventoryError, match="literal|successor|metadata"):
+        _verify(root, inventory_path, phase="R5")
+
+
+def test_r5_successor_uses_normal_lineage_to_current_executable_leaf(
+    tmp_path: Path,
+) -> None:
+    root, inventory_path, payload = _one_retained_project(
+        tmp_path,
+        activation_phase="R5",
+    )
+    predecessor = "tests/test_frozen.py::test_frozen"
+    successor = "tests/test_later.py::test_replacement"
+    leaf = "tests/test_later.py::test_current_leaf"
+    (root / "tests" / "test_frozen.py").unlink()
+    _write_later_module(
+        root,
+        [
+            (
+                "test_replacement",
+                _later_metadata(
+                    assertion_ref="assertion:frozen",
+                    activation_phase="R5",
+                    supersedes_node_id=predecessor,
+                ),
+            ),
+            (
+                "test_current_leaf",
+                _later_metadata(
+                    assertion_ref="assertion:frozen",
+                    activation_phase="R5",
+                    supersedes_node_id=successor,
+                ),
+            ),
+        ],
+    )
+    _write_r5_overlay(
+        root,
+        payload,
+        [
+            _overlay_row(
+                predecessor,
+                "assertion:frozen",
+                "successor",
+                successor_node_ids=[successor],
+            )
+        ],
+    )
+
+    verified = _verify(root, inventory_path, phase="R5")
+
+    assert verified.active_node_ids == (leaf,)
+    assert predecessor not in verified.active_node_ids
+    assert successor not in verified.active_node_ids
+
+
+def test_r5_real_overlay_is_exact_and_g0_through_r4_are_unchanged() -> None:
+    expected_refs = {
+        "G0": "active_test_nodes:312d4c08c90e95c624b5204b",
+        "R1": "active_test_nodes:48b9bc007ca7f2d149d89c83",
+        "R2": "active_test_nodes:46bd475e038bdde60083c14d",
+        "R3": "active_test_nodes:d207e42b5546fbcfb7f19a03",
+        "R4": "active_test_nodes:a6b4bb6c542f13ffe4e70188",
+    }
+    inventory_path = ROOT / "governance" / "test_inventory.json"
+
+    for phase, expected_ref in expected_refs.items():
+        result = CORE.load_and_verify(
+            ROOT,
+            inventory_path,
+            phase=phase,
+            enforce_reviewed_counts=True,
+        )
+        assert result.active_node_set_ref == expected_ref
+        assert result.r5_disposition_receipt_ref is None
+        assert result.deferred_r5_assertion_refs == ()
+        assert result.retired_r5_assertion_refs == ()
+
+    dispositions = _load_r5_dispositions().load_r5_test_dispositions(
+        ROOT,
+        expected_inventory_ref=R5_TEST_INVENTORY_REF,
+    )
+    assert len(dispositions.rows) == 43
+    assert dispositions.counts == {"successor": 17, "deferred": 25, "retired": 1}
+
+
+def test_r5_real_disposition_partition_rejects_missing_or_extra_rows(
+    tmp_path: Path,
+) -> None:
+    dispositions_module = _load_r5_dispositions()
+    reviewed = CORE.load_strict_json(
+        ROOT / "governance" / "r5_test_dispositions.json"
+    )
+    assert isinstance(reviewed, dict)
+    for name, mutate in (
+        ("missing", lambda rows: rows.pop()),
+        ("extra", lambda rows: rows.append(copy.deepcopy(rows[-1]))),
+    ):
+        root = tmp_path / name
+        governance = root / "governance"
+        governance.mkdir(parents=True)
+        (governance / "test_inventory.json").write_bytes(
+            (ROOT / "governance" / "test_inventory.json").read_bytes()
+        )
+        candidate = copy.deepcopy(reviewed)
+        rows = candidate["rows"]
+        assert isinstance(rows, list)
+        mutate(rows)
+        (governance / "r5_test_dispositions.json").write_bytes(
+            _canonical_bytes(candidate) + b"\n"
+        )
+
+        with pytest.raises(
+            dispositions_module.R5TestDispositionError,
+            match="coverage|row count|duplicate",
+        ):
+            dispositions_module.load_r5_test_dispositions(
+                root,
+                expected_inventory_ref=R5_TEST_INVENTORY_REF,
+            )
+
+
+def test_inventory_cli_adds_only_r5_disposition_fields(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    cli = _load_check_inventory()
+    inventory = CORE.load_strict_json(ROOT / "governance" / "test_inventory.json")
+    assert isinstance(inventory, dict)
+    common = dict(
+        inventory_ref=R5_TEST_INVENTORY_REF,
+        baseline_source_ref=BASELINE_SOURCE_REF,
+        active_node_ids=(),
+        collectable_node_ids=(),
+        deferred_rewrite_refs=(),
+        due_rewrite_refs=(),
+        owner_node_ids={},
+        phase_node_ids=(),
+        admission_only_node_ids=(),
+        source_tests={},
+        later_nodes={},
+        parsed_module_count=0,
+        literal_metadata_ref="literal_test_metadata:" + "0" * 24,
+        active_node_set_ref="active_test_nodes:" + "0" * 24,
+        collectable_node_set_ref="collectable_test_nodes:" + "0" * 24,
+    )
+    r4_result = CORE.InventoryResult(
+        **common,
+        r5_disposition_receipt_ref=None,
+        deferred_r5_assertion_refs=(),
+        retired_r5_assertion_refs=(),
+    )
+    r5_sources = {
+        f"tests/test_{index}.py::test_{index}": CORE.SourceTestRecord(
+            source_test_ref=f"tests/test_{index}.py::test_{index}",
+            classification="retained",
+            activation_phase="R5",
+            assertion_ref=f"assertion:test-{index}",
+            source_ast_sha256="0" * 64,
+            case_node_ids=(f"tests/test_{index}.py::test_{index}",),
+            successor_node_ids=(),
+        )
+        for index in range(43)
+    }
+    r5_result = replace(
+        r4_result,
+        source_tests=r5_sources,
+        r5_disposition_receipt_ref="r5_test_disposition_receipt:" + "1" * 24,
+        deferred_r5_assertion_refs=tuple(
+            f"assertion:deferred-{index}" for index in range(25)
+        ),
+        retired_r5_assertion_refs=("assertion:retired",),
+    )
+    with patch.object(cli, "verify_document_authority_pin", return_value="0" * 64):
+        with patch.object(cli, "load_and_verify", return_value=r4_result):
+            assert cli.main(["--phase", "R4", "--source-only"]) == 0
+        r4_payload = json.loads(capsys.readouterr().out)
+        assert not {key for key in r4_payload if key.startswith("r5_")}
+
+        with patch.object(cli, "load_and_verify", return_value=r5_result):
+            assert cli.main(["--phase", "R5", "--source-only"]) == 0
+        r5_payload = json.loads(capsys.readouterr().out)
+    assert r5_payload["r5_disposition_receipt_ref"] == (
+        "r5_test_disposition_receipt:" + "1" * 24
+    )
+    assert r5_payload["r5_successor_count"] == 17
+    assert r5_payload["r5_deferred_count"] == 25
+    assert r5_payload["r5_retired_count"] == 1
+
+
 R5_TEST_INVENTORY_REF = "test_inventory:c715e262526c0ea26a6fef90"
 R5_PREDECESSOR = "tests/test_x.py::test_x"
 
@@ -1489,6 +1942,86 @@ def test_r5_disposition_loader_rejects_inventory_symlink_escape(
 
 
 __cemm_test_inventory__ = {
+    "tests/test_test_inventory.py::test_r5_overlay_requires_a_disposition_for_each_missing_r5_leaf": {
+        "assertion_ref": "assertion:r5-test-inventory-missing-disposition-fails-closed",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3",
+        "source_ast_sha256": "ce6c8386a441355906774c14e2ce050b6fbe96f0f675b2b6b91b8a69cef06877",
+    },
+    "tests/test_test_inventory.py::test_r5_overlay_defers_absent_leaf_without_admitting_it": {
+        "assertion_ref": "assertion:r5-test-inventory-deferral-is-non-executable",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3",
+        "source_ast_sha256": "5540e021ab71a71c513d10ac538477ec4fb6c284a3428fd69cae6dd0e902273e",
+    },
+    "tests/test_test_inventory.py::test_r5_overlay_retires_only_the_exact_absent_fallback_leaf": {
+        "assertion_ref": "assertion:r5-test-inventory-retirement-is-non-executable",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3",
+        "source_ast_sha256": "418f91894cdde40dcaa3888a3bf236bb1f3cf5513849e0a938379e8665e54b4d",
+    },
+    "tests/test_test_inventory.py::test_r5_deferred_and_retired_nodes_cannot_satisfy_due_rewrites[deferred]": {
+        "assertion_ref": "assertion:r5-test-inventory-deferred-cannot-satisfy-rewrite",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3",
+        "source_ast_sha256": "73f44762624d4ab2f0e9024ae4ed9e475466112ca42f7ad7addc6531eab7e24e",
+    },
+    "tests/test_test_inventory.py::test_r5_deferred_and_retired_nodes_cannot_satisfy_due_rewrites[retired]": {
+        "assertion_ref": "assertion:r5-test-inventory-retired-cannot-satisfy-rewrite",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3",
+        "source_ast_sha256": "73f44762624d4ab2f0e9024ae4ed9e475466112ca42f7ad7addc6531eab7e24e",
+    },
+    "tests/test_test_inventory.py::test_r5_successor_requires_literal_executable_metadata": {
+        "assertion_ref": "assertion:r5-test-inventory-successor-metadata-is-literal",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3",
+        "source_ast_sha256": "730a5b05ac50430fe02c0483d524577b65d00ef7eea6f4ba5226e4d9ada5f20d",
+    },
+    "tests/test_test_inventory.py::test_r5_successor_uses_normal_lineage_to_current_executable_leaf": {
+        "assertion_ref": "assertion:r5-test-inventory-successor-uses-normal-lineage",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3",
+        "source_ast_sha256": "8713c725e90de3135e8e1eaba23ad083c2432b0ddb20a137885cfdbfd27b73fa",
+    },
+    "tests/test_test_inventory.py::test_r5_real_overlay_is_exact_and_g0_through_r4_are_unchanged": {
+        "assertion_ref": "assertion:r5-test-inventory-overlay-is-exact-and-phase-local",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3",
+        "source_ast_sha256": "2d5b5c69243c8e6ac0a25e3ca7be52dde8687ae140ca0a7d4e0056c7e1b7e534",
+    },
+    "tests/test_test_inventory.py::test_r5_real_disposition_partition_rejects_missing_or_extra_rows": {
+        "assertion_ref": "assertion:r5-test-inventory-real-partition-is-exact",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3",
+        "source_ast_sha256": "5492398c8dafd2ccb46beee6104d57d2d6323ed4fdb32fc0960eb929436a1a5d",
+    },
+    "tests/test_test_inventory.py::test_inventory_cli_adds_only_r5_disposition_fields": {
+        "assertion_ref": "assertion:r5-test-inventory-cli-is-phase-local",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-3",
+        "source_ast_sha256": "e491af91b46d9f526fe0ba5e6b23fdc053804fbed218aa1c02fe936b9c5abf85",
+    },
     "tests/test_test_inventory.py::test_r5_disposition_receipt_rejects_forged_dataclasses": {
         "assertion_ref": "assertion:r5-test-disposition-receipt-rejects-forgery",
         "activation_phase": "R5",
