@@ -141,6 +141,28 @@ def _read_json(path: Path, *, maximum: int) -> tuple[object, bytes]:
     return value, raw
 
 
+def _resolve_contained_regular_file(root: Path, relative_path: Path) -> Path:
+    candidate = root / relative_path
+    if candidate.is_symlink():
+        raise R5TestDispositionError(
+            f"reviewed source path cannot be a symlink: {relative_path.as_posix()}"
+        )
+    resolved = candidate.resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise R5TestDispositionError(
+            f"reviewed source path escapes the Hybrid MVP root: "
+            f"{relative_path.as_posix()}"
+        ) from exc
+    if not resolved.is_file():
+        raise R5TestDispositionError(
+            f"reviewed source path is not a regular file: "
+            f"{relative_path.as_posix()}"
+        )
+    return resolved
+
+
 def _exact_object(
     value: object,
     fields: frozenset[str],
@@ -262,7 +284,8 @@ def _r5_inventory_assertions(
     *,
     expected_inventory_ref: str,
 ) -> tuple[dict[str, str], frozenset[str]]:
-    inventory, _raw = _read_json(root / _INVENTORY_PATH, maximum=MAX_JSON_BYTES)
+    inventory_path = _resolve_contained_regular_file(root, _INVENTORY_PATH)
+    inventory, _raw = _read_json(inventory_path, maximum=MAX_JSON_BYTES)
     if type(inventory) is not dict:
         raise R5TestDispositionError("test inventory must be an object")
     if inventory.get("inventory_ref") != expected_inventory_ref:
@@ -312,7 +335,8 @@ def load_r5_test_dispositions(
     expected = _text(expected_inventory_ref, context="expected_inventory_ref")
     if _INVENTORY_REF_RE.fullmatch(expected) is None:
         raise R5TestDispositionError("expected_inventory_ref is invalid")
-    value, raw = _read_json(root_path / _DISPOSITION_PATH, maximum=MAX_JSON_BYTES)
+    disposition_path = _resolve_contained_regular_file(root_path, _DISPOSITION_PATH)
+    value, raw = _read_json(disposition_path, maximum=MAX_JSON_BYTES)
     top = _exact_object(value, _TOP_FIELDS, context="R5 test dispositions")
     if top["schema"] != DISPOSITION_SCHEMA:
         raise R5TestDispositionError("R5 test dispositions schema is not exact")
@@ -371,6 +395,18 @@ def build_r5_test_disposition_receipt(
     from scripts.test_inventory_core import InventoryError, content_ref, load_and_verify
 
     root_path = Path(root).resolve()
+    try:
+        reviewed = load_r5_test_dispositions(
+            root_path,
+            expected_inventory_ref=dispositions.inventory_ref,
+        )
+    except R5TestDispositionError as exc:
+        raise R5TestDispositionError(
+            f"dispositions do not match reviewed source: {exc}"
+        ) from exc
+    if dispositions != reviewed:
+        raise R5TestDispositionError("dispositions do not match reviewed source")
+    dispositions = reviewed
     try:
         inventory = load_and_verify(
             root_path,

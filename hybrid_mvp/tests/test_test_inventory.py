@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import builtins
 import copy
+from dataclasses import replace
 import hashlib
 import importlib.util
 import json
@@ -1399,7 +1400,119 @@ def test_reviewed_r5_dispositions_are_exact_inventory_partition() -> None:
     }
 
 
+def test_r5_disposition_receipt_rejects_forged_dataclasses(tmp_path: Path) -> None:
+    dispositions_module = _load_r5_dispositions()
+    root = _write_r5_disposition_project(tmp_path)
+    reviewed = dispositions_module.load_r5_test_dispositions(
+        root,
+        expected_inventory_ref=R5_TEST_INVENTORY_REF,
+    )
+    row = reviewed.rows[0]
+    for forged in (
+        replace(reviewed, schema="forged-schema"),
+        replace(reviewed, phase="R4"),
+        replace(reviewed, inventory_ref="test_inventory:" + "0" * 24),
+        replace(reviewed, rows=()),
+        replace(reviewed, rows=(row, row)),
+        replace(reviewed, source_sha256="0" * 64),
+        replace(
+            reviewed,
+            rows=(
+                replace(
+                    row,
+                    disposition="deferred",
+                    successor_node_ids=(),
+                    future_task_ref="R5-Neural-Activation",
+                    future_owner_ref="forged-owner",
+                ),
+            ),
+        ),
+        replace(
+            reviewed,
+            rows=(
+                replace(
+                    row,
+                    disposition="retired",
+                    successor_node_ids=(),
+                    retirement_reason="forged retirement reason",
+                ),
+            ),
+        ),
+    ):
+        with pytest.raises(
+            dispositions_module.R5TestDispositionError,
+            match="reviewed source",
+        ):
+            dispositions_module.build_r5_test_disposition_receipt(root, forged)
+
+
+def test_r5_disposition_loader_rejects_disposition_symlink_escape(
+    tmp_path: Path,
+) -> None:
+    dispositions_module = _load_r5_dispositions()
+    root = _write_r5_disposition_project(tmp_path)
+    disposition_path = root / "governance" / "r5_test_dispositions.json"
+    external = tmp_path / "external-r5-test-dispositions.json"
+    external.write_bytes(disposition_path.read_bytes())
+    disposition_path.unlink()
+    disposition_path.symlink_to(external)
+
+    with pytest.raises(
+        dispositions_module.R5TestDispositionError,
+        match="escapes|symlink|contained",
+    ):
+        dispositions_module.load_r5_test_dispositions(
+            root,
+            expected_inventory_ref=R5_TEST_INVENTORY_REF,
+        )
+
+
+def test_r5_disposition_loader_rejects_inventory_symlink_escape(
+    tmp_path: Path,
+) -> None:
+    dispositions_module = _load_r5_dispositions()
+    root = _write_r5_disposition_project(tmp_path)
+    inventory_path = root / "governance" / "test_inventory.json"
+    external = tmp_path / "external-test-inventory.json"
+    external.write_bytes(inventory_path.read_bytes())
+    inventory_path.unlink()
+    inventory_path.symlink_to(external)
+
+    with pytest.raises(
+        dispositions_module.R5TestDispositionError,
+        match="escapes|symlink|contained",
+    ):
+        dispositions_module.load_r5_test_dispositions(
+            root,
+            expected_inventory_ref=R5_TEST_INVENTORY_REF,
+        )
+
+
 __cemm_test_inventory__ = {
+    "tests/test_test_inventory.py::test_r5_disposition_receipt_rejects_forged_dataclasses": {
+        "assertion_ref": "assertion:r5-test-disposition-receipt-rejects-forgery",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "f5af295a30f7fe6847829afe83e035fde35d2d9d831cb7bd64650419735071c1",
+    },
+    "tests/test_test_inventory.py::test_r5_disposition_loader_rejects_disposition_symlink_escape": {
+        "assertion_ref": "assertion:r5-test-disposition-source-is-contained",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "0256de9b4e96af6c14c33161cf6f8505a5ee54bf902422533427071d20cb6f2d",
+    },
+    "tests/test_test_inventory.py::test_r5_disposition_loader_rejects_inventory_symlink_escape": {
+        "assertion_ref": "assertion:r5-test-disposition-inventory-is-contained",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "4e181ca06e346ce69a9fb06268e94715a9f42a88fd282c8540b05c779171d7e8",
+    },
     "tests/test_test_inventory.py::test_r5_disposition_schema_is_draft_2020_12_and_exact": {
         "assertion_ref": "assertion:r5-test-disposition-schema-is-strict",
         "activation_phase": "R5",
