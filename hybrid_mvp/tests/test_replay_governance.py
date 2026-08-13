@@ -97,6 +97,16 @@ HISTORICAL_STATUS_DOCUMENTS = (
 )
 
 
+def _assert_current_status_document(relative: str, text: str) -> None:
+    folded = text.casefold()
+    assert "governance/replay_status.jsonl" in text, relative
+    assert "status is derived" in folded, relative
+    assert re.search(r"\bG0-R\d\b.*\bR\d-R8\b", text) is None, relative
+    assert re.search(r"\brun:[0-9a-f]{24}\b", text) is None, relative
+    assert "c:\\dev\\cemm\\.worktrees\\hybrid-mvp-g0-r1" not in folded, relative
+    assert "requires external corpus review" not in folded, relative
+
+
 def _assert_historical_status_document(relative: str, text: str) -> None:
     banner = "\n".join(text.splitlines()[:14])
     assert "governance/replay_status.jsonl" in banner, relative
@@ -355,7 +365,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-1",
         "owner_ref": "governance",
-        "source_ast_sha256": "1100790f46116ed6a4938903ea72637191f929308a7e38b3b23225b448871102"
+        "source_ast_sha256": "1fb3374a467d467af50a6e03dd068674989e6e9fd89f55d0d9326765d7c25a6b"
     },
     "tests/test_replay_governance.py::test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix": {
         "activation_phase": "G0",
@@ -791,25 +801,17 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
     assert root_authority == (ROOT.parent / "AGENTS.md").resolve()
     assert root_authority.is_file()
 
-    invalid_current_claims = (
-        "g0 is the only green replay phase",
-        "r1 remains red",
-        "r3 and r4 remain red",
-        "r3 and r4 remain red until separately admitted",
-        "requires external corpus review",
-        "until that runner is admitted",
-        "c:\\dev\\cemm\\.worktrees\\hybrid-mvp-g0-r1",
-        "current implementation work begins",
-    )
     for relative in CURRENT_STATUS_DOCUMENTS:
         text = (ROOT / relative).read_text(encoding="utf-8")
-        folded = text.casefold()
-        assert "governance/replay_status.jsonl" in text, relative
-        assert "status is derived" in folded, relative
-        assert re.search(r"\bG0-R\d\b.*\bR\d-R8\b", text) is None, relative
-        assert re.search(r"\brun:[0-9a-f]{24}\b", text) is None, relative
-        for claim in invalid_current_claims:
-            assert claim not in folded, (relative, claim)
+        _assert_current_status_document(relative, text)
+
+    mutation_source = (ROOT / CURRENT_STATUS_DOCUMENTS[0]).read_text(encoding="utf-8")
+    for mutation in (
+        mutation_source + "\nG0-R4 are green; R5-R8 are red.\n",
+        mutation_source + "\nAdmission run: run:0123456789abcdef01234567.\n",
+    ):
+        with pytest.raises(AssertionError):
+            _assert_current_status_document(CURRENT_STATUS_DOCUMENTS[0], mutation)
 
     current_text = "\n".join(
         (ROOT / relative).read_text(encoding="utf-8")
