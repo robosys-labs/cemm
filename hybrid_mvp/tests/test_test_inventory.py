@@ -16,6 +16,10 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 CORE_PATH = ROOT / "scripts" / "test_inventory_core.py"
+R5_DISPOSITIONS_PATH = ROOT / "scripts" / "r5_test_dispositions.py"
+R5_DISPOSITIONS_SCHEMA_PATH = (
+    ROOT / "schemas" / "r5_test_dispositions.schema.json"
+)
 BASELINE_SOURCE_REF = "58345240e67bf003e6ac7d5c68752e2e5eee4a7d"
 PHASES = ("G0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8")
 
@@ -27,6 +31,21 @@ def _load_core() -> Any:
     )
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load inventory core from {CORE_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_r5_dispositions() -> Any:
+    spec = importlib.util.spec_from_file_location(
+        "_cemm_r5_test_dispositions_for_tests",
+        R5_DISPOSITIONS_PATH,
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(
+            f"cannot load R5 test dispositions from {R5_DISPOSITIONS_PATH}"
+        )
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
@@ -1080,7 +1099,387 @@ def test_source_only_verification_parses_each_module_once_without_heavy_paths(
     )
 
 
+R5_TEST_INVENTORY_REF = "test_inventory:c715e262526c0ea26a6fef90"
+R5_PREDECESSOR = "tests/test_x.py::test_x"
+
+
+def _r5_inventory_record(
+    *,
+    source_test_ref: str = R5_PREDECESSOR,
+    assertion_ref: str = "assertion:x",
+    activation_phase: str = "R5",
+) -> dict[str, object]:
+    return {
+        "source_test_ref": source_test_ref,
+        "classification": "retained",
+        "activation_phase": activation_phase,
+        "assertion_ref": assertion_ref,
+        "case_node_ids": [source_test_ref],
+    }
+
+
+def _r5_successor_row() -> dict[str, object]:
+    return {
+        "predecessor_source_test_ref": R5_PREDECESSOR,
+        "assertion_ref": "assertion:x",
+        "disposition": "successor",
+        "successor_node_ids": ["tests/test_r5_x.py::test_x"],
+    }
+
+
+def _write_r5_disposition_project(
+    tmp_path: Path,
+    *,
+    name: str = "r5-dispositions",
+    rows: list[dict[str, object]] | None = None,
+    inventory_records: list[dict[str, object]] | None = None,
+    payload_updates: dict[str, object] | None = None,
+) -> Path:
+    root = tmp_path / name
+    governance = root / "governance"
+    governance.mkdir(parents=True)
+    inventory = {
+        "inventory_ref": R5_TEST_INVENTORY_REF,
+        "source_tests": inventory_records or [_r5_inventory_record()],
+    }
+    (governance / "test_inventory.json").write_bytes(
+        _canonical_bytes(inventory) + b"\n"
+    )
+    payload: dict[str, object] = {
+        "schema": "cemm-r5-test-dispositions-v1",
+        "phase": "R5",
+        "inventory_ref": R5_TEST_INVENTORY_REF,
+        "rows": rows or [_r5_successor_row()],
+    }
+    if payload_updates:
+        payload.update(payload_updates)
+    (governance / "r5_test_dispositions.json").write_bytes(
+        _canonical_bytes(payload) + b"\n"
+    )
+    return root
+
+
+def test_r5_disposition_schema_is_draft_2020_12_and_exact() -> None:
+    jsonschema = pytest.importorskip("jsonschema")
+    schema = json.loads(R5_DISPOSITIONS_SCHEMA_PATH.read_text(encoding="utf-8"))
+    jsonschema.Draft202012Validator.check_schema(schema)
+    validator = jsonschema.Draft202012Validator(schema)
+    payload = {
+        "schema": "cemm-r5-test-dispositions-v1",
+        "phase": "R5",
+        "inventory_ref": R5_TEST_INVENTORY_REF,
+        "rows": [_r5_successor_row()],
+    }
+
+    validator.validate(payload)
+    invalid = copy.deepcopy(payload)
+    invalid["rows"][0]["future_task_ref"] = "R5-Neural-Activation"  # type: ignore[index]
+    with pytest.raises(jsonschema.ValidationError):
+        validator.validate(invalid)
+
+
+def test_r5_disposition_loader_returns_immutable_typed_rows(tmp_path: Path) -> None:
+    dispositions_module = _load_r5_dispositions()
+    root = _write_r5_disposition_project(tmp_path)
+
+    loaded = dispositions_module.load_r5_test_dispositions(
+        root,
+        expected_inventory_ref=R5_TEST_INVENTORY_REF,
+    )
+
+    assert loaded.schema == dispositions_module.DISPOSITION_SCHEMA
+    assert loaded.phase == "R5"
+    assert loaded.inventory_ref == R5_TEST_INVENTORY_REF
+    assert loaded.rows[0].successor_node_ids == ("tests/test_r5_x.py::test_x",)
+    assert loaded.counts == {"successor": 1, "deferred": 0, "retired": 0}
+    assert len(loaded.source_sha256) == 64
+    assert loaded.source_sha256 == loaded.source_sha256.lower()
+    with pytest.raises(AttributeError):
+        loaded.rows[0].assertion_ref = "assertion:changed"
+
+
+def test_r5_disposition_loader_rejects_non_exact_successor_payloads(
+    tmp_path: Path,
+) -> None:
+    dispositions_module = _load_r5_dispositions()
+    cases = [
+        ({"unknown": True}, {}, "exact fields"),
+        ({"successor_node_ids": []}, {}, "successor_node_ids"),
+        ({"future_task_ref": "R5-Neural-Activation"}, {}, "exact fields"),
+        ({}, {"unknown": True}, "exact fields"),
+    ]
+    for index, (row_update, payload_update, message) in enumerate(cases):
+        row = _r5_successor_row()
+        row.update(row_update)
+        root = _write_r5_disposition_project(
+            tmp_path,
+            name=f"invalid-successor-{index}",
+            rows=[row],
+            payload_updates=payload_update,
+        )
+        with pytest.raises(dispositions_module.R5TestDispositionError, match=message):
+            dispositions_module.load_r5_test_dispositions(
+                root,
+                expected_inventory_ref=R5_TEST_INVENTORY_REF,
+            )
+
+
+def test_r5_disposition_loader_rejects_incomplete_deferred_rows(
+    tmp_path: Path,
+) -> None:
+    dispositions_module = _load_r5_dispositions()
+    for missing in ("future_task_ref", "future_owner_ref"):
+        row = {
+            "predecessor_source_test_ref": R5_PREDECESSOR,
+            "assertion_ref": "assertion:x",
+            "disposition": "deferred",
+            "future_task_ref": "R5-Neural-Activation",
+            "future_owner_ref": "proposal-contract",
+        }
+        del row[missing]
+        root = _write_r5_disposition_project(
+            tmp_path,
+            name=f"missing-{missing}",
+            rows=[row],
+        )
+        with pytest.raises(
+            dispositions_module.R5TestDispositionError,
+            match="exact fields",
+        ):
+            dispositions_module.load_r5_test_dispositions(
+                root,
+                expected_inventory_ref=R5_TEST_INVENTORY_REF,
+            )
+
+
+def test_r5_disposition_loader_requires_exact_deferred_task(tmp_path: Path) -> None:
+    dispositions_module = _load_r5_dispositions()
+    row = {
+        "predecessor_source_test_ref": R5_PREDECESSOR,
+        "assertion_ref": "assertion:x",
+        "disposition": "deferred",
+        "future_task_ref": "R5-Later",
+        "future_owner_ref": "proposal-contract",
+    }
+    root = _write_r5_disposition_project(tmp_path, rows=[row])
+
+    with pytest.raises(
+        dispositions_module.R5TestDispositionError,
+        match="R5-Neural-Activation",
+    ):
+        dispositions_module.load_r5_test_dispositions(
+            root,
+            expected_inventory_ref=R5_TEST_INVENTORY_REF,
+        )
+
+
+def test_r5_disposition_loader_requires_concrete_zero_fallback_retirement(
+    tmp_path: Path,
+) -> None:
+    dispositions_module = _load_r5_dispositions()
+    row = {
+        "predecessor_source_test_ref": R5_PREDECESSOR,
+        "assertion_ref": "assertion:x",
+        "disposition": "retired",
+        "retirement_reason": "obsolete",
+    }
+    root = _write_r5_disposition_project(tmp_path, rows=[row])
+
+    with pytest.raises(
+        dispositions_module.R5TestDispositionError,
+        match="zero fallback paths",
+    ):
+        dispositions_module.load_r5_test_dispositions(
+            root,
+            expected_inventory_ref=R5_TEST_INVENTORY_REF,
+        )
+
+
+def test_r5_disposition_loader_rejects_duplicates_non_r5_and_assertion_drift(
+    tmp_path: Path,
+) -> None:
+    dispositions_module = _load_r5_dispositions()
+    duplicate_root = _write_r5_disposition_project(
+        tmp_path,
+        name="duplicate",
+        rows=[_r5_successor_row(), _r5_successor_row()],
+    )
+    with pytest.raises(dispositions_module.R5TestDispositionError, match="duplicate"):
+        dispositions_module.load_r5_test_dispositions(
+            duplicate_root,
+            expected_inventory_ref=R5_TEST_INVENTORY_REF,
+        )
+
+    non_r5_root = _write_r5_disposition_project(
+        tmp_path,
+        name="non-r5",
+        inventory_records=[_r5_inventory_record(activation_phase="R4")],
+    )
+    with pytest.raises(dispositions_module.R5TestDispositionError, match="non-R5"):
+        dispositions_module.load_r5_test_dispositions(
+            non_r5_root,
+            expected_inventory_ref=R5_TEST_INVENTORY_REF,
+        )
+
+    drifted = _r5_successor_row()
+    drifted["assertion_ref"] = "assertion:drifted"
+    drift_root = _write_r5_disposition_project(
+        tmp_path,
+        name="drifted",
+        rows=[drifted],
+    )
+    with pytest.raises(
+        dispositions_module.R5TestDispositionError,
+        match="assertion mismatch",
+    ):
+        dispositions_module.load_r5_test_dispositions(
+            drift_root,
+            expected_inventory_ref=R5_TEST_INVENTORY_REF,
+        )
+
+
+def test_r5_disposition_loader_requires_exact_predecessor_coverage(
+    tmp_path: Path,
+) -> None:
+    dispositions_module = _load_r5_dispositions()
+    second = "tests/test_y.py::test_y"
+    root = _write_r5_disposition_project(
+        tmp_path,
+        inventory_records=[
+            _r5_inventory_record(),
+            _r5_inventory_record(
+                source_test_ref=second,
+                assertion_ref="assertion:y",
+            ),
+        ],
+    )
+
+    with pytest.raises(
+        dispositions_module.R5TestDispositionError,
+        match="coverage|row count",
+    ):
+        dispositions_module.load_r5_test_dispositions(
+            root,
+            expected_inventory_ref=R5_TEST_INVENTORY_REF,
+        )
+
+
+def test_r5_disposition_loader_bounds_reviewed_source(tmp_path: Path) -> None:
+    dispositions_module = _load_r5_dispositions()
+    root = _write_r5_disposition_project(tmp_path)
+    (root / "governance" / "r5_test_dispositions.json").write_bytes(
+        b" " * (dispositions_module.MAX_JSON_BYTES + 1)
+    )
+
+    with pytest.raises(dispositions_module.R5TestDispositionError, match="1 MiB"):
+        dispositions_module.load_r5_test_dispositions(
+            root,
+            expected_inventory_ref=R5_TEST_INVENTORY_REF,
+        )
+
+
+def test_reviewed_r5_dispositions_are_exact_inventory_partition() -> None:
+    dispositions_module = _load_r5_dispositions()
+    loaded = dispositions_module.load_r5_test_dispositions(
+        ROOT,
+        expected_inventory_ref=R5_TEST_INVENTORY_REF,
+    )
+
+    assert len(loaded.rows) == 43
+    assert loaded.counts == {"successor": 17, "deferred": 25, "retired": 1}
+    assert {
+        row.predecessor_source_test_ref for row in loaded.rows
+    } == {
+        source["source_test_ref"]
+        for source in CORE.load_strict_json(
+            ROOT / "governance" / "test_inventory.json"
+        )["source_tests"]
+        if source["classification"] == "retained"
+        and source["activation_phase"] == "R5"
+    }
+
+
 __cemm_test_inventory__ = {
+    "tests/test_test_inventory.py::test_r5_disposition_schema_is_draft_2020_12_and_exact": {
+        "assertion_ref": "assertion:r5-test-disposition-schema-is-strict",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "908725882ff0bf3ea04f0a8addeed7c9db5efc166e4628da9fb8e2cb458b5022",
+    },
+    "tests/test_test_inventory.py::test_r5_disposition_loader_returns_immutable_typed_rows": {
+        "assertion_ref": "assertion:r5-test-disposition-loader-is-immutable",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "5a42f8cec5ab6643be7e91e7c2cb21a8357fe141d022a20a2f0dcfb39ebdc93c",
+    },
+    "tests/test_test_inventory.py::test_r5_disposition_loader_rejects_non_exact_successor_payloads": {
+        "assertion_ref": "assertion:r5-test-disposition-successors-are-exact",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "1c5b3f9a1220e9cb13fcd209e0c00c0e0669163faf650bb626c8be3754b5a57b",
+    },
+    "tests/test_test_inventory.py::test_r5_disposition_loader_rejects_incomplete_deferred_rows": {
+        "assertion_ref": "assertion:r5-test-disposition-deferrals-are-exact",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "7c935b4f441e87531c22ec4e233e7f55437fd0db66c0c2925f9118cd2a8b0bca",
+    },
+    "tests/test_test_inventory.py::test_r5_disposition_loader_requires_exact_deferred_task": {
+        "assertion_ref": "assertion:r5-test-disposition-deferral-task-is-pinned",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "e8e4bcb04b3894722dddb13fda386c064b3bdedb2ceec78ddac8469d20076f64",
+    },
+    "tests/test_test_inventory.py::test_r5_disposition_loader_requires_concrete_zero_fallback_retirement": {
+        "assertion_ref": "assertion:r5-test-disposition-retirement-is-concrete",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "6da13a0076ded9929dda328f617f7b7970ce06739003ff04d53530c7176c825b",
+    },
+    "tests/test_test_inventory.py::test_r5_disposition_loader_rejects_duplicates_non_r5_and_assertion_drift": {
+        "assertion_ref": "assertion:r5-test-disposition-identity-fails-closed",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "d4f0d564a9b95df610d86959e7827747a5dc178c06e358aad1b607dafac40d48",
+    },
+    "tests/test_test_inventory.py::test_r5_disposition_loader_requires_exact_predecessor_coverage": {
+        "assertion_ref": "assertion:r5-test-disposition-coverage-is-exact",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "084d7a5635e734747c5e1ac28175765ae46650c43cc8f173ce0c0d22dc00b3c6",
+    },
+    "tests/test_test_inventory.py::test_r5_disposition_loader_bounds_reviewed_source": {
+        "assertion_ref": "assertion:r5-test-disposition-source-is-bounded",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "493fa734b2eaf12839d097ff752bf5fba154bc7c360635a49b0a1a6a3fef743d",
+    },
+    "tests/test_test_inventory.py::test_reviewed_r5_dispositions_are_exact_inventory_partition": {
+        "assertion_ref": "assertion:r5-test-disposition-partition-is-exact",
+        "activation_phase": "R5",
+        "diagnostic_role": "owner",
+        "owner_ref": "legacy-hard-cut",
+        "introduced_by_task": "R5-Task-2",
+        "source_ast_sha256": "e3067384b4f28af2adab0a7d42fa9432a245f0e684111c354612ee43347a44d8",
+    },
     "tests/test_test_inventory.py::test_strict_json_rejects_duplicate_object_keys": {
         "assertion_ref": "assertion:test-inventory-strict-duplicate-json",
         "activation_phase": "G0",

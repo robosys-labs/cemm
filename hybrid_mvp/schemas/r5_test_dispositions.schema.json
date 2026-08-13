@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cemm.invalid/schemas/r5_test_dispositions.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "phase", "inventory_ref", "rows"],
+  "properties": {
+    "schema": {"const": "cemm-r5-test-dispositions-v1"},
+    "phase": {"const": "R5"},
+    "inventory_ref": {
+      "type": "string",
+      "pattern": "^test_inventory:[0-9a-f]{24}$"
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 43,
+      "items": {"$ref": "#/$defs/row"}
+    }
+  },
+  "$defs": {
+    "sourceTestRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^tests/[A-Za-z0-9_./-]+\\.py::[A-Za-z_][A-Za-z0-9_]*(?:::[A-Za-z_][A-Za-z0-9_]*)?(?:\\[[A-Za-z0-9_.-]+\\])?$"
+    },
+    "assertionRef": {
+      "type": "string",
+      "minLength": 11,
+      "maxLength": 256,
+      "pattern": "^assertion:[a-z0-9][a-z0-9-]*$"
+    },
+    "row": {
+      "oneOf": [
+        {"$ref": "#/$defs/successorRow"},
+        {"$ref": "#/$defs/deferredRow"},
+        {"$ref": "#/$defs/retiredRow"}
+      ]
+    },
+    "successorRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "predecessor_source_test_ref",
+        "assertion_ref",
+        "disposition",
+        "successor_node_ids"
+      ],
+      "properties": {
+        "predecessor_source_test_ref": {"$ref": "#/$defs/sourceTestRef"},
+        "assertion_ref": {"$ref": "#/$defs/assertionRef"},
+        "disposition": {"const": "successor"},
+        "successor_node_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/sourceTestRef"}
+        }
+      }
+    },
+    "deferredRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "predecessor_source_test_ref",
+        "assertion_ref",
+        "disposition",
+        "future_task_ref",
+        "future_owner_ref"
+      ],
+      "properties": {
+        "predecessor_source_test_ref": {"$ref": "#/$defs/sourceTestRef"},
+        "assertion_ref": {"$ref": "#/$defs/assertionRef"},
+        "disposition": {"const": "deferred"},
+        "future_task_ref": {"const": "R5-Neural-Activation"},
+        "future_owner_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z][a-z0-9-]*$"
+        }
+      }
+    },
+    "retiredRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "predecessor_source_test_ref",
+        "assertion_ref",
+        "disposition",
+        "retirement_reason"
+      ],
+      "properties": {
+        "predecessor_source_test_ref": {"$ref": "#/$defs/sourceTestRef"},
+        "assertion_ref": {"$ref": "#/$defs/assertionRef"},
+        "disposition": {"const": "retired"},
+        "retirement_reason": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 1024
+        }
+      }
+    }
+  }
+}
