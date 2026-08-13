@@ -91,9 +91,14 @@ def test_configured_selectors_equal_literal_inventory_roles() -> None:
     marker = ROOT / "tests" / "__init__.py"
     assert marker.is_file()
     for module_name in (
-        "tests.test_query_engine",
-        "tests.test_inference_bounds",
-        "tests.test_recursive_inference",
+        "tests.conftest",
+        "tests.r3_successor_contracts",
+        "tests.test_action_masks",
+        "tests.test_r3_decision_abi",
+        "tests.test_r3_learning_response",
+        "tests.test_r3_learning_transaction",
+        "tests.test_r3_no_program_as_meaning",
+        "tests.test_r3_recursive_query",
     ):
         spec = importlib.util.find_spec(module_name)
         assert spec is not None and spec.origin is not None
@@ -156,7 +161,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:g0-config-selectors-equal-literal-inventory-roles",
         "diagnostic_role": "phase",
         "introduced_by_task": "G0-Task-4",
-        "source_ast_sha256": "9c9a328b03d0eb30f2b9c4b9e96eb083b55511366ff24958dbd39ba0882da2e1",
+        "source_ast_sha256": "cb3998f24f363dc79fc630e64fa07557bcff1d67f6f50c79ef32c9d571ac34a5",
     },
     "tests/test_g0_integration.py::test_each_executing_tier_has_one_pytest_process": {
         "activation_phase": "G0",
