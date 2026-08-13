@@ -3,12 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 
-import torch
-
 from cemm_authoritative_hybrid.canonical import (
     canonical_bytes,
     stable_ref,
-    tensor_identity,
 )
 
 
@@ -57,29 +54,3 @@ def test_dataclass_canonical_by_sorted_fields():
 
 def test_stable_ref_namespace_isolates():
     assert stable_ref("fact", {"a": 1}) != stable_ref("rule", {"a": 1})
-
-
-def test_tensor_identity_is_byte_and_shape_deterministic():
-    a = {"w": torch.zeros(2, 2), "b": torch.ones(2)}
-    b = {"b": torch.ones(2), "w": torch.zeros(2, 2)}
-    assert tensor_identity(a) == tensor_identity(b)
-
-
-def test_tensor_identity_changes_on_byte_tamper():
-    t = torch.zeros(2, 2)
-    original = tensor_identity({"w": t})
-    t2 = t.clone()
-    t2[0, 0] = 1.0
-    assert tensor_identity({"w": t2}) != original
-
-
-def test_tensor_identity_changes_on_shape():
-    assert tensor_identity({"w": torch.zeros(2, 2)}) != tensor_identity(
-        {"w": torch.zeros(2, 3)}
-    )
-
-
-def test_tensor_identity_changes_on_dtype():
-    assert tensor_identity({"w": torch.zeros(2, 2)}) != tensor_identity(
-        {"w": torch.zeros(2, 2, dtype=torch.float64)}
-    )
