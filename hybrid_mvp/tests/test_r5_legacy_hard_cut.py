@@ -479,9 +479,12 @@ def test_r5_legacy_auditor_rejects_external_carrier_symlink(
     except OSError as exc:
         pytest.skip(f"symlink creation unavailable: {exc}")
 
-    assert auditor._carrier_findings(root) == (
-        "lineage_carrier_invalid:ValueError:untrusted redirected path: tests/test_six_phase_runtime.py",
+    findings = auditor._carrier_findings(root)
+    assert len(findings) == 1
+    assert findings[0].startswith(
+        "lineage_carrier_invalid:ValueError:untrusted redirected path component:"
     )
+    assert findings[0].endswith("tests\\test_six_phase_runtime.py")
     assert external.read_bytes() == reviewed
 
 
@@ -530,6 +533,53 @@ def test_r5_legacy_auditor_rejects_link_swap_at_open_boundary(
     assert external.read_bytes() == b"external-must-not-change"
 
 
+def test_r5_legacy_auditor_rejects_ancestor_swap_after_trust_validation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_ancestor_swap")
+    root = tmp_path / "root"
+    parent = root / "inside"
+    parent.mkdir(parents=True)
+    source = parent / "source.py"
+    source.write_bytes(b"inside")
+    external = tmp_path / "external"
+    external.mkdir()
+    external_source = external / "source.py"
+    external_source.write_bytes(b"external-must-not-change")
+    trusted = auditor._trusted_path(root, source)
+    saved = root / "saved-inside"
+    parent.rename(saved)
+    try:
+        parent.symlink_to(external, target_is_directory=True)
+    except OSError as exc:
+        saved.rename(parent)
+        pytest.skip(f"directory symlink creation unavailable: {exc}")
+
+    with pytest.raises(ValueError, match="ancestor|chain|redirected|identity"):
+        auditor._bounded_bytes(trusted, 1024)
+    assert external_source.read_bytes() == b"external-must-not-change"
+
+    parent.unlink()
+    saved.rename(parent)
+    trusted = auditor._trusted_path(root, source)
+    real_open = auditor.os.open
+
+    def swap_open_restore(path, flags, *args, **kwargs):
+        restored = root / "restored-inside"
+        parent.rename(restored)
+        parent.symlink_to(external, target_is_directory=True)
+        fd = real_open(path, flags, *args, **kwargs)
+        parent.unlink()
+        restored.rename(parent)
+        return fd
+
+    monkeypatch.setattr(auditor.os, "open", swap_open_restore)
+    with pytest.raises(ValueError, match="identity|same regular object"):
+        auditor._bounded_bytes(trusted, 1024)
+    assert external_source.read_bytes() == b"external-must-not-change"
+
+
 def test_r5_legacy_auditor_bounds_source_file_count_and_aggregate_bytes(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -571,7 +621,9 @@ def test_r5_legacy_auditor_snapshot_reads_once_and_rejects_unknown_paths(
     source.write_bytes(b"mutated")
 
     assert reader(source) == reader(source) == b"original"
-    assert calls == [source]
+    assert len(calls) == 1
+    assert calls[0].path == source
+    assert calls[0].chain
     with pytest.raises(ValueError, match="unknown snapshot path"):
         reader(root / "unknown.py")
 
@@ -802,7 +854,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "legacy-hard-cut",
-        "source_ast_sha256": '8bafddada35e3380ddde70cf9bfa66cf66cc372711cf38943985031e1e96e7c4',
+        "source_ast_sha256": 'bba3380d210b41f0c51e74f4058855d94b343b0e858c0e4e5ab88c4a9e7d863a',
     },
     "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_bounded_reader_rejects_growth_and_short_read": {
         "activation_phase": "R5",
@@ -820,6 +872,14 @@ __cemm_test_inventory__ = {
         "owner_ref": "legacy-hard-cut",
         "source_ast_sha256": '63bd7fde4155ddec8dba695f312b914b50351f02521aa75fd4c84c3500a503f3',
     },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_rejects_ancestor_swap_after_trust_validation": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-legacy-auditor-rejects-ancestor-swap-after-trust",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '9602b9791d5797ac1adf09e287657081c2d4dfb4b4caa82dfc949a2794f4ed51',
+    },
     "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_bounds_source_file_count_and_aggregate_bytes": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-legacy-auditor-bounds-source-enumeration",
@@ -834,7 +894,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "legacy-hard-cut",
-        "source_ast_sha256": '0d8801e713596c45e63ae70ea1af966c60073d4d81ce0a1035dc48b928553f6b',
+        "source_ast_sha256": 'e55dea9b14e4cdcf4382be2c6435bd52262ed0005a7d18043b561451df77dbdf',
     },
     "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_uses_same_snapshot_reader_for_all_replays": {
         "activation_phase": "R5",

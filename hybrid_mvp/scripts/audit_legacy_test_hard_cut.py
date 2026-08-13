@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+from dataclasses import dataclass
 import json
 import os
 from pathlib import Path
@@ -67,6 +68,14 @@ DELETION_CANDIDATES = (
 )
 
 
+@dataclass(frozen=True)
+class _TrustedPath:
+    root: Path
+    path: Path
+    relative: str
+    chain: tuple[tuple[Path, tuple[int, int, int, int]], ...]
+
+
 def _strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
     result: dict[str, object] = {}
     for key, value in pairs:
@@ -76,7 +85,10 @@ def _strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
     return result
 
 
-def _bounded_bytes(path: Path, limit: int) -> bytes:
+def _bounded_bytes(path: Path | _TrustedPath, limit: int) -> bytes:
+    trusted = path if isinstance(path, _TrustedPath) else _trusted_path(path.parent, path)
+    _recheck_trusted_chain(trusted, stage="before open")
+    path = trusted.path
     fd: int | None = None
     try:
         before_path = path.lstat()
@@ -100,6 +112,7 @@ def _bounded_bytes(path: Path, limit: int) -> bytes:
         opened_identity = _regular_identity(opened, path)
         if opened_identity != before_identity:
             raise ValueError(f"source identity changed before open: {path}")
+        _recheck_trusted_chain(trusted, stage="after open")
         chunks: list[bytes] = []
         total = 0
         while total <= limit:
@@ -110,6 +123,7 @@ def _bounded_bytes(path: Path, limit: int) -> bytes:
             total += len(chunk)
         data = b"".join(chunks)
         after = os.fstat(fd)
+        _recheck_trusted_chain(trusted, stage="after read")
         post_path = path.lstat()
     except OSError as exc:
         raise ValueError(f"cannot read {path}: {exc}") from exc
@@ -159,7 +173,38 @@ def _is_link_or_reparse(path: Path) -> bool:
     return _stat_is_link_or_reparse(info)
 
 
-def _trusted_path(root: Path, path: Path) -> Path:
+def _chain_identity(info: os.stat_result, path: Path) -> tuple[int, int, int, int]:
+    if _stat_is_link_or_reparse(info):
+        raise ValueError(f"untrusted redirected path component: {path}")
+    inode = int(info.st_ino)
+    if inode == 0:
+        raise ValueError(f"cannot prove path component identity: {path}")
+    return (
+        int(info.st_dev),
+        inode,
+        int(info.st_mode),
+        int(getattr(info, "st_file_attributes", 0)),
+    )
+
+
+def _recheck_trusted_chain(trusted: _TrustedPath, *, stage: str) -> None:
+    for component, expected in trusted.chain:
+        try:
+            actual = _chain_identity(component.lstat(), component)
+        except OSError as exc:
+            raise ValueError(f"trusted path chain unavailable {stage}: {component}") from exc
+        if actual != expected:
+            raise ValueError(f"trusted path chain identity changed {stage}: {component}")
+    resolved = trusted.path.resolve(strict=True)
+    try:
+        resolved.relative_to(trusted.root)
+    except ValueError as exc:
+        raise ValueError(f"trusted path escaped root {stage}: {trusted.relative}") from exc
+    if resolved != trusted.path:
+        raise ValueError(f"trusted path became redirected {stage}: {trusted.relative}")
+
+
+def _trusted_path(root: Path, path: Path) -> _TrustedPath:
     root_absolute = root.absolute()
     path_absolute = path.absolute()
     try:
@@ -175,13 +220,13 @@ def _trusted_path(root: Path, path: Path) -> Path:
     resolved_root = root_absolute.resolve(strict=True)
     if resolved_root != root_absolute:
         raise ValueError(f"untrusted redirected audit root: {root}")
+    chain: list[tuple[Path, tuple[int, int, int, int]]] = [
+        (root_absolute, _chain_identity(root_absolute.lstat(), root_absolute))
+    ]
     current = root_absolute
     for part in relative.parts:
         current = current / part
-        if _is_link_or_reparse(current):
-            raise ValueError(
-                f"untrusted redirected path: {relative.as_posix()}"
-            )
+        chain.append((current, _chain_identity(current.lstat(), current)))
     resolved = path_absolute.resolve(strict=True)
     try:
         resolved.relative_to(resolved_root)
@@ -189,7 +234,12 @@ def _trusted_path(root: Path, path: Path) -> Path:
         raise ValueError(f"resolved path escapes audit root: {relative.as_posix()}") from exc
     if resolved != path_absolute:
         raise ValueError(f"untrusted redirected path: {relative.as_posix()}")
-    return path_absolute
+    return _TrustedPath(
+        root=root_absolute,
+        path=path_absolute,
+        relative=relative.as_posix(),
+        chain=tuple(chain),
+    )
 
 
 def _strict_json(path: Path, raw: bytes | None = None) -> object:
@@ -212,7 +262,7 @@ def _python_paths(root: Path) -> tuple[Path, ...]:
     aggregate_bytes = 0
     traversed = 0
     for relative in ("tests", "scripts", "src"):
-        base = _trusted_path(root, root / relative)
+        base = _trusted_path(root, root / relative).path
         if not base.is_dir():
             raise ValueError(f"missing source root: {base}")
         pending = [base]
@@ -226,7 +276,7 @@ def _python_paths(root: Path) -> tuple[Path, ...]:
                 traversed += 1
                 if traversed > MAX_TRAVERSED_ENTRIES:
                     raise ValueError("source traversal entry bound exceeded")
-                trusted = _trusted_path(root, entry)
+                trusted = _trusted_path(root, entry).path
                 if trusted.is_dir():
                     pending.append(trusted)
                 elif trusted.is_file() and trusted.suffix == ".py":
@@ -251,7 +301,7 @@ def _build_source_reader(
         aggregate_bytes += len(raw)
         if aggregate_bytes > MAX_AGGREGATE_SOURCE_BYTES:
             raise ValueError("aggregate snapshot byte bound exceeded")
-        cache[trusted] = raw
+        cache[trusted.path] = raw
 
     def source_reader(path: Path) -> bytes:
         requested = Path(path).absolute()
@@ -561,10 +611,15 @@ def _compatibility_fixture_findings(root: Path, source_reader=None) -> tuple[str
 def _carrier_findings(root: Path, source_reader=None) -> tuple[str, ...]:
     path = root / REVIEWED_CARRIER_PATH
     try:
-        _trusted_path(root, path)
+        trusted = _trusted_path(root, path)
         if not path.is_file():
             return (f"lineage_carrier_missing:{REVIEWED_CARRIER_PATH}",)
-        tree = _tree(path, None if source_reader is None else source_reader(path))
+        raw = (
+            _bounded_bytes(trusted, MAX_SOURCE_BYTES)
+            if source_reader is None
+            else source_reader(path)
+        )
+        tree = _tree(path, raw)
     except (OSError, SyntaxError, ValueError) as exc:
         return (f"lineage_carrier_invalid:{type(exc).__name__}:{exc}",)
     findings: set[str] = set()
@@ -732,9 +787,13 @@ def _gate_input_findings(config: dict[str, object]) -> tuple[str, ...]:
 
 
 def _selector_findings(root: Path, result: object, source_reader=None) -> tuple[str, ...]:
-    path = _trusted_path(root, root / "configs" / "validation_gates.json")
+    trusted = _trusted_path(root, root / "configs" / "validation_gates.json")
+    path = trusted.path
     config = _strict_json(
-        path, None if source_reader is None else source_reader(path)
+        path,
+        _bounded_bytes(trusted, MAX_CONFIG_BYTES)
+        if source_reader is None
+        else source_reader(path),
     )
     if not isinstance(config, dict) or not isinstance(config.get("steps"), dict):
         raise ValueError("validation gates have no exact steps object")
@@ -801,7 +860,7 @@ def audit(root: Path = ROOT) -> tuple[str, ...]:
         _trusted_path(root, root)
         inventory_path = _trusted_path(
             root, root / "governance" / "test_inventory.json"
-        )
+        ).path
         direct_paths = [inventory_path]
         for relative in (
             "configs/validation_gates.json",
@@ -812,7 +871,7 @@ def audit(root: Path = ROOT) -> tuple[str, ...]:
             "scripts/test_inventory_core.py",
             "tests/conftest.py",
         ):
-            direct_paths.append(_trusted_path(root, root / relative))
+            direct_paths.append(_trusted_path(root, root / relative).path)
         python_paths = _python_paths(root)
         source_reader = _build_source_reader(
             root, (*python_paths, *direct_paths)
