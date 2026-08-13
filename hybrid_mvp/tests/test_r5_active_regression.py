@@ -690,6 +690,9 @@ def test_r5_snapshot_cleanup_attempts_prune_after_remove_exception(
         ["git", "-C", str(repository), "worktree", "list", "--porcelain"],
         text=True,
     )
+    # Git stores object files read-only on Windows; restore fixture write bits so
+    # the governing validation run-root can perform its strict cleanup.
+    active_suite._set_snapshot_writable(repository, True)
     assert "source-worktree" not in worktrees
 
 
@@ -894,7 +897,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r5-active-suite-cleanup-prunes-after-remove-error",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-10-Topology-Correction",
-        "source_ast_sha256": '44789a1f4d63bf680731ad06a754e03f4861c5bce25256b43ce3a50ca32c906b',
+        "source_ast_sha256": 'cdd315ccc86527978efee15251ef309fe5a26bec98bda050532b9acb92cf832d',
     },
     "tests/test_r5_active_regression.py::test_r5_snapshot_is_sealed_before_pytest_spawn": {
         "activation_phase": "R5",
