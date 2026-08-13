@@ -711,15 +711,21 @@ _TRAIN_PARTITION = "data/partitions/train.jsonl"
 _VALIDATION_PARTITION = "data/partitions/validation.jsonl"
 _TEST_PARTITION = "data/partitions/test.jsonl"
 _PARTITION_MANIFEST = "data/partitions/manifest.json"
-
-
-def _load_sealed_hashes(root: Path) -> tuple[str, ...]:
-    """Load the validation and test SHA-256 hashes from the partition manifest."""
-    manifest_path = root / _PARTITION_MANIFEST
-    if not manifest_path.exists():
-        return ()
-    data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    return (data["validation_sha256"], data["test_sha256"])
+_PARTITION_MANIFEST_MAX_BYTES = 64 * 1024
+_PARTITION_MANIFEST_FIELDS = frozenset(
+    {
+        "seed",
+        "train_path",
+        "train_sha256",
+        "train_count",
+        "validation_path",
+        "validation_sha256",
+        "validation_count",
+        "test_path",
+        "test_sha256",
+        "test_count",
+    }
+)
 
 
 def _file_sha256(path: Path) -> str:
@@ -731,34 +737,94 @@ def _file_sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def _check_partition_access(path: str | Path, root: Path) -> None:
-    """Raise PartitionAccessError if ``path`` is a sealed validation/test file.
+def _reject_duplicate_manifest_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate partition manifest key: {key}")
+        result[key] = value
+    return result
 
-    The check compares the resolved path against the canonical sealed paths and
-    the file's SHA-256 against the manifest's validation/test hashes.  This
-    makes it impossible for a trainer to read validation or test data even if
-    the path is renamed or symlinked.
-    """
+
+def _reject_nonfinite_manifest_value(value: str) -> None:
+    raise ValueError(f"non-finite partition manifest value: {value}")
+
+
+def _path_uses_symlink(path: Path, root: Path) -> bool:
+    try:
+        relative = path.absolute().relative_to(root)
+    except ValueError:
+        return True
+    current = root
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            return True
+    return False
+
+
+def _load_training_partition_manifest(root: Path) -> dict[str, object]:
     from .partitions import PartitionAccessError
 
-    resolved = Path(path).resolve()
-    root = Path(root).resolve()
-
-    # Refuse the canonical validation/test paths by location.
-    val_path = (root / _VALIDATION_PARTITION).resolve()
-    test_path = (root / _TEST_PARTITION).resolve()
-    if resolved == val_path or resolved == test_path:
-        raise PartitionAccessError(
-            f"trainer cannot open sealed partition: {resolved}"
+    manifest_path = root / _PARTITION_MANIFEST
+    try:
+        if _path_uses_symlink(manifest_path, root) or not manifest_path.is_file():
+            raise ValueError("partition manifest must be a regular non-symlink file")
+        with manifest_path.open("rb") as handle:
+            raw = handle.read(_PARTITION_MANIFEST_MAX_BYTES + 1)
+        if len(raw) > _PARTITION_MANIFEST_MAX_BYTES:
+            raise ValueError("partition manifest exceeds read bound")
+        manifest = json.loads(
+            raw.decode("utf-8", errors="strict"),
+            object_pairs_hook=_reject_duplicate_manifest_keys,
+            parse_constant=_reject_nonfinite_manifest_value,
         )
+        if type(manifest) is not dict or frozenset(manifest) != _PARTITION_MANIFEST_FIELDS:
+            raise ValueError("partition manifest fields mismatch")
+        if type(manifest["seed"]) is not int:
+            raise TypeError("partition manifest seed must be an exact int")
+        for split in ("train", "validation", "test"):
+            path_value = manifest[f"{split}_path"]
+            digest = manifest[f"{split}_sha256"]
+            count = manifest[f"{split}_count"]
+            if type(path_value) is not str or not path_value:
+                raise TypeError(f"partition manifest {split}_path must be an exact string")
+            if type(digest) is not str or len(digest) != 64 or any(
+                character not in "0123456789abcdef" for character in digest
+            ):
+                raise ValueError(f"partition manifest {split}_sha256 is invalid")
+            if type(count) is not int or count < 0:
+                raise ValueError(f"partition manifest {split}_count is invalid")
+    except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        raise PartitionAccessError(f"training partition manifest is invalid: {exc}") from exc
+    return manifest
 
-    # Refuse any file whose SHA-256 matches a sealed partition hash.
-    if resolved.is_file():
-        sealed = _load_sealed_hashes(root)
-        if sealed and _file_sha256(resolved) in sealed:
-            raise PartitionAccessError(
-                f"trainer cannot open sealed partition (hash match): {resolved}"
-            )
+
+def _check_partition_access(path: str | Path, root: Path) -> Path:
+    """Return the one manifest-bound train file or raise ``PartitionAccessError``."""
+    from .partitions import PartitionAccessError
+
+    root = Path(root).resolve()
+    manifest = _load_training_partition_manifest(root)
+    train_path = root / str(manifest["train_path"])
+    requested_path = Path(path).absolute()
+    try:
+        canonical_train = train_path.resolve(strict=True)
+        canonical_train.relative_to(root)
+        requested = requested_path.resolve(strict=True)
+        requested.relative_to(root)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise PartitionAccessError(f"trainer train partition path is invalid: {exc}") from exc
+    if (
+        _path_uses_symlink(train_path, root)
+        or _path_uses_symlink(requested_path, root)
+        or canonical_train != requested
+        or not canonical_train.is_file()
+    ):
+        raise PartitionAccessError("trainer may open only the manifest-bound train partition")
+    if _file_sha256(canonical_train) != manifest["train_sha256"]:
+        raise PartitionAccessError("manifest-bound train partition hash mismatch")
+    return canonical_train
 
 
 @dataclass(frozen=True)
@@ -780,12 +846,11 @@ def load_partition_episodes_for_training(
 ) -> list[PartitionEpisode]:
     """Load episodes from a partition JSONL file for training.
 
-    Raises :class:`PartitionAccessError` if ``path`` is a sealed validation or
-    test partition.
+    Raises :class:`PartitionAccessError` unless ``path`` is the exact regular,
+    non-symlink train file authenticated by the pinned partition manifest.
     """
-    _check_partition_access(path, root)
+    p = _check_partition_access(path, Path(root))
     episodes: list[PartitionEpisode] = []
-    p = Path(path)
     for line in p.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
