@@ -1,5 +1,10 @@
 # CEMM Authoritative Hybrid MVP Architecture
 
+> **Activation note:** Replay status is derived only from
+> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl). Its
+> current navigation snapshot is G0-R4 are green; R5-R8 are red; this document
+> describes architecture and does not own phase status.
+
 ## Purpose
 
 This isolated bundle combines three proven ideas without inheriting their unsafe shortcuts:
@@ -98,4 +103,4 @@ A learned cross-encoder-style scorer ranks candidate programs. The model owns ra
 
 R3 consumes only selected `VerifiedMeaning.expression` plus an independently verified `SituationContext`. It emits one canonical Decision, exactly one Effect/No-Effect receipt, and one `ResponseMeaning`, then stops at the R5 surface-realization contract. Program identity is derivation lineage only.
 
-R4 compiles reviewed assertions independently of PROPOSE, expands every reviewed surface and environment, executes the public R3 runtime, keeps expected and observed artifacts separate, labels mutations through authentic owners, seals independent partition axes, and requires external corpus review. R4 performs no training.
+R4 compiles reviewed assertions independently of PROPOSE, expands every reviewed surface and environment, executes the public R3 runtime, keeps expected and observed artifacts separate, labels mutations through authentic owners, seals independent partition axes, and admits through repository-owned artifact integrity. R4 performs no training.

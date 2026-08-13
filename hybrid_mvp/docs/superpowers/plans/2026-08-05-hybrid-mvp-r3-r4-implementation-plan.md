@@ -1,5 +1,12 @@
 # Hybrid MVP R3–R4 Corrective-Replay Implementation Plan
 
+> **Historical completion notice (2026-08-13):** R3 and R4 are admitted; the
+> body records their implementation-time procedure and is not current status.
+> Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl):
+> G0-R4 are green; R5-R8 are red. R4 external review was superseded by
+> repository-owned artifact integrity.
+
 **Status:** implementation source complete; R3 and R4 remain red until separately admitted  
 **Date:** 2026-08-05  
 **Scope:** `hybrid_mvp/` only  

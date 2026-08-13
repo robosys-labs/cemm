@@ -18,8 +18,12 @@ their milestone-completion and admission claims cannot authorize current work.
 The `historical_evidence` entries likewise cannot promote generated artifacts
 or test receipts into semantic or release authority.
 
-Corrective-replay status is a separate concern. G0 Task 2 introduces the
-append-only, machine-validated status and invalidation ledgers. Until that owner
-is present and admitted, prose status summaries and inherited receipts are
-non-authoritative. This document explains the boundary; it does not duplicate a
-status table.
+Corrective-replay status is a separate concern. Replay status is derived only
+from the append-only, machine-validated
+[`governance/replay_status.jsonl`](../governance/replay_status.jsonl) ledger
+introduced by G0 Task 2. Its effective state is currently G0-R4 are green;
+R5-R8 are red. The latest R3 and R4 admission runs are respectively
+`run:596863b3fb95f7bc247a4f57` and `run:300579c997da31e29d1c1a06`; R4 is
+repository-owned artifact integrity, not external review. These values are a
+navigation snapshot of the ledger, not a second status authority. Prose
+summaries and inherited receipts remain non-authoritative.

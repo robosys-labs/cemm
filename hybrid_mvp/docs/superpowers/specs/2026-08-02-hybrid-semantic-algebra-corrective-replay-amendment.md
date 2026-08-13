@@ -1,5 +1,11 @@
 # Hybrid Semantic Algebra Corrective-Replay Amendment
 
+> **Historical implementation-status notice (2026-08-13):** This amendment
+> remains governing semantic authority, while its implementation-time red-state
+> statements are historical. Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl):
+> G0-R4 are green; R5-R8 are red.
+
 **Status:** approved target amendment; implementation remains red until admitted
 **Date:** 2026-08-02
 **Scope:** `hybrid_mvp/` only

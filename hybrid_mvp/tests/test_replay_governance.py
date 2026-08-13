@@ -76,6 +76,26 @@ ACTIVE_POINTERS = (
     "docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md",
 )
 
+CURRENT_STATUS_DOCUMENTS = (
+    "README.md",
+    "INTEGRATION.md",
+    "docs/REPLAY_GOVERNANCE.md",
+    "docs/IMPLEMENTATION_PLAN.md",
+    "docs/ARCHITECTURE.md",
+)
+
+HISTORICAL_STATUS_DOCUMENTS = (
+    "docs/superpowers/plans/2026-08-04-hybrid-mvp-completion-critical-path.md",
+    "docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md",
+    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-r4-implementation-plan.md",
+    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-cognition-activation-plan.md",
+    "docs/superpowers/plans/2026-08-04-hybrid-mvp-r2-implementation-plan.md",
+    "docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md",
+    "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
+    "docs/superpowers/specs/2026-08-12-r4-repository-owned-admission-design.md",
+    "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
+)
+
 
 __cemm_test_inventory__ = {
     "tests/test_replay_governance.py::test_admission_binding_stores_gate_and_exact_run_refs": {
@@ -324,7 +344,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-1",
         "owner_ref": "governance",
-        "source_ast_sha256": "3b123c5d608b9e17d3c0c51d720edc8a5ee3de42e07b47d2dcfd4143c642b9a6"
+        "source_ast_sha256": "729d9b8d52e462651080a05f816fe53fb21f0e48aa73c21f8eee8dd020da419f"
     },
     "tests/test_replay_governance.py::test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix": {
         "activation_phase": "G0",
@@ -759,6 +779,70 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
     root_authority = (ROOT / str(authority["root_runtime_authority"])).resolve()
     assert root_authority == (ROOT.parent / "AGENTS.md").resolve()
     assert root_authority.is_file()
+
+    status_records = read_hash_chain(ROOT / "governance/replay_status.jsonl")
+    assert effective_replay_status(status_records) == {
+        "G0": "green",
+        "R1": "green",
+        "R2": "green",
+        "R3": "green",
+        "R4": "green",
+        "R5": "red",
+        "R6": "red",
+        "R7": "red",
+        "R8": "red",
+    }
+    assert next(
+        record for record in reversed(status_records) if record["phase"] == "R3"
+    )["admission_run_ref"] == "run:596863b3fb95f7bc247a4f57"
+    assert next(
+        record for record in reversed(status_records) if record["phase"] == "R4"
+    )["admission_run_ref"] == "run:300579c997da31e29d1c1a06"
+
+    invalid_current_claims = (
+        "g0 is the only green replay phase",
+        "r1 remains red",
+        "r3 and r4 remain red",
+        "r3 and r4 remain red until separately admitted",
+        "requires external corpus review",
+        "until that runner is admitted",
+        "c:\\dev\\cemm\\.worktrees\\hybrid-mvp-g0-r1",
+    )
+    for relative in CURRENT_STATUS_DOCUMENTS:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        folded = text.casefold()
+        assert "governance/replay_status.jsonl" in text, relative
+        assert "status is derived" in folded, relative
+        for claim in invalid_current_claims:
+            assert claim not in folded, (relative, claim)
+
+    current_text = "\n".join(
+        (ROOT / relative).read_text(encoding="utf-8")
+        for relative in CURRENT_STATUS_DOCUMENTS
+    )
+    assert "G0-R4 are green; R5-R8 are red" in current_text
+    assert "run:596863b3fb95f7bc247a4f57" in current_text
+    assert "run:300579c997da31e29d1c1a06" in current_text
+    assert "repository-owned artifact integrity" in current_text
+
+    for relative in HISTORICAL_STATUS_DOCUMENTS:
+        banner = "\n".join(
+            (ROOT / relative).read_text(encoding="utf-8").splitlines()[:14]
+        )
+        assert "governance/replay_status.jsonl" in banner, relative
+        assert "historical" in banner.casefold(), relative
+        assert "G0-R4" in banner and "R5-R8" in banner, relative
+
+    root_status = (ROOT.parent / "NATIVE_SEMANTIC_SPINE_IMPLEMENTATION_STATUS.md").read_text(encoding="utf-8")
+    root_plan = (ROOT.parent / "NATIVE_SEMANTIC_SPINE_IMPLEMENTATION_PLAN.md").read_text(encoding="utf-8")
+    for text in (root_status, root_plan):
+        assert "f20ed73c1c5d84fd4a468a8de6480cbc9eb767d9" in text
+        assert "933e4182c58c4f3cdca0884cbcefef6342e59f95" in text
+        assert "root snapshot" in text.casefold()
+        assert "does not adopt" in text.casefold()
+
+    acceptance = (ROOT.parent / "V1_ACCEPTANCE.md").read_text(encoding="utf-8")
+    assert "Hybrid MVP admissions do not check root acceptance boxes" in acceptance
 
 
 _R5_SUCCESSOR_CONTRACT = {

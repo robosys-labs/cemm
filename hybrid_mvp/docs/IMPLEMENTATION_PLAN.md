@@ -2,10 +2,13 @@
 
 > **Planning status:** This original high-level outline is retained as historical
 > context and does not carry execution or admission authority. Current work is
-> governed by the [approved 2026-08-02 semantic-algebra amendment](superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md), the [2026-07-31 corrective-replay design](superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md),
-> [master replay plan](superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md),
-> [G0-R1 implementation plan](superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md),
+> governed by the [approved 2026-08-02 semantic-algebra amendment](superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md), the [master replay plan](superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md),
+> the [R5 hard-cut foundation plan](superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md),
 > and the machine-readable [document authority map](DOCUMENT_AUTHORITY.json).
+> Replay status is derived only from
+> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl): its
+> current navigation snapshot is G0-R4 are green; R5-R8 are red. The phase
+> outline below remains historical and does not redefine that ledger.
 
 ## Phase 1 — Evaluation expansion
 

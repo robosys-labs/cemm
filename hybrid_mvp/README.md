@@ -34,6 +34,16 @@ ORIENT → PROPOSE → VERIFY → EVALUATE → EFFECT → REALIZE
 Stage 0–22 ordering is not an activation invariant. The legacy stage-bound
 architecture is superseded.
 
+## Replay status
+
+Replay status is derived only from the append-only
+[`governance/replay_status.jsonl`](governance/replay_status.jsonl) ledger; this
+navigation snapshot is not a second authority. The effective ledger state is
+G0-R4 are green; R5-R8 are red. The latest admitted R3 run is
+`run:596863b3fb95f7bc247a4f57`, and the admitted R4 repository-owned artifact
+integrity run is `run:300579c997da31e29d1c1a06`. Current implementation work
+begins at the R5 neural proposal and realization boundary.
+
 `SemanticSwitchProgram` is a construction procedure, not canonical meaning.
 Program identity is ordered and includes every dynamic pointer and binding.
 `SemanticExpression` is the derivation-independent semantic identity compiled
@@ -109,10 +119,9 @@ pip install -e '.[test]'
 
 During corrective replay, a plain `pytest` invocation is diagnostic only; it is
 not an admission receipt. Use the focused owner command specified by the active
-task in the [G0-R1 implementation plan](docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md).
-The external validation runner and its non-duplicative owner, phase and
-admission tiers are introduced by G0 Task 4. Until that runner is admitted, no
-test command may advance replay status.
+phase plan and the admitted validation runner for governed owner, phase and
+admission tiers. No test command alone advances replay status; only a verified
+admission receipt consumed by the append-only ledger can do so.
 
 No active release test may use skip or xfail markers. Final release gates
 contain zero skips, xfails, xpasses, fallback paths, compatibility adapters or
@@ -126,5 +135,5 @@ unverified surfaces.
 - [`docs/REPLAY_GOVERNANCE.md`](docs/REPLAY_GOVERNANCE.md) — precedence, evidence and status-ownership boundaries.
 - [`docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md`](docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md) — approved corrective-replay design.
 - [`docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md`](docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md) — governing replay sequence and admission boundaries.
-- [`docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md`](docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md) — executable G0-R1 tasks and focused checks.
-- [`docs/ABI_REGISTRY.md`](docs/ABI_REGISTRY.md) — active target ABIs; implementation and descendant artifacts remain red until their replay admissions.
+- [`docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md`](docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md) — current R5 hard-cut foundation tasks and checks.
+- [`docs/ABI_REGISTRY.md`](docs/ABI_REGISTRY.md) — active target ABIs and their activation gates.

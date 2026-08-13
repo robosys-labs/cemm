@@ -1,5 +1,13 @@
 # CEMM Recursive Semantic Composition — Final Status
 
+> **Root snapshot scope:** This document records the root-runtime status at
+> `f20ed73c1c5d84fd4a468a8de6480cbc9eb767d9`; it is not a live repository-wide
+> status page. Current `main` is separately observed at
+> `933e4182c58c4f3cdca0884cbcefef6342e59f95`. The Hybrid MVP proof is governed by
+> [`hybrid_mvp/governance/replay_status.jsonl`](hybrid_mvp/governance/replay_status.jsonl)
+> and does not adopt its runtime or admissions into the root runtime. Root
+> adoption requires a separate reviewed decision.
+
 ## Target
 
 ```text

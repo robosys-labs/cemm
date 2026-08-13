@@ -1,7 +1,8 @@
 # Hybrid MVP Integration
 
-This branch integrates the **CEMM Authoritative Hybrid MVP** worktree into the
-main CEMM repository as a top-level `hybrid_mvp/` subdirectory.
+The **CEMM Authoritative Hybrid MVP** is integrated as the top-level
+`hybrid_mvp/` subtree. It remains a separately governed proof: root adoption
+requires its own reviewed decision.
 
 ## Layout
 
@@ -22,8 +23,12 @@ hybrid_mvp/
 ## Status
 
 Inherited milestone receipts and generated artifacts are historical evidence,
-not current admission authority. Effective replay status is owned only by the
-append-only ledger specified in G0 Task 2. If that ledger is absent or fails
+not current admission authority. Replay status is derived only from
+[`governance/replay_status.jsonl`](governance/replay_status.jsonl). This note
+does not own a parallel status table: its current navigation snapshot is G0-R4
+are green; R5-R8 are red, with latest R3 admission
+`run:596863b3fb95f7bc247a4f57` and repository-owned R4 artifact-integrity
+admission `run:300579c997da31e29d1c1a06`. If the ledger is absent or fails
 validation, no prose summary or inherited receipt can promote a replay phase.
 
 The corrective investigation found upstream contract, data and runtime drift,
@@ -47,8 +52,8 @@ pipeline, not a release or replay receipt.
 ## Next steps
 
 Proceed under the [semantic-algebra amendment](docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md), [approved design](docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md),
-[master replay plan](docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md)
-and [G0-R1 implementation plan](docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md).
+[master replay plan](docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md),
+and [R5 hard-cut foundation plan](docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md).
 Those owners define replay order, performance-bounded validation tiers and
 admission commands; this integration note intentionally does not duplicate
 them.

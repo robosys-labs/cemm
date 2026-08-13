@@ -1,5 +1,12 @@
 # CEMM Hybrid MVP R3 Cognition Activation Implementation Plan
 
+> **Historical completion notice (2026-08-13):** R3 has been admitted; this
+> plan's branch, head, gaps, and execution steps are historical snapshots.
+> Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl):
+> G0-R4 are green; R5-R8 are red. Latest R3 admission:
+> `run:596863b3fb95f7bc247a4f57`.
+
 **Reviewed source:** `robosys-labs/cemm`
 **Branch:** `codex/hybrid-mvp-r2`
 **Reviewed head:** `68c8c04` (R2 green admission)

@@ -1,5 +1,11 @@
 # Hybrid MVP G0-R1 Implementation Plan
 
+> **Historical completion notice (2026-08-13):** G0 and R1 have been admitted;
+> this plan's paths and task instructions are retained as historical provenance.
+> Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl):
+> G0-R4 are green; R5-R8 are red.
+
 > **For Codex:** REQUIRED SUB-SKILL: Use `subagent-driven-development` task-by-task. Every implementation task uses `test-driven-development`, then contract review, code-quality/performance review, and controller verification.
 
 **Goal:** Admit G0 and R1: truthful executable governance, inherited-claim quarantine, one dependency-aware validator, and a hard cut from duplicate runtime ABIs/paths to canonical content-addressed R1 boundaries.

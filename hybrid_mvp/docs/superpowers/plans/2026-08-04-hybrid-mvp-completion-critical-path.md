@@ -1,5 +1,11 @@
 # Hybrid MVP Completion Critical Path Implementation Plan
 
+> **Historical supersession notice (2026-08-13):** This plan's paths, status,
+> and execution instructions are retained as historical evidence, not current
+> routing. Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl):
+> G0-R4 are green; R5-R8 are red. Continue with the R5 hard-cut foundation plan.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Complete the isolated Hybrid MVP as an authentic, independently verifiable six-phase semantic system, from the current red R1 candidate through clean R8 release proof, without treating construction programs as meaning or reusing invalid M4/R5 descendants.

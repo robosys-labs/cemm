@@ -1,5 +1,12 @@
 # R4 Repository-Owned Admission Design
 
+> **Historical completion notice (2026-08-13):** This design is implemented and
+> R4 is admitted through repository-owned artifact integrity. Status is derived
+> only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl):
+> G0-R4 are green; R5-R8 are red. Latest R4 admission:
+> `run:300579c997da31e29d1c1a06`.
+
 **Date:** 2026-08-12
 **Status:** approved design; implementation pending
 **Scope:** `hybrid_mvp/` R4 admission and closeout only
