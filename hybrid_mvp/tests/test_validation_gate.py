@@ -1121,6 +1121,36 @@ def test_g0_receipt_requires_exact_external_evidence_set(tmp_path: Path) -> None
             baseline_source_ref="58345240e67bf003e6ac7d5c68752e2e5eee4a7d",
         )
 
+    inventory_path = ROOT / "governance" / "test_inventory.json"
+    inventory_sha256 = inventory_core_module.verify_document_authority_pin(
+        ROOT, inventory_path
+    )
+    inventory = inventory_core_module.load_and_verify(
+        ROOT,
+        inventory_path,
+        phase="G0",
+        enforce_reviewed_counts=True,
+        expected_sha256=inventory_sha256,
+    )
+    graph, _ = validation_gate_module._load_gate_graph_with_source(
+        ROOT / "configs" / "validation_gates.json"
+    )
+    selector = validation_gate_module.validate_inventory_contract(
+        graph, inventory, phase="G0"
+    )
+    authority_raw = (ROOT / "docs" / "DOCUMENT_AUTHORITY.json").read_bytes()
+    expected_receipt = validation_gate_module._expected_g0_inventory_receipt(
+        authority_sha256=hashlib.sha256(authority_raw).hexdigest(),
+        inventory_sha256=inventory_sha256,
+        inventory=inventory,
+        selector=selector,
+    )
+    checked_in_receipt = validation_gate_module._load_canonical_g0_evidence(
+        (ROOT / "artifacts/validation/TEST_INVENTORY_RECEIPT.json").read_bytes(),
+        path=Path("artifacts/validation/TEST_INVENTORY_RECEIPT.json"),
+    )
+    assert checked_in_receipt == expected_receipt
+
 
 def test_current_source_config_rejects_alternate_receipt_plan(tmp_path: Path) -> None:
     receipt = _receipt(tmp_path)
@@ -1958,7 +1988,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-4",
         "owner_ref": "validation-runner",
-        "source_ast_sha256": "4bc006fb3673a2be9c90e34dc12537a36558f83f319ef5af98eda509cb2951cd"
+        "source_ast_sha256": "122769a0b15a40aa12db5f98a7cd41dbfbd5f864078521e4dbb569a67b8e24e1"
     },
     "tests/test_validation_gate.py::test_git_snapshot_rejects_success_with_warning_stderr": {
         "activation_phase": "G0",
