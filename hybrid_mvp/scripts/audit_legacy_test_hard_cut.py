@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import ast
 import json
+import os
 from pathlib import Path
+import stat
 import sys
 from typing import Iterable
 
@@ -14,6 +16,9 @@ INVENTORY_PATH = ROOT / "governance" / "test_inventory.json"
 INVENTORY_SHA256 = "7c27b0ad80998fc1f10876c05d0238a2498d2fd3a116ace77c9505da11d0b4b8"
 MAX_SOURCE_BYTES = 2 * 1024 * 1024
 MAX_CONFIG_BYTES = 2 * 1024 * 1024
+MAX_PYTHON_FILES = 10_000
+MAX_AGGREGATE_SOURCE_BYTES = 128 * 1024 * 1024
+MAX_TRAVERSED_ENTRIES = 20_000
 REPLAY_PHASES = ("G0", "R1", "R2", "R3", "R4")
 REVIEWED_CARRIER_PATH = "tests/test_six_phase_runtime.py"
 REVIEWED_CARRIER_NODE = (
@@ -73,18 +78,68 @@ def _strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
 
 def _bounded_bytes(path: Path, limit: int) -> bytes:
     try:
-        size = path.stat().st_size
-    except OSError as exc:
-        raise ValueError(f"cannot stat {path}: {exc}") from exc
-    if size > limit:
-        raise ValueError(f"byte bound exceeded for {path}: {size} > {limit}")
-    try:
-        data = path.read_bytes()
+        if _is_link_or_reparse(path):
+            raise ValueError(f"untrusted redirected path: {path}")
+        with path.open("rb") as stream:
+            before = os.fstat(stream.fileno())
+            if not stat.S_ISREG(before.st_mode):
+                raise ValueError(f"source is not a regular file: {path}")
+            data = stream.read(limit + 1)
+            after = os.fstat(stream.fileno())
     except OSError as exc:
         raise ValueError(f"cannot read {path}: {exc}") from exc
-    if len(data) != size:
+    if len(data) > limit:
+        raise ValueError(f"source grew while reading or exceeds byte bound: {path}")
+    before_identity = (before.st_dev, before.st_ino, before.st_size)
+    after_identity = (after.st_dev, after.st_ino, after.st_size)
+    if before_identity != after_identity:
         raise ValueError(f"source changed while reading: {path}")
+    if len(data) != after.st_size:
+        raise ValueError(f"short read or source changed while reading: {path}")
     return data
+
+
+def _is_link_or_reparse(path: Path) -> bool:
+    try:
+        info = path.lstat()
+    except OSError as exc:
+        raise ValueError(f"cannot inspect trusted path: {path}") from exc
+    return stat.S_ISLNK(info.st_mode) or bool(
+        getattr(info, "st_file_attributes", 0) & 0x400
+    )
+
+
+def _trusted_path(root: Path, path: Path) -> Path:
+    root_absolute = root.absolute()
+    path_absolute = path.absolute()
+    try:
+        relative = path_absolute.relative_to(root_absolute)
+    except ValueError as exc:
+        raise ValueError(f"path escapes audit root: {path}") from exc
+    anchor = Path(root_absolute.anchor)
+    current = anchor
+    for part in root_absolute.parts[1:]:
+        current = current / part
+        if _is_link_or_reparse(current):
+            raise ValueError(f"untrusted redirected audit root: {root}")
+    resolved_root = root_absolute.resolve(strict=True)
+    if resolved_root != root_absolute:
+        raise ValueError(f"untrusted redirected audit root: {root}")
+    current = root_absolute
+    for part in relative.parts:
+        current = current / part
+        if _is_link_or_reparse(current):
+            raise ValueError(
+                f"untrusted redirected path: {relative.as_posix()}"
+            )
+    resolved = path_absolute.resolve(strict=True)
+    try:
+        resolved.relative_to(resolved_root)
+    except ValueError as exc:
+        raise ValueError(f"resolved path escapes audit root: {relative.as_posix()}") from exc
+    if resolved != path_absolute:
+        raise ValueError(f"untrusted redirected path: {relative.as_posix()}")
+    return path_absolute
 
 
 def _strict_json(path: Path) -> object:
@@ -103,16 +158,39 @@ def _strict_json(path: Path) -> object:
 
 def _python_paths(root: Path) -> tuple[Path, ...]:
     paths: list[Path] = []
+    aggregate_bytes = 0
+    traversed = 0
     for relative in ("tests", "scripts", "src"):
-        base = root / relative
+        base = _trusted_path(root, root / relative)
         if not base.is_dir():
             raise ValueError(f"missing source root: {base}")
-        paths.extend(path for path in base.rglob("*.py") if path.is_file())
-    return tuple(sorted(set(paths)))
+        pending = [base]
+        while pending:
+            directory = pending.pop()
+            try:
+                entries = sorted(directory.iterdir(), key=lambda item: item.name)
+            except OSError as exc:
+                raise ValueError(f"cannot enumerate source root: {directory}") from exc
+            for entry in entries:
+                traversed += 1
+                if traversed > MAX_TRAVERSED_ENTRIES:
+                    raise ValueError("source traversal entry bound exceeded")
+                trusted = _trusted_path(root, entry)
+                if trusted.is_dir():
+                    pending.append(trusted)
+                elif trusted.is_file() and trusted.suffix == ".py":
+                    paths.append(trusted)
+                    if len(paths) > MAX_PYTHON_FILES:
+                        raise ValueError("Python source file count bound exceeded")
+                    aggregate_bytes += trusted.stat().st_size
+                    if aggregate_bytes > MAX_AGGREGATE_SOURCE_BYTES:
+                        raise ValueError("aggregate source byte bound exceeded")
+    return tuple(sorted(paths))
 
 
-def _tree(path: Path) -> ast.Module:
-    raw = _bounded_bytes(path, MAX_SOURCE_BYTES)
+def _tree(path: Path, raw: bytes | None = None) -> ast.Module:
+    if raw is None:
+        raw = _bounded_bytes(path, MAX_SOURCE_BYTES)
     try:
         source = raw.decode("utf-8")
     except UnicodeDecodeError as exc:
@@ -120,28 +198,43 @@ def _tree(path: Path) -> ast.Module:
     return ast.parse(source, filename=str(path))
 
 
-def _support_reference_findings(root: Path) -> tuple[str, ...]:
+def _support_reference_findings(
+    root: Path,
+    python_paths: tuple[Path, ...] | None = None,
+) -> tuple[str, ...]:
     findings: set[str] = set()
     auditor = Path(__file__).resolve()
     for module in FORBIDDEN_SUPPORT_MODULES:
         support = root / "tests" / f"{module}.py"
         if support.exists():
             findings.add(f"forbidden_support_exists:{support.relative_to(root).as_posix()}")
-    for path in _python_paths(root):
+    sources: list[tuple[Path, bytes]] = []
+    aggregate_bytes = 0
+    for path in python_paths if python_paths is not None else _python_paths(root):
+        raw = _bounded_bytes(path, MAX_SOURCE_BYTES)
+        aggregate_bytes += len(raw)
+        if aggregate_bytes > MAX_AGGREGATE_SOURCE_BYTES:
+            raise ValueError("aggregate source byte bound exceeded during read")
+        sources.append((path, raw))
+    for path, raw in sources:
         if path.resolve() == auditor:
             continue
         relative = path.relative_to(root).as_posix()
-        tree = _tree(path)
+        tree = _tree(path, raw)
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    module = alias.name.rsplit(".", 1)[-1]
-                    if module in FORBIDDEN_SUPPORT_MODULES:
-                        findings.add(f"forbidden_support_import:{relative}:{module}")
+                    for module in alias.name.split("."):
+                        if module in FORBIDDEN_SUPPORT_MODULES:
+                            findings.add(
+                                f"forbidden_support_import:{relative}:{module}"
+                            )
             elif isinstance(node, ast.ImportFrom):
-                module = (node.module or "").rsplit(".", 1)[-1]
-                if module in FORBIDDEN_SUPPORT_MODULES:
-                    findings.add(f"forbidden_support_import:{relative}:{module}")
+                for module in (node.module or "").split("."):
+                    if module in FORBIDDEN_SUPPORT_MODULES:
+                        findings.add(
+                            f"forbidden_support_import:{relative}:{module}"
+                        )
                 for alias in node.names:
                     imported = alias.name.rsplit(".", 1)[-1]
                     if imported in FORBIDDEN_SUPPORT_MODULES:
@@ -195,34 +288,67 @@ def _fixture_export_name(
     if registration is None:
         return None
     for keyword in registration.keywords:
+        if keyword.arg is None:
+            return "<dynamic>"
         if (
             keyword.arg == "name"
             and isinstance(keyword.value, ast.Constant)
             and type(keyword.value.value) is str
         ):
             return keyword.value.value
+        if keyword.arg == "name":
+            return "<dynamic>"
     return default
+
+
+def _module_statements(body: Iterable[ast.stmt]) -> tuple[ast.stmt, ...]:
+    statements: list[ast.stmt] = []
+    pending = list(reversed(tuple(body)))
+    while pending:
+        node = pending.pop()
+        statements.append(node)
+        nested: list[ast.stmt] = []
+        if isinstance(node, ast.If):
+            nested.extend(node.body)
+            nested.extend(node.orelse)
+        elif isinstance(node, (ast.For, ast.AsyncFor, ast.While)):
+            nested.extend(node.body)
+            nested.extend(node.orelse)
+        elif isinstance(node, (ast.With, ast.AsyncWith)):
+            nested.extend(node.body)
+        elif isinstance(node, (ast.Try, ast.TryStar)):
+            nested.extend(node.body)
+            for handler in node.handlers:
+                nested.extend(handler.body)
+            nested.extend(node.orelse)
+            nested.extend(node.finalbody)
+        elif isinstance(node, ast.Match):
+            for case in node.cases:
+                nested.extend(case.body)
+        pending.extend(reversed(nested))
+    return tuple(statements)
 
 
 def _compatibility_fixture_findings(root: Path) -> tuple[str, ...]:
     path = root / "tests" / "conftest.py"
     tree = _tree(path)
     findings: set[str] = set()
+    statements = _module_statements(tree.body)
     pytest_names = frozenset(
         alias.asname or alias.name
-        for node in tree.body
+        for node in statements
         if isinstance(node, ast.Import)
         for alias in node.names
         if alias.name == "pytest"
     )
     fixture_names = frozenset(
         alias.asname or alias.name
-        for node in tree.body
+        for node in statements
         if isinstance(node, ast.ImportFrom) and node.module == "pytest"
         for alias in node.names
         if alias.name == "fixture"
     )
-    for node in tree.body:
+    for node in statements:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if node.name in COMPATIBILITY_FIXTURES:
                 findings.add(f"compatibility_fixture:{node.name}")
@@ -235,6 +361,8 @@ def _compatibility_fixture_findings(root: Path) -> tuple[str, ...]:
                 )
                 if exported in COMPATIBILITY_FIXTURES:
                     findings.add(f"compatibility_fixture:{exported}")
+                elif exported == "<dynamic>":
+                    findings.add(f"dynamic_fixture_name:{node.name}")
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
             targets: Iterable[ast.expr]
             targets = node.targets if isinstance(node, ast.Assign) else (node.target,)
@@ -262,6 +390,8 @@ def _compatibility_fixture_findings(root: Path) -> tuple[str, ...]:
                     )
                     if exported in COMPATIBILITY_FIXTURES:
                         findings.add(f"compatibility_fixture:{exported}")
+                    elif exported == "<dynamic>":
+                        findings.add(f"dynamic_fixture_name:{target.id}")
         elif isinstance(node, ast.Expr):
             exported = _fixture_export_name(
                 node.value,
@@ -271,14 +401,17 @@ def _compatibility_fixture_findings(root: Path) -> tuple[str, ...]:
             )
             if exported in COMPATIBILITY_FIXTURES:
                 findings.add(f"compatibility_fixture:{exported}")
+            elif exported == "<dynamic>":
+                findings.add("dynamic_fixture_name:<expression>")
     return tuple(sorted(findings))
 
 
 def _carrier_findings(root: Path) -> tuple[str, ...]:
     path = root / REVIEWED_CARRIER_PATH
-    if not path.is_file():
-        return (f"lineage_carrier_missing:{REVIEWED_CARRIER_PATH}",)
     try:
+        _trusted_path(root, path)
+        if not path.is_file():
+            return (f"lineage_carrier_missing:{REVIEWED_CARRIER_PATH}",)
         tree = _tree(path)
     except (OSError, SyntaxError, ValueError) as exc:
         return (f"lineage_carrier_invalid:{type(exc).__name__}:{exc}",)
@@ -447,7 +580,9 @@ def _gate_input_findings(config: dict[str, object]) -> tuple[str, ...]:
 
 
 def _selector_findings(root: Path, result: object) -> tuple[str, ...]:
-    config = _strict_json(root / "configs" / "validation_gates.json")
+    config = _strict_json(
+        _trusted_path(root, root / "configs" / "validation_gates.json")
+    )
     if not isinstance(config, dict) or not isinstance(config.get("steps"), dict):
         raise ValueError("validation gates have no exact steps object")
     steps = config["steps"]
@@ -480,14 +615,29 @@ def _selector_findings(root: Path, result: object) -> tuple[str, ...]:
 
 
 def audit(root: Path = ROOT) -> tuple[str, ...]:
-    root = root.resolve()
     findings: set[str] = set()
     try:
+        root = root.absolute()
+        _trusted_path(root, root)
+        inventory_path = _trusted_path(
+            root, root / "governance" / "test_inventory.json"
+        )
+        for relative in (
+            "configs/validation_gates.json",
+            "governance/r5_test_dispositions.json",
+            "pyproject.toml",
+            "schemas/r5_test_dispositions.schema.json",
+            "scripts/r5_test_dispositions.py",
+            "scripts/test_inventory_core.py",
+            "tests/conftest.py",
+        ):
+            _trusted_path(root, root / relative)
+        python_paths = _python_paths(root)
         candidate_set = set(DELETION_CANDIDATES)
         for phase in REPLAY_PHASES:
             replay = load_and_verify(
                 root,
-                root / "governance" / "test_inventory.json",
+                inventory_path,
                 phase=phase,
                 enforce_reviewed_counts=True,
                 expected_sha256=INVENTORY_SHA256,
@@ -498,18 +648,20 @@ def audit(root: Path = ROOT) -> tuple[str, ...]:
                     findings.add(f"active_{phase.lower()}_leaf:{node_id}")
         r5 = load_and_verify(
             root,
-            root / "governance" / "test_inventory.json",
+            inventory_path,
             phase="R5",
             enforce_reviewed_counts=True,
             expected_sha256=INVENTORY_SHA256,
         )
-        config = _strict_json(root / "configs" / "validation_gates.json")
+        config = _strict_json(
+            _trusted_path(root, root / "configs" / "validation_gates.json")
+        )
         if not isinstance(config, dict):
             raise ValueError("validation gates are not an exact object")
         findings.update(_gate_input_findings(config))
         findings.update(_selector_findings(root, r5))
         findings.update(_nonfrozen_predecessor_findings(r5))
-        findings.update(_support_reference_findings(root))
+        findings.update(_support_reference_findings(root, python_paths))
         findings.update(_compatibility_fixture_findings(root))
         findings.update(_carrier_findings(root))
         for relative in DELETION_CANDIDATES:

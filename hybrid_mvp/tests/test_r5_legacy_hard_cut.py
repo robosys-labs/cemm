@@ -358,6 +358,7 @@ def test_r5_legacy_auditor_rejects_qualified_support_imports(
         (tmp_path / name).mkdir()
     (tmp_path / "tests" / "qualified.py").write_text(
         "import tests.legacy_propositions\n"
+        "import tests.legacy_propositions.payload\n"
         "from tests import legacy_runtime_fixtures\n"
         "import tests.not_legacy_propositions\n",
         encoding="utf-8",
@@ -413,6 +414,120 @@ def test_r5_legacy_auditor_rejects_aliased_and_assigned_compatibility_fixtures(
     assert auditor._compatibility_fixture_findings(tmp_path) == (
         "compatibility_fixture:verified_observation_program",
     )
+
+    (tests / "conftest.py").write_text(
+        "import pytest\n"
+        "if True:\n"
+        "    @pytest.fixture(name='runtime_factory')\n"
+        "    def nested():\n"
+        "        return None\n"
+        "try:\n"
+        "    alias = pytest.fixture(name='verified_observation_program')(nested)\n"
+        "except Exception:\n"
+        "    pass\n"
+        "def not_executed():\n"
+        "    hidden = pytest.fixture(name='SIX_PHASES')(nested)\n",
+        encoding="utf-8",
+    )
+    assert auditor._compatibility_fixture_findings(tmp_path) == (
+        "compatibility_fixture:runtime_factory",
+        "compatibility_fixture:verified_observation_program",
+    )
+
+    (tests / "conftest.py").write_text(
+        "import pytest\n"
+        "name = 'runtime_factory'\n"
+        "@pytest.fixture(name=name)\n"
+        "def dynamic():\n"
+        "    return None\n",
+        encoding="utf-8",
+    )
+    assert auditor._compatibility_fixture_findings(tmp_path) == (
+        "dynamic_fixture_name:dynamic",
+    )
+
+
+def test_r5_legacy_auditor_rejects_external_carrier_symlink(
+    tmp_path: Path,
+) -> None:
+    auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_carrier_symlink")
+    root = tmp_path / "root"
+    (root / "tests").mkdir(parents=True)
+    external = tmp_path / "external.py"
+    reviewed = (ROOT / auditor.REVIEWED_CARRIER_PATH).read_bytes()
+    external.write_bytes(reviewed)
+    try:
+        (root / auditor.REVIEWED_CARRIER_PATH).symlink_to(external)
+    except OSError as exc:
+        pytest.skip(f"symlink creation unavailable: {exc}")
+
+    assert auditor._carrier_findings(root) == (
+        "lineage_carrier_invalid:ValueError:untrusted redirected path: tests/test_six_phase_runtime.py",
+    )
+    assert external.read_bytes() == reviewed
+
+
+def test_r5_legacy_auditor_bounded_reader_rejects_growth_and_short_read(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_bounded_read")
+    path = tmp_path / "source.py"
+    path.write_bytes(b"abc")
+
+    monkeypatch.setattr(auditor.os, "fstat", lambda _fd: type("S", (), {"st_mode": 0o100000, "st_size": 1, "st_dev": 1, "st_ino": 1})())
+    monkeypatch.setattr(auditor.os, "stat", lambda _path, **_kwargs: type("S", (), {"st_mode": 0o100000, "st_size": 1, "st_dev": 1, "st_ino": 1, "st_file_attributes": 0})())
+    with pytest.raises(ValueError, match="grew while reading"):
+        auditor._bounded_bytes(path, 1)
+
+    monkeypatch.undo()
+    real_open = Path.open
+
+    class ShortReader:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def fileno(self):
+            return 0
+
+        def read(self, _limit):
+            return b"ab"
+
+    monkeypatch.setattr(Path, "open", lambda self, *args, **kwargs: ShortReader() if self == path else real_open(self, *args, **kwargs))
+    monkeypatch.setattr(
+        auditor.os,
+        "fstat",
+        lambda _fd: type(
+            "S",
+            (),
+            {"st_mode": 0o100000, "st_size": 3, "st_dev": 1, "st_ino": 1},
+        )(),
+    )
+    with pytest.raises(ValueError, match="short read|changed while reading"):
+        auditor._bounded_bytes(path, 10)
+
+
+def test_r5_legacy_auditor_bounds_source_file_count_and_aggregate_bytes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    auditor = _load_script(AUDITOR_PATH, "_r5_legacy_hard_cut_source_bounds")
+    for name in ("tests", "scripts", "src"):
+        (tmp_path / name).mkdir()
+    (tmp_path / "tests" / "a.py").write_text("a = 1\n", encoding="utf-8")
+    (tmp_path / "tests" / "b.py").write_text("b = 2\n", encoding="utf-8")
+
+    monkeypatch.setattr(auditor, "MAX_PYTHON_FILES", 1)
+    with pytest.raises(ValueError, match="file count bound"):
+        auditor._python_paths(tmp_path)
+
+    monkeypatch.setattr(auditor, "MAX_PYTHON_FILES", 10)
+    monkeypatch.setattr(auditor, "MAX_AGGREGATE_SOURCE_BYTES", 5)
+    with pytest.raises(ValueError, match="aggregate source byte bound"):
+        auditor._python_paths(tmp_path)
 
 
 def test_r5_legacy_auditor_checks_every_pre_r5_replay_phase() -> None:
@@ -604,7 +719,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "legacy-hard-cut",
-        "source_ast_sha256": '9d29749062c071691d88e3591f9b5f40d8d4d0db9d682698a256ba05d453502f',
+        "source_ast_sha256": '17775ce064e1535a4a28f55a281ec44960421ce32072b55b1274b279c6bd7760',
     },
     "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_rejects_aliased_and_assigned_compatibility_fixtures": {
         "activation_phase": "R5",
@@ -612,7 +727,31 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "legacy-hard-cut",
-        "source_ast_sha256": '2ec46e17325ee002bff6c15e15ac5d0ecb88c092ac6d1b9749918303e94206a1',
+        "source_ast_sha256": 'cbe66c05e099a100425890aa09f138a39e3db1eff3d11779b429889f6c63ded2',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_rejects_external_carrier_symlink": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-legacy-auditor-rejects-external-carrier-symlink",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '8bafddada35e3380ddde70cf9bfa66cf66cc372711cf38943985031e1e96e7c4',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_bounded_reader_rejects_growth_and_short_read": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-legacy-auditor-bounded-reader-fails-closed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": '87461484d4985497cc2a873ee5b38c7ac6c4f1d02ad7b6ccec72401753c495bd',
+    },
+    "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_bounds_source_file_count_and_aggregate_bytes": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-legacy-auditor-bounds-source-enumeration",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "owner_ref": "legacy-hard-cut",
+        "source_ast_sha256": 'c6fb5fb28fe039ba7db28b768fd56976e707eb5d62e3078e09a10d52342b4056',
     },
     "tests/test_r5_legacy_hard_cut.py::test_r5_legacy_auditor_checks_every_pre_r5_replay_phase": {
         "activation_phase": "R5",
