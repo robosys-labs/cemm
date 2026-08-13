@@ -103,3 +103,19 @@ A learned cross-encoder-style scorer ranks candidate programs. The model owns ra
 R3 consumes only selected `VerifiedMeaning.expression` plus an independently verified `SituationContext`. It emits one canonical Decision, exactly one Effect/No-Effect receipt, and one `ResponseMeaning`, then stops at the R5 surface-realization contract. Program identity is derivation lineage only.
 
 R4 compiles reviewed assertions independently of PROPOSE, expands every reviewed surface and environment, executes the public R3 runtime, keeps expected and observed artifacts separate, labels mutations through authentic owners, seals independent partition axes, and admits through repository-owned artifact integrity. R4 performs no training.
+
+## R5 hard-cut foundation boundary
+
+R4 is the latest admitted phase. For the R5 hard-cut foundation, source, owner and phase gates pass, but R5
+admission remains unavailable and its effective replay status remains red.
+Current status is derived only from the replay ledger named above; this
+architectural summary is not admission evidence.
+
+The foundation authenticates the artifact, proposal, data-isolation,
+realization and legacy-hard-cut owner boundaries without claiming that neural
+proposal or realization is active. Release training can open the manifest-bound
+canonical train partition only. The declared `train`, `selection`, `calibration`
+and `frozen_test` data classes are future authorization vocabulary; physical
+selection, calibration and frozen-test access remains owned by
+`R5-Neural-Activation`, the next increment. A deferred neural obligation is not
+an admitted model, checkpoint, calibration or evaluation result.

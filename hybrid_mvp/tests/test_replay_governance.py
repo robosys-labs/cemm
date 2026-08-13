@@ -748,6 +748,13 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-0-Review-Fix",
         "source_ast_sha256": "7eefb5752b86c7ae24fad2ad5d38003ed6c472062df52bba56f207ff10cd6295"
+    },
+    "tests/test_replay_governance.py::test_r5_active_docs_publish_truthful_foundation_boundary": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-active-docs-publish-truthful-foundation-boundary",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-9",
+        "source_ast_sha256": "71ef37036ddd5cf2131df5f02159e501dab571d57e4add13586d645cda4e124d"
     }
 }
 
@@ -1016,6 +1023,48 @@ def test_r5_appendix_guard_rejects_wrong_section_and_owner_mutations() -> None:
     for mutated in (moved_to_deferred, wrong_owner):
         with pytest.raises(AssertionError):
             _validate_r5_appendix(mutated, inventory)
+
+
+def test_r5_active_docs_publish_truthful_foundation_boundary() -> None:
+    architecture = (ROOT / "docs/ARCHITECTURE.md").read_text(encoding="utf-8")
+    registry = (ROOT / "docs/ABI_REGISTRY.md").read_text(encoding="utf-8")
+    master = (
+        ROOT
+        / "docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md"
+    ).read_text(encoding="utf-8")
+    r5_plan = (
+        ROOT / "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md"
+    ).read_text(encoding="utf-8")
+    gate_config = json.loads(
+        (ROOT / "configs/validation_gates.json").read_text(encoding="utf-8")
+    )
+
+    assert "R5 hard-cut foundation boundary" in architecture
+    assert "source, owner and phase gates pass" in architecture
+    assert "admission remains unavailable" in architecture
+    assert "R5-Neural-Activation" in architecture
+    assert "canonical train partition only" in architecture
+
+    assert "| R5 Test Disposition ABI | **1** |" in registry
+    assert "| R5 Foundation Contract ABI | **1** |" in registry
+    assert "scripts/generate_r5_test_dispositions.py" in registry
+    assert "schemas/r5_test_dispositions.schema.json" in registry
+    assert "schemas/r5_foundation.schema.json" in registry
+    assert "Deferral is not admission evidence" in registry
+
+    assert "## R5 hard-cut foundation addendum" in master
+    assert "17 successors, 25 deferrals and 1 retirement" in master
+    migrated_refs = re.findall(r"active_test_nodes:[0-9a-f]{24}", master)
+    assert len(migrated_refs) == len(set(migrated_refs)) == 2
+    assert "current source selection identities, not rewritten historical" in master
+    assert "zero-collection lineage carrier" in master
+    assert "Deferral is not admission" in master
+    assert "zero-collection" in r5_plan
+    assert "separate reviewed immutable-inventory migration" in r5_plan
+    assert (
+        "tests/test_replay_governance.py::test_r5_active_docs_publish_truthful_foundation_boundary"
+        in gate_config["steps"]["r5_phase_tests"]["exact_nodes"]
+    )
 
 
 def test_governing_pointers_make_no_old_admission_claim() -> None:

@@ -504,6 +504,15 @@ git commit -m "test(r5): remove retired compatibility suite"
 
 ### Task 9: Update active documentation and authority classification
 
+> **Implementation note:** Task 0 already promoted this design and plan and
+> classified the completion-critical-path plan, so Task 9 must verify those
+> entries rather than duplicate or reorder them. Task 8 removed the retired
+> compatibility suite but retained one exact non-executable, zero-collection
+> lineage carrier in `tests/test_six_phase_runtime.py`; its current nonfrozen
+> supersession edge requires a separate reviewed immutable-inventory migration
+> before deletion. The carrier is not a runtime path and the hard-cut auditor
+> constrains its exact shape.
+
 **Files:**
 - Modify: `docs/DOCUMENT_AUTHORITY.json`
 - Modify: `tests/test_replay_governance.py`

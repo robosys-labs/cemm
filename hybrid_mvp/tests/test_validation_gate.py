@@ -1798,8 +1798,9 @@ def test_r5_gate_plans_are_exact_bounded_and_single_process() -> None:
     )
     assert graph.pytest_process_count("R5", "phase") == 1
     phase_nodes = set(graph.resolve_pytest_nodes("R5", "phase"))
-    assert len(phase_nodes) == 6
+    assert len(phase_nodes) == 7
     assert {
+        "tests/test_replay_governance.py::test_r5_active_docs_publish_truthful_foundation_boundary",
         "tests/test_replay_governance.py::test_r5_appendix_guard_rejects_wrong_section_and_owner_mutations",
         "tests/test_replay_governance.py::test_r5_governing_plan_uses_exact_frozen_inventory_partition",
     }.issubset(phase_nodes)
@@ -2092,7 +2093,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r5-validation-plans-exact-bounded-single-process",
         "diagnostic_role": "admission_only",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
-        "source_ast_sha256": "c8c16c26ba8adf7f3781f5435a035e27a2b2f204e108242265980802ed236aff"
+        "source_ast_sha256": "09477526de429eda29877ba907f89b03daebca7a5bb8ad07f958bb9849c9ae50"
     },
     "tests/test_validation_gate.py::test_runner_records_injected_peak_rss": {
         "activation_phase": "G0",

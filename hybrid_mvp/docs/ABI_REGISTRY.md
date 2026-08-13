@@ -34,6 +34,8 @@ checkpoint, calibration, evaluation, activation and release artifact.
 | Realization Receipt ABI | **2** | `src/cemm_authoritative_hybrid/realization.py` | Serialized | `RealizationVerifier` | Surface is reinterpreted through the same evidence/proposal/compile/verify contracts and compared by canonical semantic expression. |
 | Phase Receipt ABI | 2 | `src/cemm_authoritative_hybrid/cycle.py` | Serialized when trace/evaluation enabled | `CycleFinalizer` | Each phase binds exact input/output refs, revisions, disposition, rejection codes and budget use. |
 | Cycle Result ABI | **3** | `src/cemm_authoritative_hybrid/r3_cycle.py` | Serialized | `CycleFinalizer` | R3 active target: one canonical six-phase result carrying EvaluationBundle, exact Effect/No-Effect receipt and ResponseMeaning. `cycle.py` ABI 2 is admitted predecessor history only and cannot serialize an R3-complete cycle. |
+| R5 Test Disposition ABI | **1** | `governance/r5_test_dispositions.json` | Reviewed governance input; generated receipt is evidence only | `schemas/r5_test_dispositions.schema.json`, `scripts/r5_test_dispositions.py`, `scripts/generate_r5_test_dispositions.py` | Requires an exact 17-successor/25-deferred/1-retired partition of the frozen R5 predecessor set. Deferral is not admission evidence, and `artifacts/validation/R5_TEST_DISPOSITIONS.json` is deterministic evidence rather than authority. |
+| R5 Foundation Contract ABI | **1** | `configs/r5_foundation.json` | Reviewed phase-boundary configuration | `schemas/r5_foundation.schema.json` and `tests/test_r5_foundation.py` | Declares five exact foundation owners, red effective status, unavailable admission and four future data-access classes. It does not activate a neural model or materialize selection, calibration or frozen-test partitions. |
 
 ## 2. Canonical program identity
 
@@ -172,6 +174,17 @@ release bundles
 ```
 
 No descendant generated under the duplicate/legacy program ABI may remain green.
+
+The R5 disposition receipt is regenerated with
+`python scripts/generate_r5_test_dispositions.py --output artifacts/validation/R5_TEST_DISPOSITIONS.json`,
+authenticated with
+`python scripts/generate_r5_test_dispositions.py --check artifacts/validation/R5_TEST_DISPOSITIONS.json`,
+and exercised by
+`python -m pytest tests/test_r5_legacy_hard_cut.py -q -p no:cacheprovider`.
+The foundation contract and its strict schema are checked by
+`python -m pytest tests/test_r5_foundation.py -q -p no:cacheprovider`. These
+commands validate evidence and configuration; neither command constitutes R5
+admission.
 
 ## 6. Forbidden compatibility
 
