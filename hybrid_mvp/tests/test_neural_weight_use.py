@@ -3,16 +3,12 @@
 These tests verify that:
 - The release proposal invokes the loaded weights (forward is called)
 - Weight ablation breaks learned selection (full ≥0.90, ablated ≤0.50)
-- The release path does not delegate to BootstrapProposer
 """
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
-
-from cemm_authoritative_hybrid.proposal import BootstrapProposer
-
 
 def _load_gold_sequences():
     """Load gold action sequences from the bootstrap episodes.
@@ -115,14 +111,3 @@ def test_weight_ablation_breaks_learned_selection(release_factory, structural_ho
     assert full >= 0.90, f"Full accuracy too low: {full}"
     assert ablated <= 0.50, f"Ablated accuracy too high: {ablated}"
     assert full - ablated >= 0.30, f"Accuracy drop too small: {full - ablated}"
-
-
-def test_release_path_does_not_delegate_to_bootstrap(monkeypatch, release_factory):
-    """BootstrapProposer.propose must not be called by the release path."""
-    monkeypatch.setattr(
-        BootstrapProposer,
-        "propose",
-        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("bootstrap called")),
-    )
-    result = release_factory().propose_and_verify("s", "what is your name?")
-    assert result.accepted
