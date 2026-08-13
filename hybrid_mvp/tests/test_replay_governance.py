@@ -738,17 +738,15 @@ __cemm_test_inventory__ = {
     "tests/test_replay_governance.py::test_r5_governing_plan_uses_exact_frozen_inventory_partition": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-governing-plan-uses-exact-frozen-inventory-partition",
-        "diagnostic_role": "owner",
+        "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-0",
-        "owner_ref": "governance",
         "source_ast_sha256": "51d3975e9ebf074c3b68b816112b5883abe1c90a846b7c837b5c5c6ccf4dd3c3"
     },
     "tests/test_replay_governance.py::test_r5_appendix_guard_rejects_wrong_section_and_owner_mutations": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-appendix-guard-rejects-wrong-section-and-owner-mutations",
-        "diagnostic_role": "owner",
+        "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-0-Review-Fix",
-        "owner_ref": "governance",
         "source_ast_sha256": "7eefb5752b86c7ae24fad2ad5d38003ed6c472062df52bba56f207ff10cd6295"
     }
 }

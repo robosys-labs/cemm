@@ -1767,6 +1767,62 @@ def test_committed_tree_parser_rejects_ambiguous_or_unsafe_records(
             committed,
         )
 
+def test_r5_gate_plans_are_exact_bounded_and_single_process() -> None:
+    graph = validation_gate_module.load_gate_graph(
+        ROOT / "configs" / "validation_gates.json"
+    )
+    expected_counts = {
+        "artifact-contract": 15,
+        "data-isolation": 12,
+        "legacy-hard-cut": 26,
+        "proposal-contract": 3,
+        "realization-contract": 1,
+    }
+
+    assert set(graph.phases["R5"].owners) == set(expected_counts)
+    for owner, expected_count in expected_counts.items():
+        resolved = graph.resolve_phase("R5", "owner", owner)
+        assert resolved == (
+            "governance",
+            "source_compile",
+            f"r5_{owner.replace('-', '_')}_owner_tests",
+        )
+        assert graph.pytest_process_count("R5", "owner", owner) == 1
+        assert len(graph.resolve_pytest_nodes("R5", "owner", owner)) == expected_count
+        assert len(resolved) <= graph.limits["max_steps_per_tier"]
+
+    assert graph.resolve_phase("R5", "phase") == (
+        "governance",
+        "source_compile",
+        "r5_phase_tests",
+    )
+    assert graph.pytest_process_count("R5", "phase") == 1
+    phase_nodes = set(graph.resolve_pytest_nodes("R5", "phase"))
+    assert len(phase_nodes) == 6
+    assert {
+        "tests/test_replay_governance.py::test_r5_appendix_guard_rejects_wrong_section_and_owner_mutations",
+        "tests/test_replay_governance.py::test_r5_governing_plan_uses_exact_frozen_inventory_partition",
+    }.issubset(phase_nodes)
+
+
+def test_r5_admission_rejects_before_execution_or_publication(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("R5 admission crossed the unavailable boundary")
+
+    monkeypatch.setattr(validation_gate_module, "_clean_git_snapshot", forbidden)
+    monkeypatch.setattr(validation_gate_module, "_temporary_run_root", forbidden)
+    monkeypatch.setattr(validation_gate_module, "write_receipt_exclusive", forbidden)
+
+    with pytest.raises(AdmissionValidationError, match=r"^R5 admission is not available$"):
+        validation_gate_module.run_validation(
+            ROOT,
+            phase="R5",
+            tier="admission",
+        )
+
+
 __cemm_test_inventory__ = {
     "tests/test_validation_gate.py::test_bounded_process_capture_cleans_up_when_thread_start_fails": {
         "activation_phase": "G0",
@@ -2023,6 +2079,20 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "G0-Task-4",
         "owner_ref": "validation-runner",
         "source_ast_sha256": "89fb93d771a17554797ef7c908d3b914504497a38d7555c4a8ce3dc109c67670"
+    },
+    "tests/test_validation_gate.py::test_r5_admission_rejects_before_execution_or_publication": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-admission-rejects-before-execution",
+        "diagnostic_role": "admission_only",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "source_ast_sha256": "2d21aab4aa96a44aee0e086641a841b86c5e3e749b35c7f8fd4894a670a1a388"
+    },
+    "tests/test_validation_gate.py::test_r5_gate_plans_are_exact_bounded_and_single_process": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-validation-plans-exact-bounded-single-process",
+        "diagnostic_role": "admission_only",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "source_ast_sha256": "c8c16c26ba8adf7f3781f5435a035e27a2b2f204e108242265980802ed236aff"
     },
     "tests/test_validation_gate.py::test_runner_records_injected_peak_rss": {
         "activation_phase": "G0",

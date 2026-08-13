@@ -5610,6 +5610,8 @@ def run_validation(
     graph, config_raw = _load_gate_graph_with_source(config_target)
     roots = graph._roots(phase, tier, owner)
     resolved = graph.resolve_phase(phase, tier, owner)
+    if phase == "R5" and tier == "admission":
+        raise AdmissionValidationError("R5 admission is not available")
     if not roots or not resolved:
         return ValidationOutcome(
             phase=phase, tier=tier, owner=owner, disposition="not_applicable",
