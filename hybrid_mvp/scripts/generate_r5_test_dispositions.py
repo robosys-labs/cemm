@@ -7,7 +7,6 @@ import argparse
 import json
 from pathlib import Path
 import sys
-from typing import Mapping
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,7 +74,7 @@ def build_receipt(root: Path = ROOT) -> dict[str, object]:
         receipt = build_r5_test_disposition_receipt(root_path, dispositions)
     except R5TestDispositionError as exc:
         raise R5DispositionReceiptError(str(exc)) from exc
-    validate_receipt(root_path, receipt, _expected=receipt)
+    _validate_receipt_structure(receipt)
     return receipt
 
 
@@ -85,14 +84,7 @@ def canonical_receipt_bytes(root: Path = ROOT) -> bytes:
     return _canonical_bytes(build_receipt(root))
 
 
-def validate_receipt(
-    root: Path,
-    candidate: object,
-    *,
-    _expected: Mapping[str, object] | None = None,
-) -> None:
-    """Require exact equality with a fresh authenticated reconstruction."""
-
+def _validate_receipt_structure(candidate: object) -> None:
     if type(candidate) is not dict or set(candidate) != _RECEIPT_FIELDS:
         raise R5DispositionReceiptError("receipt must have exact authenticated fields")
     if candidate.get("schema") != "cemm-r5-test-disposition-receipt-v1":
@@ -109,7 +101,13 @@ def validate_receipt(
         without_ref,
     ):
         raise R5DispositionReceiptError("receipt_ref does not match receipt content")
-    expected = dict(_expected) if _expected is not None else build_receipt(root)
+
+
+def validate_receipt(root: Path, candidate: object) -> None:
+    """Require exact equality with a fresh authenticated reconstruction."""
+
+    _validate_receipt_structure(candidate)
+    expected = build_receipt(root)
     if candidate != expected:
         raise R5DispositionReceiptError(
             "receipt does not match authenticated inventory, disposition, and metadata"
