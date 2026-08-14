@@ -8,7 +8,7 @@ import os
 import re
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 
 import pytest
@@ -758,6 +758,15 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "R4-Partition-Corrective-Task-1",
         "source_ast_sha256": "6ede0f0b23177148ad344b7d69bb6245bc197d0531e3b2659a5f4b659a9db0d3"
     },
+
+    "tests/test_replay_governance.py::test_r4_partition_defect_binding_matches_invalidated_source_base": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-partition-defect-binding-matches-current-pre-invalidation-artifacts",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R4-Partition-Corrective-Task-2",
+        "source_ast_sha256": "24d967e42130097eafa992acdb96f565dc5b7b91b0310dd8a55f804537dc475b",
+        "supersedes_node_id": "tests/test_replay_governance.py::test_r4_partition_defect_binding_matches_current_pre_invalidation_artifacts"
+    },
     "tests/test_replay_governance.py::test_r5_governing_plan_uses_exact_frozen_inventory_partition": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-governing-plan-uses-exact-frozen-inventory-partition",
@@ -814,6 +823,49 @@ def _authority() -> dict[str, object]:
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _bounded_git_blob_at(
+    source_base: str,
+    relative: str,
+    *,
+    maximum: int,
+) -> bytes:
+    assert re.fullmatch(r"[0-9a-f]{40}(?:[0-9a-f]{24})?", source_base)
+    path = PurePosixPath(relative)
+    assert not path.is_absolute()
+    assert path.parts and ".." not in path.parts and "\\" not in relative
+    assert path.as_posix() == relative
+    assert type(maximum) is int and maximum > 0
+    expression = f"{source_base}:hybrid_mvp/{relative}"
+    metadata = governance._run_bounded_git_stdout(
+        (
+            "git",
+            "--no-replace-objects",
+            "-C",
+            str(ROOT.parent),
+            "cat-file",
+            "--batch-check=%(objectname) %(objecttype) %(objectsize)",
+        ),
+        max_bytes=512,
+        input_bytes=(expression + "\n").encode("ascii"),
+    )
+    rows = metadata.splitlines()
+    assert len(rows) == 1
+    fields = rows[0].split()
+    assert len(fields) == 3
+    object_id = fields[0].decode("ascii")
+    object_type = fields[1].decode("ascii")
+    size = int(fields[2])
+    assert re.fullmatch(r"[0-9a-f]{40}(?:[0-9a-f]{24})?", object_id)
+    assert object_type == "blob"
+    assert 0 < size <= maximum
+    blobs = governance._git_batch_load_checked_blobs(
+        ROOT.parent,
+        (governance._CheckedBlob(source_base, object_id, size),),
+    )
+    assert set(blobs) == {source_base}
+    return blobs[source_base]
 
 
 def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
@@ -906,6 +958,82 @@ def test_r4_partition_defect_binding_matches_current_pre_invalidation_artifacts(
     assert _sha256(receipt) == (
         "0069ae2c8a301700498aba4801df96205f9166938e1b21d3336aa1768d75dec6"
     )
+    assert "training_allowlist_v2:51c0cc234805cdda54f8e2c7" in design
+    assert "r4_build_v3:5d5eee0ee8c0e7bb1bcba522" in design
+
+
+def test_r4_partition_defect_binding_matches_invalidated_source_base(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    records = read_hash_chain(ROOT / "governance/replay_status.jsonl")
+    red_rows = [
+        record
+        for record in records[9:]
+        if record["phase"] == "R4" and record["status"] == "red"
+    ]
+    assert len(red_rows) == 1
+    red = red_rows[0]
+    sequence = red["sequence"]
+    assert type(sequence) is int and sequence > 0
+    assert red["predecessor_ref"] == records[sequence - 1]["record_ref"]
+    assert red["admission_gate_result_ref"] is None
+    assert red["admission_run_ref"] is None
+    assert red["rationale"] == "Invalidated R4 pending a fresh admission receipt."
+    source_base = red["source_base"]
+    assert type(source_base) is str
+
+    blocked = {
+        (ROOT / "artifacts/r4/training_allowlist.json").resolve(),
+        (ROOT / "artifacts/r4/BUILD_RECEIPT.json").resolve(),
+        (
+            ROOT
+            / "docs/superpowers/specs/"
+            "2026-08-14-r4-partition-corrective-replay-design.md"
+        ).resolve(),
+    }
+    original_read_bytes = Path.read_bytes
+    original_read_text = Path.read_text
+
+    def reject_current_bytes(path: Path) -> bytes:
+        if path.resolve() in blocked:
+            raise AssertionError("historical defect binding read a mutable current file")
+        return original_read_bytes(path)
+
+    def reject_current_text(
+        path: Path, *args: object, **kwargs: object
+    ) -> str:
+        if path.resolve() in blocked:
+            raise AssertionError("historical defect binding read a mutable current file")
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_bytes", reject_current_bytes)
+    monkeypatch.setattr(Path, "read_text", reject_current_text)
+
+    allowlist_raw = _bounded_git_blob_at(
+        source_base, "artifacts/r4/training_allowlist.json", maximum=1024 * 1024
+    )
+    receipt_raw = _bounded_git_blob_at(
+        source_base, "artifacts/r4/BUILD_RECEIPT.json", maximum=1024 * 1024
+    )
+    design_raw = _bounded_git_blob_at(
+        source_base,
+        "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
+        maximum=2 * 1024 * 1024,
+    )
+
+    assert hashlib.sha256(allowlist_raw).hexdigest() == (
+        "3c47c3e66771add72a541342a5669ef5c93286356eb1ae0c0de9eb86d9b3d2db"
+    )
+    assert hashlib.sha256(receipt_raw).hexdigest() == (
+        "0069ae2c8a301700498aba4801df96205f9166938e1b21d3336aa1768d75dec6"
+    )
+    allowlist = json.loads(allowlist_raw.decode("utf-8", errors="strict"))
+    receipt = json.loads(receipt_raw.decode("utf-8", errors="strict"))
+    design = design_raw.decode("utf-8", errors="strict")
+    assert allowlist["allowlist_ref"] == (
+        "training_allowlist_v2:51c0cc234805cdda54f8e2c7"
+    )
+    assert receipt["receipt_ref"] == "r4_build_v3:5d5eee0ee8c0e7bb1bcba522"
     assert "training_allowlist_v2:51c0cc234805cdda54f8e2c7" in design
     assert "r4_build_v3:5d5eee0ee8c0e7bb1bcba522" in design
 

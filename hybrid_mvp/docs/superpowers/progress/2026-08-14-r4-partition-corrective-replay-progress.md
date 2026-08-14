@@ -91,7 +91,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 - [x] Obtain approval for globally coherent four-class architecture.
 - [x] Complete written-spec review.
 - [x] Add approved spec and implementation plan to document authority.
-- [ ] Write append-only invalidation procedure and exact evidence binding.
+- [x] Write append-only invalidation procedure and exact evidence binding.
 
 ### Partition contracts
 
@@ -218,13 +218,13 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | 2026-08-14 | `origin/codex/r4-partition-corrective-replay@45142bb` | Corrective design published and independently reviewed | Contract review passed after exact leakage, train-boundary, access, and invalidation fixes |
 | 2026-08-14 | `codex/r4-partition-corrective-replay@b3e4c33` | Executable corrective plan committed after dual independent review | Contract and code-path reviews passed; 65 TDD steps; no source/ledger/artifact mutation |
 | 2026-08-14 | `codex/r4-partition-corrective-replay@c96de455bc2220638bf08d172136821a0cb2d047` | Corrective spec/plan promoted to governing authority with exact pre-invalidation defect binding | Governance and inventory suites passed; replay chain verified; ledger and R4 data unchanged |
-| 2026-08-14 | `codex/r4-partition-corrective-replay` | R4 partition evidence invalidated from committed source base `bc7e4c6ee8493d84cc2729bdb060109b07bc1cba` | Append-only `governance_record:65ff94bf1c6e014cf04abab2`; chain verified; no artifact or run receipt created |
+| 2026-08-14 | `codex/r4-partition-corrective-replay@3085df72a9969df4289d6bf35a576a272378f062` | R4 partition evidence invalidated from committed source base `bc7e4c6ee8493d84cc2729bdb060109b07bc1cba` | Append-only `governance_record:65ff94bf1c6e014cf04abab2`; chain verified; no artifact or run receipt created |
 
 ## 11. Current checkpoint
 
-**Current work:** P4 complete; `governance_record:65ff94bf1c6e014cf04abab2` invalidates R4 from source base `bc7e4c6ee8493d84cc2729bdb060109b07bc1cba`.
-**Next required action:** complete the historical-source defect-binding successor before partition ABI source work.
-**Implementation authorization:** the ledger invalidation is complete; partition source implementation remains blocked until the historical binding is committed.
+**Current work:** P5 in progress; Task 2 invalidation `governance_record:65ff94bf1c6e014cf04abab2` and historical binding are complete at `3085df72a9969df4289d6bf35a576a272378f062`.
+**Next required action:** Task 3 defines and tests the strict partition, sufficiency, config, and class-capability ABIs.
+**Implementation authorization:** partition ABI source work is authorized; artifact generation and neural training remain blocked.
 **R5 neural work:** blocked on authentic R4 re-admission.
 
 ## 12. Exact invalidation evidence
