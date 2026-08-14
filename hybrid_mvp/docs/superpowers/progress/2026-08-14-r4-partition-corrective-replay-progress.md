@@ -71,8 +71,8 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | P1 | R4/R5 entry audit | complete | Empty allowlist and stale neural artifacts | Root-cause reports and approved repair direction |
 | P2 | Written R4 corrective design | complete | Approved architecture | Written spec and independent contract review passed |
 | P3 | Governing implementation plan | complete | Approved written spec | Detailed TDD plan reviewed and committed at `b3e4c33` |
-| P4 | Governance authority and R4 invalidation | in_progress | Governing spec/plan and clean branch | Append-only R4 red record; chain verified |
-| P5 | Partition ABI and algorithm implementation | pending | RED corruption/feasibility tests | Global assignment and independent reconstruction green |
+| P4 | Governance authority and R4 invalidation | complete | Governing spec/plan and clean branch | Append-only R4 red record; chain verified |
+| P5 | Partition ABI and algorithm implementation | in_progress | RED corruption/feasibility tests | Global assignment and independent reconstruction green |
 | P6 | Active R5 train-only capability migration | pending | New class-capability ABI | Legacy train authority absent; foundation isolation green |
 | P7 | Four-class artifact regeneration | pending | Committed generator source | Two byte-identical candidate trees and ABI 4 artifact commit |
 | P8 | R4 owner/phase/admission verification | pending | Clean artifact commit | All gates plus clean repository-owned admission pass |
@@ -138,8 +138,8 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 
 ### Replay and validation
 
-- [ ] Append reviewed R4 red invalidation.
-- [ ] Verify G0-R3 remain green and R4+ reset correctly.
+- [x] Append reviewed R4 red invalidation.
+- [x] Verify G0-R3 remain green and R4+ reset correctly.
 - [ ] Run two independent deterministic artifact builds.
 - [ ] Run one controller-bounded G0-R5 pre-admission phase sweep.
 - [ ] Run repository-owned R4 admission.
@@ -163,7 +163,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 |---|---|---|---|
 | Written design review | approved | passed | Corrective design spec at `45142bb` |
 | Frozen inventory integrity | unchanged unless separately governed | base verified | `docs/DOCUMENT_AUTHORITY.json` pin |
-| R4 invalidation | append-only red | pending | replay ledger |
+| R4 invalidation | append-only red | passed | `governance_record:65ff94bf1c6e014cf04abab2` from `bc7e4c6ee8493d84cc2729bdb060109b07bc1cba` |
 | Four-class source coverage | exact 400/400 | pending | split manifest |
 | Class disjointness | zero overlap | pending | partition sufficiency receipt |
 | Leakage isolation | zero cross-class key | pending | Partition Evidence ABI 3 |
@@ -218,12 +218,13 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | 2026-08-14 | `origin/codex/r4-partition-corrective-replay@45142bb` | Corrective design published and independently reviewed | Contract review passed after exact leakage, train-boundary, access, and invalidation fixes |
 | 2026-08-14 | `codex/r4-partition-corrective-replay@b3e4c33` | Executable corrective plan committed after dual independent review | Contract and code-path reviews passed; 65 TDD steps; no source/ledger/artifact mutation |
 | 2026-08-14 | `codex/r4-partition-corrective-replay@c96de455bc2220638bf08d172136821a0cb2d047` | Corrective spec/plan promoted to governing authority with exact pre-invalidation defect binding | Governance and inventory suites passed; replay chain verified; ledger and R4 data unchanged |
+| 2026-08-14 | `codex/r4-partition-corrective-replay` | R4 partition evidence invalidated from committed source base `bc7e4c6ee8493d84cc2729bdb060109b07bc1cba` | Append-only `governance_record:65ff94bf1c6e014cf04abab2`; chain verified; no artifact or run receipt created |
 
 ## 11. Current checkpoint
 
-**Current work:** P4 in progress; Task 1 authority tranche complete at `c96de455bc2220638bf08d172136821a0cb2d047`.
-**Next required action:** Task 2 appends the truthful R4-red invalidation from this clean committed source base.
-**Implementation authorization:** execution is authorized; partition implementation remains blocked until the append-only invalidation is committed.
+**Current work:** P4 complete; `governance_record:65ff94bf1c6e014cf04abab2` invalidates R4 from source base `bc7e4c6ee8493d84cc2729bdb060109b07bc1cba`.
+**Next required action:** complete the historical-source defect-binding successor before partition ABI source work.
+**Implementation authorization:** the ledger invalidation is complete; partition source implementation remains blocked until the historical binding is committed.
 **R5 neural work:** blocked on authentic R4 re-admission.
 
 ## 12. Exact invalidation evidence
