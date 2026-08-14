@@ -71,7 +71,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | P1 | R4/R5 entry audit | complete | Empty allowlist and stale neural artifacts | Root-cause reports and approved repair direction |
 | P2 | Written R4 corrective design | complete | Approved architecture | Written spec and independent contract review passed |
 | P3 | Governing implementation plan | complete | Approved written spec | Detailed TDD plan reviewed and committed at `b3e4c33` |
-| P4 | Governance authority and R4 invalidation | pending | Governing spec/plan and clean branch | Append-only R4 red record; chain verified |
+| P4 | Governance authority and R4 invalidation | in_progress | Governing spec/plan and clean branch | Append-only R4 red record; chain verified |
 | P5 | Partition ABI and algorithm implementation | pending | RED corruption/feasibility tests | Global assignment and independent reconstruction green |
 | P6 | Active R5 train-only capability migration | pending | New class-capability ABI | Legacy train authority absent; foundation isolation green |
 | P7 | Four-class artifact regeneration | pending | Committed generator source | Two byte-identical candidate trees and ABI 4 artifact commit |
@@ -90,7 +90,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 - [x] Obtain approval for R4-first corrective replay.
 - [x] Obtain approval for globally coherent four-class architecture.
 - [x] Complete written-spec review.
-- [ ] Add approved spec and implementation plan to document authority.
+- [x] Add approved spec and implementation plan to document authority.
 - [ ] Write append-only invalidation procedure and exact evidence binding.
 
 ### Partition contracts
@@ -220,9 +220,9 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 
 ## 11. Current checkpoint
 
-**Current work:** P3 complete; publication checkpoint.
-**Next required decision:** select subagent-driven or inline execution before source or ledger mutation.
-**Implementation authorization:** design and detailed plan approved/reviewed; execution mode remains the next explicit handoff.
+**Current work:** P4 in progress; exact authority, defect binding, selector, and living-receipt tranche.
+**Next required action:** commit and verify the authority-only Task 1 tranche before any replay-ledger mutation.
+**Implementation authorization:** execution is authorized; R4 data generation and replay-ledger mutation remain outside this tranche.
 **R5 neural work:** blocked on authentic R4 re-admission.
 
 ## 12. Exact invalidation evidence

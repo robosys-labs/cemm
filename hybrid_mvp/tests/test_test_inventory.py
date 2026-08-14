@@ -1613,7 +1613,7 @@ def test_r5_real_overlay_is_exact_and_g0_through_r4_are_unchanged() -> None:
         "R1": "active_test_nodes:614d9a53a12a2af9f8521553",
         "R2": "active_test_nodes:99397e3af1310ae238ebfada",
         "R3": "active_test_nodes:d207e42b5546fbcfb7f19a03",
-        "R4": "active_test_nodes:a6b4bb6c542f13ffe4e70188",
+        "R4": "active_test_nodes:a69a5c1083e4b61438c896f0",
     }
     inventory_path = ROOT / "governance" / "test_inventory.json"
 
@@ -2220,7 +2220,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3",
-        "source_ast_sha256": "32fed530b7f490ef4fa748f9066a969d0e59618a4a4a7362a8c450e8085bfdbc",
+        "source_ast_sha256": "ab9ff707e6370b035d85bc8ebb3bb0f00310872e29ae9e70546067d69ca7df51",
     },
     "tests/test_test_inventory.py::test_r5_real_disposition_partition_rejects_missing_or_extra_rows": {
         "assertion_ref": "assertion:r5-test-inventory-real-partition-is-exact",

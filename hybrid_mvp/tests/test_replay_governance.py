@@ -42,6 +42,8 @@ GOVERNING_DOCUMENTS = (
     "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
     "docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md",
     "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md",
+    "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
+    "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md",
 )
 
 SUPERSEDED_EXECUTION_CLAIMS = (
@@ -735,6 +737,27 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "6b2315aab7f4ddce2e3d52eeba8adb519d8557346ac45adece0e35e0e54067eb"
     },
+    "tests/test_replay_governance.py::test_corrective_tracker_is_operational_not_status_authority": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:corrective-tracker-is-operational-not-status-authority",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R4-Partition-Corrective-Task-1",
+        "source_ast_sha256": "523f5ccfefa21a5e35710d140014c041e0ef2ba768ffe3d111aadf65a3993d97"
+    },
+    "tests/test_replay_governance.py::test_r4_partition_corrective_authority_is_exact": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-partition-corrective-authority-is-exact",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R4-Partition-Corrective-Task-1",
+        "source_ast_sha256": "e185fb056f55d3ac58b86f4a7551b446e5adba380dca34439f7999e99d0fead9"
+    },
+    "tests/test_replay_governance.py::test_r4_partition_defect_binding_matches_current_pre_invalidation_artifacts": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-partition-defect-binding-matches-current-pre-invalidation-artifacts",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R4-Partition-Corrective-Task-1",
+        "source_ast_sha256": "6ede0f0b23177148ad344b7d69bb6245bc197d0531e3b2659a5f4b659a9db0d3"
+    },
     "tests/test_replay_governance.py::test_r5_governing_plan_uses_exact_frozen_inventory_partition": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-governing-plan-uses-exact-frozen-inventory-partition",
@@ -758,10 +781,39 @@ __cemm_test_inventory__ = {
     }
 }
 
-def _authority() -> dict[str, object]:
-    return json.loads(
-        (ROOT / "docs/DOCUMENT_AUTHORITY.json").read_text(encoding="utf-8")
+def _strict_json_object(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if type(key) is not str or key in result:
+            raise ValueError(f"duplicate or non-string JSON key: {key!r}")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite_json(value: str) -> object:
+    raise ValueError(f"non-finite JSON value: {value}")
+
+
+def _strict_document_authority() -> dict[str, object]:
+    raw = (ROOT / "docs/DOCUMENT_AUTHORITY.json").read_bytes()
+    assert raw.endswith(b"\n")
+    authority = json.loads(
+        raw.decode("utf-8", errors="strict"),
+        object_pairs_hook=_strict_json_object,
+        parse_constant=_reject_nonfinite_json,
     )
+    assert type(authority) is dict
+    return authority
+
+
+def _authority() -> dict[str, object]:
+    return _strict_document_authority()
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
@@ -834,6 +886,35 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
     mutation = mutation_source.replace(publication_status, "**Status:**", 1)
     with pytest.raises(AssertionError):
         _assert_historical_status_document(HISTORICAL_STATUS_DOCUMENTS[2], mutation)
+
+
+
+def test_r4_partition_corrective_authority_is_exact() -> None:
+    authority = _strict_document_authority()
+    governing = set(authority["governing_documents"])
+    assert "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md" in governing
+    assert "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md" in governing
+
+
+def test_r4_partition_defect_binding_matches_current_pre_invalidation_artifacts() -> None:
+    allowlist = ROOT / "artifacts/r4/training_allowlist.json"
+    receipt = ROOT / "artifacts/r4/BUILD_RECEIPT.json"
+    design = (ROOT / "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md").read_text(encoding="utf-8")
+    assert _sha256(allowlist) == (
+        "3c47c3e66771add72a541342a5669ef5c93286356eb1ae0c0de9eb86d9b3d2db"
+    )
+    assert _sha256(receipt) == (
+        "0069ae2c8a301700498aba4801df96205f9166938e1b21d3336aa1768d75dec6"
+    )
+    assert "training_allowlist_v2:51c0cc234805cdda54f8e2c7" in design
+    assert "r4_build_v3:5d5eee0ee8c0e7bb1bcba522" in design
+
+
+def test_corrective_tracker_is_operational_not_status_authority() -> None:
+    text = (ROOT / "docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md").read_text(encoding="utf-8")
+    assert "governance/replay_status.jsonl" in text
+    assert "never replay-status authority" in text
+    assert not re.search(r"run:[0-9a-f]{24}", text)
 
 
 _R5_SUCCESSOR_CONTRACT = {
