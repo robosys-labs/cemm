@@ -1,0 +1,40 @@
+name: R4 Task 4 envelope export
+
+on:
+  push:
+    branches:
+      - codex/r4-task4-publication
+    paths:
+      - .github/workflows/r4-task4-envelope-export.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r4-task4-publication
+          fetch-depth: 1
+
+      - name: Inventory staged envelope
+        shell: bash
+        run: |
+          set -euo pipefail
+          find .github/r4-task4-source-v5 -maxdepth 1 -type f -name 'patch.*' -print0 \
+            | sort -z \
+            | xargs -0 sha256sum > /tmp/R4_TASK4_ENVELOPE_SHA256SUMS
+          cat /tmp/R4_TASK4_ENVELOPE_SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-r4-task4-envelope-v5
+          path: |
+            .github/r4-task4-source-v5/patch.*
+            /tmp/R4_TASK4_ENVELOPE_SHA256SUMS
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
