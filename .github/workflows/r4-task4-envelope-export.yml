@@ -20,28 +20,29 @@ jobs:
           ref: codex/r4-task4-publication
           fetch-depth: 1
 
-      - name: Inventory all independently staged Task 4 payloads
+      - name: Copy and inventory all independently staged Task 4 payloads
         shell: bash
         run: |
           set -euo pipefail
-          find .github -maxdepth 3 -type f \
-            \( -path '.github/r4-task4-source-*/*' \
-               -o -path '.github/r4-task4-publisher-*/*' \
-               -o -name 'r4_task4_source_patch.gz.b64' \
-               -o -name 'r4_task4_publish.py.gz.b64' \) \
-            -print0 | sort -z | xargs -0 sha256sum \
-            > /tmp/R4_TASK4_ALL_PAYLOAD_SHA256SUMS
-          cat /tmp/R4_TASK4_ALL_PAYLOAD_SHA256SUMS
+          mkdir -p /tmp/task4-payloads
+          for path in .github/r4-task4-source-* .github/r4-task4-publisher-*; do
+            if test -e "$path"; then
+              cp -a "$path" /tmp/task4-payloads/
+            fi
+          done
+          for path in .github/r4_task4_source_patch.gz.b64 .github/r4_task4_publish.py.gz.b64; do
+            if test -f "$path"; then
+              cp "$path" /tmp/task4-payloads/
+            fi
+          done
+          find /tmp/task4-payloads -type f -print0 | sort -z | xargs -0 sha256sum \
+            > /tmp/task4-payloads/R4_TASK4_ALL_PAYLOAD_SHA256SUMS
+          cat /tmp/task4-payloads/R4_TASK4_ALL_PAYLOAD_SHA256SUMS
 
       - uses: actions/upload-artifact@v4
         with:
-          name: cemm-r4-task4-all-staged-payloads
-          path: |
-            .github/r4-task4-source-*/**
-            .github/r4-task4-publisher-*/**
-            .github/r4_task4_source_patch.gz.b64
-            .github/r4_task4_publish.py.gz.b64
-            /tmp/R4_TASK4_ALL_PAYLOAD_SHA256SUMS
+          name: cemm-r4-task4-all-staged-payloads-v2
+          path: /tmp/task4-payloads
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
