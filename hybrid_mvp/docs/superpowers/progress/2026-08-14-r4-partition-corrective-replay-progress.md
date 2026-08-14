@@ -217,12 +217,13 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | 2026-08-13 | `origin/codex/r5-hard-cut-foundation@107c518` | R5 foundation published | Full governed suite and Task 10 closeout passed |
 | 2026-08-14 | `origin/codex/r4-partition-corrective-replay@45142bb` | Corrective design published and independently reviewed | Contract review passed after exact leakage, train-boundary, access, and invalidation fixes |
 | 2026-08-14 | `codex/r4-partition-corrective-replay@b3e4c33` | Executable corrective plan committed after dual independent review | Contract and code-path reviews passed; 65 TDD steps; no source/ledger/artifact mutation |
+| 2026-08-14 | `codex/r4-partition-corrective-replay@c96de455bc2220638bf08d172136821a0cb2d047` | Corrective spec/plan promoted to governing authority with exact pre-invalidation defect binding | Governance and inventory suites passed; replay chain verified; ledger and R4 data unchanged |
 
 ## 11. Current checkpoint
 
-**Current work:** P4 in progress; exact authority, defect binding, selector, and living-receipt tranche.
-**Next required action:** commit and verify the authority-only Task 1 tranche before any replay-ledger mutation.
-**Implementation authorization:** execution is authorized; R4 data generation and replay-ledger mutation remain outside this tranche.
+**Current work:** P4 in progress; Task 1 authority tranche complete at `c96de455bc2220638bf08d172136821a0cb2d047`.
+**Next required action:** Task 2 appends the truthful R4-red invalidation from this clean committed source base.
+**Implementation authorization:** execution is authorized; partition implementation remains blocked until the append-only invalidation is committed.
 **R5 neural work:** blocked on authentic R4 re-admission.
 
 ## 12. Exact invalidation evidence
