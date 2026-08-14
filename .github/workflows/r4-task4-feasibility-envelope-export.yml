@@ -20,21 +20,21 @@ jobs:
           ref: codex/r4-task4-feasibility
           fetch-depth: 1
 
-      - name: Inventory feasibility envelope
+      - name: Copy and inventory feasibility envelope
         shell: bash
         run: |
           set -euo pipefail
-          find .github/r4-task4 -maxdepth 1 -type f -name 'patch.*' -print0 \
+          mkdir -p /tmp/task4-feasibility-envelope
+          cp -a .github/r4-task4/. /tmp/task4-feasibility-envelope/
+          find /tmp/task4-feasibility-envelope -type f -print0 \
             | sort -z | xargs -0 sha256sum \
-            > /tmp/R4_TASK4_FEASIBILITY_ENVELOPE_SHA256SUMS
-          cat /tmp/R4_TASK4_FEASIBILITY_ENVELOPE_SHA256SUMS
+            > /tmp/task4-feasibility-envelope/R4_TASK4_FEASIBILITY_ENVELOPE_SHA256SUMS
+          cat /tmp/task4-feasibility-envelope/R4_TASK4_FEASIBILITY_ENVELOPE_SHA256SUMS
 
       - uses: actions/upload-artifact@v4
         with:
-          name: cemm-r4-task4-feasibility-envelope
-          path: |
-            .github/r4-task4/patch.*
-            /tmp/R4_TASK4_FEASIBILITY_ENVELOPE_SHA256SUMS
+          name: cemm-r4-task4-feasibility-envelope-v2
+          path: /tmp/task4-feasibility-envelope
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
