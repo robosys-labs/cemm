@@ -219,12 +219,13 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | 2026-08-14 | `codex/r4-partition-corrective-replay@b3e4c33` | Executable corrective plan committed after dual independent review | Contract and code-path reviews passed; 65 TDD steps; no source/ledger/artifact mutation |
 | 2026-08-14 | `codex/r4-partition-corrective-replay@c96de455bc2220638bf08d172136821a0cb2d047` | Corrective spec/plan promoted to governing authority with exact pre-invalidation defect binding | Governance and inventory suites passed; replay chain verified; ledger and R4 data unchanged |
 | 2026-08-14 | `codex/r4-partition-corrective-replay@3085df72a9969df4289d6bf35a576a272378f062` | R4 partition evidence invalidated from committed source base `bc7e4c6ee8493d84cc2729bdb060109b07bc1cba` | Append-only `governance_record:65ff94bf1c6e014cf04abab2`; chain verified; no artifact or run receipt created |
+| 2026-08-14 | `codex/r4-partition-corrective-replay@b9efaba3a05dea0006b74d882671a98fd5f1547e` | Strict R4 partition, sufficiency, config, capability, and authorization contracts registered | Contract/schema/inventory suites passed; owner and phase tiers remained correctly governance-blocked by the deliberate R4-red ledger state |
 
 ## 11. Current checkpoint
 
-**Current work:** P5 in progress; Task 3 strict contracts, schemas, owner tests, ABI registry update, and living receipts are implemented.
-**Next required action:** publish and verify the Task 3 contract checkpoint, then begin Task 4 leakage-key extraction and global component construction.
-**Implementation authorization:** contract source is complete; extraction, assignment, artifact generation, and neural training remain blocked pending this checkpoint.
+**Current work:** P5 in progress; Task 3 strict contract tranche is complete at `b9efaba3a05dea0006b74d882671a98fd5f1547e`.
+**Next required action:** Task 4 implements exact leakage-key extraction and deterministic global component construction.
+**Implementation authorization:** Task 4 source work is authorized; assignment, artifact generation, admission, and neural training remain blocked.
 **R5 neural work:** blocked on authentic R4 re-admission.
 
 ## 12. Exact invalidation evidence
