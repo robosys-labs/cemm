@@ -95,14 +95,14 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 
 ### Partition contracts
 
-- [ ] Define Partition Evidence ABI 3 schema and strict decoder.
-- [ ] Define R4 Split Manifest ABI 1 schema and strict decoder.
-- [ ] Define R4 Partition Sufficiency ABI 1 schema and strict decoder.
-- [ ] Define R4 Class Authorization ABI 1 and admission-rooted trust projection.
-- [ ] Define Partition Config ABI 1 with an acyclic feasibility-basis binding.
+- [x] Define Partition Evidence ABI 3 schema and strict decoder.
+- [x] Define R4 Split Manifest ABI 1 schema and strict decoder.
+- [x] Define R4 Partition Sufficiency ABI 1 schema and strict decoder.
+- [x] Define R4 Class Capability/Authorization ABI 1 and admission-rooted trust projection.
+- [x] Define Partition Config ABI 1 with an acyclic feasibility-basis binding.
 - [ ] Define Build Receipt ABI 4 exact artifact identities.
 - [ ] Reject every ABI 2 training allowlist and ABI 3 build receipt as current input.
-- [ ] Separate leakage-equivalence keys from stratification labels.
+- [x] Separate leakage-equivalence keys from stratification labels at the contract boundary.
 - [ ] Preserve every exact protected identity across all seven axes as a
   namespaced leakage hyperedge.
 - [ ] Reject sentinel/coarse categorical union keys.
@@ -133,7 +133,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 - [ ] Review exact positive minimum counts.
 - [ ] Require support and feasible-component denominators.
 - [ ] Require held-out coverage across configured dimensions.
-- [ ] Reject empty classes and zero-denominator success.
+- [x] Reject empty classes and zero-denominator success at the contract boundary.
 - [ ] Reject assignment changes from seed/objective/tie-break tamper.
 
 ### Replay and validation
@@ -150,9 +150,9 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 
 ### Documentation and publication
 
-- [ ] Update ABI registry and R4 architecture boundary.
+- [x] Update ABI registry and R4 architecture boundary.
 - [ ] Add narrow supersession notices to displaced R4 partition claims.
-- [ ] Regenerate living evidence receipts mechanically.
+- [x] Regenerate living evidence receipts mechanically for the Task 3 contract tranche.
 - [ ] Complete spec and quality reviews.
 - [ ] Push every reviewed checkpoint to the corrective branch.
 - [ ] Record final commit, artifact refs, run refs, and remote publication here.
@@ -222,9 +222,9 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 
 ## 11. Current checkpoint
 
-**Current work:** P5 in progress; Task 2 invalidation `governance_record:65ff94bf1c6e014cf04abab2` and historical binding are complete at `3085df72a9969df4289d6bf35a576a272378f062`.
-**Next required action:** Task 3 defines and tests the strict partition, sufficiency, config, and class-capability ABIs.
-**Implementation authorization:** partition ABI source work is authorized; artifact generation and neural training remain blocked.
+**Current work:** P5 in progress; Task 3 strict contracts, schemas, owner tests, ABI registry update, and living receipts are implemented.
+**Next required action:** publish and verify the Task 3 contract checkpoint, then begin Task 4 leakage-key extraction and global component construction.
+**Implementation authorization:** contract source is complete; extraction, assignment, artifact generation, and neural training remain blocked pending this checkpoint.
 **R5 neural work:** blocked on authentic R4 re-admission.
 
 ## 12. Exact invalidation evidence

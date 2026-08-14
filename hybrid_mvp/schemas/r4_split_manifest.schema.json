@@ -1,0 +1,101 @@
+{
+  "$id": "https://robosys-labs.github.io/cemm/schemas/r4_split_manifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "abi_version": {"const": 1},
+    "authority_generation": {"$ref": "#/$defs/ref"},
+    "classes": {
+      "items": {"$ref": "#/$defs/classRecord"},
+      "maxItems": 4,
+      "minItems": 4,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "config_ref": {"$ref": "#/$defs/ref"},
+    "generator_source_revision": {"pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$", "type": "string"},
+    "manifest_ref": {"$ref": "#/$defs/ref"},
+    "partition_evidence_ref": {"$ref": "#/$defs/ref"},
+    "partition_sufficiency_ref": {"$ref": "#/$defs/ref"},
+    "source_set_ref": {"$ref": "#/$defs/ref"}
+  },
+  "required": [
+    "abi_version",
+    "manifest_ref",
+    "source_set_ref",
+    "generator_source_revision",
+    "authority_generation",
+    "config_ref",
+    "partition_evidence_ref",
+    "partition_sufficiency_ref",
+    "classes"
+  ],
+  "title": "CEMM R4 Split Manifest ABI 1",
+  "type": "object",
+  "$defs": {
+    "classRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "component_refs": {
+          "items": {"$ref": "#/$defs/ref"},
+          "maxItems": 4096,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "label_counts": {
+          "items": {"$ref": "#/$defs/labelCount"},
+          "maxItems": 32768,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "member_refs": {
+          "items": {"$ref": "#/$defs/ref"},
+          "maxItems": 4096,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "payload_count": {"maximum": 4096, "minimum": 1, "type": "integer"},
+        "payload_path": {
+          "pattern": "^artifacts/r4/splits/(train|selection|calibration|frozen_test)\\.jsonl$",
+          "type": "string"
+        },
+        "payload_ref": {"$ref": "#/$defs/ref"},
+        "payload_sha256": {"$ref": "#/$defs/sha256"},
+        "purpose": {"$ref": "#/$defs/purpose"},
+        "split": {"$ref": "#/$defs/split"}
+      },
+      "required": [
+        "split",
+        "purpose",
+        "payload_path",
+        "payload_ref",
+        "payload_sha256",
+        "payload_count",
+        "member_refs",
+        "component_refs",
+        "label_counts"
+      ],
+      "type": "object"
+    },
+    "labelCount": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {"maximum": 4096, "minimum": 1, "type": "integer"},
+        "label_ref": {"$ref": "#/$defs/ref"}
+      },
+      "required": ["label_ref", "count"],
+      "type": "object"
+    },
+    "purpose": {"enum": ["training", "selection", "calibration", "evaluation"]},
+    "ref": {
+      "maxLength": 512,
+      "minLength": 3,
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$",
+      "type": "string"
+    },
+    "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "split": {"enum": ["train", "selection", "calibration", "frozen_test"]}
+  }
+}

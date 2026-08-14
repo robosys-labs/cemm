@@ -1,0 +1,45 @@
+{
+  "$id": "https://robosys-labs.github.io/cemm/schemas/r4_class_capability.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "abi_version": {"const": 1},
+    "capability_ref": {"$ref": "#/$defs/ref"},
+    "payload_count": {"maximum": 4096, "minimum": 1, "type": "integer"},
+    "payload_path": {
+      "pattern": "^artifacts/r4/splits/(train|selection|calibration|frozen_test)\\.jsonl$",
+      "type": "string"
+    },
+    "payload_ref": {"$ref": "#/$defs/ref"},
+    "payload_sha256": {"$ref": "#/$defs/sha256"},
+    "purpose": {"$ref": "#/$defs/purpose"},
+    "source_set_ref": {"$ref": "#/$defs/ref"},
+    "split": {"$ref": "#/$defs/split"},
+    "split_manifest_ref": {"$ref": "#/$defs/ref"}
+  },
+  "required": [
+    "abi_version",
+    "capability_ref",
+    "purpose",
+    "split",
+    "payload_path",
+    "payload_ref",
+    "payload_sha256",
+    "payload_count",
+    "source_set_ref",
+    "split_manifest_ref"
+  ],
+  "title": "CEMM R4 Class Capability ABI 1",
+  "type": "object",
+  "$defs": {
+    "purpose": {"enum": ["training", "selection", "calibration", "evaluation"]},
+    "ref": {
+      "maxLength": 512,
+      "minLength": 3,
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$",
+      "type": "string"
+    },
+    "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "split": {"enum": ["train", "selection", "calibration", "frozen_test"]}
+  }
+}

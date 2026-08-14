@@ -197,14 +197,28 @@ admission.
 - no evaluator accepting a raw program;
 - no old checkpoint loader translating Program ABI v1 at runtime.
 
+## R4 partition corrective hard cut
+
+Partition Axis Manifest ABI 2 and Training Allowlist ABI 2 are retired as
+current R4 inputs. R4 Build Receipt ABI 3 remains historical evidence only and
+is reconstructible from the invalidated source base; it has no current decoder
+or admission authority. The newly registered contracts above do not claim that
+four-class artifacts have been generated, admitted, or activated.
+
 ## R3–R4 implemented ABI allocation
 
 | Query / Proof ABI | **1** | `src/cemm_authoritative_hybrid/r3_artifacts.py` | Episode-serializable | `ExpressionQueryOwner` | Expression-compiled query patterns, revision-pinned retrieval receipts and bounded proof DAGs; unknown is not false. |
 | Authentic Semantic Episode ABI | **3** | `src/cemm_authoritative_hybrid/r4_episodes.py` | Serialized corpus candidate | `AuthenticEpisodeBuilder` | Keeps expected contract, observed public-runtime cycle and comparison receipt separate; no bootstrap output authors semantic gold. |
 | Expected Cycle Contract ABI | **1** | `src/cemm_authoritative_hybrid/r4_contracts.py` | Serialized reviewed contract | `ExpectedCycleContractCompiler` | Total reviewed-assertion compilation with no PROPOSE/runtime dependency and no default-to-designation fallback. |
 | Semantic Mutation ABI | **2** | `src/cemm_authoritative_hybrid/r4_mutations.py` | Serialized corpus candidate | `MutationExecutor` | One declared semantic/environment/persistence change; the authentic execution owner, not the generator, supplies the observed earliest-owner result. |
-| Partition Axis Manifest ABI | **2** | `src/cemm_authoritative_hybrid/r4_partitions.py` | Serialized data boundary | `IndependentAxisPartitioner` | Uses transitive connected components for general, lexical, semantic-target, topology, dialogue, mutation and realization axes and proves exact source-universe coverage. |
-| Training Allowlist ABI | **2** | `src/cemm_authoritative_hybrid/r4_partitions.py` | Serialized training boundary | `IndependentAxisPartitioner` | Training refs are the exact intersection of all seven independently sealed train sets; validation/test refs cannot enter the allowlist. |
-| R4 Build Receipt ABI | **3** | `src/cemm_authoritative_hybrid/r4_pipeline.py` | Serialized admission-candidate evidence | `R4BuildReceipt.from_dict` + `verify_r4_admission` | Reconstructs every committed R4 artifact hash, binds exact generator source and authority generation, and remains `admission_state=candidate` until the governed admission receipt and replay ledger admit it. |
+| Partition Axis Manifest ABI | **2** | Retired historical R4 artifact; no current decoder or admission authority after the corrective hard cut. |
+| Training Allowlist ABI | **2** | Retired historical R4 artifact; no current training authorization after the corrective hard cut. |
+| Partition Evidence ABI | **3** | Strict global leakage-hypergraph, component, source-set, and assignment contract; generation/admission pending. |
+| R4 Split Manifest ABI | **1** | Exact four-class payload/member/component/label manifest; generation/admission pending. |
+| R4 Partition Sufficiency ABI | **1** | Positive-denominator, four-class, per-dimension sufficiency receipt; generation/admission pending. |
+| R4 Class Capability ABI | **1** | Purpose-bound single-class capability with no sibling-class disclosure; minting/admission pending. |
+| R4 Class Authorization ABI | **1** | Independent admitted trust projection over one capability and the artifact graph; minting/admission pending. |
+| Partition Config ABI | **1** | Reviewed integer objective, hard bounds, exact 60/15/15/10 weights, and acyclic feasibility basis. |
+| R4 Build Receipt ABI | **4** | Corrective artifact-graph receipt; registered target; generation and activation remain pending. |
 
 Corpus Review Manifest ABI 2, Approved R4 Build ABI 1, and R4 Build Receipt ABI 2 are retired. They have no active decoder, verifier, or compatibility path.

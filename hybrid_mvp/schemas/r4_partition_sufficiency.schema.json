@@ -1,0 +1,72 @@
+{
+  "$id": "https://robosys-labs.github.io/cemm/schemas/r4_partition_sufficiency.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "abi_version": {"const": 1},
+    "class_counts": {
+      "items": {"$ref": "#/$defs/classCount"},
+      "maxItems": 4,
+      "minItems": 4,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dimension_rows": {
+      "items": {"$ref": "#/$defs/dimensionSufficiency"},
+      "maxItems": 131072,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "passed": {"type": "boolean"},
+    "receipt_ref": {"$ref": "#/$defs/ref"}
+  },
+  "required": ["abi_version", "receipt_ref", "passed", "class_counts", "dimension_rows"],
+  "title": "CEMM R4 Partition Sufficiency ABI 1",
+  "type": "object",
+  "$defs": {
+    "classCount": {
+      "additionalProperties": false,
+      "properties": {
+        "component_count": {"maximum": 4096, "minimum": 1, "type": "integer"},
+        "source_count": {"maximum": 4096, "minimum": 1, "type": "integer"},
+        "split": {"$ref": "#/$defs/split"}
+      },
+      "required": ["split", "source_count", "component_count"],
+      "type": "object"
+    },
+    "dimensionSufficiency": {
+      "additionalProperties": false,
+      "properties": {
+        "dimension_ref": {"$ref": "#/$defs/ref"},
+        "feasible_component_support": {"maximum": 4096, "minimum": 1, "type": "integer"},
+        "infeasibility_reason": {"maxLength": 512, "type": "string"},
+        "maximum": {"maximum": 4096, "minimum": 1, "type": "integer"},
+        "minimum": {"maximum": 4096, "minimum": 1, "type": "integer"},
+        "observed_support": {"maximum": 4096, "minimum": 0, "type": "integer"},
+        "passed": {"type": "boolean"},
+        "source_support": {"maximum": 4096, "minimum": 1, "type": "integer"},
+        "split": {"$ref": "#/$defs/split"}
+      },
+      "required": [
+        "dimension_ref",
+        "split",
+        "source_support",
+        "feasible_component_support",
+        "observed_support",
+        "minimum",
+        "maximum",
+        "passed",
+        "infeasibility_reason"
+      ],
+      "type": "object"
+    },
+    "ref": {
+      "maxLength": 512,
+      "minLength": 3,
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$",
+      "type": "string"
+    },
+    "split": {"enum": ["train", "selection", "calibration", "frozen_test"]}
+  }
+}
