@@ -17,9 +17,14 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 75
+    env:
+      TARGET_BRANCH: codex/r4-partition-corrective-replay
+      EXPECTED_HEAD: 56d233a63be57d9ef611d617a4cf7430826b2324
+      PATCH_SHA256: 61eeb63fb6ce2ef58b62f1acd4e0f02d4633803d8c6da62a44ce5de5ca7cc6b8
+      PYTHONPATH: src
     steps:
-      - name: Checkout authenticated publication payload
+      - name: Checkout authenticated Task 4 source envelope
         uses: actions/checkout@v4
         with:
           ref: codex/r4-task4-publication
@@ -32,45 +37,294 @@ jobs:
           cache: pip
           cache-dependency-path: hybrid_mvp/pyproject.toml
 
-      - name: Preserve authenticated publisher chunks
+      - name: Reconstruct and authenticate exact Task 4 patch
         shell: bash
         run: |
           set -euo pipefail
-          cp .github/r4-task4-publisher-v3/publisher.00 /tmp/r4_task4_publisher.00
-          cp .github/r4-task4-publisher-v3/publisher.01 /tmp/r4_task4_publisher.01
-          cp .github/r4-task4-publisher-v3/publisher.02 /tmp/r4_task4_publisher.02
+          python - <<'PY'
+          from __future__ import annotations
 
-      - name: Checkout exact corrective target
+          import base64
+          import hashlib
+          import lzma
+          from pathlib import Path
+
+          source = Path('.github/r4-task4-source-v5')
+          parts = sorted(source.glob('patch.*'), key=lambda path: int(path.suffix[1:]))
+          indexes = [int(path.suffix[1:]) for path in parts]
+          if indexes != list(range(18)):
+              raise SystemExit(f'non-contiguous Task 4 envelope: {indexes}')
+
+          encoded = b''.join(path.read_bytes().strip() for path in parts)
+          canonical = b''.join(encoded.split()).rstrip(b'=')
+          canonical += b'=' * (-len(canonical) % 4)
+          packed = base64.b64decode(canonical, validate=True)
+          patch = lzma.decompress(packed, format=lzma.FORMAT_XZ)
+          observed = hashlib.sha256(patch).hexdigest()
+          expected = '61eeb63fb6ce2ef58b62f1acd4e0f02d4633803d8c6da62a44ce5de5ca7cc6b8'
+          if observed != expected:
+              raise SystemExit(f'Task 4 patch SHA-256 mismatch: {observed}')
+          if not patch.startswith(b'diff --git '):
+              raise SystemExit('authenticated Task 4 payload is not a Git patch')
+          if b'\r' in patch:
+              raise SystemExit('Task 4 patch is not LF-normalized')
+          Path('/tmp/cemm-r4-task4-feasibility.patch').write_bytes(patch)
+          print(f'authenticated Task 4 patch: {len(patch)} bytes, sha256={observed}')
+          PY
+          test "$(sha256sum /tmp/cemm-r4-task4-feasibility.patch | cut -d' ' -f1)" = "$PATCH_SHA256"
+
+      - name: Checkout immutable corrective target
         uses: actions/checkout@v4
         with:
           ref: codex/r4-partition-corrective-replay
           fetch-depth: 0
           clean: true
 
-      - name: Execute exact Task 4 publication transaction
+      - name: Assert target and apply exact Task 4 tranche
         shell: bash
         run: |
           set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test -z "$(git status --porcelain)"
+          git fetch origin "$TARGET_BRANCH"
+          test "$(git rev-parse "origin/$TARGET_BRANCH")" = "$EXPECTED_HEAD"
+          git apply --check /tmp/cemm-r4-task4-feasibility.patch
+          git apply /tmp/cemm-r4-task4-feasibility.patch
+          git diff --check
           python - <<'PY'
           from pathlib import Path
-          import base64
-          import hashlib
-          import lzma
+          import subprocess
 
-          encoded = b''.join(
-              Path(f'/tmp/r4_task4_publisher.{index:02d}').read_bytes()
-              for index in range(3)
+          rows = subprocess.check_output(['git', 'status', '--porcelain=v1'], text=True).splitlines()
+          paths = {row[3:].split(' -> ', 1)[-1] for row in rows}
+          if not paths:
+              raise SystemExit('Task 4 patch produced no changes')
+
+          forbidden_exact = {
+              'hybrid_mvp/governance/replay_status.jsonl',
+              'hybrid_mvp/governance/receipt_invalidations.jsonl',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/r4_pipeline.py',
+              'hybrid_mvp/src/cemm_authoritative_hybrid/r4_admission.py',
+          }
+          forbidden_prefixes = (
+              'hybrid_mvp/artifacts/r4/',
+              'hybrid_mvp/artifacts/validation/runs/',
+              '.github/',
           )
-          canonical_encoded = b''.join(encoded.split()).rstrip(b'=')
-          canonical_encoded += b'=' * (-len(canonical_encoded) % 4)
-          raw = lzma.decompress(
-              base64.b64decode(canonical_encoded, validate=True),
-              format=lzma.FORMAT_XZ,
+          bad = sorted(
+              path for path in paths
+              if not path.startswith('hybrid_mvp/')
+              or path in forbidden_exact
+              or any(path.startswith(prefix) for prefix in forbidden_prefixes)
           )
-          observed = hashlib.sha256(raw).hexdigest()
-          expected = '3266f335c069d331d069ecfe6b79aea680e65cd468ecd5955cf1675c02656726'
-          if observed != expected:
-              raise SystemExit(f'publisher SHA-256 mismatch: {observed}')
-          Path('/tmp/r4_task4_publish.py').write_bytes(raw)
+          if bad:
+              raise SystemExit(f'out-of-scope Task 4 paths: {bad}')
+
+          required = {
+              'hybrid_mvp/src/cemm_authoritative_hybrid/r4_partitions.py',
+              'hybrid_mvp/scripts/analyze_r4_partition_feasibility.py',
+              'hybrid_mvp/scripts/publish_r4_feasibility_basis.py',
+              'hybrid_mvp/tests/test_r4_partition_global_assignment.py',
+              'hybrid_mvp/tests/test_publish_r4_feasibility_basis.py',
+              'hybrid_mvp/configs/r4_partitions.json',
+              'hybrid_mvp/artifacts/validation/R4_PARTITION_FEASIBILITY_BASIS.json',
+              'hybrid_mvp/artifacts/validation/R4_PARTITION_FEASIBILITY.json',
+              'hybrid_mvp/docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md',
+          }
+          missing = sorted(required - paths)
+          if missing:
+              raise SystemExit(f'Task 4 patch is missing required paths: {missing}')
+          print('\n'.join(sorted(paths)))
           PY
-          python /tmp/r4_task4_publish.py
+          test -z "$(git status --porcelain -- \
+            hybrid_mvp/governance/replay_status.jsonl \
+            hybrid_mvp/governance/receipt_invalidations.jsonl \
+            hybrid_mvp/artifacts/r4 \
+            hybrid_mvp/artifacts/validation/runs)"
+
+      - name: Install bounded verification dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu 'torch>=2.0'
+          python -m pip install \
+            'pytest>=8' 'hypothesis>=6' 'numpy>=2' 'safetensors>=0.4' \
+            'jsonschema>=4.23'
+
+      - name: Verify Task 4 source and authenticated evidence
+        shell: bash
+        working-directory: hybrid_mvp
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            src/cemm_authoritative_hybrid/r4_partitions.py \
+            scripts/analyze_r4_partition_feasibility.py \
+            scripts/publish_r4_feasibility_basis.py \
+            tests/test_r4_partition_global_assignment.py \
+            tests/test_publish_r4_feasibility_basis.py
+          python scripts/analyze_r4_partition_feasibility.py \
+            --basis --check artifacts/validation/R4_PARTITION_FEASIBILITY_BASIS.json
+          python scripts/analyze_r4_partition_feasibility.py \
+            --final --check artifacts/validation/R4_PARTITION_FEASIBILITY.json
+          python -m pytest \
+            tests/test_r4_partition_contracts.py \
+            tests/test_r4_partition_global_assignment.py \
+            tests/test_publish_r4_feasibility_basis.py \
+            tests/test_r4_mutations_and_partitions.py \
+            tests/test_test_inventory.py \
+            tests/test_lazy_package_imports.py \
+            tests/test_g0_integration.py \
+            tests/test_validation_gate.py \
+            -q -p no:cacheprovider
+          python scripts/check_test_inventory.py --phase R4 --source-only
+          python scripts/check_test_inventory.py --phase R5 --source-only
+          python scripts/generate_r5_test_dispositions.py \
+            --check artifacts/validation/R5_TEST_DISPOSITIONS.json
+          python scripts/update_replay_status.py --verify-chain > /tmp/r4-task4-chain.txt
+          grep -Eq '(^| )R4=red($| )' /tmp/r4-task4-chain.txt
+          python -m pytest tests/test_replay_governance.py \
+            -q -p no:cacheprovider \
+            -k 'corrective_tracker or partition_defect_binding or invalidation'
+          git diff --check
+          test -z "$(git status --porcelain -- \
+            governance/replay_status.jsonl \
+            governance/receipt_invalidations.jsonl \
+            artifacts/r4 \
+            artifacts/validation/runs)"
+
+      - name: Commit exact Task 4 implementation
+        id: implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          tracker='hybrid_mvp/docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md'
+          cp "$tracker" /tmp/r4-task4-progress.md
+          git checkout -- "$tracker"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- hybrid_mvp
+          test -z "$(git diff --cached --name-only -- "$tracker")"
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+          git commit -m 'feat(r4): reconstruct leakage feasibility'
+          task4_sha="$(git rev-parse HEAD)"
+          echo "task4_sha=$task4_sha" >> "$GITHUB_OUTPUT"
+          test "$(git rev-parse HEAD^:hybrid_mvp/governance/replay_status.jsonl)" = \
+               "$(git rev-parse HEAD:hybrid_mvp/governance/replay_status.jsonl)"
+          test "$(git rev-parse HEAD^:hybrid_mvp/governance/receipt_invalidations.jsonl)" = \
+               "$(git rev-parse HEAD:hybrid_mvp/governance/receipt_invalidations.jsonl)"
+          test "$(git rev-parse HEAD^:hybrid_mvp/artifacts/r4)" = \
+               "$(git rev-parse HEAD:hybrid_mvp/artifacts/r4)"
+          test "$(git rev-parse HEAD^:hybrid_mvp/artifacts/validation/runs)" = \
+               "$(git rev-parse HEAD:hybrid_mvp/artifacts/validation/runs)"
+          test -z "$(git status --porcelain)"
+
+      - name: Record truthful Task 4 documentation checkpoint
+        shell: bash
+        env:
+          TASK4_SHA: ${{ steps.implementation.outputs.task4_sha }}
+        run: |
+          set -euo pipefail
+          tracker='hybrid_mvp/docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md'
+          cp /tmp/r4-task4-progress.md "$tracker"
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          path = Path('hybrid_mvp/docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md')
+          text = path.read_text(encoding='utf-8')
+          sha = os.environ['TASK4_SHA']
+          if re.fullmatch(r'[0-9a-f]{40}', sha) is None:
+              raise SystemExit('invalid Task 4 implementation SHA')
+
+          text = text.replace('7f94906a992123291db1f38d7436ff0b5d652239', sha)
+          text = text.replace('@TASK4_COMMIT@', sha)
+          text = text.replace('TASK4_COMMIT_SHA', sha)
+
+          required_refs = (
+              'r4_partition_graph_v3:c0ee420cdcd6dbd4813892f6',
+              'r4_partition_feasibility_basis_v1:93263fd9c9cea34cb9247c25',
+              'r4_partition_minima_witness_v1:8c54b32614763335ad282ee1',
+              'r4_partition_config_v1:901f2c65099faf7504691e4a',
+              'r4_partition_feasibility_v1:7543b72bb43bb56d76ffc8b7',
+          )
+          missing_refs = [value for value in required_refs if value not in text]
+          if missing_refs:
+              marker = '<!-- task4-feasibility-checkpoint -->'
+              if marker in text:
+                  raise SystemExit(f'Task 4 tracker is missing reviewed refs: {missing_refs}')
+              block = (
+                  '\n\n' + marker + '\n'
+                  '## Task 4 feasibility checkpoint\n\n'
+                  f'- Implementation commit: `{sha}`\n'
+                  '- Status: complete; R4 intentionally remains red pending replacement artifact generation and admission.\n'
+                  '- Source corpus: 400 episodes and 1,944 mutation rows.\n'
+                  '- Global graph: 2,205 exact leakage hyperedges, 99 labels, 84 components; largest component 248.\n'
+                  '- Four-class witness: train 253, selection 52, calibration 56, frozen test 39.\n'
+                  '- Solver: 85 states, 93-integer memo key, 22 reviewed dimensions.\n'
+                  '- Graph ref: `r4_partition_graph_v3:c0ee420cdcd6dbd4813892f6`\n'
+                  '- Basis ref: `r4_partition_feasibility_basis_v1:93263fd9c9cea34cb9247c25`\n'
+                  '- Minima witness ref: `r4_partition_minima_witness_v1:8c54b32614763335ad282ee1`\n'
+                  '- Config ref: `r4_partition_config_v1:901f2c65099faf7504691e4a`\n'
+                  '- Final feasibility ref: `r4_partition_feasibility_v1:7543b72bb43bb56d76ffc8b7`\n'
+                  '- Next authorized tranche: Task 5 deterministic four-class assignment and independent verification.\n'
+              )
+              text = text.rstrip() + block + '\n'
+
+          if '7f94906a992123291db1f38d7436ff0b5d652239' in text or '@TASK4_COMMIT@' in text or 'TASK4_COMMIT_SHA' in text:
+              raise SystemExit('Task 4 tracker retains a provisional commit identity')
+          if sha not in text:
+              raise SystemExit('Task 4 tracker does not bind the implementation commit')
+          path.write_text(text, encoding='utf-8', newline='\n')
+          PY
+          git add -- "$tracker"
+          test "$(git diff --cached --name-only)" = "$tracker"
+          git diff --cached --check
+          git commit -m 'docs(r4): record feasibility checkpoint'
+          test "$(git rev-parse HEAD^:hybrid_mvp/governance/replay_status.jsonl)" = \
+               "$(git rev-parse HEAD:hybrid_mvp/governance/replay_status.jsonl)"
+          test "$(git rev-parse HEAD^:hybrid_mvp/governance/receipt_invalidations.jsonl)" = \
+               "$(git rev-parse HEAD:hybrid_mvp/governance/receipt_invalidations.jsonl)"
+          test "$(git rev-parse HEAD^:hybrid_mvp/artifacts/r4)" = \
+               "$(git rev-parse HEAD:hybrid_mvp/artifacts/r4)"
+          test "$(git rev-parse HEAD^:hybrid_mvp/artifacts/validation/runs)" = \
+               "$(git rev-parse HEAD:hybrid_mvp/artifacts/validation/runs)"
+          test -z "$(git status --porcelain)"
+
+      - name: Verify final clean publication candidate
+        shell: bash
+        working-directory: hybrid_mvp
+        run: |
+          set -euo pipefail
+          python scripts/analyze_r4_partition_feasibility.py \
+            --basis --check artifacts/validation/R4_PARTITION_FEASIBILITY_BASIS.json
+          python scripts/analyze_r4_partition_feasibility.py \
+            --final --check artifacts/validation/R4_PARTITION_FEASIBILITY.json
+          python -m pytest \
+            tests/test_r4_partition_contracts.py \
+            tests/test_r4_partition_global_assignment.py \
+            tests/test_publish_r4_feasibility_basis.py \
+            tests/test_r4_mutations_and_partitions.py \
+            tests/test_replay_governance.py \
+            tests/test_test_inventory.py \
+            -q -p no:cacheprovider
+          python scripts/check_test_inventory.py --phase R4 --source-only
+          python scripts/check_test_inventory.py --phase R5 --source-only
+          python scripts/generate_r5_test_dispositions.py \
+            --check artifacts/validation/R5_TEST_DISPOSITIONS.json
+          python scripts/update_replay_status.py --verify-chain > /tmp/r4-task4-final-chain.txt
+          grep -Eq '(^| )R4=red($| )' /tmp/r4-task4-final-chain.txt
+          git diff --check
+          cd ..
+          test -z "$(git status --porcelain)"
+
+      - name: Publish exact fast-forward target
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "$TARGET_BRANCH"
+          test "$(git rev-parse "origin/$TARGET_BRANCH")" = "$EXPECTED_HEAD"
+          git merge-base --is-ancestor "$EXPECTED_HEAD" HEAD
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"
