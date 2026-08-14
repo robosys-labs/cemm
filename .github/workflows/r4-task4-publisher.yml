@@ -32,12 +32,12 @@ jobs:
           cache: pip
           cache-dependency-path: hybrid_mvp/pyproject.toml
 
-      - name: Preserve authenticated payloads
+      - name: Preserve authenticated publisher chunks
         shell: bash
         run: |
           set -euo pipefail
-          cp .github/r4_task4_source_patch.gz.b64 /tmp/r4_task4_source_patch.gz.b64
-          cp .github/r4_task4_publish.py.gz.b64 /tmp/r4_task4_publish.py.gz.b64
+          cp .github/r4-task4-publisher/publisher.00 /tmp/r4_task4_publisher.00
+          cp .github/r4-task4-publisher/publisher.01 /tmp/r4_task4_publisher.01
 
       - name: Checkout exact corrective target
         uses: actions/checkout@v4
@@ -53,15 +53,21 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import base64
-          import gzip
           import hashlib
+          import lzma
 
-          encoded = Path('/tmp/r4_task4_publish.py.gz.b64').read_bytes()
+          encoded = b''.join(
+              Path(f'/tmp/r4_task4_publisher.{index:02d}').read_bytes()
+              for index in range(2)
+          )
           canonical_encoded = b''.join(encoded.split()).rstrip(b'=')
           canonical_encoded += b'=' * (-len(canonical_encoded) % 4)
-          raw = gzip.decompress(base64.b64decode(canonical_encoded, validate=True))
+          raw = lzma.decompress(
+              base64.b64decode(canonical_encoded, validate=True),
+              format=lzma.FORMAT_XZ,
+          )
           observed = hashlib.sha256(raw).hexdigest()
-          expected = 'd8fd599a45a0d18b1590b9425542d698933d424d73c92f7ec546b1205313fb81'
+          expected = '89f42d5d0ec068addb1b544f61e4835cf755d83ab24b6f296ade4c6ba1756eaa'
           if observed != expected:
               raise SystemExit(f'publisher SHA-256 mismatch: {observed}')
           Path('/tmp/r4_task4_publish.py').write_bytes(raw)
