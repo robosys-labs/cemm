@@ -221,6 +221,12 @@ Floating-point comparison is forbidden. The objective definition, weights,
 seed, ratios, limits, and tie-break material are serialized in reviewed config
 and content-addressed into the split manifest.
 
+The identity graph is acyclic: source/component/solver material produces a
+feasibility-basis ref and minima-witness ref; Partition Config ABI 1 binds those
+two inputs; the final feasibility receipt binds the completed config ref; and
+the split manifest/Build Receipt bind that final receipt. Config never points
+to a receipt that points back to config.
+
 The partitioner fails closed when the connected-component topology makes the
 reviewed requirements infeasible. It never splits a leakage component or
 silently relaxes a minimum.
@@ -288,6 +294,22 @@ verify bytes and identities as integrity owners, but they must not compute model
 metrics from the frozen-test payload. The frozen-test evaluation capability is
 minted only after exact selected-model and calibration receipts exist.
 
+A capability is not its own trust root. R4 also emits a class-scoped
+authorization projection containing the expected capability ref/SHA, exact
+artifact-graph ref, generator source revision, and authority generation, with
+no sibling identities. Build Receipt ABI 4 binds this authorization SHA, and
+the repository admission receipt binds its exact ref/SHA. A consumer resolves
+those expected values from the admitted R4 run and passes them separately into
+its isolated process. Replacing authorization, capability, and payload together
+therefore fails the external admission identity check.
+
+The repository-owned parent controller performs ledger/run verification, then
+starts an isolated training child with only the expected authorization ref/SHA
+and a private snapshot containing authorization, train capability, and train
+payload. The child cannot open the ledger, admission receipt, global manifest,
+Build Receipt, or sibling artifacts. The parent does not import trainer/model
+code.
+
 This corrective increment implements only the active train capability. It
 migrates the existing R5 foundation training loader, trainer entry points,
 metadata provenance, governed data-isolation tests, and validation inputs from
@@ -310,7 +332,11 @@ This corrective replay makes a hard data-ABI cut:
 - introduce R4 Partition Sufficiency ABI 1 for non-vacuous feasibility and
   coverage evidence;
 - introduce R4 Class Capability ABI 1 for a single authorized payload with no
-  sibling-class disclosure; and
+  sibling-class disclosure;
+- introduce R4 Class Authorization ABI 1 for the admission-authenticated,
+  class-scoped expected capability identity;
+- introduce Partition Config ABI 1 for ratios, integer formulas, bounds,
+  minima/maxima, and feasibility identity; and
 - bump R4 Build Receipt ABI 3 to ABI 4 because its owned artifact set and exact
   fields change.
 
@@ -336,7 +362,9 @@ approved governing corrective spec and plan
 -> reviewed R4 red invalidation bound to the admitted defective artifact
 -> deterministic source implementation
 -> two byte-identical candidate artifact builds
--> checked-in ABI 4 artifact graph
+-> all final source/config/test/doc changes committed
+-> final two byte-identical builds from that exact source commit
+-> checked-in ABI 4 artifact-only commit whose single parent is that source
 -> R4 owner and phase verification
 -> repository-owned clean R4 admission run
 -> append-only R4 green transition
@@ -351,6 +379,11 @@ according to normal ledger semantics; R5 is already red and remains red.
 No green transition is appended until committed inputs reconstruct exactly and
 the admission run proves the complete new artifact graph.
 
+Historical ABI 3 admission receipts continue to reconstruct their old evidence
+path set from their stored source base. Current candidates require only the ABI
+4 evidence path set. A bounded union may police dirty-path containment, but it
+is never accepted as one ambiguous admission policy.
+
 ## 10. Validation ownership
 
 Existing R4 owners remain bounded. The `mutation-partition` owner gains the new
@@ -362,6 +395,12 @@ existing step bound. Expensive corpus generation is not duplicated across each
 owner gate. Deterministic generation runs at the artifact-generation checkpoint
 and admission independently reconstructs identities without retraining or
 rerunning R5.
+
+Closeout runs one complete G0-R5 phase sweep before admission. The ordinary R4
+admission owns the one full active-suite process. The ledger-only admission
+commit is followed by governance/artifact checks, not another phase/full-suite
+sweep. The aggregate broad-test budget is therefore at most seven pytest
+processes and 1,800 seconds on the reviewed Windows host.
 
 Required corruption tests include:
 
