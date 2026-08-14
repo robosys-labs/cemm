@@ -1,0 +1,40 @@
+name: R4 Task 4 feasibility envelope export
+
+on:
+  push:
+    branches:
+      - codex/r4-task4-feasibility
+    paths:
+      - .github/workflows/r4-task4-feasibility-envelope-export.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r4-task4-feasibility
+          fetch-depth: 1
+
+      - name: Inventory feasibility envelope
+        shell: bash
+        run: |
+          set -euo pipefail
+          find .github/r4-task4 -maxdepth 1 -type f -name 'patch.*' -print0 \
+            | sort -z | xargs -0 sha256sum \
+            > /tmp/R4_TASK4_FEASIBILITY_ENVELOPE_SHA256SUMS
+          cat /tmp/R4_TASK4_FEASIBILITY_ENVELOPE_SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-r4-task4-feasibility-envelope
+          path: |
+            .github/r4-task4/patch.*
+            /tmp/R4_TASK4_FEASIBILITY_ENVELOPE_SHA256SUMS
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
