@@ -49,25 +49,90 @@ jobs:
           import lzma
           from pathlib import Path
 
+          EXPECTED = '61eeb63fb6ce2ef58b62f1acd4e0f02d4633803d8c6da62a44ce5de5ca7cc6b8'
           source = Path('.github/r4-task4-source-v5')
           parts = sorted(source.glob('patch.*'), key=lambda path: int(path.suffix[1:]))
           indexes = [int(path.suffix[1:]) for path in parts]
           if indexes != list(range(18)):
               raise SystemExit(f'non-contiguous Task 4 envelope: {indexes}')
 
-          encoded = b''.join(path.read_bytes().strip() for path in parts)
-          canonical = b''.join(encoded.split()).rstrip(b'=')
-          canonical += b'=' * (-len(canonical) % 4)
-          packed = base64.b64decode(canonical, validate=True)
-          patch = lzma.decompress(packed, format=lzma.FORMAT_XZ)
-          observed = hashlib.sha256(patch).hexdigest()
-          expected = '61eeb63fb6ce2ef58b62f1acd4e0f02d4633803d8c6da62a44ce5de5ca7cc6b8'
-          if observed != expected:
-              raise SystemExit(f'Task 4 patch SHA-256 mismatch: {observed}')
+          raw_parts = [b''.join(path.read_bytes().split()) for path in parts]
+          raw = b''.join(raw_parts)
+          boundaries: list[tuple[int, int, int]] = []
+          cursor = 0
+          for index, part in enumerate(raw_parts):
+              boundaries.append((index, cursor, cursor + len(part)))
+              cursor += len(part)
+
+          def decode(candidate: bytes) -> bytes | None:
+              canonical = candidate.rstrip(b'=')
+              if len(canonical) % 4 == 1:
+                  return None
+              canonical += b'=' * (-len(canonical) % 4)
+              try:
+                  packed = base64.b64decode(canonical, validate=True)
+                  patch = lzma.decompress(packed, format=lzma.FORMAT_XZ)
+              except (ValueError, lzma.LZMAError):
+                  return None
+              return patch if hashlib.sha256(patch).hexdigest() == EXPECTED else None
+
+          direct = decode(raw)
+          repair: tuple[int, bytes] | None = None
+          if direct is not None:
+              repair = (-1, direct)
+          elif len(raw.rstrip(b'=')) % 4 == 1:
+              # The staged envelope has exactly one surplus Base64 data character.
+              # Search the irregular tail first, then the complete bounded envelope.
+              tail_start = boundaries[16][1]
+              ordered_positions = list(range(tail_start, len(raw)))
+              ordered_positions.extend(range(0, tail_start))
+              for position in ordered_positions:
+                  patch = decode(raw[:position] + raw[position + 1 :])
+                  if patch is not None:
+                      if repair is not None:
+                          raise SystemExit('ambiguous Task 4 envelope repair')
+                      repair = (position, patch)
+                      # The expected SHA makes the repair unique; continue only
+                      # within a small neighborhood to detect accidental ambiguity.
+                      for nearby in range(max(0, position - 8), min(len(raw), position + 9)):
+                          if nearby == position:
+                              continue
+                          alternative = decode(raw[:nearby] + raw[nearby + 1 :])
+                          if alternative is not None:
+                              raise SystemExit(
+                                  f'ambiguous Task 4 envelope repair at {position} and {nearby}'
+                              )
+                      break
+
+          if repair is None:
+              raise SystemExit(
+                  'cannot reconstruct authenticated Task 4 patch from the bounded envelope'
+              )
+
+          position, patch = repair
           if not patch.startswith(b'diff --git '):
               raise SystemExit('authenticated Task 4 payload is not a Git patch')
           if b'\r' in patch:
               raise SystemExit('Task 4 patch is not LF-normalized')
+
+          if position >= 0:
+              chunk_index = -1
+              local_offset = -1
+              for index, start, end in boundaries:
+                  if start <= position < end:
+                      chunk_index = index
+                      local_offset = position - start
+                      break
+              removed = raw[position : position + 1].decode('ascii', errors='replace')
+              print(
+                  'repaired single-character transport defect: '
+                  f'absolute={position}, chunk={chunk_index:02d}, '
+                  f'offset={local_offset}, removed={removed!r}'
+              )
+          else:
+              print('Task 4 envelope required no repair')
+
+          observed = hashlib.sha256(patch).hexdigest()
           Path('/tmp/cemm-r4-task4-feasibility.patch').write_bytes(patch)
           print(f'authenticated Task 4 patch: {len(patch)} bytes, sha256={observed}')
           PY
@@ -92,7 +157,6 @@ jobs:
           git apply /tmp/cemm-r4-task4-feasibility.patch
           git diff --check
           python - <<'PY'
-          from pathlib import Path
           import subprocess
 
           rows = subprocess.check_output(['git', 'status', '--porcelain=v1'], text=True).splitlines()
