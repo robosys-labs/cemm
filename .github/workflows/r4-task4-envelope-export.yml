@@ -20,21 +20,28 @@ jobs:
           ref: codex/r4-task4-publication
           fetch-depth: 1
 
-      - name: Inventory staged envelope
+      - name: Inventory all independently staged Task 4 payloads
         shell: bash
         run: |
           set -euo pipefail
-          find .github/r4-task4-source-v5 -maxdepth 1 -type f -name 'patch.*' -print0 \
-            | sort -z \
-            | xargs -0 sha256sum > /tmp/R4_TASK4_ENVELOPE_SHA256SUMS
-          cat /tmp/R4_TASK4_ENVELOPE_SHA256SUMS
+          find .github -maxdepth 3 -type f \
+            \( -path '.github/r4-task4-source-*/*' \
+               -o -path '.github/r4-task4-publisher-*/*' \
+               -o -name 'r4_task4_source_patch.gz.b64' \
+               -o -name 'r4_task4_publish.py.gz.b64' \) \
+            -print0 | sort -z | xargs -0 sha256sum \
+            > /tmp/R4_TASK4_ALL_PAYLOAD_SHA256SUMS
+          cat /tmp/R4_TASK4_ALL_PAYLOAD_SHA256SUMS
 
       - uses: actions/upload-artifact@v4
         with:
-          name: cemm-r4-task4-envelope-v5
+          name: cemm-r4-task4-all-staged-payloads
           path: |
-            .github/r4-task4-source-v5/patch.*
-            /tmp/R4_TASK4_ENVELOPE_SHA256SUMS
+            .github/r4-task4-source-*/**
+            .github/r4-task4-publisher-*/**
+            .github/r4_task4_source_patch.gz.b64
+            .github/r4_task4_publish.py.gz.b64
+            /tmp/R4_TASK4_ALL_PAYLOAD_SHA256SUMS
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
