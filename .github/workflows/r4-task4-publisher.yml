@@ -57,9 +57,10 @@ jobs:
           import hashlib
 
           encoded = Path('/tmp/r4_task4_publish.py.gz.b64').read_bytes()
-          raw = gzip.decompress(base64.b64decode(encoded, validate=True))
+          canonical_encoded = b''.join(encoded.split())
+          raw = gzip.decompress(base64.b64decode(canonical_encoded, validate=True))
           observed = hashlib.sha256(raw).hexdigest()
-          expected = '6384a000c6dd376ddee1706a4d5185febd7c0c5d843f37a01b38a7915f56f926'
+          expected = '6354f7a403e31608d6760a3b1c2118e00068c384ea227de3d6cd2925bb199ae0'
           if observed != expected:
               raise SystemExit(f'publisher SHA-256 mismatch: {observed}')
           Path('/tmp/r4_task4_publish.py').write_bytes(raw)
