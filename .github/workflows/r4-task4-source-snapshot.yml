@@ -1,0 +1,41 @@
+name: R4 Task 4 source snapshot
+
+on:
+  push:
+    branches:
+      - codex/r4-task4-snapshot
+    paths:
+      - .github/workflows/r4-task4-source-snapshot.yml
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r4-partition-corrective-replay
+          fetch-depth: 0
+
+      - name: Create exact source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "56d233a63be57d9ef611d617a4cf7430826b2324"
+          git status --porcelain | test ! -s /dev/stdin
+          tar --exclude=.git --exclude=.pytest_cache --exclude='**/__pycache__' \
+            -czf /tmp/cemm-r4-task4-source.tar.gz .
+          sha256sum /tmp/cemm-r4-task4-source.tar.gz > /tmp/SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-r4-task4-source-56d233a
+          path: |
+            /tmp/cemm-r4-task4-source.tar.gz
+            /tmp/SHA256SUMS
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
