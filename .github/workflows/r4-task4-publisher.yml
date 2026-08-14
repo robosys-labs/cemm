@@ -36,8 +36,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp .github/r4-task4-publisher/publisher.00 /tmp/r4_task4_publisher.00
-          cp .github/r4-task4-publisher/publisher.01 /tmp/r4_task4_publisher.01
+          cp .github/r4-task4-publisher-v3/publisher.00 /tmp/r4_task4_publisher.00
+          cp .github/r4-task4-publisher-v3/publisher.01 /tmp/r4_task4_publisher.01
+          cp .github/r4-task4-publisher-v3/publisher.02 /tmp/r4_task4_publisher.02
 
       - name: Checkout exact corrective target
         uses: actions/checkout@v4
@@ -58,7 +59,7 @@ jobs:
 
           encoded = b''.join(
               Path(f'/tmp/r4_task4_publisher.{index:02d}').read_bytes()
-              for index in range(2)
+              for index in range(3)
           )
           canonical_encoded = b''.join(encoded.split()).rstrip(b'=')
           canonical_encoded += b'=' * (-len(canonical_encoded) % 4)
@@ -67,7 +68,7 @@ jobs:
               format=lzma.FORMAT_XZ,
           )
           observed = hashlib.sha256(raw).hexdigest()
-          expected = '89f42d5d0ec068addb1b544f61e4835cf755d83ab24b6f296ade4c6ba1756eaa'
+          expected = '3266f335c069d331d069ecfe6b79aea680e65cd468ecd5955cf1675c02656726'
           if observed != expected:
               raise SystemExit(f'publisher SHA-256 mismatch: {observed}')
           Path('/tmp/r4_task4_publish.py').write_bytes(raw)
