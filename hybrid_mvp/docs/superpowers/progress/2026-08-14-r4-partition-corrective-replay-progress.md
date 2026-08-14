@@ -70,14 +70,14 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | P0 | R5 foundation closeout and remote publication | complete | Published base commit | 1,641-test governed pass; Task 10 closeout |
 | P1 | R4/R5 entry audit | complete | Empty allowlist and stale neural artifacts | Root-cause reports and approved repair direction |
 | P2 | Written R4 corrective design | complete | Approved architecture | Written spec and independent contract review passed |
-| P3 | Governing implementation plan | pending | Approved written spec | Detailed TDD plan reviewed and committed |
+| P3 | Governing implementation plan | complete | Approved written spec | Detailed TDD plan reviewed and committed at `b3e4c33` |
 | P4 | Governance authority and R4 invalidation | pending | Governing spec/plan and clean branch | Append-only R4 red record; chain verified |
 | P5 | Partition ABI and algorithm implementation | pending | RED corruption/feasibility tests | Global assignment and independent reconstruction green |
 | P6 | Active R5 train-only capability migration | pending | New class-capability ABI | Legacy train authority absent; foundation isolation green |
 | P7 | Four-class artifact regeneration | pending | Committed generator source | Two byte-identical candidate trees and ABI 4 artifact commit |
 | P8 | R4 owner/phase/admission verification | pending | Clean artifact commit | All gates plus clean repository-owned admission pass |
 | P9 | R4 green re-admission | pending | Passed exact R4 admission receipt | Append-only green record; chain verified |
-| P10 | Full regression and closeout publication | pending | Re-admitted R4 | G0-R4 phases, governed suite, docs, branch review, push |
+| P10 | Closeout publication | pending | Re-admitted R4 | Governance/artifact checks, docs, branch review, push; admission owns the full suite |
 | P11 | R5 Neural Activation design/implementation | blocked | Re-admitted non-vacuous R4 | Separate approved R5 plan |
 
 ## 6. Detailed implementation checklist
@@ -89,7 +89,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 - [x] Confirm the intersection remains empty without lexical.
 - [x] Obtain approval for R4-first corrective replay.
 - [x] Obtain approval for globally coherent four-class architecture.
-- [ ] Complete written-spec review.
+- [x] Complete written-spec review.
 - [ ] Add approved spec and implementation plan to document authority.
 - [ ] Write append-only invalidation procedure and exact evidence binding.
 
@@ -98,6 +98,8 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 - [ ] Define Partition Evidence ABI 3 schema and strict decoder.
 - [ ] Define R4 Split Manifest ABI 1 schema and strict decoder.
 - [ ] Define R4 Partition Sufficiency ABI 1 schema and strict decoder.
+- [ ] Define R4 Class Authorization ABI 1 and admission-rooted trust projection.
+- [ ] Define Partition Config ABI 1 with an acyclic feasibility-basis binding.
 - [ ] Define Build Receipt ABI 4 exact artifact identities.
 - [ ] Reject every ABI 2 training allowlist and ABI 3 build receipt as current input.
 - [ ] Separate leakage-equivalence keys from stratification labels.
@@ -118,6 +120,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 - [ ] Prove exact payload count/hash/ref binding.
 - [ ] Keep frozen-test payload unopened by training/model code.
 - [ ] Mint class-scoped capabilities that disclose no sibling class identity.
+- [ ] Resolve admission trust in a parent and pass only train-scoped identity/snapshot to an isolated child.
 - [ ] Migrate the active R5 train-only loader and trainer provenance to the R4
   train capability.
 - [ ] Retire legacy `PartitionManifest`, `Partitioner`, and three-way loader
@@ -126,6 +129,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 ### Sufficiency and anti-vacuity
 
 - [ ] Generate feasibility report before freezing thresholds.
+- [ ] Preserve the acyclic basis → config → final receipt identity graph; changed basis refs stop for amended review.
 - [ ] Review exact positive minimum counts.
 - [ ] Require support and feasible-component denominators.
 - [ ] Require held-out coverage across configured dimensions.
@@ -137,12 +141,11 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 - [ ] Append reviewed R4 red invalidation.
 - [ ] Verify G0-R3 remain green and R4+ reset correctly.
 - [ ] Run two independent deterministic artifact builds.
-- [ ] Run all R4 owner gates.
-- [ ] Run R4 phase gate.
+- [ ] Run one controller-bounded G0-R5 pre-admission phase sweep.
 - [ ] Run repository-owned R4 admission.
 - [ ] Append exact R4 green transition.
 - [ ] Verify the complete replay chain.
-- [ ] Run G0-R4 phase gates and governed active suite.
+- [ ] Use the admission-owned governed active suite; do not repeat it after the ledger-only commit.
 - [ ] Confirm R5 remains red.
 
 ### Documentation and publication
@@ -158,7 +161,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 
 | Gate/evidence | Required result | Current result | Evidence ref/location |
 |---|---|---|---|
-| Written design review | approved | pending | Corrective design spec |
+| Written design review | approved | passed | Corrective design spec at `45142bb` |
 | Frozen inventory integrity | unchanged unless separately governed | base verified | `docs/DOCUMENT_AUTHORITY.json` pin |
 | R4 invalidation | append-only red | pending | replay ledger |
 | Four-class source coverage | exact 400/400 | pending | split manifest |
@@ -183,12 +186,14 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | Legacy partitions are reused for convenience | critical | Structural absence/authority tests | R5 config opens `data/partitions/*.jsonl` as admitted R4 data |
 | Ledger is changed before governing authority exists | high | Spec/plan review and clean committed invalidation candidate first | Status mutation precedes approved authority |
 | Thresholds are tuned to model results | high | Freeze from component/coverage feasibility only | Any model metric influences partition config |
-| Gate/process proliferation | medium | Keep current R4 owners; one pytest process per tier | New owner or repeated corpus build is proposed without necessity |
+| Gate/process proliferation | medium | One controller-enforced six-phase sweep plus one admission active process | New broad validation process exceeds seven/1,800-second aggregate |
 | Generated artifacts exceed practical repository bounds | medium | Bounded canonical payloads and artifact-size gates | Candidate violates reviewed byte limits |
 | Tracker becomes a second status source | high | Link ledger; ban copied mutable phase matrix/run claim | Tracker conflicts with ledger or is consumed by admission code |
 | Root adoption is implied | high | Scope tests and explicit non-goal | Any root runtime/acceptance file changes |
 | Exact protected axes are weakened into labels | critical | Type leakage hyperedges separately and reconstruct all seven axes | Any exact target/topology/dialogue/mutation/response identity crosses classes |
 | Global split manifest leaks sibling data identities | critical | Give consumers class-scoped capabilities only | A consumer receives another class path/hash/ref/count |
+| Config/feasibility identities become cyclic | critical | Basis → config → final receipt → manifest DAG | A config points at a receipt that points back to config |
+| Solver rewrite changes reviewed feasibility basis | high | Equal-only strict basis publisher; exit 3 before writes | Basis/minima-witness ref differs from frozen config |
 
 ## 9. Performance budget
 
@@ -200,6 +205,8 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | Assignment math | Exact integer objective only |
 | Normal runtime impact | None |
 | Pytest processes per validation tier | One |
+| Broad closeout pytest aggregate | At most 7: six pre-admission phases plus one admission-owned active suite |
+| Broad closeout wall budget | At most 1,800 seconds on reviewed Windows host |
 | Artifact generation | Once per candidate root; twice for determinism checkpoint |
 | Neural training during R4 repair | Zero |
 
@@ -208,13 +215,14 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | Date | Branch/commit | Event | Verification |
 |---|---|---|---|
 | 2026-08-13 | `origin/codex/r5-hard-cut-foundation@107c518` | R5 foundation published | Full governed suite and Task 10 closeout passed |
-| 2026-08-14 | `codex/r4-partition-corrective-replay@107c518` | Corrective branch created | Clean exact base; remote publication pending |
+| 2026-08-14 | `origin/codex/r4-partition-corrective-replay@45142bb` | Corrective design published and independently reviewed | Contract review passed after exact leakage, train-boundary, access, and invalidation fixes |
+| 2026-08-14 | `codex/r4-partition-corrective-replay@b3e4c33` | Executable corrective plan committed after dual independent review | Contract and code-path reviews passed; 65 TDD steps; no source/ledger/artifact mutation |
 
 ## 11. Current checkpoint
 
-**Current work:** P3, governing implementation plan.
-**Next required decision:** review of the detailed implementation plan before source or ledger mutation.
-**Implementation authorization:** design approved; source, ledger, ABI, and artifact mutation remain gated on the detailed implementation plan.
+**Current work:** P3 complete; publication checkpoint.
+**Next required decision:** select subagent-driven or inline execution before source or ledger mutation.
+**Implementation authorization:** design and detailed plan approved/reviewed; execution mode remains the next explicit handoff.
 **R5 neural work:** blocked on authentic R4 re-admission.
 
 ## 12. Exact invalidation evidence
