@@ -1,0 +1,37 @@
+name: Agent R4 Task 5 workspace export
+
+on:
+  push:
+    branches:
+      - agent/r4-task5-workspace-20260815
+    paths:
+      - .github/workflows/agent-r4-task5-export.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r4-partition-corrective-replay
+          fetch-depth: 0
+      - name: Package exact checkout including Git metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          git rev-parse HEAD > "$RUNNER_TEMP/HEAD.txt"
+          tar -czf "$RUNNER_TEMP/cemm-r4-task5-workspace.tar.gz" .
+      - name: Upload workspace
+        uses: actions/upload-artifact@v4
+        with:
+          name: cemm-r4-task5-workspace
+          path: |
+            ${{ runner.temp }}/cemm-r4-task5-workspace.tar.gz
+            ${{ runner.temp }}/HEAD.txt
+          if-no-files-found: error
+          retention-days: 1
