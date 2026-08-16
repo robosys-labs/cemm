@@ -21,20 +21,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/r4-task4-batch-publisher-20260816
+          ref: codex/r4-task4-publication
           fetch-depth: 0
           persist-credentials: false
-      - name: Package exact target checkout
+      - name: Package Task 4 publication envelope
         run: |
           set -euo pipefail
-          tar --exclude=.git -czf /tmp/cemm-agent-r4-task4-checkout.tgz .
-          sha256sum /tmp/cemm-agent-r4-task4-checkout.tgz > /tmp/cemm-agent-r4-task4-checkout.sha256
-      - name: Upload checkout archive
+          tar --exclude=.git -czf /tmp/cemm-r4-task4-publication.tgz .
+          sha256sum /tmp/cemm-r4-task4-publication.tgz > /tmp/cemm-r4-task4-publication.sha256
+      - name: Upload publication archive
         uses: actions/upload-artifact@v4
         with:
-          name: cemm-agent-r4-task4-checkout
+          name: cemm-r4-task4-publication
           retention-days: 1
           if-no-files-found: error
           path: |
-            /tmp/cemm-agent-r4-task4-checkout.tgz
-            /tmp/cemm-agent-r4-task4-checkout.sha256
+            /tmp/cemm-r4-task4-publication.tgz
+            /tmp/cemm-r4-task4-publication.sha256
