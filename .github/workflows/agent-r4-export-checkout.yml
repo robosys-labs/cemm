@@ -21,20 +21,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: codex/r4-task4-publication
+          ref: agent/r4-task4-publish-20260816
           fetch-depth: 0
           persist-credentials: false
-      - name: Package Task 4 publication envelope
+      - name: Package alternate Task 4 source envelope
         run: |
           set -euo pipefail
-          tar --exclude=.git -czf /tmp/cemm-r4-task4-publication.tgz .
-          sha256sum /tmp/cemm-r4-task4-publication.tgz > /tmp/cemm-r4-task4-publication.sha256
-      - name: Upload publication archive
+          tar --exclude=.git -czf /tmp/cemm-r4-task4-source-envelope.tgz .
+          sha256sum /tmp/cemm-r4-task4-source-envelope.tgz > /tmp/cemm-r4-task4-source-envelope.sha256
+      - name: Upload source envelope archive
         uses: actions/upload-artifact@v4
         with:
-          name: cemm-r4-task4-publication
+          name: cemm-r4-task4-source-envelope
           retention-days: 1
           if-no-files-found: error
           path: |
-            /tmp/cemm-r4-task4-publication.tgz
-            /tmp/cemm-r4-task4-publication.sha256
+            /tmp/cemm-r4-task4-source-envelope.tgz
+            /tmp/cemm-r4-task4-source-envelope.sha256
