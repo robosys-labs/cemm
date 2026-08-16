@@ -1,0 +1,40 @@
+name: Agent R4 export checkout
+
+on:
+  push:
+    branches:
+      - agent/r4-export-checkout-20260816
+    paths:
+      - .github/workflows/agent-r4-export-checkout.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-r4-export-checkout-20260816
+  cancel-in-progress: false
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task4-batch-publisher-20260816
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Package exact target checkout
+        run: |
+          set -euo pipefail
+          tar --exclude=.git -czf /tmp/cemm-agent-r4-task4-checkout.tgz .
+          sha256sum /tmp/cemm-agent-r4-task4-checkout.tgz > /tmp/cemm-agent-r4-task4-checkout.sha256
+      - name: Upload checkout archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: cemm-agent-r4-task4-checkout
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            /tmp/cemm-agent-r4-task4-checkout.tgz
+            /tmp/cemm-agent-r4-task4-checkout.sha256
