@@ -17,34 +17,29 @@ concurrency:
 jobs:
   export:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/r4-export-checkout-20260816
           fetch-depth: 0
           persist-credentials: false
-      - name: Package all remaining Task 4 staging branches
+      - name: Export complete reachable Git graph
         run: |
           set -euo pipefail
           git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
-          mkdir -p /tmp/r4-task4-staging
-          for branch in \
-            agent/r4-task4-publish-20260815 \
-            codex/r4-task4-feasibility \
-            codex/r4-task4-snapshot
-          do
-            safe="${branch//\//__}"
-            git rev-parse "origin/$branch" > "/tmp/r4-task4-staging/$safe.commit"
-            git archive --format=tar.gz \
-              --output="/tmp/r4-task4-staging/$safe.tgz" \
-              "origin/$branch"
-          done
-          (cd /tmp/r4-task4-staging && sha256sum *.tgz > SHA256SUMS)
-      - name: Upload staging branch archives
+          git bundle create /tmp/cemm-r4-all-heads.bundle --all
+          git bundle verify /tmp/cemm-r4-all-heads.bundle
+          git show-ref > /tmp/cemm-r4-all-heads.refs
+          sha256sum /tmp/cemm-r4-all-heads.bundle > /tmp/cemm-r4-all-heads.sha256
+      - name: Upload Git graph
         uses: actions/upload-artifact@v4
         with:
-          name: cemm-r4-task4-staging-branches
+          name: cemm-r4-all-heads-git-bundle
           retention-days: 1
           if-no-files-found: error
-          path: /tmp/r4-task4-staging/
+          compression-level: 0
+          path: |
+            /tmp/cemm-r4-all-heads.bundle
+            /tmp/cemm-r4-all-heads.refs
+            /tmp/cemm-r4-all-heads.sha256
