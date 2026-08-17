@@ -28,26 +28,23 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Authenticate and reassemble Task 4 transport
+      - name: Reassemble Task 4 transport in explicit order
         shell: bash
         run: |
-          set -euo pipefail
-          cd .github/r4-task5-recovery
-          test "$(sha256sum task4.00.0 | cut -d' ' -f1)" = "0768010ef82d3f3289383d8f20a598f2ce3d9380e1899a904af43cdd4710d2a2"
-          test "$(sha256sum task4.00.1 | cut -d' ' -f1)" = "32ec659c3a6f3a80324061f302f5b4a0bfce83b761d24b1be078ba3f0f832ee7"
-          test "$(sha256sum task4.00.2 | cut -d' ' -f1)" = "71f475a90e49537e497cb13f742265fdefa48e9fd998bfe95103bb9102f31896"
-          test "$(sha256sum task4.00.3 | cut -d' ' -f1)" = "90e5ecee3c60556e92e0f919dfabdc0c736271f9cb4512c4ea5ef0a66a7eaa1b"
-          test "$(sha256sum task4.part.01 | cut -d' ' -f1)" = "cc247d9143d5e79f786c20fd8f020e091ed0e97b94a7022399897e119e8e6134"
-          test "$(sha256sum task4.02.0 | cut -d' ' -f1)" = "9c5f3caad8042aa4130ddb3b5eee5d0ef90389ee289f5a38de60eba44f3fd116"
-          test "$(sha256sum task4.02.1 | cut -d' ' -f1)" = "a2626a8ee4319b6fa43b289377d41efbf2b3f6bc56315c4a0226c5206449ec05"
-          test "$(sha256sum task4.02.2 | cut -d' ' -f1)" = "9e00c806c38f80f631910deb0ee6a29ebd5212f1046d229860a403015f8cbbde"
-          test "$(sha256sum task4.02.3 | cut -d' ' -f1)" = "041a2f353438880c010add43f383303df668535f350073333cd3daf26c9d5641"
-          test "$(sha256sum task4.03.0 | cut -d' ' -f1)" = "e58847995ba8bcd8013ad7aec05d42a31ec1685362fa29d7a4fdf59e6e806140"
-          test "$(sha256sum task4.03.1 | cut -d' ' -f1)" = "a76f002a98df16976228ff5624641ffcea8d017732f129908a7c68413f270ace"
-          test "$(sha256sum task4.03.2 | cut -d' ' -f1)" = "1f91ac221be45e98080319d48a372b535f51931f7271c5e4839b3ccc7af03f5c"
-          test "$(sha256sum task4.03.3 | cut -d' ' -f1)" = "5a8eef0a078119004ffec372a7c1673affb12109cd172d283532c7e149eeaae0"
-          cat task4.00.* task4.part.01 task4.02.* task4.03.* > task4.xz.b64
-          wc -c task4.xz.b64
-          sha256sum task4.xz.b64
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          root = Path('.github/r4-task5-recovery')
+          names = (
+              'task4.00.0', 'task4.00.1', 'task4.00.2', 'task4.00.3',
+              'task4.part.01',
+              'task4.02.0', 'task4.02.1', 'task4.02.2', 'task4.02.3',
+              'task4.03.0', 'task4.03.1', 'task4.03.2', 'task4.03.3',
+          )
+          data = b''.join((root / name).read_bytes() for name in names)
+          print(f'task4 transport bytes={len(data)} sha256={sha256(data).hexdigest()}')
+          (root / 'task4.xz.b64').write_bytes(data)
+          PY
       - name: Verify, commit, and fast-forward Task 4 and Task 5
         run: python .github/r4-task5-recovery/publish_task5.py
