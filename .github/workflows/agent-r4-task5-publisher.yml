@@ -28,5 +28,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Reassemble exact Task 4 transport
+        shell: bash
+        run: cat .github/r4-task5-recovery/task4.part.* > .github/r4-task5-recovery/task4.xz.b64
       - name: Verify, commit, and fast-forward Task 4 and Task 5
         run: python .github/r4-task5-recovery/publish_task5.py
