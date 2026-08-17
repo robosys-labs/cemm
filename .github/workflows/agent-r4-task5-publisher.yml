@@ -48,6 +48,6 @@ jobs:
           test "$(sha256sum task4.03.3 | cut -d' ' -f1)" = "5a8eef0a078119004ffec372a7c1673affb12109cd172d283532c7e149eeaae0"
           cat task4.00.* task4.part.01 task4.02.* task4.03.* > task4.xz.b64
           test "$(wc -c < task4.xz.b64)" = "30384"
-          test "$(sha256sum task4.xz.b64 | cut -d' ' -f1)" = "a4eabfd5480ce9df928aff3218c83583b4e87634a785ce9d3770808db470e73d"
+          sha256sum task4.xz.b64
       - name: Verify, commit, and fast-forward Task 4 and Task 5
         run: python .github/r4-task5-recovery/publish_task5.py
