@@ -1,0 +1,1 @@
+ignore last helper-only staging commits; they never touch target
