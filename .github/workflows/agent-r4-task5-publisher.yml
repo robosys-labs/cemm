@@ -28,8 +28,18 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Reassemble exact Task 4 transport
+      - name: Authenticate and reassemble Task 4 transport
         shell: bash
-        run: cat .github/r4-task5-recovery/task4.part.* > .github/r4-task5-recovery/task4.xz.b64
+        run: |
+          set -euo pipefail
+          cd .github/r4-task5-recovery
+          wc -c task4.part.*
+          sha256sum task4.part.*
+          test "$(sha256sum task4.part.00 | cut -d' ' -f1)" = "384763a7340d0ecca2c9971b48064aa95cf393a2bdd4c180c6d608e0986b891c"
+          test "$(sha256sum task4.part.01 | cut -d' ' -f1)" = "cc247d9143d5e79f786c20fd8f020e091ed0e97b94a7022399897e119e8e6134"
+          test "$(sha256sum task4.part.02 | cut -d' ' -f1)" = "244221f5b51db76c566d2a1aab7d819e99a68aea5eddaa487c7981045e4ba041"
+          test "$(sha256sum task4.part.03 | cut -d' ' -f1)" = "c8db56b26097f0e65e83aefec4aa91d96e18a8a1b263d4dfe705196ce6956d4a"
+          cat task4.part.* > task4.xz.b64
+          test "$(wc -c < task4.xz.b64)" = "30384"
       - name: Verify, commit, and fast-forward Task 4 and Task 5
         run: python .github/r4-task5-recovery/publish_task5.py
