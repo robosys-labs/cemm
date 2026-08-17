@@ -76,9 +76,11 @@ jobs:
         run: |
           python - <<'PY'
           import importlib.util
+          import json
           import os
           from pathlib import Path
           import subprocess
+          import sys
 
           script = Path('.github/r4-task5-recovery/publish_task5.py')
           spec = importlib.util.spec_from_file_location('r4_task5_publisher', script)
@@ -103,5 +105,71 @@ jobs:
               return completed.stdout.rstrip('\r\n') if capture else ''
 
           module.run = run_preserving_porcelain
+          original_validate_task4 = module.validate_task4
+
+          def validate_task4_host_independent():
+              analyzer = module.HYBRID / 'scripts/analyze_r4_partition_feasibility.py'
+              text = analyzer.read_text('utf-8')
+              old = '        "solver": feasibility.solver_stats.as_dict(),\n'
+              new = (
+                  '        "solver": {\n'
+                  '            key: value\n'
+                  '            for key, value in feasibility.solver_stats.as_dict().items()\n'
+                  '            if key != "wall_seconds_millis"\n'
+                  '        },\n'
+              )
+              if text.count(old) != 1:
+                  raise RuntimeError('Task 4 solver identity anchor is not exact')
+              analyzer.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+              module.py(
+                  'scripts/analyze_r4_partition_feasibility.py',
+                  '--basis', '--output',
+                  'artifacts/validation/R4_PARTITION_FEASIBILITY_BASIS.json',
+              )
+              basis_path = module.HYBRID / 'artifacts/validation/R4_PARTITION_FEASIBILITY_BASIS.json'
+              basis = json.loads(basis_path.read_text('utf-8'))
+              if basis['feasibility_basis_ref'] != 'r4_partition_feasibility_basis_v1:8d7b96e61cd31e98bbc9de46':
+                  raise RuntimeError(f"unexpected host-independent basis ref: {basis['feasibility_basis_ref']}")
+              if basis['graph_ref'] != 'r4_partition_graph_v3:c80724e6107d010c724ad341':
+                  raise RuntimeError(f"unexpected graph ref: {basis['graph_ref']}")
+              if basis['minima_witness_ref'] != 'r4_partition_minima_witness_v1:7283c55335905b1dba4e6c67':
+                  raise RuntimeError(f"unexpected witness ref: {basis['minima_witness_ref']}")
+              if basis['solver'] != {
+                  'estimated_memory_bytes': 252960,
+                  'key_width_ints': 93,
+                  'state_count': 85,
+              }:
+                  raise RuntimeError(f"unexpected deterministic solver material: {basis['solver']}")
+
+              sys.path.insert(0, str(module.HYBRID / 'src'))
+              from cemm_authoritative_hybrid.canonical import stable_ref
+
+              config_path = module.HYBRID / 'configs/r4_partitions.json'
+              config = json.loads(config_path.read_text('utf-8'))
+              config['feasibility_basis_ref'] = basis['feasibility_basis_ref']
+              config['config_ref'] = stable_ref(
+                  'r4_partition_config_v1',
+                  {key: value for key, value in config.items() if key != 'config_ref'},
+              )
+              if config['config_ref'] != 'r4_partition_config_v1:0647f2402b0b942044c243ec':
+                  raise RuntimeError(f"unexpected host-independent config ref: {config['config_ref']}")
+              config_path.write_text(
+                  json.dumps(config, sort_keys=True, separators=(',', ':')) + '\n',
+                  encoding='utf-8',
+              )
+
+              module.py(
+                  'scripts/analyze_r4_partition_feasibility.py',
+                  '--final', '--output',
+                  'artifacts/validation/R4_PARTITION_FEASIBILITY.json',
+              )
+              final_path = module.HYBRID / 'artifacts/validation/R4_PARTITION_FEASIBILITY.json'
+              final = json.loads(final_path.read_text('utf-8'))
+              if final['receipt_ref'] != 'r4_partition_feasibility_v1:654878fb2b7e874d07ff31e4':
+                  raise RuntimeError(f"unexpected host-independent final ref: {final['receipt_ref']}")
+              original_validate_task4()
+
+          module.validate_task4 = validate_task4_host_independent
           raise SystemExit(module.main())
           PY
