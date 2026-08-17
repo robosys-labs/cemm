@@ -76,7 +76,9 @@ jobs:
         run: |
           python - <<'PY'
           import importlib.util
+          import os
           from pathlib import Path
+          import subprocess
 
           script = Path('.github/r4-task5-recovery/publish_task5.py')
           spec = importlib.util.spec_from_file_location('r4_task5_publisher', script)
@@ -84,5 +86,22 @@ jobs:
           assert spec.loader is not None
           spec.loader.exec_module(module)
           module.ENVELOPE = Path('/tmp/r4-task5-envelope')
+
+          def run_preserving_porcelain(*args, cwd=module.REPO, env=None, capture=False):
+              merged = os.environ.copy()
+              if env:
+                  merged.update(env)
+              print('+', ' '.join(args), flush=True)
+              completed = subprocess.run(
+                  args,
+                  cwd=cwd,
+                  env=merged,
+                  check=True,
+                  text=True,
+                  stdout=subprocess.PIPE if capture else None,
+              )
+              return completed.stdout.rstrip('\r\n') if capture else ''
+
+          module.run = run_preserving_porcelain
           raise SystemExit(module.main())
           PY
