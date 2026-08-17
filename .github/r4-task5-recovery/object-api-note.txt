@@ -1,0 +1,1 @@
+Publication fallback uses the Git object API directly from independently validated local blobs if patch transport cannot reproduce the authenticated stream.
