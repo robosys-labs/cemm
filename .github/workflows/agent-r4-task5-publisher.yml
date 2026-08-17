@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Authenticate and reassemble Task 4 transport
+      - name: Authenticate and stage Task 4 transport outside checkout
         shell: bash
         run: |
           python - <<'PY'
@@ -54,24 +54,35 @@ jobs:
               ('task4.03.3', '5a8eef0a078119004ffec372a7c1673affb12109cd172d283532c7e149eeaae0'),
           )
           chunks = []
-          mismatches = []
           for name, digest in expected:
               payload = (root / name).read_bytes()
               observed = sha256(payload).hexdigest()
               print(f'{name}: bytes={len(payload)} sha256={observed}')
               if observed != digest:
-                  mismatches.append((name, observed, digest))
+                  raise SystemExit(f'{name} SHA mismatch: {observed} != {digest}')
               chunks.append(payload)
-          if mismatches:
-              for name, observed, digest in mismatches:
-                  print(f'MISMATCH {name}: {observed} != {digest}')
-              raise SystemExit(f'{len(mismatches)} Task 4 transport chunks mismatch')
-          data = b''.join(chunks)
-          observed = sha256(data).hexdigest()
-          print(f'task4 aggregate: bytes={len(data)} sha256={observed}')
-          if len(data) != 30384 or observed != 'a4eabfd5480ce9df928aff3218c83583b4e87634a785ce9d3770808db470e73d':
+          task4 = b''.join(chunks)
+          observed = sha256(task4).hexdigest()
+          print(f'task4 aggregate: bytes={len(task4)} sha256={observed}')
+          if len(task4) != 30384 or observed != 'a4eabfd5480ce9df928aff3218c83583b4e87634a785ce9d3770808db470e73d':
               raise SystemExit('Task 4 aggregate transport mismatch')
-          (root / 'task4.xz.b64').write_bytes(data)
+          temp = Path('/tmp/r4-task5-envelope')
+          temp.mkdir(parents=True, exist_ok=True)
+          (temp / 'task4.xz.b64').write_bytes(task4)
+          (temp / 'task5.xz.b64').write_bytes((root / 'task5.xz.b64').read_bytes())
           PY
       - name: Verify, commit, and fast-forward Task 4 and Task 5
-        run: python .github/r4-task5-recovery/publish_task5.py
+        shell: bash
+        run: |
+          python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+
+          script = Path('.github/r4-task5-recovery/publish_task5.py')
+          spec = importlib.util.spec_from_file_location('r4_task5_publisher', script)
+          module = importlib.util.module_from_spec(spec)
+          assert spec.loader is not None
+          spec.loader.exec_module(module)
+          module.ENVELOPE = Path('/tmp/r4-task5-envelope')
+          raise SystemExit(module.main())
+          PY
