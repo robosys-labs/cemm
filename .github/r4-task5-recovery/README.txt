@@ -1,0 +1,1 @@
+temporary verified publication envelope; target branch mutations occur only through SHA-fenced publisher validation
