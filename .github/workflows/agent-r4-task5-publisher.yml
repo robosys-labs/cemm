@@ -52,13 +52,18 @@ jobs:
               'task4.03.3': '5a8eef0a078119004ffec372a7c1673affb12109cd172d283532c7e149eeaae0',
           }
           chunks = []
+          mismatches = []
           for name, digest in expected.items():
               payload = (root / name).read_bytes()
               observed = sha256(payload).hexdigest()
               print(f'{name}: bytes={len(payload)} sha256={observed}')
               if observed != digest:
-                  raise SystemExit(f'{name} SHA mismatch: {observed} != {digest}')
+                  mismatches.append((name, observed, digest))
               chunks.append(payload)
+          if mismatches:
+              for name, observed, digest in mismatches:
+                  print(f'MISMATCH {name}: {observed} != {digest}')
+              raise SystemExit(f'{len(mismatches)} Task 4 transport chunks mismatch')
           data = b''.join(chunks)
           observed = sha256(data).hexdigest()
           print(f'task4 aggregate: bytes={len(data)} sha256={observed}')
