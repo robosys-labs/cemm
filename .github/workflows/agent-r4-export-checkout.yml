@@ -1,4 +1,4 @@
-name: Agent R4 export checkout
+name: Agent R4 Task7 trainer migration
 
 on:
   push:
@@ -11,192 +11,156 @@ permissions:
   contents: write
 
 concurrency:
-  group: agent-r4-export-checkout-20260816
+  group: agent-r4-task7-trainer-migration
   cancel-in-progress: false
 
 jobs:
-  verify-task7-access:
+  migrate-and-verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 45
     env:
       PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 9d6d7ee32edcfa6e172b7a2f06f346556d21a3ac
+          ref: agent/r4-task7-train-capability-20260818
           fetch-depth: 0
-          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Compile and adversarially verify train-capability loader
+      - name: Verify fenced parent
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = '9d6d7ee32edcfa6e172b7a2f06f346556d21a3ac'
+      - name: Migrate release trainers to authenticated snapshots
+        working-directory: hybrid_mvp
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/cemm_authoritative_hybrid/training.py')
+          text = path.read_text(encoding='utf-8')
+
+          # Import the new immutable authenticated snapshot boundary.
+          anchor = 'from .programs import ProgramAction, SemanticSwitchProgram\n'
+          replacement = anchor + 'from .r4_partition_access import AuthenticatedClassSnapshot\n'
+          if text.count(anchor) != 1:
+              raise SystemExit('training import anchor drift')
+          text = text.replace(anchor, replacement, 1)
+
+          # Replace the complete legacy in-module partition loader block with one snapshot parser.
+          start = text.index('# ---------------------------------------------------------------------------\n# Release trainers with partition isolation (M4 Task 3)\n# ---------------------------------------------------------------------------\n')
+          end = text.index('def _git_revision(root: Path) -> str:\n', start)
+          new_block = '''# ---------------------------------------------------------------------------\n# Release trainers with authenticated R4 train snapshots\n# ---------------------------------------------------------------------------\n\n\n@dataclass(frozen=True)\nclass PartitionEpisode:\n    \"\"\"A single episode parsed from an already-authenticated R4 train snapshot.\"\"\"\n\n    surface: str\n    action_sequence: tuple[dict[str, Any], ...]\n    action_encoding_hash: str\n    authority_hash: str\n    response_meaning: dict[str, Any]\n    realization_surface: str | None\n    episode_ref: str\n    seed_category: str\n\n\ndef _episodes_from_authenticated_snapshot(\n    snapshot: AuthenticatedClassSnapshot,\n) -> tuple[list[PartitionEpisode], str]:\n    \"\"\"Parse exactly the authenticated bytes without reopening any path.\"\"\"\n    if type(snapshot) is not AuthenticatedClassSnapshot:\n        raise TypeError(\"snapshot must be exact AuthenticatedClassSnapshot\")\n    episodes: list[PartitionEpisode] = []\n    try:\n        text = snapshot.payload_bytes.decode(\"utf-8\", errors=\"strict\")\n        for line in text.splitlines():\n            if not line:\n                continue\n            row = json.loads(line)\n            if type(row) is not dict:\n                raise TypeError(\"train payload row must be an exact object\")\n            surface = row.get(\"orientation\", {}).get(\"source_text\", \"\")\n            actions = tuple(row.get(\"selected_program\", {}).get(\"actions\", ()))\n            rm = row.get(\"response_meaning\", {})\n            realization_surface = row.get(\"realization_receipt\", {}).get(\"surface\")\n            episodes.append(\n                PartitionEpisode(\n                    surface=surface,\n                    action_sequence=actions,\n                    action_encoding_hash=row.get(\"action_encoding_hash\", \"\"),\n                    authority_hash=row.get(\"authority_hash\", \"\"),\n                    response_meaning=rm,\n                    realization_surface=realization_surface,\n                    episode_ref=row.get(\"episode_ref\", \"\"),\n                    seed_category=row.get(\"training_source\", {}).get(\"source_kind\", \"\"),\n                )\n            )\n    except (UnicodeError, json.JSONDecodeError, TypeError, AttributeError) as exc:\n        raise ValueError(f\"authenticated train payload is malformed: {exc}\") from exc\n    if len(episodes) != snapshot.episode_count:\n        raise ValueError(\"authenticated train payload count changed after verification\")\n    refs = [episode.episode_ref for episode in episodes]\n    if not refs or any(type(ref) is not str or not ref for ref in refs):\n        raise ValueError(\"authenticated train payload contains invalid episode refs\")\n    if refs != sorted(refs) or len(refs) != len(set(refs)):\n        raise ValueError(\"authenticated train payload refs are not canonical unique order\")\n    return episodes, snapshot.payload_sha256\n\n\ndef partition_dataset_hash(episodes: Sequence[PartitionEpisode]) -> str:\n    \"\"\"Return a stable SHA-256 hash of an authenticated partition episode dataset.\"\"\"\n    payload = json.dumps(\n        [\n            {\n                \"episode_ref\": e.episode_ref,\n                \"surface\": e.surface,\n                \"action_encoding_hash\": e.action_encoding_hash,\n                \"authority_hash\": e.authority_hash,\n                \"seed_category\": e.seed_category,\n            }\n            for e in episodes\n        ],\n        sort_keys=True,\n        separators=(\",\", \":\"),\n        ensure_ascii=False,\n    )\n    return f\"dataset:{hashlib.sha256(payload.encode('utf-8')).hexdigest()[:24]}\"\n\n\n'''
+          text = text[:start] + new_block + text[end:]
+
+          # Proposal trainer consumes one immutable authenticated snapshot.
+          old = '''    def fit(self, episodes_path: str | Path) -> dict:\n        \"\"\"Train on ``episodes_path`` and return a training report.\n\n        Raises :class:`PartitionAccessError` if ``episodes_path`` is a sealed\n        validation or test partition.\n        \"\"\"\n        episodes, dataset_hash = _load_partition_episodes_with_hash(\n            episodes_path, self._root\n        )\n        _set_deterministic_seeds(self._seed)\n'''
+          new = '''    def fit(self, snapshot: AuthenticatedClassSnapshot) -> dict:\n        \"\"\"Train from one immutable, externally authenticated R4 train snapshot.\"\"\"\n        episodes, dataset_hash = _episodes_from_authenticated_snapshot(snapshot)\n        _set_deterministic_seeds(self._seed)\n'''
+          if text.count(old) != 1:
+              raise SystemExit('proposal fit anchor drift')
+          text = text.replace(old, new, 1)
+          text = text.replace('        self._train_path = Path(episodes_path)\n        self._train_dataset_hash = dataset_hash\n', '        self._train_snapshot = snapshot\n        self._train_dataset_hash = dataset_hash\n', 1)
+
+          # Realizer trainer consumes the same snapshot boundary.
+          old = '''    def fit(self, episodes_path: str | Path) -> dict:\n        \"\"\"Train on ``episodes_path`` and return a training report.\"\"\"\n        episodes, dataset_hash = _load_partition_episodes_with_hash(\n            episodes_path, self._root\n        )\n        _set_deterministic_seeds(self._seed)\n'''
+          new = '''    def fit(self, snapshot: AuthenticatedClassSnapshot) -> dict:\n        \"\"\"Train from one immutable, externally authenticated R4 train snapshot.\"\"\"\n        episodes, dataset_hash = _episodes_from_authenticated_snapshot(snapshot)\n        _set_deterministic_seeds(self._seed)\n'''
+          if text.count(old) != 1:
+              raise SystemExit('realizer fit anchor drift')
+          text = text.replace(old, new, 1)
+          text = text.replace('        self._train_path = Path(episodes_path)\n        self._train_dataset_hash = dataset_hash\n', '        self._train_snapshot = snapshot\n        self._train_dataset_hash = dataset_hash\n', 1)
+
+          # Metadata binds authenticated capability/payload graph identities.
+          proposal_marker = '            \"dataset_hash\": self._train_dataset_hash,\n            \"config\": {\n'
+          proposal_repl = '            \"dataset_hash\": self._train_dataset_hash,\n            \"train_capability_ref\": self._train_snapshot.capability_ref,\n            \"train_payload_ref\": self._train_snapshot.payload_ref,\n            \"train_payload_sha256\": self._train_snapshot.payload_sha256,\n            \"train_artifact_graph_ref\": self._train_snapshot.artifact_graph_ref,\n            \"train_generator_source_revision\": self._train_snapshot.generator_source_revision,\n            \"train_authority_generation\": self._train_snapshot.authority_generation,\n            \"config\": {\n'
+          if text.count(proposal_marker) != 2:
+              raise SystemExit('metadata marker count drift')
+          text = text.replace(proposal_marker, proposal_repl, 2)
+
+          # Release entrypoints require the caller to supply the already authenticated snapshot.
+          old = '''def train_proposal_release(\n    root: str | Path,\n    config: dict | None = None,\n) -> tuple[ReleaseProposalTrainer, dict, str]:\n    \"\"\"Train the release proposal model on the train partition.\n\n    Returns ``(trainer, report, source_revision)``.\n    \"\"\"\n'''
+          new = '''def train_proposal_release(\n    root: str | Path,\n    snapshot: AuthenticatedClassSnapshot,\n    config: dict | None = None,\n) -> tuple[ReleaseProposalTrainer, dict, str]:\n    \"\"\"Train the release proposal model from an authenticated R4 train snapshot.\n\n    Returns ``(trainer, report, source_revision)``.\n    \"\"\"\n'''
+          if text.count(old) != 1:
+              raise SystemExit('proposal release signature drift')
+          text = text.replace(old, new, 1)
+          text = text.replace('    report = trainer.fit(root / _TRAIN_PARTITION)\n', '    report = trainer.fit(snapshot)\n', 1)
+
+          old = '''def train_realizer_release(\n    root: str | Path,\n    config: dict | None = None,\n) -> tuple[ReleaseRealizerTrainer, dict, str]:\n    \"\"\"Train the release realizer model on the train partition.\n\n    Returns ``(trainer, report, source_revision)``.\n    \"\"\"\n'''
+          new = '''def train_realizer_release(\n    root: str | Path,\n    snapshot: AuthenticatedClassSnapshot,\n    config: dict | None = None,\n) -> tuple[ReleaseRealizerTrainer, dict, str]:\n    \"\"\"Train the release realizer model from an authenticated R4 train snapshot.\n\n    Returns ``(trainer, report, source_revision)``.\n    \"\"\"\n'''
+          if text.count(old) != 1:
+              raise SystemExit('realizer release signature drift')
+          text = text.replace(old, new, 1)
+          text = text.replace('    report = trainer.fit(root / _TRAIN_PARTITION)\n', '    report = trainer.fit(snapshot)\n', 1)
+
+          # Reproduction helpers must no longer silently recover a legacy partition.
+          for name in ('retrain_proposal_release', 'retrain_realizer_release'):
+              sig = f'def {name}(root: str | Path) -> dict:\n'
+              if text.count(sig) != 1:
+                  raise SystemExit(f'{name} signature drift')
+              text = text.replace(sig, f'def {name}(root: str | Path, snapshot: AuthenticatedClassSnapshot) -> dict:\n', 1)
+          text = text.replace('    trainer, report, revision = train_proposal_release(root, config)\n', '    trainer, report, revision = train_proposal_release(root, snapshot, config)\n', 1)
+          text = text.replace('    trainer, report, revision = train_realizer_release(root, config)\n', '    trainer, report, revision = train_realizer_release(root, snapshot, config)\n', 1)
+
+          # Reproduction cannot mint trust itself; callers must pass the authenticated snapshot.
+          old = '''def reproduce_models(\n    expected_root: str | Path,\n    *,\n    temporary: bool = False,\n    receipt_path: str | Path | None = None,\n) -> dict:\n'''
+          new = '''def reproduce_models(\n    expected_root: str | Path,\n    snapshot: AuthenticatedClassSnapshot,\n    *,\n    temporary: bool = False,\n    receipt_path: str | Path | None = None,\n) -> dict:\n'''
+          if text.count(old) != 1:
+              raise SystemExit('reproduce signature drift')
+          text = text.replace(old, new, 1)
+          text = text.replace('        proposal_result = retrain_proposal_release(expected_root)\n', '        proposal_result = retrain_proposal_release(expected_root, snapshot)\n', 1)
+          text = text.replace('        realizer_result = retrain_realizer_release(expected_root)\n', '        realizer_result = retrain_realizer_release(expected_root, snapshot)\n', 1)
+
+          if '_TRAIN_PARTITION' in text or '_PARTITION_MANIFEST' in text or 'from .partitions import PartitionAccessError' in text:
+              raise SystemExit('legacy partition authority remains in training.py')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          python -m py_compile src/cemm_authoritative_hybrid/training.py src/cemm_authoritative_hybrid/r4_partition_access.py
+          git diff --check
+      - name: Install focused test dependencies
+        run: |
+          python -m pip install 'pytest==8.4.0' 'jsonschema==4.25.1' 'numpy==2.5.2' 'safetensors==0.5.3'
+          python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
+      - name: Run focused structural verification
         working-directory: hybrid_mvp
         env:
           PYTHONPATH: src:scripts:.
         run: |
           set -euo pipefail
-          python -m py_compile src/cemm_authoritative_hybrid/r4_partition_access.py
           python - <<'PY'
-          from __future__ import annotations
-          import hashlib
-          import json
-          import os
-          from pathlib import Path
-          import shutil
-          import tempfile
+          from cemm_authoritative_hybrid.r4_partition_access import AuthenticatedClassSnapshot
+          import cemm_authoritative_hybrid.training as training
 
-          from cemm_authoritative_hybrid.r4_partition_access import (
-              AuthenticatedClassSnapshot,
-              PartitionAccessError,
-              load_r4_train_episodes,
+          snap = AuthenticatedClassSnapshot(
+              capability_ref='r4_class_capability_v1:test',
+              payload_ref='r4_split_payload_v1:test',
+              payload_sha256='0' * 64,
+              payload_bytes=b'{"episode_ref":"episode:a","orientation":{"source_text":"hello"},"selected_program":{"actions":[]},"response_meaning":{},"training_source":{"source_kind":"reviewed"}}\n',
+              episode_count=1,
+              artifact_graph_ref='r4_artifact_graph_v4:test',
+              generator_source_revision='a' * 40,
+              authority_generation='authority:test',
           )
-          from cemm_authoritative_hybrid.r4_partition_contracts import (
-              R4ClassAuthorization,
-              R4ClassCapability,
-          )
-
-          SOURCE = Path('artifacts/r4/episodes.jsonl')
-          first = next(line for line in SOURCE.read_bytes().splitlines() if line)
-          row = json.loads(first)
-          episode_ref = row['episode_ref']
-          payload = first + b'\n'
-          revision = '9d6d7ee32edcfa6e172b7a2f06f346556d21a3ac'
-
-          def build(root: Path):
-              payload_path = root / 'artifacts/r4/splits/train.jsonl'
-              capability_path = root / 'artifacts/r4/capabilities/train.json'
-              authorization_path = root / 'artifacts/r4/authorizations/train.json'
-              for path in (payload_path, capability_path, authorization_path):
-                  path.parent.mkdir(parents=True, exist_ok=True)
-              payload_path.write_bytes(payload)
-              capability = R4ClassCapability.create(
-                  purpose='training',
-                  split='train',
-                  payload_path='artifacts/r4/splits/train.jsonl',
-                  payload_sha256=hashlib.sha256(payload).hexdigest(),
-                  payload_count=1,
-                  source_set_ref='source_set:test',
-                  split_manifest_ref='split_manifest:test',
-              )
-              capability_raw = capability.to_json_bytes()
-              capability_path.write_bytes(capability_raw)
-              authorization = R4ClassAuthorization.create(
-                  purpose='training',
-                  expected_capability_ref=capability.capability_ref,
-                  expected_capability_sha256=hashlib.sha256(capability_raw).hexdigest(),
-                  artifact_graph_ref='r4_artifact_graph_v4:test',
-                  generator_source_revision=revision,
-                  authority_generation='authority-v1-2026-07-29',
-              )
-              authorization_raw = authorization.to_json_bytes()
-              authorization_path.write_bytes(authorization_raw)
-              return authorization_path, capability_path, payload_path, authorization, authorization_raw
-
-          with tempfile.TemporaryDirectory(prefix='r4-task7-access-') as temp:
-              root = Path(temp)
-              auth_path, cap_path, payload_path, auth, auth_raw = build(root)
-              expected_sha = hashlib.sha256(auth_raw).hexdigest()
-              batch = load_r4_train_episodes(
-                  'artifacts/r4/authorizations/train.json',
-                  'artifacts/r4/capabilities/train.json',
-                  root,
-                  expected_authorization_ref=auth.authorization_ref,
-                  expected_authorization_sha256=expected_sha,
-              )
-              assert [episode.episode_ref for episode in batch.episodes] == [episode_ref]
-              assert type(batch.snapshot) is AuthenticatedClassSnapshot
-              assert batch.snapshot.payload_bytes == payload
-              assert batch.snapshot.episode_count == 1
-              assert batch.authorization_ref == auth.authorization_ref
-              assert batch.artifact_graph_ref == 'r4_artifact_graph_v4:test'
-
-              # External authorization trust must fail before capability access.
-              cap_path.unlink()
-              try:
-                  load_r4_train_episodes(
-                      auth_path,
-                      root / 'artifacts/r4/capabilities/train.json',
-                      root,
-                      expected_authorization_ref=auth.authorization_ref,
-                      expected_authorization_sha256='0' * 64,
-                  )
-              except PartitionAccessError as exc:
-                  assert 'authorization SHA' in str(exc)
-              else:
-                  raise AssertionError('wrong external authorization SHA was accepted')
-              cap_path.parent.mkdir(parents=True, exist_ok=True)
-              _, _, _, _, _ = build(root)
-
-              # Legacy and sibling/copy paths are rejected before reading payload bytes.
-              legacy = root / 'data/partitions/train.jsonl'
-              legacy.parent.mkdir(parents=True)
-              legacy.write_bytes(payload)
-              for bad_auth, bad_cap in (
-                  ('data/partitions/train.jsonl', 'artifacts/r4/capabilities/train.json'),
-                  ('artifacts/r4/authorizations/train.json', 'data/partitions/train.jsonl'),
-              ):
-                  try:
-                      load_r4_train_episodes(
-                          bad_auth, bad_cap, root,
-                          expected_authorization_ref=auth.authorization_ref,
-                          expected_authorization_sha256=expected_sha,
-                      )
-                  except PartitionAccessError:
-                      pass
-                  else:
-                      raise AssertionError('legacy path was accepted')
-
-              copied = root / 'copied-capability.json'
-              shutil.copyfile(root / 'artifacts/r4/capabilities/train.json', copied)
-              try:
-                  load_r4_train_episodes(
-                      'artifacts/r4/authorizations/train.json', copied, root,
-                      expected_authorization_ref=auth.authorization_ref,
-                      expected_authorization_sha256=expected_sha,
-                  )
-              except PartitionAccessError:
-                  pass
-              else:
-                  raise AssertionError('copied capability was accepted')
-
-              # A payload mutation after capability minting must fail closed.
-              payload_path.write_bytes(payload + payload)
-              try:
-                  load_r4_train_episodes(
-                      'artifacts/r4/authorizations/train.json',
-                      'artifacts/r4/capabilities/train.json',
-                      root,
-                      expected_authorization_ref=auth.authorization_ref,
-                      expected_authorization_sha256=expected_sha,
-                  )
-              except PartitionAccessError as exc:
-                  assert 'payload SHA' in str(exc)
-              else:
-                  raise AssertionError('mutated payload was accepted')
-
-          print('Task 7 train-capability access smoke: PASS')
+          episodes, digest = training._episodes_from_authenticated_snapshot(snap)
+          assert [e.episode_ref for e in episodes] == ['episode:a']
+          assert digest == '0' * 64
+          assert '_TRAIN_PARTITION' not in training.__dict__
+          assert '_PARTITION_MANIFEST' not in training.__dict__
           PY
+          python scripts/check_r3_r4_structure.py
+          python scripts/check_test_inventory.py --phase R4 --source-only
+          python scripts/check_test_inventory.py --phase R5 --source-only
+          git grep -nE 'data[/\\]partitions|_TRAIN_PARTITION|_PARTITION_MANIFEST' -- src/cemm_authoritative_hybrid/training.py && exit 1 || true
           git diff --check
-
-  record:
-    if: always()
-    needs: verify-task7-access
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: agent/r4-export-checkout-20260816
-          fetch-depth: 0
-      - name: Record Task 7 access outcome
-        env:
-          RESULT: ${{ needs.verify-task7-access.result }}
+      - name: Commit and push trainer migration
         run: |
           set -euo pipefail
-          mkdir -p .github/r4-task7-status
-          printf '{"access":"%s","source":"%s"}\n' "$RESULT" '9d6d7ee32edcfa6e172b7a2f06f346556d21a3ac' > .github/r4-task7-status/access.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- .github/r4-task7-status/access.json
-          git commit -m 'ci(r4): record Task 7 access verification'
-          git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
+          git add -- hybrid_mvp/src/cemm_authoritative_hybrid/training.py
+          git diff --cached --check
+          git commit -m 'refactor(r5): train from authenticated R4 snapshot'
+          git push origin HEAD:refs/heads/agent/r4-task7-train-capability-20260818
+          git rev-parse HEAD
