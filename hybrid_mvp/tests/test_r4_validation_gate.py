@@ -141,7 +141,7 @@ __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_
                                                                                          'diagnostic_role': 'owner',
                                                                                          'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                          'owner_ref': 'artifact-integrity',
-                                                                                         'source_ast_sha256': '5d272acc451aebd4303796cdc020e7fdc74eeeb855e78974e4183e0c07c3d5ac'},
+                                                                                         'source_ast_sha256': '946124cff943ef9e6b4632405e005c0ad6b3d9b0ae1a65d878f7ae77a99a5114'},
  'tests/test_r4_validation_gate.py::test_r4_integrity_report_rejects_retired_review_fields': {'activation_phase': 'R4',
                                                                                               'assertion_ref': 'assertion:r4-integrity-report-rejects-review-fields',
                                                                                               'diagnostic_role': 'owner',

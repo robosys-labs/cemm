@@ -38,7 +38,7 @@ __cemm_test_inventory__ = {'tests/test_r4_authentic_episodes.py::test_every_acce
                                                                                                 'assertion_ref': 'assertion:r4-build-receipt-is-exact-admission-candidate',
                                                                                                 'diagnostic_role': 'phase',
                                                                                                 'introduced_by_task': 'R4-Repository-Owned-Admission',
-                                                                                                'source_ast_sha256': '6f478cf5f46fb3e7b1377a63e2ec5e415f662fd2f0c3aeb4a40371538320ef91'},
+                                                                                                'source_ast_sha256': '726b0fc3f96909b9dc60ec3d4f9074b324c08c09b6f1dc28739ffe24d3c17a23'},
  'tests/test_r4_authentic_episodes.py::test_r4_build_receipt_rejects_retired_review_state': {'activation_phase': 'R4',
                                                                                              'assertion_ref': 'assertion:r4-build-receipt-rejects-retired-review-state',
                                                                                              'diagnostic_role': 'phase',
