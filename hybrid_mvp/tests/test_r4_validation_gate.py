@@ -25,6 +25,7 @@ def _valid_report() -> dict[str, object]:
         "artifact_count": 401,
         "artifact_set_ref": gate.content_ref("artifact_set", ["x"]),
         "build_receipt_ref": gate.content_ref("build_receipt", {"x": 1}),
+        "build_receipt_abi_version": 3,
         "source_revision": "1" * 40,
         "authority_generation": "authority:test",
     }
@@ -33,10 +34,22 @@ def _valid_report() -> dict[str, object]:
 
 
 def test_r4_integrity_report_has_exact_internal_shape() -> None:
+    report = _valid_report()
     gate._validate_admission_step_report(
         "r4_artifact_integrity",
-        _valid_report(),
+        report,
     )
+    report["build_receipt_abi_version"] = 4
+    identity = dict(report)
+    identity.pop("integrity_ref")
+    report["integrity_ref"] = gate.content_ref("r4_artifact_integrity", identity)
+    gate._validate_admission_step_report("r4_artifact_integrity", report)
+    report["build_receipt_abi_version"] = 2
+    identity = dict(report)
+    identity.pop("integrity_ref")
+    report["integrity_ref"] = gate.content_ref("r4_artifact_integrity", identity)
+    with pytest.raises(gate.AdmissionValidationError, match="ABI version"):
+        gate._validate_admission_step_report("r4_artifact_integrity", report)
 
 
 def test_r4_integrity_report_rejects_retired_review_fields() -> None:
