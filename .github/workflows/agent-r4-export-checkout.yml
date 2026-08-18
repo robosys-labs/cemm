@@ -1,4 +1,4 @@
-name: Agent R4 Task 7 training hard-cut verification
+name: Agent R4 Task 7 authenticated hard-cut publisher
 
 on:
   push:
@@ -24,48 +24,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/r4-task7-training-hardcut-20260818
+          ref: agent/r4-task7-training-hardcut-verified-20260818
           path: work
           fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-export-checkout-20260816
+          path: helper
+          fetch-depth: 1
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Remove dead three-way training authority
-        working-directory: work
+      - name: Authenticate and apply reviewed patch
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = 'd74063f30c06d00f5b8c3781a3399ebd71368a7e'
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('hybrid_mvp/src/cemm_authoritative_hybrid/training.py')
-          text = path.read_text(encoding='utf-8')
-          start_marker = '# ---------------------------------------------------------------------------\n# Release trainers with partition isolation (M4 Task 3)\n# ---------------------------------------------------------------------------\n'
-          end_marker = 'def _validated_train_batch(batch: AuthenticatedR4TrainBatch) -> tuple[AuthenticEpisode, ...]:\n'
-          start = text.find(start_marker)
-          end = text.find(end_marker, start)
-          if start < 0 or end <= start:
-              raise SystemExit('legacy training loader boundary drift')
-          replacement = '# ---------------------------------------------------------------------------\n# Release trainers with authenticated R4 train evidence\n# ---------------------------------------------------------------------------\n\n\n'
-          updated = text[:start] + replacement + text[end:]
-          forbidden = (
-              '_TRAIN_PARTITION', '_VALIDATION_PARTITION', '_TEST_PARTITION',
-              '_PARTITION_MANIFEST', 'load_partition_episodes_for_training',
-              '_load_partition_episodes_with_hash', '_check_partition_access',
-              'from .partitions import PartitionAccessError',
-          )
-          for token in forbidden:
-              if token in updated:
-                  raise SystemExit(f'legacy training authority survived: {token}')
-          path.write_text(updated, encoding='utf-8')
-          PY
-          git diff --check
+          test "$(git -C work rev-parse HEAD)" = 'c1346377e9a2d52c8a1f62deeea47524dd252a96'
+          test "$(sha256sum helper/.github/r4-task7/hardcut.patch.gz.b64 | awk '{print $1}')" = '31093ab3f93c29d5c071e482e595b0f9557bb90b54728a4ebd5da66c3482be08'
+          base64 -d helper/.github/r4-task7/hardcut.patch.gz.b64 | gzip -d > /tmp/task7-hardcut.patch
+          test "$(sha256sum /tmp/task7-hardcut.patch | awk '{print $1}')" = 'c78917c44fc487c8d90fa2cb236754c696e447af75fac898e03862154f3206b6'
+          git -C work apply --check /tmp/task7-hardcut.patch
+          git -C work apply /tmp/task7-hardcut.patch
+          git -C work diff --check
+          printf '%s\n' \
+            hybrid_mvp/src/cemm_authoritative_hybrid/training.py \
+            hybrid_mvp/tests/test_r5_data_isolation.py | sort > /tmp/expected
+          git -C work diff --name-only | sort > /tmp/actual
+          diff -u /tmp/expected /tmp/actual
       - name: Install governed dependencies
         run: |
           set -euo pipefail
           python -m pip install 'pytest==8.4.0' 'numpy==2.5.2' 'safetensors==0.5.3'
           python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
       - id: verify
-        name: Refresh metadata and verify hard-cut
+        name: Verify exact hard-cut candidate
         continue-on-error: true
         working-directory: work/hybrid_mvp
         env:
@@ -74,11 +66,7 @@ jobs:
           set -o pipefail
           {
             set -euo pipefail
-            python scripts/refresh_r5_test_metadata.py
-            if grep -Fq '0000000000000000000000000000000000000000000000000000000000000000' tests/test_r5_data_isolation.py; then
-              echo 'placeholder R5 AST hash survived refresh' >&2
-              exit 1
-            fi
+            python scripts/verify_r3_r4_test_metadata.py
             python -m py_compile src/cemm_authoritative_hybrid/training.py tests/test_r5_data_isolation.py
             python -m pytest \
               tests/test_r5_data_isolation.py \
@@ -94,7 +82,7 @@ jobs:
             git diff --check
             test -z "$(git status --short -- artifacts/r4)"
           } 2>&1 | tee /tmp/training-hardcut.log
-      - name: Publish verified staging content
+      - name: Commit and push exact verified hard-cut
         if: steps.verify.outcome == 'success'
         working-directory: work
         run: |
@@ -103,11 +91,8 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -- hybrid_mvp/src/cemm_authoritative_hybrid/training.py hybrid_mvp/tests/test_r5_data_isolation.py
           git diff --cached --check
-          printf '%s\n' hybrid_mvp/src/cemm_authoritative_hybrid/training.py hybrid_mvp/tests/test_r5_data_isolation.py | sort > /tmp/expected
-          git diff --cached --name-only | sort > /tmp/actual
-          diff -u /tmp/expected /tmp/actual
           git commit -m 'refactor(r5): remove legacy training partition authority'
-          git push origin HEAD:refs/heads/agent/r4-task7-training-hardcut-20260818
+          git push origin HEAD:refs/heads/agent/r4-task7-training-hardcut-verified-20260818
       - name: Record outcome
         if: always()
         env:
@@ -120,9 +105,9 @@ jobs:
           git checkout agent/r4-export-checkout-20260816
           mkdir -p .github/r4-task7-status
           printf '{"training_hardcut":"%s","source":"%s"}\n' "$OUTCOME" "$SOURCE" > .github/r4-task7-status/training-hardcut.json
-          if test -f /tmp/training-hardcut.log; then cp /tmp/training-hardcut.log .github/r4-task7-status/training-hardcut.log; else printf 'verification did not start\n' > .github/r4-task7-status/training-hardcut.log; fi
+          cp /tmp/training-hardcut.log .github/r4-task7-status/training-hardcut.log || true
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -- .github/r4-task7-status/training-hardcut.json .github/r4-task7-status/training-hardcut.log
-          git commit -m 'ci(r5): record training hard-cut verification'
+          git commit -m 'ci(r5): record authenticated training hard-cut'
           git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
