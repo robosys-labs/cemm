@@ -1,0 +1,45 @@
+name: Agent R4 Task 6 gate report patch
+
+on:
+  push:
+    branches:
+      - agent/r4-export-checkout-20260816
+    paths:
+      - .github/workflows/agent-r4-task6-gate-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task6-build-receipt-20260818
+          fetch-depth: 0
+      - name: Authenticate Build Receipt ABI version in integrity reports
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('hybrid_mvp/scripts/validation_gate.py')
+          text = path.read_text('utf-8')
+          old_fields = '''                "schema", "artifact_count", "artifact_set_ref", "build_receipt_ref",\n                "source_revision", "authority_generation", "integrity_ref",\n'''
+          new_fields = '''                "schema", "artifact_count", "artifact_set_ref", "build_receipt_ref",\n                "build_receipt_abi_version", "source_revision", "authority_generation",\n                "integrity_ref",\n'''
+          if text.count(old_fields) != 1:
+              raise SystemExit(f'R4 integrity field anchor count={text.count(old_fields)}')
+          text = text.replace(old_fields, new_fields, 1)
+          old_count = '''            if _nonnegative_exact_int(row["artifact_count"], "R4 artifact count") == 0:\n                raise AdmissionValidationError("R4 artifact integrity report is empty")\n'''
+          new_count = old_count + '''            abi_version = _nonnegative_exact_int(\n                row["build_receipt_abi_version"], "R4 Build Receipt ABI version"\n            )\n            if abi_version not in {3, 4}:\n                raise AdmissionValidationError("R4 Build Receipt ABI version is unsupported")\n'''
+          if text.count(old_count) != 1:
+              raise SystemExit(f'R4 integrity count anchor count={text.count(old_count)}')
+          path.write_text(text.replace(old_count, new_count, 1), encoding='utf-8')
+          PY
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- hybrid_mvp/scripts/validation_gate.py
+          git commit -m 'feat(r4): authenticate Build Receipt ABI in gate reports'
+          git push origin HEAD:refs/heads/agent/r4-task6-build-receipt-20260818
