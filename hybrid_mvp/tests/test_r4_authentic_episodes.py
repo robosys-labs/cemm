@@ -62,36 +62,63 @@ def _episodes() -> tuple[AuthenticEpisode, ...]:
     return rows
 
 
-def _candidate_receipt() -> R4BuildReceipt:
+def _candidate_values() -> dict[str, object]:
     sha = "sha256:" + "0" * 64
-    return R4BuildReceipt.create(
-        source_revision="1" * 40,
-        authority_generation="authority:test",
-        abi_registry_ref="abi:test",
-        scenario_source_sha256=sha,
-        assertion_registry_sha256=sha,
-        contract_set_sha256=sha,
-        derivation_contract_set_sha256=sha,
-        expanded_case_set_sha256=sha,
-        episode_set_sha256=sha,
-        mutation_set_sha256=sha,
-        mutation_observation_set_sha256=sha,
-        structural_sufficiency_sha256=sha,
-        partition_manifest_sha256s=tuple(
-            "sha256:" + f"{index:064x}" for index in range(1, 8)
+    return {
+        "source_revision": "1" * 40,
+        "authority_generation": "authority-v1-2026-07-29",
+        "abi_registry_ref": "abi:test",
+        "scenario_source_sha256": sha,
+        "assertion_registry_sha256": sha,
+        "contract_set_sha256": sha,
+        "derivation_contract_set_sha256": sha,
+        "expanded_case_set_sha256": sha,
+        "episode_set_sha256": sha,
+        "mutation_set_sha256": sha,
+        "mutation_observation_set_sha256": sha,
+        "structural_sufficiency_sha256": sha,
+        "partition_evidence_sha256": sha,
+        "split_manifest_sha256": sha,
+        "partition_sufficiency_sha256": sha,
+        "split_payload_sha256s": tuple(
+            "sha256:" + f"{index:064x}" for index in range(1, 5)
         ),
-        training_allowlist_sha256=sha,
-        admission_state="candidate",
-    )
+        "train_capability_sha256": sha,
+        "train_authorization_sha256": sha,
+        "admission_state": "candidate",
+    }
+
+
+def _candidate_receipt() -> R4BuildReceipt:
+    return R4BuildReceipt.create(**_candidate_values())
 
 
 def test_r4_build_receipt_is_an_exact_admission_candidate() -> None:
     value = _candidate_receipt().as_dict()
-    assert R4_BUILD_RECEIPT_ABI_VERSION == 3
-    assert value["abi_version"] == 3
+    assert R4_BUILD_RECEIPT_ABI_VERSION == 4
+    assert value["abi_version"] == 4
     assert value["admission_state"] == "candidate"
+    assert len(value["split_payload_sha256s"]) == 4
+    assert "partition_manifest_sha256s" not in value
+    assert "training_allowlist_sha256" not in value
     assert "review_state" not in value
     assert R4BuildReceipt.from_dict(value).as_dict() == value
+
+    legacy = dict(value)
+    legacy["abi_version"] = 3
+    legacy["partition_manifest_sha256s"] = ["sha256:" + "0" * 64]
+    legacy["training_allowlist_sha256"] = "sha256:" + "0" * 64
+    legacy.pop("partition_evidence_sha256")
+    with pytest.raises(ValueError, match="R4BuildReceipt|unsupported"):
+        R4BuildReceipt.from_dict(legacy)
+
+    for count in (3, 5):
+        fields = _candidate_values()
+        fields["split_payload_sha256s"] = tuple(
+            "sha256:" + f"{index:064x}" for index in range(1, count + 1)
+        )
+        with pytest.raises(ValueError, match="four canonical hashes"):
+            R4BuildReceipt.create(**fields)
 
 
 def test_r4_build_receipt_rejects_retired_review_state() -> None:
