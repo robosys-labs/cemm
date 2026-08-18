@@ -1,0 +1,189 @@
+name: Agent R4 Task 6 parallel verification
+
+on:
+  push:
+    branches:
+      - agent/r4-export-checkout-20260816
+    paths:
+      - .github/workflows/agent-r4-task6-parallel.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-r4-task6-parallel-20260818
+  cancel-in-progress: false
+
+jobs:
+  source-contracts:
+    name: ABI 4 source and contract checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task6-sourcecheck-20260818
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install focused dependencies
+        run: python -m pip install 'pytest==8.4.0' 'jsonschema==4.25.1'
+      - name: Compile and verify ABI 4 contracts
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            src/cemm_authoritative_hybrid/r4_pipeline.py \
+            src/cemm_authoritative_hybrid/r4_partition_contracts.py \
+            scripts/build_r4_artifacts.py
+          python -m pytest \
+            tests/test_r4_partition_contracts.py \
+            tests/test_r4_partition_global_assignment.py \
+            -q -p no:cacheprovider
+          python - <<'PY'
+          import copy
+          import json
+          import jsonschema
+          from pathlib import Path
+          from cemm_authoritative_hybrid.r4_pipeline import R4BuildReceipt
+
+          h = 'sha256:' + '0' * 64
+          values = {
+              'source_revision': 'a' * 40,
+              'authority_generation': 'authority-v1-2026-07-29',
+              'abi_registry_ref': 'abi:r4-authentic-build-environment',
+              'scenario_source_sha256': h,
+              'assertion_registry_sha256': h,
+              'contract_set_sha256': h,
+              'derivation_contract_set_sha256': h,
+              'expanded_case_set_sha256': h,
+              'episode_set_sha256': h,
+              'mutation_set_sha256': h,
+              'mutation_observation_set_sha256': h,
+              'structural_sufficiency_sha256': h,
+              'partition_evidence_sha256': h,
+              'split_manifest_sha256': h,
+              'partition_sufficiency_sha256': h,
+              'split_payload_sha256s': (h, h, h, h),
+              'train_capability_sha256': h,
+              'train_authorization_sha256': h,
+              'admission_state': 'candidate',
+          }
+          receipt = R4BuildReceipt.create(**values)
+          rebuilt = R4BuildReceipt.from_dict(receipt.as_dict())
+          assert rebuilt == receipt
+          schema = json.loads(Path('schemas/r4_build_receipt.schema.json').read_text())
+          jsonschema.Draft202012Validator(schema).validate(receipt.as_dict())
+          legacy = receipt.as_dict()
+          legacy['abi_version'] = 3
+          legacy['partition_manifest_sha256s'] = [h]
+          legacy['training_allowlist_sha256'] = h
+          legacy.pop('partition_evidence_sha256')
+          try:
+              R4BuildReceipt.from_dict(legacy)
+          except (TypeError, ValueError):
+              pass
+          else:
+              raise AssertionError('ABI 3 receipt was accepted by ABI 4 decoder')
+          print(json.dumps({'abi': receipt.abi_version, 'receipt_ref': receipt.receipt_ref}, sort_keys=True))
+          PY
+          git diff --check
+
+  candidate-ab:
+    name: Authentic A/B candidate generation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task6-sourcecheck-20260818
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install exact governed runtime dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install \
+            'pytest==8.4.0' \
+            'hypothesis==6.163.0' \
+            'numpy==2.5.2' \
+            'safetensors==0.5.3' \
+            'fastapi==0.115.0' \
+            'httpx==0.27.0' \
+            'jsonschema==4.25.1'
+          python -m pip install 'torch==2.6.0' \
+            --index-url https://download.pytorch.org/whl/cpu
+      - name: Generate two independent candidate trees
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
+        run: |
+          set -euo pipefail
+          REVISION="$(git rev-parse HEAD)"
+          rm -rf /tmp/r4-task6-a /tmp/r4-task6-b
+          python scripts/build_r4_artifacts.py \
+            --environment src/cemm_authoritative_hybrid/r4_environment.py \
+            --source-revision "$REVISION" \
+            --output /tmp/r4-task6-a > /tmp/r4-task6-a.json
+          python scripts/build_r4_artifacts.py \
+            --environment src/cemm_authoritative_hybrid/r4_environment.py \
+            --source-revision "$REVISION" \
+            --output /tmp/r4-task6-b > /tmp/r4-task6-b.json
+          diff -qr /tmp/r4-task6-a /tmp/r4-task6-b
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from cemm_authoritative_hybrid.r4_pipeline import R4BuildReceipt
+          from cemm_authoritative_hybrid.r4_partition_contracts import SPLITS
+
+          root = Path('/tmp/r4-task6-a')
+          expected = {f'splits/{split}.jsonl' for split in SPLITS}
+          actual = {p.relative_to(root).as_posix() for p in root.rglob('*') if p.is_file()}
+          assert expected <= actual
+          assert 'partition_evidence.json' in actual
+          assert 'partition_sufficiency.json' in actual
+          assert 'split_manifest.json' in actual
+          assert 'capabilities/train.json' in actual
+          assert 'authorizations/train.json' in actual
+          assert not any(path.startswith('partitions/') for path in actual)
+          assert 'training_allowlist.json' not in actual
+          counts = {}
+          refs = set()
+          for split in SPLITS:
+              path = root / 'splits' / f'{split}.jsonl'
+              rows = [json.loads(line) for line in path.read_text().splitlines() if line]
+              counts[split] = len(rows)
+              assert rows
+              episode_refs = [row['episode_ref'] for row in rows]
+              assert episode_refs == sorted(episode_refs)
+              assert not refs.intersection(episode_refs)
+              refs.update(episode_refs)
+          assert sum(counts.values()) == 400, counts
+          receipt = R4BuildReceipt.from_dict(json.loads((root / 'BUILD_RECEIPT.json').read_text()))
+          assert receipt.abi_version == 4
+          assert receipt.source_revision == Path('.').resolve().joinpath('.git').exists() * receipt.source_revision or receipt.source_revision
+          print(json.dumps({'counts': counts, 'receipt_ref': receipt.receipt_ref, 'files': len(actual)}, sort_keys=True))
+          PY
+          git status --short -- artifacts/r4
+      - name: Upload compact candidate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r4-task6-candidate-ab-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 2
+          if-no-files-found: warn
+          path: |
+            /tmp/r4-task6-a.json
+            /tmp/r4-task6-b.json
