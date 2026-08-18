@@ -1,0 +1,88 @@
+name: Agent R4 Task 5 parallel verifier
+
+on:
+  push:
+    branches:
+      - agent/r4-export-checkout-20260816
+    paths:
+      - .github/workflows/agent-r4-task5-parallel.yml
+      - .github/r4-task5-recovery/parallel_task5.py
+      - .github/r4-task5-recovery/publish_task5.py
+      - .github/r4-task5-recovery/task4.00.0
+      - .github/r4-task5-recovery/task4.00.1
+      - .github/r4-task5-recovery/task4.00.2
+      - .github/r4-task5-recovery/task4.00.3a
+      - .github/r4-task5-recovery/task4.00.3b
+      - .github/r4-task5-recovery/task4.part.01
+      - .github/r4-task5-recovery/task4.02.0
+      - .github/r4-task5-recovery/task4.02.1a
+      - .github/r4-task5-recovery/task4.02.1b
+      - .github/r4-task5-recovery/task4.02.2
+      - .github/r4-task5-recovery/task4.02.3
+      - .github/r4-task5-recovery/task4.03.0
+      - .github/r4-task5-recovery/task4.03.1
+      - .github/r4-task5-recovery/task4.03.2
+      - .github/r4-task5-recovery/task4.03.3
+      - .github/r4-task5-recovery/task5.xz.b64
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-r4-task5-parallel-20260818
+  cancel-in-progress: false
+
+jobs:
+  verify-task4:
+    name: Verify Task 4 cross-host identity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout verification envelope
+        uses: actions/checkout@v4
+        with:
+          ref: agent/r4-export-checkout-20260816
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify Task 4
+        run: python .github/r4-task5-recovery/parallel_task5.py verify-task4
+
+  verify-task5:
+    name: Verify Task 5 allocator and independent verifier
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout verification envelope
+        uses: actions/checkout@v4
+        with:
+          ref: agent/r4-export-checkout-20260816
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify Task 5
+        run: python .github/r4-task5-recovery/parallel_task5.py verify-task5
+
+  publish:
+    name: Publish verified Task 4 and Task 5 chunks
+    needs:
+      - verify-task4
+      - verify-task5
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout publication envelope
+        uses: actions/checkout@v4
+        with:
+          ref: agent/r4-export-checkout-20260816
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Publish verified chunks
+        run: python .github/r4-task5-recovery/parallel_task5.py publish
