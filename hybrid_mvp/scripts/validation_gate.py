@@ -2121,12 +2121,18 @@ def _validate_admission_step_report(kind: str, report: object) -> None:
         if kind == "r4_artifact_integrity":
             row = _exact_fields(item, frozenset({
                 "schema", "artifact_count", "artifact_set_ref", "build_receipt_ref",
-                "source_revision", "authority_generation", "integrity_ref",
+                "build_receipt_abi_version", "source_revision", "authority_generation",
+                "integrity_ref",
             }), "R4-artifact-integrity step report")
             if row["schema"] != "cemm-r4-artifact-integrity-step-report-v1":
                 raise AdmissionValidationError("R4 artifact integrity report schema is invalid")
             if _nonnegative_exact_int(row["artifact_count"], "R4 artifact count") == 0:
                 raise AdmissionValidationError("R4 artifact integrity report is empty")
+            abi_version = _nonnegative_exact_int(
+                row["build_receipt_abi_version"], "R4 Build Receipt ABI version"
+            )
+            if abi_version not in {3, 4}:
+                raise AdmissionValidationError("R4 Build Receipt ABI version is unsupported")
             for field in (
                 "artifact_set_ref", "build_receipt_ref", "integrity_ref",
             ):
