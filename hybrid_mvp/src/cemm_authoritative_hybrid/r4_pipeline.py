@@ -95,7 +95,7 @@ def _sha256_bytes(raw: bytes) -> str:
 
 def _rows_bytes(rows: Iterable[Mapping[str, Any]]) -> bytes:
     material = tuple(dict(row) for row in rows)
-    return b"" if not material else b"".join(_canonical_json_line(row) for row in material)
+    return b"\n".join(_canonical_json(row) for row in material) + b"\n"
 
 
 def _set_hash(rows: Iterable[Mapping[str, Any]]) -> str:
@@ -500,7 +500,7 @@ class R4Pipeline:
             episode_set_sha256=_set_hash(row.as_dict() for row in episodes),
             mutation_set_sha256=_set_hash(row.as_dict() for row in mutations),
             mutation_observation_set_sha256=_set_hash(row.as_dict() for row in observations),
-            structural_sufficiency_sha256=_sha256_bytes(_canonical_json_line(sufficiency.as_dict())),
+            structural_sufficiency_sha256=_sha256_bytes(_canonical_json(sufficiency.as_dict())),
             partition_evidence_sha256=_sha256_bytes(evidence.to_json_bytes()),
             split_manifest_sha256=_sha256_bytes(split_manifest.to_json_bytes()),
             partition_sufficiency_sha256=_sha256_bytes(partition_sufficiency.to_json_bytes()),
