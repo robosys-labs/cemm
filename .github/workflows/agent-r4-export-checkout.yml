@@ -1,4 +1,4 @@
-name: Agent R4 Task 7 global successor verification
+name: Agent R4 Task 7 training hard-cut verification
 
 on:
   push:
@@ -11,81 +11,89 @@ permissions:
   contents: write
 
 concurrency:
-  group: agent-r4-task7-global-successors-20260818
+  group: agent-r4-task7-registered-helper-20260818
   cancel-in-progress: true
 
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 45
     env:
       PYTHONDONTWRITEBYTECODE: '1'
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/r4-task7-global-successors-20260818
+          ref: agent/r4-task7-training-hardcut-20260818
           path: work
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - run: python -m pip install 'pytest==8.4.0'
-      - id: verify
-        name: Normalize, refresh, and verify
-        continue-on-error: true
+      - name: Remove dead three-way training authority
         working-directory: work
-        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 'd74063f30c06d00f5b8c3781a3399ebd71368a7e'
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('hybrid_mvp/src/cemm_authoritative_hybrid/training.py')
+          text = path.read_text(encoding='utf-8')
+          start_marker = '# ---------------------------------------------------------------------------\n# Release trainers with partition isolation (M4 Task 3)\n# ---------------------------------------------------------------------------\n'
+          end_marker = 'def _validated_train_batch(batch: AuthenticatedR4TrainBatch) -> tuple[AuthenticEpisode, ...]:\n'
+          start = text.find(start_marker)
+          end = text.find(end_marker, start)
+          if start < 0 or end <= start:
+              raise SystemExit('legacy training loader boundary drift')
+          replacement = '# ---------------------------------------------------------------------------\n# Release trainers with authenticated R4 train evidence\n# ---------------------------------------------------------------------------\n\n\n'
+          updated = text[:start] + replacement + text[end:]
+          forbidden = (
+              '_TRAIN_PARTITION', '_VALIDATION_PARTITION', '_TEST_PARTITION',
+              '_PARTITION_MANIFEST', 'load_partition_episodes_for_training',
+              '_load_partition_episodes_with_hash', '_check_partition_access',
+              'from .partitions import PartitionAccessError',
+          )
+          for token in forbidden:
+              if token in updated:
+                  raise SystemExit(f'legacy training authority survived: {token}')
+          path.write_text(updated, encoding='utf-8')
+          PY
+          git diff --check
+      - name: Install governed dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install 'pytest==8.4.0' 'numpy==2.5.2' 'safetensors==0.5.3'
+          python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
+      - id: verify
+        name: Refresh metadata and verify hard-cut
+        continue-on-error: true
+        working-directory: work/hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
         run: |
           set -o pipefail
           {
             set -euo pipefail
-            test "$(git rev-parse HEAD)" = '516a9b07cd5ef520bd14512d14a58511b1e58be5'
-            python - <<'PY'
-          from pathlib import Path
-
-          path = Path('hybrid_mvp/tests/test_r4_partition_global_assignment.py')
-          text = path.read_text(encoding='utf-8')
-          start_marker = "    **{\n        f'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[{case_id}]': {"
-          next_marker = "    'tests/test_r4_partition_global_assignment.py::test_split_manifest_counts_match_assignment': {"
-          start = text.find(start_marker)
-          end = text.find(next_marker, start)
-          if start < 0 or end < 0:
-              raise SystemExit('parameter metadata anchor drift')
-          case_ids = (
-              'adversarial_mutation', 'authority_target', 'dialogue', 'entity',
-              'graph_topology', 'lexical_value', 'normalized_text', 'template',
-          )
-          rows = []
-          for case_id in case_ids:
-              rows.append(
-                  "    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[" + case_id + "]': {\n"
-                  "        'activation_phase': 'R4',\n"
-                  "        'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions',\n"
-                  "        'diagnostic_role': 'owner',\n"
-                  "        'introduced_by_task': 'R4-Partition-Corrective-Task-7',\n"
-                  "        'owner_ref': 'mutation-partition',\n"
-                  "        'source_ast_sha256': '0000000000000000000000000000000000000000000000000000000000000000',\n"
-                  "        'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[" + case_id + "]',\n"
-                  "    },\n"
-              )
-          path.write_text(text[:start] + ''.join(rows) + text[end:], encoding='utf-8')
-          PY
-            cd hybrid_mvp
-            export PYTHONPATH=src:scripts:.
-            python scripts/refresh_r3_r4_test_metadata.py
-            python scripts/verify_r3_r4_test_metadata.py
-            if grep -Fq "'source_ast_sha256': '0000000000000000000000000000000000000000000000000000000000000000'" tests/test_r4_partition_global_assignment.py; then
-              echo 'placeholder AST hash survived refresh' >&2
+            python scripts/refresh_r5_test_metadata.py
+            if grep -Fq '0000000000000000000000000000000000000000000000000000000000000000' tests/test_r5_data_isolation.py; then
+              echo 'placeholder R5 AST hash survived refresh' >&2
               exit 1
             fi
-            python -m pytest tests/test_r4_partition_global_assignment.py -q -p no:cacheprovider
+            python -m py_compile src/cemm_authoritative_hybrid/training.py tests/test_r5_data_isolation.py
+            python -m pytest \
+              tests/test_r5_data_isolation.py \
+              tests/test_r4_training_partition_boundary.py \
+              tests/test_r4_release_training.py \
+              tests/test_r5_foundation.py \
+              -q -p no:cacheprovider
             python scripts/check_test_inventory.py --phase R4 --source-only
             python scripts/check_test_inventory.py --phase R5 --source-only
             python scripts/check_r3_r4_structure.py
+            ! grep -nE '_TRAIN_PARTITION|_PARTITION_MANIFEST|load_partition_episodes_for_training|_check_partition_access|cemm_authoritative_hybrid\.partitions|from \.partitions' src/cemm_authoritative_hybrid/training.py
+            ! grep -nE 'cemm_authoritative_hybrid\.partitions|load_partition_episodes_for_training' tests/test_r5_data_isolation.py
             git diff --check
             test -z "$(git status --short -- artifacts/r4)"
-          } 2>&1 | tee /tmp/global-successors.log
+          } 2>&1 | tee /tmp/training-hardcut.log
       - name: Publish verified staging content
         if: steps.verify.outcome == 'success'
         working-directory: work
@@ -93,11 +101,13 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- hybrid_mvp/tests/test_r4_partition_global_assignment.py
+          git add -- hybrid_mvp/src/cemm_authoritative_hybrid/training.py hybrid_mvp/tests/test_r5_data_isolation.py
           git diff --cached --check
-          test "$(git diff --cached --name-only)" = 'hybrid_mvp/tests/test_r4_partition_global_assignment.py'
-          git commit -m 'test(r4): refresh global partition successor metadata'
-          git push origin HEAD:refs/heads/agent/r4-task7-global-successors-20260818
+          printf '%s\n' hybrid_mvp/src/cemm_authoritative_hybrid/training.py hybrid_mvp/tests/test_r5_data_isolation.py | sort > /tmp/expected
+          git diff --cached --name-only | sort > /tmp/actual
+          diff -u /tmp/expected /tmp/actual
+          git commit -m 'refactor(r5): remove legacy training partition authority'
+          git push origin HEAD:refs/heads/agent/r4-task7-training-hardcut-20260818
       - name: Record outcome
         if: always()
         env:
@@ -109,10 +119,10 @@ jobs:
           cd status-repo
           git checkout agent/r4-export-checkout-20260816
           mkdir -p .github/r4-task7-status
-          printf '{"global_successors":"%s","source":"%s"}\n' "$OUTCOME" "$SOURCE" > .github/r4-task7-status/global-successors.json
-          cp /tmp/global-successors.log .github/r4-task7-status/global-successors.log
+          printf '{"training_hardcut":"%s","source":"%s"}\n' "$OUTCOME" "$SOURCE" > .github/r4-task7-status/training-hardcut.json
+          if test -f /tmp/training-hardcut.log; then cp /tmp/training-hardcut.log .github/r4-task7-status/training-hardcut.log; else printf 'verification did not start\n' > .github/r4-task7-status/training-hardcut.log; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- .github/r4-task7-status/global-successors.json .github/r4-task7-status/global-successors.log
-          git commit -m 'ci(r4): record global successor verification'
+          git add -- .github/r4-task7-status/training-hardcut.json .github/r4-task7-status/training-hardcut.log
+          git commit -m 'ci(r5): record training hard-cut verification'
           git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
