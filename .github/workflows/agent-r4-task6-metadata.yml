@@ -1,0 +1,41 @@
+name: Agent R4 Task 6 metadata refresh
+
+on:
+  push:
+    branches:
+      - agent/r4-export-checkout-20260816
+    paths:
+      - .github/workflows/agent-r4-task6-metadata.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task6-build-receipt-20260818
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Refresh and verify governed R3/R4 AST metadata
+        working-directory: hybrid_mvp
+        run: |
+          set -euo pipefail
+          python scripts/refresh_r3_r4_test_metadata.py
+          python scripts/verify_r3_r4_test_metadata.py
+          git diff --check
+          git status --short
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- tests/test_r3_*.py tests/test_r4_*.py
+          if git diff --cached --quiet; then
+            echo 'metadata already current'
+          else
+            git commit -m 'test(r4): refresh Task 6 governed AST metadata'
+            git push origin HEAD:refs/heads/agent/r4-task6-build-receipt-20260818
+          fi
