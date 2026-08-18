@@ -15,63 +15,188 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish-task6-checkpoint:
+  verify-task7-access:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/r4-task4-batch-publisher-20260816
+          ref: 9d6d7ee32edcfa6e172b7a2f06f346556d21a3ac
           fetch-depth: 0
-      - name: Record verified Task 6 checkpoint
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Compile and adversarially verify train-capability loader
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
         run: |
           set -euo pipefail
-          EXPECTED='e53dd76dbf246ba7af30c564899d8c711e457177'
-          test "$(git rev-parse HEAD)" = "$EXPECTED"
+          python -m py_compile src/cemm_authoritative_hybrid/r4_partition_access.py
           python - <<'PY'
+          from __future__ import annotations
+          import hashlib
+          import json
+          import os
           from pathlib import Path
+          import shutil
+          import tempfile
 
-          path = Path('hybrid_mvp/docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md')
-          text = path.read_text(encoding='utf-8')
+          from cemm_authoritative_hybrid.r4_partition_access import (
+              AuthenticatedClassSnapshot,
+              PartitionAccessError,
+              load_r4_train_episodes,
+          )
+          from cemm_authoritative_hybrid.r4_partition_contracts import (
+              R4ClassAuthorization,
+              R4ClassCapability,
+          )
 
-          replacements = {
-              '**Working branch:** `codex/r4-partition-corrective-replay`': '**Working branch:** `agent/r4-task4-batch-publisher-20260816`',
-              '**Remote target:** `origin/codex/r4-partition-corrective-replay`': '**Remote target:** `origin/agent/r4-task4-batch-publisher-20260816`',
-              '| P5 | Partition ABI and algorithm implementation | in_progress | RED corruption/feasibility tests | Global assignment and independent reconstruction green |': '| P5 | Partition ABI and algorithm implementation | complete | RED corruption/feasibility tests | Global assignment, Build Receipt ABI 4, temporary candidate generation, and independent reconstruction green |',
-              '- [ ] Define Build Receipt ABI 4 exact artifact identities.': '- [x] Define Build Receipt ABI 4 exact artifact identities.',
-              '- [ ] Reject every ABI 2 training allowlist and ABI 3 build receipt as current input.': '- [x] Reject every ABI 2 training allowlist and ABI 3 build receipt as current input.',
-          }
-          for old, new in replacements.items():
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'checkpoint anchor count {count}: {old}')
-              text = text.replace(old, new, 1)
+          SOURCE = Path('artifacts/r4/episodes.jsonl')
+          first = next(line for line in SOURCE.read_bytes().splitlines() if line)
+          row = json.loads(first)
+          episode_ref = row['episode_ref']
+          payload = first + b'\n'
+          revision = '9d6d7ee32edcfa6e172b7a2f06f346556d21a3ac'
 
-          section_anchor = '## 6. Detailed implementation checklist\n'
-          checkpoint = '''### Task 6 verified source checkpoint — 2026-08-18\n\n- Source commit published to the corrective target: `e53dd76dbf246ba7af30c564899d8c711e457177` (`feat(r4): generate four-class partition evidence`).\n- Final verification snapshot: `3c5e9f3fd8e820b47505b1b76266f3118a0c7231`; its tree is exactly the tree published by the clean source commit.\n- Governed source/tests/inventory passed on the frozen snapshot.\n- Two independent temporary ABI 4 candidate trees were byte-identical, covered all 400 authentic episodes across four nonempty classes, and both passed independent candidate admission reconstruction.\n- Historical checked-in `artifacts/r4/**` remain unchanged invalidated ABI 3 evidence; no replacement artifact tree or R4 green admission is claimed here.\n- Next authorized source tranche is Task 7: migrate the active R5 train-only capability boundary and hard-cut legacy partition authority.\n\n'''
-          if '### Task 6 verified source checkpoint — 2026-08-18' not in text:
-              if text.count(section_anchor) != 1:
-                  raise SystemExit('detailed checklist anchor missing or duplicated')
-              text = text.replace(section_anchor, checkpoint + section_anchor, 1)
+          def build(root: Path):
+              payload_path = root / 'artifacts/r4/splits/train.jsonl'
+              capability_path = root / 'artifacts/r4/capabilities/train.json'
+              authorization_path = root / 'artifacts/r4/authorizations/train.json'
+              for path in (payload_path, capability_path, authorization_path):
+                  path.parent.mkdir(parents=True, exist_ok=True)
+              payload_path.write_bytes(payload)
+              capability = R4ClassCapability.create(
+                  purpose='training',
+                  split='train',
+                  payload_path='artifacts/r4/splits/train.jsonl',
+                  payload_sha256=hashlib.sha256(payload).hexdigest(),
+                  payload_count=1,
+                  source_set_ref='source_set:test',
+                  split_manifest_ref='split_manifest:test',
+              )
+              capability_raw = capability.to_json_bytes()
+              capability_path.write_bytes(capability_raw)
+              authorization = R4ClassAuthorization.create(
+                  purpose='training',
+                  expected_capability_ref=capability.capability_ref,
+                  expected_capability_sha256=hashlib.sha256(capability_raw).hexdigest(),
+                  artifact_graph_ref='r4_artifact_graph_v4:test',
+                  generator_source_revision=revision,
+                  authority_generation='authority-v1-2026-07-29',
+              )
+              authorization_raw = authorization.to_json_bytes()
+              authorization_path.write_bytes(authorization_raw)
+              return authorization_path, capability_path, payload_path, authorization, authorization_raw
 
-          log_heading = '## 10. Publication log\n'
-          row = '| 2026-08-18 | `agent/r4-task4-batch-publisher-20260816@e53dd76dbf246ba7af30c564899d8c711e457177` | Task 6 Build Receipt ABI 4 and temporary four-class candidate generation source published | Governed source/tests/inventory green; two temporary candidate trees byte-identical and independently admitted; checked-in R4 artifacts unchanged |\n'
-          if row not in text:
-              start = text.find(log_heading)
-              if start < 0:
-                  raise SystemExit('publication log heading missing')
-              table = text.find('| Date | Branch/commit | Event | Verification |', start)
-              sep = text.find('\n', text.find('\n', table) + 1) + 1
-              if table < 0 or sep <= 0:
-                  raise SystemExit('publication log table header missing')
-              text = text[:sep] + row + text[sep:]
+          with tempfile.TemporaryDirectory(prefix='r4-task7-access-') as temp:
+              root = Path(temp)
+              auth_path, cap_path, payload_path, auth, auth_raw = build(root)
+              expected_sha = hashlib.sha256(auth_raw).hexdigest()
+              batch = load_r4_train_episodes(
+                  'artifacts/r4/authorizations/train.json',
+                  'artifacts/r4/capabilities/train.json',
+                  root,
+                  expected_authorization_ref=auth.authorization_ref,
+                  expected_authorization_sha256=expected_sha,
+              )
+              assert [episode.episode_ref for episode in batch.episodes] == [episode_ref]
+              assert type(batch.snapshot) is AuthenticatedClassSnapshot
+              assert batch.snapshot.payload_bytes == payload
+              assert batch.snapshot.episode_count == 1
+              assert batch.authorization_ref == auth.authorization_ref
+              assert batch.artifact_graph_ref == 'r4_artifact_graph_v4:test'
 
-          path.write_text(text, encoding='utf-8')
+              # External authorization trust must fail before capability access.
+              cap_path.unlink()
+              try:
+                  load_r4_train_episodes(
+                      auth_path,
+                      root / 'artifacts/r4/capabilities/train.json',
+                      root,
+                      expected_authorization_ref=auth.authorization_ref,
+                      expected_authorization_sha256='0' * 64,
+                  )
+              except PartitionAccessError as exc:
+                  assert 'authorization SHA' in str(exc)
+              else:
+                  raise AssertionError('wrong external authorization SHA was accepted')
+              cap_path.parent.mkdir(parents=True, exist_ok=True)
+              _, _, _, _, _ = build(root)
+
+              # Legacy and sibling/copy paths are rejected before reading payload bytes.
+              legacy = root / 'data/partitions/train.jsonl'
+              legacy.parent.mkdir(parents=True)
+              legacy.write_bytes(payload)
+              for bad_auth, bad_cap in (
+                  ('data/partitions/train.jsonl', 'artifacts/r4/capabilities/train.json'),
+                  ('artifacts/r4/authorizations/train.json', 'data/partitions/train.jsonl'),
+              ):
+                  try:
+                      load_r4_train_episodes(
+                          bad_auth, bad_cap, root,
+                          expected_authorization_ref=auth.authorization_ref,
+                          expected_authorization_sha256=expected_sha,
+                      )
+                  except PartitionAccessError:
+                      pass
+                  else:
+                      raise AssertionError('legacy path was accepted')
+
+              copied = root / 'copied-capability.json'
+              shutil.copyfile(root / 'artifacts/r4/capabilities/train.json', copied)
+              try:
+                  load_r4_train_episodes(
+                      'artifacts/r4/authorizations/train.json', copied, root,
+                      expected_authorization_ref=auth.authorization_ref,
+                      expected_authorization_sha256=expected_sha,
+                  )
+              except PartitionAccessError:
+                  pass
+              else:
+                  raise AssertionError('copied capability was accepted')
+
+              # A payload mutation after capability minting must fail closed.
+              payload_path.write_bytes(payload + payload)
+              try:
+                  load_r4_train_episodes(
+                      'artifacts/r4/authorizations/train.json',
+                      'artifacts/r4/capabilities/train.json',
+                      root,
+                      expected_authorization_ref=auth.authorization_ref,
+                      expected_authorization_sha256=expected_sha,
+                  )
+              except PartitionAccessError as exc:
+                  assert 'payload SHA' in str(exc)
+              else:
+                  raise AssertionError('mutated payload was accepted')
+
+          print('Task 7 train-capability access smoke: PASS')
           PY
           git diff --check
-          git diff -- hybrid_mvp/docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md
+
+  record:
+    if: always()
+    needs: verify-task7-access
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-export-checkout-20260816
+          fetch-depth: 0
+      - name: Record Task 7 access outcome
+        env:
+          RESULT: ${{ needs.verify-task7-access.result }}
+        run: |
+          set -euo pipefail
+          mkdir -p .github/r4-task7-status
+          printf '{"access":"%s","source":"%s"}\n' "$RESULT" '9d6d7ee32edcfa6e172b7a2f06f346556d21a3ac' > .github/r4-task7-status/access.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- hybrid_mvp/docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md
-          git commit -m 'docs(r4): record Task 6 candidate checkpoint'
-          git push origin HEAD:refs/heads/agent/r4-task4-batch-publisher-20260816
+          git add -- .github/r4-task7-status/access.json
+          git commit -m 'ci(r4): record Task 7 access verification'
+          git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
