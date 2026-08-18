@@ -11,13 +11,12 @@ from cemm_authoritative_hybrid.r4_admission import (
     R4AdmissionError,
     verify_r4_admission,
 )
-from cemm_authoritative_hybrid.r4_pipeline import R4BuildReceipt
 
 
 ROOT = Path(__file__).parents[1]
 
 
-def _copied_r4_project(tmp_path: Path) -> tuple[Path, R4BuildReceipt]:
+def _copied_r4_project(tmp_path: Path) -> tuple[Path, dict[str, object]]:
     project = tmp_path / "project"
     artifact_target = project / "artifacts" / "r4"
     artifact_target.parent.mkdir(parents=True)
@@ -25,31 +24,11 @@ def _copied_r4_project(tmp_path: Path) -> tuple[Path, R4BuildReceipt]:
     scenario_target = project / "data" / "scenarios" / "use_cases.jsonl"
     scenario_target.parent.mkdir(parents=True)
     shutil.copyfile(ROOT / "data" / "scenarios" / "use_cases.jsonl", scenario_target)
-
-    receipt_path = artifact_target / "BUILD_RECEIPT.json"
-    legacy = json.loads(receipt_path.read_text(encoding="utf-8"))
-    values = {
-        key: value
-        for key, value in legacy.items()
-        if key not in {"abi_version", "receipt_ref", "review_state"}
-    }
-    values["partition_manifest_sha256s"] = tuple(
-        values["partition_manifest_sha256s"]
-    )
-    values["admission_state"] = "candidate"
-    receipt = R4BuildReceipt.create(**values)
-    receipt_path.write_text(
-        json.dumps(
-            receipt.as_dict(),
-            ensure_ascii=False,
-            allow_nan=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        )
-        + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    config_target = project / "configs" / "r4_partitions.json"
+    config_target.parent.mkdir(parents=True)
+    shutil.copyfile(ROOT / "configs" / "r4_partitions.json", config_target)
+    receipt = json.loads((artifact_target / "BUILD_RECEIPT.json").read_text(encoding="utf-8"))
+    assert receipt["abi_version"] == 3
     return project, receipt
 
 
@@ -59,20 +38,32 @@ def test_r4_admission_reconstructs_repository_owned_artifacts(
     project, receipt = _copied_r4_project(tmp_path)
     report = verify_r4_admission(
         project,
-        expected_source_revision=receipt.source_revision,
-        expected_authority_generation=receipt.authority_generation,
+        expected_source_revision=str(receipt["source_revision"]),
+        expected_authority_generation=str(receipt["authority_generation"]),
     )
     assert set(report) == {
         "schema",
         "artifact_count",
         "artifact_set_ref",
         "build_receipt_ref",
+        "build_receipt_abi_version",
         "source_revision",
         "authority_generation",
         "integrity_ref",
     }
     assert report["schema"] == "cemm-r4-artifact-integrity-step-report-v1"
+    assert report["build_receipt_abi_version"] == 3
     assert report["artifact_count"] > 400
+
+    candidate = project / "candidate"
+    shutil.copytree(project / "artifacts" / "r4", candidate)
+    with pytest.raises(R4AdmissionError, match="ABI 4"):
+        verify_r4_admission(
+            project,
+            expected_source_revision=str(receipt["source_revision"]),
+            expected_authority_generation=str(receipt["authority_generation"]),
+            candidate_root=candidate,
+        )
 
 
 @pytest.mark.parametrize(
@@ -103,8 +94,8 @@ def test_r4_admission_rejects_tampered_artifact(
     with pytest.raises(R4AdmissionError):
         verify_r4_admission(
             project,
-            expected_source_revision=receipt.source_revision,
-            expected_authority_generation=receipt.authority_generation,
+            expected_source_revision=str(receipt["source_revision"]),
+            expected_authority_generation=str(receipt["authority_generation"]),
         )
 
 
@@ -113,22 +104,22 @@ __cemm_test_inventory__ = {'tests/test_r4_admission.py::test_r4_admission_recons
                                                                                            'diagnostic_role': 'owner',
                                                                                            'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                            'owner_ref': 'artifact-integrity',
-                                                                                           'source_ast_sha256': '71299d54d4323fba9e053aac7f9ba606551e7393c84babe480a9b39492c7394e'},
+                                                                                           'source_ast_sha256': 'cf13a7fbb55d81b1d92dde2c2c27557151dbf669f86adc2172a8f4b080d2f1ec'},
  'tests/test_r4_admission.py::test_r4_admission_rejects_tampered_artifact[episode]': {'activation_phase': 'R4',
                                                                                       'assertion_ref': 'assertion:r4-admission-rejects-tampered-episode',
                                                                                       'diagnostic_role': 'owner',
                                                                                       'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                       'owner_ref': 'artifact-integrity',
-                                                                                      'source_ast_sha256': '39185b6e67b50020d58624d38f3259d0fa0594c0915b3637613a6bb3b1271272'},
+                                                                                      'source_ast_sha256': '8e81dd1cffb3d2efa06206c39dea92d676cf03bbaa133b2fc5d5e1f2ce911a26'},
  'tests/test_r4_admission.py::test_r4_admission_rejects_tampered_artifact[partition]': {'activation_phase': 'R4',
                                                                                         'assertion_ref': 'assertion:r4-admission-rejects-tampered-partition',
                                                                                         'diagnostic_role': 'owner',
                                                                                         'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                         'owner_ref': 'artifact-integrity',
-                                                                                        'source_ast_sha256': '39185b6e67b50020d58624d38f3259d0fa0594c0915b3637613a6bb3b1271272'},
+                                                                                        'source_ast_sha256': '8e81dd1cffb3d2efa06206c39dea92d676cf03bbaa133b2fc5d5e1f2ce911a26'},
  'tests/test_r4_admission.py::test_r4_admission_rejects_tampered_artifact[receipt]': {'activation_phase': 'R4',
                                                                                       'assertion_ref': 'assertion:r4-admission-rejects-tampered-receipt',
                                                                                       'diagnostic_role': 'owner',
                                                                                       'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                       'owner_ref': 'artifact-integrity',
-                                                                                      'source_ast_sha256': '39185b6e67b50020d58624d38f3259d0fa0594c0915b3637613a6bb3b1271272'}}
+                                                                                      'source_ast_sha256': '8e81dd1cffb3d2efa06206c39dea92d676cf03bbaa133b2fc5d5e1f2ce911a26'}}

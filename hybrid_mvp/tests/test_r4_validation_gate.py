@@ -25,6 +25,7 @@ def _valid_report() -> dict[str, object]:
         "artifact_count": 401,
         "artifact_set_ref": gate.content_ref("artifact_set", ["x"]),
         "build_receipt_ref": gate.content_ref("build_receipt", {"x": 1}),
+        "build_receipt_abi_version": 3,
         "source_revision": "1" * 40,
         "authority_generation": "authority:test",
     }
@@ -33,10 +34,22 @@ def _valid_report() -> dict[str, object]:
 
 
 def test_r4_integrity_report_has_exact_internal_shape() -> None:
+    report = _valid_report()
     gate._validate_admission_step_report(
         "r4_artifact_integrity",
-        _valid_report(),
+        report,
     )
+    report["build_receipt_abi_version"] = 4
+    identity = dict(report)
+    identity.pop("integrity_ref")
+    report["integrity_ref"] = gate.content_ref("r4_artifact_integrity", identity)
+    gate._validate_admission_step_report("r4_artifact_integrity", report)
+    report["build_receipt_abi_version"] = 2
+    identity = dict(report)
+    identity.pop("integrity_ref")
+    report["integrity_ref"] = gate.content_ref("r4_artifact_integrity", identity)
+    with pytest.raises(gate.AdmissionValidationError, match="ABI version"):
+        gate._validate_admission_step_report("r4_artifact_integrity", report)
 
 
 def test_r4_integrity_report_rejects_retired_review_fields() -> None:
@@ -128,7 +141,7 @@ __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_
                                                                                          'diagnostic_role': 'owner',
                                                                                          'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                          'owner_ref': 'artifact-integrity',
-                                                                                         'source_ast_sha256': '5d272acc451aebd4303796cdc020e7fdc74eeeb855e78974e4183e0c07c3d5ac'},
+                                                                                         'source_ast_sha256': '946124cff943ef9e6b4632405e005c0ad6b3d9b0ae1a65d878f7ae77a99a5114'},
  'tests/test_r4_validation_gate.py::test_r4_integrity_report_rejects_retired_review_fields': {'activation_phase': 'R4',
                                                                                               'assertion_ref': 'assertion:r4-integrity-report-rejects-review-fields',
                                                                                               'diagnostic_role': 'owner',

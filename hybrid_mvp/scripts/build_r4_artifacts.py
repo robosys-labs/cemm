@@ -1,27 +1,10 @@
 #!/usr/bin/env python3
-"""Build R4 artifacts with an explicitly supplied authentic environment owner.
+"""Build a new deterministic R4 ABI 4 candidate tree.
 
-The factory module must expose:
-
-``build_environment(project_root, output_root, *, source_revision) -> mapping``
-
-Required mapping entries:
-- ``authority``
-- ``revision_pin``
-- ``abi_registry_ref``
-- ``runtime_factory(expanded_case)``
-- ``mutation_owner`` implementing ``execute_mutation(semantic_mutation)``
-- ``source_revision``
-
-Optional authentic execution entry:
-- ``restart_executor`` implementing ``execute_restart_case(...)``
-
-Optional reviewed derivation entries must be supplied together:
-- ``derivation_contracts``
-- ``derivation_validator`` implementing ``validate_derivation(...)``
-
-This script deliberately has no fixture/default environment.  R4 must not label
-mutations or environmental outcomes by assumption.
+The environment module must expose
+``build_environment(project_root, execution_state_root, *, source_revision)``
+and return authentic authority/runtime/mutation owners.  This command never
+modifies an existing artifact tree: ``--output`` must name a new path.
 """
 from __future__ import annotations
 
@@ -32,12 +15,13 @@ import json
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
-from typing import Any, Mapping
+from typing import Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from cemm_authoritative_hybrid.r4_episodes import PublicRuntimeEpisodeOwner
+from cemm_authoritative_hybrid.r4_partition_config import R4PartitionConfig
 from cemm_authoritative_hybrid.r4_pipeline import R4Pipeline
 
 
@@ -51,15 +35,12 @@ def _load_factory(path: Path):
     if relative is not None and relative.suffix == ".py":
         module_name = ".".join(relative.with_suffix("").parts)
         module = importlib.import_module(module_name)
-        owner = getattr(module, "build_environment", None)
-        if not callable(owner):
-            raise TypeError("environment module must define build_environment")
-        return owner
-    spec = importlib.util.spec_from_file_location("cemm_r4_environment", resolved)
-    if spec is None or spec.loader is None:
-        raise RuntimeError("cannot load R4 environment module")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    else:
+        spec = importlib.util.spec_from_file_location("cemm_r4_environment", resolved)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("cannot load R4 environment module")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
     owner = getattr(module, "build_environment", None)
     if not callable(owner):
         raise TypeError("environment module must define build_environment")
@@ -71,89 +52,105 @@ def main() -> int:
     parser.add_argument("--environment", type=Path, required=True)
     parser.add_argument("--source-revision", required=True)
     parser.add_argument(
-        "--scenarios", type=Path,
+        "--scenarios",
+        type=Path,
         default=ROOT / "data" / "scenarios" / "use_cases.jsonl",
     )
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--seed", type=int, default=1701)
     parser.add_argument(
-        "--sufficiency-config", type=Path,
+        "--sufficiency-config",
+        type=Path,
         default=ROOT / "configs" / "r4_structural_sufficiency.json",
     )
     parser.add_argument(
-        "--partition-config", type=Path,
+        "--partition-config",
+        type=Path,
         default=ROOT / "configs" / "r4_partitions.json",
     )
     args = parser.parse_args()
 
+    output = args.output.resolve()
+    if output.exists():
+        raise FileExistsError(f"candidate output already exists: {output}")
+    partition_config = R4PartitionConfig.from_json_bytes(
+        args.partition_config.resolve().read_bytes()
+    )
+    structural_config = json.loads(
+        args.sufficiency_config.resolve().read_text(encoding="utf-8")
+    )
+    if type(structural_config) is not dict:
+        raise TypeError("structural sufficiency config must be an object")
+
     build_environment = _load_factory(args.environment.resolve())
     execution_state = TemporaryDirectory(prefix="cemm-r4-build-state-")
+    environment = None
     try:
         environment = build_environment(
             ROOT,
             Path(execution_state.name),
             source_revision=args.source_revision,
         )
-    except BaseException:
-        execution_state.cleanup()
-        raise
-    if not isinstance(environment, Mapping):
-        raise TypeError("build_environment must return a mapping")
-    required = {
-        "authority", "revision_pin", "abi_registry_ref", "runtime_factory",
-        "mutation_owner", "source_revision",
-    }
-    missing = sorted(required - set(environment))
-    if missing:
-        raise ValueError(f"environment mapping is missing: {missing}")
-    config = json.loads(args.sufficiency_config.read_text(encoding="utf-8"))
-    partition_config = json.loads(
-        args.partition_config.read_text(encoding="utf-8")
-    )
-    ratios_value = partition_config.get("ratios", [60, 20, 20])
-    if (
-        type(ratios_value) is not list
-        or len(ratios_value) != 3
-        or any(type(value) is not int or value <= 0 for value in ratios_value)
-    ):
-        raise ValueError("partition ratios must be three positive integers")
-    episode_owner = PublicRuntimeEpisodeOwner(
-        environment["runtime_factory"],
-        restart_executor=environment.get("restart_executor"),
-    )
-    pipeline = R4Pipeline(
-        authority=environment["authority"],
-        revision_pin=environment["revision_pin"],
-        abi_registry_ref=environment["abi_registry_ref"],
-        episode_owner=episode_owner,
-        mutation_owner=environment["mutation_owner"],
-        source_revision=environment["source_revision"],
-        seed=args.seed,
-        minimums=config.get("minimums"),
-        maximums=config.get("maximums"),
-        partition_ratios=tuple(ratios_value),
-    )
-    derivations = environment.get("derivation_contracts", ())
-    derivation_validator = environment.get("derivation_validator")
-    if bool(derivations) != callable(derivation_validator):
-        raise ValueError(
-            "derivation_contracts and derivation_validator must be supplied together"
+        if not isinstance(environment, Mapping):
+            raise TypeError("build_environment must return a mapping")
+        required = {
+            "authority",
+            "revision_pin",
+            "abi_registry_ref",
+            "runtime_factory",
+            "mutation_owner",
+            "source_revision",
+        }
+        missing = sorted(required - set(environment))
+        if missing:
+            raise ValueError(f"environment mapping is missing: {missing}")
+        if environment["source_revision"] != args.source_revision:
+            raise ValueError("environment source revision differs from requested source revision")
+
+        episode_owner = PublicRuntimeEpisodeOwner(
+            environment["runtime_factory"],
+            restart_executor=environment.get("restart_executor"),
         )
-    close_environment = environment.get("close")
-    if close_environment is not None and not callable(close_environment):
-        raise TypeError("environment close owner must be callable")
-    try:
+        pipeline = R4Pipeline(
+            authority=environment["authority"],
+            revision_pin=environment["revision_pin"],
+            abi_registry_ref=environment["abi_registry_ref"],
+            episode_owner=episode_owner,
+            mutation_owner=environment["mutation_owner"],
+            source_revision=environment["source_revision"],
+            partition_config=partition_config,
+            minimums=structural_config.get("minimums"),
+            maximums=structural_config.get("maximums"),
+        )
+        derivations = environment.get("derivation_contracts", ())
+        derivation_validator = environment.get("derivation_validator")
+        if bool(derivations) != callable(derivation_validator):
+            raise ValueError(
+                "derivation_contracts and derivation_validator must be supplied together"
+            )
         result = pipeline.build(
             args.scenarios.resolve(),
             derivation_contracts=derivations,
             derivation_validator=derivation_validator,
         )
-        pipeline.write(result, args.output.resolve())
+        inventory = pipeline.write_candidate_tree(result, output)
     finally:
-        if close_environment is not None:
-            close_environment()
+        if environment is not None:
+            close_environment = environment.get("close")
+            if close_environment is not None:
+                if not callable(close_environment):
+                    raise TypeError("environment close owner must be callable")
+                close_environment()
         execution_state.cleanup()
-    print(json.dumps(result.receipt.as_dict(), sort_keys=True))
+
+    print(
+        json.dumps(
+            {
+                "receipt": result.receipt.as_dict(),
+                "paths": [path.as_posix() for path in inventory],
+            },
+            sort_keys=True,
+        )
+    )
     return 0
 
 
