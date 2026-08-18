@@ -1,0 +1,159 @@
+name: Agent R4 Task 6 integration verification
+
+on:
+  push:
+    branches:
+      - agent/r4-export-checkout-20260816
+    paths:
+      - .github/workflows/agent-r4-task6-integration.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-r4-task6-integration-20260818
+  cancel-in-progress: false
+
+jobs:
+  historical-and-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task6-integrationcheck-20260818
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install 'pytest==8.4.0' 'jsonschema==4.25.1'
+      - name: Compile and preserve historical ABI 3 reconstruction
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            src/cemm_authoritative_hybrid/r4_pipeline.py \
+            src/cemm_authoritative_hybrid/r4_admission.py \
+            src/cemm_authoritative_hybrid/r4_partition_contracts.py \
+            scripts/build_r4_artifacts.py
+          python -m pytest \
+            tests/test_r4_partition_contracts.py \
+            tests/test_r4_partition_global_assignment.py \
+            -q -p no:cacheprovider
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from cemm_authoritative_hybrid.r4_admission import verify_r4_admission
+
+          report = verify_r4_admission(
+              Path('.'),
+              expected_source_revision='5864053dbf5a67d3bd8f03ae3dbc9c0eb6a25302',
+              expected_authority_generation='authority-v1-2026-07-29',
+          )
+          assert report['build_receipt_abi_version'] == 3
+          print(json.dumps(report, sort_keys=True, separators=(',', ':')))
+          PY
+          git diff --check
+
+  candidate-ab-admission:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task6-integrationcheck-20260818
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install exact governed runtime dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install \
+            'pytest==8.4.0' \
+            'hypothesis==6.163.0' \
+            'numpy==2.5.2' \
+            'safetensors==0.5.3' \
+            'fastapi==0.115.0' \
+            'httpx==0.27.0' \
+            'jsonschema==4.25.1'
+          python -m pip install 'torch==2.6.0' \
+            --index-url https://download.pytorch.org/whl/cpu
+      - name: Generate, compare, and independently admit A/B candidates
+        working-directory: hybrid_mvp
+        env:
+          PYTHONPATH: src:scripts:.
+        run: |
+          set -euo pipefail
+          REVISION="$(git rev-parse HEAD)"
+          rm -rf /tmp/r4-task6-int-a /tmp/r4-task6-int-b
+          python scripts/build_r4_artifacts.py \
+            --environment src/cemm_authoritative_hybrid/r4_environment.py \
+            --source-revision "$REVISION" \
+            --output /tmp/r4-task6-int-a > /tmp/r4-task6-int-a.log
+          python scripts/build_r4_artifacts.py \
+            --environment src/cemm_authoritative_hybrid/r4_environment.py \
+            --source-revision "$REVISION" \
+            --output /tmp/r4-task6-int-b > /tmp/r4-task6-int-b.log
+          diff -qr /tmp/r4-task6-int-a /tmp/r4-task6-int-b
+          python - <<'PY'
+          import hashlib
+          import json
+          import subprocess
+          from pathlib import Path
+          from cemm_authoritative_hybrid.r4_admission import verify_r4_admission
+          from cemm_authoritative_hybrid.r4_pipeline import R4BuildReceipt
+          from cemm_authoritative_hybrid.r4_partition_contracts import SPLITS
+
+          revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          reports = []
+          fingerprints = []
+          for root in (Path('/tmp/r4-task6-int-a'), Path('/tmp/r4-task6-int-b')):
+              receipt = R4BuildReceipt.from_dict(json.loads((root / 'BUILD_RECEIPT.json').read_text()))
+              assert receipt.source_revision == revision
+              report = verify_r4_admission(
+                  Path('.'),
+                  expected_source_revision=revision,
+                  expected_authority_generation=receipt.authority_generation,
+                  candidate_root=root,
+              )
+              assert report['build_receipt_abi_version'] == 4
+              reports.append(report)
+              file_rows = []
+              for path in sorted(p for p in root.rglob('*') if p.is_file()):
+                  raw = path.read_bytes()
+                  file_rows.append((path.relative_to(root).as_posix(), len(raw), hashlib.sha256(raw).hexdigest()))
+              fingerprints.append(file_rows)
+          assert fingerprints[0] == fingerprints[1]
+          counts = {}
+          for split in SPLITS:
+              rows = [line for line in (Path('/tmp/r4-task6-int-a') / 'splits' / f'{split}.jsonl').read_text().splitlines() if line]
+              assert rows
+              counts[split] = len(rows)
+          assert sum(counts.values()) == 400, counts
+          inventory = {path.relative_to('/tmp/r4-task6-int-a').as_posix() for path in Path('/tmp/r4-task6-int-a').rglob('*') if path.is_file()}
+          assert not any(path.startswith('partitions/') for path in inventory)
+          assert 'training_allowlist.json' not in inventory
+          print(json.dumps({'counts': counts, 'files': len(inventory), 'reports': reports}, sort_keys=True, separators=(',', ':')))
+          PY
+          test -z "$(git status --short -- artifacts/r4)"
+      - name: Upload compact execution output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r4-task6-integration-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 2
+          if-no-files-found: warn
+          path: |
+            /tmp/r4-task6-int-a.log
+            /tmp/r4-task6-int-b.log
