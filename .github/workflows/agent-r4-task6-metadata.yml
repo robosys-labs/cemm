@@ -22,20 +22,28 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Refresh and verify governed R3/R4 AST metadata
+      - name: Refresh, verify, and publish governed R3/R4 AST metadata
         working-directory: hybrid_mvp
         run: |
           set -euo pipefail
           python scripts/refresh_r3_r4_test_metadata.py
           python scripts/verify_r3_r4_test_metadata.py
           git diff --check
-          git status --short
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -- tests/test_r3_*.py tests/test_r4_*.py
           if git diff --cached --quiet; then
-            echo 'metadata already current'
+            RESULT=already-current
           else
             git commit -m 'test(r4): refresh Task 6 governed AST metadata'
             git push origin HEAD:refs/heads/agent/r4-task6-build-receipt-20260818
+            RESULT=updated
           fi
+          TASK6_HEAD="$(git rev-parse HEAD)"
+          git fetch origin agent/r4-export-checkout-20260816
+          git checkout -B agent-r4-export-status origin/agent/r4-export-checkout-20260816
+          mkdir -p .github/r4-task6-status
+          printf '{"result":"%s","task6_head":"%s"}\n' "$RESULT" "$TASK6_HEAD" > .github/r4-task6-status/metadata.json
+          git add -- .github/r4-task6-status/metadata.json
+          git commit -m 'ci(r4): record Task 6 metadata refresh'
+          git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
