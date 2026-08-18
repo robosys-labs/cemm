@@ -38,6 +38,21 @@ def main() -> None:
         default=None,
         help="Output artifact directory (overrides config).",
     )
+    parser.add_argument(
+        "--release-isolated-root",
+        default=None,
+        help="Private R4 train-evidence root supplied by the release parent controller.",
+    )
+    parser.add_argument(
+        "--expected-authorization-ref",
+        default=None,
+        help="Admission-authenticated train authorization ref (release mode only).",
+    )
+    parser.add_argument(
+        "--expected-authorization-sha256",
+        default=None,
+        help="Admission-authenticated train authorization SHA-256 (release mode only).",
+    )
     args = parser.parse_args()
 
     # Load config
@@ -45,16 +60,56 @@ def main() -> None:
     with open(config_path, encoding="utf-8") as fh:
         config = json.load(fh)
 
-    episodes_path = args.episodes or config.get("episodes_path", "data/bootstrap/realization_episodes.jsonl")
-    output_dir = args.output or config.get("artifact_dir", "artifacts/realizer_dev")
-
+    output_dir_value = args.output or config.get("artifact_dir", "artifacts/realizer_dev")
     root = Path(__file__).resolve().parents[1]
-    episodes_path = root / episodes_path
-    output_dir = root / output_dir
+    output_dir = root / output_dir_value
+    is_release = bool(config.get("release", False)) or "release" in str(output_dir).lower()
+    episodes_path = None
+    if not is_release:
+        episodes_value = args.episodes or config.get("episodes_path", "data/bootstrap/realization_episodes.jsonl")
+        episodes_path = root / episodes_value
 
-    print(f"Training neural realizer")
+    train_batch = None
+    if is_release:
+        if args.episodes is not None:
+            parser.error("--episodes is forbidden in release mode")
+        required = {
+            "--release-isolated-root": args.release_isolated_root,
+            "--expected-authorization-ref": args.expected_authorization_ref,
+            "--expected-authorization-sha256": args.expected_authorization_sha256,
+        }
+        missing = [flag for flag, value in required.items() if not value]
+        if missing:
+            parser.error("release mode requires " + ", ".join(missing))
+        if config.get("train_authorization_trust") != "r4_admission_receipt":
+            parser.error("release config must trust only r4_admission_receipt")
+        authorization_path = config.get("train_authorization_path")
+        capability_path = config.get("train_capability_path")
+        if type(authorization_path) is not str or type(capability_path) is not str:
+            parser.error("release config requires exact train authorization/capability paths")
+        isolated_root = Path(args.release_isolated_root).resolve(strict=True)
+        repository_root = root.resolve(strict=True)
+        try:
+            isolated_root.relative_to(repository_root)
+        except ValueError:
+            pass
+        else:
+            parser.error("release isolated root must be outside the repository")
+        from cemm_authoritative_hybrid.r4_partition_access import load_r4_train_episodes
+
+        train_batch = load_r4_train_episodes(
+            authorization_path,
+            capability_path,
+            isolated_root,
+            expected_authorization_ref=args.expected_authorization_ref,
+            expected_authorization_sha256=args.expected_authorization_sha256,
+        )
+
+    print("Training neural realizer")
     print(f"  Config: {config_path}")
-    print(f"  Episodes: {episodes_path}")
+    print(f"  Data mode: {'authenticated-r4-train' if is_release else 'bootstrap'}")
+    if episodes_path is not None:
+        print(f"  Episodes: {episodes_path}")
     print(f"  Output: {output_dir}")
     print(f"  Hidden: {config.get('hidden', 64)}, Layers: {config.get('layers', 2)}")
     print(f"  Epochs: {config.get('epochs', 60)}, LR: {config.get('learning_rate', 0.003)}")
@@ -74,15 +129,16 @@ def main() -> None:
 
     rc = RuntimeConfig.release()
 
-    # Train — use the release trainer when the config targets a release artifact.
-    is_release = "release" in str(output_dir).lower() or config.get("release", False)
-
+    # Release mode is train-capability-only; bootstrap paths are never accepted.
     if is_release:
         from cemm_authoritative_hybrid.training import (
             ReleaseRealizerTrainer,
             save_realizer_release_artifact,
             _git_revision,
         )
+
+        if train_batch is None:
+            raise RuntimeError("release train batch was not authenticated")
 
         trainer = ReleaseRealizerTrainer(
             authority=linked,
@@ -97,7 +153,7 @@ def main() -> None:
             device=config.get("device", "cpu"),
             root=root,
         )
-        report = trainer.fit(episodes_path)
+        report = trainer.fit(train_batch)
         revision = _git_revision(root)
         manifest_sha256, final_metadata = save_realizer_release_artifact(
             output_dir, trainer, report, revision

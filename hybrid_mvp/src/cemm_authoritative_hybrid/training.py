@@ -49,6 +49,9 @@ from .model import (
 )
 from .persistence import RevisionPin, memory_stores
 from .programs import ProgramAction, SemanticSwitchProgram
+from .r4_episodes import AuthenticEpisode
+from .r4_partition_access import AuthenticatedClassSnapshot, AuthenticatedR4TrainBatch
+from .r4_partition_contracts import canonical_json_bytes
 from .verifier import ActionMasker, ExactProgramVerifier, LegalActionIndex
 
 __all__ = [
@@ -916,6 +919,85 @@ def partition_dataset_hash(episodes: Sequence[PartitionEpisode]) -> str:
     return f"dataset:{hashlib.sha256(payload.encode('utf-8')).hexdigest()[:24]}"
 
 
+def _validated_train_batch(batch: AuthenticatedR4TrainBatch) -> tuple[AuthenticEpisode, ...]:
+    """Validate one immutable authenticated train batch without reopening evidence."""
+    if type(batch) is not AuthenticatedR4TrainBatch:
+        raise TypeError("train batch must be exact AuthenticatedR4TrainBatch")
+    snapshot = batch.snapshot
+    if type(snapshot) is not AuthenticatedClassSnapshot:
+        raise TypeError("train snapshot must be exact AuthenticatedClassSnapshot")
+    if type(batch.episodes) is not tuple or not batch.episodes:
+        raise ValueError("authenticated train batch must contain episodes")
+    if any(type(episode) is not AuthenticEpisode for episode in batch.episodes):
+        raise TypeError("authenticated train batch must contain exact AuthenticEpisode values")
+    if type(snapshot.payload_bytes) is not bytes or not snapshot.payload_bytes:
+        raise ValueError("authenticated train snapshot bytes must be nonempty")
+    if type(snapshot.episode_count) is not int or snapshot.episode_count != len(batch.episodes):
+        raise ValueError("authenticated train snapshot count mismatch")
+    payload_sha = hashlib.sha256(snapshot.payload_bytes).hexdigest()
+    if payload_sha != snapshot.payload_sha256:
+        raise ValueError("authenticated train snapshot SHA mismatch")
+    expected_payload = b"".join(canonical_json_bytes(episode.as_dict()) for episode in batch.episodes)
+    if expected_payload != snapshot.payload_bytes:
+        raise ValueError("authenticated train snapshot bytes differ from typed episodes")
+    refs = tuple(episode.episode_ref for episode in batch.episodes)
+    if refs != tuple(sorted(refs)) or len(refs) != len(set(refs)):
+        raise ValueError("authenticated train episode refs must be unique canonical order")
+    for value, label in (
+        (snapshot.capability_ref, "capability_ref"),
+        (snapshot.payload_ref, "payload_ref"),
+        (batch.authorization_ref, "authorization_ref"),
+        (batch.artifact_graph_ref, "artifact_graph_ref"),
+        (batch.authority_generation, "authority_generation"),
+    ):
+        if type(value) is not str or not value:
+            raise ValueError(f"authenticated train {label} must be nonempty text")
+    for value, label in (
+        (snapshot.payload_sha256, "payload_sha256"),
+        (batch.authorization_sha256, "authorization_sha256"),
+    ):
+        if type(value) is not str or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
+            raise ValueError(f"authenticated train {label} must be lowercase SHA-256 hex")
+    revision = batch.generator_source_revision
+    if type(revision) is not str or len(revision) not in {40, 64} or any(c not in "0123456789abcdef" for c in revision):
+        raise ValueError("authenticated train generator_source_revision is invalid")
+    return batch.episodes
+
+
+def _selected_program_actions(episode: AuthenticEpisode) -> tuple[ProgramAction, ...]:
+    """Return the exact verifier-selected Program ABI 2 action sequence."""
+    cycle = episode.observed_cycle
+    proposal = cycle.proposal
+    verification = cycle.verification
+    if proposal is None or verification is None or verification.status != "selected":
+        return ()
+    selected_ref = verification.selected_candidate_ref
+    if selected_ref is None:
+        raise ValueError("selected verification lacks selected candidate ref")
+    selected = tuple(candidate for candidate in proposal.candidates if candidate.candidate_ref == selected_ref)
+    if len(selected) != 1:
+        raise ValueError("selected verification does not identify exactly one proposal candidate")
+    actions = selected[0].program.actions
+    if type(actions) is not tuple or not actions or any(type(action) is not ProgramAction for action in actions):
+        raise ValueError("selected proposal program contains invalid actions")
+    return actions
+
+
+def _train_data_provenance(batch: AuthenticatedR4TrainBatch) -> dict[str, object]:
+    """Return the train-only provenance material bound into release model identity."""
+    return {
+        "authorization_ref": batch.authorization_ref,
+        "authorization_sha256": batch.authorization_sha256,
+        "capability_ref": batch.snapshot.capability_ref,
+        "payload_ref": batch.snapshot.payload_ref,
+        "payload_sha256": batch.snapshot.payload_sha256,
+        "episode_count": batch.snapshot.episode_count,
+        "artifact_graph_ref": batch.artifact_graph_ref,
+        "generator_source_revision": batch.generator_source_revision,
+        "authority_generation": batch.authority_generation,
+    }
+
+
 def _git_revision(root: Path) -> str:
     """Return the current git commit hash, or empty string if unavailable."""
     try:
@@ -992,23 +1074,15 @@ class ReleaseProposalTrainer:
         self._device = device
         self._root = Path(root) if root is not None else Path.cwd()
 
-    def fit(self, episodes_path: str | Path) -> dict:
-        """Train on ``episodes_path`` and return a training report.
-
-        Raises :class:`PartitionAccessError` if ``episodes_path`` is a sealed
-        validation or test partition.
-        """
-        episodes, dataset_hash = _load_partition_episodes_with_hash(
-            episodes_path, self._root
-        )
+    def fit(self, train_batch: AuthenticatedR4TrainBatch) -> dict:
+        """Train only from one externally authenticated immutable R4 train batch."""
+        episodes = _validated_train_batch(train_batch)
+        dataset_hash = train_batch.snapshot.payload_sha256
         _set_deterministic_seeds(self._seed)
         vocab = _ActionVocabulary(self._legal_action_index, self._max_form_tokens)
 
         for ep in episodes:
-            if not ep.action_sequence:
-                continue
-            for i, action_dict in enumerate(ep.action_sequence):
-                action = _action_from_dict(action_dict, i)
+            for action in _selected_program_actions(ep):
                 vocab.add_action(action)
 
         network = ProposalNetwork(
@@ -1033,18 +1107,19 @@ class ReleaseProposalTrainer:
             tuple[torch.Tensor, torch.Tensor, Any, list[tuple[ProgramAction, int]]]
         ] = []
         for ep in episodes:
-            if not ep.action_sequence:
+            actions = _selected_program_actions(ep)
+            if not actions:
                 continue
+            surface = ep.expanded_case.surface
             orientation = _build_orientation(
-                ep.surface, self._authority, self._config, self._form_resolver
+                surface, self._authority, self._config, self._form_resolver
             )
-            lattice = self._form_resolver.resolve(ep.surface)
+            lattice = self._form_resolver.resolve(surface)
             form_features = _encode_form_units(lattice, self._max_form_tokens)
             orient_features = _encode_orientation_structural(orientation)
 
             gold_actions: list[tuple[ProgramAction, int]] = []
-            for i, action_dict in enumerate(ep.action_sequence):
-                action = _action_from_dict(action_dict, i)
+            for action in actions:
                 idx = vocab.index_for_action(action)
                 if idx is not None:
                     gold_actions.append((action, idx))
@@ -1086,7 +1161,7 @@ class ReleaseProposalTrainer:
         self._vocab = vocab
         self._episodes = episodes
         self._loss_history = loss_history
-        self._train_path = Path(episodes_path)
+        self._train_batch = train_batch
         self._train_dataset_hash = dataset_hash
 
         return {
@@ -1122,6 +1197,7 @@ class ReleaseProposalTrainer:
                 "vocab_size": self._vocab.size,
                 "target_encoding": "dynamic_pointer_slots",
                 "internal_ref_vocabulary": [],
+                "train_data": _train_data_provenance(self._train_batch),
             },
         }
 
@@ -1156,11 +1232,10 @@ class ReleaseRealizerTrainer:
         self._device = device
         self._root = Path(root) if root is not None else Path.cwd()
 
-    def fit(self, episodes_path: str | Path) -> dict:
-        """Train on ``episodes_path`` and return a training report."""
-        episodes, dataset_hash = _load_partition_episodes_with_hash(
-            episodes_path, self._root
-        )
+    def fit(self, train_batch: AuthenticatedR4TrainBatch) -> dict:
+        """Train only from one externally authenticated immutable R4 train batch."""
+        episodes = _validated_train_batch(train_batch)
+        dataset_hash = train_batch.snapshot.payload_sha256
         _set_deterministic_seeds(self._seed)
 
         network = RealizerNetwork(
@@ -1174,8 +1249,11 @@ class ReleaseRealizerTrainer:
 
         training_data: list[tuple[torch.Tensor, int]] = []
         for ep in episodes:
-            features = _encode_response_meaning_features(ep.response_meaning)
-            target = _surface_to_target(ep.surface, self._vocab_size)
+            response_meaning = ep.observed_cycle.response_meaning
+            if response_meaning is None:
+                continue
+            features = _encode_response_meaning_features(response_meaning.as_dict())
+            target = _surface_to_target(ep.expanded_case.surface, self._vocab_size)
             training_data.append((features, target))
 
         if not training_data:
@@ -1202,7 +1280,7 @@ class ReleaseRealizerTrainer:
         self._network = network
         self._episodes = episodes
         self._loss_history = loss_history
-        self._train_path = Path(episodes_path)
+        self._train_batch = train_batch
         self._train_dataset_hash = dataset_hash
 
         return {
@@ -1239,6 +1317,7 @@ class ReleaseRealizerTrainer:
                 "seed": self._seed,
                 "target_encoding": "dynamic_pointer_slots",
                 "internal_ref_vocabulary": [],
+                "train_data": _train_data_provenance(self._train_batch),
             },
         }
 
@@ -1383,13 +1462,13 @@ def _build_release_components(root: Path):
 
 def train_proposal_release(
     root: str | Path,
+    *,
+    train_batch: AuthenticatedR4TrainBatch,
     config: dict | None = None,
 ) -> tuple[ReleaseProposalTrainer, dict, str]:
-    """Train the release proposal model on the train partition.
-
-    Returns ``(trainer, report, source_revision)``.
-    """
+    """Train the release proposal model from authenticated R4 train evidence."""
     root = Path(root)
+    _validated_train_batch(train_batch)
     config = config or {}
     comps = _build_release_components(root)
 
@@ -1412,20 +1491,20 @@ def train_proposal_release(
         device=config.get("device", "cpu"),
         root=root,
     )
-    report = trainer.fit(root / _TRAIN_PARTITION)
+    report = trainer.fit(train_batch)
     revision = _git_revision(root)
     return trainer, report, revision
 
 
 def train_realizer_release(
     root: str | Path,
+    *,
+    train_batch: AuthenticatedR4TrainBatch,
     config: dict | None = None,
 ) -> tuple[ReleaseRealizerTrainer, dict, str]:
-    """Train the release realizer model on the train partition.
-
-    Returns ``(trainer, report, source_revision)``.
-    """
+    """Train the release realizer model from authenticated R4 train evidence."""
     root = Path(root)
+    _validated_train_batch(train_batch)
     config = config or {}
     comps = _build_release_components(root)
 
@@ -1442,12 +1521,12 @@ def train_realizer_release(
         device=config.get("device", "cpu"),
         root=root,
     )
-    report = trainer.fit(root / _TRAIN_PARTITION)
+    report = trainer.fit(train_batch)
     revision = _git_revision(root)
     return trainer, report, revision
 
 
-def retrain_proposal_release(root: str | Path) -> dict:
+def retrain_proposal_release(root: str | Path, *, train_batch: AuthenticatedR4TrainBatch) -> dict:
     """Re-train the release proposal model and return identity info.
 
     Returns a dict with ``model_identity`` and ``tensor_identity``.
@@ -1464,7 +1543,7 @@ def retrain_proposal_release(root: str | Path) -> dict:
     root = Path(root)
     config_path = root / "configs" / "proposal_release.json"
     config = json.loads(config_path.read_text(encoding="utf-8")) if config_path.exists() else {}
-    trainer, report, revision = train_proposal_release(root, config)
+    trainer, report, revision = train_proposal_release(root, train_batch=train_batch, config=config)
 
     metadata_template = trainer.build_metadata()
     abi_registry = ABIRegistry()
@@ -1500,7 +1579,7 @@ def retrain_proposal_release(root: str | Path) -> dict:
     }
 
 
-def retrain_realizer_release(root: str | Path) -> dict:
+def retrain_realizer_release(root: str | Path, *, train_batch: AuthenticatedR4TrainBatch) -> dict:
     """Re-train the release realizer model and return identity info."""
     from .canonical import tensor_identity
     from .artifacts import (
@@ -1514,7 +1593,7 @@ def retrain_realizer_release(root: str | Path) -> dict:
     root = Path(root)
     config_path = root / "configs" / "realizer_release.json"
     config = json.loads(config_path.read_text(encoding="utf-8")) if config_path.exists() else {}
-    trainer, report, revision = train_realizer_release(root, config)
+    trainer, report, revision = train_realizer_release(root, train_batch=train_batch, config=config)
 
     metadata_template = trainer.build_metadata()
     abi_registry = ABIRegistry()
@@ -1670,6 +1749,7 @@ def _expected_calibration_error(bins: Sequence[dict]) -> float:
 def reproduce_models(
     expected_root: str | Path,
     *,
+    train_batch: AuthenticatedR4TrainBatch,
     temporary: bool = False,
     receipt_path: str | Path | None = None,
 ) -> dict:
@@ -1708,13 +1788,13 @@ def reproduce_models(
             if in_repo:
                 raise RuntimeError("scratch directory must be outside the repository")
 
-        proposal_result = retrain_proposal_release(expected_root)
+        proposal_result = retrain_proposal_release(expected_root, train_batch=train_batch)
         expected_proposal = read_canonical_json(proposal_release / "model_metadata.json")
         proposal_id_ok = proposal_result["model_identity"] == expected_proposal["model_identity"]
         receipt["proposal"]["model_identity_reproduced"] = proposal_id_ok
         receipt["proposal"]["tensor_identity_reproduced"] = proposal_id_ok
 
-        realizer_result = retrain_realizer_release(expected_root)
+        realizer_result = retrain_realizer_release(expected_root, train_batch=train_batch)
         expected_realizer = read_canonical_json(realizer_release / "model_metadata.json")
         realizer_id_ok = realizer_result["model_identity"] == expected_realizer["model_identity"]
         receipt["realizer"]["model_identity_reproduced"] = realizer_id_ok
