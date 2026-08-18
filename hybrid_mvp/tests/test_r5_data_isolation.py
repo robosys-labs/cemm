@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from dataclasses import replace
 from pathlib import Path
 import shutil
 from types import SimpleNamespace
@@ -12,11 +11,19 @@ import pytest
 
 import cemm_authoritative_hybrid.training as training_module
 from cemm_authoritative_hybrid.partitions import PartitionAccessError
+from cemm_authoritative_hybrid.r4_episodes import AuthenticEpisode
+from cemm_authoritative_hybrid.r4_partition_access import (
+    AuthenticatedClassSnapshot,
+    AuthenticatedR4TrainBatch,
+)
+from cemm_authoritative_hybrid.r4_partition_contracts import canonical_json_bytes
 from cemm_authoritative_hybrid.training import (
     ReleaseProposalTrainer,
     ReleaseRealizerTrainer,
     load_partition_episodes_for_training,
 )
+
+ROOT = Path(__file__).parents[1]
 
 
 __cemm_test_inventory__ = {
@@ -98,7 +105,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "data-isolation",
-        "source_ast_sha256": "2a46da66af92f620132bcbd9cd727d0abb3c1bf791f606c2f6212ec8e0857d7e",
+        "source_ast_sha256": 'e6734cb5da913e3384bca79c5fd3be6da8730fe62fd06d0f1b9ff681433e4779',
     },
     "tests/test_r5_data_isolation.py::test_release_trainers_reject_nontrain_before_downstream_work": {
         "activation_phase": "R5",
@@ -106,7 +113,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "data-isolation",
-        "source_ast_sha256": "81e25ca60f9724c6942a149260f779480213a9626b7f662540828ace8455896c",
+        "source_ast_sha256": '213fe668209da77409e3788bdf497df24475be3c51e141571d9aa394893e62ad',
     },
     "tests/test_r5_data_isolation.py::test_release_trainer_metadata_uses_authenticated_fit_snapshot": {
         "activation_phase": "R5",
@@ -114,7 +121,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
         "owner_ref": "data-isolation",
-        "source_ast_sha256": "29cd347df56a902e991ec934d5dc148406be3a04af62e261e7e5cb52db48b31b",
+        "source_ast_sha256": 'b1a2ba429a23dc08f33c0318a6cfe94b04074669a38d5450cb0014a327d4f6ef',
     },
 }
 
@@ -292,9 +299,38 @@ def test_training_loader_parses_authenticated_snapshot_without_second_read(
     assert [episode.episode_ref for episode in episodes] == ["episode:train"]
 
 
+def _authenticated_batch() -> AuthenticatedR4TrainBatch:
+    for line in (ROOT / "artifacts/r4/episodes.jsonl").read_text(encoding="utf-8").splitlines():
+        episode = AuthenticEpisode.from_dict(json.loads(line))
+        cycle = episode.observed_cycle
+        if (
+            cycle.proposal is not None
+            and cycle.verification is not None
+            and cycle.verification.status == "selected"
+            and cycle.response_meaning is not None
+        ):
+            raw = canonical_json_bytes(episode.as_dict())
+            digest = hashlib.sha256(raw).hexdigest()
+            return AuthenticatedR4TrainBatch(
+                episodes=(episode,),
+                snapshot=AuthenticatedClassSnapshot(
+                    capability_ref="r4_class_capability_v1:test",
+                    payload_ref="r4_split_payload_v1:test",
+                    payload_sha256=digest,
+                    payload_bytes=raw,
+                    episode_count=1,
+                ),
+                authorization_ref="r4_class_authorization_v1:test",
+                authorization_sha256="1" * 64,
+                artifact_graph_ref="r4_artifact_graph_v4:test",
+                generator_source_revision="a" * 40,
+                authority_generation="authority:test",
+            )
+    raise AssertionError("fixture requires one selected authentic R4 episode")
+
+
 def test_release_trainers_authenticate_train_once(tmp_path, monkeypatch):
-    train, _, _ = _write_partition_root(tmp_path)
-    original_check = training_module._check_partition_access
+    batch = _authenticated_batch()
 
     class LoadedEpisodes(RuntimeError):
         pass
@@ -303,36 +339,30 @@ def test_release_trainers_authenticate_train_once(tmp_path, monkeypatch):
         (ReleaseProposalTrainer, "_ActionVocabulary"),
         (ReleaseRealizerTrainer, "RealizerNetwork"),
     ):
-        calls = 0
         seed_calls = 0
-
-        def counted_check(*args, **kwargs):
-            nonlocal calls
-            calls += 1
-            return original_check(*args, **kwargs)
 
         def counted_seed(_seed):
             nonlocal seed_calls
             seed_calls += 1
 
-        def stop_after_load(*_args, **_kwargs):
+        def legacy_access_must_not_run(*_args, **_kwargs):
+            raise AssertionError("release trainer attempted legacy partition access")
+
+        def stop_after_authenticated_batch(*_args, **_kwargs):
             raise LoadedEpisodes
 
         with monkeypatch.context() as context:
-            context.setattr(training_module, "_check_partition_access", counted_check)
+            context.setattr(training_module, "_check_partition_access", legacy_access_must_not_run)
             context.setattr(training_module, "_set_deterministic_seeds", counted_seed)
-            context.setattr(training_module, downstream_name, stop_after_load)
+            context.setattr(training_module, downstream_name, stop_after_authenticated_batch)
             trainer = _trainer_stopping_after_episode_load(trainer_type, tmp_path)
             with pytest.raises(LoadedEpisodes):
-                trainer.fit(train)
-        assert calls == 1
+                trainer.fit(batch)
         assert seed_calls == 1
 
 
 def test_release_trainers_reject_nontrain_before_downstream_work(tmp_path, monkeypatch):
-    _, validation, test = _write_partition_root(tmp_path)
-    arbitrary = tmp_path / "arbitrary.jsonl"
-    arbitrary.write_text('{"episode_ref":"episode:arbitrary"}\n', encoding="utf-8")
+    batch = _authenticated_batch()
     seed_calls = 0
 
     def counted_seed(_seed):
@@ -340,7 +370,7 @@ def test_release_trainers_reject_nontrain_before_downstream_work(tmp_path, monke
         seed_calls += 1
 
     def downstream_must_not_run(*_args, **_kwargs):
-        raise AssertionError("trainer reached downstream work for a non-train partition")
+        raise AssertionError("trainer reached downstream work for unauthenticated input")
 
     for trainer_type, downstream_name in (
         (ReleaseProposalTrainer, "_ActionVocabulary"),
@@ -350,17 +380,19 @@ def test_release_trainers_reject_nontrain_before_downstream_work(tmp_path, monke
             context.setattr(training_module, "_set_deterministic_seeds", counted_seed)
             context.setattr(training_module, downstream_name, downstream_must_not_run)
             trainer = _trainer_stopping_after_episode_load(trainer_type, tmp_path)
-            for path in (validation, test, arbitrary):
-                with pytest.raises(PartitionAccessError):
-                    trainer.fit(path)
+            for value in (
+                ROOT / "data/partitions/train.jsonl",
+                batch.snapshot,
+                object(),
+            ):
+                with pytest.raises(TypeError):
+                    trainer.fit(value)
     assert seed_calls == 0
 
 
 def test_release_trainer_metadata_uses_authenticated_fit_snapshot(tmp_path, monkeypatch):
-    train, _, _ = _write_partition_root(tmp_path)
-    expected_dataset_hash = _sha256(train)
-    original_train_bytes = train.read_bytes()
-    original_load = training_module._load_partition_episodes_with_hash
+    batch = _authenticated_batch()
+    expected_dataset_hash = batch.snapshot.payload_sha256
 
     class FakeVocabulary:
         size = 1
@@ -396,9 +428,17 @@ def test_release_trainer_metadata_uses_authenticated_fit_snapshot(tmp_path, monk
         def __init__(self, *_args, **_kwargs):
             pass
 
-    def load_with_proposal_action(*args, **kwargs):
-        episodes, digest = original_load(*args, **kwargs)
-        return [replace(episodes[0], action_sequence=({"action_type": "test"},))], digest
+    expected_provenance = {
+        "authorization_ref": batch.authorization_ref,
+        "authorization_sha256": batch.authorization_sha256,
+        "capability_ref": batch.snapshot.capability_ref,
+        "payload_ref": batch.snapshot.payload_ref,
+        "payload_sha256": batch.snapshot.payload_sha256,
+        "episode_count": batch.snapshot.episode_count,
+        "artifact_graph_ref": batch.artifact_graph_ref,
+        "generator_source_revision": batch.generator_source_revision,
+        "authority_generation": batch.authority_generation,
+    }
 
     for trainer_type in (ReleaseProposalTrainer, ReleaseRealizerTrainer):
         with monkeypatch.context() as context:
@@ -407,39 +447,27 @@ def test_release_trainer_metadata_uses_authenticated_fit_snapshot(tmp_path, monk
             context.setattr(training_module, "_ActionVocabulary", FakeVocabulary)
             context.setattr(training_module, "ProposalNetwork", FakeNetwork)
             context.setattr(training_module, "RealizerNetwork", FakeNetwork)
-            context.setattr(training_module, "_action_from_dict", lambda *_args: object())
             context.setattr(training_module, "_build_orientation", lambda *_args: object())
             context.setattr(training_module, "_encode_form_units", lambda *_args: object())
-            context.setattr(
-                training_module, "_encode_orientation_structural", lambda *_args: object()
-            )
-            context.setattr(
-                training_module, "_encode_response_meaning_features", lambda *_args: object()
-            )
+            context.setattr(training_module, "_encode_orientation_structural", lambda *_args: object())
+            context.setattr(training_module, "_encode_response_meaning_features", lambda *_args: object())
             context.setattr(training_module, "_surface_to_target", lambda *_args: 0)
+            context.setattr(training_module, "_compute_action_encoding_hash", lambda _index: "action:test")
             context.setattr(
-                training_module, "_compute_action_encoding_hash", lambda _index: "action:test"
+                training_module,
+                "_check_partition_access",
+                lambda *_args, **_kwargs: (_ for _ in ()).throw(
+                    AssertionError("build/fit reopened legacy train evidence")
+                ),
             )
-            if trainer_type is ReleaseProposalTrainer:
-                context.setattr(
-                    training_module,
-                    "_load_partition_episodes_with_hash",
-                    load_with_proposal_action,
-                )
             trainer = _trainer_stopping_after_episode_load(trainer_type, tmp_path)
+            trainer._epochs = 0
             trainer._form_resolver = SimpleNamespace(resolve=lambda _surface: object())
             if trainer_type is ReleaseProposalTrainer:
                 trainer._config = object()
             with pytest.raises(AttributeError):
                 trainer.build_metadata()
-            trainer.fit(train)
-            train.write_text('{"episode_ref":"episode:mutated"}\n', encoding="utf-8")
-            context.setattr(
-                training_module,
-                "_file_sha256",
-                lambda *_args, **_kwargs: (_ for _ in ()).throw(
-                    AssertionError("build_metadata reopened the train partition")
-                ),
-            )
-            assert trainer.build_metadata()["dataset_hash"] == expected_dataset_hash
-        train.write_bytes(original_train_bytes)
+            trainer.fit(batch)
+            metadata = trainer.build_metadata()
+            assert metadata["dataset_hash"] == expected_dataset_hash
+            assert metadata["config"]["train_data"] == expected_provenance

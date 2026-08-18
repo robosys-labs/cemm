@@ -10,6 +10,9 @@
   "device": "cpu",
   "target_encoding": "dynamic_pointer_slots",
   "internal_ref_vocabulary": [],
-  "episodes_path": "data/partitions/train.jsonl",
-  "artifact_dir": "artifacts/proposal_release"
+  "artifact_dir": "artifacts/proposal_release",
+  "release": true,
+  "train_capability_path": "artifacts/r4/capabilities/train.json",
+  "train_authorization_path": "artifacts/r4/authorizations/train.json",
+  "train_authorization_trust": "r4_admission_receipt"
 }

@@ -36,6 +36,9 @@ def main() -> None:
         default="artifacts/validation/REPRODUCIBILITY.json",
         help="Path to write the reproducibility receipt JSON.",
     )
+    parser.add_argument("--release-isolated-root", required=True)
+    parser.add_argument("--expected-authorization-ref", required=True)
+    parser.add_argument("--expected-authorization-sha256", required=True)
     args = parser.parse_args()
 
     expected_root = (ROOT / args.expected).resolve()
@@ -47,10 +50,27 @@ def main() -> None:
     print(f"  Receipt: {receipt_path}")
     print()
 
+    from cemm_authoritative_hybrid.r4_partition_access import load_r4_train_episodes
     from cemm_authoritative_hybrid.training import reproduce_models
 
+    isolated_root = Path(args.release_isolated_root).resolve(strict=True)
+    repository_root = ROOT.resolve(strict=True)
+    try:
+        isolated_root.relative_to(repository_root)
+    except ValueError:
+        pass
+    else:
+        parser.error("release isolated root must be outside the repository")
+    train_batch = load_r4_train_episodes(
+        "artifacts/r4/authorizations/train.json",
+        "artifacts/r4/capabilities/train.json",
+        isolated_root,
+        expected_authorization_ref=args.expected_authorization_ref,
+        expected_authorization_sha256=args.expected_authorization_sha256,
+    )
     receipt = reproduce_models(
         expected_root=ROOT,
+        train_batch=train_batch,
         temporary=args.temporary,
         receipt_path=receipt_path,
     )
