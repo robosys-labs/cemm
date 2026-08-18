@@ -754,6 +754,15 @@ class GlobalPartitionGraph:
     components: tuple[LeakageComponent, ...]
 
 
+@dataclass(frozen=True)
+class AssignmentResult:
+    evidence: PartitionEvidence
+    assignments: tuple[ComponentAssignment, ...]
+    objective: tuple[int, int, int, str]
+    solver_stats: SolverStats
+    sparse_counter_updates: int
+
+
 def normalized_surface_key(surface: object, language: object) -> str:
     if type(surface) is not str or type(language) is not str:
         raise TypeError("surface and language must be exact strings")
@@ -1422,6 +1431,226 @@ class GlobalLeakagePartitioner:
             witness_objective_ref=objective_ref,
             solver_stats=stats,
         )
+
+    def assign(
+        self,
+        episodes: Iterable[object],
+        *,
+        config: R4PartitionConfig,
+        mutations: Iterable[object] = (),
+    ) -> AssignmentResult:
+        if type(config) is not R4PartitionConfig:
+            raise TypeError("config must be an exact R4PartitionConfig")
+        graph = self.build_graph(episodes, mutations=mutations)
+        labels_by_ref = {row.label_ref: row for row in graph.labels}
+        configured = tuple(sorted({row.dimension_ref for row in config.minima}))
+        if any(ref not in labels_by_ref for ref in configured):
+            raise ValueError("partition config names an unknown stratification label")
+
+        label_members = {
+            ref: frozenset(labels_by_ref[ref].member_refs) for ref in configured
+        }
+        global_label_counts = {ref: len(label_members[ref]) for ref in configured}
+        component_label_counts: dict[str, dict[str, int]] = {}
+        for component in graph.components:
+            members = frozenset(component.member_refs)
+            counts = {
+                ref: len(members.intersection(label_members[ref]))
+                for ref in configured
+            }
+            component_label_counts[component.component_ref] = {
+                ref: count for ref, count in counts.items() if count
+            }
+
+        def rare_score(component: LeakageComponent) -> int:
+            return sum(
+                RARITY_SCALE // global_label_counts[ref]
+                for ref in component_label_counts[component.component_ref]
+            )
+
+        ordered = tuple(
+            sorted(
+                graph.components,
+                key=lambda row: (
+                    -len(row.member_refs),
+                    -rare_score(row),
+                    row.component_ref,
+                ),
+            )
+        )
+        oracle = _CompletionOracle(
+            components=ordered,
+            labels_by_ref=labels_by_ref,
+            minima=config.minima,
+            maxima=config.maxima,
+            max_states=config.bounds.max_solver_states,
+            max_seconds=config.bounds.max_solver_seconds,
+        )
+        class_counts = [0, 0, 0, 0]
+        observed = {
+            (split, ref): 0 for split in SPLITS for ref in configured
+        }
+        assignment_by_component: dict[str, str] = {}
+        sparse_updates = 0
+        current_minima = tuple(config.minima)
+
+        for index, component in enumerate(ordered):
+            candidates: list[tuple[tuple[int, int, int, str], int]] = []
+            counts = component_label_counts[component.component_ref]
+            for split_index, split in enumerate(SPLITS):
+                next_counts = list(class_counts)
+                next_counts[split_index] += len(component.member_refs)
+                next_minima = _remaining_minima_after(
+                    current_minima,
+                    split=split,
+                    contribution=counts,
+                )
+                completion = oracle.find_completion(
+                    index + 1, tuple(next_counts), next_minima
+                )
+                if completion is None:
+                    continue
+                next_observed = dict(observed)
+                for ref, contribution in counts.items():
+                    next_observed[(split, ref)] += contribution
+                objective = _full_objective(
+                    source_count=sum(len(row.member_refs) for row in ordered),
+                    class_counts=tuple(next_counts),
+                    observed=next_observed,
+                    config=config,
+                    global_label_counts=global_label_counts,
+                    tie_break_ref=stable_ref(
+                        "r4_partition_tie",
+                        {
+                            "component": component.component_ref,
+                            "split": split,
+                            "seed": config.seed,
+                        },
+                    ),
+                )
+                candidates.append((objective, split_index))
+            if not candidates:
+                raise ValueError(
+                    f"no feasible placement remains for {component.component_ref}"
+                )
+            _, chosen_index = min(candidates, key=lambda row: row[0])
+            chosen_split = SPLITS[chosen_index]
+            class_counts[chosen_index] += len(component.member_refs)
+            assignment_by_component[component.component_ref] = chosen_split
+            counts = component_label_counts[component.component_ref]
+            for ref, contribution in counts.items():
+                observed[(chosen_split, ref)] += contribution
+                sparse_updates += 1
+            current_minima = _remaining_minima_after(
+                current_minima, split=chosen_split, contribution=counts
+            )
+
+        if any(value <= 0 for value in class_counts):
+            raise ValueError("allocator produced an empty split")
+        if any(row.minimum > 0 for row in current_minima):
+            raise ValueError("allocator did not satisfy configured minima")
+        maxima = {(row.split, row.dimension_ref): row.maximum for row in config.maxima}
+        if any(observed[key] > maxima[key] for key in maxima):
+            raise ValueError("allocator exceeded a configured maximum")
+
+        contract_components = tuple(
+            sorted(
+                (
+                    GlobalPartitionComponent.create(
+                        source_set_ref=graph.source_set_ref,
+                        member_refs=component.member_refs,
+                        hyperedge_refs=component.hyperedge_refs,
+                        split=assignment_by_component[component.component_ref],
+                    )
+                    for component in graph.components
+                ),
+                key=lambda row: row.component_ref,
+            )
+        )
+        evidence = PartitionEvidence.create(
+            source_set_ref=graph.source_set_ref,
+            config_ref=config.config_ref,
+            hyperedges=graph.hyperedges,
+            labels=graph.labels,
+            components=contract_components,
+        )
+        final_tie = stable_ref(
+            "r4_partition_assignment_tie_v1",
+            sorted(assignment_by_component.items()),
+        )
+        final_objective = _full_objective(
+            source_count=sum(class_counts),
+            class_counts=tuple(class_counts),
+            observed=observed,
+            config=config,
+            global_label_counts=global_label_counts,
+            tie_break_ref=final_tie,
+        )
+        assignments = tuple(
+            ComponentAssignment(component.component_ref, assignment_by_component[component.component_ref])
+            for component in sorted(graph.components, key=lambda row: row.component_ref)
+        )
+        return AssignmentResult(
+            evidence=evidence,
+            assignments=assignments,
+            objective=final_objective,
+            solver_stats=oracle.stats(),
+            sparse_counter_updates=sparse_updates,
+        )
+
+
+def _remaining_minima_after(
+    minima: tuple[DimensionMinimum, ...],
+    *,
+    split: str,
+    contribution: Mapping[str, int],
+) -> tuple[DimensionMinimum, ...]:
+    rows = []
+    for row in minima:
+        remaining = row.minimum
+        if row.split == split:
+            remaining = max(0, remaining - contribution.get(row.dimension_ref, 0))
+        # Internal solver state admits zero; materialize an exact stand-in row.
+        obj = object.__new__(DimensionMinimum)
+        object.__setattr__(obj, "dimension_ref", row.dimension_ref)
+        object.__setattr__(obj, "split", row.split)
+        object.__setattr__(obj, "minimum", remaining)
+        rows.append(obj)
+    return tuple(rows)
+
+
+def _full_objective(
+    *,
+    source_count: int,
+    class_counts: tuple[int, int, int, int],
+    observed: Mapping[tuple[str, str], int],
+    config: R4PartitionConfig,
+    global_label_counts: Mapping[str, int],
+    tie_break_ref: str,
+) -> tuple[int, int, int, str]:
+    weights = {row.split: row.weight for row in config.target_weights}
+    size_deviation = sum(
+        abs(RATIO_DENOMINATOR * class_counts[index] - source_count * weights[split])
+        for index, split in enumerate(SPLITS)
+    )
+    configured = tuple(sorted(global_label_counts))
+    label_deviation = sum(
+        abs(
+            RATIO_DENOMINATOR * observed.get((split, ref), 0)
+            - global_label_counts[ref] * weights[split]
+        )
+        for split in SPLITS
+        for ref in configured
+    )
+    minima = {(row.split, row.dimension_ref): row.minimum for row in config.minima}
+    maxima = {(row.split, row.dimension_ref): row.maximum for row in config.maxima}
+    bound_violation = sum(
+        max(0, minima[(split, ref)] - observed.get((split, ref), 0))
+        + max(0, observed.get((split, ref), 0) - maxima[(split, ref)])
+        for split in SPLITS
+        for ref in configured
+    )
+    return size_deviation, label_deviation, bound_violation, tie_break_ref
 
 
 class _CompletionOracle:

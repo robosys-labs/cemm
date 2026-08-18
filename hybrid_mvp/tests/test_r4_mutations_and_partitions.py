@@ -19,6 +19,7 @@ from cemm_authoritative_hybrid.r4_partitions import (
     PartitionAxisManifest,
     PartitionComponent,
     TrainingAllowlist,
+    GlobalLeakagePartitioner,
 )
 
 __cemm_test_inventory__ = {'tests/test_r4_mutations_and_partitions.py::test_mutations_change_one_declared_dimension_and_use_owner_labels': {'activation_phase': 'R4',
@@ -32,7 +33,13 @@ __cemm_test_inventory__ = {'tests/test_r4_mutations_and_partitions.py::test_muta
                                                                                                                               'diagnostic_role': 'owner',
                                                                                                                               'introduced_by_task': 'R4-Complete',
                                                                                                                               'owner_ref': 'mutation-partition',
-                                                                                                                              'source_ast_sha256': 'ab80a84f1033f5b98d45c985921f5c6be4f4e71d04c1039d342b854c2f731343'}}
+                                                                                                                              'source_ast_sha256': 'ab80a84f1033f5b98d45c985921f5c6be4f4e71d04c1039d342b854c2f731343'},
+ 'tests/test_r4_mutations_and_partitions.py::test_global_partition_successor_exposes_four_class_assignment_owner': {'activation_phase': 'R4',
+                                                                                                                    'assertion_ref': 'assertion:r4-global-partition-successor-exposes-four-class-assignment-owner',
+                                                                                                                    'diagnostic_role': 'owner',
+                                                                                                                    'introduced_by_task': 'R4-Partition-Corrective-Task-5',
+                                                                                                                    'owner_ref': 'mutation-partition',
+                                                                                                                    'source_ast_sha256': '4340ae030e1b6801d6fa1b1f082bf4d90f795bb2cd8a4bcec497e520b9e4e3ee'}}
 
 
 
@@ -160,3 +167,10 @@ def test_partition_axis_manifest_is_exact_and_training_allowlist_has_no_test_ref
         "general", "lexical", "semantic_target", "topology",
         "dialogue", "mutation", "realization",
     }
+
+
+def test_global_partition_successor_exposes_four_class_assignment_owner() -> None:
+    owner = GlobalLeakagePartitioner()
+    assert callable(owner.build_graph)
+    assert callable(owner.analyze_feasibility)
+    assert callable(owner.assign)
