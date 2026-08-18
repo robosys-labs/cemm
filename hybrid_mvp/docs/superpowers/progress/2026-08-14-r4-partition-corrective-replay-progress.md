@@ -103,11 +103,11 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 - [ ] Define Build Receipt ABI 4 exact artifact identities.
 - [ ] Reject every ABI 2 training allowlist and ABI 3 build receipt as current input.
 - [x] Separate leakage-equivalence keys from stratification labels at the contract boundary.
-- [ ] Preserve every exact protected identity across all seven axes as a
+- [x] Preserve every exact protected identity across all seven axes as a
   namespaced leakage hyperedge.
-- [ ] Reject sentinel/coarse categorical union keys.
-- [ ] Implement deterministic global component assignment.
-- [ ] Implement independent verifier reconstruction.
+- [x] Reject sentinel/coarse categorical union keys.
+- [x] Implement deterministic global component assignment.
+- [x] Implement independent verifier reconstruction.
 
 ### Data and access
 
@@ -128,11 +128,11 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 
 ### Sufficiency and anti-vacuity
 
-- [ ] Generate feasibility report before freezing thresholds.
-- [ ] Preserve the acyclic basis → config → final receipt identity graph; changed basis refs stop for amended review.
-- [ ] Review exact positive minimum counts.
-- [ ] Require support and feasible-component denominators.
-- [ ] Require held-out coverage across configured dimensions.
+- [x] Generate feasibility report before freezing thresholds.
+- [x] Preserve the acyclic basis → config → final receipt identity graph; changed basis refs stop for amended review.
+- [x] Review exact positive minimum counts.
+- [x] Require support and feasible-component denominators.
+- [x] Require held-out coverage across configured dimensions.
 - [x] Reject empty classes and zero-denominator success at the contract boundary.
 - [ ] Reject assignment changes from seed/objective/tie-break tamper.
 
@@ -220,12 +220,15 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | 2026-08-14 | `codex/r4-partition-corrective-replay@c96de455bc2220638bf08d172136821a0cb2d047` | Corrective spec/plan promoted to governing authority with exact pre-invalidation defect binding | Governance and inventory suites passed; replay chain verified; ledger and R4 data unchanged |
 | 2026-08-14 | `codex/r4-partition-corrective-replay@3085df72a9969df4289d6bf35a576a272378f062` | R4 partition evidence invalidated from committed source base `bc7e4c6ee8493d84cc2729bdb060109b07bc1cba` | Append-only `governance_record:65ff94bf1c6e014cf04abab2`; chain verified; no artifact or run receipt created |
 | 2026-08-14 | `codex/r4-partition-corrective-replay@b9efaba3a05dea0006b74d882671a98fd5f1547e` | Strict R4 partition, sufficiency, config, capability, and authorization contracts registered | Contract/schema/inventory suites passed; owner and phase tiers remained correctly governance-blocked by the deliberate R4-red ledger state |
+| 2026-08-17 | `agent/r4-task4-batch-publisher-20260816@7e7cc4abebb4c3bb39be9263a7525d5dc19e0dbc` | Read-only seven-axis leakage feasibility checkpoint reconstructed | 400 sources; 1635 exact hyperedges; 530 labels; 84 components; largest 248; basis/config/final identities check |
+| 2026-08-17 | `agent/r4-task4-batch-publisher-20260816@9beb7abe37efcad5e41601e4dc53e0aa6291e033` | Deterministic four-class assignment and independent reconstruction completed | Whole-component assignment, permutation determinism, split-tamper rejection, giant-component infeasibility, equal-only feasibility publisher, R4/R5 inventory checks passed |
 
 ## 11. Current checkpoint
 
-**Current work:** P5 in progress; Task 3 strict contract tranche is complete at `b9efaba3a05dea0006b74d882671a98fd5f1547e`.
-**Next required action:** Task 4 implements exact leakage-key extraction and deterministic global component construction.
-**Implementation authorization:** Task 4 source work is authorized; assignment, artifact generation, admission, and neural training remain blocked.
+**Current work:** P5 in progress; Task 5 deterministic four-class assignment and independent verification are complete at `9beb7abe37efcad5e41601e4dc53e0aa6291e033`.
+**Task 4 feasibility identities:** graph `r4_partition_graph_v3:c80724e6107d010c724ad341`; basis `r4_partition_feasibility_basis_v1:8d7b96e61cd31e98bbc9de46`; witness `r4_partition_minima_witness_v1:7283c55335905b1dba4e6c67`; config `r4_partition_config_v1:0647f2402b0b942044c243ec`; final `r4_partition_feasibility_v1:654878fb2b7e874d07ff31e4`.
+**Next required action:** Task 6 cuts Build Receipt ABI 4 and prepares deterministic temporary four-class generated fixtures.
+**Implementation authorization:** Task 6 source/schema/test work is authorized; checked-in replacement R4 artifacts, re-admission, and neural training remain blocked.
 **R5 neural work:** blocked on authentic R4 re-admission.
 
 ## 12. Exact invalidation evidence
