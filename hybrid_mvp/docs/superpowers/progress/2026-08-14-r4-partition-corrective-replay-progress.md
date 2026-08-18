@@ -3,9 +3,9 @@
 **Tracker date:** 2026-08-14
 **Tracker role:** operational evidence; never replay-status authority
 **Effective status owner:** [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl)
-**Working branch:** `codex/r4-partition-corrective-replay`
+**Working branch:** `agent/r4-task4-batch-publisher-20260816`
 **Base commit:** `107c5189353564ce8b66317c897bc28a62cfd403`
-**Remote target:** `origin/codex/r4-partition-corrective-replay`
+**Remote target:** `origin/agent/r4-task4-batch-publisher-20260816`
 
 ## 1. Executive summary
 
@@ -72,13 +72,22 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | P2 | Written R4 corrective design | complete | Approved architecture | Written spec and independent contract review passed |
 | P3 | Governing implementation plan | complete | Approved written spec | Detailed TDD plan reviewed and committed at `b3e4c33` |
 | P4 | Governance authority and R4 invalidation | complete | Governing spec/plan and clean branch | Append-only R4 red record; chain verified |
-| P5 | Partition ABI and algorithm implementation | in_progress | RED corruption/feasibility tests | Global assignment and independent reconstruction green |
+| P5 | Partition ABI and algorithm implementation | complete | RED corruption/feasibility tests | Global assignment, Build Receipt ABI 4, temporary candidate generation, and independent reconstruction green |
 | P6 | Active R5 train-only capability migration | pending | New class-capability ABI | Legacy train authority absent; foundation isolation green |
 | P7 | Four-class artifact regeneration | pending | Committed generator source | Two byte-identical candidate trees and ABI 4 artifact commit |
 | P8 | R4 owner/phase/admission verification | pending | Clean artifact commit | All gates plus clean repository-owned admission pass |
 | P9 | R4 green re-admission | pending | Passed exact R4 admission receipt | Append-only green record; chain verified |
 | P10 | Closeout publication | pending | Re-admitted R4 | Governance/artifact checks, docs, branch review, push; admission owns the full suite |
 | P11 | R5 Neural Activation design/implementation | blocked | Re-admitted non-vacuous R4 | Separate approved R5 plan |
+
+### Task 6 verified source checkpoint — 2026-08-18
+
+- Source commit published to the corrective target: `e53dd76dbf246ba7af30c564899d8c711e457177` (`feat(r4): generate four-class partition evidence`).
+- Final verification snapshot: `3c5e9f3fd8e820b47505b1b76266f3118a0c7231`; its tree is exactly the tree published by the clean source commit.
+- Governed source/tests/inventory passed on the frozen snapshot.
+- Two independent temporary ABI 4 candidate trees were byte-identical, covered all 400 authentic episodes across four nonempty classes, and both passed independent candidate admission reconstruction.
+- Historical checked-in `artifacts/r4/**` remain unchanged invalidated ABI 3 evidence; no replacement artifact tree or R4 green admission is claimed here.
+- Next authorized source tranche is Task 7: migrate the active R5 train-only capability boundary and hard-cut legacy partition authority.
 
 ## 6. Detailed implementation checklist
 
@@ -100,8 +109,8 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 - [x] Define R4 Partition Sufficiency ABI 1 schema and strict decoder.
 - [x] Define R4 Class Capability/Authorization ABI 1 and admission-rooted trust projection.
 - [x] Define Partition Config ABI 1 with an acyclic feasibility-basis binding.
-- [ ] Define Build Receipt ABI 4 exact artifact identities.
-- [ ] Reject every ABI 2 training allowlist and ABI 3 build receipt as current input.
+- [x] Define Build Receipt ABI 4 exact artifact identities.
+- [x] Reject every ABI 2 training allowlist and ABI 3 build receipt as current input.
 - [x] Separate leakage-equivalence keys from stratification labels at the contract boundary.
 - [x] Preserve every exact protected identity across all seven axes as a
   namespaced leakage hyperedge.
@@ -214,6 +223,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 
 | Date | Branch/commit | Event | Verification |
 |---|---|---|---|
+| 2026-08-18 | `agent/r4-task4-batch-publisher-20260816@e53dd76dbf246ba7af30c564899d8c711e457177` | Task 6 Build Receipt ABI 4 and temporary four-class candidate generation source published | Governed source/tests/inventory green; two temporary candidate trees byte-identical and independently admitted; checked-in R4 artifacts unchanged |
 | 2026-08-13 | `origin/codex/r5-hard-cut-foundation@107c518` | R5 foundation published | Full governed suite and Task 10 closeout passed |
 | 2026-08-14 | `origin/codex/r4-partition-corrective-replay@45142bb` | Corrective design published and independently reviewed | Contract review passed after exact leakage, train-boundary, access, and invalidation fixes |
 | 2026-08-14 | `codex/r4-partition-corrective-replay@b3e4c33` | Executable corrective plan committed after dual independent review | Contract and code-path reviews passed; 65 TDD steps; no source/ledger/artifact mutation |
