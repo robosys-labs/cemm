@@ -142,4 +142,4 @@ __cemm_test_inventory__ = {'tests/test_r4_training_partition_boundary.py::test_c
                                                                                                        'introduced_by_task': 'R4-Partition-Corrective-Task-7',
                                                                                                        'owner_ref': 'artifact-integrity',
                                                                                                        'source_ast_sha256': '107208937e8f03be68185f26d1db531f3e0f95ccf1322224a0e56dadb26ec4ef',
-                                                                                                       'supersedes_node_id': 'tests/test_partition_leakage.py::test_sealed_test_hash-is-not-available-to-training'}}
+                                                                                                       'supersedes_node_id': 'tests/test_partition_leakage.py::test_sealed_test_hash_is_not_available_to_training'}}
