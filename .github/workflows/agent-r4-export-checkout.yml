@@ -8,40 +8,52 @@ on:
       - .github/workflows/agent-r4-export-checkout.yml
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: agent-r4-export-checkout-20260816
   cancel-in-progress: false
 
 jobs:
-  export:
+  refresh-task6-metadata:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/r4-export-checkout-20260816
+          ref: agent/r4-task6-build-receipt-20260818
           fetch-depth: 0
-          persist-credentials: false
-      - name: Export complete reachable Git graph
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Refresh and verify governed metadata
+        working-directory: hybrid_mvp
         run: |
           set -euo pipefail
-          git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
-          git bundle create /tmp/cemm-r4-all-heads.bundle --all
-          git bundle verify /tmp/cemm-r4-all-heads.bundle
-          git show-ref > /tmp/cemm-r4-all-heads.refs
-          sha256sum /tmp/cemm-r4-all-heads.bundle > /tmp/cemm-r4-all-heads.sha256
-          git rev-parse origin/agent/r4-task4-batch-publisher-20260816 > /tmp/cemm-r4-target-head
-      - name: Upload Git graph
-        uses: actions/upload-artifact@v4
-        with:
-          name: cemm-r4-all-heads-git-bundle
-          retention-days: 1
-          if-no-files-found: error
-          compression-level: 0
-          path: |
-            /tmp/cemm-r4-all-heads.bundle
-            /tmp/cemm-r4-all-heads.refs
-            /tmp/cemm-r4-all-heads.sha256
-            /tmp/cemm-r4-target-head
+          python scripts/refresh_r3_r4_test_metadata.py
+          python scripts/verify_r3_r4_test_metadata.py
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- tests/test_r3_*.py tests/test_r4_*.py
+          if git diff --cached --quiet; then
+            RESULT=already-current
+          else
+            git commit -m 'test(r4): refresh Task 6 governed AST metadata'
+            git push origin HEAD:refs/heads/agent/r4-task6-build-receipt-20260818
+            RESULT=updated
+          fi
+          printf '%s\n' "$RESULT" > /tmp/task6-metadata-result
+          git rev-parse HEAD > /tmp/task6-metadata-head
+      - name: Record result on helper branch
+        run: |
+          set -euo pipefail
+          RESULT="$(cat /tmp/task6-metadata-result)"
+          TASK6_HEAD="$(cat /tmp/task6-metadata-head)"
+          git fetch origin agent/r4-export-checkout-20260816
+          git checkout -B helper-status origin/agent/r4-export-checkout-20260816
+          mkdir -p .github/r4-task6-status
+          printf '{"result":"%s","task6_head":"%s"}\n' "$RESULT" "$TASK6_HEAD" > .github/r4-task6-status/metadata.json
+          git add -- .github/r4-task6-status/metadata.json
+          git commit -m 'ci(r4): record Task 6 metadata refresh'
+          git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
