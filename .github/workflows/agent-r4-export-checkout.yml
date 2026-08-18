@@ -111,3 +111,5 @@ jobs:
           git add -- .github/r4-task7-status/training-hardcut.json .github/r4-task7-status/training-hardcut.log
           git commit -m 'ci(r5): record authenticated training hard-cut'
           git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
+
+# trigger: 2026-08-18T09:13+01:00
