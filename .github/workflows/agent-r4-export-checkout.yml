@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  verify-and-publish:
+  verify:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     env:
@@ -30,12 +30,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Normalize literal parameter metadata
+      - run: python -m pip install 'pytest==8.4.0'
+      - id: verify
+        name: Normalize, refresh, and verify
+        continue-on-error: true
         working-directory: work
+        shell: bash
         run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = '516a9b07cd5ef520bd14512d14a58511b1e58be5'
-          python - <<'PY'
+          set -o pipefail
+          {
+            set -euo pipefail
+            test "$(git rev-parse HEAD)" = '516a9b07cd5ef520bd14512d14a58511b1e58be5'
+            python - <<'PY'
           from pathlib import Path
 
           path = Path('hybrid_mvp/tests/test_r4_partition_global_assignment.py')
@@ -47,14 +53,8 @@ jobs:
           if start < 0 or end < 0:
               raise SystemExit('parameter metadata anchor drift')
           case_ids = (
-              'adversarial_mutation',
-              'authority_target',
-              'dialogue',
-              'entity',
-              'graph_topology',
-              'lexical_value',
-              'normalized_text',
-              'template',
+              'adversarial_mutation', 'authority_target', 'dialogue', 'entity',
+              'graph_topology', 'lexical_value', 'normalized_text', 'template',
           )
           rows = []
           for case_id in case_ids:
@@ -71,28 +71,23 @@ jobs:
               )
           path.write_text(text[:start] + ''.join(rows) + text[end:], encoding='utf-8')
           PY
-          git diff --check
-      - name: Install focused dependency
-        run: python -m pip install 'pytest==8.4.0'
-      - name: Refresh metadata and verify global successors
-        working-directory: work/hybrid_mvp
-        env:
-          PYTHONPATH: src:scripts:.
-        run: |
-          set -euo pipefail
-          python scripts/refresh_r3_r4_test_metadata.py
-          python scripts/verify_r3_r4_test_metadata.py
-          if grep -Fq "'source_ast_sha256': '0000000000000000000000000000000000000000000000000000000000000000'" tests/test_r4_partition_global_assignment.py; then
-            echo 'placeholder AST hash survived refresh' >&2
-            exit 1
-          fi
-          python -m pytest tests/test_r4_partition_global_assignment.py -q -p no:cacheprovider
-          python scripts/check_test_inventory.py --phase R4 --source-only
-          python scripts/check_test_inventory.py --phase R5 --source-only
-          python scripts/check_r3_r4_structure.py
-          git diff --check
-          test -z "$(git status --short -- artifacts/r4)"
-      - name: Commit verified successor file
+            cd hybrid_mvp
+            export PYTHONPATH=src:scripts:.
+            python scripts/refresh_r3_r4_test_metadata.py
+            python scripts/verify_r3_r4_test_metadata.py
+            if grep -Fq "'source_ast_sha256': '0000000000000000000000000000000000000000000000000000000000000000'" tests/test_r4_partition_global_assignment.py; then
+              echo 'placeholder AST hash survived refresh' >&2
+              exit 1
+            fi
+            python -m pytest tests/test_r4_partition_global_assignment.py -q -p no:cacheprovider
+            python scripts/check_test_inventory.py --phase R4 --source-only
+            python scripts/check_test_inventory.py --phase R5 --source-only
+            python scripts/check_r3_r4_structure.py
+            git diff --check
+            test -z "$(git status --short -- artifacts/r4)"
+          } 2>&1 | tee /tmp/global-successors.log
+      - name: Publish verified staging content
+        if: steps.verify.outcome == 'success'
         working-directory: work
         run: |
           set -euo pipefail
@@ -103,18 +98,21 @@ jobs:
           test "$(git diff --cached --name-only)" = 'hybrid_mvp/tests/test_r4_partition_global_assignment.py'
           git commit -m 'test(r4): refresh global partition successor metadata'
           git push origin HEAD:refs/heads/agent/r4-task7-global-successors-20260818
-          git rev-parse HEAD > /tmp/task7-global-head
-      - name: Record successful verification
+      - name: Record outcome
+        if: always()
+        env:
+          OUTCOME: ${{ steps.verify.outcome }}
         run: |
           set -euo pipefail
-          HEAD_SHA="$(cat /tmp/task7-global-head)"
+          SOURCE="$(git -C work rev-parse HEAD)"
           git clone --no-checkout "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" status-repo
           cd status-repo
           git checkout agent/r4-export-checkout-20260816
           mkdir -p .github/r4-task7-status
-          printf '{"global_successors":"success","source":"%s"}\n' "$HEAD_SHA" > .github/r4-task7-status/global-successors.json
+          printf '{"global_successors":"%s","source":"%s"}\n' "$OUTCOME" "$SOURCE" > .github/r4-task7-status/global-successors.json
+          cp /tmp/global-successors.log .github/r4-task7-status/global-successors.log
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- .github/r4-task7-status/global-successors.json
+          git add -- .github/r4-task7-status/global-successors.json .github/r4-task7-status/global-successors.log
           git commit -m 'ci(r4): record global successor verification'
           git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
