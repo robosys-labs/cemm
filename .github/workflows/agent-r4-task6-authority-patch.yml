@@ -1,0 +1,50 @@
+name: Agent R4 Task 6 authority patch
+
+on:
+  push:
+    branches:
+      - agent/r4-export-checkout-20260816
+    paths:
+      - .github/workflows/agent-r4-task6-authority-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task6-build-receipt-20260818
+          fetch-depth: 0
+      - name: Correct real authority generation type
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          source = Path('hybrid_mvp/src/cemm_authoritative_hybrid/r4_partition_contracts.py')
+          text = source.read_text('utf-8')
+          old = '"authority_generation": _exact_ref(\n                authority_generation, "authority_generation"\n            ),'
+          new = '"authority_generation": exact_text(\n                authority_generation, "authority_generation", maximum=128\n            ),'
+          if text.count(old) != 2:
+              raise SystemExit(f'authority-generation contract anchor count={text.count(old)}')
+          source.write_text(text.replace(old, new), encoding='utf-8')
+
+          for name in ('r4_split_manifest.schema.json', 'r4_class_authorization.schema.json'):
+              path = Path('hybrid_mvp/schemas') / name
+              value = json.loads(path.read_text('utf-8'))
+              value['properties']['authority_generation'] = {
+                  'type': 'string', 'minLength': 1, 'maxLength': 128
+              }
+              path.write_text(json.dumps(value, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- hybrid_mvp/src/cemm_authoritative_hybrid/r4_partition_contracts.py hybrid_mvp/schemas/r4_split_manifest.schema.json hybrid_mvp/schemas/r4_class_authorization.schema.json
+          git commit -m 'fix(r4): bind canonical authority generation text'
+          git push origin HEAD:refs/heads/agent/r4-task6-build-receipt-20260818
