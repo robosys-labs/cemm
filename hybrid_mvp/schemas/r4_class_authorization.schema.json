@@ -1,16 +1,55 @@
 {
+  "$defs": {
+    "purpose": {
+      "enum": [
+        "training",
+        "selection",
+        "calibration",
+        "evaluation"
+      ]
+    },
+    "ref": {
+      "maxLength": 512,
+      "minLength": 3,
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$",
+      "type": "string"
+    },
+    "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
   "$id": "https://robosys-labs.github.io/cemm/schemas/r4_class_authorization.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
-    "abi_version": {"const": 1},
-    "artifact_graph_ref": {"$ref": "#/$defs/ref"},
-    "authority_generation": {"$ref": "#/$defs/ref"},
-    "authorization_ref": {"$ref": "#/$defs/ref"},
-    "expected_capability_ref": {"$ref": "#/$defs/ref"},
-    "expected_capability_sha256": {"$ref": "#/$defs/sha256"},
-    "generator_source_revision": {"pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$", "type": "string"},
-    "purpose": {"$ref": "#/$defs/purpose"}
+    "abi_version": {
+      "const": 1
+    },
+    "artifact_graph_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "authority_generation": {
+      "maxLength": 128,
+      "minLength": 1,
+      "type": "string"
+    },
+    "authorization_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "expected_capability_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "expected_capability_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "generator_source_revision": {
+      "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$",
+      "type": "string"
+    },
+    "purpose": {
+      "$ref": "#/$defs/purpose"
+    }
   },
   "required": [
     "abi_version",
@@ -23,15 +62,5 @@
     "authority_generation"
   ],
   "title": "CEMM R4 Class Authorization ABI 1",
-  "type": "object",
-  "$defs": {
-    "purpose": {"enum": ["training", "selection", "calibration", "evaluation"]},
-    "ref": {
-      "maxLength": 512,
-      "minLength": 3,
-      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$",
-      "type": "string"
-    },
-    "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
-  }
+  "type": "object"
 }

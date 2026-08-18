@@ -871,8 +871,8 @@ class R4SplitManifest:
             "generator_source_revision": _exact_revision(
                 generator_source_revision, "generator_source_revision"
             ),
-            "authority_generation": _exact_ref(
-                authority_generation, "authority_generation"
+            "authority_generation": exact_text(
+                authority_generation, "authority_generation", maximum=128
             ),
             "config_ref": _exact_ref(config_ref, "config_ref"),
             "partition_evidence_ref": _exact_ref(
@@ -1372,8 +1372,8 @@ class R4ClassAuthorization:
             "generator_source_revision": _exact_revision(
                 generator_source_revision, "generator_source_revision"
             ),
-            "authority_generation": _exact_ref(
-                authority_generation, "authority_generation"
+            "authority_generation": exact_text(
+                authority_generation, "authority_generation", maximum=128
             ),
         }
         return _new(
