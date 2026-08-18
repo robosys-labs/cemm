@@ -1,0 +1,45 @@
+name: Agent R4 Task 6 base hash patch
+
+on:
+  push:
+    branches:
+      - agent/r4-export-checkout-20260816
+    paths:
+      - .github/workflows/agent-r4-task6-basehash-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task6-build-receipt-20260818
+          fetch-depth: 0
+      - name: Preserve base artifact byte/hash conventions
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('hybrid_mvp/src/cemm_authoritative_hybrid/r4_pipeline.py')
+          text = path.read_text('utf-8')
+          old_rows = '    return b"" if not material else b"".join(_canonical_json_line(row) for row in material)\n'
+          new_rows = '    return b"\\n".join(_canonical_json(row) for row in material) + b"\\n"\n'
+          if text.count(old_rows) != 1:
+              raise SystemExit(f'rows anchor count={text.count(old_rows)}')
+          text = text.replace(old_rows, new_rows, 1)
+          old_hash = '            structural_sufficiency_sha256=_sha256_bytes(_canonical_json_line(sufficiency.as_dict())),\n'
+          new_hash = '            structural_sufficiency_sha256=_sha256_bytes(_canonical_json(sufficiency.as_dict())),\n'
+          if text.count(old_hash) != 1:
+              raise SystemExit(f'structural hash anchor count={text.count(old_hash)}')
+          path.write_text(text.replace(old_hash, new_hash, 1), encoding='utf-8')
+          PY
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- hybrid_mvp/src/cemm_authoritative_hybrid/r4_pipeline.py
+          git commit -m 'fix(r4): preserve canonical base artifact hashing'
+          git push origin HEAD:refs/heads/agent/r4-task6-build-receipt-20260818
