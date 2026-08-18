@@ -32,6 +32,7 @@ jobs:
           git bundle verify /tmp/cemm-r4-all-heads.bundle
           git show-ref > /tmp/cemm-r4-all-heads.refs
           sha256sum /tmp/cemm-r4-all-heads.bundle > /tmp/cemm-r4-all-heads.sha256
+          git rev-parse origin/agent/r4-task4-batch-publisher-20260816 > /tmp/cemm-r4-target-head
       - name: Upload Git graph
         uses: actions/upload-artifact@v4
         with:
@@ -43,3 +44,4 @@ jobs:
             /tmp/cemm-r4-all-heads.bundle
             /tmp/cemm-r4-all-heads.refs
             /tmp/cemm-r4-all-heads.sha256
+            /tmp/cemm-r4-target-head
