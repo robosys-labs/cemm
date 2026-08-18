@@ -1,4 +1,4 @@
-name: Agent R4 Task7 trainer migration
+name: Agent R4 Task 7 mutation successor verification
 
 on:
   push:
@@ -11,123 +11,79 @@ permissions:
   contents: write
 
 concurrency:
-  group: agent-r4-task7-trainer-migration
+  group: agent-r4-task7-mutation-successors-20260818
   cancel-in-progress: false
 
 jobs:
-  publish:
+  verify-and-publish:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 30
     env:
       PYTHONDONTWRITEBYTECODE: '1'
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
     steps:
-      - name: Checkout publisher payload
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: agent/r4-export-checkout-20260816
-          path: publisher
-          fetch-depth: 1
-          persist-credentials: false
-      - name: Checkout fenced Task 7 branch
-        uses: actions/checkout@v4
-        with:
-          ref: agent/r4-task7-train-capability-20260818
+          ref: agent/r4-task7-mutation-successors-20260818
           path: work
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Authenticate and apply exact reviewed patch
+      - name: Verify fenced successor source
         working-directory: work
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = '9d6d7ee32edcfa6e172b7a2f06f346556d21a3ac'
-          base64 -d ../publisher/.github/r4-task7/trainer.patch.gz.b64 | gzip -dc > /tmp/task7-trainer.patch
-          echo '315cf0d4b38b0c92e040c34c894dea9ff599bdc4f9b6c10a6aee03ab03810020  /tmp/task7-trainer.patch' | sha256sum -c -
-          git apply --check /tmp/task7-trainer.patch
-          git apply /tmp/task7-trainer.patch
-          git diff --check
-          cat > /tmp/expected-files <<'EOF'
-          hybrid_mvp/configs/proposal_release.json
-          hybrid_mvp/configs/realizer_release.json
-          hybrid_mvp/scripts/reproduce_models.py
-          hybrid_mvp/scripts/train_proposer.py
-          hybrid_mvp/scripts/train_realizer.py
-          hybrid_mvp/src/cemm_authoritative_hybrid/training.py
-          hybrid_mvp/tests/test_r5_data_isolation.py
-          EOF
-          git diff --name-only | sort > /tmp/actual-files
-          sort -o /tmp/expected-files /tmp/expected-files
-          diff -u /tmp/expected-files /tmp/actual-files
-      - name: Install focused governed dependencies
-        run: |
-          set -euo pipefail
-          python -m pip install 'pytest==8.4.0' 'jsonschema==4.25.1' 'numpy==2.5.2' 'safetensors==0.5.3'
-          python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
-      - name: Verify Task 7 trainer boundary
+          test "$(git rev-parse HEAD)" = '6dcf7b7c2341ba7519d1d6879a42dcfdf60fdc40'
+          test "$(git diff 7245501a81d68c30bcff9c08209435073baeb1fd...HEAD --name-only)" = 'hybrid_mvp/tests/test_r4_mutations_and_partitions.py'
+          git diff --check 7245501a81d68c30bcff9c08209435073baeb1fd...HEAD
+      - name: Install focused dependency
+        run: python -m pip install 'pytest==8.4.0'
+      - name: Refresh governed metadata and verify successors
         working-directory: work/hybrid_mvp
         env:
           PYTHONPATH: src:scripts:.
         run: |
           set -euo pipefail
-          python -m py_compile \
-            src/cemm_authoritative_hybrid/training.py \
-            scripts/train_proposer.py \
-            scripts/train_realizer.py \
-            scripts/reproduce_models.py
+          python scripts/refresh_r3_r4_test_metadata.py
           python scripts/verify_r3_r4_test_metadata.py
+          if grep -Fq "'source_ast_sha256': '0000000000000000000000000000000000000000000000000000000000000000'" tests/test_r4_mutations_and_partitions.py; then
+            echo 'placeholder AST hash survived refresh' >&2
+            exit 1
+          fi
+          python -m pytest tests/test_r4_mutations_and_partitions.py -q -p no:cacheprovider
           python scripts/check_test_inventory.py --phase R4 --source-only
           python scripts/check_test_inventory.py --phase R5 --source-only
           python scripts/check_r3_r4_structure.py
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          for name in ('proposal_release.json', 'realizer_release.json'):
-              row = json.loads((Path('configs') / name).read_text(encoding='utf-8'))
-              assert row['release'] is True
-              assert 'episodes_path' not in row
-              assert row['train_capability_path'] == 'artifacts/r4/capabilities/train.json'
-              assert row['train_authorization_path'] == 'artifacts/r4/authorizations/train.json'
-              assert row['train_authorization_trust'] == 'r4_admission_receipt'
-              wire = json.dumps(row, sort_keys=True)
-              for forbidden in ('selection', 'calibration', 'frozen_test', 'data/partitions'):
-                  assert forbidden not in wire
-          PY
-          set +e
-          python scripts/train_proposer.py --config configs/proposal_release.json --episodes data/bootstrap/proposal_episodes.jsonl >/tmp/release-proposer.out 2>&1
-          proposer_rc=$?
-          python scripts/train_realizer.py --config configs/realizer_release.json >/tmp/release-realizer.out 2>&1
-          realizer_rc=$?
-          set -e
-          test "$proposer_rc" -eq 2
-          test "$realizer_rc" -eq 2
-          grep -F -- '--episodes is forbidden in release mode' /tmp/release-proposer.out
-          grep -F -- 'release mode requires --release-isolated-root' /tmp/release-realizer.out
-          python -m pytest \
-            tests/test_r5_data_isolation.py \
-            tests/test_r4_training_partition_boundary.py \
-            tests/test_r5_foundation.py \
-            -q -p no:cacheprovider
           git diff --check
           test -z "$(git status --short -- artifacts/r4)"
-      - name: Commit and push exact Task 7 chunk
+      - name: Commit refreshed successor metadata
         working-directory: work
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- \
-            hybrid_mvp/configs/proposal_release.json \
-            hybrid_mvp/configs/realizer_release.json \
-            hybrid_mvp/scripts/reproduce_models.py \
-            hybrid_mvp/scripts/train_proposer.py \
-            hybrid_mvp/scripts/train_realizer.py \
-            hybrid_mvp/src/cemm_authoritative_hybrid/training.py \
-            hybrid_mvp/tests/test_r5_data_isolation.py
+          git add -- hybrid_mvp/tests/test_r4_mutations_and_partitions.py
           git diff --cached --check
-          git diff --cached --name-only | sort > /tmp/staged-files
-          diff -u /tmp/expected-files /tmp/staged-files
-          git commit -m 'refactor(r5): bind release trainers to R4 train evidence'
-          git push origin HEAD:refs/heads/agent/r4-task7-train-capability-20260818
-          git rev-parse HEAD
+          test "$(git diff --cached --name-only)" = 'hybrid_mvp/tests/test_r4_mutations_and_partitions.py'
+          if git diff --cached --quiet; then
+            echo 'metadata was already current'
+          else
+            git commit -m 'test(r4): refresh mutation successor metadata'
+            git push origin HEAD:refs/heads/agent/r4-task7-mutation-successors-20260818
+          fi
+          git rev-parse HEAD > /tmp/task7-mutation-head
+      - name: Record successful verification
+        run: |
+          set -euo pipefail
+          HEAD_SHA="$(cat /tmp/task7-mutation-head)"
+          git clone --no-checkout "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" status-repo
+          cd status-repo
+          git checkout agent/r4-export-checkout-20260816
+          mkdir -p .github/r4-task7-status
+          printf '{"mutation_successors":"success","source":"%s"}\n' "$HEAD_SHA" > .github/r4-task7-status/mutation-successors.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- .github/r4-task7-status/mutation-successors.json
+          git commit -m 'ci(r4): record mutation successor verification'
+          git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
