@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 import hashlib
+import json
+import time
+import unicodedata
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, Sequence
 
 from .canonical import stable_ref
 from .expressions import (
@@ -18,6 +22,33 @@ from .expressions import (
 from .r3_codec import exact_fields, exact_int, exact_refs, exact_text, wire_refs
 from .r4_contracts import ExpectedCycleContract
 from .r4_mutations import SemanticMutation
+
+from .r4_partition_contracts import (
+    MAX_COMPONENTS as GLOBAL_MAX_COMPONENTS,
+    MAX_HYPEREDGES,
+    MAX_HYPEREDGES_PER_EPISODE,
+    MAX_LABELS,
+    MAX_LABELS_PER_EPISODE,
+    MAX_SOURCE_EPISODES,
+    MAX_TOTAL_HYPEREDGE_MEMBERSHIPS,
+    MAX_TOTAL_LABEL_MEMBERSHIPS,
+    PARTITION_EVIDENCE_ABI_VERSION,
+    SPLITS,
+    GlobalPartitionComponent,
+    LeakageHyperedge,
+    PartitionEvidence,
+    StratificationLabel,
+)
+from .r4_partition_config import (
+    MAX_SOLVER_KEY_INTS,
+    MAX_SOLVER_SECONDS,
+    MAX_SOLVER_STATES,
+    RARITY_SCALE,
+    RATIO_DENOMINATOR,
+    DimensionMaximum,
+    DimensionMinimum,
+    R4PartitionConfig,
+)
 
 PARTITION_AXIS_MANIFEST_ABI_VERSION = 2
 TRAINING_ALLOWLIST_ABI_VERSION = 2
@@ -631,4 +662,917 @@ class IndependentAxisPartitioner:
                     "discourse": None if response is None else response.discourse_action,
                 },
             ),
+        )
+
+# ---------------------------------------------------------------------------
+# Partition Evidence ABI 3 / four-class global partition implementation.
+#
+# The legacy ABI-2 classes above remain readable until the governed Task 7
+# consumer hard-cut.  New source work must use GlobalLeakagePartitioner.
+# ---------------------------------------------------------------------------
+
+CURRENT_SPLITS = SPLITS
+MAX_REVIEWED_DIMENSIONS = (MAX_SOLVER_KEY_INTS - 5) // len(SPLITS)
+
+
+class FeasibilityIndeterminate(RuntimeError):
+    """Raised when a bounded solver resource limit is reached."""
+
+    def __init__(self, *, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
+@dataclass(frozen=True)
+class LeakageComponent:
+    component_ref: str
+    member_refs: tuple[str, ...]
+    hyperedge_refs: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ComponentAssignment:
+    component_ref: str
+    split: str
+
+    def as_dict(self) -> dict[str, str]:
+        return {"component_ref": self.component_ref, "split": self.split}
+
+
+@dataclass(frozen=True)
+class DimensionSupport:
+    dimension_ref: str
+    source_support: int
+    feasible_component_support: int
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "dimension_ref": self.dimension_ref,
+            "source_support": self.source_support,
+            "feasible_component_support": self.feasible_component_support,
+        }
+
+
+@dataclass(frozen=True)
+class SolverStats:
+    state_count: int
+    key_width_ints: int
+    estimated_memory_bytes: int
+    wall_seconds_millis: int
+
+    def as_dict(self) -> dict[str, int]:
+        return {
+            "state_count": self.state_count,
+            "key_width_ints": self.key_width_ints,
+            "estimated_memory_bytes": self.estimated_memory_bytes,
+            "wall_seconds_millis": self.wall_seconds_millis,
+        }
+
+
+@dataclass(frozen=True)
+class PartitionFeasibility:
+    source_count: int
+    component_count: int
+    largest_component_count: int
+    component_size_histogram: tuple[tuple[int, int], ...]
+    dimension_support: tuple[DimensionSupport, ...]
+    four_nonempty_possible: bool
+    infeasibility_reasons: tuple[str, ...]
+    candidate_minima: tuple[DimensionMinimum, ...]
+    candidate_maxima: tuple[DimensionMaximum, ...]
+    assignment_witness: tuple[ComponentAssignment, ...]
+    witness_objective_ref: str
+    solver_stats: SolverStats
+
+
+@dataclass(frozen=True)
+class GlobalPartitionGraph:
+    source_set_ref: str
+    graph_ref: str
+    hyperedges: tuple[LeakageHyperedge, ...]
+    labels: tuple[StratificationLabel, ...]
+    components: tuple[LeakageComponent, ...]
+
+
+def normalized_surface_key(surface: object, language: object) -> str:
+    if type(surface) is not str or type(language) is not str:
+        raise TypeError("surface and language must be exact strings")
+    normalized = " ".join(
+        unicodedata.normalize("NFKC", surface).casefold().split()
+    )
+    if not normalized or not language:
+        raise ValueError("surface and language must be nonempty")
+    return stable_ref(
+        "normalized_surface_v3",
+        {"language": language, "surface": normalized},
+    )
+
+
+def _raw_episode(episode: object) -> dict[str, Any]:
+    if type(episode) is dict:
+        value = episode
+    else:
+        encoder = getattr(episode, "as_dict", None)
+        if not callable(encoder):
+            raise TypeError("episodes must be exact mappings or expose as_dict()")
+        value = encoder()
+    if type(value) is not dict:
+        raise TypeError("episode serialization must be an exact object")
+    episode_ref = value.get("episode_ref")
+    if type(episode_ref) is not str or ":" not in episode_ref:
+        raise ValueError("episode_ref must be an exact content reference")
+    return value
+
+
+def _raw_mutation(mutation: object) -> dict[str, Any]:
+    if type(mutation) is dict:
+        value = mutation
+    else:
+        encoder = getattr(mutation, "as_dict", None)
+        if not callable(encoder):
+            raise TypeError("mutations must be exact mappings or expose as_dict()")
+        value = encoder()
+    if type(value) is not dict:
+        raise TypeError("mutation serialization must be an exact object")
+    return value
+
+
+def _lineage_ref(rows: object, prefix: str) -> str | None:
+    if type(rows) is not list:
+        return None
+    matches = [row for row in rows if type(row) is str and row.startswith(prefix)]
+    if len(matches) > 1:
+        raise ValueError(f"duplicate {prefix} lineage")
+    return matches[0] if matches else None
+
+
+def _grounded_targets(expression: Mapping[str, Any]) -> tuple[str, ...]:
+    refs: set[str] = set()
+    applications = expression.get("applications", [])
+    if type(applications) is not list:
+        raise TypeError("expected expression applications must be a list")
+    for app in applications:
+        if type(app) is not dict:
+            raise TypeError("application row must be an object")
+        for field in ("roles", "qualifiers"):
+            bindings = app.get(field, [])
+            if type(bindings) is not list:
+                raise TypeError(f"{field} must be a list")
+            for binding in bindings:
+                if type(binding) is not dict:
+                    raise TypeError("binding row must be an object")
+                filler = binding.get("filler")
+                if type(filler) is not dict:
+                    continue
+                if filler.get("kind") == "grounded":
+                    target = filler.get("target_ref")
+                    if type(target) is str and ":" in target:
+                        refs.add(target)
+    return tuple(sorted(refs))
+
+
+def _topology_key(expression: Mapping[str, Any]) -> str:
+    applications = expression.get("applications", [])
+    if type(applications) is not list:
+        raise TypeError("expected expression applications must be a list")
+    material: list[dict[str, object]] = []
+    for app in applications:
+        if type(app) is not dict:
+            raise TypeError("application row must be an object")
+        row: dict[str, object] = {
+            "operator": app.get("operator"),
+            "predicate_ref": app.get("predicate_ref"),
+        }
+        for field in ("roles", "qualifiers"):
+            bindings = app.get(field, [])
+            if type(bindings) is not list:
+                raise TypeError(f"{field} must be a list")
+            row[field] = [
+                binding.get("role_ref")
+                for binding in bindings
+                if type(binding) is dict
+            ]
+        material.append(row)
+    return stable_ref(
+        "r4_expression_topology_v3",
+        {
+            "applications": material,
+            "root_count": len(expression.get("root_refs", [])),
+            "scope_operators": [
+                row.get("operator_type")
+                for row in expression.get("scope_operators", [])
+                if type(row) is dict
+            ],
+            "expression_links": [
+                [row.get("link_type"), len(row.get("operand_refs", []))]
+                for row in expression.get("expression_links", [])
+                if type(row) is dict
+            ],
+            "binder_count": len(expression.get("binders", [])),
+        },
+    )
+
+
+def _topology_category(expression: Mapping[str, Any]) -> str:
+    applications = expression.get("applications", [])
+    operators = tuple(
+        app.get("operator")
+        for app in applications
+        if type(app) is dict and type(app.get("operator")) is str
+    )
+    return stable_ref(
+        "r4_topology_category_v1",
+        {
+            "application_count": len(applications),
+            "operators": list(operators),
+            "root_count": len(expression.get("root_refs", [])),
+            "scope_count": len(expression.get("scope_operators", [])),
+            "link_count": len(expression.get("expression_links", [])),
+        },
+    )
+
+
+def _response_semantic_key(episode: Mapping[str, Any]) -> str | None:
+    observed = episode.get("observed_cycle")
+    if type(observed) is not dict:
+        return None
+    response = observed.get("response_meaning")
+    if type(response) is not dict:
+        return None
+    material = {
+        name: response.get(name)
+        for name in (
+            "cycle_status",
+            "discourse_action",
+            "epistemic_status_ref",
+            "modality_ref",
+            "polarity_ref",
+        )
+    }
+    if not any(value is not None for value in material.values()):
+        return None
+    return stable_ref("r4_response_semantic_family_v1", material)
+
+
+def _response_expression_ref(episode: Mapping[str, Any]) -> str | None:
+    observed = episode.get("observed_cycle")
+    if type(observed) is not dict:
+        return None
+    response = observed.get("response_meaning")
+    if type(response) is not dict:
+        return None
+    expression = response.get("response_expression")
+    if type(expression) is not dict:
+        return None
+    ref = expression.get("expression_ref")
+    return ref if type(ref) is str and ":" in ref else None
+
+
+def _obligation_refs(episode: Mapping[str, Any]) -> tuple[str, ...]:
+    observed = episode.get("observed_cycle")
+    if type(observed) is not dict:
+        return ()
+    response = observed.get("response_meaning")
+    if type(response) is not dict:
+        return ()
+    refs: set[str] = set()
+    for name in ("obligation_ref",):
+        value = response.get(name)
+        if type(value) is str and ":" in value:
+            refs.add(value)
+    obligation = response.get("obligation")
+    if type(obligation) is dict:
+        for name in (
+            "obligation_ref",
+            "plan_ref",
+            "expected_answer_contract_ref",
+            "completion_receipt_ref",
+        ):
+            value = obligation.get(name)
+            if type(value) is str and ":" in value:
+                refs.add(value)
+    plan = response.get("learning_plan")
+    if type(plan) is dict:
+        for name in ("obligation_ref", "plan_ref"):
+            value = plan.get(name)
+            if type(value) is str and ":" in value:
+                refs.add(value)
+    return tuple(sorted(refs))
+
+
+def _category(ref: str) -> str:
+    return ref.split(":", 1)[0]
+
+
+class GlobalLeakagePartitioner:
+    """Build one deterministic global leakage graph and four-class assignment."""
+
+    def build_graph(
+        self,
+        episodes: Iterable[object],
+        *,
+        mutations: Iterable[object] = (),
+    ) -> GlobalPartitionGraph:
+        rows = tuple(_raw_episode(row) for row in episodes)
+        mutation_rows = tuple(_raw_mutation(row) for row in mutations)
+        if not rows:
+            raise ValueError("partition graph requires authentic episodes")
+        if len(rows) > MAX_SOURCE_EPISODES:
+            raise ValueError("partition source universe exceeds hard bound")
+        refs = tuple(sorted(row["episode_ref"] for row in rows))
+        if len(refs) != len(set(refs)):
+            raise ValueError("episode refs must be unique")
+        source_set_ref = stable_ref("r4_partition_source_v3", list(refs))
+        by_ref = {row["episode_ref"]: row for row in rows}
+        mutations_by_parent: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for mutation in mutation_rows:
+            parent = mutation.get("parent_case_ref")
+            if type(parent) is str:
+                mutations_by_parent[parent].append(mutation)
+
+        key_members: dict[tuple[str, str, str], set[str]] = defaultdict(set)
+        label_members: dict[str, set[str]] = defaultdict(set)
+
+        def leakage(axis: str, namespace: str, key_ref: object, member: str) -> None:
+            if key_ref is None:
+                return
+            if type(key_ref) is not str or ":" not in key_ref:
+                raise ValueError(f"{axis}/{namespace} leakage key is not an exact ref")
+            key_members[(axis, namespace, key_ref)].add(member)
+
+        def label(namespace: str, member: str) -> None:
+            if not namespace or len(namespace) > 128:
+                raise ValueError("stratification namespace violates bounds")
+            label_members[namespace].add(member)
+
+        for episode_ref in refs:
+            episode = by_ref[episode_ref]
+            case = episode.get("expanded_case")
+            contract = episode.get("expected_contract")
+            if type(case) is not dict or type(contract) is not dict:
+                raise TypeError("authentic episode lacks exact case/contract")
+
+            # General exact reviewed-source identities.  Singleton keys are
+            # intentionally retained in extraction material but serialize only
+            # when they actually form a leakage hyperedge.
+            for namespace, key in (
+                ("scenario", case.get("scenario_ref")),
+                ("case", case.get("case_ref")),
+                ("trajectory", case.get("trajectory_ref")),
+            ):
+                leakage("general", namespace, key, episode_ref)
+            for ref in episode.get("generator_lineage_refs", []):
+                if type(ref) is str and ":" in ref:
+                    leakage("general", "generator_lineage", ref, episode_ref)
+
+            # Lexical exact identities. Language is only a qualifier on the
+            # normalized surface; it never unions the corpus by itself.
+            surface_family = _lineage_ref(case.get("lineage_refs"), "surface_family:")
+            leakage("lexical", "surface_family", surface_family, episode_ref)
+            surface = case.get("surface")
+            language = case.get("language")
+            if type(surface) is str and type(language) is str:
+                leakage(
+                    "lexical",
+                    "normalized_surface",
+                    normalized_surface_key(surface, language),
+                    episode_ref,
+                )
+                label(f"coverage:language:{language}", episode_ref)
+            if surface_family is not None:
+                label(f"coverage:surface:{surface_family}", episode_ref)
+            environment_family = _lineage_ref(
+                case.get("lineage_refs"), "environment_family:"
+            )
+            if environment_family is not None:
+                label(f"coverage:environment:{environment_family}", episode_ref)
+
+            expressions = contract.get("expected_expressions", [])
+            if type(expressions) is not list:
+                raise TypeError("expected_expressions must be a list")
+            if expressions:
+                for expression in expressions:
+                    if type(expression) is not dict:
+                        raise TypeError("expected expression must be an object")
+                    leakage(
+                        "semantic_target",
+                        "semantic_expression",
+                        expression.get("expression_ref"),
+                        episode_ref,
+                    )
+                    applications = expression.get("applications", [])
+                    if type(applications) is not list:
+                        raise TypeError("expression applications must be a list")
+                    for app in applications:
+                        if type(app) is not dict:
+                            raise TypeError("expression application must be an object")
+                        predicate = app.get("predicate_ref")
+                        leakage(
+                            "semantic_target", "predicate", predicate, episode_ref
+                        )
+                        operator = app.get("operator")
+                        if type(operator) is str:
+                            label(f"coverage:operator:{operator}", episode_ref)
+                    for target in _grounded_targets(expression):
+                        leakage(
+                            "semantic_target", "grounded_target", target, episode_ref
+                        )
+                        label(f"coverage:target_category:{_category(target)}", episode_ref)
+                    topology = _topology_key(expression)
+                    leakage("topology", "expression_topology", topology, episode_ref)
+                    label(
+                        f"coverage:topology:{_topology_category(expression)}",
+                        episode_ref,
+                    )
+            else:
+                label("coverage:topology:none", episode_ref)
+
+            # Dialogue exact identities: trajectory plus non-null obligation
+            # descendants only.  No sentinel obligation is admitted.
+            leakage("dialogue", "trajectory", case.get("trajectory_ref"), episode_ref)
+            obligations = _obligation_refs(episode)
+            for obligation_ref in obligations:
+                leakage("dialogue", "obligation_lineage", obligation_ref, episode_ref)
+            label(
+                "coverage:dialogue_obligation:present"
+                if obligations
+                else "coverage:dialogue_obligation:none",
+                episode_ref,
+            )
+
+            # Mutation identities are qualified by exact parent source so the
+            # corpus-wide mutation dimension remains a label, not a union key.
+            case_ref = case.get("case_ref")
+            if type(case_ref) is str:
+                leakage("mutation", "parent_case", case_ref, episode_ref)
+                for mutation in mutations_by_parent.get(case_ref, ()):
+                    mutation_ref = mutation.get("mutation_ref")
+                    if type(mutation_ref) is str and ":" in mutation_ref:
+                        leakage(
+                            "mutation", "mutation_child", mutation_ref, episode_ref
+                        )
+                    family = _lineage_ref(
+                        mutation.get("lineage_refs"), "mutation_family:"
+                    )
+                    if family is not None:
+                        leakage(
+                            "mutation",
+                            "reviewed_mutation_family",
+                            stable_ref(
+                                "r4_reviewed_mutation_family_v1",
+                                {"scenario_ref": case.get("scenario_ref"), "family_ref": family},
+                            ),
+                            episode_ref,
+                        )
+                    dimension = mutation.get("dimension")
+                    if type(dimension) is str:
+                        label(f"coverage:mutation:{dimension}", episode_ref)
+
+            response_expression = _response_expression_ref(episode)
+            leakage(
+                "realization",
+                "response_expression",
+                response_expression,
+                episode_ref,
+            )
+            response_semantics = _response_semantic_key(episode)
+            leakage(
+                "realization",
+                "response_semantics",
+                response_semantics,
+                episode_ref,
+            )
+            expected_response = contract.get("expected_response")
+            if type(expected_response) is dict:
+                discourse = expected_response.get("discourse_action")
+                if type(discourse) is str:
+                    label(f"coverage:response:{discourse}", episode_ref)
+
+            for field, prefix in (
+                ("expected_mode", "mode"),
+                ("expected_owner", "owner"),
+                ("expression_relation", "expression_relation"),
+            ):
+                value = contract.get(field)
+                if type(value) is str:
+                    label(f"coverage:{prefix}:{value}", episode_ref)
+            decision = contract.get("expected_decision")
+            if type(decision) is dict:
+                for field, prefix in (("action", "decision_action"), ("status", "decision_status")):
+                    value = decision.get(field)
+                    if type(value) is str:
+                        label(f"coverage:{prefix}:{value}", episode_ref)
+            effect = contract.get("expected_effect")
+            if type(effect) is dict:
+                for field, prefix in (("kind", "effect_kind"), ("status_or_reason", "effect_status")):
+                    value = effect.get(field)
+                    if type(value) is str:
+                        label(f"coverage:{prefix}:{value}", episode_ref)
+            assertions = contract.get("normalized_assertions", [])
+            if type(assertions) is list:
+                for assertion in assertions:
+                    if type(assertion) is dict and type(assertion.get("kind")) is str:
+                        label(f"coverage:assertion_kind:{assertion['kind']}", episode_ref)
+
+            outcome = contract.get("outcome_kind")
+            if type(outcome) is str:
+                label(f"coverage:outcome:{outcome}", episode_ref)
+            gap = contract.get("expected_gap")
+            if type(gap) is dict:
+                gap_kind = gap.get("kind") or gap.get("gap_kind")
+                if type(gap_kind) is str:
+                    label(f"coverage:gap:{gap_kind}", episode_ref)
+            elif gap is None:
+                label("coverage:gap:none", episode_ref)
+
+        hyperedges: list[LeakageHyperedge] = []
+        per_episode_edges: Counter[str] = Counter()
+        total_edge_memberships = 0
+        for (axis, namespace, key_ref), members in sorted(key_members.items()):
+            ordered = tuple(sorted(members))
+            if len(ordered) < 2:
+                continue
+            edge = LeakageHyperedge.create(
+                axis=axis,
+                key_namespace=namespace,
+                key_ref=key_ref,
+                member_refs=ordered,
+            )
+            hyperedges.append(edge)
+            total_edge_memberships += len(ordered)
+            per_episode_edges.update(ordered)
+        hyperedges.sort(key=lambda row: row.hyperedge_ref)
+        if len(hyperedges) > MAX_HYPEREDGES:
+            raise ValueError("partition graph exceeds hyperedge bound")
+        if total_edge_memberships > MAX_TOTAL_HYPEREDGE_MEMBERSHIPS:
+            raise ValueError("partition graph exceeds hyperedge membership bound")
+        if any(value > MAX_HYPEREDGES_PER_EPISODE for value in per_episode_edges.values()):
+            raise ValueError("episode exceeds hyperedge fanout bound")
+
+        labels: list[StratificationLabel] = []
+        per_episode_labels: Counter[str] = Counter()
+        total_label_memberships = 0
+        for namespace, members in sorted(label_members.items()):
+            ordered = tuple(sorted(members))
+            row = StratificationLabel.create(namespace=namespace, member_refs=ordered)
+            labels.append(row)
+            total_label_memberships += len(ordered)
+            per_episode_labels.update(ordered)
+        labels.sort(key=lambda row: row.label_ref)
+        if len(labels) > MAX_LABELS:
+            raise ValueError("partition graph exceeds label bound")
+        if total_label_memberships > MAX_TOTAL_LABEL_MEMBERSHIPS:
+            raise ValueError("partition graph exceeds label membership bound")
+        if any(value > MAX_LABELS_PER_EPISODE for value in per_episode_labels.values()):
+            raise ValueError("episode exceeds label fanout bound")
+
+        uf = _UnionFind(refs)
+        for edge in hyperedges:
+            first = edge.member_refs[0]
+            for member in edge.member_refs[1:]:
+                uf.union(first, member)
+        members_by_root: dict[str, list[str]] = defaultdict(list)
+        for ref in refs:
+            members_by_root[uf.find(ref)].append(ref)
+        edge_owner: dict[str, str] = {}
+        root_by_member = {ref: uf.find(ref) for ref in refs}
+        for edge in hyperedges:
+            root = root_by_member[edge.member_refs[0]]
+            edge_owner[edge.hyperedge_ref] = root
+        components: list[LeakageComponent] = []
+        for root, members in members_by_root.items():
+            ordered_members = tuple(sorted(members))
+            edge_refs = tuple(
+                sorted(
+                    ref for ref, owner in edge_owner.items() if owner == root
+                )
+            )
+            material = {
+                "source_set_ref": source_set_ref,
+                "partition_abi_version": PARTITION_EVIDENCE_ABI_VERSION,
+                "member_refs": list(ordered_members),
+                "hyperedge_refs": list(edge_refs),
+            }
+            components.append(
+                LeakageComponent(
+                    component_ref=stable_ref(
+                        "r4_global_partition_component_v3", material
+                    ),
+                    member_refs=ordered_members,
+                    hyperedge_refs=edge_refs,
+                )
+            )
+        components.sort(key=lambda row: row.component_ref)
+        if len(components) > GLOBAL_MAX_COMPONENTS:
+            raise ValueError("partition graph exceeds component bound")
+
+        graph_ref = stable_ref(
+            "r4_partition_graph_v3",
+            {
+                "source_set_ref": source_set_ref,
+                "hyperedges": [row.as_dict() for row in hyperedges],
+                "labels": [row.as_dict() for row in labels],
+                "components": [
+                    {
+                        "component_ref": row.component_ref,
+                        "member_refs": list(row.member_refs),
+                        "hyperedge_refs": list(row.hyperedge_refs),
+                    }
+                    for row in components
+                ],
+            },
+        )
+        return GlobalPartitionGraph(
+            source_set_ref=source_set_ref,
+            graph_ref=graph_ref,
+            hyperedges=tuple(hyperedges),
+            labels=tuple(labels),
+            components=tuple(components),
+        )
+
+    @staticmethod
+    def dimension_support(graph: GlobalPartitionGraph) -> tuple[DimensionSupport, ...]:
+        component_by_member = {
+            member: component.component_ref
+            for component in graph.components
+            for member in component.member_refs
+        }
+        rows = []
+        for label in graph.labels:
+            component_refs = {
+                component_by_member[member] for member in label.member_refs
+            }
+            rows.append(
+                DimensionSupport(
+                    dimension_ref=label.label_ref,
+                    source_support=len(label.member_refs),
+                    feasible_component_support=len(component_refs),
+                )
+            )
+        return tuple(sorted(rows, key=lambda row: row.dimension_ref))
+
+    def analyze_feasibility(
+        self,
+        episodes: Iterable[object],
+        *,
+        mutations: Iterable[object] = (),
+        max_dimensions: int = 22,
+    ) -> tuple[GlobalPartitionGraph, PartitionFeasibility]:
+        graph = self.build_graph(episodes, mutations=mutations)
+        support = self.dimension_support(graph)
+        eligible = [
+            row
+            for row in support
+            if row.source_support >= len(SPLITS)
+            and row.feasible_component_support >= len(SPLITS)
+        ]
+        eligible.sort(
+            key=lambda row: (
+                -row.source_support,
+                -row.feasible_component_support,
+                row.dimension_ref,
+            )
+        )
+        max_dimensions = min(
+            exact_int(max_dimensions, "max_dimensions", minimum=1),
+            MAX_REVIEWED_DIMENSIONS,
+        )
+        selected = eligible[:max_dimensions]
+        labels_by_ref = {row.label_ref: row for row in graph.labels}
+
+        reasons: list[str] = []
+        witness: tuple[ComponentAssignment, ...] = ()
+        stats = SolverStats(0, 5, 0, 0)
+        # If the top candidate set is jointly infeasible, deterministically trim
+        # the least-supported tail until one exact positive set remains.
+        while selected:
+            minima = tuple(
+                DimensionMinimum.create(
+                    dimension_ref=row.dimension_ref,
+                    split=split,
+                    minimum=1,
+                )
+                for row in sorted(selected, key=lambda item: item.dimension_ref)
+                for split in SPLITS
+            )
+            maxima = tuple(
+                DimensionMaximum.create(
+                    dimension_ref=row.dimension_ref,
+                    split=split,
+                    maximum=row.source_support,
+                )
+                for row in sorted(selected, key=lambda item: item.dimension_ref)
+                for split in SPLITS
+            )
+            try:
+                oracle = _CompletionOracle(
+                    components=graph.components,
+                    labels_by_ref=labels_by_ref,
+                    minima=minima,
+                    maxima=maxima,
+                    max_states=MAX_SOLVER_STATES,
+                    max_seconds=MAX_SOLVER_SECONDS,
+                )
+                completion = oracle.find_completion(0, (0, 0, 0, 0), minima)
+            except FeasibilityIndeterminate:
+                raise
+            stats = oracle.stats()
+            if completion is not None:
+                witness = tuple(
+                    ComponentAssignment(component.component_ref, SPLITS[split_index])
+                    for component, split_index in zip(
+                        oracle.components, completion, strict=True
+                    )
+                )
+                break
+            selected = selected[:-1]
+        if not witness:
+            reasons.append("joint_four_class_dimension_coverage_infeasible")
+            minima = ()
+            maxima = ()
+        else:
+            selected_refs = {row.dimension_ref for row in selected}
+            minima = tuple(
+                row
+                for row in minima
+                if row.dimension_ref in selected_refs
+            )
+            maxima = tuple(
+                row
+                for row in maxima
+                if row.dimension_ref in selected_refs
+            )
+
+        histogram = Counter(len(row.member_refs) for row in graph.components)
+        objective_ref = stable_ref(
+            "r4_partition_witness_objective_v1",
+            [row.as_dict() for row in witness],
+        )
+        return graph, PartitionFeasibility(
+            source_count=sum(len(row.member_refs) for row in graph.components),
+            component_count=len(graph.components),
+            largest_component_count=max(len(row.member_refs) for row in graph.components),
+            component_size_histogram=tuple(sorted(histogram.items())),
+            dimension_support=support,
+            four_nonempty_possible=bool(witness),
+            infeasibility_reasons=tuple(reasons),
+            candidate_minima=minima,
+            candidate_maxima=maxima,
+            assignment_witness=witness,
+            witness_objective_ref=objective_ref,
+            solver_stats=stats,
+        )
+
+
+class _CompletionOracle:
+    """Bounded exact completion oracle shared by feasibility and allocation."""
+
+    def __init__(
+        self,
+        *,
+        components: Sequence[LeakageComponent],
+        labels_by_ref: Mapping[str, StratificationLabel],
+        minima: tuple[DimensionMinimum, ...],
+        maxima: tuple[DimensionMaximum, ...],
+        max_states: int,
+        max_seconds: int,
+    ) -> None:
+        self.components = tuple(components)
+        self.dimensions = tuple(sorted({row.dimension_ref for row in minima}))
+        if len(self.dimensions) > MAX_REVIEWED_DIMENSIONS:
+            raise ValueError("configured dimensions exceed solver key width")
+        if {row.dimension_ref for row in maxima} != set(self.dimensions):
+            raise ValueError("solver minima/maxima dimension mismatch")
+        self._dim_index = {ref: index for index, ref in enumerate(self.dimensions)}
+        label_members = {
+            ref: frozenset(labels_by_ref[ref].member_refs) for ref in self.dimensions
+        }
+        self._contribution: tuple[tuple[int, ...], ...] = tuple(
+            tuple(
+                len(frozenset(component.member_refs).intersection(label_members[ref]))
+                for ref in self.dimensions
+            )
+            for component in self.components
+        )
+        self._suffix_capacity: list[tuple[int, ...]] = [
+            (0,) * len(self.dimensions) for _ in range(len(self.components) + 1)
+        ]
+        running = [0] * len(self.dimensions)
+        for index in range(len(self.components) - 1, -1, -1):
+            contribution = self._contribution[index]
+            for dim, value in enumerate(contribution):
+                running[dim] += value
+            self._suffix_capacity[index] = tuple(running)
+        self._memo: dict[tuple[int, ...], tuple[int, ...] | None] = {}
+        self._max_states = exact_int(max_states, "max_states", minimum=1)
+        self._max_seconds = exact_int(max_seconds, "max_seconds", minimum=1)
+        self._start = time.monotonic()
+        self._states = 0
+        self._key_width = 1 + len(SPLITS) + len(SPLITS) * len(self.dimensions)
+        if self._key_width > MAX_SOLVER_KEY_INTS:
+            raise ValueError("solver memo key exceeds reviewed width")
+
+    def _needs(self, minima: tuple[DimensionMinimum, ...]) -> tuple[int, ...]:
+        by_key = {(row.split, row.dimension_ref): row.minimum for row in minima}
+        return tuple(
+            by_key.get((split, ref), 0)
+            for split in SPLITS
+            for ref in self.dimensions
+        )
+
+    def find_completion(
+        self,
+        index: int,
+        class_counts: tuple[int, int, int, int],
+        minima: tuple[DimensionMinimum, ...],
+    ) -> tuple[int, ...] | None:
+        needs = self._needs(minima)
+        return self._search(index, class_counts, needs)
+
+    def _search(
+        self,
+        index: int,
+        class_counts: tuple[int, int, int, int],
+        needs: tuple[int, ...],
+    ) -> tuple[int, ...] | None:
+        key = (index, *class_counts, *needs)
+        cached = self._memo.get(key, ...)
+        if cached is not ...:
+            return cached
+        self._states += 1
+        if self._states > self._max_states:
+            raise FeasibilityIndeterminate(reason="resource_bound:solver_states")
+        elapsed = time.monotonic() - self._start
+        if elapsed > self._max_seconds:
+            raise FeasibilityIndeterminate(reason="resource_bound:solver_seconds")
+        estimated = self._states * self._key_width * 32
+        if estimated > 192 * 1024 * 1024:
+            raise FeasibilityIndeterminate(reason="resource_bound:solver_memory")
+
+        if index == len(self.components):
+            result = () if all(class_counts) and not any(needs) else None
+            self._memo[key] = result
+            return result
+
+        remaining_components = len(self.components) - index
+        if sum(count == 0 for count in class_counts) > remaining_components:
+            self._memo[key] = None
+            return None
+        cap = self._suffix_capacity[index]
+        width = len(self.dimensions)
+        for dim in range(width):
+            aggregate_need = sum(needs[split * width + dim] for split in range(4))
+            if aggregate_need > cap[dim]:
+                self._memo[key] = None
+                return None
+            for split in range(4):
+                if needs[split * width + dim] > cap[dim]:
+                    self._memo[key] = None
+                    return None
+
+        component = self.components[index]
+        contribution = self._contribution[index]
+        # Symmetric split states are equivalent for feasibility.  Collapsing
+        # them prevents the four-way class permutation from multiplying memo
+        # states without changing the existence of a completion.
+        split_rows: list[tuple[int, int, int]] = []
+        seen_states: set[tuple[int, tuple[int, ...]]] = set()
+        for split_index in range(4):
+            base = split_index * width
+            segment = needs[base : base + width]
+            state_shape = (class_counts[split_index], segment)
+            if state_shape in seen_states:
+                continue
+            seen_states.add(state_shape)
+            coverage = sum(
+                min(segment[dim], value)
+                for dim, value in enumerate(contribution)
+                if value
+            )
+            # Prefer empty classes and then placements that retire the most
+            # remaining exact minima; split index is the final stable tie.
+            split_rows.append((0 if class_counts[split_index] == 0 else 1, -coverage, split_index))
+        for _, __, split_index in sorted(split_rows):
+            next_counts = list(class_counts)
+            next_counts[split_index] += len(component.member_refs)
+            next_needs = list(needs)
+            base = split_index * width
+            for dim, value in enumerate(contribution):
+                if value:
+                    pos = base + dim
+                    next_needs[pos] = max(0, next_needs[pos] - value)
+            tail = self._search(index + 1, tuple(next_counts), tuple(next_needs))
+            if tail is not None:
+                result = (split_index, *tail)
+                self._memo[key] = result
+                return result
+        self._memo[key] = None
+        return None
+
+    def stats(self) -> SolverStats:
+        return SolverStats(
+            state_count=self._states,
+            key_width_ints=self._key_width,
+            estimated_memory_bytes=self._states * self._key_width * 32,
+            wall_seconds_millis=int((time.monotonic() - self._start) * 1000),
         )
