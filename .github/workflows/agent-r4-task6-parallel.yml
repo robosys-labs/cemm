@@ -48,7 +48,6 @@ jobs:
             tests/test_r4_partition_global_assignment.py \
             -q -p no:cacheprovider
           python - <<'PY'
-          import copy
           import json
           import jsonschema
           from pathlib import Path
@@ -144,6 +143,7 @@ jobs:
           diff -qr /tmp/r4-task6-a /tmp/r4-task6-b
           python - <<'PY'
           import json
+          import subprocess
           from pathlib import Path
           from cemm_authoritative_hybrid.r4_pipeline import R4BuildReceipt
           from cemm_authoritative_hybrid.r4_partition_contracts import SPLITS
@@ -172,11 +172,12 @@ jobs:
               refs.update(episode_refs)
           assert sum(counts.values()) == 400, counts
           receipt = R4BuildReceipt.from_dict(json.loads((root / 'BUILD_RECEIPT.json').read_text()))
+          expected_revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
           assert receipt.abi_version == 4
-          assert receipt.source_revision == Path('.').resolve().joinpath('.git').exists() * receipt.source_revision or receipt.source_revision
+          assert receipt.source_revision == expected_revision
           print(json.dumps({'counts': counts, 'receipt_ref': receipt.receipt_ref, 'files': len(actual)}, sort_keys=True))
           PY
-          git status --short -- artifacts/r4
+          test -z "$(git status --short -- artifacts/r4)"
       - name: Upload compact candidate evidence
         if: always()
         uses: actions/upload-artifact@v4
