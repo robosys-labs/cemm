@@ -8,7 +8,7 @@ on:
       - .github/workflows/agent-r4-task6-integration.yml
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: agent-r4-task6-integration-20260818
@@ -157,3 +157,31 @@ jobs:
           path: |
             /tmp/r4-task6-int-a.log
             /tmp/r4-task6-int-b.log
+
+  record:
+    if: always()
+    needs:
+      - historical-and-contracts
+      - candidate-ab-admission
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-export-checkout-20260816
+          fetch-depth: 0
+      - name: Record parallel outcomes
+        env:
+          HISTORICAL_RESULT: ${{ needs.historical-and-contracts.result }}
+          CANDIDATE_RESULT: ${{ needs.candidate-ab-admission.result }}
+        run: |
+          set -euo pipefail
+          mkdir -p .github/r4-task6-status
+          printf '{"candidate":"%s","historical":"%s","workflow_sha":"%s"}\n' \
+            "$CANDIDATE_RESULT" "$HISTORICAL_RESULT" "$GITHUB_SHA" \
+            > .github/r4-task6-status/integration.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- .github/r4-task6-status/integration.json
+          git commit -m 'ci(r4): record Task 6 integration outcomes'
+          git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
