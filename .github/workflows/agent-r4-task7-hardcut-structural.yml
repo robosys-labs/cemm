@@ -1,0 +1,84 @@
+name: Agent R4 Task 7 hard-cut structural verification
+
+on:
+  push:
+    branches:
+      - agent/r4-export-checkout-20260816
+    paths:
+      - .github/workflows/agent-r4-task7-hardcut-structural.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-r4-task7-hardcut-structural-20260820
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task7-training-hardcut-verified-20260818
+          path: work
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-export-checkout-20260816
+          path: helper
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - id: verify
+        continue-on-error: true
+        name: Authenticate patch and verify structural contract
+        run: |
+          set -o pipefail
+          {
+            set -euo pipefail
+            test "$(git -C work rev-parse HEAD)" = 'c1346377e9a2d52c8a1f62deeea47524dd252a96'
+            test "$(sha256sum helper/.github/r4-task7/hardcut.patch.gz.b64 | awk '{print $1}')" = '31093ab3f93c29d5c071e482e595b0f9557bb90b54728a4ebd5da66c3482be08'
+            base64 -d helper/.github/r4-task7/hardcut.patch.gz.b64 | gzip -d > /tmp/task7-hardcut.patch
+            test "$(sha256sum /tmp/task7-hardcut.patch | awk '{print $1}')" = 'c78917c44fc487c8d90fa2cb236754c696e447af75fac898e03862154f3206b6'
+            git -C work apply --check /tmp/task7-hardcut.patch
+            git -C work apply /tmp/task7-hardcut.patch
+            git -C work diff --check
+            printf '%s\n' \
+              hybrid_mvp/src/cemm_authoritative_hybrid/training.py \
+              hybrid_mvp/tests/test_r5_data_isolation.py | sort > /tmp/expected
+            git -C work diff --name-only | sort > /tmp/actual
+            diff -u /tmp/expected /tmp/actual
+            cd work/hybrid_mvp
+            python -m py_compile src/cemm_authoritative_hybrid/training.py tests/test_r5_data_isolation.py
+            python scripts/verify_r3_r4_test_metadata.py
+            python scripts/check_test_inventory.py --phase R4 --source-only
+            python scripts/check_test_inventory.py --phase R5 --source-only
+            python scripts/check_r3_r4_structure.py
+            ! grep -nE '_TRAIN_PARTITION|_PARTITION_MANIFEST|load_partition_episodes_for_training|_check_partition_access|cemm_authoritative_hybrid\.partitions|from \.partitions' src/cemm_authoritative_hybrid/training.py
+            ! grep -nE 'cemm_authoritative_hybrid\.partitions|load_partition_episodes_for_training' tests/test_r5_data_isolation.py
+            test -z "$(git status --short -- artifacts/r4)"
+          } 2>&1 | tee /tmp/hardcut-structural.log
+      - name: Record structural outcome
+        if: always()
+        env:
+          OUTCOME: ${{ steps.verify.outcome }}
+        run: |
+          set -euo pipefail
+          git clone --no-checkout "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" status-repo
+          cd status-repo
+          git checkout agent/r4-export-checkout-20260816
+          mkdir -p .github/r4-task7-status
+          printf '{"structural":"%s","base":"%s"}\n' "$OUTCOME" 'c1346377e9a2d52c8a1f62deeea47524dd252a96' > .github/r4-task7-status/training-hardcut-structural.json
+          cp /tmp/hardcut-structural.log .github/r4-task7-status/training-hardcut-structural.log || true
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- .github/r4-task7-status/training-hardcut-structural.json .github/r4-task7-status/training-hardcut-structural.log
+          git commit -m 'ci(r5): record training hard-cut structural verification'
+          git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
