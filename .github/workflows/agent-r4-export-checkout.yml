@@ -15,7 +15,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  started:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-export-checkout-20260816
+          fetch-depth: 0
+      - name: Record workflow start
+        run: |
+          set -euo pipefail
+          mkdir -p .github/r4-task7-status
+          printf '{"started":true,"workflow_sha":"%s"}\n' "$GITHUB_SHA" > .github/r4-task7-status/training-hardcut-started.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- .github/r4-task7-status/training-hardcut-started.json
+          git commit -m 'ci(r5): mark training hard-cut started'
+          git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
+
   verify:
+    needs: started
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -112,4 +132,4 @@ jobs:
           git commit -m 'ci(r5): record authenticated training hard-cut'
           git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
 
-# trigger: 2026-08-19T23:55+01:00
+# trigger: 2026-08-20T00:04+01:00
