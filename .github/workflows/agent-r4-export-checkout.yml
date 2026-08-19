@@ -112,4 +112,4 @@ jobs:
           git commit -m 'ci(r5): record authenticated training hard-cut'
           git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
 
-# trigger: 2026-08-18T09:13+01:00
+# trigger: 2026-08-19T23:55+01:00
