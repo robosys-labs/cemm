@@ -1,4 +1,4 @@
-name: Agent R4 Task 7 authenticated hard-cut publisher
+name: Agent R4 Task 7 independent hard-cut verifier
 
 on:
   push:
@@ -11,40 +11,20 @@ permissions:
   contents: write
 
 concurrency:
-  group: agent-r4-task7-registered-helper-20260818
+  group: agent-r4-task7-hardcut-macos-20260820
   cancel-in-progress: true
 
 jobs:
-  started:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: agent/r4-export-checkout-20260816
-          fetch-depth: 0
-      - name: Record workflow start
-        run: |
-          set -euo pipefail
-          mkdir -p .github/r4-task7-status
-          printf '{"started":true,"workflow_sha":"%s"}\n' "$GITHUB_SHA" > .github/r4-task7-status/training-hardcut-started.json
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- .github/r4-task7-status/training-hardcut-started.json
-          git commit -m 'ci(r5): mark training hard-cut started'
-          git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
-
   verify:
-    needs: started
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    runs-on: macos-14
+    timeout-minutes: 30
     env:
       PYTHONDONTWRITEBYTECODE: '1'
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/r4-task7-training-hardcut-verified-20260818
+          ref: agent/r4-task7-training-hardcut-macos-verified-20260820
           path: work
           fetch-depth: 0
       - uses: actions/checkout@v4
@@ -56,13 +36,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Authenticate and apply reviewed patch
+      - id: patch
+        name: Authenticate and apply reviewed patch
+        continue-on-error: true
         run: |
           set -euo pipefail
           test "$(git -C work rev-parse HEAD)" = 'c1346377e9a2d52c8a1f62deeea47524dd252a96'
-          test "$(sha256sum helper/.github/r4-task7/hardcut.patch.gz.b64 | awk '{print $1}')" = '31093ab3f93c29d5c071e482e595b0f9557bb90b54728a4ebd5da66c3482be08'
-          base64 -d helper/.github/r4-task7/hardcut.patch.gz.b64 | gzip -d > /tmp/task7-hardcut.patch
-          test "$(sha256sum /tmp/task7-hardcut.patch | awk '{print $1}')" = 'c78917c44fc487c8d90fa2cb236754c696e447af75fac898e03862154f3206b6'
+          python - <<'PY'
+          from pathlib import Path
+          import base64, gzip, hashlib
+          source = Path('helper/.github/r4-task7/hardcut.patch.gz.b64')
+          encoded = source.read_bytes()
+          assert hashlib.sha256(encoded).hexdigest() == '31093ab3f93c29d5c071e482e595b0f9557bb90b54728a4ebd5da66c3482be08'
+          patch = gzip.decompress(base64.b64decode(encoded, validate=True))
+          assert hashlib.sha256(patch).hexdigest() == 'c78917c44fc487c8d90fa2cb236754c696e447af75fac898e03862154f3206b6'
+          Path('/tmp/task7-hardcut.patch').write_bytes(patch)
+          PY
           git -C work apply --check /tmp/task7-hardcut.patch
           git -C work apply /tmp/task7-hardcut.patch
           git -C work diff --check
@@ -72,13 +61,19 @@ jobs:
           git -C work diff --name-only | sort > /tmp/actual
           diff -u /tmp/expected /tmp/actual
       - name: Install governed dependencies
+        if: steps.patch.outcome == 'success'
         run: |
           set -euo pipefail
-          python -m pip install 'pytest==8.4.0' 'numpy==2.5.2' 'safetensors==0.5.3'
-          python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install \
+            'pytest==8.4.0' \
+            'numpy==2.5.2' \
+            'safetensors==0.5.3' \
+            'jsonschema==4.25.1' \
+            'torch==2.6.0'
       - id: verify
-        name: Verify exact hard-cut candidate
+        if: steps.patch.outcome == 'success'
         continue-on-error: true
+        name: Verify exact hard-cut candidate
         working-directory: work/hybrid_mvp
         env:
           PYTHONPATH: src:scripts:.
@@ -101,7 +96,7 @@ jobs:
             ! grep -nE 'cemm_authoritative_hybrid\.partitions|load_partition_episodes_for_training' tests/test_r5_data_isolation.py
             git diff --check
             test -z "$(git status --short -- artifacts/r4)"
-          } 2>&1 | tee /tmp/training-hardcut.log
+          } 2>&1 | tee /tmp/training-hardcut-macos.log
       - name: Commit and push exact verified hard-cut
         if: steps.verify.outcome == 'success'
         working-directory: work
@@ -112,24 +107,25 @@ jobs:
           git add -- hybrid_mvp/src/cemm_authoritative_hybrid/training.py hybrid_mvp/tests/test_r5_data_isolation.py
           git diff --cached --check
           git commit -m 'refactor(r5): remove legacy training partition authority'
-          git push origin HEAD:refs/heads/agent/r4-task7-training-hardcut-verified-20260818
-      - name: Record outcome
+          git push origin HEAD:refs/heads/agent/r4-task7-training-hardcut-macos-verified-20260820
+      - name: Record independent outcome
         if: always()
         env:
-          OUTCOME: ${{ steps.verify.outcome }}
+          PATCH_OUTCOME: ${{ steps.patch.outcome }}
+          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
         run: |
           set -euo pipefail
+          PATCH_RESULT="${PATCH_OUTCOME:-not-run}"
+          VERIFY_RESULT="${VERIFY_OUTCOME:-not-run}"
           SOURCE="$(git -C work rev-parse HEAD)"
           git clone --no-checkout "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" status-repo
           cd status-repo
-          git checkout agent/r4-export-checkout-20260816
+          git checkout agent/r4-task7-hardcut-macos-status-20260820
           mkdir -p .github/r4-task7-status
-          printf '{"training_hardcut":"%s","source":"%s"}\n' "$OUTCOME" "$SOURCE" > .github/r4-task7-status/training-hardcut.json
-          cp /tmp/training-hardcut.log .github/r4-task7-status/training-hardcut.log || true
+          printf '{"patch":"%s","verify":"%s","source":"%s"}\n' "$PATCH_RESULT" "$VERIFY_RESULT" "$SOURCE" > .github/r4-task7-status/hardcut-macos.json
+          cp /tmp/training-hardcut-macos.log .github/r4-task7-status/hardcut-macos.log 2>/dev/null || true
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- .github/r4-task7-status/training-hardcut.json .github/r4-task7-status/training-hardcut.log
-          git commit -m 'ci(r5): record authenticated training hard-cut'
-          git push origin HEAD:refs/heads/agent/r4-export-checkout-20260816
-
-# trigger: 2026-08-20T00:04+01:00
+          git add -- .github/r4-task7-status/hardcut-macos.json .github/r4-task7-status/hardcut-macos.log
+          git commit -m 'ci(r5): record independent training hard-cut'
+          git push origin HEAD:refs/heads/agent/r4-task7-hardcut-macos-status-20260820
