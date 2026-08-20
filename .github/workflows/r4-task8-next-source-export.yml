@@ -1,17 +1,20 @@
 name: R4 Task 8 next-source export
 
 on:
-  push:
+  pull_request:
     branches:
       - agent/r4-task8-next-source-export-20260820
-    paths:
-      - .github/workflows/r4-task8-next-source-export.yml
+    types:
+      - opened
+      - reopened
+      - synchronize
 
 permissions:
   contents: read
 
 jobs:
   export:
+    if: github.event.pull_request.head.ref == 'agent/r4-task8-next-source-trigger-20260820'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
