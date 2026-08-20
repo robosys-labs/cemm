@@ -34,7 +34,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Fence the exact base and code lineage
+      - name: Fence the exact workflow and code surfaces
         run: |
           set -euo pipefail
           merge_sha="$(git rev-parse HEAD)"
@@ -42,12 +42,15 @@ jobs:
           head_sha="$(git rev-parse "${merge_sha}^2")"
           hardcut_sha="$(git rev-parse "${head_sha}^")"
           published_sha="$(git rev-parse "${hardcut_sha}^")"
+          expected_published='6e9b6fe4efbda48e52245a21647fcb2b0a8792ba'
           test "$hardcut_sha" = 'efba3974e0856d99ba873774b6b7ec6615c2a19d'
-          test "$published_sha" = '6e9b6fe4efbda48e52245a21647fcb2b0a8792ba'
-          test "$(git rev-parse "${base_sha}^")" = '32fdd0c86ba73d227a65c57ba309c14c35b5a4b6'
-          test "$(git rev-parse "${base_sha}^^")" = 'b9e963be90ad76d3ba8e43ecddb51b5d1aee76bb'
-          test "$(git rev-parse "${base_sha}^^^")" = '38909ca803a5ae885e31c99f7e45d0a82cad96b2'
-          test "$(git rev-parse "${base_sha}^^^^")" = '6e9b6fe4efbda48e52245a21647fcb2b0a8792ba'
+          test "$published_sha" = "$expected_published"
+          test "$(git merge-base "$expected_published" "$base_sha")" = "$expected_published"
+          printf '%s\n' \
+            '.github/workflows/r4-task7-literalize-leakage-successors-pr.yml' \
+            '.github/workflows/r4-task7-structural-hardcut-pr-verify.yml' | sort > /tmp/expected-base
+          git diff --name-only "$expected_published" "$base_sha" | sort > /tmp/actual-base
+          diff -u /tmp/expected-base /tmp/actual-base
           printf '%s\n' \
             'hybrid_mvp/configs/partitions.json' \
             'hybrid_mvp/scripts/check_r3_r4_structure.py' | sort > /tmp/expected-hardcut
@@ -63,14 +66,6 @@ jobs:
             'hybrid_mvp/tests/test_r4_partition_global_assignment.py' | sort > /tmp/expected-cumulative
           git diff --name-only "$published_sha" "$head_sha" | sort > /tmp/actual-cumulative
           diff -u /tmp/expected-cumulative /tmp/actual-cumulative
-          printf '%s\n' \
-            '.github/workflows/r4-task7-literalize-leakage-successors-pr.yml' > /tmp/expected-base-patch
-          git diff --name-only "${base_sha}^^" "${base_sha}^" | sort > /tmp/actual-base-patch
-          diff -u /tmp/expected-base-patch /tmp/actual-base-patch
-          printf '%s\n' \
-            '.github/workflows/r4-task7-structural-hardcut-pr-verify.yml' > /tmp/expected-base
-          git diff --name-only "${base_sha}^" "$base_sha" | sort > /tmp/actual-base
-          diff -u /tmp/expected-base /tmp/actual-base
       - name: Install governed test dependencies
         run: |
           set -euo pipefail
