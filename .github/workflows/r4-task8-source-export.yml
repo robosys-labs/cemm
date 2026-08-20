@@ -1,7 +1,7 @@
 name: R4 Task 8 source export
 
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - agent/r4-task7-structural-hardcut-ci-base-20260820
     types:
@@ -20,8 +20,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/r4-task7-structural-hardcut-pr-head-20260820
+          repository: robosys-labs/cemm
+          ref: b8b180a1faac6e0f9460f8939dd1386859cb99aa
           fetch-depth: 0
+          persist-credentials: false
       - name: Fence exported source
         run: test "$(git rev-parse HEAD)" = 'b8b180a1faac6e0f9460f8939dd1386859cb99aa'
       - name: Build exact source archive
