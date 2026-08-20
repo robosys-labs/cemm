@@ -106,37 +106,55 @@ class AdmissionValidationError(ValueError):
     """A stored admission receipt failed strict reconstruction."""
 
 
-def _required_admission_evidence_paths(phase: str) -> tuple[str, ...]:
-    if phase == "G0":
-        return _G0_ADMISSION_EVIDENCE_PATHS
-    if phase in {"R1", "R2"}:
-        return ()
-    if phase == "R3":
-        return (
-            "artifacts/validation/R3_ACTIVATION_CANARIES.json",
-        )
-    if phase == "R4":
-        return (
-            "artifacts/r4/BUILD_RECEIPT.json",
-            "artifacts/r4/episodes.jsonl",
-            "artifacts/r4/expanded_cases.jsonl",
-            "artifacts/r4/expected_contracts.jsonl",
-            "artifacts/r4/expected_derivations.jsonl",
-            "artifacts/r4/mutation_observations.jsonl",
-            "artifacts/r4/mutations.jsonl",
-            "artifacts/r4/partitions/dialogue.json",
-            "artifacts/r4/partitions/general.json",
-            "artifacts/r4/partitions/lexical.json",
-            "artifacts/r4/partitions/mutation.json",
-            "artifacts/r4/partitions/realization.json",
-            "artifacts/r4/partitions/semantic_target.json",
-            "artifacts/r4/partitions/topology.json",
-            "artifacts/r4/structural_sufficiency.json",
-            "artifacts/r4/training_allowlist.json",
-        )
-    raise AdmissionValidationError(
-        f"admission evidence policy is not implemented for phase {phase}"
-    )
+_R4_HISTORICAL_ABI3_SOURCE_REF = "597348731c45892f7d9145e8fff96214beb0b245"
+_R4_HISTORICAL_ABI3_EVIDENCE_PATHS = (
+    "artifacts/r4/BUILD_RECEIPT.json",
+    "artifacts/r4/episodes.jsonl",
+    "artifacts/r4/expanded_cases.jsonl",
+    "artifacts/r4/expected_contracts.jsonl",
+    "artifacts/r4/expected_derivations.jsonl",
+    "artifacts/r4/mutation_observations.jsonl",
+    "artifacts/r4/mutations.jsonl",
+    "artifacts/r4/partitions/dialogue.json",
+    "artifacts/r4/partitions/general.json",
+    "artifacts/r4/partitions/lexical.json",
+    "artifacts/r4/partitions/mutation.json",
+    "artifacts/r4/partitions/realization.json",
+    "artifacts/r4/partitions/semantic_target.json",
+    "artifacts/r4/partitions/topology.json",
+    "artifacts/r4/structural_sufficiency.json",
+    "artifacts/r4/training_allowlist.json",
+)
+_R4_CURRENT_ABI4_EVIDENCE_PATHS = (
+    "artifacts/r4/BUILD_RECEIPT.json",
+    "artifacts/r4/authorizations/train.json",
+    "artifacts/r4/capabilities/train.json",
+    "artifacts/r4/episodes.jsonl",
+    "artifacts/r4/expanded_cases.jsonl",
+    "artifacts/r4/expected_contracts.jsonl",
+    "artifacts/r4/expected_derivations.jsonl",
+    "artifacts/r4/mutation_observations.jsonl",
+    "artifacts/r4/mutations.jsonl",
+    "artifacts/r4/partition_evidence.json",
+    "artifacts/r4/partition_sufficiency.json",
+    "artifacts/r4/split_manifest.json",
+    "artifacts/r4/splits/calibration.jsonl",
+    "artifacts/r4/splits/frozen_test.jsonl",
+    "artifacts/r4/splits/selection.jsonl",
+    "artifacts/r4/splits/train.jsonl",
+    "artifacts/r4/structural_sufficiency.json",
+)
+_R4_HISTORICAL_ABI3_INTEGRITY_REPORT = MappingProxyType(
+    {
+        "artifact_count": 5098,
+        "artifact_set_ref": "r4_admission_artifact_set:c5ce84ac55fc034ab4fd352e",
+        "authority_generation": "authority-v1-2026-07-29",
+        "build_receipt_ref": "r4_build_v3:5d5eee0ee8c0e7bb1bcba522",
+        "integrity_ref": "r4_artifact_integrity:a3109eea0a3d10e9a992057a",
+        "schema": "cemm-r4-artifact-integrity-step-report-v1",
+        "source_revision": "5864053dbf5a67d3bd8f03ae3dbc9c0eb6a25302",
+    }
+)
 
 def _duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
     result: dict[str, object] = {}
@@ -258,6 +276,131 @@ def _read_bounded_file(path: Path, *, maximum: int) -> bytes:
 def load_strict_json(path: Path) -> object:
     raw = _read_bounded_file(path, maximum=_MAX_AUTHENTICATED_FILE_BYTES)
     return _load_strict_json_bytes(raw, path=path)
+
+
+def _r4_integrity_step_result(step_results: Sequence[object]) -> object:
+    matches = tuple(
+        result
+        for result in step_results
+        if getattr(result, "kind", None) == "r4_artifact_integrity"
+    )
+    if len(matches) != 1:
+        raise AdmissionValidationError(
+            "R4 evidence policy requires exactly one artifact-integrity step"
+        )
+    return matches[0]
+
+
+def _r4_receipt_evidence_policy(
+    *,
+    source_ref: str,
+    step_results: Sequence[object],
+    evidence_paths: Sequence[str],
+) -> tuple[str, ...]:
+    if type(source_ref) is not str or _SOURCE_RE.fullmatch(source_ref) is None:
+        raise AdmissionValidationError("R4 evidence-policy source_ref is invalid")
+    actual = tuple(evidence_paths)
+    if actual != tuple(sorted(actual)) or len(actual) != len(set(actual)):
+        raise AdmissionValidationError(
+            "R4 evidence-policy paths must be sorted and unique"
+        )
+    integrity = _r4_integrity_step_result(step_results)
+    disposition = getattr(integrity, "disposition", None)
+    report = getattr(integrity, "report", None)
+    report_material = None if report is None else _canonical_clone(report)
+
+    if actual == _R4_HISTORICAL_ABI3_EVIDENCE_PATHS:
+        if (
+            source_ref != _R4_HISTORICAL_ABI3_SOURCE_REF
+            or disposition != "passed"
+            or report_material != dict(_R4_HISTORICAL_ABI3_INTEGRITY_REPORT)
+        ):
+            raise AdmissionValidationError(
+                "historical R4 ABI 3 evidence requires its exact source/report tuple"
+            )
+        return _R4_HISTORICAL_ABI3_EVIDENCE_PATHS
+
+    if actual == _R4_CURRENT_ABI4_EVIDENCE_PATHS:
+        if source_ref == _R4_HISTORICAL_ABI3_SOURCE_REF:
+            raise AdmissionValidationError(
+                "historical R4 source cannot claim the current ABI 4 policy"
+            )
+        if disposition == "passed":
+            if (
+                type(report_material) is not dict
+                or report_material.get("build_receipt_abi_version") != 4
+            ):
+                raise AdmissionValidationError(
+                    "current R4 evidence requires an ABI 4 integrity report"
+                )
+        return _R4_CURRENT_ABI4_EVIDENCE_PATHS
+
+    raise AdmissionValidationError(
+        "R4 evidence files do not equal a reviewed ABI-specific policy"
+    )
+
+
+def _r4_current_candidate_evidence_policy(root: Path) -> tuple[str, ...]:
+    try:
+        root_path = Path(root).resolve(strict=True)
+        receipt_path = _resolve_existing_lexical_path(
+            root_path,
+            "artifacts/r4/BUILD_RECEIPT.json",
+            require_file=True,
+        )
+        raw = _read_bounded_file(
+            receipt_path, maximum=_MAX_AUTHENTICATED_FILE_BYTES
+        )
+        value = _load_strict_json_bytes(raw, path=receipt_path)
+        if canonical_json_bytes(value) + b"\n" != raw:
+            raise GateConfigError("R4 Build Receipt bytes are not a canonical JSON line")
+        if type(value) is not dict or type(value.get("abi_version")) is not int:
+            raise GateConfigError("R4 Build Receipt ABI version is invalid")
+        if value["abi_version"] != 4:
+            raise GateConfigError(
+                "current R4 admission requires Build Receipt ABI version 4"
+            )
+    except (OSError, GateConfigError) as exc:
+        raise AdmissionValidationError(str(exc)) from exc
+    return _R4_CURRENT_ABI4_EVIDENCE_PATHS
+
+
+def _required_admission_evidence_paths(
+    phase: str,
+    *,
+    root: Path | None = None,
+    source_ref: str | None = None,
+    step_results: Sequence[object] | None = None,
+    evidence_paths: Sequence[str] | None = None,
+) -> tuple[str, ...]:
+    if phase == "G0":
+        return _G0_ADMISSION_EVIDENCE_PATHS
+    if phase in {"R1", "R2"}:
+        return ()
+    if phase == "R3":
+        return ("artifacts/validation/R3_ACTIVATION_CANARIES.json",)
+    if phase != "R4":
+        raise AdmissionValidationError(
+            f"admission evidence policy is not implemented for phase {phase}"
+        )
+    if root is not None:
+        if any(
+            value is not None
+            for value in (source_ref, step_results, evidence_paths)
+        ):
+            raise AdmissionValidationError(
+                "current R4 evidence-policy selection has conflicting context"
+            )
+        return _r4_current_candidate_evidence_policy(root)
+    if source_ref is None or step_results is None or evidence_paths is None:
+        raise AdmissionValidationError(
+            "R4 evidence-policy selection requires exact receipt context"
+        )
+    return _r4_receipt_evidence_policy(
+        source_ref=source_ref,
+        step_results=step_results,
+        evidence_paths=evidence_paths,
+    )
 
 def _exact_fields(value: object, fields: frozenset[str], context: str) -> dict[str, object]:
     if type(value) is not dict:
@@ -1969,7 +2112,12 @@ def _nonnegative_exact_int(value: object, label: str) -> int:
     return value
 
 
-def _validate_admission_step_report(kind: str, report: object) -> None:
+def _validate_admission_step_report(
+    kind: str,
+    report: object,
+    *,
+    source_ref: str | None = None,
+) -> None:
     try:
         item = _canonical_clone(report)
         if type(item) is not dict:
@@ -2119,11 +2267,29 @@ def _validate_admission_step_report(kind: str, report: object) -> None:
                 raise AdmissionValidationError("R3 activation canaries report identity is invalid")
             return
         if kind == "r4_artifact_integrity":
+            if type(source_ref) is not str or _SOURCE_RE.fullmatch(source_ref) is None:
+                raise AdmissionValidationError(
+                    "R4 artifact integrity report requires an exact source_ref"
+                )
+            historical_fields = frozenset(_R4_HISTORICAL_ABI3_INTEGRITY_REPORT)
+            if set(item) == historical_fields:
+                if (
+                    source_ref != _R4_HISTORICAL_ABI3_SOURCE_REF
+                    or item != dict(_R4_HISTORICAL_ABI3_INTEGRITY_REPORT)
+                ):
+                    raise AdmissionValidationError(
+                        "historical R4 ABI 3 report differs from its exact source tuple"
+                    )
+                return
             row = _exact_fields(item, frozenset({
                 "schema", "artifact_count", "artifact_set_ref", "build_receipt_ref",
                 "build_receipt_abi_version", "source_revision", "authority_generation",
                 "integrity_ref",
             }), "R4-artifact-integrity step report")
+            if source_ref == _R4_HISTORICAL_ABI3_SOURCE_REF:
+                raise AdmissionValidationError(
+                    "historical R4 source requires the exact ABI 3 report"
+                )
             if row["schema"] != "cemm-r4-artifact-integrity-step-report-v1":
                 raise AdmissionValidationError("R4 artifact integrity report schema is invalid")
             if _nonnegative_exact_int(row["artifact_count"], "R4 artifact count") == 0:
@@ -2131,8 +2297,10 @@ def _validate_admission_step_report(kind: str, report: object) -> None:
             abi_version = _nonnegative_exact_int(
                 row["build_receipt_abi_version"], "R4 Build Receipt ABI version"
             )
-            if abi_version not in {3, 4}:
-                raise AdmissionValidationError("R4 Build Receipt ABI version is unsupported")
+            if abi_version != 4:
+                raise AdmissionValidationError(
+                    "current R4 Build Receipt ABI version must be 4"
+                )
             for field in (
                 "artifact_set_ref", "build_receipt_ref", "integrity_ref",
             ):
@@ -2156,6 +2324,7 @@ def _validate_control_step_report(
     report: object,
     *,
     disposition: str,
+    source_ref: str | None = None,
 ) -> None:
     if disposition == "blocked":
         if report is not None:
@@ -2163,7 +2332,7 @@ def _validate_control_step_report(
         return
     if disposition == "passed":
         if kind in ADMISSION_ONLY_KINDS:
-            _validate_admission_step_report(kind, report)
+            _validate_admission_step_report(kind, report, source_ref=source_ref)
             return
         if kind == "governance":
             try:
@@ -2381,7 +2550,10 @@ class StepResult:
                     "control-step observation must equal its semantic report"
                 )
             _validate_control_step_report(
-                kind, report_material, disposition=disposition
+                kind,
+                report_material,
+                disposition=disposition,
+                source_ref=source_ref,
             )
         elif kind in PYTEST_KINDS:
             if (report_material is None) != (observation_material is None):
@@ -2754,12 +2926,18 @@ class GateReceipt:
         evidence = tuple(evidence_files)
         if evidence != tuple(sorted(evidence)) or len(evidence) != len(set(evidence)):
             raise AdmissionValidationError("receipt evidence files must be sorted and unique")
-        if tier == "admission" and tuple(item.path for item in evidence) != (
-            _required_admission_evidence_paths(phase)
-        ):
-            raise AdmissionValidationError(
-                "receipt evidence files do not equal the exact phase policy"
+        if tier == "admission":
+            actual_evidence_paths = tuple(item.path for item in evidence)
+            expected_evidence_paths = _required_admission_evidence_paths(
+                phase,
+                source_ref=source_ref,
+                step_results=results,
+                evidence_paths=actual_evidence_paths,
             )
+            if actual_evidence_paths != expected_evidence_paths:
+                raise AdmissionValidationError(
+                    "receipt evidence files do not equal the exact phase policy"
+                )
         gate_payload = {
             "config_ref": config_ref,
             "environment_ref": environment_ref,
@@ -2955,7 +3133,9 @@ def _verify_current_source_config(root: Path, receipt: GateReceipt) -> None:
         manifest.evidence_file("configs/validation_gates.json")
         current_evidence = tuple(
             manifest.evidence_file(path)
-            for path in _required_admission_evidence_paths(receipt.phase)
+            for path in _required_admission_evidence_paths(
+                receipt.phase, root=root_path
+            )
         )
         expected_inputs: dict[str, tuple[EvidenceFile, ...]] = {}
         for result in receipt.step_results:
@@ -3178,7 +3358,67 @@ def _load_receipt_file(path: Path) -> GateReceipt:
         raise AdmissionValidationError(str(exc)) from exc
 
 
+def _verify_r4_receipt_evidence(
+    root: Path,
+    receipt: GateReceipt,
+) -> tuple[str, ...]:
+    paths = tuple(item.path for item in receipt.evidence_files)
+    policy = _required_admission_evidence_paths(
+        "R4",
+        source_ref=receipt.source_ref,
+        step_results=receipt.step_results,
+        evidence_paths=paths,
+    )
+    expected_abi = (
+        3 if policy == _R4_HISTORICAL_ABI3_EVIDENCE_PATHS else 4
+    )
+    try:
+        committed_blobs = _tracked_source_blobs(root, receipt.source_ref)
+        build_receipt_raw: bytes | None = None
+        for evidence in receipt.evidence_files:
+            object_id = committed_blobs.get(evidence.path)
+            if object_id is None:
+                raise GateConfigError(
+                    f"evidence is absent from its source base: {evidence.path}"
+                )
+            raw = _read_committed_blob(
+                root,
+                object_id=object_id,
+                relative=evidence.path,
+            )
+            if hashlib.sha256(raw).hexdigest() != evidence.sha256:
+                raise GateConfigError(
+                    f"evidence hash mismatch at source base: {evidence.path}"
+                )
+            if evidence.path == "artifacts/r4/BUILD_RECEIPT.json":
+                build_receipt_raw = raw
+        if build_receipt_raw is None:
+            raise GateConfigError("R4 evidence omits its Build Receipt")
+        build_path = Path("artifacts/r4/BUILD_RECEIPT.json")
+        build_receipt = _load_strict_json_bytes(
+            build_receipt_raw, path=build_path
+        )
+        if canonical_json_bytes(build_receipt) + b"\n" != build_receipt_raw:
+            raise GateConfigError(
+                "R4 source-base Build Receipt bytes are not a canonical JSON line"
+            )
+        if (
+            type(build_receipt) is not dict
+            or type(build_receipt.get("abi_version")) is not int
+            or build_receipt["abi_version"] != expected_abi
+        ):
+            raise GateConfigError(
+                "R4 source-base Build Receipt ABI differs from its evidence policy"
+            )
+    except GateConfigError as exc:
+        raise AdmissionValidationError(str(exc)) from exc
+    return policy
+
+
 def _verify_receipt_evidence(root: Path, receipt: GateReceipt) -> tuple[str, ...]:
+    if receipt.phase == "R4":
+        return _verify_r4_receipt_evidence(root, receipt)
+
     paths: list[str] = []
     # The test-inventory receipt is a living document that must be regenerated
     # when the test inventory changes (e.g. new tests added for a new replay
@@ -4186,6 +4426,64 @@ def _tracked_source_blobs(root: Path, source_ref: str) -> Mapping[str, str]:
         timeout_seconds=60,
     )
     return _parse_tracked_source_blobs(raw)
+
+
+def _read_committed_blob(
+    root: Path,
+    *,
+    object_id: str,
+    relative: str,
+) -> bytes:
+    if (
+        type(object_id) is not str
+        or len(object_id) not in {40, 64}
+        or re.fullmatch(r"[0-9a-f]+", object_id) is None
+    ):
+        raise GateConfigError("committed evidence blob identity is invalid")
+    checked = _safe_relative_path(
+        relative, "committed evidence path", directory=False
+    )
+    try:
+        completed = capture_bounded_process(
+            [
+                "git",
+                "--no-replace-objects",
+                "-C",
+                str(root),
+                "cat-file",
+                "blob",
+                object_id,
+            ],
+            max_stdout_bytes=_MAX_AUTHENTICATED_FILE_BYTES,
+            max_stderr_bytes=_MAX_GIT_PROBE_BYTES,
+            timeout_seconds=60,
+            env=_sanitized_git_environment(),
+        )
+    except (OSError, ProcessControlError, ValueError) as exc:
+        raise GateConfigError(
+            f"cannot read committed evidence blob: {checked}"
+        ) from exc
+    if completed.returncode != 0 or completed.stderr:
+        raise GateConfigError(f"cannot read committed evidence blob: {checked}")
+    raw = completed.stdout
+    if len(raw) > _MAX_AUTHENTICATED_FILE_BYTES:
+        raise GateConfigError(f"committed evidence exceeds its size bound: {checked}")
+    header = f"blob {len(raw)}\0".encode("ascii")
+    try:
+        git_sha1 = hashlib.sha1(usedforsecurity=False)
+    except TypeError:  # pragma: no cover - legacy Python compatibility
+        git_sha1 = hashlib.sha1()
+    git_sha256 = hashlib.sha256()
+    git_sha1.update(header)
+    git_sha1.update(raw)
+    git_sha256.update(header)
+    git_sha256.update(raw)
+    observed = (
+        git_sha1.hexdigest() if len(object_id) == 40 else git_sha256.hexdigest()
+    )
+    if observed != object_id:
+        raise GateConfigError(f"committed evidence blob changed: {checked}")
+    return raw
 
 
 _TRANSIENT_SOURCE_DIR_NAMES = frozenset(
@@ -5314,7 +5612,9 @@ class _RunContext:
             )
         except (ImportError, OSError, RuntimeError, TypeError, ValueError) as exc:
             raise GateConfigError(f"R4 artifact integrity verification failed: {exc}") from exc
-        _validate_admission_step_report("r4_artifact_integrity", report)
+        _validate_admission_step_report(
+            "r4_artifact_integrity", report, source_ref=self.source_ref
+        )
         return _HandledStep(
             disposition="passed", exit_code=0, error_code=None, report=report,
             observation_report=report, wall_ns=time.monotonic_ns() - started,
@@ -5591,7 +5891,7 @@ def _admission_evidence(
     *,
     manifest: _InputManifestCache | None = None,
 ) -> tuple[EvidenceFile, ...]:
-    required = _required_admission_evidence_paths(phase)
+    required = _required_admission_evidence_paths(phase, root=root)
     if manifest is not None:
         return tuple(manifest.evidence_file(path) for path in required)
     return tuple(EvidenceFile.from_path(root, path) for path in required)
@@ -5654,7 +5954,9 @@ def run_validation(
             context._input_manifest.evidence_file(
                 "configs/validation_gates.json"
             )
-            for required_path in _required_admission_evidence_paths(phase):
+            for required_path in _required_admission_evidence_paths(
+                phase, root=root_path
+            ):
                 context._input_manifest.evidence_file(required_path)
         prepared_inputs = {
             step_id: context.input_files(graph.steps[step_id])

@@ -265,6 +265,14 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "2339dfa89ac4231e90089984be2669fd615e04bb45486eaf2c147d8590353e8d"
     },
+    "tests/test_replay_governance.py::test_r4_preflight_allows_only_abi3_and_abi4_admission_evidence": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-preflight-allows-only-abi3-and-abi4-admission-evidence",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Partition-Corrective-Task-8",
+        "owner_ref": "governance",
+        "source_ast_sha256": "50522aed292e8ff86c63ccbc39c0c0feaf2004c1801a795e0e02b1348832e57c"
+    },
     "tests/test_replay_governance.py::test_candidate_reconstructs_prior_admissions_before_any_transition[green]": {
         "activation_phase": "G0",
         "assertion_ref": "assertion:candidate-reconstructs-prior-admissions-before-any-transition",
@@ -560,6 +568,14 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
         "source_ast_sha256": "fb7309e4eb1a59e8540ea67f1c3fe9c1a61474777e391b3e54ae409493e55078"
+    },
+    "tests/test_replay_governance.py::test_r4_multi_admission_verify_uses_historical_evidence_without_live_files": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-multi-admission-verify-uses-historical-evidence-without-live-files",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Partition-Corrective-Task-8",
+        "owner_ref": "governance",
+        "source_ast_sha256": "2e6db4931f48f9230a3d67b9bfadc91c8f83f6dff2b96d5895c9f1c63f06d321"
     },
     "tests/test_replay_governance.py::test_red_candidate_without_prior_admissions_scans_dirty_status_once": {
         "activation_phase": "G0",
@@ -2042,6 +2058,36 @@ def test_candidate_preflight_allows_exact_run_phase_and_fixed_evidence(
         script._preflight_owner_import("G0", run_ref)
 
 
+def test_r4_preflight_allows_only_abi3_and_abi4_admission_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    script = _load_update_script()
+    run_ref = "run:" + "1" * 24
+    exact_run = "artifacts/validation/runs/" + "1" * 24 + ".json"
+    r4_dirty = frozenset(
+        {
+            exact_run,
+            "artifacts/r4/training_allowlist.json",
+            "artifacts/r4/partition_evidence.json",
+            "artifacts/r4/splits/train.jsonl",
+        }
+    )
+    monkeypatch.setattr(script, "_dirty_hybrid_paths", lambda: r4_dirty)
+    script._preflight_owner_import("R4", run_ref)
+    assert script._PHASE_ADMISSION_EVIDENCE_PATHS["R4"] == (
+        script._R4_HISTORICAL_ABI3_EVIDENCE_PATHS
+        | script._R4_CURRENT_ABI4_EVIDENCE_PATHS
+    )
+
+    monkeypatch.setattr(
+        script,
+        "_dirty_hybrid_paths",
+        lambda: r4_dirty | {"artifacts/r4/legacy_compatibility.json"},
+    )
+    with pytest.raises(GovernanceError, match="dirty governed input"):
+        script._preflight_owner_import("R4", run_ref)
+
+
 def test_owner_loads_exact_reviewed_file_and_rejects_broad_error_alias(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -2545,6 +2591,58 @@ def test_multi_admission_verify_aggregates_exact_paths_before_dirty_narrowing(
         require_evidence_files=False,
     )
     assert allowed == frozenset((*paths_by_phase["G0"], *paths_by_phase["R1"]))
+
+
+def test_r4_multi_admission_verify_uses_historical_evidence_without_live_files(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    script = _load_update_script()
+    records = _initial_status_records()
+    g_gate, g_run = "gate_result:" + "2" * 24, "run:" + "2" * 24
+    r_gate, r_run = "gate_result:" + "3" * 24, "run:" + "3" * 24
+    _append_status(
+        records, phase="G0", status="green", gate_ref=g_gate, run_ref=g_run
+    )
+    _append_status(
+        records,
+        phase="R4",
+        status="green",
+        gate_ref=r_gate,
+        run_ref=r_run,
+        source_base="b" * 40,
+    )
+    paths_by_phase = {
+        "G0": (
+            "artifacts/validation/runs/" + "2" * 24 + ".json",
+        ),
+        "R4": (
+            "artifacts/r4/training_allowlist.json",
+            "artifacts/validation/runs/" + "3" * 24 + ".json",
+        ),
+    }
+
+    def loader(**kwargs):
+        phase = kwargs["phase"]
+        run_ref = g_run if phase == "G0" else r_run
+        return _receipt_for_admitted_run(records, run_ref), paths_by_phase[phase]
+
+    owner = script.AdmissionOwner(ValueError, loader, _accept_current_source_config)
+    dirty = frozenset(
+        {
+            *paths_by_phase["G0"],
+            *paths_by_phase["R4"],
+            "governance/replay_status.jsonl",
+        }
+    )
+    monkeypatch.setattr(script, "_dirty_hybrid_paths", lambda: dirty)
+    script._preflight_owner_import("G0", g_run, authenticated_ledger=True)
+    allowed = script._verify_admitted_runs(
+        records,
+        owner=owner,
+        dirty_paths=dirty,
+        require_evidence_files=False,
+    )
+    assert allowed == frozenset((*paths_by_phase["G0"], *paths_by_phase["R4"]))
 
 
 

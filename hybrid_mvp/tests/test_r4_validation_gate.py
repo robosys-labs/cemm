@@ -25,7 +25,7 @@ def _valid_report() -> dict[str, object]:
         "artifact_count": 401,
         "artifact_set_ref": gate.content_ref("artifact_set", ["x"]),
         "build_receipt_ref": gate.content_ref("build_receipt", {"x": 1}),
-        "build_receipt_abi_version": 3,
+        "build_receipt_abi_version": 4,
         "source_revision": "1" * 40,
         "authority_generation": "authority:test",
     }
@@ -34,29 +34,46 @@ def _valid_report() -> dict[str, object]:
 
 
 def test_r4_integrity_report_has_exact_internal_shape() -> None:
-    report = _valid_report()
+    historical = dict(gate._R4_HISTORICAL_ABI3_INTEGRITY_REPORT)
     gate._validate_admission_step_report(
         "r4_artifact_integrity",
-        report,
+        historical,
+        source_ref=gate._R4_HISTORICAL_ABI3_SOURCE_REF,
     )
-    report["build_receipt_abi_version"] = 4
+    with pytest.raises(gate.AdmissionValidationError, match="exact source tuple"):
+        gate._validate_admission_step_report(
+            "r4_artifact_integrity",
+            historical,
+            source_ref="2" * 40,
+        )
+
+    report = _valid_report()
+    gate._validate_admission_step_report(
+        "r4_artifact_integrity", report, source_ref="2" * 40
+    )
+    report["build_receipt_abi_version"] = 3
     identity = dict(report)
     identity.pop("integrity_ref")
     report["integrity_ref"] = gate.content_ref("r4_artifact_integrity", identity)
-    gate._validate_admission_step_report("r4_artifact_integrity", report)
-    report["build_receipt_abi_version"] = 2
-    identity = dict(report)
-    identity.pop("integrity_ref")
-    report["integrity_ref"] = gate.content_ref("r4_artifact_integrity", identity)
-    with pytest.raises(gate.AdmissionValidationError, match="ABI version"):
-        gate._validate_admission_step_report("r4_artifact_integrity", report)
+    with pytest.raises(gate.AdmissionValidationError, match="must be 4"):
+        gate._validate_admission_step_report(
+            "r4_artifact_integrity", report, source_ref="2" * 40
+        )
+    with pytest.raises(gate.AdmissionValidationError, match="exact ABI 3"):
+        gate._validate_admission_step_report(
+            "r4_artifact_integrity",
+            _valid_report(),
+            source_ref=gate._R4_HISTORICAL_ABI3_SOURCE_REF,
+        )
 
 
 def test_r4_integrity_report_rejects_retired_review_fields() -> None:
     report = _valid_report()
     report["reviewer_ref"] = "reviewer:test"
     with pytest.raises(gate.AdmissionValidationError):
-        gate._validate_admission_step_report("r4_artifact_integrity", report)
+        gate._validate_admission_step_report(
+            "r4_artifact_integrity", report, source_ref="2" * 40
+        )
 
 
 def test_r4_generator_source_is_parent_of_artifact_only_commit(monkeypatch) -> None:
@@ -124,9 +141,85 @@ def test_historical_receipt_keeps_unselected_retired_step_opaque() -> None:
         gate.GateGraph.from_dict(payload)
 
 
-def test_r4_admission_evidence_policy_is_sorted_and_unique() -> None:
-    paths = gate._required_admission_evidence_paths("R4")
-    assert paths == tuple(sorted(set(paths)))
+def test_r4_admission_evidence_policy_is_sorted_and_unique(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt_path = (
+        ROOT
+        / "artifacts"
+        / "validation"
+        / "runs"
+        / "300579c997da31e29d1c1a06.json"
+    )
+    historical_receipt = gate._load_receipt_file(receipt_path)
+    historical_paths = tuple(
+        item.path for item in historical_receipt.evidence_files
+    )
+    assert historical_paths == gate._R4_HISTORICAL_ABI3_EVIDENCE_PATHS
+    assert historical_paths == tuple(sorted(set(historical_paths)))
+    assert gate._required_admission_evidence_paths(
+        "R4",
+        source_ref=historical_receipt.source_ref,
+        step_results=historical_receipt.step_results,
+        evidence_paths=historical_paths,
+    ) == historical_paths
+    with pytest.raises(gate.AdmissionValidationError, match="source/report tuple"):
+        gate._required_admission_evidence_paths(
+            "R4",
+            source_ref="2" * 40,
+            step_results=historical_receipt.step_results,
+            evidence_paths=historical_paths,
+        )
+
+    current_root = tmp_path / "current"
+    build_receipt = current_root / "artifacts" / "r4" / "BUILD_RECEIPT.json"
+    build_receipt.parent.mkdir(parents=True)
+    build_receipt.write_bytes(gate.canonical_json_bytes({"abi_version": 4}) + b"\n")
+    current_paths = gate._required_admission_evidence_paths(
+        "R4", root=current_root
+    )
+    assert current_paths == gate._R4_CURRENT_ABI4_EVIDENCE_PATHS
+    assert current_paths == tuple(sorted(set(current_paths)))
+    assert "artifacts/r4/partition_evidence.json" in current_paths
+    assert "artifacts/r4/training_allowlist.json" not in current_paths
+    build_receipt.write_bytes(gate.canonical_json_bytes({"abi_version": 3}) + b"\n")
+    with pytest.raises(gate.AdmissionValidationError, match="version 4"):
+        gate._required_admission_evidence_paths("R4", root=current_root)
+
+    committed_bytes = {
+        path: (ROOT / path).read_bytes() for path in historical_paths
+    }
+    monkeypatch.setattr(
+        gate,
+        "_tracked_source_blobs",
+        lambda _root, source_ref: {
+            path: f"{index + 1:040x}"
+            for index, path in enumerate(historical_paths)
+        }
+        if source_ref == gate._R4_HISTORICAL_ABI3_SOURCE_REF
+        else {},
+    )
+    monkeypatch.setattr(
+        gate,
+        "_read_committed_blob",
+        lambda _root, *, object_id, relative: committed_bytes[relative],
+    )
+    run_directory = tmp_path / "artifacts" / "validation" / "runs"
+    run_directory.mkdir(parents=True)
+    historical_run_path = run_directory / receipt_path.name
+    historical_run_path.write_bytes(receipt_path.read_bytes())
+    reconstructed, reconstructed_paths = gate.load_verified_admission_receipt(
+        tmp_path,
+        phase="R4",
+        expected_status="passed",
+        run_ref=historical_receipt.run_ref,
+    )
+    assert reconstructed.run_ref == historical_receipt.run_ref
+    assert reconstructed.source_ref == historical_receipt.source_ref
+    assert reconstructed_paths == tuple(
+        sorted((*historical_paths, historical_run_path.relative_to(tmp_path).as_posix()))
+    )
 
 
 def test_r4_active_inventory_timeout_covers_measured_suite_bound() -> None:
@@ -141,13 +234,13 @@ __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_
                                                                                          'diagnostic_role': 'owner',
                                                                                          'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                          'owner_ref': 'artifact-integrity',
-                                                                                         'source_ast_sha256': '946124cff943ef9e6b4632405e005c0ad6b3d9b0ae1a65d878f7ae77a99a5114'},
+                                                                                         'source_ast_sha256': 'a79be629304bb1da7335cfc1bbf0889d2c8b2639f2b2b0cef3cf29798518c196'},
  'tests/test_r4_validation_gate.py::test_r4_integrity_report_rejects_retired_review_fields': {'activation_phase': 'R4',
                                                                                               'assertion_ref': 'assertion:r4-integrity-report-rejects-review-fields',
                                                                                               'diagnostic_role': 'owner',
                                                                                               'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                               'owner_ref': 'artifact-integrity',
-                                                                                              'source_ast_sha256': '89a399b7ee2116ca9521f63a8ca47431bccf5c6cee297ca1df11087da556dfbe'},
+                                                                                              'source_ast_sha256': '60d7d58a06b634f634a713a6cdcd13d3b802ec577fb7d65f60f0c5298569200a'},
  'tests/test_r4_validation_gate.py::test_r4_generator_source_is_parent_of_artifact_only_commit': {'activation_phase': 'R4',
                                                                                                   'assertion_ref': 'assertion:r4-generator-source-is-artifact-parent',
                                                                                                   'diagnostic_role': 'owner',
@@ -177,7 +270,7 @@ __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_
                                                                                               'diagnostic_role': 'owner',
                                                                                               'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                               'owner_ref': 'artifact-integrity',
-                                                                                              'source_ast_sha256': 'fe53e4fb36ac33f92bad8ae0839f41e872319a0b8d48b63b8c3d9496577b8cdc'},
+                                                                                              'source_ast_sha256': '722ea3ad5c1106dec17e185a74c2d10bf1c2b020cf25dcfec49f711ad0e4c52c'},
  'tests/test_r4_validation_gate.py::test_r4_active_inventory_timeout_covers_measured_suite_bound': {'activation_phase': 'R4',
                                                                                                     'assertion_ref': 'assertion:r4-active-inventory-timeout-measured-bound',
                                                                                                     'diagnostic_role': 'owner',

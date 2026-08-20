@@ -165,6 +165,47 @@ _RUN_REF_RE = re.compile(r"run:[0-9a-f]{24}\Z")
 _ADMISSION_PATH_RE = re.compile(
     r"artifacts/validation/runs/[0-9a-f]{24}\.json\Z"
 )
+_R4_HISTORICAL_ABI3_EVIDENCE_PATHS = frozenset(
+    {
+        "artifacts/r4/BUILD_RECEIPT.json",
+        "artifacts/r4/episodes.jsonl",
+        "artifacts/r4/expanded_cases.jsonl",
+        "artifacts/r4/expected_contracts.jsonl",
+        "artifacts/r4/expected_derivations.jsonl",
+        "artifacts/r4/mutation_observations.jsonl",
+        "artifacts/r4/mutations.jsonl",
+        "artifacts/r4/partitions/dialogue.json",
+        "artifacts/r4/partitions/general.json",
+        "artifacts/r4/partitions/lexical.json",
+        "artifacts/r4/partitions/mutation.json",
+        "artifacts/r4/partitions/realization.json",
+        "artifacts/r4/partitions/semantic_target.json",
+        "artifacts/r4/partitions/topology.json",
+        "artifacts/r4/structural_sufficiency.json",
+        "artifacts/r4/training_allowlist.json",
+    }
+)
+_R4_CURRENT_ABI4_EVIDENCE_PATHS = frozenset(
+    {
+        "artifacts/r4/BUILD_RECEIPT.json",
+        "artifacts/r4/authorizations/train.json",
+        "artifacts/r4/capabilities/train.json",
+        "artifacts/r4/episodes.jsonl",
+        "artifacts/r4/expanded_cases.jsonl",
+        "artifacts/r4/expected_contracts.jsonl",
+        "artifacts/r4/expected_derivations.jsonl",
+        "artifacts/r4/mutation_observations.jsonl",
+        "artifacts/r4/mutations.jsonl",
+        "artifacts/r4/partition_evidence.json",
+        "artifacts/r4/partition_sufficiency.json",
+        "artifacts/r4/split_manifest.json",
+        "artifacts/r4/splits/calibration.jsonl",
+        "artifacts/r4/splits/frozen_test.jsonl",
+        "artifacts/r4/splits/selection.jsonl",
+        "artifacts/r4/splits/train.jsonl",
+        "artifacts/r4/structural_sufficiency.json",
+    }
+)
 _PHASE_ADMISSION_EVIDENCE_PATHS = {
     "G0": frozenset(
         {
@@ -177,31 +218,14 @@ _PHASE_ADMISSION_EVIDENCE_PATHS = {
     "R3": frozenset(
         {"artifacts/validation/R3_ACTIVATION_CANARIES.json"}
     ),
-    "R4": frozenset(
-        {
-            "artifacts/r4/expected_contracts.jsonl",
-            "artifacts/r4/expected_derivations.jsonl",
-            "artifacts/r4/expanded_cases.jsonl",
-            "artifacts/r4/episodes.jsonl",
-            "artifacts/r4/mutations.jsonl",
-            "artifacts/r4/mutation_observations.jsonl",
-            "artifacts/r4/structural_sufficiency.json",
-            "artifacts/r4/partitions/general.json",
-            "artifacts/r4/partitions/lexical.json",
-            "artifacts/r4/partitions/semantic_target.json",
-            "artifacts/r4/partitions/topology.json",
-            "artifacts/r4/partitions/dialogue.json",
-            "artifacts/r4/partitions/mutation.json",
-            "artifacts/r4/partitions/realization.json",
-            "artifacts/r4/training_allowlist.json",
-            "artifacts/r4/BUILD_RECEIPT.json",
-        }
-    ),
+    "R4": _R4_HISTORICAL_ABI3_EVIDENCE_PATHS
+    | _R4_CURRENT_ABI4_EVIDENCE_PATHS,
     "R5": frozenset(),
     "R6": frozenset(),
     "R7": frozenset(),
     "R8": frozenset(),
 }
+
 _FIXED_EVIDENCE_PATHS = frozenset().union(
     *_PHASE_ADMISSION_EVIDENCE_PATHS.values()
 )
@@ -464,8 +488,9 @@ def _verify_admitted_runs(
     if selected is not None:
         selected.cache_reset()
     for record in admitted:
+        phase = str(record["phase"])
         receipt, paths = _validated_admission(
-            str(record["phase"]),
+            phase,
             str(record["status"]),
             run_ref=str(record["admission_run_ref"]),
             owner=selected,
@@ -479,8 +504,17 @@ def _verify_admitted_runs(
             predecessor_ref=record["predecessor_ref"],
             source_base=record["source_base"],
         )
+        historical_r4 = phase == "R4" and any(
+            path
+            in (
+                _R4_HISTORICAL_ABI3_EVIDENCE_PATHS
+                - _R4_CURRENT_ABI4_EVIDENCE_PATHS
+            )
+            for path in paths
+        )
         normalized = _normalize_allowed_evidence_paths(
-            paths, require_files=require_evidence_files
+            paths,
+            require_files=require_evidence_files and not historical_r4,
         )
         if len(normalized) != len(paths):
             raise GovernanceError("validated evidence paths must be unique")
