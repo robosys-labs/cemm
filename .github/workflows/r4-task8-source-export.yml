@@ -1,0 +1,47 @@
+name: R4 Task 8 source export
+
+on:
+  pull_request:
+    branches:
+      - agent/r4-task7-structural-hardcut-ci-base-20260820
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    if: github.event.pull_request.head.ref == 'agent/r4-task7-structural-hardcut-pr-head-20260820'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task7-structural-hardcut-pr-head-20260820
+          fetch-depth: 0
+      - name: Fence exported source
+        run: test "$(git rev-parse HEAD)" = 'b8b180a1faac6e0f9460f8939dd1386859cb99aa'
+      - name: Build exact source archive
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz --output=/tmp/cemm-task8-source.tar.gz HEAD -- \
+            hybrid_mvp/AGENTS.md \
+            hybrid_mvp/configs \
+            hybrid_mvp/docs \
+            hybrid_mvp/governance \
+            hybrid_mvp/schemas \
+            hybrid_mvp/scripts \
+            hybrid_mvp/src \
+            hybrid_mvp/tests
+          sha256sum /tmp/cemm-task8-source.tar.gz | tee /tmp/cemm-task8-source.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-task8-source-b8b180a1
+          path: |
+            /tmp/cemm-task8-source.tar.gz
+            /tmp/cemm-task8-source.sha256
+          if-no-files-found: error
+          retention-days: 1
