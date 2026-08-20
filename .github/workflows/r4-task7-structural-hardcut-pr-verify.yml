@@ -34,20 +34,33 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Fence the exact base and code commits
+      - name: Fence the exact base and code lineage
         run: |
           set -euo pipefail
           merge_sha="$(git rev-parse HEAD)"
           base_sha="$(git rev-parse "${merge_sha}^1")"
           head_sha="$(git rev-parse "${merge_sha}^2")"
-          test "$head_sha" = 'efba3974e0856d99ba873774b6b7ec6615c2a19d'
-          test "$(git rev-parse "${head_sha}^")" = '6e9b6fe4efbda48e52245a21647fcb2b0a8792ba'
-          test "$(git rev-parse "${base_sha}^")" = '6e9b6fe4efbda48e52245a21647fcb2b0a8792ba'
+          hardcut_sha="$(git rev-parse "${head_sha}^")"
+          published_sha="$(git rev-parse "${hardcut_sha}^")"
+          test "$hardcut_sha" = 'efba3974e0856d99ba873774b6b7ec6615c2a19d'
+          test "$published_sha" = '6e9b6fe4efbda48e52245a21647fcb2b0a8792ba'
+          test "$(git rev-parse "${base_sha}^")" = '38909ca803a5ae885e31c99f7e45d0a82cad96b2'
+          test "$(git rev-parse "${base_sha}^^")" = '6e9b6fe4efbda48e52245a21647fcb2b0a8792ba'
           printf '%s\n' \
             'hybrid_mvp/configs/partitions.json' \
-            'hybrid_mvp/scripts/check_r3_r4_structure.py' | sort > /tmp/expected-head
-          git diff --name-only "${head_sha}^" "$head_sha" | sort > /tmp/actual-head
+            'hybrid_mvp/scripts/check_r3_r4_structure.py' | sort > /tmp/expected-hardcut
+          git diff --name-only "$published_sha" "$hardcut_sha" | sort > /tmp/actual-hardcut
+          diff -u /tmp/expected-hardcut /tmp/actual-hardcut
+          printf '%s\n' \
+            'hybrid_mvp/tests/test_r4_partition_global_assignment.py' > /tmp/expected-head
+          git diff --name-only "$hardcut_sha" "$head_sha" | sort > /tmp/actual-head
           diff -u /tmp/expected-head /tmp/actual-head
+          printf '%s\n' \
+            'hybrid_mvp/configs/partitions.json' \
+            'hybrid_mvp/scripts/check_r3_r4_structure.py' \
+            'hybrid_mvp/tests/test_r4_partition_global_assignment.py' | sort > /tmp/expected-cumulative
+          git diff --name-only "$published_sha" "$head_sha" | sort > /tmp/actual-cumulative
+          diff -u /tmp/expected-cumulative /tmp/actual-cumulative
           printf '%s\n' \
             '.github/workflows/r4-task7-structural-hardcut-pr-verify.yml' > /tmp/expected-base
           git diff --name-only "${base_sha}^" "$base_sha" | sort > /tmp/actual-base
@@ -74,6 +87,7 @@ jobs:
       - name: Run focused R4-R5 boundary tests
         run: |
           python -m pytest \
+            tests/test_r4_partition_global_assignment.py \
             tests/test_r5_data_isolation.py \
             tests/test_r4_training_partition_boundary.py \
             tests/test_r4_partition_contracts.py \
