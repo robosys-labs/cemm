@@ -1,0 +1,140 @@
+name: R4 Task 7 literalize leakage successors
+
+on:
+  push:
+    branches:
+      - agent/r4-task7-structural-hardcut-verify-20260820
+    paths:
+      - .github/workflows/r4-task7-literalize-leakage-successors.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: r4-task7-literalize-leakage-successors
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+      PYTHONPATH: src:scripts:.
+    defaults:
+      run:
+        working-directory: hybrid_mvp
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task7-structural-hardcut-pr-head-20260820
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Fence the exact parent
+        run: test "$(git rev-parse HEAD)" = 'efba3974e0856d99ba873774b6b7ec6615c2a19d'
+      - name: Literalize cases and refresh only their AST digest
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import ast
+          import hashlib
+          from pathlib import Path
+
+          path = Path("tests/test_r4_partition_global_assignment.py")
+          source = path.read_text(encoding="utf-8")
+          old = '''_LINEAGE_AXIS_CASES = (
+              ("adversarial_mutation", "mutation"),
+              ("authority_target", "semantic_target"),
+              ("dialogue", "dialogue"),
+              ("entity", "semantic_target"),
+              ("graph_topology", "topology"),
+              ("lexical_value", "lexical"),
+              ("normalized_text", "lexical"),
+              ("template", "lexical"),
+          )
+
+
+          @pytest.mark.parametrize(
+              ("lineage_case", "axis"),
+              _LINEAGE_AXIS_CASES,
+              ids=tuple(row[0] for row in _LINEAGE_AXIS_CASES),
+          )
+          '''
+          new = '''@pytest.mark.parametrize(
+              ("lineage_case", "axis"),
+              (
+                  ("adversarial_mutation", "mutation"),
+                  ("authority_target", "semantic_target"),
+                  ("dialogue", "dialogue"),
+                  ("entity", "semantic_target"),
+                  ("graph_topology", "topology"),
+                  ("lexical_value", "lexical"),
+                  ("normalized_text", "lexical"),
+                  ("template", "lexical"),
+              ),
+              ids=(
+                  "adversarial_mutation",
+                  "authority_target",
+                  "dialogue",
+                  "entity",
+                  "graph_topology",
+                  "lexical_value",
+                  "normalized_text",
+                  "template",
+              ),
+          )
+          '''
+          if source.count(old) != 1:
+              raise SystemExit("expected exactly one lineage-case decorator block")
+          source = source.replace(old, new)
+          tree = ast.parse(source, filename=str(path))
+          function = next(
+              node
+              for node in ast.walk(tree)
+              if isinstance(node, ast.FunctionDef)
+              and node.name == "test_no_leakage_hyperedge_crosses_classes"
+          )
+          digest = hashlib.sha256(
+              ast.dump(
+                  function,
+                  annotate_fields=True,
+                  include_attributes=False,
+              ).encode("utf-8")
+          ).hexdigest()
+          old_digest = "9c131b409ed8d2dea7c5a0d0a7e90992f86fc1029b2bc034627d6f72f41edc22"
+          needle = f"'source_ast_sha256': '{old_digest}'"
+          replacement = f"'source_ast_sha256': '{digest}'"
+          if source.count(needle) != 8:
+              raise SystemExit("expected exactly eight governed case digests")
+          source = source.replace(needle, replacement)
+          if "_LINEAGE_AXIS_CASES" in source:
+              raise SystemExit("non-literal lineage-case indirection survived")
+          path.write_text(source, encoding="utf-8", newline="\n")
+          print(f"literal successor AST digest: {digest}")
+          PY
+      - name: Verify metadata and source-only inventory
+        run: |
+          set -euo pipefail
+          python scripts/verify_r3_r4_test_metadata.py
+          for phase in G0 R1 R2 R3 R4 R5; do
+            python scripts/check_test_inventory.py --phase "$phase" --source-only
+          done
+      - name: Enforce minimal patch
+        run: |
+          set -euo pipefail
+          printf '%s\n' 'tests/test_r4_partition_global_assignment.py' > /tmp/expected
+          git diff --name-only | sort > /tmp/actual
+          diff -u /tmp/expected /tmp/actual
+          git diff --check
+      - name: Commit and push the governed fix
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/test_r4_partition_global_assignment.py
+          git commit -m 'test(r4): literalize leakage successor cases'
+          git push origin HEAD:agent/r4-task7-structural-hardcut-pr-head-20260820
