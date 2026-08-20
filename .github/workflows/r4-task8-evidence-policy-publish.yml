@@ -72,7 +72,7 @@ jobs:
             '.github/workflows/r4-task8-evidence-policy-publish.yml' | sort > /tmp/expected-control
           git -C control diff --name-only "$reviewed_parent" HEAD | sort > /tmp/actual-control
           diff -u /tmp/expected-control /tmp/actual-control
-          test "$(sha256sum control/.github/r4-task8/evidence-policy.patch.gz.b64 | cut -d' ' -f1)" = '4e298ddd6773a4f1083c8576da49def15d469025ddfa28c7da224cd1dad27c2b'
+          test "$(git -C control hash-object .github/r4-task8/evidence-policy.patch.gz.b64)" = '8cdd6366a88811f0b10ea30017f94fe32b399b6f'
           printf 'INITIAL_HEAD_SHA=%s\n' "$head_sha" >> "$GITHUB_ENV"
           git -C candidate checkout --detach "$reviewed_parent"
       - name: Reconstruct and authenticate the reviewed source tree
