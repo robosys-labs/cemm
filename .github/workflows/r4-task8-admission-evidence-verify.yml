@@ -70,12 +70,21 @@ jobs:
           fi
 
           test "$(git -C control merge-base "$reviewed_parent" HEAD)" = "$reviewed_parent"
-          printf '%s\n' \
-            '.github/r4-task8/admission-evidence.patch.gz.b64' \
-            '.github/workflows/r4-task8-admission-evidence-verify.yml' | sort > /tmp/expected-control-paths
+          {
+            for index in 00 01 02 03 04 05; do
+              printf '.github/r4-task8/admission-evidence-v2/%s.b64\n' "$index"
+            done
+            printf '.github/workflows/r4-task8-admission-evidence-verify.yml\n'
+          } | sort > /tmp/expected-control-paths
           git -C control diff --name-only "$reviewed_parent" HEAD | sort > /tmp/actual-control-paths
           diff -u /tmp/expected-control-paths /tmp/actual-control-paths
-          test "$(sha256sum control/.github/r4-task8/admission-evidence.patch.gz.b64 | cut -d' ' -f1)" = '3345c8aa4e73c1b4708213c0c53cb7777587c3cb92b9dc756276400754e608ba'
+
+          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/00.b64)" = '9a87682ab6fb076c329a7f9f5320b7efc49b1ebe'
+          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/01.b64)" = 'd21da035dbe6624a3dadfdd173fb829399a4900c'
+          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/02.b64)" = 'c748bf6ec45db7d0b0a779f82f3191b2456e147e'
+          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/03.b64)" = '665d942771ad5f097c9e8c26eea1fd30f2248d37'
+          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/04.b64)" = 'b01e859533e03ebc6e446197eb606e3beb431933'
+          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/05.b64)" = '45aef13531546766797ab79ae0fa665195bf2526'
 
           printf 'INITIAL_HEAD_SHA=%s\n' "$head_sha" >> "$GITHUB_ENV"
           git -C candidate checkout --detach "$reviewed_parent"
@@ -84,10 +93,12 @@ jobs:
       - name: Authenticate and apply the reviewed patch
         run: |
           set -euo pipefail
-          base64 --decode control/.github/r4-task8/admission-evidence.patch.gz.b64 > /tmp/cemm-task8-admission-evidence.patch.gz
-          test "$(sha256sum /tmp/cemm-task8-admission-evidence.patch.gz | cut -d' ' -f1)" = 'b9f092bc85f25ebcab408bcb673df9c8f996d6dafeb812e1e62d34ae9e9d76dd'
+          cat control/.github/r4-task8/admission-evidence-v2/*.b64 > /tmp/cemm-task8-admission-evidence.patch.gz.b64
+          test "$(sha256sum /tmp/cemm-task8-admission-evidence.patch.gz.b64 | cut -d' ' -f1)" = 'da4d464e7d3cee0a11c5097f9b81957dc4fca5f47047052c7a7bcea63e7ac7d9'
+          base64 --decode /tmp/cemm-task8-admission-evidence.patch.gz.b64 > /tmp/cemm-task8-admission-evidence.patch.gz
+          test "$(sha256sum /tmp/cemm-task8-admission-evidence.patch.gz | cut -d' ' -f1)" = 'b21de1b74ac712450f7892c7d8d2d6b88b56d3a34fdf334d2356f3b11e57485f'
           gzip -dc /tmp/cemm-task8-admission-evidence.patch.gz > /tmp/cemm-task8-admission-evidence.patch
-          test "$(sha256sum /tmp/cemm-task8-admission-evidence.patch | cut -d' ' -f1)" = 'fe41919d538b2e35bd535390ced5e98929bd24b45f292989457f8073789c289c'
+          test "$(sha256sum /tmp/cemm-task8-admission-evidence.patch | cut -d' ' -f1)" = '3e9817a3ebcbf93c2fa17c64b508dedbd3b32ee5c12fcb1d7c83b8d4fa233806'
           git -C candidate apply --check /tmp/cemm-task8-admission-evidence.patch
           git -C candidate apply /tmp/cemm-task8-admission-evidence.patch
           git -C candidate diff --check
@@ -103,7 +114,30 @@ jobs:
           test "$(sha256sum candidate/hybrid_mvp/scripts/validation_gate.py | cut -d' ' -f1)" = '4a3fc6293d662996fa8faa70529eef162b36d5db28f1f9c4789c84394a15661d'
           test "$(sha256sum candidate/hybrid_mvp/scripts/update_replay_status.py | cut -d' ' -f1)" = '6d6cb8c448c54fb9eef85602a20ad251ed2f70bce3cca6ff88b6dc5f58975a54'
           test "$(sha256sum candidate/hybrid_mvp/tests/test_r4_validation_gate.py | cut -d' ' -f1)" = '2d643fbfd02d1425dfbc3f0c3d79ca6d99fc934162a31b1aeb3e00659fd3dab7'
-          test "$(sha256sum candidate/hybrid_mvp/tests/test_replay_governance.py | cut -d' ' -f1)" = '71284280550048049c239609746704b92de1e6e06179f7aea653dae63f34be5c'
+          test "$(sha256sum candidate/hybrid_mvp/tests/test_replay_governance.py | cut -d' ' -f1)" = '8d7221ccd6f96dbe719bb90c5ce5123f1ca8c5de695f26f05aca911b8deb502c'
+
+      - name: Create the deterministic local candidate commit
+        run: |
+          set -euo pipefail
+          git -C candidate config user.name 'CEMM Verification Bot'
+          git -C candidate config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C candidate add -- \
+            hybrid_mvp/scripts/update_replay_status.py \
+            hybrid_mvp/scripts/validation_gate.py \
+            hybrid_mvp/tests/test_r4_validation_gate.py \
+            hybrid_mvp/tests/test_replay_governance.py
+          git -C candidate diff --cached --check
+          GIT_AUTHOR_NAME='CEMM Verification Bot' \
+          GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
+          GIT_AUTHOR_DATE='2026-08-20T17:30:00+01:00' \
+          GIT_COMMITTER_NAME='CEMM Verification Bot' \
+          GIT_COMMITTER_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
+          GIT_COMMITTER_DATE='2026-08-20T17:30:00+01:00' \
+            git -C candidate commit --no-gpg-sign -m 'fix(r4): select admission evidence by build ABI'
+          candidate_sha="$(git -C candidate rev-parse HEAD)"
+          test "$(git -C candidate rev-parse HEAD^)" = 'b8b180a1faac6e0f9460f8939dd1386859cb99aa'
+          test -z "$(git -C candidate status --short --untracked-files=all)"
+          printf 'CANDIDATE_SHA=%s\n' "$candidate_sha" >> "$GITHUB_ENV"
 
       - name: Install governed verification dependencies
         run: |
@@ -188,31 +222,16 @@ jobs:
           ) | frozenset(gate._R4_CURRENT_ABI4_EVIDENCE_PATHS)
           PY
 
-      - name: Create one deterministic candidate commit
+      - name: Confirm the verified candidate remains clean
         run: |
           set -euo pipefail
           find candidate/hybrid_mvp -type d -name __pycache__ -prune -exec rm -rf {} +
-          test -z "$(git -C candidate status --short --untracked-files=all | grep -vE '^ M hybrid_mvp/(scripts/(update_replay_status|validation_gate)\.py|tests/(test_r4_validation_gate|test_replay_governance)\.py)$' || true)"
-          git -C candidate config user.name 'CEMM Verification Bot'
-          git -C candidate config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git -C candidate add -- \
-            hybrid_mvp/scripts/update_replay_status.py \
-            hybrid_mvp/scripts/validation_gate.py \
-            hybrid_mvp/tests/test_r4_validation_gate.py \
-            hybrid_mvp/tests/test_replay_governance.py
-          git -C candidate diff --cached --check
-          GIT_AUTHOR_NAME='CEMM Verification Bot' \
-          GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
-          GIT_AUTHOR_DATE='2026-08-20T17:00:00+01:00' \
-          GIT_COMMITTER_NAME='CEMM Verification Bot' \
-          GIT_COMMITTER_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
-          GIT_COMMITTER_DATE='2026-08-20T17:00:00+01:00' \
-            git -C candidate commit --no-gpg-sign -m 'fix(r4): select admission evidence by build ABI'
-          candidate_sha="$(git -C candidate rev-parse HEAD)"
-          test "$(git -C candidate rev-parse HEAD^)" = 'b8b180a1faac6e0f9460f8939dd1386859cb99aa'
-          printf 'CANDIDATE_SHA=%s\n' "$candidate_sha" >> "$GITHUB_ENV"
+          test -z "$(git -C candidate status --short --untracked-files=all)"
 
-          python - "$candidate_sha" <<'PY'
+      - name: Write the deterministic verification receipt
+        run: |
+          set -euo pipefail
+          python - "$CANDIDATE_SHA" <<'PY'
           import json
           from pathlib import Path
           import subprocess
@@ -227,7 +246,7 @@ jobs:
               'candidate_sha': candidate_sha,
               'parent_sha': 'b8b180a1faac6e0f9460f8939dd1386859cb99aa',
               'tree_sha': tree_sha,
-              'patch_sha256': 'fe41919d538b2e35bd535390ced5e98929bd24b45f292989457f8073789c289c',
+              'patch_sha256': '3e9817a3ebcbf93c2fa17c64b508dedbd3b32ee5c12fcb1d7c83b8d4fa233806',
               'changed_paths': [
                   'hybrid_mvp/scripts/update_replay_status.py',
                   'hybrid_mvp/scripts/validation_gate.py',
