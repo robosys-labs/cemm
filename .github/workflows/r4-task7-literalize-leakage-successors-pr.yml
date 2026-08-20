@@ -140,7 +140,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ '${{ steps.state.outputs.needs_patch }}' = 'true' ]; then
-            printf '%s\n' 'tests/test_r4_partition_global_assignment.py' > /tmp/expected
+            printf '%s\n' 'hybrid_mvp/tests/test_r4_partition_global_assignment.py' > /tmp/expected
             git diff --name-only | sort > /tmp/actual
             diff -u /tmp/expected /tmp/actual
             git diff --check
