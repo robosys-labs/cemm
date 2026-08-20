@@ -1798,6 +1798,90 @@ def test_committed_tree_parser_rejects_ambiguous_or_unsafe_records(
             committed,
         )
 
+
+def test_r4_gate_plans_are_exact_bounded_and_single_process() -> None:
+    graph = validation_gate_module.load_gate_graph(
+        ROOT / "configs" / "validation_gates.json"
+    )
+    inventory_path = ROOT / "governance" / "test_inventory.json"
+    inventory = inventory_core_module.load_and_verify(
+        ROOT,
+        inventory_path,
+        phase="R4",
+        enforce_reviewed_counts=True,
+        expected_sha256=inventory_core_module.verify_document_authority_pin(
+            ROOT, inventory_path
+        ),
+    )
+    expected_steps = {
+        "artifact-integrity": "r4_artifact_integrity_owner_tests",
+        "expected-contract": "r4_contract_review_owner_tests",
+        "governance": "r4_governance_owner_tests",
+        "mutation-partition": "r4_data_owner_tests",
+        "structural-sufficiency": "r4_structural_sufficiency_owner_tests",
+        "surface-expansion": "r4_surface_expansion_owner_tests",
+    }
+    expected_counts = {
+        "artifact-integrity": 16,
+        "expected-contract": 33,
+        "governance": 2,
+        "mutation-partition": 36,
+        "structural-sufficiency": 2,
+        "surface-expansion": 2,
+    }
+
+    assert set(graph.phases["R4"].owners) == set(expected_steps)
+    assert set(inventory.owner_node_ids) == set(expected_steps)
+    owner_nodes: set[str] = set()
+    for owner, step_id in expected_steps.items():
+        resolved = graph.resolve_phase("R4", "owner", owner)
+        assert resolved == ("governance", "source_compile", step_id)
+        assert "r4_artifact_integrity" not in resolved
+        assert graph.pytest_process_count("R4", "owner", owner) == 1
+        selected = graph.resolve_pytest_nodes("R4", "owner", owner)
+        assert selected == inventory.owner_node_ids[owner]
+        assert len(selected) == expected_counts[owner]
+        owner_nodes.update(selected)
+
+    phase_resolved = graph.resolve_phase("R4", "phase")
+    assert phase_resolved == ("governance", "source_compile", "r4_phase_tests")
+    assert graph.pytest_process_count("R4", "phase") == 1
+    phase_nodes = graph.resolve_pytest_nodes("R4", "phase")
+    assert phase_nodes == inventory.phase_node_ids
+    assert len(phase_nodes) == 34
+    assert owner_nodes.isdisjoint(phase_nodes)
+
+    admission = graph.resolve_phase("R4", "admission")
+    assert admission == (
+        "governance",
+        "source_compile",
+        "authority_link",
+        "pytest_active",
+        "sqlite_activation",
+        "r4_artifact_integrity",
+    )
+    assert graph.pytest_process_count("R4", "admission") == 1
+    assert admission.count("r4_artifact_integrity") == 1
+
+    selected_steps = set(admission) | set(phase_resolved)
+    for owner in expected_steps:
+        selected_steps.update(graph.resolve_phase("R4", "owner", owner))
+    selected_steps.update(graph.resolve_phase("R5", "phase"))
+    for owner in graph.phases["R5"].owners:
+        selected_steps.update(graph.resolve_phase("R5", "owner", owner))
+    forbidden_inputs = {
+        "artifacts/r4/training_allowlist.json",
+        "configs/partitions.json",
+        "data/partitions/",
+        "scripts/partition_episodes.py",
+        "src/cemm_authoritative_hybrid/partitions.py",
+    }
+    for step_id in selected_steps:
+        inputs = tuple(graph.steps[step_id].material.get("inputs", ()))
+        assert not forbidden_inputs.intersection(inputs)
+        assert not any(path.startswith("artifacts/r4/partitions/") for path in inputs)
+
+
 def test_r5_gate_plans_are_exact_bounded_and_single_process() -> None:
     graph = validation_gate_module.load_gate_graph(
         ROOT / "configs" / "validation_gates.json"
@@ -1814,7 +1898,7 @@ def test_r5_gate_plans_are_exact_bounded_and_single_process() -> None:
     )
     expected_counts = {
         "artifact-contract": 15,
-        "data-isolation": 12,
+        "data-isolation": 17,
         "legacy-hard-cut": 55,
         "proposal-contract": 3,
         "realization-contract": 1,
@@ -2125,6 +2209,13 @@ __cemm_test_inventory__ = {
         "owner_ref": "validation-runner",
         "source_ast_sha256": "89fb93d771a17554797ef7c908d3b914504497a38d7555c4a8ce3dc109c67670"
     },
+    "tests/test_validation_gate.py::test_r4_gate_plans_are_exact_bounded_and_single_process": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-validation-plans-exact-bounded-single-process",
+        "diagnostic_role": "admission_only",
+        "introduced_by_task": "R4-Partition-Corrective-Task-8",
+        "source_ast_sha256": "f087f19840b0bb727045b60a343c83106650e5f30bb0bd712683d983577e79e9"
+    },
     "tests/test_validation_gate.py::test_r5_admission_rejects_before_execution_or_publication": {
         "activation_phase": "R5",
         "assertion_ref": "assertion:r5-admission-rejects-before-execution",
@@ -2137,7 +2228,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r5-validation-plans-exact-bounded-single-process",
         "diagnostic_role": "admission_only",
         "introduced_by_task": "R5-Hard-Cut-Foundation",
-        "source_ast_sha256": "92a8c80b102e52f489d09b77e3889c3054e9063aecbf1a81ab7090d2a95b8230"
+        "source_ast_sha256": "d23398f35138182bbca7eb829d5f447f701d47dad94823bb1d72cd983cffb244"
     },
     "tests/test_validation_gate.py::test_runner_records_injected_peak_rss": {
         "activation_phase": "G0",
