@@ -173,7 +173,10 @@ jobs:
           assert 'artifacts/r4/training_allowlist.json' in evidence_paths
           assert 'artifacts/r4/partition_evidence.json' not in evidence_paths
           selected = gate._required_admission_evidence_paths(
-              'R4', receipt=receipt
+              'R4',
+              source_ref=receipt.source_ref,
+              step_results=receipt.step_results,
+              evidence_paths=tuple(item.path for item in receipt.evidence_files),
           )
           assert selected == tuple(
               path for path in evidence_paths
