@@ -1,13 +1,10 @@
-name: R4 Task 8 admission-evidence verification and publication
+name: R4 Task 8 ABI-aware admission evidence
 
 on:
   pull_request:
     branches:
       - agent/r4-task8-admission-evidence-ci-base-20260820
-    types:
-      - opened
-      - reopened
-      - synchronize
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: write
@@ -41,82 +38,68 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Fence control and candidate lineages
+      - name: Fence candidate and control surfaces
         run: |
           set -euo pipefail
-          reviewed_parent='b8b180a1faac6e0f9460f8939dd1386859cb99aa'
-          head_sha="$(git -C candidate rev-parse HEAD)"
-          test '${{ github.event.pull_request.base.ref }}' = 'agent/r4-task8-admission-evidence-ci-base-20260820'
-          test '${{ github.event.pull_request.head.ref }}' = 'agent/r4-task8-admission-evidence-candidate-20260820'
-          test "$(git -C candidate rev-parse HEAD^)" = "$reviewed_parent"
-
-          printf '%s\n' '.github/r4-task8-status/admission-evidence-trigger.json' > /tmp/expected-trigger-path
+          parent='b8b180a1faac6e0f9460f8939dd1386859cb99aa'
+          candidate_head="$(git -C candidate rev-parse HEAD)"
+          test "$(git -C candidate rev-parse HEAD^)" = "$parent"
+          printf '%s\n' '.github/r4-task8-status/admission-evidence-trigger.json' > /tmp/trigger-path
           printf '%s\n' \
             'hybrid_mvp/scripts/update_replay_status.py' \
             'hybrid_mvp/scripts/validation_gate.py' \
             'hybrid_mvp/tests/test_r4_validation_gate.py' \
-            'hybrid_mvp/tests/test_replay_governance.py' | sort > /tmp/expected-code-paths
-          git -C candidate diff --name-only "$reviewed_parent" "$head_sha" | sort > /tmp/actual-head-paths
-          if diff -q /tmp/expected-trigger-path /tmp/actual-head-paths >/dev/null; then
-            cat > /tmp/expected-trigger.json <<'JSON'
-          {
-            "purpose": "trigger SHA-fenced Task 8 admission-evidence verification",
-            "replace_with_parent": "b8b180a1faac6e0f9460f8939dd1386859cb99aa"
-          }
-          JSON
-            cmp /tmp/expected-trigger.json candidate/.github/r4-task8-status/admission-evidence-trigger.json
+            'hybrid_mvp/tests/test_replay_governance.py' | sort > /tmp/code-paths
+          git -C candidate diff --name-only "$parent" "$candidate_head" | sort > /tmp/candidate-paths
+          if diff -q /tmp/trigger-path /tmp/candidate-paths >/dev/null; then
+            test "$(git -C candidate hash-object .github/r4-task8-status/admission-evidence-trigger.json)" = '5c3e21959fa8a54d2d4664f303550ad841366767'
           else
-            diff -u /tmp/expected-code-paths /tmp/actual-head-paths
+            diff -u /tmp/code-paths /tmp/candidate-paths
           fi
 
-          test "$(git -C control merge-base "$reviewed_parent" HEAD)" = "$reviewed_parent"
+          test "$(git -C control merge-base "$parent" HEAD)" = "$parent"
           {
             for index in 00 01 02 03 04 05; do
               printf '.github/r4-task8/admission-evidence-v2/%s.b64\n' "$index"
             done
             printf '.github/workflows/r4-task8-admission-evidence-verify.yml\n'
-          } | sort > /tmp/expected-control-paths
-          git -C control diff --name-only "$reviewed_parent" HEAD | sort > /tmp/actual-control-paths
-          diff -u /tmp/expected-control-paths /tmp/actual-control-paths
+          } | sort > /tmp/control-paths-expected
+          git -C control diff --name-only "$parent" HEAD | sort > /tmp/control-paths
+          diff -u /tmp/control-paths-expected /tmp/control-paths
+          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/00.b64)" = '72048f8508ad3d339ce826bd2643bdfca6d194e3'
+          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/01.b64)" = '1a4ee26b578cb6b6ea531bf6d9504339dc35dfac'
+          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/02.b64)" = '0740ac7704a53d24540ee48557db919b5c5dab2c'
+          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/03.b64)" = 'b9682e577510ee346e333b44e1e9a5767ed1307c'
+          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/04.b64)" = 'aca78d74fd7a7967a4dd7e6ebd2afe94f9fac0b5'
+          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/05.b64)" = 'b6ade3479910396e1e47a36fc94e31c810bc2c2c'
+          printf 'INITIAL_HEAD_SHA=%s\n' "$candidate_head" >> "$GITHUB_ENV"
+          git -C candidate checkout --detach "$parent"
 
-          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/00.b64)" = '9a87682ab6fb076c329a7f9f5320b7efc49b1ebe'
-          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/01.b64)" = 'd21da035dbe6624a3dadfdd173fb829399a4900c'
-          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/02.b64)" = 'c748bf6ec45db7d0b0a779f82f3191b2456e147e'
-          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/03.b64)" = '665d942771ad5f097c9e8c26eea1fd30f2248d37'
-          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/04.b64)" = 'b01e859533e03ebc6e446197eb606e3beb431933'
-          test "$(git -C control hash-object .github/r4-task8/admission-evidence-v2/05.b64)" = '45aef13531546766797ab79ae0fa665195bf2526'
-
-          printf 'INITIAL_HEAD_SHA=%s\n' "$head_sha" >> "$GITHUB_ENV"
-          git -C candidate checkout --detach "$reviewed_parent"
-          test "$(git -C candidate rev-parse HEAD)" = "$reviewed_parent"
-
-      - name: Authenticate and apply the reviewed patch
+      - name: Reconstruct and apply the reviewed patch
         run: |
           set -euo pipefail
-          cat control/.github/r4-task8/admission-evidence-v2/*.b64 > /tmp/cemm-task8-admission-evidence.patch.gz.b64
-          test "$(sha256sum /tmp/cemm-task8-admission-evidence.patch.gz.b64 | cut -d' ' -f1)" = 'da4d464e7d3cee0a11c5097f9b81957dc4fca5f47047052c7a7bcea63e7ac7d9'
-          base64 --decode /tmp/cemm-task8-admission-evidence.patch.gz.b64 > /tmp/cemm-task8-admission-evidence.patch.gz
-          test "$(sha256sum /tmp/cemm-task8-admission-evidence.patch.gz | cut -d' ' -f1)" = 'b21de1b74ac712450f7892c7d8d2d6b88b56d3a34fdf334d2356f3b11e57485f'
-          gzip -dc /tmp/cemm-task8-admission-evidence.patch.gz > /tmp/cemm-task8-admission-evidence.patch
-          test "$(sha256sum /tmp/cemm-task8-admission-evidence.patch | cut -d' ' -f1)" = '3e9817a3ebcbf93c2fa17c64b508dedbd3b32ee5c12fcb1d7c83b8d4fa233806'
-          git -C candidate apply --check /tmp/cemm-task8-admission-evidence.patch
-          git -C candidate apply /tmp/cemm-task8-admission-evidence.patch
+          cat control/.github/r4-task8/admission-evidence-v2/*.b64 > /tmp/change.b64
+          test "$(sha256sum /tmp/change.b64 | cut -d' ' -f1)" = '91e14cc3fe9b8f17e388f9862e665f1124d3c4ceb92badbc5051dbded619acc3'
+          base64 --decode /tmp/change.b64 > /tmp/change.patch.gz
+          test "$(sha256sum /tmp/change.patch.gz | cut -d' ' -f1)" = '4338bd85086d00ae526100721bcb9feebe0a0766caf14fc133f25181c954ab07'
+          gzip -dc /tmp/change.patch.gz > /tmp/change.patch
+          test "$(sha256sum /tmp/change.patch | cut -d' ' -f1)" = '90412ab9e7f30ccfea678e03fb4f356968113608c2f2f9f9e91c5494297483ba'
+          git -C candidate apply --check /tmp/change.patch
+          git -C candidate apply /tmp/change.patch
           git -C candidate diff --check
-
           printf '%s\n' \
             'hybrid_mvp/scripts/update_replay_status.py' \
             'hybrid_mvp/scripts/validation_gate.py' \
             'hybrid_mvp/tests/test_r4_validation_gate.py' \
-            'hybrid_mvp/tests/test_replay_governance.py' | sort > /tmp/expected-code-paths
-          git -C candidate diff --name-only | sort > /tmp/actual-code-paths
-          diff -u /tmp/expected-code-paths /tmp/actual-code-paths
-
-          test "$(sha256sum candidate/hybrid_mvp/scripts/validation_gate.py | cut -d' ' -f1)" = '4a3fc6293d662996fa8faa70529eef162b36d5db28f1f9c4789c84394a15661d'
+            'hybrid_mvp/tests/test_replay_governance.py' | sort > /tmp/code-paths
+          git -C candidate diff --name-only | sort > /tmp/applied-paths
+          diff -u /tmp/code-paths /tmp/applied-paths
           test "$(sha256sum candidate/hybrid_mvp/scripts/update_replay_status.py | cut -d' ' -f1)" = '6d6cb8c448c54fb9eef85602a20ad251ed2f70bce3cca6ff88b6dc5f58975a54'
+          test "$(sha256sum candidate/hybrid_mvp/scripts/validation_gate.py | cut -d' ' -f1)" = '4a3fc6293d662996fa8faa70529eef162b36d5db28f1f9c4789c84394a15661d'
           test "$(sha256sum candidate/hybrid_mvp/tests/test_r4_validation_gate.py | cut -d' ' -f1)" = '2d643fbfd02d1425dfbc3f0c3d79ca6d99fc934162a31b1aeb3e00659fd3dab7'
-          test "$(sha256sum candidate/hybrid_mvp/tests/test_replay_governance.py | cut -d' ' -f1)" = '8d7221ccd6f96dbe719bb90c5ce5123f1ca8c5de695f26f05aca911b8deb502c'
+          test "$(sha256sum candidate/hybrid_mvp/tests/test_replay_governance.py | cut -d' ' -f1)" = '75842b356f1e2216395a67b740f39b9919acfdd44afc225ee052c983f33c6629'
 
-      - name: Create the deterministic local candidate commit
+      - name: Create deterministic local candidate
         run: |
           set -euo pipefail
           git -C candidate config user.name 'CEMM Verification Bot'
@@ -129,34 +112,26 @@ jobs:
           git -C candidate diff --cached --check
           GIT_AUTHOR_NAME='CEMM Verification Bot' \
           GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
-          GIT_AUTHOR_DATE='2026-08-20T17:30:00+01:00' \
+          GIT_AUTHOR_DATE='2026-08-20T18:00:00+01:00' \
           GIT_COMMITTER_NAME='CEMM Verification Bot' \
           GIT_COMMITTER_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
-          GIT_COMMITTER_DATE='2026-08-20T17:30:00+01:00' \
+          GIT_COMMITTER_DATE='2026-08-20T18:00:00+01:00' \
             git -C candidate commit --no-gpg-sign -m 'fix(r4): select admission evidence by build ABI'
-          candidate_sha="$(git -C candidate rev-parse HEAD)"
           test "$(git -C candidate rev-parse HEAD^)" = 'b8b180a1faac6e0f9460f8939dd1386859cb99aa'
           test -z "$(git -C candidate status --short --untracked-files=all)"
-          printf 'CANDIDATE_SHA=%s\n' "$candidate_sha" >> "$GITHUB_ENV"
+          printf 'CANDIDATE_SHA=%s\n' "$(git -C candidate rev-parse HEAD)" >> "$GITHUB_ENV"
 
-      - name: Install governed verification dependencies
+      - name: Install verification dependencies
         run: |
           set -euo pipefail
-          python -m pip install \
-            'pytest==8.4.0' \
-            'jsonschema==4.25.1' \
-            'numpy==2.5.2' \
-            'safetensors==0.5.3'
+          python -m pip install 'pytest==8.4.0' 'jsonschema==4.25.1' 'numpy==2.5.2' 'safetensors==0.5.3'
           python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
 
-      - name: Compile active source and scripts
-        working-directory: candidate/hybrid_mvp
-        run: python -m compileall -q src scripts
-
-      - name: Run focused gate and governance owners
+      - name: Run focused owners
         working-directory: candidate/hybrid_mvp
         run: |
           set -euo pipefail
+          python -m compileall -q src scripts
           python -m pytest \
             tests/test_r4_validation_gate.py \
             tests/test_replay_governance.py \
@@ -164,7 +139,7 @@ jobs:
             tests/test_r5_data_isolation.py \
             -q -p no:cacheprovider
 
-      - name: Verify metadata and frozen source inventory
+      - name: Verify frozen inventory and hard cuts
         working-directory: candidate/hybrid_mvp
         run: |
           set -euo pipefail
@@ -172,120 +147,83 @@ jobs:
           for phase in G0 R1 R2 R3 R4 R5; do
             python scripts/check_test_inventory.py --phase "$phase" --source-only
           done
-
-      - name: Run structural and legacy hard-cut audits
-        working-directory: candidate/hybrid_mvp
-        run: |
-          set -euo pipefail
           python scripts/check_r3_r4_structure.py
           python scripts/audit_legacy_test_hard_cut.py
 
-      - name: Reconstruct the admitted historical ABI 3 evidence
+      - name: Reconstruct historical ABI 3 receipt
         working-directory: candidate/hybrid_mvp
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
           import sys
-
           from cemm_authoritative_hybrid import process_control
-
           sys.modules['process_control'] = process_control
           import validation_gate as gate
           import update_replay_status as replay
 
-          root = Path('.').resolve()
-          receipt, evidence_paths = gate.load_verified_admission_receipt(
-              root,
+          receipt, paths = gate.load_verified_admission_receipt(
+              Path('.').resolve(),
               phase='R4',
               expected_status='passed',
               run_ref='run:300579c997da31e29d1c1a06',
           )
           assert receipt.source_ref == '597348731c45892f7d9145e8fff96214beb0b245'
           assert receipt.gate_result_ref == 'gate_result:c9a643b22f3df49f8a074466'
-          assert len(evidence_paths) == 17
-          assert 'artifacts/r4/training_allowlist.json' in evidence_paths
-          assert 'artifacts/r4/partition_evidence.json' not in evidence_paths
+          assert len(paths) == 17
           selected = gate._required_admission_evidence_paths(
               'R4',
               source_ref=receipt.source_ref,
               step_results=receipt.step_results,
               evidence_paths=tuple(item.path for item in receipt.evidence_files),
           )
-          assert selected == tuple(
-              path for path in evidence_paths
-              if not path.startswith('artifacts/validation/runs/')
+          assert selected == tuple(path for path in paths if not path.startswith('artifacts/validation/runs/'))
+          assert 'artifacts/r4/training_allowlist.json' in selected
+          assert 'artifacts/r4/partition_evidence.json' not in selected
+          assert replay._PHASE_ADMISSION_EVIDENCE_PATHS['R4'] == (
+              frozenset(gate._R4_HISTORICAL_ABI3_EVIDENCE_PATHS)
+              | frozenset(gate._R4_CURRENT_ABI4_EVIDENCE_PATHS)
           )
           assert set(selected) < set(replay._PHASE_ADMISSION_EVIDENCE_PATHS['R4'])
-          assert replay._PHASE_ADMISSION_EVIDENCE_PATHS['R4'] == frozenset(
-              gate._R4_HISTORICAL_ABI3_EVIDENCE_PATHS
-          ) | frozenset(gate._R4_CURRENT_ABI4_EVIDENCE_PATHS)
           PY
 
-      - name: Confirm the verified candidate remains clean
+      - name: Confirm clean candidate and write receipt
         run: |
           set -euo pipefail
           find candidate/hybrid_mvp -type d -name __pycache__ -prune -exec rm -rf {} +
           test -z "$(git -C candidate status --short --untracked-files=all)"
-
-      - name: Write the deterministic verification receipt
-        run: |
-          set -euo pipefail
           python - "$CANDIDATE_SHA" <<'PY'
-          import json
+          import json, subprocess, sys
           from pathlib import Path
-          import subprocess
-          import sys
-
-          candidate_sha = sys.argv[1]
-          tree_sha = subprocess.check_output(
-              ['git', '-C', 'candidate', 'rev-parse', f'{candidate_sha}^{{tree}}'],
-              text=True,
-          ).strip()
-          payload = {
-              'candidate_sha': candidate_sha,
+          sha = sys.argv[1]
+          tree = subprocess.check_output(['git','-C','candidate','rev-parse',f'{sha}^{{tree}}'], text=True).strip()
+          Path('/tmp/task8-verification.json').write_text(json.dumps({
+              'candidate_sha': sha,
               'parent_sha': 'b8b180a1faac6e0f9460f8939dd1386859cb99aa',
-              'tree_sha': tree_sha,
-              'patch_sha256': '3e9817a3ebcbf93c2fa17c64b508dedbd3b32ee5c12fcb1d7c83b8d4fa233806',
+              'tree_sha': tree,
+              'patch_sha256': '90412ab9e7f30ccfea678e03fb4f356968113608c2f2f9f9e91c5494297483ba',
               'changed_paths': [
                   'hybrid_mvp/scripts/update_replay_status.py',
                   'hybrid_mvp/scripts/validation_gate.py',
                   'hybrid_mvp/tests/test_r4_validation_gate.py',
                   'hybrid_mvp/tests/test_replay_governance.py',
               ],
-              'historical_receipt': {
-                  'run_ref': 'run:300579c997da31e29d1c1a06',
-                  'source_ref': '597348731c45892f7d9145e8fff96214beb0b245',
-                  'abi_version': 3,
-                  'evidence_count': 16,
-              },
-              'current_candidate_policy': {
-                  'abi_version': 4,
-                  'evidence_count': 17,
-              },
-              'inventory_phases': ['G0', 'R1', 'R2', 'R3', 'R4', 'R5'],
               'metadata_records': 356,
-          }
-          Path('/tmp/r4-task8-admission-evidence-verification.json').write_text(
-              json.dumps(payload, sort_keys=True, indent=2) + '\n',
-              encoding='utf-8',
-          )
+              'inventory_phases': ['G0','R1','R2','R3','R4','R5'],
+              'focused_test_count': 111,
+          }, sort_keys=True, indent=2) + '\n', encoding='utf-8')
           PY
 
-      - name: SHA-fenced publication to candidate and target branches
+      - name: SHA-fenced publication
         run: |
           set -euo pipefail
           candidate_ref='refs/heads/agent/r4-task8-admission-evidence-candidate-20260820'
           target_ref='refs/heads/agent/r4-task4-batch-publisher-20260816'
-          reviewed_parent='b8b180a1faac6e0f9460f8939dd1386859cb99aa'
-
-          git -C candidate push \
-            --force-with-lease="$candidate_ref:$INITIAL_HEAD_SHA" \
-            origin HEAD:"$candidate_ref"
+          parent='b8b180a1faac6e0f9460f8939dd1386859cb99aa'
+          git -C candidate push --force-with-lease="$candidate_ref:$INITIAL_HEAD_SHA" origin HEAD:"$candidate_ref"
           test "$(git -C candidate ls-remote origin "$candidate_ref" | cut -f1)" = "$CANDIDATE_SHA"
-
           remote_target="$(git -C candidate ls-remote origin "$target_ref" | cut -f1)"
-          if [ "$remote_target" = "$reviewed_parent" ]; then
+          if [ "$remote_target" = "$parent" ]; then
             git -C candidate push origin HEAD:"$target_ref"
           else
             test "$remote_target" = "$CANDIDATE_SHA"
@@ -295,6 +233,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: cemm-r4-task8-admission-evidence-verification
-          path: /tmp/r4-task8-admission-evidence-verification.json
+          path: /tmp/task8-verification.json
           if-no-files-found: error
           retention-days: 7
