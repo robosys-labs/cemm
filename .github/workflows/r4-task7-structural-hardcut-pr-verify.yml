@@ -48,7 +48,8 @@ jobs:
           test "$(git merge-base "$expected_published" "$base_sha")" = "$expected_published"
           printf '%s\n' \
             '.github/workflows/r4-task7-literalize-leakage-successors-pr.yml' \
-            '.github/workflows/r4-task7-structural-hardcut-pr-verify.yml' | sort > /tmp/expected-base
+            '.github/workflows/r4-task7-structural-hardcut-pr-verify.yml' \
+            '.github/workflows/r4-task8-source-export.yml' | sort > /tmp/expected-base
           git diff --name-only "$expected_published" "$base_sha" | sort > /tmp/actual-base
           diff -u /tmp/expected-base /tmp/actual-base
           printf '%s\n' \
@@ -66,6 +67,30 @@ jobs:
             'hybrid_mvp/tests/test_r4_partition_global_assignment.py' | sort > /tmp/expected-cumulative
           git diff --name-only "$published_sha" "$head_sha" | sort > /tmp/actual-cumulative
           diff -u /tmp/expected-cumulative /tmp/actual-cumulative
+      - name: Export exact Task 8 source surface
+        working-directory: .
+        run: |
+          set -euo pipefail
+          head_sha="$(git rev-parse HEAD^2)"
+          test "$head_sha" = 'b8b180a1faac6e0f9460f8939dd1386859cb99aa'
+          git archive --format=tar.gz --output=/tmp/cemm-task8-source.tar.gz "$head_sha" -- \
+            hybrid_mvp/AGENTS.md \
+            hybrid_mvp/configs \
+            hybrid_mvp/docs \
+            hybrid_mvp/governance \
+            hybrid_mvp/schemas \
+            hybrid_mvp/scripts \
+            hybrid_mvp/src \
+            hybrid_mvp/tests
+          sha256sum /tmp/cemm-task8-source.tar.gz > /tmp/cemm-task8-source.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-task8-source-b8b180a1
+          path: |
+            /tmp/cemm-task8-source.tar.gz
+            /tmp/cemm-task8-source.sha256
+          if-no-files-found: error
+          retention-days: 1
       - name: Install governed test dependencies
         run: |
           set -euo pipefail
