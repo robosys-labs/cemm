@@ -1,0 +1,4 @@
+{
+  "purpose": "trigger the SHA-fenced Task 8 evidence-policy patch workflow",
+  "replace_with_parent": "b8b180a1faac6e0f9460f8939dd1386859cb99aa"
+}
