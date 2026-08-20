@@ -33,12 +33,20 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Fence the exact reviewed parent
+      - name: Fence and discard the disposable trigger commit
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = 'b8b180a1faac6e0f9460f8939dd1386859cb99aa'
+          trigger_sha='490c025633af288f4175783a48805b52d7728b9b'
+          reviewed_parent='b8b180a1faac6e0f9460f8939dd1386859cb99aa'
+          test "$(git rev-parse HEAD)" = "$trigger_sha"
+          test "$(git rev-parse HEAD^)" = "$reviewed_parent"
           test '${{ github.event.pull_request.base.ref }}' = 'agent/r4-task8-evidence-policy-ci-base-20260820'
           test '${{ github.event.pull_request.head.ref }}' = 'agent/r4-task8-evidence-policy-head-20260820'
+          printf '%s\n' '.github/r4-task8-status/evidence-policy-trigger.json' > /tmp/expected-trigger
+          git diff --name-only HEAD^ HEAD | sort > /tmp/actual-trigger
+          diff -u /tmp/expected-trigger /tmp/actual-trigger
+          git checkout --detach "$reviewed_parent"
+          test "$(git rev-parse HEAD)" = "$reviewed_parent"
       - name: Decode and authenticate the reviewed patch
         run: |
           set -euo pipefail
@@ -120,4 +128,6 @@ B64
             hybrid_mvp/tests/test_r4_validation_gate.py
           git diff --cached --check
           git commit -m 'fix(r4): select admission evidence by build ABI'
-          git push origin HEAD:agent/r4-task8-evidence-policy-head-20260820
+          git push \
+            --force-with-lease=refs/heads/agent/r4-task8-evidence-policy-head-20260820:490c025633af288f4175783a48805b52d7728b9b \
+            origin HEAD:refs/heads/agent/r4-task8-evidence-policy-head-20260820
