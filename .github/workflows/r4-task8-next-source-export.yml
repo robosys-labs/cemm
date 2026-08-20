@@ -1,0 +1,41 @@
+name: R4 Task 8 next-source export
+
+on:
+  push:
+    branches:
+      - agent/r4-task8-next-source-export-20260820
+    paths:
+      - .github/workflows/r4-task8-next-source-export.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: robosys-labs/cemm
+          ref: 8e09a87c14e167558834a1adf329d836ee75801a
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fence exact target
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = '8e09a87c14e167558834a1adf329d836ee75801a'
+          test -z "$(git status --short --untracked-files=all)"
+      - name: Archive exact Hybrid MVP tree
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz --output=/tmp/cemm-task8-current-tree.tar.gz HEAD -- hybrid_mvp
+          sha256sum /tmp/cemm-task8-current-tree.tar.gz | tee /tmp/cemm-task8-current-tree.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-task8-current-tree-8e09a87c
+          path: |
+            /tmp/cemm-task8-current-tree.tar.gz
+            /tmp/cemm-task8-current-tree.sha256
+          if-no-files-found: error
+          retention-days: 1
