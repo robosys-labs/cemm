@@ -1,0 +1,87 @@
+name: R4 Task 7 structural hard-cut PR verification
+
+on:
+  pull_request:
+    branches:
+      - agent/r4-task7-structural-hardcut-ci-base-20260820
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r4-task7-structural-hardcut-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: hybrid_mvp
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+      PYTHONPATH: src:scripts:.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Fence the exact base and code commits
+        run: |
+          set -euo pipefail
+          merge_sha="$(git rev-parse HEAD)"
+          base_sha="$(git rev-parse "${merge_sha}^1")"
+          head_sha="$(git rev-parse "${merge_sha}^2")"
+          test "$head_sha" = 'efba3974e0856d99ba873774b6b7ec6615c2a19d'
+          test "$(git rev-parse "${head_sha}^")" = '6e9b6fe4efbda48e52245a21647fcb2b0a8792ba'
+          test "$(git rev-parse "${base_sha}^")" = '6e9b6fe4efbda48e52245a21647fcb2b0a8792ba'
+          printf '%s\n' \
+            'hybrid_mvp/configs/partitions.json' \
+            'hybrid_mvp/scripts/check_r3_r4_structure.py' | sort > /tmp/expected-head
+          git diff --name-only "${head_sha}^" "$head_sha" | sort > /tmp/actual-head
+          diff -u /tmp/expected-head /tmp/actual-head
+          printf '%s\n' \
+            '.github/workflows/r4-task7-structural-hardcut-pr-verify.yml' > /tmp/expected-base
+          git diff --name-only "${base_sha}^" "$base_sha" | sort > /tmp/actual-base
+          diff -u /tmp/expected-base /tmp/actual-base
+      - name: Install governed test dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install 'pytest==8.4.0' 'jsonschema==4.25.1' 'numpy==2.5.2' 'safetensors==0.5.3'
+          python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
+      - name: Compile active source and scripts
+        run: python -m compileall -q src scripts
+      - name: Enforce R3-R5 structural hard cut
+        run: python scripts/check_r3_r4_structure.py
+      - name: Verify R3-R4 test metadata
+        run: python scripts/verify_r3_r4_test_metadata.py
+      - name: Replay source-only inventory through R5
+        run: |
+          set -euo pipefail
+          for phase in G0 R1 R2 R3 R4 R5; do
+            python scripts/check_test_inventory.py --phase "$phase" --source-only
+          done
+      - name: Audit legacy test hard cut
+        run: python scripts/audit_legacy_test_hard_cut.py
+      - name: Run focused R4-R5 boundary tests
+        run: |
+          python -m pytest \
+            tests/test_r5_data_isolation.py \
+            tests/test_r4_training_partition_boundary.py \
+            tests/test_r4_partition_contracts.py \
+            tests/test_r4_release_training.py \
+            tests/test_r5_foundation.py \
+            -q -p no:cacheprovider
+      - name: Confirm governed source remains unchanged
+        if: always()
+        run: |
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          test -z "$(git status --short -- .)"
