@@ -1,7 +1,7 @@
 name: R4 Task 8 source export
 
 on:
-  pull_request_target:
+  pull_request:
     branches:
       - agent/r4-task7-structural-hardcut-ci-base-20260820
     types:
