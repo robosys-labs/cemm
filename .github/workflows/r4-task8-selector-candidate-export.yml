@@ -1,0 +1,39 @@
+name: R4 Task 8 selector candidate export
+
+on:
+  pull_request_target:
+    branches:
+      - agent/r4-task8-selector-final-ci-base-20260820
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    if: github.event.pull_request.head.ref == 'agent/r4-task8-selector-final-candidate-20260820'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: robosys-labs/cemm
+          ref: 4c247d7284014f06a2764510b448af675a4ecb07
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fence and archive exact candidate checkout
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = '4c247d7284014f06a2764510b448af675a4ecb07'
+          test "$(git rev-parse HEAD^)" = '8e09a87c14e167558834a1adf329d836ee75801a'
+          test -z "$(git status --short --untracked-files=all)"
+          tar -czf /tmp/cemm-r4-task8-selector-candidate.tar.gz .git hybrid_mvp
+          sha256sum /tmp/cemm-r4-task8-selector-candidate.tar.gz > /tmp/cemm-r4-task8-selector-candidate.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-r4-task8-selector-candidate-4c247d72
+          path: |
+            /tmp/cemm-r4-task8-selector-candidate.tar.gz
+            /tmp/cemm-r4-task8-selector-candidate.sha256
+          if-no-files-found: error
+          retention-days: 1
