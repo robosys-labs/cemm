@@ -39,14 +39,14 @@ __cemm_test_inventory__ = {
     'tests/test_r4_partition_global_assignment.py::test_real_allocator_is_whole_component_deterministic_and_independently_verified': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-global-assignment-is-deterministic-and-independently-verified', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-5', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '90aa8a47c5a8be9bed2db614d68de3a10a63e3ce133354d6b149b3103601e2fa'},
     'tests/test_r4_partition_global_assignment.py::test_independent_verifier_rejects_split_tamper': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-independent-verifier-rejects-split-tamper', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-5', 'owner_ref': 'mutation-partition', 'source_ast_sha256': 'e1787b22db9957fd373f09c25618eda748eeffa79aacad48f1e1ccc10371e334'},
     'tests/test_r4_partition_global_assignment.py::test_synthetic_giant_component_fails_four_class_feasibility': {'activation_phase': 'R4', 'assertion_ref': 'assertion:r4-giant-component-fails-four-class-feasibility', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-5', 'owner_ref': 'mutation-partition', 'source_ast_sha256': 'e29dae679d51a1f04ac32419f8cf7a9218bbb085227f0b89158d093789dd4e56'},
-    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[adversarial_mutation]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '9c131b409ed8d2dea7c5a0d0a7e90992f86fc1029b2bc034627d6f72f41edc22', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[adversarial_mutation]'},
-    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[authority_target]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '9c131b409ed8d2dea7c5a0d0a7e90992f86fc1029b2bc034627d6f72f41edc22', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[authority_target]'},
-    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[dialogue]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '9c131b409ed8d2dea7c5a0d0a7e90992f86fc1029b2bc034627d6f72f41edc22', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[dialogue]'},
-    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[entity]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '9c131b409ed8d2dea7c5a0d0a7e90992f86fc1029b2bc034627d6f72f41edc22', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[entity]'},
-    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[graph_topology]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '9c131b409ed8d2dea7c5a0d0a7e90992f86fc1029b2bc034627d6f72f41edc22', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[graph_topology]'},
-    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[lexical_value]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '9c131b409ed8d2dea7c5a0d0a7e90992f86fc1029b2bc034627d6f72f41edc22', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[lexical_value]'},
-    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[normalized_text]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '9c131b409ed8d2dea7c5a0d0a7e90992f86fc1029b2bc034627d6f72f41edc22', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[normalized_text]'},
-    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[template]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '9c131b409ed8d2dea7c5a0d0a7e90992f86fc1029b2bc034627d6f72f41edc22', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[template]'},
+    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[adversarial_mutation]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '58b9338eae01c81f8f066a81096be012595f08e3944c14e8b49b2256ef61f386', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[adversarial_mutation]'},
+    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[authority_target]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '58b9338eae01c81f8f066a81096be012595f08e3944c14e8b49b2256ef61f386', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[authority_target]'},
+    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[dialogue]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '58b9338eae01c81f8f066a81096be012595f08e3944c14e8b49b2256ef61f386', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[dialogue]'},
+    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[entity]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '58b9338eae01c81f8f066a81096be012595f08e3944c14e8b49b2256ef61f386', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[entity]'},
+    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[graph_topology]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '58b9338eae01c81f8f066a81096be012595f08e3944c14e8b49b2256ef61f386', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[graph_topology]'},
+    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[lexical_value]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '58b9338eae01c81f8f066a81096be012595f08e3944c14e8b49b2256ef61f386', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[lexical_value]'},
+    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[normalized_text]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '58b9338eae01c81f8f066a81096be012595f08e3944c14e8b49b2256ef61f386', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[normalized_text]'},
+    'tests/test_r4_partition_global_assignment.py::test_no_leakage_hyperedge_crosses_classes[template]': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-no-lineage-component-crosses-partitions', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '58b9338eae01c81f8f066a81096be012595f08e3944c14e8b49b2256ef61f386', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_no_lineage_component_crosses_partitions[template]'},
     'tests/test_r4_partition_global_assignment.py::test_split_manifest_counts_match_assignment': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-partition-manifest-has-correct-counts', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '8dda2d0050821008ef08fe2d60062417c943419babf650ab70c74b0c6be11212', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_partition_manifest_has_correct_counts'},
     'tests/test_r4_partition_global_assignment.py::test_split_payload_counts_match_manifest': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-partition-counts-match-files', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': 'f5a1d02c3f9c5ea96f33f9feb31ff0a9845b355d6d8611e02a073c2edf7d354b', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_partition_counts_match_files'},
     'tests/test_r4_partition_global_assignment.py::test_split_payload_hashes_match_manifest': {'activation_phase': 'R4', 'assertion_ref': 'assertion:partition-leakage-partition-manifest-hashes-match-files', 'diagnostic_role': 'owner', 'introduced_by_task': 'R4-Partition-Corrective-Task-7', 'owner_ref': 'mutation-partition', 'source_ast_sha256': '2c0c41510c6d8662e82b13fe7c9086ed268ffeb552b6052aadd6a1a6fe6f8655', 'supersedes_node_id': 'tests/test_partition_leakage.py::test_partition_manifest_hashes_match_files'},
@@ -244,22 +244,28 @@ def test_independent_verifier_rejects_split_tamper() -> None:
         )
 
 
-_LINEAGE_AXIS_CASES = (
-    ("adversarial_mutation", "mutation"),
-    ("authority_target", "semantic_target"),
-    ("dialogue", "dialogue"),
-    ("entity", "semantic_target"),
-    ("graph_topology", "topology"),
-    ("lexical_value", "lexical"),
-    ("normalized_text", "lexical"),
-    ("template", "lexical"),
-)
-
-
 @pytest.mark.parametrize(
     ("lineage_case", "axis"),
-    _LINEAGE_AXIS_CASES,
-    ids=tuple(row[0] for row in _LINEAGE_AXIS_CASES),
+    (
+        ("adversarial_mutation", "mutation"),
+        ("authority_target", "semantic_target"),
+        ("dialogue", "dialogue"),
+        ("entity", "semantic_target"),
+        ("graph_topology", "topology"),
+        ("lexical_value", "lexical"),
+        ("normalized_text", "lexical"),
+        ("template", "lexical"),
+    ),
+    ids=(
+        "adversarial_mutation",
+        "authority_target",
+        "dialogue",
+        "entity",
+        "graph_topology",
+        "lexical_value",
+        "normalized_text",
+        "template",
+    ),
 )
 def test_no_leakage_hyperedge_crosses_classes(
     assigned,
