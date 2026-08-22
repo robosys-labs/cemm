@@ -39,19 +39,27 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Repair v3 error reporter without changing candidate source
+      - name: Normalize v3 wrapper diagnostics and authenticated patch identity
         run: |
           set -euo pipefail
+          patch='control/.github/r5-r6-task1/source-owner-repair.patch.gz.b64'
+          actual_patch_sha="$(sha256sum "$patch" | cut -d' ' -f1)"
+          test "$actual_patch_sha" = '97322ae51aa45628b2db1411a7a485f89d3c87cd12766df8fa1fa17fa18c327f'
           python - <<'PY'
           from pathlib import Path
 
           path = Path('control/.github/r5-r6-task1/run-current-admission-v3.sh')
           text = path.read_text(encoding='utf-8')
-          old = '''trap 'rc=$?; printf \\"Task 1 v3 wrapper failed at line %s: %s\\\\n\\" \\"${LINENO}\\" \\"${BASH_COMMAND}\\" >&2; exit \\"${rc}\\"' ERR'''
-          new = '''trap 'rc=$?; printf "Task 1 v3 wrapper failed at line %s: %s\\n" "${LINENO}" "${BASH_COMMAND}" >&2; exit "${rc}"' ERR'''
-          if text.count(old) != 1:
+          trap_old = '''trap 'rc=$?; printf \\"Task 1 v3 wrapper failed at line %s: %s\\\\n\\" \\"${LINENO}\\" \\"${BASH_COMMAND}\\" >&2; exit \\"${rc}\\"' ERR'''
+          trap_new = '''trap 'rc=$?; printf "Task 1 v3 wrapper failed at line %s: %s\\n" "${LINENO}" "${BASH_COMMAND}" >&2; exit "${rc}"' ERR'''
+          hash_old = 'abc439ec63ed804e31829b0858d2927594c4601672f7bfcbcf935d6510bc4670'
+          hash_new = '97322ae51aa45628b2db1411a7a485f89d3c87cd12766df8fa1fa17fa18c327f'
+          if text.count(trap_old) != 1:
               raise SystemExit('expected malformed v3 ERR trap exactly once')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          if text.count(hash_old) != 1:
+              raise SystemExit('expected stale source-owner payload hash exactly once')
+          text = text.replace(trap_old, trap_new, 1).replace(hash_old, hash_new, 1)
+          path.write_text(text, encoding='utf-8')
           PY
           bash -n control/.github/r5-r6-task1/run-current-admission-v3.sh
       - name: Install governed R4 verification dependencies
