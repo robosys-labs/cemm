@@ -1,0 +1,4 @@
+{
+  "purpose": "trigger minimal R4 owner repair, deterministic ABI-4 rebuild, admission, and green transition",
+  "replace_with_parent": "ca4816bc892d14e7eb593f00977309e2031f131b"
+}
