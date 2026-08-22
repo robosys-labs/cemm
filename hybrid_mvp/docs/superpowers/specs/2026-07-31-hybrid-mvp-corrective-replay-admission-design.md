@@ -12,6 +12,13 @@ evidence)
 > `SemanticSwitchProgram` derivations from canonical `SemanticExpression` and
 > `VerifiedMeaning`. Conflicting program-as-meaning language is superseded by
 > the authoritative amendment and corrected in place here.
+>
+> **2026-08-22 R4 partition-boundary supersession:** Section 7 remains
+> historical design evidence, but its independent-axis assignments, read
+> allowlist, and external-review requirements are superseded only for R4 by
+> the 2026-08-14 partition corrective design and plan. The generic G0-R3 and
+> R5-R8 boundaries in this document remain governing unless separately
+> amended. Effective status remains ledger-derived.
 
 ## 1. Decision
 

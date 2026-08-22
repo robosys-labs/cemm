@@ -1,6 +1,6 @@
 # R4 Partition Corrective Replay Progress Tracker
 
-**Tracker date:** 2026-08-14
+**Tracker date:** 2026-08-22
 **Tracker role:** operational evidence; never replay-status authority
 **Effective status owner:** [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl)
 **Working branch:** `agent/r4-task4-batch-publisher-20260816`
@@ -9,15 +9,18 @@
 
 ## 1. Executive summary
 
-The R5 hard-cut foundation is complete, independently reviewed, fully verified,
-and published. R5 remains red by design. Entry analysis for R5 neural activation
-found that the admitted R4 training boundary is vacuous: the checked-in R4
-training allowlist contains zero episode refs.
+The R5 hard-cut foundation and its authenticated train-only boundary are
+implemented, independently reviewed, verified, and published. The defect that
+triggered this replay remains bound to the historical checked-in R4 ABI 3
+artifact graph: its training allowlist contains zero episode refs.
 
-The approved repair is a separate R4 corrective replay. It replaces independent
-per-axis split hashing plus empty intersection with one globally coherent,
-leakage-safe four-class partition. Neural training remains prohibited until R4
-is invalidated, repaired, regenerated, and re-admitted.
+The approved R4 repair now has a globally coherent leakage-safe four-class
+source implementation, deterministic temporary candidate generation, an
+authenticated train capability boundary, hard removal of legacy three-way
+partition authority, ABI-aware historical/current evidence selection, and exact
+validation selectors/receipts. Checked-in replacement R4 artifacts and
+re-admission remain separate later steps. Neural training remains prohibited
+until those steps complete.
 
 This tracker records implementation progress. It does not copy or override the
 effective phase matrix, admission run refs, or ledger transitions.
@@ -31,7 +34,7 @@ effective phase matrix, admission run refs, or ledger transitions.
 | Governed R5 active suite | 1,641 passed; 0 failed/error/skip/xfail/xpass | verified |
 | R5 active-set ref | `active_test_nodes:88eb3a69bff515c3766400f6` | verified at base |
 | R5 disposition | 17 successor / 25 deferred / 1 retired | verified at base |
-| Frozen inventory SHA-256 | `7c27b0ad80998fc1f10876c05d0238a2498d2fd3a116ace77c9505da11d0b4b8` | unchanged at base |
+| Frozen inventory SHA-256 | `7c27b0ad80998fc1f10876c05d0238a2498d2fd3a116ace77c9505da11d0b4b8` | unchanged through Task 8 selectors |
 | R4 source universe | 400 authentic episodes | verified |
 | Current R4 training allowlist | 0 refs | defect confirmed |
 | Legacy partition data | 234 train / 78 validation / 78 test | quarantined; not R4 authority |
@@ -73,7 +76,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | P3 | Governing implementation plan | complete | Approved written spec | Detailed TDD plan reviewed and committed at `b3e4c33` |
 | P4 | Governance authority and R4 invalidation | complete | Governing spec/plan and clean branch | Append-only R4 red record; chain verified |
 | P5 | Partition ABI and algorithm implementation | complete | RED corruption/feasibility tests | Global assignment, Build Receipt ABI 4, temporary candidate generation, and independent reconstruction green |
-| P6 | Active R5 train-only capability migration | pending | New class-capability ABI | Legacy train authority absent; foundation isolation green |
+| P6 | Active R5 train-only capability migration | complete | New class-capability ABI | Authenticated train capability/authorization, isolated snapshot provenance, legacy authority absence, and foundation isolation verified |
 | P7 | Four-class artifact regeneration | pending | Committed generator source | Two byte-identical candidate trees and ABI 4 artifact commit |
 | P8 | R4 owner/phase/admission verification | pending | Clean artifact commit | All gates plus clean repository-owned admission pass |
 | P9 | R4 green re-admission | pending | Passed exact R4 admission receipt | Append-only green record; chain verified |
@@ -88,6 +91,26 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 - Two independent temporary ABI 4 candidate trees were byte-identical, covered all 400 authentic episodes across four nonempty classes, and both passed independent candidate admission reconstruction.
 - Historical checked-in `artifacts/r4/**` remain unchanged invalidated ABI 3 evidence; no replacement artifact tree or R4 green admission is claimed here.
 - Next authorized source tranche is Task 7: migrate the active R5 train-only capability boundary and hard-cut legacy partition authority.
+
+### Task 7 and Task 8 source-boundary checkpoint — 2026-08-22
+
+- Task 7 migrated the R5 release trainers and loader to authenticated R4 train
+  authorization/capability evidence, preserved every governed predecessor
+  assertion lineage, and removed the legacy `partitions.py`, three-way generator,
+  `data/partitions/**`, obsolete diagnostics, and superseded tests.
+- Structural hard-cut checks reject reintroduction of the retired module, paths,
+  configuration, scripts, or active string/import references.
+- Task 8 now selects historical ABI 3 admission evidence only for the exact
+  source-pinned historical receipt and requires the exact ABI 4 set for current
+  candidates. Dirty-path containment is bounded to the reviewed union but current
+  admission never accepts that union.
+- R4/R5 owner and phase selectors are exact, disjoint, one-process plans; living
+  inventory/disposition receipts were regenerated mechanically without changing
+  the frozen inventory bytes.
+- The corrective target is published through
+  `4c247d7284014f06a2764510b448af675a4ecb07`. Checked-in `artifacts/r4/**` remain
+  invalidated ABI 3 evidence; no replacement artifact tree or green admission is
+  claimed by this checkpoint.
 
 ## 6. Detailed implementation checklist
 
@@ -130,9 +153,9 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 - [ ] Keep frozen-test payload unopened by training/model code.
 - [ ] Mint class-scoped capabilities that disclose no sibling class identity.
 - [ ] Resolve admission trust in a parent and pass only train-scoped identity/snapshot to an isolated child.
-- [ ] Migrate the active R5 train-only loader and trainer provenance to the R4
+- [x] Migrate the active R5 train-only loader and trainer provenance to the R4
   train capability.
-- [ ] Retire legacy `PartitionManifest`, `Partitioner`, and three-way loader
+- [x] Retire legacy `PartitionManifest`, `Partitioner`, and three-way loader
   authority with structural absence tests.
 
 ### Sufficiency and anti-vacuity
@@ -143,7 +166,7 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 - [x] Require support and feasible-component denominators.
 - [x] Require held-out coverage across configured dimensions.
 - [x] Reject empty classes and zero-denominator success at the contract boundary.
-- [ ] Reject assignment changes from seed/objective/tie-break tamper.
+- [x] Reject assignment changes from seed/objective/tie-break tamper.
 
 ### Replay and validation
 
@@ -160,10 +183,10 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 ### Documentation and publication
 
 - [x] Update ABI registry and R4 architecture boundary.
-- [ ] Add narrow supersession notices to displaced R4 partition claims.
+- [x] Add narrow supersession notices to displaced R4 partition claims.
 - [x] Regenerate living evidence receipts mechanically for the Task 3 contract tranche.
 - [ ] Complete spec and quality reviews.
-- [ ] Push every reviewed checkpoint to the corrective branch.
+- [x] Push every completed reviewed checkpoint to the corrective branch.
 - [ ] Record final commit, artifact refs, run refs, and remote publication here.
 
 ## 7. Acceptance evidence register
@@ -173,17 +196,17 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 | Written design review | approved | passed | Corrective design spec at `45142bb` |
 | Frozen inventory integrity | unchanged unless separately governed | base verified | `docs/DOCUMENT_AUTHORITY.json` pin |
 | R4 invalidation | append-only red | passed | `governance_record:65ff94bf1c6e014cf04abab2` from `bc7e4c6ee8493d84cc2729bdb060109b07bc1cba` |
-| Four-class source coverage | exact 400/400 | pending | split manifest |
-| Class disjointness | zero overlap | pending | partition sufficiency receipt |
-| Leakage isolation | zero cross-class key | pending | Partition Evidence ABI 3 |
-| R5 train authority | only authenticated R4 train capability | pending | class-capability and data-isolation gates |
-| Class non-vacuity | four nonempty classes | pending | partition sufficiency receipt |
-| Deterministic generation | two byte-identical trees | pending | generation comparison receipt |
+| Four-class source coverage | exact 400/400 | temporary candidates verified; checked-in replacement pending | split manifest candidate reconstruction |
+| Class disjointness | zero overlap | temporary candidates verified; checked-in replacement pending | partition sufficiency candidate receipt |
+| Leakage isolation | zero cross-class key | source, allocator, and temporary candidates verified; checked-in replacement pending | Partition Evidence ABI 3 candidate reconstruction |
+| R5 train authority | only authenticated R4 train capability | source boundary complete; final checked-in capability awaits artifact publication | class-capability, release-training, and data-isolation gates |
+| Class non-vacuity | four nonempty classes | temporary candidates verified; checked-in replacement pending | partition sufficiency candidate receipt |
+| Deterministic generation | two byte-identical trees | verified at Task 6 source checkpoint; final generator-source replay still required | temporary candidate comparison; Task 9 repeats from final source |
 | Artifact integrity | exact Build Receipt ABI 4 reconstruction | pending | R4 admission report |
 | R4 re-admission | passed clean committed run | pending | validation run receipt |
 | Replay chain | ledger-derived accepted state | pending after repair | `update_replay_status.py --verify-chain` |
 | Governed regression | zero active failures/skips | pending after repair | active-suite result |
-| Remote publication | corrective branch at reviewed HEAD | pending | origin branch |
+| Remote publication | corrective branch at reviewed HEAD | current checkpoints published; final closeout pending | `origin/agent/r4-task4-batch-publisher-20260816` |
 
 ## 8. Risk register
 
@@ -223,6 +246,10 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 
 | Date | Branch/commit | Event | Verification |
 |---|---|---|---|
+| 2026-08-20 | `agent/r4-task4-batch-publisher-20260816@4c247d7284014f06a2764510b448af675a4ecb07` | Task 8 validation selectors and canonical inventory/disposition receipts reconciled | 204 focused tests; 356 metadata records; G0-R5 source-only inventory; deterministic receipt regeneration; structural and legacy hard-cut checks |
+| 2026-08-20 | `agent/r4-task4-batch-publisher-20260816@8e09a87c14e167558834a1adf329d836ee75801a` | Task 8 historical ABI 3/current ABI 4 admission-evidence policy published | 111 focused tests; exact historical reconstruction; bounded dirty-path union; frozen inventory unchanged |
+| 2026-08-20 | `agent/r4-task4-batch-publisher-20260816@b8b180a1faac6e0f9460f8939dd1386859cb99aa` | Task 7 predecessor lineages literalized and legacy partition authority hard-cut | 55 focused R4/R5 boundary tests; 356 metadata records; source-only inventory; zero legacy findings |
+| 2026-08-18 | `agent/r4-task4-batch-publisher-20260816@7245501a81d68c30bcff9c08209435073baeb1fd` | Task 7 active train boundary migrated to class-scoped capability evidence | Release-training parent, train access, authorization/capability, and isolation contracts passed |
 | 2026-08-18 | `agent/r4-task4-batch-publisher-20260816@e53dd76dbf246ba7af30c564899d8c711e457177` | Task 6 Build Receipt ABI 4 and temporary four-class candidate generation source published | Governed source/tests/inventory green; two temporary candidate trees byte-identical and independently admitted; checked-in R4 artifacts unchanged |
 | 2026-08-13 | `origin/codex/r5-hard-cut-foundation@107c518` | R5 foundation published | Full governed suite and Task 10 closeout passed |
 | 2026-08-14 | `origin/codex/r4-partition-corrective-replay@45142bb` | Corrective design published and independently reviewed | Contract review passed after exact leakage, train-boundary, access, and invalidation fixes |
@@ -235,10 +262,17 @@ Status vocabulary: `complete`, `in_progress`, `pending`, `blocked`, `stopped`.
 
 ## 11. Current checkpoint
 
-**Current work:** P5 in progress; Task 5 deterministic four-class assignment and independent verification are complete at `9beb7abe37efcad5e41601e4dc53e0aa6291e033`.
+**Current work:** P5 and P6 are complete. Task 8 ABI-aware evidence policy,
+validation selectors, living receipts, active architecture, ABI registry, and
+narrow historical supersession notices are the final non-controller
+reconciliation before the repository-owned publisher/controller tranche.
 **Task 4 feasibility identities:** graph `r4_partition_graph_v3:c80724e6107d010c724ad341`; basis `r4_partition_feasibility_basis_v1:8d7b96e61cd31e98bbc9de46`; witness `r4_partition_minima_witness_v1:7283c55335905b1dba4e6c67`; config `r4_partition_config_v1:0647f2402b0b942044c243ec`; final `r4_partition_feasibility_v1:654878fb2b7e874d07ff31e4`.
-**Next required action:** Task 6 cuts Build Receipt ABI 4 and prepares deterministic temporary four-class generated fixtures.
-**Implementation authorization:** Task 6 source/schema/test work is authorized; checked-in replacement R4 artifacts, re-admission, and neural training remain blocked.
+**Next required action:** implement and verify the transactional
+`publish_r4_candidate.py` and aggregate-budget
+`run_r4_corrective_validation.py` owners with failure-injection tests.
+**Artifact boundary:** checked-in replacement R4 artifacts, artifact-only commit,
+re-admission, and neural training remain blocked until the final generator source
+and controller/publisher contracts are committed and verified.
 **R5 neural work:** blocked on authentic R4 re-admission.
 
 ## 12. Exact invalidation evidence
@@ -252,6 +286,7 @@ The governing corrective spec binds the defect to:
 - Build Receipt file SHA-256
   `0069ae2c8a301700498aba4801df96205f9166938e1b21d3336aa1768d75dec6`.
 
-The future red record uses the current ledger schema. Its committed
+The committed invalidation record uses the current ledger schema. Its
 `source_base`, not a nonexistent ledger evidence field, binds this reviewed
-diagnosis.
+diagnosis. The tracker does not duplicate its effective status or admission
+identity.

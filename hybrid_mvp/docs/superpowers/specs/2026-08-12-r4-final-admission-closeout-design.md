@@ -1,5 +1,12 @@
 # Hybrid MVP R4 Final Admission and Integration Design
 
+> **Superseded execution notice (2026-08-22):** this document remains
+> historical closeout evidence. Its external-review, independent-axis,
+> training-allowlist, and pre-corrective artifact claims are superseded by the
+> repository-owned admission design and the 2026-08-14 partition corrective
+> design/plan. Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
 **Status:** approved closeout design; implementation remains red until admitted
 **Date:** 2026-08-12
 **Scope:** `hybrid_mvp/` plus repository integration only

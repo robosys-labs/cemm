@@ -4,8 +4,11 @@
 > body records their implementation-time procedure and is not current status.
 > Status is derived only from
 > [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
-> R4 external review was superseded by
-> repository-owned artifact integrity.
+> R4 external review was superseded by repository-owned artifact integrity.
+> Its independent-axis assignments, intersection-only training allowlist, and
+> related R4 partition completion steps are also narrowly superseded by the
+> 2026-08-14 partition corrective design and plan. R3 implementation history
+> remains unchanged.
 
 **Status at publication:** implementation source complete; R3 and R4 remain red until separately admitted
 **Date:** 2026-08-05  

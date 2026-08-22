@@ -200,25 +200,32 @@ admission.
 ## R4 partition corrective hard cut
 
 Partition Axis Manifest ABI 2 and Training Allowlist ABI 2 are retired as
-current R4 inputs. R4 Build Receipt ABI 3 remains historical evidence only and
-is reconstructible from the invalidated source base; it has no current decoder
-or admission authority. The newly registered contracts above do not claim that
-four-class artifacts have been generated, admitted, or activated.
+current R4 inputs and are deliberately absent from the active allocation table.
+R4 Build Receipt ABI 3 is historical evidence only. It may be reconstructed
+solely for the exact admitted historical source/receipt tuple through the
+source-pinned validation policy; no current candidate may decode, submit, or
+admit ABI 3 evidence. Current candidates require the exact ABI 4 evidence set.
+The registered target contracts below do not claim that replacement four-class
+artifacts have been committed, admitted, or activated.
 
-## R3–R4 implemented ABI allocation
+## R3–R4 active target ABI allocation
 
+| ABI | Version | Canonical owner | Persistence | Validator / compiler | Activation gate |
+|---|---:|---|---|---|---|
 | Query / Proof ABI | **1** | `src/cemm_authoritative_hybrid/r3_artifacts.py` | Episode-serializable | `ExpressionQueryOwner` | Expression-compiled query patterns, revision-pinned retrieval receipts and bounded proof DAGs; unknown is not false. |
 | Authentic Semantic Episode ABI | **3** | `src/cemm_authoritative_hybrid/r4_episodes.py` | Serialized corpus candidate | `AuthenticEpisodeBuilder` | Keeps expected contract, observed public-runtime cycle and comparison receipt separate; no bootstrap output authors semantic gold. |
 | Expected Cycle Contract ABI | **1** | `src/cemm_authoritative_hybrid/r4_contracts.py` | Serialized reviewed contract | `ExpectedCycleContractCompiler` | Total reviewed-assertion compilation with no PROPOSE/runtime dependency and no default-to-designation fallback. |
 | Semantic Mutation ABI | **2** | `src/cemm_authoritative_hybrid/r4_mutations.py` | Serialized corpus candidate | `MutationExecutor` | One declared semantic/environment/persistence change; the authentic execution owner, not the generator, supplies the observed earliest-owner result. |
-| Partition Axis Manifest ABI | **2** | Retired historical R4 artifact; no current decoder or admission authority after the corrective hard cut. |
-| Training Allowlist ABI | **2** | Retired historical R4 artifact; no current training authorization after the corrective hard cut. |
-| Partition Evidence ABI | **3** | Strict global leakage-hypergraph, component, source-set, and assignment contract; generation/admission pending. |
-| R4 Split Manifest ABI | **1** | Exact four-class payload/member/component/label manifest; generation/admission pending. |
-| R4 Partition Sufficiency ABI | **1** | Positive-denominator, four-class, per-dimension sufficiency receipt; generation/admission pending. |
-| R4 Class Capability ABI | **1** | Purpose-bound single-class capability with no sibling-class disclosure; minting/admission pending. |
-| R4 Class Authorization ABI | **1** | Independent admitted trust projection over one capability and the artifact graph; minting/admission pending. |
-| Partition Config ABI | **1** | Reviewed integer objective, hard bounds, exact 60/15/15/10 weights, and acyclic feasibility basis. |
-| R4 Build Receipt ABI | **4** | Corrective artifact-graph receipt; registered target; generation and activation remain pending. |
+| Partition Evidence ABI | **3** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized R4 candidate | `GlobalLeakagePartitioner` plus `verify_partition_assignment` | One global leakage hypergraph, exact components, labels, source set, and four-class assignment; registered target, generation/admission pending. |
+| R4 Split Manifest ABI | **1** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized R4 candidate | `R4SplitManifest.from_dict` plus R4 admission reconstruction | Exact `train`/`selection`/`calibration`/`frozen_test` payload, member, component, label, count, and hash binding; generation/admission pending. |
+| R4 Partition Sufficiency ABI | **1** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized R4 candidate | `R4PartitionSufficiencyReceipt.from_dict` plus `r4_sufficiency.py` | Positive-denominator four-class and per-dimension sufficiency; zero-support and vacuous success are rejected; generation/admission pending. |
+| R4 Class Capability ABI | **1** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized single-class projection | `R4ClassCapability.from_json_bytes` and `r4_partition_access.py` | Purpose-bound capability discloses one class only; the R5 foundation may consume train and cannot discover sibling identities; minting/admission pending. |
+| R4 Class Authorization ABI | **1** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized trust projection | `R4ClassAuthorization.from_json_bytes` and `r4_partition_access.py` | Binds one capability to the admitted artifact graph, generator source, and authority generation; minting/admission pending. |
+| Partition Config ABI | **1** | `src/cemm_authoritative_hybrid/r4_partition_config.py` | Reviewed configuration | `R4PartitionConfig.from_json_bytes` | Exact integer objective, hard bounds, 60/15/15/10 weights, tie-break rules, and acyclic feasibility-basis binding. |
+| R4 Build Receipt ABI | **4** | `src/cemm_authoritative_hybrid/r4_pipeline.py` | Serialized artifact-graph root | `R4BuildReceipt.from_json_bytes` and `verify_r4_admission` | Corrective artifact-graph receipt; registered target; generation and activation remain pending. |
 
-Corpus Review Manifest ABI 2, Approved R4 Build ABI 1, and R4 Build Receipt ABI 2 are retired. They have no active decoder, verifier, or compatibility path.
+Corpus Review Manifest ABI 2, Approved R4 Build ABI 1, R4 Build Receipt
+ABI 2, Partition Axis Manifest ABI 2, and Training Allowlist ABI 2 are retired.
+They have no active candidate decoder, verifier, authorization role, or
+compatibility path. Historical ABI 3 reconstruction is the single bounded
+exception described above and cannot authorize current artifacts.

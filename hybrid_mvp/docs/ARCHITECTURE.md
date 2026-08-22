@@ -102,20 +102,34 @@ A learned cross-encoder-style scorer ranks candidate programs. The model owns ra
 
 R3 consumes only selected `VerifiedMeaning.expression` plus an independently verified `SituationContext`. It emits one canonical Decision, exactly one Effect/No-Effect receipt, and one `ResponseMeaning`, then stops at the R5 surface-realization contract. Program identity is derivation lineage only.
 
-R4 compiles reviewed assertions independently of PROPOSE, expands every reviewed surface and environment, executes the public R3 runtime, keeps expected and observed artifacts separate, labels mutations through authentic owners, seals independent partition axes, and admits through repository-owned artifact integrity. R4 performs no training.
+R4 compiles reviewed assertions independently of PROPOSE, expands every
+reviewed surface and environment, executes the public R3 runtime, keeps expected
+and observed artifacts separate, and labels mutations through authentic owners.
+Its data boundary preserves the exact protected identities from all seven
+reviewed axes as namespaced leakage hyperedges, builds one global connected-
+component graph, and assigns each whole component exactly once to `train`,
+`selection`, `calibration`, or `frozen_test`. Per-axis rows remain reconstruction
+and stratification evidence; they are not independent assignments and are never
+intersected into a training allowlist. Repository-owned integrity reconstructs
+the global evidence, exact class payloads, sufficiency receipt, class-scoped
+capability/authorization, and Build Receipt ABI 4. R4 performs no training.
 
 ## R5 hard-cut foundation boundary
 
-R4 is the latest admitted phase. For the R5 hard-cut foundation, source, owner and phase gates pass, but R5
-admission remains unavailable and its effective replay status remains red.
-Current status is derived only from the replay ledger named above; this
-architectural summary is not admission evidence.
+The R5 hard-cut foundation is shaped so its source, owner and phase gates pass
+independently while admission remains unavailable until a separately reviewed
+activation increment provides its missing owners. This is a static architectural
+boundary, not a replay-status claim. Current status is derived only from the
+replay ledger named above; this document is not admission evidence.
 
 The foundation authenticates the artifact, proposal, data-isolation,
-realization and legacy-hard-cut owner boundaries without claiming that neural
-proposal or realization is active. Release training can open the manifest-bound
-canonical train partition only. The declared `train`, `selection`, `calibration`
-and `frozen_test` data classes are future authorization vocabulary; physical
-selection, calibration and frozen-test access remains owned by
-`R5-Neural-Activation`, the next increment. A deferred neural obligation is not
-an admitted model, checkpoint, calibration or evaluation result.
+realization and legacy-hard-cut boundaries without claiming that neural proposal
+or realization is active. Release training can open the authenticated,
+authorization- and capability-bound canonical train partition only. The isolated
+consumer receives one immutable train snapshot and its provenance; it receives
+no sibling class path, hash, ref, count, payload, or manifest identity. The
+`train`, `selection`, `calibration`, and `frozen_test` names are current R4
+purpose classes, but only the train class is consumable by the R5 foundation.
+Selection, calibration, and frozen-test access remain owned by
+`R5-Neural-Activation`. A deferred neural obligation is not an admitted model,
+checkpoint, calibration, or evaluation result.

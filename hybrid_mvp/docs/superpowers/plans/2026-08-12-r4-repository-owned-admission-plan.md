@@ -4,6 +4,10 @@
 > paths, cleanup commands, and task state in the body are historical, not current
 > routing. Status is derived only from
 > [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> **Partition-boundary supersession (2026-08-22):** the repository-owned
+> admission migration remains historical governing evidence, while its
+> Build Receipt ABI 3, per-axis partition, and training-allowlist tasks are
+> superseded by the 2026-08-14 partition corrective design and plan.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

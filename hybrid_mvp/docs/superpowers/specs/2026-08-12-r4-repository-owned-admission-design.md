@@ -4,6 +4,11 @@
 > R4 is admitted through repository-owned artifact integrity. Status is derived
 > only from
 > [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> **Partition-boundary supersession (2026-08-22):** repository-owned
+> integrity remains governing, but the independent partition generation,
+> seven per-axis assignment checks, training allowlist, and Build Receipt ABI
+> 3 fields in this document are superseded by the 2026-08-14 partition
+> corrective design and plan.
 
 **Date:** 2026-08-12
 **Status at publication:** approved design; implementation pending

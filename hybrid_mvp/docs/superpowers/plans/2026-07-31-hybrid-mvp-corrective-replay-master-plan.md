@@ -4,7 +4,10 @@
 > governing design, but status, paths, and completed execution steps in the body
 > are historical snapshots. Status is derived only from
 > [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
-> R4 now uses repository-owned artifact integrity.
+> R4 now uses repository-owned artifact integrity. Its independent-axis
+> partition assignment, intersection allowlist, and external-review steps are
+> narrowly superseded by the 2026-08-14 partition corrective design and plan;
+> the remaining phase allocation stays governing.
 
 > **For Codex:** REQUIRED SUB-SKILL: Use `subagent-driven-development` to execute each detailed phase plan task-by-task, with test-first implementation, contract review, code-quality review, and controller verification.
 
