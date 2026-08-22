@@ -104,6 +104,10 @@ jobs:
       - name: Repair owners, rebuild twice, verify, admit, and publish
         run: |
           set -euo pipefail
+          cat > /tmp/task1-bash-env <<'EOF'
+          trap 'rc=$?; printf "Generated Task 1 failed at line %s: %s\n" "${LINENO}" "${BASH_COMMAND}" >&2; exit "${rc}"' ERR
+          EOF
+          export BASH_ENV=/tmp/task1-bash-env
           bash control/.github/r5-r6-task1/run-current-admission-v3.sh \
             "$GITHUB_WORKSPACE/candidate" \
             "$GITHUB_WORKSPACE/control"
