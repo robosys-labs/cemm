@@ -49,30 +49,16 @@ jobs:
             python scripts/update_replay_status.py --verify-chain
             echo
             echo '== build environment owners =='
-            rg -n --hidden --glob '!artifacts/**' --glob '!*.pyc' 'def build_environment|build_environment\s*=' . || true
+            grep -RInE --exclude-dir=artifacts --exclude='*.pyc' 'def build_environment|build_environment[[:space:]]*=' . || true
             echo
             echo '== R4 environment/runtime fixtures =='
-            rg -n --hidden --glob '!artifacts/**' 'runtime_factory|mutation_owner|restart_executor|R4Pipeline\(' tests scripts src || true
+            grep -RInE --exclude-dir=artifacts 'runtime_factory|mutation_owner|restart_executor|R4Pipeline\(' tests scripts src || true
             echo
             echo '== current R4 artifact inventory =='
             find artifacts/r4 -type f -printf '%P\t%s\n' | sort
             echo
             echo '== current build receipt =='
             cat artifacts/r4/BUILD_RECEIPT.json
-            echo
-            echo '== R4 gate configuration =='
-            python - <<'PY'
-          import json
-          from pathlib import Path
-          value=json.loads(Path('configs/validation_gates.json').read_text())
-          print(json.dumps({k:v for k,v in value.items() if k in {'owners','phases','admission'}}, indent=2, sort_keys=True)[:30000])
-          PY
-            echo
-            echo '== validation CLI =='
-            python scripts/validation_gate.py --help || true
-            echo
-            echo '== build CLI =='
-            python scripts/build_r4_artifacts.py --help || true
             echo
             echo '== exact R4 tests =='
             find tests -maxdepth 1 -type f -name '*r4*' -printf '%f\n' | sort
@@ -91,19 +77,29 @@ jobs:
               -q -p no:cacheprovider
             echo "focused_exit=$?"
             echo
-            echo '== R4 owner/phase dry runs =='
-            python scripts/validation_gate.py --phase R4 --tier owner --dry-run
+            echo '== R4 owner/phase dry runs with exact control-plane path =='
+            PYTHONPATH=src/cemm_authoritative_hybrid:src:scripts:. python scripts/validation_gate.py --phase R4 --tier owner --dry-run
             echo "owner_dry_exit=$?"
-            python scripts/validation_gate.py --phase R4 --tier phase --dry-run
+            PYTHONPATH=src/cemm_authoritative_hybrid:src:scripts:. python scripts/validation_gate.py --phase R4 --tier phase --dry-run
             echo "phase_dry_exit=$?"
-            python scripts/validation_gate.py --phase R4 --tier admission --dry-run
+            PYTHONPATH=src/cemm_authoritative_hybrid:src:scripts:. python scripts/validation_gate.py --phase R4 --tier admission --dry-run
             echo "admission_dry_exit=$?"
           } >> "$report" 2>&1
           set -e
           cat "$report"
+      - name: Export exact deployed checkout for independent repair
+        working-directory: .
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 'ca4816bc892d14e7eb593f00977309e2031f131b'
+          tar -czf /tmp/cemm-r5-r6-task1-checkout.tar.gz .git hybrid_mvp
+          sha256sum /tmp/cemm-r5-r6-task1-checkout.tar.gz > /tmp/cemm-r5-r6-task1-checkout.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: cemm-r5-r6-task1-r4-diagnostic
-          path: /tmp/r4-task1-diagnostic.txt
+          name: cemm-r5-r6-task1-r4-diagnostic-v2
+          path: |
+            /tmp/r4-task1-diagnostic.txt
+            /tmp/cemm-r5-r6-task1-checkout.tar.gz
+            /tmp/cemm-r5-r6-task1-checkout.sha256
           if-no-files-found: error
           retention-days: 3
