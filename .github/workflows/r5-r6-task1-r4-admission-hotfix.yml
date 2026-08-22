@@ -1,6 +1,9 @@
 name: R5 R6 Task 1 verifier assertion hotfix
 
 on:
+  push:
+    branches:
+      - agent/r5-r6-task1-r4-admission-ci-base-20260822
   pull_request:
     branches:
       - agent/r5-r6-task1-r4-admission-ci-base-20260822
@@ -11,7 +14,9 @@ permissions:
 
 jobs:
   patch-control:
-    if: github.event.pull_request.head.ref == 'agent/r5-r6-task1-r4-admission-candidate-20260822'
+    if: >-
+      github.event_name == 'push' ||
+      github.event.pull_request.head.ref == 'agent/r5-r6-task1-r4-admission-candidate-20260822'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
