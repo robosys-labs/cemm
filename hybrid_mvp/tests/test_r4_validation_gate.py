@@ -187,16 +187,22 @@ def test_r4_admission_evidence_policy_is_sorted_and_unique(
     with pytest.raises(gate.AdmissionValidationError, match="version 4"):
         gate._required_admission_evidence_paths("R4", root=current_root)
 
+    historical_blobs = gate._tracked_source_blobs(
+        ROOT, gate._R4_HISTORICAL_ABI3_SOURCE_REF
+    )
+    assert set(historical_paths).issubset(historical_blobs)
     committed_bytes = {
-        path: (ROOT / path).read_bytes() for path in historical_paths
+        path: gate._read_committed_blob(
+            ROOT,
+            object_id=historical_blobs[path],
+            relative=path,
+        )
+        for path in historical_paths
     }
     monkeypatch.setattr(
         gate,
         "_tracked_source_blobs",
-        lambda _root, source_ref: {
-            path: f"{index + 1:040x}"
-            for index, path in enumerate(historical_paths)
-        }
+        lambda _root, source_ref: historical_blobs
         if source_ref == gate._R4_HISTORICAL_ABI3_SOURCE_REF
         else {},
     )
@@ -270,7 +276,7 @@ __cemm_test_inventory__ = {'tests/test_r4_validation_gate.py::test_r4_integrity_
                                                                                               'diagnostic_role': 'owner',
                                                                                               'introduced_by_task': 'R4-Repository-Owned-Admission',
                                                                                               'owner_ref': 'artifact-integrity',
-                                                                                              'source_ast_sha256': '722ea3ad5c1106dec17e185a74c2d10bf1c2b020cf25dcfec49f711ad0e4c52c'},
+                                                                                              'source_ast_sha256': '24c2dcfdbebfcfce2046cf9236c591355f4d86d352abb7d3089a0f3cf00c83fc'},
  'tests/test_r4_validation_gate.py::test_r4_active_inventory_timeout_covers_measured_suite_bound': {'activation_phase': 'R4',
                                                                                                     'assertion_ref': 'assertion:r4-active-inventory-timeout-measured-bound',
                                                                                                     'diagnostic_role': 'owner',
