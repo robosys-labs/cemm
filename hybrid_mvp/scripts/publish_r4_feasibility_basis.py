@@ -7,12 +7,17 @@ import json
 import os
 from pathlib import Path
 import shutil
+import sys
 import tempfile
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
 
 from cemm_authoritative_hybrid.r4_partition_config import R4PartitionConfig
 from cemm_authoritative_hybrid.r4_partition_contracts import MAX_PARTITION_ARTIFACT_BYTES
 
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def _load(path: Path) -> tuple[bytes, dict[str, object]]:

@@ -6,6 +6,7 @@ corpus is therefore the evidence source for these historical assertions.
 """
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 
 import pytest
@@ -49,6 +50,7 @@ ROOT = Path(__file__).parents[1]
 EPISODES = ROOT / "artifacts" / "r4" / "episodes.jsonl"
 
 
+@lru_cache(maxsize=1)
 def _episodes() -> tuple[AuthenticEpisode, ...]:
     assert EPISODES.is_file(), "R4 authentic episode corpus has not been built"
     import json
