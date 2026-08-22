@@ -4,7 +4,7 @@
 **Reviewed branch:** `agent/r4-task4-batch-publisher-20260816`  
 **Reviewed commit:** `5c704399b417414cf91211d6d9a9a8c8ce84767c`  
 **Scope:** `hybrid_mvp/` only  
-**Decision:** **NO-GO for R5/R6 implementation until the corrections in this review are adopted**
+**Decision:** **PLAN GO after Task 0; SOURCE IMPLEMENTATION NO-GO until current R4 ABI-4 is green**
 
 ## 1. Executive finding
 
@@ -258,3 +258,49 @@ symlink/reparse/junction rejection, and clean retry.
 First adopt the accompanying design and implementation plan, then satisfy the
 fresh R4 admission prerequisite. The corrected task graph is implementation
 ready only after those two steps are green.
+
+## 7. Final efficiency and anti-bloat refinement
+
+The final review found that correctness alone was insufficient: the draft
+still permitted excess schemas, modules, artifact retention, and hot-path
+verification. The following corrections are now binding:
+
+1. **Consolidated contracts.** R5 uses one purpose-snapshot ABI and one
+   discriminated lifecycle-receipt ABI rather than separate near-duplicate
+   snapshot/receipt codecs. R6 uses one discriminated evidence receipt for
+   adapter, parity, and operational evidence.
+2. **Minimal implementation footprint.** R5 has at most five active owner
+   modules; there is no module-per-receipt layout, compatibility re-export,
+   wrapper-only layer, or speculative accelerator abstraction.
+3. **No artifact-history inflation.** Non-selected checkpoint weights remain
+   in bounded scratch/CI storage and are deleted after selection and
+   reproduction. Git receives only selected artifacts that fit the reviewed
+   repository-size budget plus bounded manifests and receipts.
+4. **Hot-path work is single-pass.** Models, manifests, safe tensors, and
+   authority pins are verified once when the composition root loads.
+   Context features and pointer tables are encoded once per request and
+   reused; immutable refs are computed once; phases exchange typed objects,
+   not JSON.
+5. **Bounded inference.** Proposal uses vectorized pointer heads, cached
+   context encodings, bounded beam/top-k, and no materialization of masked
+   candidates. Realization batches a bounded set of neural candidates for
+   round-trip verification and has no template fallback.
+6. **Budgets precede architecture.** Task 2 freezes combined checkpoint
+   bytes, parameter count, startup, RSS, p50/p95 stage latency, beam/decode
+   bounds, round-trip candidate count, trace/report size, artifact count,
+   dependency count, and import-time ceilings before model code begins.
+   Implementation may improve but cannot raise those ceilings.
+7. **Dependency restraint.** R5 is CPU-only and uses the existing PyTorch,
+   safetensors, JSON, and validation stack. A new runtime dependency,
+   accelerator backend, cache, streaming protocol, or server framework
+   requires separate measured justification.
+8. **One HTTP surface.** API and web share one HTTP transport adapter. The
+   initial R6 increment does not implement streaming. CLI and evaluation
+   remain thin codecs over the same composition root.
+9. **Bounded evidence and tests.** Receipts retain refs, aggregates, and
+   typed failures rather than duplicated datasets, tensors, traces, or
+   per-step logits. Deferred assertions should use literal parameter IDs
+   and conjunctive successor reuse rather than one file/class per case.
+
+These corrections reduce the planned ABI count from sixteen to ten and
+prevent offline governance rigor from becoming request-time overhead.

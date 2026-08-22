@@ -44,6 +44,8 @@ GOVERNING_DOCUMENTS = (
     "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md",
     "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
     "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md",
+    "docs/superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md",
+    "docs/superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md",
 )
 
 SUPERSEDED_EXECUTION_CLAIMS = (

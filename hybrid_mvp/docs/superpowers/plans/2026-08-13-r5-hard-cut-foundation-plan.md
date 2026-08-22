@@ -1,5 +1,12 @@
 # R5 Legacy Hard-Cut Foundation Implementation Plan
 
+> **Activation refinement (2026-08-22):** this completed foundation plan
+> remains authoritative for legacy removal, the five foundation owners,
+> and the 17/25/1 predecessor disposition. The
+> [R5 Neural Activation and R6 Composition Plan](2026-08-22-r5-neural-activation-r6-composition-plan.md)
+> governs all later activation and R6 work; it does not reopen any retired
+> fixture, bootstrap, compatibility, or fallback path.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Remove retired test/runtime-fixture paths, preserve every active G0-R4 assertion, and give the 43 frozen R5 source-test records exactly 17 current foundation successors, 25 explicit deferred neural obligations, and 1 explicit fallback retirement; then update active documentation and make the R5 source/owner/phase foundation gates pass while R5 admission remains unavailable and replay status remains red.

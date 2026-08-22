@@ -1,5 +1,13 @@
 # R5 Hard-Cut Foundation Design
 
+> **Activation refinement (2026-08-22):** this document remains the
+> governing R5 hard-cut and 17/25/1 disposition contract. Neural
+> activation and R6 composition are governed by the
+> [R5 Neural Activation and R6 Composition Design](2026-08-22-r5-neural-activation-r6-composition-design.md)
+> and its implementation plan. The refinement introduces no compatibility
+> path and cannot execute until a current R4 Build Receipt ABI 4 admission
+> is green.
+
 **Date:** 2026-08-13
 **Status:** approved design; implementation pending
 **Scope:** `hybrid_mvp/` R5 test, governance, validation, and active-document foundation

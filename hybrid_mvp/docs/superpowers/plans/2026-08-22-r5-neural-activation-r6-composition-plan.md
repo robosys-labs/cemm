@@ -25,6 +25,14 @@
 - Linux and Windows path/process safety are required.
 - R5 and R6 are admitted separately.
 - R7 remains red.
+- One canonical codec serves each ABI family; no receipt-specific wrappers.
+- R5 uses one purpose-snapshot type and at most five active owner modules.
+- No non-selected checkpoint weights are committed to Git.
+- No new runtime dependency, accelerator backend, cache, or streaming
+  protocol is introduced without separate measured review.
+- Artifact verification, hashing, and model loading occur at startup, not
+  per request.
+- Task 2 freezes hard resource ceilings before model implementation.
 
 ## Task 0 — Publish authority and exact baseline
 
@@ -33,13 +41,16 @@
 1. Add the 2026-08-22 design and plan to `docs/DOCUMENT_AUTHORITY.json`.
 2. Update exact governing-document constants in
    `tests/test_replay_governance.py`.
-3. Add narrow supersession notices to the R5 foundation documents:
+3. Apply the final efficiency and anti-bloat refinement: consolidate
+   purpose snapshots and receipt families, freeze hot-path rules, prevent
+   non-selected artifact retention, and collapse API/web into one HTTP adapter.
+4. Add narrow supersession notices to the R5 foundation documents:
    foundation remains authoritative for hard-cut behavior; this plan governs
    activation and R6.
-4. Update `docs/IMPLEMENTATION_PLAN.md` to point here.
-5. Run governance tests, metadata verification, source-only inventory G0-R5,
+5. Update `docs/IMPLEMENTATION_PLAN.md` to point here.
+6. Run governance tests, metadata verification, source-only inventory G0-R5,
    structural hard cut, legacy audit, and ledger verification.
-6. Commit and push one documentation/governance change.
+7. Commit and push one documentation/governance change.
 
 **Stop:** do not modify runtime/model/training source in this task.
 
@@ -58,10 +69,15 @@
 **Acceptance:** effective G0-R4 green, R5-R8 red.  
 **Stop:** no R5 training before this acceptance passes.
 
-## Task 2 — Freeze R5/R6 ABIs and validation skeleton
+## Task 2 — Freeze R5/R6 ABIs, validation skeleton, and resource budget
 
-Create strict schemas and canonical types for all ABIs defined in the design.
-Register them in `ABI_REGISTRY.md` only after tests exist.
+Create strict schemas and canonical types for the consolidated ABI
+families defined in the design. Register them in `ABI_REGISTRY.md` only after
+tests exist. Add `configs/r5_r6_resource_budget.json` with measured baseline and
+hard ceilings for model bytes/parameters, startup, RSS, p50/p95 stage latency,
+beam/decode/state bounds, round-trip candidates, trace/report bytes, artifact
+count/bytes, runtime dependencies, and import time. The same task adds a strict
+schema and owner tests; later implementation tasks cannot raise a ceiling.
 
 Add validation graph entries for all R5/R6 owners, but keep:
 
@@ -78,27 +94,25 @@ noncanonical bytes.
 
 Commit/push ABI and graph changes separately from model implementation.
 
-## Task 3 — Implement purpose-bound class access
+## Task 3 — Implement one purpose-bound class snapshot
 
-Extend R4 class access into exact R5 worker inputs:
-
-- `TrainInputSnapshot`
-- `SelectionInputSnapshot`
-- `CalibrationInputSnapshot`
-
-Each is minted from its own capability/authorization and contains no sibling
-metadata.
+Extend R4 class access into one canonical `R5PurposeSnapshot` with an
+exact `purpose` discriminator: `train`, `selection`, or `calibration`.
+Separate mint/open owners enforce the purpose, but all three variants use
+one codec, validator, and provenance envelope. The snapshot contains no
+sibling metadata.
 
 Add process-bound tests that prove:
 
 - train cannot open selection/calibration/frozen-test;
 - selection cannot open train/calibration/frozen-test;
 - calibration cannot open train/selection/frozen-test;
+- a purpose mismatch fails before data decoding;
 - no class can discover sibling paths, hashes, refs, counts, or manifests;
 - frozen-test mint/open is rejected for R5 and R6;
 - path traversal, symlink, junction, and reparse escapes fail.
 
-Commit/push access ABI and tests before any trainer changes.
+Commit/push the single snapshot ABI and tests before trainer changes.
 
 ## Task 4 — Hard-cut obsolete bootstrap training authority
 
@@ -112,22 +126,26 @@ Delete or quarantine from release imports:
 - arbitrary validation-path calibration;
 - compatibility re-exports.
 
-Split modules by responsibility:
+The active R5 implementation is limited to at most five owner modules:
 
 ```text
-neural_features.py
-neural_proposer.py
-neural_realizer.py
-r5_training.py
-r5_selection.py
-r5_calibration.py
-r5_reproduction.py
+r5_features.py
+r5_proposer.py
+r5_realizer.py
+r5_lifecycle.py
+r5_activation.py
 ```
 
-The control plane and runtime package initializer must remain Torch-light until
-a selected activation is explicitly loaded.
+`r5_lifecycle.py` owns the discriminated offline receipt variants and
+shared canonical codec; it is never imported on the request path. Do not
+create a module per receipt, wrapper-only layer, compatibility alias, or
+speculative accelerator abstraction. Superseded `model.py`/`training.py`
+owners are removed in the same lineage once their successors verify.
 
-Add structural tests for one release path and zero bootstrap reachability.
+The control plane and package initializer remain Torch-light until an exact
+activation bundle is loaded. Add structural tests for one release path,
+zero bootstrap reachability, the five-module ceiling, and an acyclic import
+graph.
 
 ## Task 5 — Implement Neural Feature Schema ABI 1
 
@@ -148,7 +166,10 @@ Required tests:
 - feature construction performs no authority-wide scan;
 - bounds reject oversize contexts;
 - no source/internal ref spelling appears in tensors or vocabulary;
-- deterministic bytes across processes/platforms where specified.
+- deterministic bytes across processes/platforms where specified;
+- form/context/pointer features are computed once per request and exposed as
+  immutable cached tensors within the request lifetime;
+- construction stays inside the frozen allocation and latency ceilings.
 
 ## Task 6 — Implement the masked neural proposer
 
@@ -159,10 +180,12 @@ At every step:
 1. construct exact legal candidates;
 2. apply masks before softmax and loss;
 3. decode only licensed pointers;
-4. preserve bounded beam/state/time/RSS limits;
-5. emit explicit abstention and model confidence;
-6. build canonical Program ABI 2 candidates;
-7. pass them to the exact verifier.
+4. reuse one cached context encoding and vectorized pointer tables;
+5. preserve bounded beam/state/time/RSS limits and materialize only top-k legal
+   expansions;
+6. emit explicit abstention and model confidence;
+7. build canonical Program ABI 2 candidates;
+8. pass only the bounded final top-k set to the exact verifier.
 
 Tests consume the deferred proposal assertions:
 
@@ -188,8 +211,10 @@ Implement deterministic training with:
 - bounded workers/threads/memory/time;
 - canonical Training Receipt ABI 1.
 
-Publish a committed candidate set transactionally. Do not select a checkpoint in
-this task.
+Publish the candidate manifest and bounded training receipt
+transactionally, but keep candidate weight files in bounded scratch/CI storage.
+Do not commit non-selected checkpoints and do not select a checkpoint in this
+task.
 
 ## Task 8 — Select the proposer checkpoint
 
@@ -203,8 +228,9 @@ Freeze:
 - deterministic tie-break;
 - selected checkpoint identity.
 
-No optimizer or train snapshot may exist in the process. Commit/push selection
-evidence and selected proposer artifact.
+No optimizer or train snapshot may exist in the process. Commit/push
+selection evidence and only the selected proposer artifact after enforcing the
+repository-size budget; delete non-selected candidate weights.
 
 ## Task 9 — Implement the structured neural realizer
 
@@ -216,8 +242,10 @@ Replace sentence-hash classification with a bounded autoregressive decoder over:
 - end/failure actions;
 - legality masks.
 
-Every result must create a candidate surface and undergo public round-trip
-semantic verification.
+Decode only a bounded top-k set, batch round-trip parsing where possible,
+and accept the first exact equivalent result in model order. Every result must
+undergo public round-trip semantic verification; none may use a template or
+static fallback.
 
 Tests consume realization and weight-use obligations:
 
@@ -242,7 +270,9 @@ Selection metrics include:
 - latency/RSS/capacity;
 - robustness to candidate order and ref renaming.
 
-Commit/push selected realizer and selection receipt.
+Commit/push only the selected realizer and selection lifecycle receipt
+after enforcing the combined selected-artifact budget; delete non-selected
+realizer weights.
 
 ## Task 11 — Calibrate selected models
 
@@ -255,7 +285,7 @@ Use a calibration-only snapshot and actual model scores to produce:
 - ECE and threshold evidence;
 - abstention threshold;
 - exact proposer/realizer identities;
-- canonical Calibration Receipt ABI 1.
+- the `calibration` variant of R5 Lifecycle Receipt ABI 1.
 
 Tests consume all three calibration obligations. Zero-support or fixed-label
 confidence fails.
@@ -271,7 +301,8 @@ In fresh scratch outside the repository:
 5. verify scratch cleanup on success/failure.
 
 Run proposer and realizer zero-weight/ablation experiments with frozen thresholds.
-Emit Reproduction and Weight-Use receipts.
+Emit the `reproduction` and `weight_use` variants of the shared R5
+Lifecycle Receipt ABI 1.
 
 Consume all reproduction and weight-use deferred assertions.
 
@@ -292,7 +323,9 @@ Verify all files before tensor access. Test tamper, truncation, swapping,
 wrong-authority, wrong-source, wrong-ABI, path escape, symlink/reparse, duplicate,
 and unsafe tensor cases.
 
-Publish transactionally with rollback and crash/retry tests on Linux and Windows.
+Publish transactionally with rollback and crash/retry tests on Linux and
+Windows. Stop rather than commit selected model blobs when the combined size,
+artifact count, or startup/RSS ceilings are exceeded.
 
 ## Task 14 — Activate exact R5 runtime path
 
@@ -306,6 +339,11 @@ Release construction:
 - retains exact verifier and R3;
 - uses selected neural realizer;
 - produces exact RealizationReceipt;
+- verifies artifact bytes and manifests once at root load, then reuses immutable
+  handles without per-request rehash or filesystem discovery;
+- runs models under `eval()` and `torch.inference_mode()` with frozen thread and
+  allocation limits;
+- passes typed in-memory objects between phases without JSON round-trips;
 - has no normal fallback.
 
 Development remains diagnostic and cannot satisfy release/admission selectors.
@@ -347,7 +385,7 @@ Implement `CompositionRequest`, `CompositionResult`, and `CompositionRoot`.
 The root:
 
 - requires exact R5 activation ref;
-- owns runtime lifecycle;
+- owns and reuses one verified runtime/model/store lifecycle;
 - propagates deadline/cancellation;
 - binds idempotency;
 - enforces output/trace bounds;
@@ -369,15 +407,16 @@ CLI handles transport only:
 
 Verify the old CLI path cannot load a development/bootstrap owner in release.
 
-## Task 19 — Add API and web adapters
+## Task 19 — Add one HTTP adapter for API and web
 
-Create thin transport adapters with:
+Create one thin HTTP transport owner used by both API and web. Do not
+introduce a second web semantic adapter or server framework. The initial R6
+increment has no streaming. The shared adapter provides:
 
 - strict request schemas;
 - authentication/authorization hook boundary;
 - body/output/time bounds;
 - idempotency and cancellation;
-- streaming policy only if semantically complete chunks are defined;
 - no direct model or semantic-owner imports;
 - no fallback responses.
 
@@ -393,8 +432,8 @@ Tests prove R7 is the earliest possible frozen-test owner.
 
 ## Task 21 — Prove cross-surface parity
 
-For the same canonical request, CLI/API/web/evaluation adapters must bind the
-same:
+For the same canonical request, CLI, shared HTTP, and evaluation
+adapters must bind the same:
 
 - input/evidence identity;
 - VerifiedMeaning/expression;
@@ -419,9 +458,10 @@ Measure and freeze reviewed budgets for:
 - cancellation latency;
 - clean shutdown.
 
-Test process-tree termination, transactional rollback, partial writes,
-store/model mismatch, adapter disconnect, repeated idempotency keys, and
-Linux/Windows path semantics.
+Compare every measurement against the Task 2 ceilings; this task may
+freeze tighter values but cannot raise them. Test process-tree termination,
+transactional rollback, partial writes, store/model mismatch, adapter
+disconnect, repeated idempotency keys, and Linux/Windows path semantics.
 
 ## Task 23 — R6 structural hard cut
 
@@ -484,7 +524,7 @@ R2 green
 R3 green
 R4 green (current ABI 4)
 R5 green (neural activation)
-R6 green (one composition root)
+R6 green (one composition root, one HTTP adapter, all frozen budgets)
 R7 red (frozen-test evaluation not yet run)
 R8 red
 ```

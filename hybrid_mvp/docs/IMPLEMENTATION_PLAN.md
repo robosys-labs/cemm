@@ -13,9 +13,10 @@
 > - [R5 Neural Activation and R6 Composition Design](superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md)
 > - [R5 Neural Activation and R6 Composition Plan](superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md)
 >
-> Its first task is atomic promotion into `DOCUMENT_AUTHORITY.json` and the
-> exact governance tests. No R5/R6 source implementation should begin before
-> that promotion and a fresh current-source R4 ABI-4 green admission.
+> This package is promoted into `DOCUMENT_AUTHORITY.json` by R5/R6
+> Task 0. Source implementation remains blocked until Task 1 admits a fresh
+> current-source R4 ABI-4 predecessor. The efficiency and anti-bloat
+> contract in the target design is binding on every implementation tranche.
 >
 > Replay status is derived only from
 > [`governance/replay_status.jsonl`](../governance/replay_status.jsonl). The

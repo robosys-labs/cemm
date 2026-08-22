@@ -107,52 +107,104 @@ objects. Frozen test remains physically unopened until R7.
 
 ## 5. Target ABIs
 
-These ABIs are registered before their implementations are admitted.
+These ABIs are registered before their implementations are admitted. One
+canonical JSON codec and one safe-tensor loader serve all variants; a
+lifecycle stage or evidence kind does not receive a duplicate serializer.
 
 ### R5
 
-1. **Neural Feature Schema ABI 1** — exact structural feature and pointer-slot
-   schema; excludes internal ref spelling and raw authority-wide vocabularies.
-2. **R5 Training Input Snapshot ABI 1** — one immutable purpose-bound class
-   projection and provenance.
-3. **Proposal Checkpoint ABI 1** — safe tensors, architecture, feature schema,
-   action schema, source, authority, train capability, config, and tensor
+1. **Neural Feature Schema ABI 1** — exact structural feature and
+   context-local pointer-slot schema; excludes internal ref spelling and
+   authority-wide vocabularies.
+2. **R5 Purpose Snapshot ABI 1** — one immutable discriminated projection
+   with `purpose` equal to `train`, `selection`, or `calibration`; separate
+   mint/open owners enforce the one-class firewall.
+3. **Proposal Checkpoint ABI 1** — safe tensors, architecture, feature and
+   action schemas, source, authority, train capability, config, and tensor
    identity.
-4. **Realizer Checkpoint ABI 1** — safe tensors, decoder vocabulary, literal
-   copy schema, ResponseMeaning ABI, source, authority, train capability,
-   config, and tensor identity.
-5. **Training Receipt ABI 1** — exact inputs, deterministic environment,
-   optimizer, epochs/steps, losses, resource use, output identities.
-6. **Selection Receipt ABI 1** — selection capability, candidate set,
-   per-candidate metrics, deterministic tie-break, selected identities.
-7. **Calibration Receipt ABI 1** — calibration capability, selected model
-   identities, score definition, bins, ECE, thresholds, calibrator identity.
-8. **Reproduction Receipt ABI 1** — independent scratch path, second-run
-   artifacts, byte/tensor/model identity comparisons.
-9. **Weight-Use Receipt ABI 1** — invocation counts, model identity,
-   zero-weight/ablation degradation and no fallback.
-10. **R5 Activation Bundle ABI 1** — selected checkpoints, calibrator, runtime
-    config, authority, feature/action/response ABIs, canary set, source.
-11. **R5 Activation Canary Receipt ABI 1** — fresh public-runtime observations
-    covering proposal, abstention, realization, failure, restart, and exact
-    round-trip meaning.
+4. **Realizer Checkpoint ABI 1** — safe tensors, decoder vocabulary,
+   literal-copy schema, ResponseMeaning ABI, source, authority, train
+   capability, config, and tensor identity.
+5. **R5 Lifecycle Receipt ABI 1** — a strict discriminated union for
+   `training`, `selection`, `calibration`, `reproduction`, and `weight_use`;
+   each kind has an exact bounded body and shared provenance envelope.
+6. **R5 Activation Bundle ABI 1** — selected checkpoints, calibrator,
+   runtime config, authority, feature/action/response ABIs, canary set,
+   dependency lock, and source.
+7. **R5 Activation Canary Receipt ABI 1** — fresh public-runtime
+   observations covering proposal, abstention, realization, failure,
+   restart, and exact round-trip meaning.
 
 ### R6
 
-1. **Composition Request ABI 1** — request/session/evidence/deadline/idempotency
-   and trace policy.
+1. **Composition Request ABI 1** — request/session/evidence/deadline,
+   idempotency, and trace policy.
 2. **Composition Result ABI 1** — cycle result, verified surface, exact
-   realization receipt, final revision, bounded diagnostics.
-3. **Surface Adapter Receipt ABI 1** — transport input/output and composition
-   request/result bindings.
-4. **Surface Parity Receipt ABI 1** — identical semantic and effect identities
-   across CLI/API/web/evaluation adapters.
-5. **Operational Budget Receipt ABI 1** — cold/warm startup, latency, RSS,
-   output size, cancellation, concurrency, and cleanup.
+   realization receipt, final revision, and bounded diagnostics.
+3. **R6 Evidence Receipt ABI 1** — a strict discriminated union for
+   `adapter`, `parity`, and `operational_budget` evidence.
 
 No “latest model” pointer or directory selection participates in authority.
 
-## 6. Neural proposer design
+## 6. Efficiency and anti-bloat contract
+
+### 6.1 Budget before architecture
+
+Task 2 creates a reviewed resource-budget configuration before any model
+implementation. It freezes hard ceilings for combined selected checkpoint
+bytes, parameter count, cold activation, peak RSS, p50/p95 proposal,
+verification, realization and end-to-end latency, maximum beam width,
+decoder steps, live states, round-trip candidates, trace/report bytes,
+artifact count/bytes, runtime dependency count, and import time. A later
+implementation may reduce a ceiling but cannot raise one without a
+separate reviewed design change.
+
+R5 has one deterministic CPU release/reference backend. Accelerator,
+quantization, distributed training, speculative decoding, and streaming
+are out of scope until measured evidence shows that the admitted CPU path
+cannot meet the frozen product budget.
+
+### 6.2 Hot-path rules
+
+- activation verifies manifests, model bytes, authority, schemas, and
+  source once, then retains immutable verified handles;
+- no Git, subprocess, filesystem discovery, whole-artifact rehash,
+  training, calibration, or JSON serialization occurs per request;
+- ProposalContext features and context-local pointer embeddings are built
+  once per request and reused across decoder steps;
+- pointer scoring is vectorized, legality masks apply before probability
+  computation, and masked candidate objects are not materialized;
+- inference uses `eval()` and `torch.inference_mode()` with reviewed thread
+  limits and bounded reusable buffers;
+- immutable canonical refs are memoized on object construction;
+- exact verification runs over a bounded top-k final set, not an unbounded
+  beam history;
+- realization batches its bounded neural candidates through round-trip
+  verification and returns typed failure when none is equivalent;
+- default traces exclude tensors, logits, raw datasets, and full search
+  histories.
+
+### 6.3 Code, dependency, and artifact rules
+
+R5 uses at most five active owner modules and shared canonical codecs; it
+does not create a module/class/schema per receipt variant. Existing
+superseded model/training owners are removed in the same lineage rather
+than wrapped or re-exported. No new runtime dependency is allowed without
+measured necessity and a reviewed impact on startup, memory, supply-chain,
+and cross-platform behavior.
+
+Candidate training weights live in bounded scratch or CI storage. Git
+receives only the selected proposer and realizer when their combined size
+is below the frozen repository budget; otherwise implementation stops for
+an artifact-store design. Receipts retain hashes, refs, aggregate metrics,
+and typed failures, never duplicate model bytes, datasets, per-example
+logits, or unbounded traces.
+
+R6 has one CLI adapter, one shared HTTP adapter for API and web, and one
+evaluation boundary. The initial increment has no streaming and no
+second server stack.
+
+## 7. Neural proposer design
 
 The proposer is an autoregressive constrained decoder over one
 `ProposalContext`.
@@ -188,9 +240,11 @@ spelling, or authority-wide output vocabulary is forbidden.
 
 Candidate order is randomized during training and evaluation. Equivalent
 permutations must preserve semantic distributions. Search is bounded by exact
-beam, step, state, memory, and time limits.
+beam, step, state, memory, and time limits. Form, orientation, context, and
+pointer-table encodings are computed once; decoder steps reuse cached tensors
+and score pointer tables in batches rather than rebuilding candidate objects.
 
-## 7. Neural realizer design
+## 8. Neural realizer design
 
 The realizer consumes exact `ResponseMeaning` plus licensed literal pointers.
 It does not receive a raw Decision, program, source query, or internal semantic
@@ -210,9 +264,11 @@ loaded weights. Every candidate is reinterpreted through the same public
 evidence/proposal/verify contracts and accepted only on canonical expression
 equivalence with required situated qualifiers.
 
-Failure yields a typed no-surface result, never a semantically invented fallback.
+A bounded top-k set of neural candidates is decoded and round-trip checked
+in one batch where possible. Failure yields a typed no-surface result, never a
+semantically invented fallback.
 
-## 8. Training, selection, and calibration
+## 9. Training, selection, and calibration
 
 ### Training
 
@@ -234,7 +290,9 @@ Failure yields a typed no-surface result, never a semantically invented fallback
 - deterministic metric definitions and tie-break;
 - capacity, latency, abstention, semantic accuracy, round-trip success, and
   robustness are explicit dimensions;
-- selected weights become immutable before calibration.
+- selected weights become immutable before calibration;
+- non-selected candidate weights remain outside Git and are deleted after
+  selection and reproduction, while their bounded hashes and metrics remain.
 
 ### Calibration
 
@@ -245,7 +303,7 @@ Failure yields a typed no-surface result, never a semantically invented fallback
 - cannot alter checkpoint weights or selection;
 - threshold policy is content-addressed.
 
-## 9. Reproduction and weight-use proof
+## 10. Reproduction and weight-use proof
 
 A clean second training run occurs in scratch outside the repository. It must
 compare independently:
@@ -268,13 +326,14 @@ Weight-use tests require:
 Ablation thresholds are established from measured baseline evidence and frozen
 before admission.
 
-## 10. Runtime activation
+## 11. Runtime activation
 
 The release runtime starts only from one exact `R5ActivationBundle`.
 
 Startup verifies all artifact, source, authority, ABI, lock, calibration, and
-selection identities before tensor use. Missing, mismatched, unsafe, dirty, or
-ambiguous artifacts fail startup.
+selection identities once before tensor use. Missing, mismatched, unsafe, dirty,
+or ambiguous artifacts fail startup. Per-request receipts bind the retained
+verified identities and never rehash or rediscover the artifact graph.
 
 The canonical runtime owners become:
 
@@ -294,7 +353,7 @@ The final REALIZE phase binds `ResponseMeaning`, surface, model identity,
 decoder trace summary, round-trip VerifiedMeaning/expression, and exact
 RealizationReceipt.
 
-## 11. R6 composition root
+## 12. R6 composition root
 
 R6 introduces one public construction API, conceptually:
 
@@ -324,7 +383,7 @@ realizer, decision, or effect implementation modules.
 The evaluation adapter accepts cases but cannot open frozen-test capability at
 R6. R7 injects that capability later.
 
-## 12. Security and reliability
+## 13. Security and reliability
 
 - `safetensors` only; no pickle, `torch.load`, dynamic code, or arbitrary
   object deserialization;
@@ -339,7 +398,7 @@ R6. R7 injects that capability later.
 - crash/retry tests prove no half-activated bundle;
 - training/reproduction never run on request paths.
 
-## 13. Validation and admission
+## 14. Validation and admission
 
 ### R5 owner tiers
 
@@ -368,8 +427,7 @@ structural-hard-cut
 composition-abi
 composition-root
 cli-adapter
-api-adapter
-web-adapter
+http-adapter
 evaluation-adapter-boundary
 surface-parity
 cancellation-idempotency
@@ -382,7 +440,7 @@ active-set execution and binds deterministic generated artifacts. Expensive
 training/reproduction occur only when their content-addressed inputs changed,
 but cached diagnostics never admit.
 
-## 14. Stop conditions
+## 15. Stop conditions
 
 Stop and retain red status when any of these holds:
 
@@ -398,14 +456,18 @@ Stop and retain red status when any of these holds:
 - a normal response has a fallback;
 - a surface adapter semantically routes input;
 - multiple production roots exist;
-- any admission evidence is dirty, missing, ambiguous, or stale.
+- any admission evidence is dirty, missing, ambiguous, or stale;
+- a frozen resource ceiling is exceeded or raised inside an implementation task;
+- non-selected weights, duplicated payloads, unbounded traces, or a new runtime
+  dependency enter the release lineage without separate review.
 
-## 15. Definition of done
+## 16. Definition of done
 
 R5 is complete only after all 25 deferred `R5-Neural-Activation` assertions have
 exact executable successors, the activation bundle and fresh canaries pass, R5
 admission is current-source green, and R6 remains red.
 
 R6 is complete only after every supported adapter executes through the same
-composition root with exact parity, operational gates pass, R6 admission is
-current-source green, and frozen-test evaluation remains unopened for R7.
+composition root with exact parity, all frozen size/latency/RSS/dependency
+budgets pass, R6 admission is current-source green, and frozen-test evaluation
+remains unopened for R7.
