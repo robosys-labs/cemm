@@ -1,0 +1,778 @@
+name: R5 R6 Task 0 efficiency and authority promotion
+
+on:
+  pull_request:
+    branches:
+      - agent/r5-r6-task0-efficiency-authority-ci-base-20260822
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: r5-r6-task0-efficiency-authority-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  verify-and-publish:
+    if: github.event.pull_request.head.ref == 'agent/r5-r6-task0-efficiency-authority-candidate-20260822'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+      PYTHONPATH: src:scripts:.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r5-r6-task0-efficiency-authority-candidate-20260822
+          path: candidate
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r5-r6-task0-efficiency-authority-ci-base-20260822
+          path: control
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Fence disposable trigger and control surface
+        run: |
+          set -euo pipefail
+          parent='ad76f8e30dfa293150b5b8acd79ca2c980c8c7d1'
+          trigger='488d8bceebe507adcda7dfe9d1ee60c284baef4f'
+          test '${{ github.event.pull_request.base.ref }}' = 'agent/r5-r6-task0-efficiency-authority-ci-base-20260822'
+          test '${{ github.event.pull_request.head.ref }}' = 'agent/r5-r6-task0-efficiency-authority-candidate-20260822'
+          test "$(git -C candidate rev-parse HEAD)" = "$trigger"
+          test "$(git -C candidate rev-parse HEAD^)" = "$parent"
+          printf '%s\n' '.github/r5-r6-task0/efficiency-authority-trigger.json' > /tmp/expected-trigger
+          git -C candidate diff --name-only "$parent" "$trigger" | sort > /tmp/actual-trigger
+          diff -u /tmp/expected-trigger /tmp/actual-trigger
+          test "$(git -C candidate hash-object .github/r5-r6-task0/efficiency-authority-trigger.json)" = '56c54bc0c9a1224288ff5369432a6d012d0dd72f'
+
+          test "$(git -C control merge-base "$parent" HEAD)" = "$parent"
+          printf '%s\n' '.github/workflows/r5-r6-task0-efficiency-authority.yml' > /tmp/expected-control
+          git -C control diff --name-only "$parent" HEAD | sort > /tmp/actual-control
+          diff -u /tmp/expected-control /tmp/actual-control
+          printf 'INITIAL_HEAD_SHA=%s\n' "$trigger" >> "$GITHUB_ENV"
+          git -C candidate checkout --detach "$parent"
+
+      - name: Apply final efficiency refinement and promote authority
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          from pathlib import Path
+
+          root = Path('candidate/hybrid_mvp')
+
+          def read(relative: str) -> str:
+              return (root / relative).read_text(encoding='utf-8')
+
+          def write(relative: str, text: str) -> None:
+              (root / relative).write_text(text, encoding='utf-8')
+
+          def replace_once(text: str, old: str, new: str, *, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise AssertionError(f'{label}: expected one anchor, found {count}')
+              return text.replace(old, new, 1)
+
+          def replace_section(text: str, start: str, end: str, replacement: str, *, label: str) -> str:
+              start_index = text.find(start)
+              if start_index < 0:
+                  raise AssertionError(f'{label}: missing start anchor')
+              end_index = text.find(end, start_index + len(start))
+              if end_index < 0:
+                  raise AssertionError(f'{label}: missing end anchor')
+              return text[:start_index] + replacement + text[end_index:]
+
+          design_path = 'docs/superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md'
+          plan_path = 'docs/superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md'
+
+          # Promote exactly the target design and implementation plan.
+          authority_path = root / 'docs/DOCUMENT_AUTHORITY.json'
+          authority = json.loads(authority_path.read_text(encoding='utf-8'))
+          governing = authority['governing_documents']
+          insert_after = 'docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md'
+          additions = [design_path, plan_path]
+          for item in additions:
+              if item in governing:
+                  raise AssertionError(f'authority already contains {item}')
+          insertion = governing.index(insert_after) + 1
+          governing[insertion:insertion] = additions
+          authority_path.write_text(
+              json.dumps(authority, ensure_ascii=False, indent=2) + '\n',
+              encoding='utf-8',
+          )
+
+          governance_path = 'tests/test_replay_governance.py'
+          governance = read(governance_path)
+          governance_anchor = '''    "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
+              "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md",
+          )'''
+          governance_replacement = '''    "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
+              "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md",
+              "docs/superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md",
+              "docs/superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md",
+          )'''
+          governance = replace_once(
+              governance,
+              governance_anchor,
+              governance_replacement,
+              label='governing document tuple',
+          )
+          write(governance_path, governance)
+
+          foundation_design_path = 'docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md'
+          foundation_design = read(foundation_design_path)
+          foundation_design = replace_once(
+              foundation_design,
+              '# R5 Hard-Cut Foundation Design\n\n',
+              '''# R5 Hard-Cut Foundation Design
+
+          > **Activation refinement (2026-08-22):** this document remains the
+          > governing R5 hard-cut and 17/25/1 disposition contract. Neural
+          > activation and R6 composition are governed by the
+          > [R5 Neural Activation and R6 Composition Design](2026-08-22-r5-neural-activation-r6-composition-design.md)
+          > and its implementation plan. The refinement introduces no compatibility
+          > path and cannot execute until a current R4 Build Receipt ABI 4 admission
+          > is green.
+
+          ''',
+              label='foundation design banner',
+          )
+          write(foundation_design_path, foundation_design)
+
+          foundation_plan_path = 'docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md'
+          foundation_plan = read(foundation_plan_path)
+          foundation_plan = replace_once(
+              foundation_plan,
+              '# R5 Legacy Hard-Cut Foundation Implementation Plan\n\n',
+              '''# R5 Legacy Hard-Cut Foundation Implementation Plan
+
+          > **Activation refinement (2026-08-22):** this completed foundation plan
+          > remains authoritative for legacy removal, the five foundation owners,
+          > and the 17/25/1 predecessor disposition. The
+          > [R5 Neural Activation and R6 Composition Plan](2026-08-22-r5-neural-activation-r6-composition-plan.md)
+          > governs all later activation and R6 work; it does not reopen any retired
+          > fixture, bootstrap, compatibility, or fallback path.
+
+          ''',
+              label='foundation plan banner',
+          )
+          write(foundation_plan_path, foundation_plan)
+
+          implementation_path = 'docs/IMPLEMENTATION_PLAN.md'
+          implementation = read(implementation_path)
+          implementation = replace_once(
+              implementation,
+              '''> Its first task is atomic promotion into `DOCUMENT_AUTHORITY.json` and the
+          > exact governance tests. No R5/R6 source implementation should begin before
+          > that promotion and a fresh current-source R4 ABI-4 green admission.''',
+              '''> This package is promoted into `DOCUMENT_AUTHORITY.json` by R5/R6
+          > Task 0. Source implementation remains blocked until Task 1 admits a fresh
+          > current-source R4 ABI-4 predecessor. The efficiency and anti-bloat
+          > contract in the target design is binding on every implementation tranche.''',
+              label='implementation pointer',
+          )
+          write(implementation_path, implementation)
+
+          review_path = 'docs/superpowers/progress/2026-08-22-r5-r6-plan-readiness-review.md'
+          review = read(review_path)
+          review = replace_once(
+              review,
+              '**Decision:** **NO-GO for R5/R6 implementation until the corrections in this review are adopted**',
+              '**Decision:** **PLAN GO after Task 0; SOURCE IMPLEMENTATION NO-GO until current R4 ABI-4 is green**',
+              label='readiness decision',
+          )
+          review_addendum = '''
+
+          ## 7. Final efficiency and anti-bloat refinement
+
+          The final review found that correctness alone was insufficient: the draft
+          still permitted excess schemas, modules, artifact retention, and hot-path
+          verification. The following corrections are now binding:
+
+          1. **Consolidated contracts.** R5 uses one purpose-snapshot ABI and one
+             discriminated lifecycle-receipt ABI rather than separate near-duplicate
+             snapshot/receipt codecs. R6 uses one discriminated evidence receipt for
+             adapter, parity, and operational evidence.
+          2. **Minimal implementation footprint.** R5 has at most five active owner
+             modules; there is no module-per-receipt layout, compatibility re-export,
+             wrapper-only layer, or speculative accelerator abstraction.
+          3. **No artifact-history inflation.** Non-selected checkpoint weights remain
+             in bounded scratch/CI storage and are deleted after selection and
+             reproduction. Git receives only selected artifacts that fit the reviewed
+             repository-size budget plus bounded manifests and receipts.
+          4. **Hot-path work is single-pass.** Models, manifests, safe tensors, and
+             authority pins are verified once when the composition root loads.
+             Context features and pointer tables are encoded once per request and
+             reused; immutable refs are computed once; phases exchange typed objects,
+             not JSON.
+          5. **Bounded inference.** Proposal uses vectorized pointer heads, cached
+             context encodings, bounded beam/top-k, and no materialization of masked
+             candidates. Realization batches a bounded set of neural candidates for
+             round-trip verification and has no template fallback.
+          6. **Budgets precede architecture.** Task 2 freezes combined checkpoint
+             bytes, parameter count, startup, RSS, p50/p95 stage latency, beam/decode
+             bounds, round-trip candidate count, trace/report size, artifact count,
+             dependency count, and import-time ceilings before model code begins.
+             Implementation may improve but cannot raise those ceilings.
+          7. **Dependency restraint.** R5 is CPU-only and uses the existing PyTorch,
+             safetensors, JSON, and validation stack. A new runtime dependency,
+             accelerator backend, cache, streaming protocol, or server framework
+             requires separate measured justification.
+          8. **One HTTP surface.** API and web share one HTTP transport adapter. The
+             initial R6 increment does not implement streaming. CLI and evaluation
+             remain thin codecs over the same composition root.
+          9. **Bounded evidence and tests.** Receipts retain refs, aggregates, and
+             typed failures rather than duplicated datasets, tensors, traces, or
+             per-step logits. Deferred assertions should use literal parameter IDs
+             and conjunctive successor reuse rather than one file/class per case.
+
+          These corrections reduce the planned ABI count from sixteen to ten and
+          prevent offline governance rigor from becoming request-time overhead.
+          '''
+          if '## 7. Final efficiency and anti-bloat refinement' in review:
+              raise AssertionError('readiness addendum already present')
+          review = review.rstrip() + review_addendum + '\n'
+          write(review_path, review)
+
+          design = read(design_path)
+          abi_section = '''## 5. Target ABIs
+
+          These ABIs are registered before their implementations are admitted. One
+          canonical JSON codec and one safe-tensor loader serve all variants; a
+          lifecycle stage or evidence kind does not receive a duplicate serializer.
+
+          ### R5
+
+          1. **Neural Feature Schema ABI 1** — exact structural feature and
+             context-local pointer-slot schema; excludes internal ref spelling and
+             authority-wide vocabularies.
+          2. **R5 Purpose Snapshot ABI 1** — one immutable discriminated projection
+             with `purpose` equal to `train`, `selection`, or `calibration`; separate
+             mint/open owners enforce the one-class firewall.
+          3. **Proposal Checkpoint ABI 1** — safe tensors, architecture, feature and
+             action schemas, source, authority, train capability, config, and tensor
+             identity.
+          4. **Realizer Checkpoint ABI 1** — safe tensors, decoder vocabulary,
+             literal-copy schema, ResponseMeaning ABI, source, authority, train
+             capability, config, and tensor identity.
+          5. **R5 Lifecycle Receipt ABI 1** — a strict discriminated union for
+             `training`, `selection`, `calibration`, `reproduction`, and `weight_use`;
+             each kind has an exact bounded body and shared provenance envelope.
+          6. **R5 Activation Bundle ABI 1** — selected checkpoints, calibrator,
+             runtime config, authority, feature/action/response ABIs, canary set,
+             dependency lock, and source.
+          7. **R5 Activation Canary Receipt ABI 1** — fresh public-runtime
+             observations covering proposal, abstention, realization, failure,
+             restart, and exact round-trip meaning.
+
+          ### R6
+
+          1. **Composition Request ABI 1** — request/session/evidence/deadline,
+             idempotency, and trace policy.
+          2. **Composition Result ABI 1** — cycle result, verified surface, exact
+             realization receipt, final revision, and bounded diagnostics.
+          3. **R6 Evidence Receipt ABI 1** — a strict discriminated union for
+             `adapter`, `parity`, and `operational_budget` evidence.
+
+          No “latest model” pointer or directory selection participates in authority.
+
+          '''
+          design = replace_section(
+              design,
+              '## 5. Target ABIs\n',
+              '## 6. Neural proposer design\n',
+              abi_section,
+              label='design ABI section',
+          )
+          for old, new in ((15, 16), (14, 15), (13, 14), (12, 13), (11, 12), (10, 11), (9, 10), (8, 9), (7, 8), (6, 7)):
+              design = replace_once(
+                  design,
+                  f'## {old}. ',
+                  f'## {new}. ',
+                  label=f'design heading {old}',
+              )
+          efficiency_section = '''## 6. Efficiency and anti-bloat contract
+
+          ### 6.1 Budget before architecture
+
+          Task 2 creates a reviewed resource-budget configuration before any model
+          implementation. It freezes hard ceilings for combined selected checkpoint
+          bytes, parameter count, cold activation, peak RSS, p50/p95 proposal,
+          verification, realization and end-to-end latency, maximum beam width,
+          decoder steps, live states, round-trip candidates, trace/report bytes,
+          artifact count/bytes, runtime dependency count, and import time. A later
+          implementation may reduce a ceiling but cannot raise one without a
+          separate reviewed design change.
+
+          R5 has one deterministic CPU release/reference backend. Accelerator,
+          quantization, distributed training, speculative decoding, and streaming
+          are out of scope until measured evidence shows that the admitted CPU path
+          cannot meet the frozen product budget.
+
+          ### 6.2 Hot-path rules
+
+          - activation verifies manifests, model bytes, authority, schemas, and
+            source once, then retains immutable verified handles;
+          - no Git, subprocess, filesystem discovery, whole-artifact rehash,
+            training, calibration, or JSON serialization occurs per request;
+          - ProposalContext features and context-local pointer embeddings are built
+            once per request and reused across decoder steps;
+          - pointer scoring is vectorized, legality masks apply before probability
+            computation, and masked candidate objects are not materialized;
+          - inference uses `eval()` and `torch.inference_mode()` with reviewed thread
+            limits and bounded reusable buffers;
+          - immutable canonical refs are memoized on object construction;
+          - exact verification runs over a bounded top-k final set, not an unbounded
+            beam history;
+          - realization batches its bounded neural candidates through round-trip
+            verification and returns typed failure when none is equivalent;
+          - default traces exclude tensors, logits, raw datasets, and full search
+            histories.
+
+          ### 6.3 Code, dependency, and artifact rules
+
+          R5 uses at most five active owner modules and shared canonical codecs; it
+          does not create a module/class/schema per receipt variant. Existing
+          superseded model/training owners are removed in the same lineage rather
+          than wrapped or re-exported. No new runtime dependency is allowed without
+          measured necessity and a reviewed impact on startup, memory, supply-chain,
+          and cross-platform behavior.
+
+          Candidate training weights live in bounded scratch or CI storage. Git
+          receives only the selected proposer and realizer when their combined size
+          is below the frozen repository budget; otherwise implementation stops for
+          an artifact-store design. Receipts retain hashes, refs, aggregate metrics,
+          and typed failures, never duplicate model bytes, datasets, per-example
+          logits, or unbounded traces.
+
+          R6 has one CLI adapter, one shared HTTP adapter for API and web, and one
+          evaluation boundary. The initial increment has no streaming and no
+          second server stack.
+
+          '''
+          design = replace_once(
+              design,
+              '## 7. Neural proposer design\n',
+              efficiency_section + '## 7. Neural proposer design\n',
+              label='design efficiency section',
+          )
+          design = replace_once(
+              design,
+              'Candidate order is randomized during training and evaluation. Equivalent\npermutations must preserve semantic distributions. Search is bounded by exact\nbeam, step, state, memory, and time limits.',
+              'Candidate order is randomized during training and evaluation. Equivalent\npermutations must preserve semantic distributions. Search is bounded by exact\nbeam, step, state, memory, and time limits. Form, orientation, context, and\npointer-table encodings are computed once; decoder steps reuse cached tensors\nand score pointer tables in batches rather than rebuilding candidate objects.',
+              label='proposer hot path',
+          )
+          design = replace_once(
+              design,
+              'Failure yields a typed no-surface result, never a semantically invented fallback.',
+              'A bounded top-k set of neural candidates is decoded and round-trip checked\nin one batch where possible. Failure yields a typed no-surface result, never a\nsemantically invented fallback.',
+              label='realizer top-k',
+          )
+          design = replace_once(
+              design,
+              '- selected weights become immutable before calibration.',
+              '- selected weights become immutable before calibration;\n- non-selected candidate weights remain outside Git and are deleted after\n  selection and reproduction, while their bounded hashes and metrics remain.',
+              label='selection artifact policy',
+          )
+          design = replace_once(
+              design,
+              'Startup verifies all artifact, source, authority, ABI, lock, calibration, and\nselection identities before tensor use. Missing, mismatched, unsafe, dirty, or\nambiguous artifacts fail startup.',
+              'Startup verifies all artifact, source, authority, ABI, lock, calibration, and\nselection identities once before tensor use. Missing, mismatched, unsafe, dirty,\nor ambiguous artifacts fail startup. Per-request receipts bind the retained\nverified identities and never rehash or rediscover the artifact graph.',
+              label='activation startup verification',
+          )
+          design = replace_once(
+              design,
+              '''composition-abi
+          composition-root
+          cli-adapter
+          api-adapter
+          web-adapter
+          evaluation-adapter-boundary
+          surface-parity
+          cancellation-idempotency
+          operational-budgets
+          structural-hard-cut''',
+              '''composition-abi
+          composition-root
+          cli-adapter
+          http-adapter
+          evaluation-adapter-boundary
+          surface-parity
+          cancellation-idempotency
+          operational-budgets
+          structural-hard-cut''',
+              label='R6 owner consolidation',
+          )
+          design = replace_once(
+              design,
+              '- any admission evidence is dirty, missing, ambiguous, or stale.',
+              '- any admission evidence is dirty, missing, ambiguous, or stale;\n- a frozen resource ceiling is exceeded or raised inside an implementation task;\n- non-selected weights, duplicated payloads, unbounded traces, or a new runtime\n  dependency enter the release lineage without separate review.',
+              label='design stop conditions',
+          )
+          design = replace_once(
+              design,
+              'R6 is complete only after every supported adapter executes through the same\ncomposition root with exact parity, operational gates pass, R6 admission is\ncurrent-source green, and frozen-test evaluation remains unopened for R7.',
+              'R6 is complete only after every supported adapter executes through the same\ncomposition root with exact parity, all frozen size/latency/RSS/dependency\nbudgets pass, R6 admission is current-source green, and frozen-test evaluation\nremains unopened for R7.',
+              label='design definition of done',
+          )
+          write(design_path, design)
+
+          plan = read(plan_path)
+          plan = replace_once(
+              plan,
+              '- R7 remains red.',
+              '''- R7 remains red.
+          - One canonical codec serves each ABI family; no receipt-specific wrappers.
+          - R5 uses one purpose-snapshot type and at most five active owner modules.
+          - No non-selected checkpoint weights are committed to Git.
+          - No new runtime dependency, accelerator backend, cache, or streaming
+            protocol is introduced without separate measured review.
+          - Artifact verification, hashing, and model loading occur at startup, not
+            per request.
+          - Task 2 freezes hard resource ceilings before model implementation.''',
+              label='plan global efficiency invariants',
+          )
+          plan = replace_once(
+              plan,
+              '3. Add narrow supersession notices to the R5 foundation documents:\n   foundation remains authoritative for hard-cut behavior; this plan governs\n   activation and R6.\n4. Update `docs/IMPLEMENTATION_PLAN.md` to point here.\n5. Run governance tests, metadata verification, source-only inventory G0-R5,\n   structural hard cut, legacy audit, and ledger verification.\n6. Commit and push one documentation/governance change.',
+              '3. Apply the final efficiency and anti-bloat refinement: consolidate\n   purpose snapshots and receipt families, freeze hot-path rules, prevent\n   non-selected artifact retention, and collapse API/web into one HTTP adapter.\n4. Add narrow supersession notices to the R5 foundation documents:\n   foundation remains authoritative for hard-cut behavior; this plan governs\n   activation and R6.\n5. Update `docs/IMPLEMENTATION_PLAN.md` to point here.\n6. Run governance tests, metadata verification, source-only inventory G0-R5,\n   structural hard cut, legacy audit, and ledger verification.\n7. Commit and push one documentation/governance change.',
+              label='Task 0 efficiency step',
+          )
+          plan = replace_once(
+              plan,
+              '## Task 2 — Freeze R5/R6 ABIs and validation skeleton',
+              '## Task 2 — Freeze R5/R6 ABIs, validation skeleton, and resource budget',
+              label='Task 2 heading',
+          )
+          plan = replace_once(
+              plan,
+              'Create strict schemas and canonical types for all ABIs defined in the design.\nRegister them in `ABI_REGISTRY.md` only after tests exist.',
+              'Create strict schemas and canonical types for the consolidated ABI\nfamilies defined in the design. Register them in `ABI_REGISTRY.md` only after\ntests exist. Add `configs/r5_r6_resource_budget.json` with measured baseline and\nhard ceilings for model bytes/parameters, startup, RSS, p50/p95 stage latency,\nbeam/decode/state bounds, round-trip candidates, trace/report bytes, artifact\ncount/bytes, runtime dependencies, and import time. The same task adds a strict\nschema and owner tests; later implementation tasks cannot raise a ceiling.',
+              label='Task 2 budget body',
+          )
+          task3 = '''## Task 3 — Implement one purpose-bound class snapshot
+
+          Extend R4 class access into one canonical `R5PurposeSnapshot` with an
+          exact `purpose` discriminator: `train`, `selection`, or `calibration`.
+          Separate mint/open owners enforce the purpose, but all three variants use
+          one codec, validator, and provenance envelope. The snapshot contains no
+          sibling metadata.
+
+          Add process-bound tests that prove:
+
+          - train cannot open selection/calibration/frozen-test;
+          - selection cannot open train/calibration/frozen-test;
+          - calibration cannot open train/selection/frozen-test;
+          - a purpose mismatch fails before data decoding;
+          - no class can discover sibling paths, hashes, refs, counts, or manifests;
+          - frozen-test mint/open is rejected for R5 and R6;
+          - path traversal, symlink, junction, and reparse escapes fail.
+
+          Commit/push the single snapshot ABI and tests before trainer changes.
+
+          '''
+          plan = replace_section(
+              plan,
+              '## Task 3 — Implement purpose-bound class access\n',
+              '## Task 4 — Hard-cut obsolete bootstrap training authority\n',
+              task3,
+              label='Task 3 section',
+          )
+          task4 = '''## Task 4 — Hard-cut obsolete bootstrap training authority
+
+          Delete or quarantine from release imports:
+
+          - `BootstrapEpisode`;
+          - bootstrap JSONL loaders;
+          - `train_proposer`;
+          - `train_realizer`;
+          - old artifact-saving entry points where superseded;
+          - arbitrary validation-path calibration;
+          - compatibility re-exports.
+
+          The active R5 implementation is limited to at most five owner modules:
+
+          ```text
+          r5_features.py
+          r5_proposer.py
+          r5_realizer.py
+          r5_lifecycle.py
+          r5_activation.py
+          ```
+
+          `r5_lifecycle.py` owns the discriminated offline receipt variants and
+          shared canonical codec; it is never imported on the request path. Do not
+          create a module per receipt, wrapper-only layer, compatibility alias, or
+          speculative accelerator abstraction. Superseded `model.py`/`training.py`
+          owners are removed in the same lineage once their successors verify.
+
+          The control plane and package initializer remain Torch-light until an exact
+          activation bundle is loaded. Add structural tests for one release path,
+          zero bootstrap reachability, the five-module ceiling, and an acyclic import
+          graph.
+
+          '''
+          plan = replace_section(
+              plan,
+              '## Task 4 — Hard-cut obsolete bootstrap training authority\n',
+              '## Task 5 — Implement Neural Feature Schema ABI 1\n',
+              task4,
+              label='Task 4 section',
+          )
+          plan = replace_once(
+              plan,
+              '- deterministic bytes across processes/platforms where specified.',
+              '- deterministic bytes across processes/platforms where specified;\n- form/context/pointer features are computed once per request and exposed as\n  immutable cached tensors within the request lifetime;\n- construction stays inside the frozen allocation and latency ceilings.',
+              label='Task 5 performance tests',
+          )
+          plan = replace_once(
+              plan,
+              '4. preserve bounded beam/state/time/RSS limits;\n5. emit explicit abstention and model confidence;\n6. build canonical Program ABI 2 candidates;\n7. pass them to the exact verifier.',
+              '4. reuse one cached context encoding and vectorized pointer tables;\n5. preserve bounded beam/state/time/RSS limits and materialize only top-k legal\n   expansions;\n6. emit explicit abstention and model confidence;\n7. build canonical Program ABI 2 candidates;\n8. pass only the bounded final top-k set to the exact verifier.',
+              label='Task 6 hot path',
+          )
+          plan = replace_once(
+              plan,
+              'Publish a committed candidate set transactionally. Do not select a checkpoint in\nthis task.',
+              'Publish the candidate manifest and bounded training receipt\ntransactionally, but keep candidate weight files in bounded scratch/CI storage.\nDo not commit non-selected checkpoints and do not select a checkpoint in this\ntask.',
+              label='Task 7 artifact policy',
+          )
+          plan = replace_once(
+              plan,
+              'No optimizer or train snapshot may exist in the process. Commit/push selection\nevidence and selected proposer artifact.',
+              'No optimizer or train snapshot may exist in the process. Commit/push\nselection evidence and only the selected proposer artifact after enforcing the\nrepository-size budget; delete non-selected candidate weights.',
+              label='Task 8 selected-only policy',
+          )
+          plan = replace_once(
+              plan,
+              'Every result must create a candidate surface and undergo public round-trip\nsemantic verification.',
+              'Decode only a bounded top-k set, batch round-trip parsing where possible,\nand accept the first exact equivalent result in model order. Every result must\nundergo public round-trip semantic verification; none may use a template or\nstatic fallback.',
+              label='Task 9 bounded realization',
+          )
+          plan = replace_once(
+              plan,
+              'Commit/push selected realizer and selection receipt.',
+              'Commit/push only the selected realizer and selection lifecycle receipt\nafter enforcing the combined selected-artifact budget; delete non-selected\nrealizer weights.',
+              label='Task 10 selected-only policy',
+          )
+          plan = replace_once(
+              plan,
+              '- canonical Calibration Receipt ABI 1.',
+              '- the `calibration` variant of R5 Lifecycle Receipt ABI 1.',
+              label='Task 11 lifecycle receipt',
+          )
+          plan = replace_once(
+              plan,
+              'Emit Reproduction and Weight-Use receipts.',
+              'Emit the `reproduction` and `weight_use` variants of the shared R5\nLifecycle Receipt ABI 1.',
+              label='Task 12 lifecycle receipt',
+          )
+          plan = replace_once(
+              plan,
+              'Publish transactionally with rollback and crash/retry tests on Linux and Windows.',
+              'Publish transactionally with rollback and crash/retry tests on Linux and\nWindows. Stop rather than commit selected model blobs when the combined size,\nartifact count, or startup/RSS ceilings are exceeded.',
+              label='Task 13 artifact ceiling',
+          )
+          plan = replace_once(
+              plan,
+              '- produces exact RealizationReceipt;\n- has no normal fallback.',
+              '- produces exact RealizationReceipt;\n- verifies artifact bytes and manifests once at root load, then reuses immutable\n  handles without per-request rehash or filesystem discovery;\n- runs models under `eval()` and `torch.inference_mode()` with frozen thread and\n  allocation limits;\n- passes typed in-memory objects between phases without JSON round-trips;\n- has no normal fallback.',
+              label='Task 14 runtime efficiency',
+          )
+          plan = replace_once(
+              plan,
+              '- owns runtime lifecycle;\n- propagates deadline/cancellation;',
+              '- owns and reuses one verified runtime/model/store lifecycle;\n- propagates deadline/cancellation;',
+              label='Task 17 root reuse',
+          )
+          plan = replace_once(
+              plan,
+              '## Task 19 — Add API and web adapters',
+              '## Task 19 — Add one HTTP adapter for API and web',
+              label='Task 19 heading',
+          )
+          plan = replace_once(
+              plan,
+              'Create thin transport adapters with:',
+              'Create one thin HTTP transport owner used by both API and web. Do not\nintroduce a second web semantic adapter or server framework. The initial R6\nincrement has no streaming. The shared adapter provides:',
+              label='Task 19 body',
+          )
+          plan = replace_once(
+              plan,
+              '- streaming policy only if semantically complete chunks are defined;\n',
+              '',
+              label='remove initial streaming',
+          )
+          plan = replace_once(
+              plan,
+              'For the same canonical request, CLI/API/web/evaluation adapters must bind the\nsame:',
+              'For the same canonical request, CLI, shared HTTP, and evaluation\nadapters must bind the same:',
+              label='Task 21 surface consolidation',
+          )
+          plan = replace_once(
+              plan,
+              'Test process-tree termination, transactional rollback, partial writes,\nstore/model mismatch, adapter disconnect, repeated idempotency keys, and\nLinux/Windows path semantics.',
+              'Compare every measurement against the Task 2 ceilings; this task may\nfreeze tighter values but cannot raise them. Test process-tree termination,\ntransactional rollback, partial writes, store/model mismatch, adapter\ndisconnect, repeated idempotency keys, and Linux/Windows path semantics.',
+              label='Task 22 frozen budgets',
+          )
+          plan = replace_once(
+              plan,
+              'R6 green (one composition root)\nR7 red (frozen-test evaluation not yet run)',
+              'R6 green (one composition root, one HTTP adapter, all frozen budgets)\nR7 red (frozen-test evaluation not yet run)',
+              label='final acceptance budget',
+          )
+          write(plan_path, plan)
+
+          # Final exact assertions prevent silent plan drift.
+          final_authority = json.loads(authority_path.read_text(encoding='utf-8'))
+          assert final_authority['governing_documents'][-2:] == [design_path, plan_path]
+          final_governance = read(governance_path)
+          assert final_governance.count(design_path) == 1
+          assert final_governance.count(plan_path) == 1
+          final_design = read(design_path)
+          assert final_design.count('ABI 1') >= 10
+          assert 'R5 Lifecycle Receipt ABI 1' in final_design
+          assert 'R6 Evidence Receipt ABI 1' in final_design
+          assert 'api-adapter' not in final_design
+          assert 'web-adapter' not in final_design
+          assert 'http-adapter' in final_design
+          final_plan = read(plan_path)
+          assert final_plan.count('## Task ') == 25
+          assert 'R5PurposeSnapshot' in final_plan
+          assert 'at most five active owner modules' in final_plan
+          assert 'No non-selected checkpoint weights are committed to Git.' in final_plan
+          assert 'Task 19 — Add one HTTP adapter for API and web' in final_plan
+          PY
+
+          cat > /tmp/expected-paths <<'EOF'
+          hybrid_mvp/docs/DOCUMENT_AUTHORITY.json
+          hybrid_mvp/docs/IMPLEMENTATION_PLAN.md
+          hybrid_mvp/docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md
+          hybrid_mvp/docs/superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md
+          hybrid_mvp/docs/superpowers/progress/2026-08-22-r5-r6-plan-readiness-review.md
+          hybrid_mvp/docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md
+          hybrid_mvp/docs/superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md
+          hybrid_mvp/tests/test_replay_governance.py
+          EOF
+          sort -o /tmp/expected-paths /tmp/expected-paths
+          git -C candidate diff --name-only | sort > /tmp/actual-paths
+          diff -u /tmp/expected-paths /tmp/actual-paths
+          git -C candidate diff --check
+
+      - name: Create deterministic Task 0 candidate commit
+        run: |
+          set -euo pipefail
+          git -C candidate config user.name 'CEMM Verification Bot'
+          git -C candidate config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C candidate add -- $(cat /tmp/expected-paths)
+          git -C candidate diff --cached --check
+          GIT_AUTHOR_NAME='CEMM Verification Bot' \
+          GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
+          GIT_AUTHOR_DATE='2026-08-22T10:30:00+01:00' \
+          GIT_COMMITTER_NAME='CEMM Verification Bot' \
+          GIT_COMMITTER_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
+          GIT_COMMITTER_DATE='2026-08-22T10:30:00+01:00' \
+            git -C candidate commit --no-gpg-sign -m 'docs(r5-r6): promote efficient activation authority'
+          candidate_sha="$(git -C candidate rev-parse HEAD)"
+          test "$(git -C candidate rev-parse HEAD^)" = 'ad76f8e30dfa293150b5b8acd79ca2c980c8c7d1'
+          test -z "$(git -C candidate status --short --untracked-files=all)"
+          printf 'CANDIDATE_SHA=%s\n' "$candidate_sha" >> "$GITHUB_ENV"
+
+      - name: Install focused verification dependencies
+        run: python -m pip install 'pytest==8.4.0' 'jsonschema==4.25.1'
+
+      - name: Verify governance and foundation contracts
+        working-directory: candidate/hybrid_mvp
+        run: |
+          set -euo pipefail
+          python -m pytest tests/test_replay_governance.py tests/test_r5_foundation.py -q -p no:cacheprovider
+
+      - name: Verify metadata and source-only inventory
+        working-directory: candidate/hybrid_mvp
+        run: |
+          set -euo pipefail
+          python scripts/verify_r3_r4_test_metadata.py
+          for phase in G0 R1 R2 R3 R4 R5; do
+            python scripts/check_test_inventory.py --phase "$phase" --source-only
+          done
+
+      - name: Verify structural, legacy, and replay-chain contracts
+        working-directory: candidate/hybrid_mvp
+        run: |
+          set -euo pipefail
+          python scripts/check_r3_r4_structure.py
+          python scripts/audit_legacy_test_hard_cut.py
+          python scripts/update_replay_status.py --verify-chain
+
+      - name: Confirm clean candidate and write receipt
+        run: |
+          set -euo pipefail
+          find candidate/hybrid_mvp -type d -name __pycache__ -prune -exec rm -rf {} +
+          test -z "$(git -C candidate status --short --untracked-files=all)"
+          python - "$CANDIDATE_SHA" <<'PY'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          sha = sys.argv[1]
+          tree = subprocess.check_output(
+              ['git', '-C', 'candidate', 'rev-parse', f'{sha}^{{tree}}'],
+              text=True,
+          ).strip()
+          payload = {
+              'schema': 'cemm-r5-r6-task0-authority-v1',
+              'candidate_sha': sha,
+              'parent_sha': 'ad76f8e30dfa293150b5b8acd79ca2c980c8c7d1',
+              'tree_sha': tree,
+              'changed_paths': 8,
+              'r5_abi_families': 7,
+              'r6_abi_families': 3,
+              'task_count': 25,
+              'runtime_module_ceiling': 5,
+              'non_selected_checkpoints_in_git': False,
+              'r5_backend': 'cpu',
+              'http_adapter_count': 1,
+              'streaming_in_r6_initial': False,
+              'source_implementation_unblocked': False,
+              'next_required_task': 'Task 1 current R4 ABI-4 green admission',
+          }
+          Path('/tmp/r5-r6-task0-authority.json').write_text(
+              json.dumps(payload, sort_keys=True, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      - name: SHA-fenced publication to candidate and target
+        run: |
+          set -euo pipefail
+          candidate_ref='refs/heads/agent/r5-r6-task0-efficiency-authority-candidate-20260822'
+          target_ref='refs/heads/agent/r4-task4-batch-publisher-20260816'
+          parent='ad76f8e30dfa293150b5b8acd79ca2c980c8c7d1'
+          git -C candidate push \
+            --force-with-lease="$candidate_ref:$INITIAL_HEAD_SHA" \
+            origin HEAD:"$candidate_ref"
+          test "$(git -C candidate ls-remote origin "$candidate_ref" | cut -f1)" = "$CANDIDATE_SHA"
+          remote_target="$(git -C candidate ls-remote origin "$target_ref" | cut -f1)"
+          if [ "$remote_target" = "$parent" ]; then
+            git -C candidate push origin HEAD:"$target_ref"
+          else
+            test "$remote_target" = "$CANDIDATE_SHA"
+          fi
+          test "$(git -C candidate ls-remote origin "$target_ref" | cut -f1)" = "$CANDIDATE_SHA"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-r5-r6-task0-authority-verification
+          path: /tmp/r5-r6-task0-authority.json
+          if-no-files-found: error
+          retention-days: 7
