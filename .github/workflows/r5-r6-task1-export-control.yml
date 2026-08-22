@@ -1,0 +1,42 @@
+name: R5 R6 Task 1 export control templates
+
+on:
+  push:
+    branches:
+      - agent/r5-r6-task1-r4-current-admission-ci-base-20260822
+    paths:
+      - .github/workflows/r5-r6-task1-export-control.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r5-r6-task1-r4-current-admission-ci-base-20260822
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fence and copy exact templates
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > /tmp/control-head.txt
+          sha256sum \
+            .github/r5-r6-task1/run-current-admission.sh \
+            .github/r5-r6-task1/run-current-admission-v3.sh \
+            > /tmp/control-template-sha256.txt
+          cp .github/r5-r6-task1/run-current-admission.sh /tmp/run-current-admission.sh
+          cp .github/r5-r6-task1/run-current-admission-v3.sh /tmp/run-current-admission-v3.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-r5-r6-task1-control-templates
+          path: |
+            /tmp/control-head.txt
+            /tmp/control-template-sha256.txt
+            /tmp/run-current-admission.sh
+            /tmp/run-current-admission-v3.sh
+          if-no-files-found: error
+          retention-days: 1
