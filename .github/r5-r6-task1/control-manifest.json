@@ -1,7 +1,0 @@
-{
-  "parent_sha": "ca4816bc892d14e7eb593f00977309e2031f131b",
-  "source_repair_sha": "8fc96895513dd4305f0737a98319782a1f5aa0f7",
-  "source_repair_tree": "bb073e594f9aa09d50a59882def2fd7bf551297e",
-  "source_patch_sha256": "ca83b4e32acdd6a7525c12eb3a84db03cf583fa5f2519afec0a894ad0356a6c0",
-  "runner_sha256": "23a4ceb564f6178aa3f2082c06aa786c48a358b3eafda05143d74df0ecfa64d9"
-}
