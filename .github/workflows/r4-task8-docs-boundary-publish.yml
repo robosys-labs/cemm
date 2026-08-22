@@ -60,7 +60,7 @@ jobs:
           sort -o /tmp/docs-paths /tmp/docs-paths
           git -C candidate diff --name-only "$parent" "$candidate_head" | sort > /tmp/candidate-paths
           if diff -q /tmp/trigger-path /tmp/candidate-paths >/dev/null; then
-            test "$(git -C candidate hash-object .github/r4-task8-status/docs-boundary-trigger.json)" = 'f43754fc4cbf5e2e46da011a0cb7e5dab954c6ef'
+            test "$(git -C candidate hash-object .github/r4-task8-status/docs-boundary-trigger.json)" = '5dd5c58bb901ad08cd7039413ea9d24d51e42ae2'
           else
             diff -u /tmp/docs-paths /tmp/candidate-paths
           fi
