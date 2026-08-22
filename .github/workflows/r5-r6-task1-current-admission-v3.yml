@@ -57,6 +57,8 @@ jobs:
           hash_new = '97322ae51aa45628b2db1411a7a485f89d3c87cd12766df8fa1fa17fa18c327f'
           trigger_blob_pattern_old = '03b5a3aa800e1dcb1444ae4f876e60220c3ca795'
           trigger_blob_pattern_new = '950d485c5859182c54192fb1d6950e45e9659412'
+          control_marker_old = "\\n\\n# Reconstruct and authenticate"
+          control_marker_new = "\\n\\n# Reconstruct the exact four-file source-owner repair."
           trigger_block_old = '''replace_once(
               '.github/r5-r6-task1/current-admission-trigger.json',
               '.github/r5-r6-task1/current-admission-v3-trigger.json',
@@ -75,6 +77,7 @@ jobs:
               (trap_old, trap_new, 'malformed ERR trap'),
               (hash_old, hash_new, 'stale source-owner payload hash'),
               (trigger_blob_pattern_old, trigger_blob_pattern_new, 'stale old-trigger blob pattern'),
+              (control_marker_old, control_marker_new, 'stale source-repair section marker'),
               (trigger_block_old, trigger_block_new, 'two-use trigger-path migration'),
           ):
               if text.count(old) != 1:
