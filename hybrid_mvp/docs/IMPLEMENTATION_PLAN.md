@@ -2,9 +2,21 @@
 
 > **Planning status:** This original high-level outline is retained as historical
 > context and does not carry execution or admission authority. Current work is
-> governed by the [approved 2026-08-02 semantic-algebra amendment](superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md), the [master replay plan](superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md),
+> governed by the [approved 2026-08-02 semantic-algebra amendment](superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md),
+> the [master replay plan](superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md),
 > the [R5 hard-cut foundation plan](superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md),
 > and the machine-readable [document authority map](DOCUMENT_AUTHORITY.json).
+>
+> The reviewed pre-implementation R5/R6 readiness package is:
+>
+> - [R5/R6 Plan Readiness Review](superpowers/progress/2026-08-22-r5-r6-plan-readiness-review.md)
+> - [R5 Neural Activation and R6 Composition Design](superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md)
+> - [R5 Neural Activation and R6 Composition Plan](superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md)
+>
+> Its first task is atomic promotion into `DOCUMENT_AUTHORITY.json` and the
+> exact governance tests. No R5/R6 source implementation should begin before
+> that promotion and a fresh current-source R4 ABI-4 green admission.
+>
 > Replay status is derived only from
 > [`governance/replay_status.jsonl`](../governance/replay_status.jsonl). The
 > phase outline below remains historical and does not redefine that ledger.
@@ -70,11 +82,9 @@
 
 ## Phase 8 — Neural realization
 
-- exact `ResponseMeaning` input;
-- constrained pointer-aware generation;
-- multilingual language packs/models;
-- semantic-equivalence verifier;
-- deterministic fallback for critical operation and denial messages.
+Historical outline only. The active R5/R6 design requires exact
+`ResponseMeaning`, a constrained pointer-aware learned decoder, multilingual
+language packs, semantic round-trip verification, and **no normal fallback**.
 
 ## Phase 9 — Shadow comparison and cutover decision
 
