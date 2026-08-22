@@ -39,7 +39,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Normalize v3 wrapper diagnostics and authenticated patch identity
+      - name: Normalize authenticated v3 wrapper control assumptions
         run: |
           set -euo pipefail
           patch='control/.github/r5-r6-task1/source-owner-repair.patch.gz.b64'
@@ -50,15 +50,34 @@ jobs:
 
           path = Path('control/.github/r5-r6-task1/run-current-admission-v3.sh')
           text = path.read_text(encoding='utf-8')
+
           trap_old = '''trap 'rc=$?; printf \\"Task 1 v3 wrapper failed at line %s: %s\\\\n\\" \\"${LINENO}\\" \\"${BASH_COMMAND}\\" >&2; exit \\"${rc}\\"' ERR'''
           trap_new = '''trap 'rc=$?; printf "Task 1 v3 wrapper failed at line %s: %s\\n" "${LINENO}" "${BASH_COMMAND}" >&2; exit "${rc}"' ERR'''
           hash_old = 'abc439ec63ed804e31829b0858d2927594c4601672f7bfcbcf935d6510bc4670'
           hash_new = '97322ae51aa45628b2db1411a7a485f89d3c87cd12766df8fa1fa17fa18c327f'
-          if text.count(trap_old) != 1:
-              raise SystemExit('expected malformed v3 ERR trap exactly once')
-          if text.count(hash_old) != 1:
-              raise SystemExit('expected stale source-owner payload hash exactly once')
-          text = text.replace(trap_old, trap_new, 1).replace(hash_old, hash_new, 1)
+          trigger_block_old = '''replace_once(
+              '.github/r5-r6-task1/current-admission-trigger.json',
+              '.github/r5-r6-task1/current-admission-v3-trigger.json',
+              'trigger path',
+          )'''
+          trigger_block_new = '''old_trigger_path = '.github/r5-r6-task1/current-admission-trigger.json'
+          new_trigger_path = '.github/r5-r6-task1/current-admission-v3-trigger.json'
+          trigger_path_count = text.count(old_trigger_path)
+          if trigger_path_count != 2:
+              raise AssertionError(
+                  f'trigger path: expected two occurrences, found {trigger_path_count}'
+              )
+          text = text.replace(old_trigger_path, new_trigger_path)'''
+
+          for old, new, label in (
+              (trap_old, trap_new, 'malformed ERR trap'),
+              (hash_old, hash_new, 'stale source-owner payload hash'),
+              (trigger_block_old, trigger_block_new, 'two-use trigger-path migration'),
+          ):
+              if text.count(old) != 1:
+                  raise SystemExit(f'expected {label} exactly once')
+              text = text.replace(old, new, 1)
+
           path.write_text(text, encoding='utf-8')
           PY
           bash -n control/.github/r5-r6-task1/run-current-admission-v3.sh
