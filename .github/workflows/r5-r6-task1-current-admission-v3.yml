@@ -72,6 +72,13 @@ jobs:
                   f'trigger path: expected two occurrences, found {trigger_path_count}'
               )
           text = text.replace(old_trigger_path, new_trigger_path)'''
+          source_fence_old = '''[[ \"$(git -C \"${REPO_DIR}\" rev-parse HEAD)\" == \"${SOURCE_SHA}\" ]]
+          [[ \"$(git -C \"${REPO_DIR}\" rev-parse 'HEAD^{tree}')\" == \"${SOURCE_TREE}\" ]]
+          [[ -z \"$(git -C \"${REPO_DIR}\" status --short --untracked-files=all)\" ]]
+          push_candidate_if_at \"${REPAIR_SHA}\" \"${SOURCE_SHA}\"'''
+          source_fence_new = '''[[ \"$(git -C \"${REPO_DIR}\" rev-parse HEAD)\" == \"${SOURCE_SHA}\" ]]
+          [[ -z \"$(git -C \"${REPO_DIR}\" status --short --untracked-files=all)\" ]]
+          push_candidate_if_at \"${REPAIR_SHA}\" \"${SOURCE_SHA}\"'''
 
           for old, new, label in (
               (trap_old, trap_new, 'malformed ERR trap'),
@@ -79,6 +86,7 @@ jobs:
               (trigger_blob_pattern_old, trigger_blob_pattern_new, 'stale old-trigger blob pattern'),
               (control_marker_old, control_marker_new, 'stale source-repair section marker'),
               (trigger_block_old, trigger_block_new, 'two-use trigger-path migration'),
+              (source_fence_old, source_fence_new, 'redundant stale source-tree fence'),
           ):
               if text.count(old) != 1:
                   raise SystemExit(f'expected {label} exactly once')
