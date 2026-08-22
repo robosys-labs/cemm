@@ -1,0 +1,370 @@
+name: R4 Task 8 transactional candidate closeout controllers
+
+on:
+  pull_request:
+    branches:
+      - agent/r4-task8-controller-ci-base-20260822
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: r4-task8-controller-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  build_candidate:
+    if: github.event.pull_request.head.ref == 'agent/r4-task8-controller-candidate-20260822'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      candidate_sha: ${{ steps.commit_candidate.outputs.candidate_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task8-controller-candidate-20260822
+          path: candidate
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r4-task8-controller-ci-base-20260822
+          path: control
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fence candidate trigger and control surface
+        run: |
+          set -euo pipefail
+          parent='5c704399b417414cf91211d6d9a9a8c8ce84767c'
+          trigger='fd58e83ceaac6cd1314dfbfd576a0fec79a4652a'
+          test '${{ github.event.pull_request.base.ref }}' = 'agent/r4-task8-controller-ci-base-20260822'
+          test '${{ github.event.pull_request.head.ref }}' = 'agent/r4-task8-controller-candidate-20260822'
+          test "$(git -C candidate rev-parse HEAD)" = "$trigger"
+          test "$(git -C candidate rev-parse HEAD^)" = "$parent"
+          test "$(git -C candidate rev-parse HEAD^^{tree})" = '7bd10c29d7ef425c8776bedf4a1dc1eb76cb7cd1'
+          printf '%s\n' '.github/r4-task8-status/controller-trigger.json' > /tmp/expected-trigger
+          git -C candidate diff --name-only "$parent" "$trigger" | sort > /tmp/actual-trigger
+          diff -u /tmp/expected-trigger /tmp/actual-trigger
+          test "$(git -C candidate hash-object .github/r4-task8-status/controller-trigger.json)" = '83d56a1e44ddfc0efe60d57dd15320a302c4f60b'
+
+          test "$(git -C control merge-base "$parent" HEAD)" = "$parent"
+          {
+            for index in 00 01 02 03 04 05; do
+              printf '.github/r4-task8/controller-payload/%s.b64\n' "$index"
+            done
+            printf '.github/workflows/r4-task8-controller-publish.yml\n'
+          } | sort > /tmp/expected-control
+          git -C control diff --name-only "$parent" HEAD | sort > /tmp/actual-control
+          diff -u /tmp/expected-control /tmp/actual-control
+
+          test "$(git -C control hash-object .github/r4-task8/controller-payload/00.b64)" = 'c136426681bffdf698fd1052fb254e61d5ee0948'
+          test "$(git -C control hash-object .github/r4-task8/controller-payload/01.b64)" = '789b02b3e593d8db0080807472f82ea0783b2c69'
+          test "$(git -C control hash-object .github/r4-task8/controller-payload/02.b64)" = 'e4afc48ccc79ccc609dff697c63e36be0bdb3abc'
+          test "$(git -C control hash-object .github/r4-task8/controller-payload/03.b64)" = '5251fdff38e47ec951e27831da9c70bb7e89edf0'
+          test "$(git -C control hash-object .github/r4-task8/controller-payload/04.b64)" = 'c8a1df7aea293cc33e6520299b70dc351b51b8a3'
+          test "$(git -C control hash-object .github/r4-task8/controller-payload/05.b64)" = 'bfa84393b1bbbd10558e508a258335b49d810e0b'
+
+          printf 'INITIAL_HEAD_SHA=%s\n' "$trigger" >> "$GITHUB_ENV"
+          git -C candidate checkout --detach "$parent"
+          test "$(git -C candidate rev-parse HEAD)" = "$parent"
+
+      - name: Authenticate and apply exact implementation patch
+        run: |
+          set -euo pipefail
+          cat control/.github/r4-task8/controller-payload/*.b64 > /tmp/controller.patch.gz.b64
+          test "$(sha256sum /tmp/controller.patch.gz.b64 | cut -d' ' -f1)" = '05089ae3daa585b87b4c1f09359ba9fe1cd29729fdfafad7e482daa0860bd983'
+          base64 --decode /tmp/controller.patch.gz.b64 > /tmp/controller.patch.gz
+          test "$(sha256sum /tmp/controller.patch.gz | cut -d' ' -f1)" = 'd102e1ae2a98c1f31565f368654de183327c0e45afd1dcf2d30856b03a37290d'
+          gzip -dc /tmp/controller.patch.gz > /tmp/controller.patch
+          test "$(sha256sum /tmp/controller.patch | cut -d' ' -f1)" = '342fe6f70cc7b8fb648ec418eaabc46e92d4be506f7713a6ebdaaeab933db8eb'
+          git -C candidate apply --check /tmp/controller.patch
+          git -C candidate apply /tmp/controller.patch
+          git -C candidate diff --check
+
+          cat > /tmp/expected-code-paths <<'EOF'
+          hybrid_mvp/artifacts/validation/R5_TEST_DISPOSITIONS.json
+          hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json
+          hybrid_mvp/configs/validation_gates.json
+          hybrid_mvp/scripts/publish_r4_candidate.py
+          hybrid_mvp/scripts/run_r4_corrective_validation.py
+          hybrid_mvp/src/cemm_authoritative_hybrid/r4_admission.py
+          hybrid_mvp/src/cemm_authoritative_hybrid/r4_pipeline.py
+          hybrid_mvp/tests/test_publish_r4_candidate.py
+          hybrid_mvp/tests/test_r4_corrective_validation.py
+          hybrid_mvp/tests/test_validation_gate.py
+          EOF
+          sort -o /tmp/expected-code-paths /tmp/expected-code-paths
+          git -C candidate diff --name-only | sort > /tmp/actual-code-paths
+          diff -u /tmp/expected-code-paths /tmp/actual-code-paths
+
+          test "$(git -C candidate hash-object hybrid_mvp/artifacts/validation/R5_TEST_DISPOSITIONS.json)" = '2aae3a5c91359a0c7e8641579ce1ec7ea99daf51'
+          test "$(git -C candidate hash-object hybrid_mvp/artifacts/validation/TEST_INVENTORY_RECEIPT.json)" = '5be776d0a98f80ddedd79b821cbafdf1aadb8b94'
+          test "$(git -C candidate hash-object hybrid_mvp/configs/validation_gates.json)" = '318b3e1a9fc9c5e9f3f396655e2512280f96f3ac'
+          test "$(git -C candidate hash-object hybrid_mvp/scripts/publish_r4_candidate.py)" = '338b62c77c5e2985fc1807879b0514002594aa4c'
+          test "$(git -C candidate hash-object hybrid_mvp/scripts/run_r4_corrective_validation.py)" = '3e24cda6c0a5973410811338e8733101e109696e'
+          test "$(git -C candidate hash-object hybrid_mvp/src/cemm_authoritative_hybrid/r4_admission.py)" = '69cd0c28b148f445cf37addb28fa0c1de049fe7c'
+          test "$(git -C candidate hash-object hybrid_mvp/src/cemm_authoritative_hybrid/r4_pipeline.py)" = 'da185d83fa17040019d2b5a275210c4994b7470b'
+          test "$(git -C candidate hash-object hybrid_mvp/tests/test_publish_r4_candidate.py)" = '374c391b58bddab4e4e3686890897212253d0ab8'
+          test "$(git -C candidate hash-object hybrid_mvp/tests/test_r4_corrective_validation.py)" = '50c5f7ce0e69d45efbc45532abb85cd4790a6328'
+          test "$(git -C candidate hash-object hybrid_mvp/tests/test_validation_gate.py)" = 'f917da65bf7b1b7556181999180e080919414899'
+
+      - name: Create deterministic candidate commit
+        id: commit_candidate
+        run: |
+          set -euo pipefail
+          git -C candidate config user.name 'CEMM Verification Bot'
+          git -C candidate config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C candidate add -- $(cat /tmp/expected-code-paths)
+          git -C candidate diff --cached --check
+          GIT_AUTHOR_NAME='CEMM Verification Bot' \
+          GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
+          GIT_AUTHOR_DATE='2026-08-22T07:30:00+01:00' \
+          GIT_COMMITTER_NAME='CEMM Verification Bot' \
+          GIT_COMMITTER_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
+          GIT_COMMITTER_DATE='2026-08-22T07:30:00+01:00' \
+            git -C candidate commit --no-gpg-sign -m 'feat(r4): add transactional candidate closeout controllers'
+          candidate_sha="$(git -C candidate rev-parse HEAD)"
+          test "$(git -C candidate rev-parse HEAD^)" = '5c704399b417414cf91211d6d9a9a8c8ce84767c'
+          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = '96fed4fc0ec4b66c87a8cad82f31f6799e2994ae'
+          test -z "$(git -C candidate status --short --untracked-files=all)"
+          printf 'candidate_sha=%s\n' "$candidate_sha" >> "$GITHUB_OUTPUT"
+          printf 'CANDIDATE_SHA=%s\n' "$candidate_sha" >> "$GITHUB_ENV"
+
+      - name: Lease-replace disposable trigger with candidate
+        run: |
+          set -euo pipefail
+          candidate_ref='refs/heads/agent/r4-task8-controller-candidate-20260822'
+          git -C candidate push \
+            --force-with-lease="$candidate_ref:$INITIAL_HEAD_SHA" \
+            origin HEAD:"$candidate_ref"
+          test "$(git -C candidate ls-remote origin "$candidate_ref" | cut -f1)" = "$CANDIDATE_SHA"
+
+  verify_linux:
+    needs: build_candidate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+      PYTHONHASHSEED: '0'
+      PYTHONPATH: src:scripts:.
+    defaults:
+      run:
+        working-directory: hybrid_mvp
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build_candidate.outputs.candidate_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Fence exact candidate
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = '${{ needs.build_candidate.outputs.candidate_sha }}'
+          test "$(git rev-parse HEAD^)" = '5c704399b417414cf91211d6d9a9a8c8ce84767c'
+          test "$(git rev-parse 'HEAD^{tree}')" = '96fed4fc0ec4b66c87a8cad82f31f6799e2994ae'
+          test -z "$(git status --short --untracked-files=all)"
+      - name: Install governed dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install \
+            'pytest==8.4.0' \
+            'jsonschema==4.25.1' \
+            'numpy==2.5.2' \
+            'safetensors==0.5.3'
+          python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
+      - name: Compile active source and scripts
+        run: python -m compileall -q src scripts
+      - name: Run direct Task 8 focused owners
+        run: |
+          set -euo pipefail
+          python -m pytest \
+            tests/test_publish_r4_candidate.py \
+            tests/test_r4_corrective_validation.py \
+            tests/test_r4_partition_contracts.py \
+            tests/test_r4_partition_global_assignment.py \
+            tests/test_r4_admission.py \
+            tests/test_r4_validation_gate.py \
+            tests/test_r4_training_partition_boundary.py \
+            tests/test_r5_data_isolation.py \
+            tests/test_validation_gate.py \
+            -q -p no:cacheprovider
+      - name: Verify metadata and zero-change refreshes
+        run: |
+          set -euo pipefail
+          python scripts/verify_r3_r4_test_metadata.py
+          python scripts/refresh_r3_r4_test_metadata.py
+          python scripts/refresh_r5_test_metadata.py
+          test -z "$(git status --short --untracked-files=all)"
+      - name: Replay source-only inventory G0 through R5
+        run: |
+          set -euo pipefail
+          for phase in G0 R1 R2 R3 R4 R5; do
+            python scripts/check_test_inventory.py --phase "$phase" --source-only
+          done
+      - name: Reproduce canonical validation receipts
+        run: |
+          set -euo pipefail
+          python scripts/generate_r5_test_dispositions.py \
+            --check artifacts/validation/R5_TEST_DISPOSITIONS.json
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          import test_inventory_core as inventory_core
+          import validation_gate
+
+          root = Path('.').resolve()
+          inventory_path = root / 'governance/test_inventory.json'
+          inventory_sha = inventory_core.verify_document_authority_pin(root, inventory_path)
+          inventory = inventory_core.load_and_verify(
+              root,
+              inventory_path,
+              phase='G0',
+              enforce_reviewed_counts=True,
+              expected_sha256=inventory_sha,
+          )
+          graph, _ = validation_gate._load_gate_graph_with_source(
+              root / 'configs/validation_gates.json'
+          )
+          selector = validation_gate.validate_inventory_contract(
+              graph, inventory, phase='G0'
+          )
+          authority_raw = (root / 'docs/DOCUMENT_AUTHORITY.json').read_bytes()
+          expected = validation_gate._expected_g0_inventory_receipt(
+              authority_sha256=hashlib.sha256(authority_raw).hexdigest(),
+              inventory_sha256=inventory_sha,
+              inventory=inventory,
+              selector=selector,
+          )
+          actual = (root / 'artifacts/validation/TEST_INVENTORY_RECEIPT.json').read_bytes()
+          assert validation_gate.canonical_json_bytes(expected) == actual
+          assert len(selector.collectable_node_ids) == 1848
+          assert inventory.parsed_module_count == 125
+          assert selector.literal_metadata_ref == 'literal_test_metadata:3ae3a73ecd10d28b55bbc02c'
+          PY
+      - name: Verify structural, legacy, and replay-ledger contracts
+        run: |
+          set -euo pipefail
+          python scripts/check_r3_r4_structure.py
+          python scripts/audit_legacy_test_hard_cut.py
+          python scripts/update_replay_status.py --verify-chain
+      - name: Confirm clean candidate
+        if: always()
+        run: |
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          test -z "$(git status --short --untracked-files=all)"
+
+  verify_windows:
+    needs: build_candidate
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+      PYTHONHASHSEED: '0'
+      PYTHONPATH: src;scripts;.
+    defaults:
+      run:
+        working-directory: hybrid_mvp
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build_candidate.outputs.candidate_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Fence exact candidate
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD) -ne '${{ needs.build_candidate.outputs.candidate_sha }}') { throw 'candidate SHA mismatch' }
+          if ((git rev-parse HEAD^) -ne '5c704399b417414cf91211d6d9a9a8c8ce84767c') { throw 'candidate parent mismatch' }
+          if (git status --short --untracked-files=all) { throw 'candidate checkout is dirty' }
+      - name: Install Windows verification dependencies
+        run: python -m pip install "pytest==8.4.0" "jsonschema==4.25.1"
+      - name: Run transactional and controller cases on Windows
+        run: |
+          python -m pytest `
+            tests/test_publish_r4_candidate.py `
+            tests/test_r4_corrective_validation.py `
+            tests/test_validation_gate.py::test_r4_gate_plans_are_exact_bounded_and_single_process `
+            -q -p no:cacheprovider
+      - name: Confirm clean candidate
+        if: always()
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path . -Directory -Filter __pycache__ -Recurse | Remove-Item -Recurse -Force
+          if (git status --short --untracked-files=all) { throw 'verification mutated candidate' }
+
+  publish:
+    needs: [build_candidate, verify_linux, verify_windows]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build_candidate.outputs.candidate_sha }}
+          fetch-depth: 0
+      - name: Fence and fast-forward production target
+        run: |
+          set -euo pipefail
+          candidate='${{ needs.build_candidate.outputs.candidate_sha }}'
+          parent='5c704399b417414cf91211d6d9a9a8c8ce84767c'
+          target_ref='refs/heads/agent/r4-task4-batch-publisher-20260816'
+          candidate_ref='refs/heads/agent/r4-task8-controller-candidate-20260822'
+          test "$(git rev-parse HEAD)" = "$candidate"
+          test "$(git rev-parse HEAD^)" = "$parent"
+          test "$(git rev-parse 'HEAD^{tree}')" = '96fed4fc0ec4b66c87a8cad82f31f6799e2994ae'
+          test "$(git ls-remote origin "$candidate_ref" | cut -f1)" = "$candidate"
+          remote_target="$(git ls-remote origin "$target_ref" | cut -f1)"
+          if [ "$remote_target" = "$parent" ]; then
+            git push origin HEAD:"$target_ref"
+          else
+            test "$remote_target" = "$candidate"
+          fi
+          test "$(git ls-remote origin "$target_ref" | cut -f1)" = "$candidate"
+      - name: Write verification receipt
+        run: |
+          python - '${{ needs.build_candidate.outputs.candidate_sha }}' <<'PY'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          sha = sys.argv[1]
+          tree = subprocess.check_output(
+              ['git', 'rev-parse', f'{sha}^{{tree}}'], text=True
+          ).strip()
+          payload = {
+              'schema': 'cemm-r4-task8-controller-publication-v1',
+              'candidate_sha': sha,
+              'parent_sha': '5c704399b417414cf91211d6d9a9a8c8ce84767c',
+              'tree_sha': tree,
+              'patch_sha256': '342fe6f70cc7b8fb648ec418eaabc46e92d4be506f7713a6ebdaaeab933db8eb',
+              'changed_path_count': 10,
+              'linux_focused_test_count': 126,
+              'windows_focused_test_count': 21,
+              'metadata_records': 367,
+              'collectable_nodes': 1848,
+              'parsed_modules': 125,
+              'inventory_phases': ['G0', 'R1', 'R2', 'R3', 'R4', 'R5'],
+              'task9_phase_sweep_executed': False,
+              'task10_admission_executed': False,
+          }
+          Path('/tmp/task8-controller-verification.json').write_text(
+              json.dumps(payload, sort_keys=True, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-r4-task8-controller-verification
+          path: /tmp/task8-controller-verification.json
+          if-no-files-found: error
+          retention-days: 7
