@@ -1,0 +1,222 @@
+name: R5 R6 Task 0 efficient authority promotion v2
+
+on:
+  pull_request:
+    branches:
+      - agent/r5-r6-task0-efficiency-authority-ci-base-20260822
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: r5-r6-task0-efficiency-authority-v2-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  verify-and-publish:
+    if: github.event.pull_request.head.ref == 'agent/r5-r6-task0-efficiency-authority-candidate-20260822'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+      PYTHONPATH: src:scripts:.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r5-r6-task0-efficiency-authority-candidate-20260822
+          path: candidate
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r5-r6-task0-efficiency-authority-ci-base-20260822
+          path: control
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Fence trigger and minimal control surface
+        run: |
+          set -euo pipefail
+          parent='ad76f8e30dfa293150b5b8acd79ca2c980c8c7d1'
+          trigger='488d8bceebe507adcda7dfe9d1ee60c284baef4f'
+          template_commit='3abc325d674c0616050be78204e239aba5e7193f'
+          template_path='.github/workflows/r5-r6-task0-efficiency-authority.yml'
+
+          test '${{ github.event.pull_request.base.ref }}' = 'agent/r5-r6-task0-efficiency-authority-ci-base-20260822'
+          test '${{ github.event.pull_request.head.ref }}' = 'agent/r5-r6-task0-efficiency-authority-candidate-20260822'
+          test "$(git -C candidate rev-parse HEAD)" = "$trigger"
+          test "$(git -C candidate rev-parse HEAD^)" = "$parent"
+          printf '%s\n' '.github/r5-r6-task0/efficiency-authority-trigger.json' > /tmp/expected-trigger
+          git -C candidate diff --name-only "$parent" "$trigger" | sort > /tmp/actual-trigger
+          diff -u /tmp/expected-trigger /tmp/actual-trigger
+          test "$(git -C candidate hash-object .github/r5-r6-task0/efficiency-authority-trigger.json)" = '56c54bc0c9a1224288ff5369432a6d012d0dd72f'
+
+          test "$(git -C control merge-base "$parent" HEAD)" = "$parent"
+          printf '%s\n' '.github/workflows/r5-r6-task0-efficiency-authority-v2.yml' > /tmp/expected-control
+          git -C control diff --name-only "$parent" HEAD | sort > /tmp/actual-control
+          diff -u /tmp/expected-control /tmp/actual-control
+          test "$(git -C control rev-parse "$template_commit:$template_path")" = 'dd6f4d16018d37d6327cd6d633e4e37c535b3712'
+          test ! -e "control/$template_path"
+
+          printf 'INITIAL_HEAD_SHA=%s\n' "$trigger" >> "$GITHUB_ENV"
+          git -C candidate checkout --detach "$parent"
+
+      - name: Reuse the reviewed transformation and normalize EOF
+        run: |
+          set -euo pipefail
+          git -C control show \
+            '3abc325d674c0616050be78204e239aba5e7193f:.github/workflows/r5-r6-task0-efficiency-authority.yml' \
+            > /tmp/reviewed-workflow.yml
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          raw = Path('/tmp/reviewed-workflow.yml').read_text(encoding='utf-8')
+          opener = "          python - <<'PY'\n"
+          closer = "\n          PY\n"
+          start = raw.index(opener) + len(opener)
+          end = raw.index(closer, start)
+          script = textwrap.dedent(raw[start:end])
+          assert "Apply final efficiency refinement" not in script
+          assert "R5 Lifecycle Receipt ABI 1" in script
+          assert "Task 19 — Add one HTTP adapter for API and web" in script
+          Path('/tmp/refine_task0.py').write_text(script, encoding='utf-8')
+          PY
+          python /tmp/refine_task0.py
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path(
+              'candidate/hybrid_mvp/docs/superpowers/progress/'
+              '2026-08-22-r5-r6-plan-readiness-review.md'
+          )
+          path.write_text(path.read_text(encoding='utf-8').rstrip() + '\n', encoding='utf-8')
+          PY
+
+          cat > /tmp/expected-paths <<'EOF'
+          hybrid_mvp/docs/DOCUMENT_AUTHORITY.json
+          hybrid_mvp/docs/IMPLEMENTATION_PLAN.md
+          hybrid_mvp/docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md
+          hybrid_mvp/docs/superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md
+          hybrid_mvp/docs/superpowers/progress/2026-08-22-r5-r6-plan-readiness-review.md
+          hybrid_mvp/docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md
+          hybrid_mvp/docs/superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md
+          hybrid_mvp/tests/test_replay_governance.py
+          EOF
+          sort -o /tmp/expected-paths /tmp/expected-paths
+          git -C candidate diff --name-only | sort > /tmp/actual-paths
+          diff -u /tmp/expected-paths /tmp/actual-paths
+          git -C candidate diff --check
+
+      - name: Create deterministic Task 0 candidate
+        run: |
+          set -euo pipefail
+          git -C candidate config user.name 'CEMM Verification Bot'
+          git -C candidate config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C candidate add -- $(cat /tmp/expected-paths)
+          git -C candidate diff --cached --check
+          GIT_AUTHOR_NAME='CEMM Verification Bot' \
+          GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
+          GIT_AUTHOR_DATE='2026-08-22T10:30:00+01:00' \
+          GIT_COMMITTER_NAME='CEMM Verification Bot' \
+          GIT_COMMITTER_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
+          GIT_COMMITTER_DATE='2026-08-22T10:30:00+01:00' \
+            git -C candidate commit --no-gpg-sign -m 'docs(r5-r6): promote efficient activation authority'
+          candidate_sha="$(git -C candidate rev-parse HEAD)"
+          test "$(git -C candidate rev-parse HEAD^)" = 'ad76f8e30dfa293150b5b8acd79ca2c980c8c7d1'
+          test -z "$(git -C candidate status --short --untracked-files=all)"
+          printf 'CANDIDATE_SHA=%s\n' "$candidate_sha" >> "$GITHUB_ENV"
+
+      - name: Install focused verification dependencies
+        run: python -m pip install 'pytest==8.4.0' 'jsonschema==4.25.1'
+
+      - name: Verify governance and foundation
+        working-directory: candidate/hybrid_mvp
+        run: |
+          set -euo pipefail
+          python -m pytest tests/test_replay_governance.py tests/test_r5_foundation.py -q -p no:cacheprovider
+
+      - name: Verify metadata and source-only inventory
+        working-directory: candidate/hybrid_mvp
+        run: |
+          set -euo pipefail
+          python scripts/verify_r3_r4_test_metadata.py
+          for phase in G0 R1 R2 R3 R4 R5; do
+            python scripts/check_test_inventory.py --phase "$phase" --source-only
+          done
+
+      - name: Verify structural, legacy, and replay-chain contracts
+        working-directory: candidate/hybrid_mvp
+        run: |
+          set -euo pipefail
+          python scripts/check_r3_r4_structure.py
+          python scripts/audit_legacy_test_hard_cut.py
+          python scripts/update_replay_status.py --verify-chain
+
+      - name: Confirm clean candidate and write receipt
+        run: |
+          set -euo pipefail
+          find candidate/hybrid_mvp -type d -name __pycache__ -prune -exec rm -rf {} +
+          test -z "$(git -C candidate status --short --untracked-files=all)"
+          python - "$CANDIDATE_SHA" <<'PY'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          sha = sys.argv[1]
+          tree = subprocess.check_output(
+              ['git', '-C', 'candidate', 'rev-parse', f'{sha}^{{tree}}'],
+              text=True,
+          ).strip()
+          payload = {
+              'schema': 'cemm-r5-r6-task0-authority-v1',
+              'candidate_sha': sha,
+              'parent_sha': 'ad76f8e30dfa293150b5b8acd79ca2c980c8c7d1',
+              'tree_sha': tree,
+              'changed_paths': 8,
+              'r5_abi_families': 7,
+              'r6_abi_families': 3,
+              'task_count': 25,
+              'runtime_module_ceiling': 5,
+              'non_selected_checkpoints_in_git': False,
+              'r5_backend': 'cpu',
+              'http_adapter_count': 1,
+              'streaming_in_r6_initial': False,
+              'source_implementation_unblocked': False,
+              'next_required_task': 'Task 1 current R4 ABI-4 green admission',
+          }
+          Path('/tmp/r5-r6-task0-authority.json').write_text(
+              json.dumps(payload, sort_keys=True, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      - name: SHA-fenced publication
+        run: |
+          set -euo pipefail
+          candidate_ref='refs/heads/agent/r5-r6-task0-efficiency-authority-candidate-20260822'
+          target_ref='refs/heads/agent/r4-task4-batch-publisher-20260816'
+          parent='ad76f8e30dfa293150b5b8acd79ca2c980c8c7d1'
+          git -C candidate push \
+            --force-with-lease="$candidate_ref:$INITIAL_HEAD_SHA" \
+            origin HEAD:"$candidate_ref"
+          test "$(git -C candidate ls-remote origin "$candidate_ref" | cut -f1)" = "$CANDIDATE_SHA"
+          remote_target="$(git -C candidate ls-remote origin "$target_ref" | cut -f1)"
+          if [ "$remote_target" = "$parent" ]; then
+            git -C candidate push origin HEAD:"$target_ref"
+          else
+            test "$remote_target" = "$CANDIDATE_SHA"
+          fi
+          test "$(git -C candidate ls-remote origin "$target_ref" | cut -f1)" = "$CANDIDATE_SHA"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-r5-r6-task0-authority-verification
+          path: /tmp/r5-r6-task0-authority.json
+          if-no-files-found: error
+          retention-days: 7
