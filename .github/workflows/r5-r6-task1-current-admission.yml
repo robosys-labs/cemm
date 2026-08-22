@@ -49,6 +49,24 @@ jobs:
             'jsonschema==4.25.1'
           python -m pip install 'torch==2.6.0' \
             --index-url https://download.pytorch.org/whl/cpu
+      - name: Bind control-plane imports to the exact candidate root
+        run: |
+          set -euo pipefail
+          test "$(git -C control hash-object .github/r5-r6-task1/run-current-admission.sh)" = '7a468b8e0a5c95008cdaac74966c95e25f530c92'
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('control/.github/r5-r6-task1/run-current-admission.sh')
+          text = path.read_text(encoding='utf-8')
+          old = 'export PYTHONPATH=src/cemm_authoritative_hybrid:src:scripts:.\n'
+          new = (
+              'export PYTHONPATH="${REPO_DIR}/hybrid_mvp/src/cemm_authoritative_hybrid:'
+              '${REPO_DIR}/hybrid_mvp/src:${REPO_DIR}/hybrid_mvp/scripts:'
+              '${REPO_DIR}/hybrid_mvp"\n'
+          )
+          assert text.count(old) == 1
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
       - name: Repair owners, rebuild twice, admit, and publish
         run: bash "$(pwd)/control/.github/r5-r6-task1/run-current-admission.sh" "$(pwd)/candidate" "$(pwd)/control"
       - uses: actions/upload-artifact@v4
