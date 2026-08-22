@@ -41,7 +41,7 @@ jobs:
           PY
           git rm .github/workflows/r5-r6-task1-r4-admission-hotfix.yml
           printf '%s\n' '.github/workflows/r5-r6-task1-r4-admission-hotfix.yml' '.github/workflows/r5-r6-task1-r4-admission.yml' | sort > /tmp/expected
-          git diff --name-only | sort > /tmp/actual
+          git diff HEAD --name-only | sort > /tmp/actual
           diff -u /tmp/expected /tmp/actual
           test "$(git diff -- .github/workflows/r5-r6-task1-r4-admission.yml | grep -c '^[-+]          assert report.*artifact_count')" -eq 4
           git diff --check
