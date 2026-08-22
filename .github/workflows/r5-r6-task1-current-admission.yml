@@ -50,7 +50,7 @@ jobs:
           python -m pip install 'torch==2.6.0' \
             --index-url https://download.pytorch.org/whl/cpu
       - name: Repair owners, rebuild twice, admit, and publish
-        run: bash control/.github/r5-r6-task1/run-current-admission.sh candidate control
+        run: bash "$(pwd)/control/.github/r5-r6-task1/run-current-admission.sh" "$(pwd)/candidate" "$(pwd)/control"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
