@@ -24,6 +24,7 @@ jobs:
       PYTHONDONTWRITEBYTECODE: '1'
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
       PYTHONHASHSEED: '0'
+      PYTHONPATH: ${{ github.workspace }}/candidate/hybrid_mvp/src/cemm_authoritative_hybrid:${{ github.workspace }}/candidate/hybrid_mvp/src:${{ github.workspace }}/candidate/hybrid_mvp/scripts:${{ github.workspace }}/candidate/hybrid_mvp
       CANDIDATE_BRANCH: agent/r5-r6-task1-r4-ledger-fix2-candidate-20260822
       TARGET_BRANCH: agent/r4-task4-batch-publisher-20260816
       TARGET_BASE_SHA: ca4816bc892d14e7eb593f00977309e2031f131b
