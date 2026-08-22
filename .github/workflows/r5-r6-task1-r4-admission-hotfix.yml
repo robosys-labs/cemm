@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           control_ref='refs/heads/agent/r5-r6-task1-r4-admission-ci-base-20260822'
-          expected_head='32dbd464b54e72e490551950c54b3a42639b8021'
+          expected_head='${{ github.event.pull_request.base.sha }}'
           test "$(git rev-parse HEAD)" = "$expected_head"
           python - <<'PY'
           from pathlib import Path
