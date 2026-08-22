@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+trap 'rc=$?; printf \"Task 1 v3 wrapper failed at line %s: %s\\n\" \"${LINENO}\" \"${BASH_COMMAND}\" >&2; exit \"${rc}\"' ERR
 
 REPO_DIR=${1:?candidate repository path required}
 CONTROL_DIR=${2:?control repository path required}
@@ -34,7 +35,7 @@ git -C "${CONTROL_DIR}" diff --name-only "${PARENT_SHA}" HEAD | sort > /tmp/task
 diff -u /tmp/task1-v3-control.expected /tmp/task1-v3-control.actual
 [[ "$(git -C "${CONTROL_DIR}" hash-object .github/r5-r6-task1/run-current-admission.sh)" == '7a468b8e0a5c95008cdaac74966c95e25f530c92' ]]
 [[ "$(sha256sum "${OLD_PATCH}" | cut -d' ' -f1)" == 'abc439ec63ed804e31829b0858d2927594c4601672f7bfcbcf935d6510bc4670' ]]
-[[ "$(sha256sum "${EXTENSION_PATCH}" | cut -d' ' -f1)" == '67ca65e542816550222a319e70496c737b540683059e2bee3dc76607ffec02dc' ]]
+[[ "$(sha256sum "${EXTENSION_PATCH}" | cut -d' ' -f1)" == '67ca3d489d39ff100e5943624b43f61ee024f926802ec0953db535c8c78e3a7c' ]]
 
 python3 - "${OLD_RUNNER}" "${GENERATED_RUNNER}" <<'PY'
 from __future__ import annotations
@@ -110,9 +111,9 @@ new_post_commit = '''[[ "$(git -C "${REPO_DIR}" rev-parse HEAD)" == "${REPAIR_SH
 push_candidate_if_at "${TRIGGER_SHA}" "${REPAIR_SHA}"
 
 base64 --decode "${EXTENSION_B64}" > /tmp/r5-task1-phase-stability.patch.gz
-[[ "$(sha256sum /tmp/r5-task1-phase-stability.patch.gz | cut -d' ' -f1)" == 'b53d38d454408ce2a83024e80324f573e4c5ca1cc01e01b85e993fd1d0d81fd1' ]]
+[[ "$(sha256sum /tmp/r5-task1-phase-stability.patch.gz | cut -d' ' -f1)" == 'b53f1bc56c796d04a8d224560273640b5c4e00d70c3ed187e5a03bca27ec27f6' ]]
 gzip -dc /tmp/r5-task1-phase-stability.patch.gz > /tmp/r5-task1-phase-stability.patch
-[[ "$(sha256sum /tmp/r5-task1-phase-stability.patch | cut -d' ' -f1)" == 'ad54998477b35790f67b4d34870d053a20a94ee3c971933f229a5a8f0d92c0ea' ]]
+[[ "$(sha256sum /tmp/r5-task1-phase-stability.patch | cut -d' ' -f1)" == 'ad541eeaa81f419ec25d90a04267e000c8d045cb459475a8bc9bc6b61fce86a5' ]]
 git -C "${REPO_DIR}" apply --check /tmp/r5-task1-phase-stability.patch
 git -C "${REPO_DIR}" apply /tmp/r5-task1-phase-stability.patch
 printf '%s\n' \
