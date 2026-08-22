@@ -1,0 +1,68 @@
+name: R5 R6 Task 1 current R4 ABI-4 admission v3
+
+on:
+  pull_request:
+    branches:
+      - agent/r5-r6-task1-r4-current-admission-ci-base-20260822
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: r5-r6-task1-current-r4-admission-v3-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  verify-admit-publish:
+    if: >-
+      github.event.pull_request.head.ref == 'agent/r5-r6-task1-r4-current-admission-v3-candidate-20260822' &&
+      github.event.pull_request.head.sha == 'd4be105c99fc7975650a432a1bf8689caa06286f'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: d4be105c99fc7975650a432a1bf8689caa06286f
+          path: candidate
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r5-r6-task1-r4-current-admission-ci-base-20260822
+          path: control
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install governed R4 verification dependencies
+        working-directory: candidate/hybrid_mvp
+        run: |
+          set -euo pipefail
+          python -m pip install \
+            'pytest==8.4.0' \
+            'hypothesis==6.163.0' \
+            'numpy==2.5.2' \
+            'safetensors==0.5.3' \
+            'fastapi==0.115.0' \
+            'httpx==0.27.0' \
+            'jsonschema==4.25.1'
+          python -m pip install 'torch==2.6.0' \
+            --index-url https://download.pytorch.org/whl/cpu
+      - name: Repair owners, rebuild twice, verify, admit, and publish
+        run: |
+          set -euo pipefail
+          bash control/.github/r5-r6-task1/run-current-admission-v3.sh \
+            "$GITHUB_WORKSPACE/candidate" \
+            "$GITHUB_WORKSPACE/control"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cemm-r5-r6-task1-current-r4-admission-v3
+          path: /tmp/r5-r6-task1-evidence/**
+          if-no-files-found: warn
+          retention-days: 7
