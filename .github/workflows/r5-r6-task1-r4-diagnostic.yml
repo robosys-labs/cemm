@@ -1,0 +1,109 @@
+name: R5 R6 Task 1 R4 diagnostic
+
+on:
+  pull_request:
+    branches:
+      - agent/r5-r6-task1-r4-diagnostic-base-20260822
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.event.pull_request.head.ref == 'agent/r5-r6-task1-r4-diagnostic-head-20260822'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+      PYTHONPATH: src:scripts:.
+    defaults:
+      run:
+        working-directory: hybrid_mvp
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ca4816bc892d14e7eb593f00977309e2031f131b
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install focused dependencies
+        run: |
+          python -m pip install 'pytest==8.4.0' 'jsonschema==4.25.1' 'numpy==2.2.6' 'safetensors==0.5.3'
+          python -m pip install 'torch==2.6.0' --index-url https://download.pytorch.org/whl/cpu
+      - name: Inspect R4 owners and current evidence
+        shell: bash
+        run: |
+          set -u
+          report=/tmp/r4-task1-diagnostic.txt
+          : > "$report"
+          {
+            echo '== source =='
+            git rev-parse HEAD
+            git status --short --untracked-files=all
+            echo
+            echo '== effective ledger =='
+            python scripts/update_replay_status.py --verify-chain
+            echo
+            echo '== build environment owners =='
+            rg -n --hidden --glob '!artifacts/**' --glob '!*.pyc' 'def build_environment|build_environment\s*=' . || true
+            echo
+            echo '== R4 environment/runtime fixtures =='
+            rg -n --hidden --glob '!artifacts/**' 'runtime_factory|mutation_owner|restart_executor|R4Pipeline\(' tests scripts src || true
+            echo
+            echo '== current R4 artifact inventory =='
+            find artifacts/r4 -type f -printf '%P\t%s\n' | sort
+            echo
+            echo '== current build receipt =='
+            cat artifacts/r4/BUILD_RECEIPT.json
+            echo
+            echo '== R4 gate configuration =='
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          value=json.loads(Path('configs/validation_gates.json').read_text())
+          print(json.dumps({k:v for k,v in value.items() if k in {'owners','phases','admission'}}, indent=2, sort_keys=True)[:30000])
+          PY
+            echo
+            echo '== validation CLI =='
+            python scripts/validation_gate.py --help || true
+            echo
+            echo '== build CLI =='
+            python scripts/build_r4_artifacts.py --help || true
+            echo
+            echo '== exact R4 tests =='
+            find tests -maxdepth 1 -type f -name '*r4*' -printf '%f\n' | sort
+          } >> "$report" 2>&1
+
+          set +e
+          {
+            echo
+            echo '== focused R4 tests =='
+            python -m pytest \
+              tests/test_r4_partition_contracts.py \
+              tests/test_r4_partition_global_assignment.py \
+              tests/test_r4_admission.py \
+              tests/test_r4_validation_gate.py \
+              tests/test_validation_gate.py \
+              -q -p no:cacheprovider
+            echo "focused_exit=$?"
+            echo
+            echo '== R4 owner/phase dry runs =='
+            python scripts/validation_gate.py --phase R4 --tier owner --dry-run
+            echo "owner_dry_exit=$?"
+            python scripts/validation_gate.py --phase R4 --tier phase --dry-run
+            echo "phase_dry_exit=$?"
+            python scripts/validation_gate.py --phase R4 --tier admission --dry-run
+            echo "admission_dry_exit=$?"
+          } >> "$report" 2>&1
+          set -e
+          cat "$report"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cemm-r5-r6-task1-r4-diagnostic
+          path: /tmp/r4-task1-diagnostic.txt
+          if-no-files-found: error
+          retention-days: 3
