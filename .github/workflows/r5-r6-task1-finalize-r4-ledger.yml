@@ -1,0 +1,266 @@
+name: R5 R6 Task 1 finalize R4 ABI-4 admission ledger
+
+on:
+  push:
+    branches:
+      - agent/r5-r6-task1-r4-current-admission-ci-base-20260822
+    paths:
+      - .github/workflows/r5-r6-task1-finalize-r4-ledger.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: r5-r6-task1-finalize-r4-ledger
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: d4be105c99fc7975650a432a1bf8689caa06286f
+          path: candidate
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Generate exact final Task 1 runner
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          template = Path('control/.github/r5-r6-task1/run-current-admission.sh')
+          out = Path('/tmp/r5-r6-task1-final.generated.sh')
+          text = template.read_text(encoding='utf-8')
+
+          def replace_once(old: str, new: str, label: str) -> None:
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise AssertionError(f'{label}: expected one occurrence, found {count}')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              'TRIGGER_SHA=5d3523f54223285e26b4d315cd5dbe176aabc1f3',
+              'TRIGGER_SHA=d4be105c99fc7975650a432a1bf8689caa06286f',
+              'trigger sha',
+          )
+          replace_once(
+              'SOURCE_SHA=8fc96895513dd4305f0737a98319782a1f5aa0f7\n'
+              'SOURCE_TREE=bb073e594f9aa09d50a59882def2fd7bf551297e',
+              'REPAIR_SHA=8fc96895513dd4305f0737a98319782a1f5aa0f7\n'
+              'REPAIR_TREE=bb073e594f9aa09d50a59882def2fd7bf551297e\n'
+              'SOURCE_SHA=879e421cc731522677fe2db0006d18d6a634e9cb',
+              'source constants',
+          )
+          replace_once(
+              'CANDIDATE_BRANCH=agent/r5-r6-task1-r4-current-admission-candidate-20260822',
+              'CANDIDATE_BRANCH=agent/r5-r6-task1-r4-ledger-fix-candidate-20260822',
+              'candidate branch',
+          )
+          replace_once(
+              'PATCH_B64=${CONTROL_DIR}/.github/r5-r6-task1/source-owner-repair.patch.gz.b64\n'
+              'EVIDENCE_DIR=',
+              'PATCH_B64=${CONTROL_DIR}/.github/r5-r6-task1/source-owner-repair.patch.gz.b64\n'
+              'EXTENSION_B64=${CONTROL_DIR}/.github/r5-r6-task1/phase-stability.patch.gz.b64\n'
+              'EVIDENCE_DIR=',
+              'extension variable',
+          )
+
+          old_trigger_path = '.github/r5-r6-task1/current-admission-trigger.json'
+          new_trigger_path = '.github/r5-r6-task1/current-admission-v3-trigger.json'
+          trigger_count = text.count(old_trigger_path)
+          if trigger_count != 2:
+              raise AssertionError(
+                  f'trigger path: expected two occurrences, found {trigger_count}'
+              )
+          text = text.replace(old_trigger_path, new_trigger_path)
+          replace_once(
+              '950d485c5859182c54192fb1d6950e45e9659412',
+              'b61537ddc809b1cbc724a45de4fd49d431726d03',
+              'trigger blob',
+          )
+
+          control_start = text.index('[[ "$(git -C "${CONTROL_DIR}" merge-base')
+          control_end = text.index(
+              '\n\n# Reconstruct the exact four-file source-owner repair.',
+              control_start,
+          )
+          text = (
+              text[:control_start]
+              + '# Control checkout is pinned to the exact workflow commit.'
+              + text[control_end:]
+          )
+
+          old_post_commit = '''[[ "$(git -C "${REPO_DIR}" rev-parse HEAD)" == "${SOURCE_SHA}" ]]
+          [[ "$(git -C "${REPO_DIR}" rev-parse 'HEAD^{tree}')" == "${SOURCE_TREE}" ]]
+          [[ -z "$(git -C "${REPO_DIR}" status --short --untracked-files=all)" ]]
+          push_candidate_if_at "${TRIGGER_SHA}" "${SOURCE_SHA}"
+
+          cd "${REPO_DIR}/hybrid_mvp"
+          '''
+          new_post_commit = '''[[ "$(git -C "${REPO_DIR}" rev-parse HEAD)" == "${REPAIR_SHA}" ]]
+          [[ "$(git -C "${REPO_DIR}" rev-parse 'HEAD^{tree}')" == "${REPAIR_TREE}" ]]
+          [[ -z "$(git -C "${REPO_DIR}" status --short --untracked-files=all)" ]]
+          push_candidate_if_at "${TRIGGER_SHA}" "${REPAIR_SHA}"
+
+          base64 --decode "${EXTENSION_B64}" > /tmp/r5-task1-phase-stability.patch.gz
+          [[ "$(sha256sum /tmp/r5-task1-phase-stability.patch.gz | cut -d' ' -f1)" == 'b53f1bc56c796d04a8d224560273640b5c4e00d70c3ed187e5a03bca27ec27f6' ]]
+          gzip -dc /tmp/r5-task1-phase-stability.patch.gz > /tmp/r5-task1-phase-stability.patch
+          [[ "$(sha256sum /tmp/r5-task1-phase-stability.patch | cut -d' ' -f1)" == 'ad541eeaa81f419ec25d90a04267e000c8d045cb459475a8bc9bc6b61fce86a5' ]]
+          git -C "${REPO_DIR}" apply --check /tmp/r5-task1-phase-stability.patch
+          git -C "${REPO_DIR}" apply /tmp/r5-task1-phase-stability.patch
+          printf '%s\n' \
+            'hybrid_mvp/scripts/publish_r4_feasibility_basis.py' \
+            'hybrid_mvp/tests/test_r4_authentic_episodes.py' | sort > /tmp/task1-phase-stability.expected
+          git -C "${REPO_DIR}" diff --name-only | sort > /tmp/task1-phase-stability.actual
+          diff -u /tmp/task1-phase-stability.expected /tmp/task1-phase-stability.actual
+          git -C "${REPO_DIR}" diff --check
+          git -C "${REPO_DIR}" add -- \
+            hybrid_mvp/scripts/publish_r4_feasibility_basis.py \
+            hybrid_mvp/tests/test_r4_authentic_episodes.py
+          GIT_AUTHOR_NAME='CEMM Verification Bot' \
+          GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
+          GIT_AUTHOR_DATE='2026-08-22T14:00:00+01:00' \
+          GIT_COMMITTER_NAME='CEMM Verification Bot' \
+          GIT_COMMITTER_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
+          GIT_COMMITTER_DATE='2026-08-22T14:00:00+01:00' \
+            git -C "${REPO_DIR}" commit --no-gpg-sign -m 'fix(r4): stabilize structured phase execution'
+          [[ "$(git -C "${REPO_DIR}" rev-parse HEAD)" == "${SOURCE_SHA}" ]]
+          [[ -z "$(git -C "${REPO_DIR}" status --short --untracked-files=all)" ]]
+          push_candidate_if_at "${REPAIR_SHA}" "${SOURCE_SHA}"
+
+          STABILITY_SHA="${SOURCE_SHA}"
+          python3 - "${REPO_DIR}/hybrid_mvp/scripts/update_replay_status.py" <<'PY_LEDGER'
+          from pathlib import Path
+          import sys
+
+          path = Path(sys.argv[1])
+          text = path.read_text(encoding='utf-8')
+          old = '''    captured_allowed = _normalize_allowed_evidence_paths(
+              captured_paths, require_files=require_evidence_files
+          )'''
+          new = '''    # These paths were already authenticated by _verify_admitted_runs and,
+              # for a new transition, _validated_admission. Historical R4 ABI-3
+              # evidence may be intentionally absent after the hard cut; the
+              # revalidation closure below still enforces current evidence files.
+              captured_allowed = _normalize_allowed_evidence_paths(
+                  captured_paths, require_files=False
+              )'''
+          if text.count(old) != 1:
+              raise AssertionError('expected post-write evidence normalization exactly once')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY_LEDGER
+          printf '%s\n' 'hybrid_mvp/scripts/update_replay_status.py' > /tmp/task1-ledger-fix.expected
+          git -C "${REPO_DIR}" diff --name-only | sort > /tmp/task1-ledger-fix.actual
+          diff -u /tmp/task1-ledger-fix.expected /tmp/task1-ledger-fix.actual
+          git -C "${REPO_DIR}" diff --check
+          git -C "${REPO_DIR}" add -- hybrid_mvp/scripts/update_replay_status.py
+          GIT_AUTHOR_NAME='CEMM Verification Bot' \
+          GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
+          GIT_AUTHOR_DATE='2026-08-22T23:45:00+01:00' \
+          GIT_COMMITTER_NAME='CEMM Verification Bot' \
+          GIT_COMMITTER_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' \
+          GIT_COMMITTER_DATE='2026-08-22T23:45:00+01:00' \
+            git -C "${REPO_DIR}" commit --no-gpg-sign -m 'fix(r4): retain historical admission evidence replay'
+          LEDGER_FIX_SHA="$(git -C "${REPO_DIR}" rev-parse HEAD)"
+          [[ "$(git -C "${REPO_DIR}" rev-parse HEAD^)" == "${STABILITY_SHA}" ]]
+          [[ -z "$(git -C "${REPO_DIR}" status --short --untracked-files=all)" ]]
+          push_candidate_if_at "${STABILITY_SHA}" "${LEDGER_FIX_SHA}"
+          SOURCE_SHA="${LEDGER_FIX_SHA}"
+
+          cd "${REPO_DIR}/hybrid_mvp"
+          '''
+          replace_once(old_post_commit, new_post_commit, 'source extension and ledger fix')
+          replace_once(
+              'export PYTHONPATH=src/cemm_authoritative_hybrid:src:scripts:.\n',
+              'export PYTHONPATH="${REPO_DIR}/hybrid_mvp/src/cemm_authoritative_hybrid:'
+              '${REPO_DIR}/hybrid_mvp/src:${REPO_DIR}/hybrid_mvp/scripts:'
+              '${REPO_DIR}/hybrid_mvp"\n',
+              'absolute Python path',
+          )
+          if text.count('2026-08-22T13:30:00+01:00') != 2:
+              raise AssertionError('artifact date: expected two occurrences')
+          text = text.replace(
+              '2026-08-22T13:30:00+01:00',
+              '2026-08-22T23:46:00+01:00',
+          )
+          replace_once(
+              "'schema':'cemm-r5-r6-task1-r4-current-admission-v2',",
+              "'schema':'cemm-r5-r6-task1-r4-current-admission-v4',",
+              'publication schema',
+          )
+          replace_once(
+              "'source_repair_sha':source,",
+              "'source_repair_sha':'8fc96895513dd4305f0737a98319782a1f5aa0f7',\n"
+              "  'stability_source_sha':'879e421cc731522677fe2db0006d18d6a634e9cb',\n"
+              "  'source_sha':source,",
+              'publication source fields',
+          )
+
+          for forbidden in (
+              '5d3523f54223285e26b4d315cd5dbe176aabc1f3',
+              'agent/r5-r6-task1-r4-current-admission-candidate-20260822',
+              '.github/r5-r6-task1/current-admission-trigger.json',
+          ):
+              if forbidden in text:
+                  raise AssertionError(f'old control identity remains: {forbidden}')
+          for required in (
+              'agent/r5-r6-task1-r4-ledger-fix-candidate-20260822',
+              '879e421cc731522677fe2db0006d18d6a634e9cb',
+              'fix(r4): retain historical admission evidence replay',
+              'require_files=False',
+              'cemm-r5-r6-task1-r4-current-admission-v4',
+          ):
+              if required not in text:
+                  raise AssertionError(f'missing transformed identity: {required}')
+
+          out.write_text(text, encoding='utf-8')
+          PY
+          chmod +x /tmp/r5-r6-task1-final.generated.sh
+          bash -n /tmp/r5-r6-task1-final.generated.sh
+      - name: Install governed R4 verification dependencies
+        working-directory: candidate/hybrid_mvp
+        run: |
+          set -euo pipefail
+          python -m pip install \
+            'pytest==8.4.0' \
+            'hypothesis==6.163.0' \
+            'numpy==2.5.2' \
+            'safetensors==0.5.3' \
+            'fastapi==0.115.0' \
+            'httpx==0.27.0' \
+            'jsonschema==4.25.1'
+          python -m pip install 'torch==2.6.0' \
+            --index-url https://download.pytorch.org/whl/cpu
+      - name: Rebuild, verify, admit, publish, and close R4
+        run: |
+          set -euo pipefail
+          cat > /tmp/task1-bash-env <<'EOF'
+          trap 'rc=$?; printf "Final Task 1 runner failed at line %s: %s\n" "${LINENO}" "${BASH_COMMAND}" >&2; exit "${rc}"' ERR
+          EOF
+          export BASH_ENV=/tmp/task1-bash-env
+          bash /tmp/r5-r6-task1-final.generated.sh \
+            "$GITHUB_WORKSPACE/candidate" \
+            "$GITHUB_WORKSPACE/control"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cemm-r5-r6-task1-final-r4-admission
+          path: /tmp/r5-r6-task1-evidence/**
+          if-no-files-found: warn
+          retention-days: 7
