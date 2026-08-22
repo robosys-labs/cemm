@@ -55,6 +55,8 @@ jobs:
           trap_new = '''trap 'rc=$?; printf "Task 1 v3 wrapper failed at line %s: %s\\n" "${LINENO}" "${BASH_COMMAND}" >&2; exit "${rc}"' ERR'''
           hash_old = 'abc439ec63ed804e31829b0858d2927594c4601672f7bfcbcf935d6510bc4670'
           hash_new = '97322ae51aa45628b2db1411a7a485f89d3c87cd12766df8fa1fa17fa18c327f'
+          trigger_blob_pattern_old = '03b5a3aa800e1dcb1444ae4f876e60220c3ca795'
+          trigger_blob_pattern_new = '950d485c5859182c54192fb1d6950e45e9659412'
           trigger_block_old = '''replace_once(
               '.github/r5-r6-task1/current-admission-trigger.json',
               '.github/r5-r6-task1/current-admission-v3-trigger.json',
@@ -72,6 +74,7 @@ jobs:
           for old, new, label in (
               (trap_old, trap_new, 'malformed ERR trap'),
               (hash_old, hash_new, 'stale source-owner payload hash'),
+              (trigger_blob_pattern_old, trigger_blob_pattern_new, 'stale old-trigger blob pattern'),
               (trigger_block_old, trigger_block_new, 'two-use trigger-path migration'),
           ):
               if text.count(old) != 1:
