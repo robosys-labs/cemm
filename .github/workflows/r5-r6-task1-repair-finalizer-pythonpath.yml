@@ -1,0 +1,63 @@
+name: R5 R6 Task 1 repair finalizer Python path
+
+on:
+  pull_request:
+    branches:
+      - agent/r5-r6-task1-r4-current-admission-ci-base-20260822
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: >-
+      github.event.pull_request.head.ref == 'agent/r5-r6-task1-r4-ledger-final-trigger-20260822' &&
+      github.event.pull_request.head.sha == '1d31bfa770ed9224e1735a897cc69e5c1652bb3f'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/r5-r6-task1-r4-current-admission-ci-base-20260822
+          fetch-depth: 0
+      - name: Add absolute verifier Python path
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/r5-r6-task1-finalize-r4-ledger-v3.yml')
+          lines = path.read_text(encoding='utf-8').splitlines()
+          anchor = "      PYTHONHASHSEED: '0'"
+          value = (
+              '      PYTHONPATH: $' + '{{ github.workspace }}' +
+              '/candidate/hybrid_mvp/src/cemm_authoritative_hybrid:$' +
+              '{{ github.workspace }}' + '/candidate/hybrid_mvp/src:$' +
+              '{{ github.workspace }}' + '/candidate/hybrid_mvp/scripts:$' +
+              '{{ github.workspace }}' + '/candidate/hybrid_mvp'
+          )
+          if value in lines:
+              raise SystemExit(0)
+          count = lines.count(anchor)
+          if count != 1:
+              raise AssertionError(f'expected one PYTHONHASHSEED anchor, found {count}')
+          index = lines.index(anchor)
+          lines.insert(index + 1, value)
+          path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          PY
+          git diff --check
+          printf '%s\n' '.github/workflows/r5-r6-task1-finalize-r4-ledger-v3.yml' > /tmp/expected
+          git diff --name-only | sort > /tmp/actual
+          diff -u /tmp/expected /tmp/actual
+          if git diff --quiet; then
+            exit 0
+          fi
+          expected_head="$(git rev-parse HEAD)"
+          git config user.name 'CEMM Verification Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- .github/workflows/r5-r6-task1-finalize-r4-ledger-v3.yml
+          git commit --no-gpg-sign -m 'ci(r5-r6): add final R4 verifier Python path'
+          git push \
+            --force-with-lease="refs/heads/agent/r5-r6-task1-r4-current-admission-ci-base-20260822:${expected_head}" \
+            origin HEAD:refs/heads/agent/r5-r6-task1-r4-current-admission-ci-base-20260822
