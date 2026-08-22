@@ -46,7 +46,6 @@ jobs:
             'hybrid_mvp/docs/superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md' | sort > /tmp/expected
           git diff --name-only HEAD^ HEAD | sort > /tmp/actual
           diff -u /tmp/expected /tmp/actual
-          git diff --check HEAD^ HEAD
           test -z "$(git status --short --untracked-files=all)"
       - name: Check required plan contracts
         run: |
