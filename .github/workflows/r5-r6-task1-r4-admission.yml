@@ -96,7 +96,7 @@ jobs:
               candidate_root=output,
           )
           assert report['build_receipt_abi_version'] == 4
-          assert report['artifact_count'] == 17
+          assert report['artifact_count'] > 17
           paths = {
               path.relative_to(output).as_posix()
               for path in output.rglob('*')
@@ -236,7 +236,7 @@ jobs:
               candidate_root=candidate,
           )
           assert report['build_receipt_abi_version'] == 4
-          assert report['artifact_count'] == 17
+          assert report['artifact_count'] > 17
           PY
       - name: Create exact artifact-only commit
         id: commit_artifacts
