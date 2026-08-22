@@ -39,6 +39,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Repair v3 error reporter without changing candidate source
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('control/.github/r5-r6-task1/run-current-admission-v3.sh')
+          text = path.read_text(encoding='utf-8')
+          old = '''trap 'rc=$?; printf \\"Task 1 v3 wrapper failed at line %s: %s\\\\n\\" \\"${LINENO}\\" \\"${BASH_COMMAND}\\" >&2; exit \\"${rc}\\"' ERR'''
+          new = '''trap 'rc=$?; printf "Task 1 v3 wrapper failed at line %s: %s\\n" "${LINENO}" "${BASH_COMMAND}" >&2; exit "${rc}"' ERR'''
+          if text.count(old) != 1:
+              raise SystemExit('expected malformed v3 ERR trap exactly once')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          bash -n control/.github/r5-r6-task1/run-current-admission-v3.sh
       - name: Install governed R4 verification dependencies
         working-directory: candidate/hybrid_mvp
         run: |
