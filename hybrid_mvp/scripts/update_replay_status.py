@@ -732,8 +732,12 @@ def _make_post_write_validator(
 ) -> Callable[[], None]:
     captured_records = tuple(dict(record) for record in records)
     captured_paths = tuple(evidence_paths)
+    # These paths were already authenticated by _verify_admitted_runs and,
+    # for a new transition, _validated_admission. Historical R4 ABI-3
+    # evidence may be intentionally absent after the hard cut; the
+    # revalidation closure below still enforces current evidence files.
     captured_allowed = _normalize_allowed_evidence_paths(
-        captured_paths, require_files=require_evidence_files
+        captured_paths, require_files=False
     )
     if len(captured_allowed) != len(captured_paths):
         raise GovernanceError("validated evidence paths must be unique")
