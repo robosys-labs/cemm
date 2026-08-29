@@ -466,6 +466,14 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "6fad6ec0e2bc594ecf20ba45bef06e852d9b4fd410be38504003f894ef597520"
     },
+    "tests/test_replay_governance.py::test_active_hybrid_workflows_cannot_rewrite_governed_source": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:active-hybrid-workflows-cannot-rewrite-source",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "0c03ae5af33f1797613c3120bb16e31a647afb5855dbbb9bf885c03784b1cea3"
+    },
     "tests/test_replay_governance.py::test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix": {
         "activation_phase": "G0",
         "assertion_ref": "assertion:every-suffix-record-binds-commit-ancestor-monotonic-exact-prefix",
@@ -1127,6 +1135,24 @@ def test_r5_placeholder_docstrings_do_not_claim_admitted_semantics() -> None:
     assert "input utterance is not an authorized response target" in (
         ast.get_docstring(realizer_fit) or ""
     )
+
+
+def test_active_hybrid_workflows_cannot_rewrite_governed_source() -> None:
+    workflows = ROOT.parent / ".github/workflows"
+    forbidden = (
+        "contents: write",
+        "git push",
+        ".github/r3_close_apply.py",
+        "base64 --decode",
+        "frombase64string",
+    )
+    offenders: list[tuple[str, str]] = []
+    for path in sorted((*workflows.glob("*.yml"), *workflows.glob("*.yaml"))):
+        text = path.read_text(encoding="utf-8").casefold()
+        for marker in forbidden:
+            if marker in text:
+                offenders.append((path.name, marker))
+    assert not offenders, offenders
 
 
 def test_r4_partition_corrective_documents_are_superseded() -> None:
