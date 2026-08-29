@@ -899,7 +899,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r4-1-replay-tracker-is-operational-not-status-authority",
         "diagnostic_role": "phase",
         "introduced_by_task": "R4.1-Data-Supervision-Task-1",
-        "source_ast_sha256": "f8007cd38fe875863fcfff176618419196d404ec40e5681170519dd15ef0f293"
+        "source_ast_sha256": "6004947a410e6f2120f71155ec749f27c9d305c04ae4c346327af9ba29431e95"
     },
     "tests/test_replay_governance.py::test_r4_partition_corrective_documents_are_superseded": {
         "activation_phase": "G0",
@@ -1391,9 +1391,12 @@ def test_r4_1_replay_tracker_is_operational_not_status_authority() -> None:
 
     def assert_no_positive_tracker_claims(candidate: str) -> None:
         assert not re.search(
-            r"^\s*this tracker\s+(?:(?:now|also|hereby)\s+)*"
-            r"(?:admits?|authori[sz]e[sd]?|"
-            r"declares?\b[^\r\n]*\b(?:replay\s+)?complete(?:d)?)\b",
+            r"^\s*this tracker\s+"
+            r"(?:(?:do|does|did|has|have|had|will|can|could|may|might|must|"
+            r"be|been|being|is|am|are|was|were|now|also|hereby)\s+)*"
+            r"(?:admit(?:s|ted|ting)?|authori[sz](?:e(?:s|d)?|ing)|"
+            r"declar(?:e(?:s|d)?|ing)\b[^\r\n]*\b"
+            r"complet(?:e(?:s|d)?|ing))\b",
             candidate,
             re.IGNORECASE | re.MULTILINE,
         )
@@ -1420,10 +1423,48 @@ def test_r4_1_replay_tracker_is_operational_not_status_authority() -> None:
     assert not re.search(r"run:[0-9a-f]{24}", text)
     assert not re.search(r"^\|\s*(?:G0|R[1-8])\s*\|", text, re.MULTILINE)
     assert_no_positive_tracker_claims(text)
-    with pytest.raises(AssertionError):
-        assert_no_positive_tracker_claims(
-            text + "\nThis tracker admits R4 and declares the replay complete.\n"
-        )
+    for claim in (
+        "This tracker admit R4.",
+        "This tracker admits R4.",
+        "This tracker admitted R4.",
+        "This tracker is admitting R4.",
+        "This tracker has admitted R4.",
+        "This tracker will admit R4.",
+        "This tracker can admit R4.",
+        "This tracker now also hereby admits R4.",
+    ):
+        with pytest.raises(AssertionError):
+            assert_no_positive_tracker_claims(text + "\n" + claim + "\n")
+    for claim in (
+        "This tracker authorize R4.",
+        "This tracker authorizes R4.",
+        "This tracker authorized R4.",
+        "This tracker is authorizing R4.",
+        "This tracker has authorised R4.",
+        "This tracker will authorise R4.",
+        "This tracker can authorize R4.",
+        "This tracker now also hereby authorizes R4.",
+    ):
+        with pytest.raises(AssertionError):
+            assert_no_positive_tracker_claims(text + "\n" + claim + "\n")
+    for claim in (
+        "This tracker declare the replay complete.",
+        "This tracker declares the replay completes.",
+        "This tracker declared the replay completed.",
+        "This tracker is declaring the replay completing.",
+        "This tracker has declared the replay complete.",
+        "This tracker will declare the replay completed.",
+        "This tracker can declare the replay complete.",
+        "This tracker now also hereby declares the replay complete.",
+    ):
+        with pytest.raises(AssertionError):
+            assert_no_positive_tracker_claims(text + "\n" + claim + "\n")
+    for disclaimer in (
+        "This tracker does not admit R4.",
+        "This tracker cannot authorize R4.",
+        "This tracker does not declare the replay complete.",
+    ):
+        assert_no_positive_tracker_claims(text + "\n" + disclaimer + "\n")
 
     task_rows = re.findall(
         r"^\|\s*T(\d{2})\s*\|\s*([^|]+?)\s*\|\s*([a-z_]+)\s*\|",
