@@ -27,23 +27,37 @@ from cemm_authoritative_hybrid.governance import (
 
 ROOT = Path(__file__).resolve().parents[1]
 
+R4_1_AMENDMENT = (
+    "docs/superpowers/specs/"
+    "2026-08-29-r4-1-data-supervision-corrective-amendment.md"
+)
+
+AUTHORITY_LIKE_ROOT_FILES = frozenset({
+    "AGENTS.md",
+    "README.md",
+    "INTEGRATION.md",
+})
+
+REQUIRED_R5_PREREQUISITE_MARKERS = (
+    "reviewed derivation supervision is independent of bootstrap output",
+    "every purpose class contains semantic evaluation denominators",
+    "reviewed ResponseMeaning-to-surface supervision",
+    "unsupported reviewed minima fail without trimming",
+)
+
 GOVERNING_DOCUMENTS = (
     "AGENTS.md",
+    R4_1_AMENDMENT,
     "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
-    "docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md",
-    "docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md",
-    "docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md",
+    "README.md",
+    "INTEGRATION.md",
     "docs/ARCHITECTURE.md",
     "docs/ABI_REGISTRY.md",
-    "docs/superpowers/plans/2026-08-04-hybrid-mvp-r2-implementation-plan.md",
-    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-r4-implementation-plan.md",
-    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-cognition-activation-plan.md",
-    "docs/superpowers/specs/2026-08-12-r4-repository-owned-admission-design.md",
-    "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
+    "docs/REPLAY_GOVERNANCE.md",
+    "docs/IMPLEMENTATION_PLAN.md",
+    "docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md",
+    "docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md",
     "docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md",
-    "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md",
-    "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
-    "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md",
     "docs/superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md",
     "docs/superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md",
 )
@@ -60,14 +74,34 @@ SUPERSEDED_EXECUTION_CLAIMS = (
     "docs/superpowers/specs/2026-08-12-r4-final-admission-closeout-design.md",
     "docs/superpowers/plans/2026-08-12-r4-final-admission-closeout-plan.md",
     "docs/superpowers/plans/2026-08-04-hybrid-mvp-completion-critical-path.md",
+    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-r4-implementation-plan.md",
+    "docs/superpowers/specs/2026-08-12-r4-repository-owned-admission-design.md",
+    "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
+    "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
+    "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md",
 )
 
 HISTORICAL_EVIDENCE = (
-    "docs/EVALUATION_REPORT.md",
-    "docs/NEURAL_MODEL.md",
+    "docs/AUTHORITY_GOVERNANCE.md",
     "docs/COMPARISON.md",
+    "docs/EVALUATION_PROTOCOL.md",
+    "docs/EVALUATION_REPORT.md",
+    "docs/GRAPH_PROGRAM_ABI.md",
+    "docs/KNOWN_LIMITATIONS.md",
+    "docs/NEURAL_MODEL.md",
+    "docs/RUNTIME_AND_EFFECTS.md",
     "docs/RUNTIME_TRACES.md",
     "docs/WORKTREE_INTEGRATION.md",
+    "docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md",
+    "docs/superpowers/plans/2026-08-04-hybrid-mvp-r2-implementation-plan.md",
+    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-cognition-activation-plan.md",
+    "docs/superpowers/plans/2026-08-12-r1-legacy-test-retirement-plan.md",
+    "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md",
+    "docs/superpowers/plans/2026-08-29-hybrid-authority-cleanup-plan.md",
+    "docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md",
+    "docs/superpowers/progress/2026-08-22-r5-r6-plan-readiness-review.md",
+    "docs/superpowers/specs/2026-08-12-r1-legacy-test-retirement-design.md",
+    "docs/superpowers/specs/2026-08-29-hybrid-authority-cleanup-design.md",
     "artifacts/",
 )
 
@@ -377,7 +411,23 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-1",
         "owner_ref": "governance",
-        "source_ast_sha256": "1fb3374a467d467af50a6e03dd068674989e6e9fd89f55d0d9326765d7c25a6b"
+        "source_ast_sha256": "29235c86026a04ba30cba6be6fe17fa1d474aaad7c8f5314f20b75654a605965"
+    },
+    "tests/test_replay_governance.py::test_authority_cleanup_classifies_every_authority_like_document_once": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:authority-cleanup-classifies-documents-exactly",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-1",
+        "owner_ref": "governance",
+        "source_ast_sha256": "e9f7a6b008392d5d88b6ce4915dc51a3026079ed77bb8e6d03b42e6e0f26e716"
+    },
+    "tests/test_replay_governance.py::test_r4_1_amendment_owns_authentic_r5_prerequisites": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:r4-1-amendment-owns-r5-prerequisites",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-1",
+        "owner_ref": "governance",
+        "source_ast_sha256": "be6df0f7f7bb1d9df2d1312888e2ed90f4db25a664d7b0033d3de5fe4727c11c"
     },
     "tests/test_replay_governance.py::test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix": {
         "activation_phase": "G0",
@@ -762,12 +812,13 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "R4-Partition-Corrective-Task-1",
         "source_ast_sha256": "523f5ccfefa21a5e35710d140014c041e0ef2ba768ffe3d111aadf65a3993d97"
     },
-    "tests/test_replay_governance.py::test_r4_partition_corrective_authority_is_exact": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-partition-corrective-authority-is-exact",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-1",
-        "source_ast_sha256": "e185fb056f55d3ac58b86f4a7551b446e5adba380dca34439f7999e99d0fead9"
+    "tests/test_replay_governance.py::test_r4_partition_corrective_documents_are_superseded": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:r4-partition-corrective-documents-are-superseded",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-1",
+        "owner_ref": "governance",
+        "source_ast_sha256": "624ebbe3db3db3b638eba09857c8c147e802a77777ac66c7461551c83f7bc15f"
     },
     "tests/test_replay_governance.py::test_r4_partition_defect_binding_matches_current_pre_invalidation_artifacts": {
         "activation_phase": "R4",
@@ -901,7 +952,7 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
     assert authority["generated_artifacts_are_authority"] is False
     assert authority["root_adoption_requires_separate_review"] is True
 
-    amendment = (ROOT / GOVERNING_DOCUMENTS[1]).read_text(encoding="utf-8")
+    amendment = (ROOT / GOVERNING_DOCUMENTS[2]).read_text(encoding="utf-8")
     assert "SemanticSwitchProgram" in amendment
     assert "SemanticExpression" in amendment
     assert "VerifiedMeaning" in amendment
@@ -959,11 +1010,46 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
 
 
 
-def test_r4_partition_corrective_authority_is_exact() -> None:
+def test_authority_cleanup_classifies_every_authority_like_document_once() -> None:
+    authority = _authority()
+    classes = (
+        tuple(authority["governing_documents"]),
+        tuple(authority["superseded_execution_claims"]),
+        tuple(authority["historical_evidence"]),
+    )
+    classified = set().union(*(set(rows) for rows in classes))
+    markdown = {
+        path.relative_to(ROOT).as_posix()
+        for path in (ROOT / "docs").rglob("*.md")
+    }
+    assert markdown | AUTHORITY_LIKE_ROOT_FILES <= classified
+    for index, left in enumerate(classes):
+        for right in classes[index + 1 :]:
+            assert set(left).isdisjoint(right)
+    assert authority["governing_documents"][0] == "AGENTS.md"
+    assert authority["governing_documents"][1] == R4_1_AMENDMENT
+
+
+def test_r4_1_amendment_owns_authentic_r5_prerequisites() -> None:
+    authority = _authority()
+    assert R4_1_AMENDMENT in authority["governing_documents"]
+    text = (ROOT / R4_1_AMENDMENT).read_text(encoding="utf-8")
+    for marker in REQUIRED_R5_PREREQUISITE_MARKERS:
+        assert marker in text
+    assert "governance/replay_status.jsonl" in text
+    assert "root adoption" in text.casefold()
+
+
+def test_r4_partition_corrective_documents_are_superseded() -> None:
     authority = _strict_document_authority()
     governing = set(authority["governing_documents"])
-    assert "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md" in governing
-    assert "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md" in governing
+    superseded = set(authority["superseded_execution_claims"])
+    paths = {
+        "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
+        "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md",
+    }
+    assert paths <= superseded
+    assert paths.isdisjoint(governing)
 
 
 def test_r4_partition_defect_binding_matches_current_pre_invalidation_artifacts() -> None:
