@@ -500,7 +500,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Selector-Regression-Fix",
         "owner_ref": "governance",
-        "source_ast_sha256": "7aaaf7a28a8e36755d3c1d98313cb9fd43e9046169e21afd489560ecfb7cf6e9"
+        "source_ast_sha256": "c460a56426145f2dc272618a43f9e1673e436e72a7fa639a6200ae51aa505ca0"
     },
     "tests/test_replay_governance.py::test_governing_r5_documents_require_external_r4_1_prerequisite": {
         "activation_phase": "G0",
@@ -1336,8 +1336,9 @@ def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
         available: dict[str, ast.FunctionDef | ast.AsyncFunctionDef],
     ) -> list[tuple[str, str, int]]:
         # Abstract values are (kind, material). Only paths derived from ROOT are
-        # governed here: local paths are safe, while escape/maybe paths fail at
-        # every filesystem or unreviewed helper boundary.
+        # governed here: local paths are safe, tainted values fail if consumed
+        # as filesystem paths, and escape/maybe paths also fail at unreviewed
+        # helper boundaries.
         unknown = ("unknown", None)
         module_values = {
             name: value
@@ -1357,6 +1358,8 @@ def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
                 return ("maybe", None)
             if any(state[0] == "maybe" for state in states):
                 return ("maybe", None)
+            if any(state[0] == "tainted" for state in states):
+                return ("tainted", None)
             values = [state[1] for state in states if state[0] == "value"]
             if len(values) == len(states) and all(type(value) is str for value in values):
                 safe = all(
@@ -1395,8 +1398,10 @@ def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
             left: tuple[str, object],
             right: tuple[str, object],
         ) -> tuple[str, object]:
-            if left[0] not in {"local", "escape", "maybe"}:
+            if left[0] not in {"local", "escape", "maybe", "tainted"}:
                 return unknown
+            if left[0] == "tainted":
+                return ("maybe", None)
             if right[0] == "safe-segment":
                 return left
             if right[0] != "value" or type(right[1]) is not str:
@@ -1418,6 +1423,48 @@ def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
             relative = PurePosixPath(*base).as_posix() if base else "."
             escaped = relative == ".." or relative.startswith("../")
             return ("escape" if escaped else "local", relative)
+
+        def concatenate_strings(
+            left: tuple[str, object],
+            right: tuple[str, object],
+        ) -> tuple[str, object]:
+            if (
+                left[0] == "value"
+                and right[0] == "value"
+                and type(left[1]) is str
+                and type(right[1]) is str
+            ):
+                return value_state(left[1] + right[1])
+            if left == value_state("") and right[0] in {
+                "local",
+                "escape",
+                "maybe",
+                "tainted",
+            }:
+                return right
+            if right == value_state("") and left[0] in {
+                "local",
+                "escape",
+                "maybe",
+                "tainted",
+            }:
+                return left
+            if left[0] == "escape" and right[0] == "value" and type(right[1]) is str:
+                return ("escape", None)
+            if left[0] == "local" and right[0] == "value" and type(right[1]) is str:
+                suffix = right[1]
+                if suffix.startswith(("/", "\\")):
+                    return join_path(left, value_state(suffix.lstrip("/\\")))
+                if left[1] not in {None, "."}:
+                    return join_path(("local", "."), value_state(f"{left[1]}{suffix}"))
+            if left[0] in {"local", "escape", "maybe", "tainted"} or right[0] in {
+                "local",
+                "escape",
+                "maybe",
+                "tainted",
+            }:
+                return ("maybe", None)
+            return unknown
 
         offenders: list[tuple[str, str, int]] = []
         active_states: set[tuple[str, tuple[tuple[str, tuple[str, object]], ...]]] = set()
@@ -1450,7 +1497,9 @@ def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
             analyzed_states += 1
             assert analyzed_states <= 512
 
-            def evaluate(expression: ast.AST) -> tuple[str, object]:
+            def evaluate(expression: ast.AST | None) -> tuple[str, object]:
+                if expression is None:
+                    return unknown
                 if isinstance(expression, ast.Name):
                     if expression.id == "ROOT":
                         return ("local", ".")
@@ -1513,9 +1562,19 @@ def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
                     return merge([evaluate(value) for value in expression.values])
                 if isinstance(expression, ast.Attribute):
                     base = evaluate(expression.value)
-                    if expression.attr == "parent" and base[0] in {"local", "escape", "maybe"}:
+                    if expression.attr == "parent" and base[0] in {
+                        "local",
+                        "escape",
+                        "maybe",
+                        "tainted",
+                    }:
                         return join_path(base, value_state(".."))
-                    if expression.attr == "parents" and base[0] in {"local", "escape", "maybe"}:
+                    if expression.attr == "parents" and base[0] in {
+                        "local",
+                        "escape",
+                        "maybe",
+                        "tainted",
+                    }:
                         return ("parents", base)
                     return unknown
                 if isinstance(expression, ast.Subscript):
@@ -1523,7 +1582,7 @@ def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
                     index = evaluate(expression.slice)
                     if base[0] == "parents":
                         return ("escape", "..")
-                    if base[0] in {"escape", "maybe"}:
+                    if base[0] in {"escape", "maybe", "tainted"}:
                         return base
                     if base[0] == "value" and index[0] == "value":
                         try:
@@ -1531,9 +1590,24 @@ def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
                         except (KeyError, IndexError, TypeError):
                             return unknown
                     return unknown
+                if isinstance(expression, ast.BinOp) and isinstance(expression.op, ast.Add):
+                    return concatenate_strings(evaluate(expression.left), evaluate(expression.right))
                 if isinstance(expression, ast.BinOp) and isinstance(expression.op, ast.Div):
                     return join_path(evaluate(expression.left), evaluate(expression.right))
+                if isinstance(expression, ast.JoinedStr):
+                    result = value_state("")
+                    for value in expression.values:
+                        if isinstance(value, ast.FormattedValue):
+                            part = evaluate(value.value)
+                            if part[0] == "value":
+                                part = value_state(str(part[1]))
+                        else:
+                            part = evaluate(value)
+                        result = concatenate_strings(result, part)
+                    return result
                 if isinstance(expression, ast.Call):
+                    if ast.unparse(expression.func) in authenticated_git_calls:
+                        return unknown
                     if isinstance(expression.func, ast.Name):
                         if expression.func.id in {"_authority", "_strict_document_authority"}:
                             return value_state(_authority())
@@ -1574,9 +1648,25 @@ def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
                             if receiver[0] == "value":
                                 chars = evaluate(expression.args[0])[1] if expression.args else None
                                 return value_state(getattr(receiver[1], expression.func.attr)(chars))
-                        if receiver[0] in {"local", "escape", "maybe"}:
+                        if receiver[0] in {"local", "escape", "maybe", "tainted"}:
                             return receiver
+                    child_states = [evaluate(child) for child in ast.iter_child_nodes(expression)]
+                    if any(
+                        state[0] in {"escape", "maybe", "parents"}
+                        for state in child_states
+                    ):
+                        return ("maybe", None)
+                    if any(state[0] in {"local", "tainted"} for state in child_states):
+                        return ("tainted", None)
                     return unknown
+                child_states = [evaluate(child) for child in ast.iter_child_nodes(expression)]
+                if any(
+                    state[0] in {"escape", "maybe", "parents"}
+                    for state in child_states
+                ):
+                    return ("maybe", None)
+                if any(state[0] in {"local", "tainted"} for state in child_states):
+                    return ("tainted", None)
                 return unknown
 
             def bind_call_arguments(
@@ -1683,7 +1773,7 @@ def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
                     ]
                     if escaped_arguments:
                         offenders.append((function_name, f"helper:{callee}", call.lineno))
-                if target[0] in {"escape", "maybe"}:
+                if target[0] in {"escape", "maybe", "tainted"}:
                     exception = (function_name, operation, str(target[1]))
                     if exception not in allowed_external_reads:
                         offenders.append((function_name, operation, call.lineno))
@@ -1732,6 +1822,13 @@ def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
         ),
         "os-read": "def target():\n    return os.stat(ROOT / '..' / 'x')\n",
         "parents": "def target():\n    return ROOT.parents[0].joinpath('x').read_text()\n",
+        "percent-format": "def target():\n    return open('%s/x' % ROOT.parent).read()\n",
+        "string-concat": (
+            "def target():\n    return open(str(ROOT.parent) + '/x').read()\n"
+        ),
+        "string-interpolation": (
+            "def target():\n    return open(f'{ROOT.parent}/x').read()\n"
+        ),
     }
     missed_regressions: list[str] = []
     for label, regression_source in sorted(regression_sources.items()):
@@ -1744,6 +1841,26 @@ def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
         if not find_offenders({"target"}, regression_functions):
             missed_regressions.append(label)
     assert not missed_regressions, missed_regressions
+
+    local_string_sources = {
+        "plain-concat": "def target():\n    return open('local' + '/x').read()\n",
+        "plain-interpolation": "def target():\n    return open(f'local/{1}').read()\n",
+        "root-local-concat": (
+            "def target():\n    return open(str(ROOT / 'local') + '/x').read()\n"
+        ),
+    }
+    false_positives: dict[str, list[tuple[str, str, int]]] = {}
+    for label, local_source in sorted(local_string_sources.items()):
+        local_tree = ast.parse(local_source)
+        local_functions = {
+            node.name: node
+            for node in local_tree.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+        local_offenders = find_offenders({"target"}, local_functions)
+        if local_offenders:
+            false_positives[label] = local_offenders
+    assert not false_positives, false_positives
     assert not find_offenders(selected_names, functions)
 
 
