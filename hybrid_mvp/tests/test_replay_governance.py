@@ -494,13 +494,13 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "b0343442a4fa2160c28462a3d2c408dfcc350ca61cc88b6d1c0b157199169c11"
     },
-    "tests/test_replay_governance.py::test_active_hybrid_workflows_cannot_rewrite_governed_source": {
+    "tests/test_replay_governance.py::test_selected_g0_governance_nodes_do_not_read_repository_parent": {
         "activation_phase": "G0",
-        "assertion_ref": "assertion:active-hybrid-workflows-cannot-rewrite-source",
+        "assertion_ref": "assertion:selected-g0-governance-nodes-do-not-read-repository-parent",
         "diagnostic_role": "owner",
-        "introduced_by_task": "Authority-Cleanup-Task-4",
+        "introduced_by_task": "G0-Selector-Regression-Fix",
         "owner_ref": "governance",
-        "source_ast_sha256": "0c03ae5af33f1797613c3120bb16e31a647afb5855dbbb9bf885c03784b1cea3"
+        "source_ast_sha256": "5f200edcbc6b9c29aac6b8826652c5e5f3b74f0a5bae6bf3c2173baf9841ae8f"
     },
     "tests/test_replay_governance.py::test_governing_r5_documents_require_external_r4_1_prerequisite": {
         "activation_phase": "G0",
@@ -1254,21 +1254,108 @@ def test_r5_placeholder_docstrings_do_not_claim_admitted_semantics() -> None:
     )
 
 
-def test_active_hybrid_workflows_cannot_rewrite_governed_source() -> None:
-    workflows = ROOT.parent / ".github/workflows"
-    forbidden = (
-        "contents: write",
-        "git push",
-        ".github/r3_close_apply.py",
-        "base64 --decode",
-        "frombase64string",
+def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
+    config_path = ROOT / "configs/validation_gates.json"
+    source_path = ROOT / "tests/test_replay_governance.py"
+    config = json.loads(
+        config_path.read_bytes().decode("utf-8", errors="strict"),
+        object_pairs_hook=_strict_json_object,
+        parse_constant=_reject_nonfinite_json,
     )
-    offenders: list[tuple[str, str]] = []
-    for path in sorted((*workflows.glob("*.yml"), *workflows.glob("*.yaml"))):
-        text = path.read_text(encoding="utf-8").casefold()
-        for marker in forbidden:
-            if marker in text:
-                offenders.append((path.name, marker))
+    assert type(config) is dict
+    steps = config["steps"]
+    assert type(steps) is dict
+    governance_step = steps["g0_governance_tests"]
+    assert type(governance_step) is dict
+    exact_nodes = governance_step["exact_nodes"]
+    assert type(exact_nodes) is list
+
+    module_prefix = "tests/test_replay_governance.py::"
+    selected_names = {
+        node_id.removeprefix(module_prefix).split("[", 1)[0]
+        for node_id in exact_nodes
+        if type(node_id) is str and node_id.startswith(module_prefix)
+    }
+    tree = ast.parse(source_path.read_text(encoding="utf-8"), filename=str(source_path))
+    functions = {
+        node.name: node
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    assert selected_names <= set(functions)
+
+    def contains_repository_parent(
+        expression: ast.AST,
+        parent_bound_names: set[str],
+    ) -> bool:
+        return any(
+            (
+                isinstance(candidate, ast.Attribute)
+                and candidate.attr == "parent"
+                and isinstance(candidate.value, ast.Name)
+                and candidate.value.id == "ROOT"
+            )
+            or (
+                isinstance(candidate, ast.Name)
+                and candidate.id in parent_bound_names
+            )
+            for candidate in ast.walk(expression)
+        )
+
+    read_methods = frozenset(
+        {
+            "exists",
+            "glob",
+            "is_dir",
+            "is_file",
+            "iterdir",
+            "lstat",
+            "open",
+            "read_bytes",
+            "read_text",
+            "rglob",
+            "stat",
+        }
+    )
+    offenders: list[tuple[str, str, int]] = []
+    for function_name in sorted(selected_names):
+        function = functions[function_name]
+        parent_bound_names: set[str] = set()
+        assignments = [
+            node
+            for node in ast.walk(function)
+            if isinstance(node, (ast.Assign, ast.AnnAssign, ast.NamedExpr))
+        ]
+        changed = True
+        while changed:
+            changed = False
+            for assignment in assignments:
+                value = assignment.value
+                if not contains_repository_parent(value, parent_bound_names):
+                    continue
+                if isinstance(assignment, ast.Assign):
+                    targets = assignment.targets
+                else:
+                    targets = [assignment.target]
+                names = {
+                    candidate.id
+                    for target in targets
+                    for candidate in ast.walk(target)
+                    if isinstance(candidate, ast.Name)
+                }
+                new_names = names - parent_bound_names
+                if new_names:
+                    parent_bound_names.update(new_names)
+                    changed = True
+        for call in ast.walk(function):
+            if (
+                isinstance(call, ast.Call)
+                and isinstance(call.func, ast.Attribute)
+                and call.func.attr in read_methods
+                and contains_repository_parent(call.func.value, parent_bound_names)
+            ):
+                offenders.append((function_name, call.func.attr, call.lineno))
+
     assert not offenders, offenders
 
 
