@@ -6,6 +6,7 @@ consult runtime observations, bootstrap proposals, or verifier selections.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import errno
 import hashlib
 import os
 from pathlib import Path
@@ -63,8 +64,9 @@ MAX_LITERAL_ALIGNMENTS = 64
 R4_REVIEW_MANIFEST_PATH = "data/review/r4_1/REVIEW_MANIFEST.json"
 R4_SCENARIO_SOURCE_PATH = "data/scenarios/use_cases.jsonl"
 R4_REVIEW_SOURCE_FILE_COUNT = 5  # manifest plus the four child owners below
-R4_REVIEW_BUNDLE_READ_COUNT = 6  # reviewed package plus the scenario source
+R4_REVIEW_BUNDLE_READ_COUNT = 6  # file opens/snapshots, not low-level read syscalls
 MAX_R4_REVIEW_BUNDLE_BYTES = R4_REVIEW_BUNDLE_READ_COUNT * MAX_R4_SOURCE_BYTES
+MAX_R4_SOURCE_READ_SYSCALLS = 8_192
 
 _SOURCE_PATHS = (
     "data/review/r4_1/mutation_contracts.jsonl",
@@ -271,10 +273,26 @@ def _assert_regular_source_path(
 
 def _read_descriptor_bytes(descriptor: int, path: Path, *, maximum: int) -> bytes:
     del path  # retained as a deterministic hostile-I/O seam
-    try:
-        return os.read(descriptor, maximum + 1)
-    except OSError as exc:
-        raise ValueError("cannot read reviewed source") from exc
+    expected_size = _descriptor_identity(descriptor).size
+    read_limit = min(maximum + 1, expected_size + 1)
+    chunks: list[bytes] = []
+    total = 0
+    for _ in range(MAX_R4_SOURCE_READ_SYSCALLS):
+        try:
+            chunk = os.read(descriptor, read_limit - total)
+        except InterruptedError:
+            continue
+        except OSError as exc:
+            if exc.errno == errno.EINTR:
+                continue
+            raise ValueError("cannot read reviewed source") from exc
+        if not chunk:
+            return b"".join(chunks)
+        chunks.append(chunk)
+        total += len(chunk)
+        if total >= read_limit:
+            return b"".join(chunks)
+    raise ValueError("reviewed source exceeds the bounded read syscall count")
 
 
 def _read_regular_file_once(
@@ -601,74 +619,9 @@ class AuthenticatedR4ReviewBundle:
     aggregate_bytes: int
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
-        raise _factory_only("AuthenticatedR4ReviewBundle")
-
-    @classmethod
-    def create(
-        cls,
-        *,
-        manifest: R4ReviewManifest,
-        manifest_bytes: bytes,
-        sources: tuple[AuthenticatedR4SourceBytes, ...],
-        scenario_source: AuthenticatedR4SourceBytes,
-        read_count: int,
-        aggregate_bytes: int,
-    ) -> "AuthenticatedR4ReviewBundle":
-        canonical_manifest = _canonical_nested(manifest, R4ReviewManifest, "manifest")
-        if type(manifest_bytes) is not bytes or manifest_bytes != canonical_manifest.to_json_bytes():
-            raise ValueError("authenticated manifest bytes are not canonical")
-        if (
-            type(sources) is not tuple
-            or len(sources) != len(_SOURCE_PATHS)
-            or any(type(source) is not AuthenticatedR4SourceBytes for source in sources)
-            or tuple(source.path for source in sources) != _SOURCE_PATHS
-        ):
-            raise ValueError("authenticated child source membership is not exact")
-        canonical_sources = tuple(
-            AuthenticatedR4SourceBytes.create(path=source.path, raw_bytes=source.raw_bytes)
-            for source in sources
-        )
-        if canonical_sources != sources:
-            raise ValueError("authenticated child source bytes are not canonical")
-        if type(scenario_source) is not AuthenticatedR4SourceBytes:
-            raise TypeError("scenario source must be exact AuthenticatedR4SourceBytes")
-        canonical_scenario = AuthenticatedR4SourceBytes.create(
-            path=scenario_source.path, raw_bytes=scenario_source.raw_bytes
-        )
-        if canonical_scenario != scenario_source or scenario_source.path != R4_SCENARIO_SOURCE_PATH:
-            raise ValueError("authenticated scenario source is not canonical")
-        exact_reads = exact_int(
-            read_count,
-            "review bundle read_count",
-            minimum=R4_REVIEW_BUNDLE_READ_COUNT,
-            maximum=R4_REVIEW_BUNDLE_READ_COUNT,
-        )
-        exact_aggregate = exact_int(
-            aggregate_bytes,
-            "review bundle aggregate_bytes",
-            minimum=1,
-            maximum=MAX_R4_REVIEW_BUNDLE_BYTES,
-        )
-        recomputed_aggregate = len(manifest_bytes) + sum(
-            len(source.raw_bytes) for source in (*canonical_sources, canonical_scenario)
-        )
-        if exact_aggregate != recomputed_aggregate:
-            raise ValueError("review bundle aggregate byte count does not reconstruct")
-        computed_ref = _source_bundle_ref(canonical_sources, canonical_scenario)
-        if computed_ref != canonical_manifest.source_bundle_ref:
-            raise ValueError("review manifest source-bundle content ref does not reconstruct")
-        return construct(
-            cls,
-            manifest=canonical_manifest,
-            manifest_bytes=manifest_bytes,
-            manifest_sha256=hashlib.sha256(manifest_bytes).hexdigest(),
-            sources=canonical_sources,
-            scenario_source=canonical_scenario,
-            reviewed_base_revision=canonical_manifest.reviewed_base_revision,
-            authority_generation=canonical_manifest.authority_generation,
-            source_bundle_ref=computed_ref,
-            read_count=exact_reads,
-            aggregate_bytes=exact_aggregate,
+        raise TypeError(
+            "AuthenticatedR4ReviewBundle is created only by "
+            "load_authenticated_r4_review_bundle"
         )
 
     @property
@@ -686,8 +639,9 @@ def load_authenticated_r4_review_bundle(
 ) -> AuthenticatedR4ReviewBundle:
     """Read and authenticate the exact six-file R4.1 reviewed-source bundle.
 
-    The manifest and each named source are opened once.  No directory listing,
-    runtime observation, bootstrap output, or generated artifact is consulted.
+    The manifest and each named source are opened once; bounded repeated read
+    syscalls may consume that same descriptor.  No directory listing, runtime
+    observation, bootstrap output, or generated artifact is consulted.
     The descriptor/path/ancestor identity checks detect stable replacement
     observed across the read within the portable metadata exposed by the host
     OS.  A transient ancestor swap restored before the post-read probe, a remote
@@ -731,11 +685,20 @@ def load_authenticated_r4_review_bundle(
         raise ValueError("reviewed scenario source SHA-256 mismatch")
     if read_paths != set(_ALL_AUTHENTICATED_SOURCE_PATHS):
         raise ValueError("review bundle read membership is not exact")
-    return AuthenticatedR4ReviewBundle.create(
+    exact_sources = tuple(sources)
+    computed_ref = _source_bundle_ref(exact_sources, scenario)
+    if computed_ref != manifest.source_bundle_ref:
+        raise ValueError("review manifest source-bundle content ref does not reconstruct")
+    return construct(
+        AuthenticatedR4ReviewBundle,
         manifest=manifest,
         manifest_bytes=manifest_bytes,
-        sources=tuple(sources),
+        manifest_sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+        sources=exact_sources,
         scenario_source=scenario,
+        reviewed_base_revision=manifest.reviewed_base_revision,
+        authority_generation=manifest.authority_generation,
+        source_bundle_ref=computed_ref,
         read_count=len(read_paths),
         aggregate_bytes=aggregate_bytes,
     )
@@ -1318,6 +1281,7 @@ __all__ = [
     "AuthenticatedR4ReviewBundle",
     "AuthenticatedR4SourceBytes",
     "MAX_R4_REVIEW_BUNDLE_BYTES",
+    "MAX_R4_SOURCE_READ_SYSCALLS",
     "MUTATION_CONTRACT_ABI_VERSION",
     "PROPOSAL_SUPERVISION_ABI_VERSION",
     "R4_REVIEW_MANIFEST_ABI_VERSION",

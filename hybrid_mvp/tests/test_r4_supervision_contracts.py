@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import FrozenInstanceError
+import errno
 import hashlib
 import json
 import os
@@ -982,8 +983,129 @@ def test_review_bundle_reads_exactly_five_reviewed_sources_plus_scenario_once(
     )
     with pytest.raises(FrozenInstanceError):
         bundle.read_count = 7
-    with pytest.raises(TypeError, match="use .*create"):
+    with pytest.raises(TypeError, match="created only by load_authenticated"):
         type(bundle)()
+
+
+def test_authenticated_review_bundle_has_no_public_mint_api(tmp_path: Path) -> None:
+    root, _, _ = _write_review_tree(tmp_path)
+    bundle_type = supervision_module.AuthenticatedR4ReviewBundle
+    assert "create" not in bundle_type.__dict__
+    assert "_mint_authenticated_r4_review_bundle" not in supervision_module.__all__
+    bundle = supervision_module.load_authenticated_r4_review_bundle(root)
+    with pytest.raises(TypeError, match="created only by load_authenticated"):
+        bundle_type()
+
+
+def test_reader_failure_prevents_authenticated_bundle_creation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, _, _ = _write_review_tree(tmp_path)
+
+    def disabled_reader(project_root: Path, relative_path: str, *, maximum: int) -> bytes:
+        del project_root, relative_path, maximum
+        raise ValueError("reader disabled")
+
+    monkeypatch.setattr(supervision_module, "_read_regular_file_once", disabled_reader)
+    with pytest.raises(ValueError, match="reader disabled"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_retries_eintr_and_partial_reads_without_reopening(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, _, _ = _write_review_tree(tmp_path)
+    real_open = supervision_module.os.open
+    real_read = supervision_module.os.read
+    open_calls = 0
+    read_calls = 0
+    interruptions: list[OSError] = [
+        InterruptedError(errno.EINTR, "interrupted"),
+        OSError(errno.EINTR, "interrupted"),
+    ]
+
+    def counted_open(path, flags):
+        nonlocal open_calls
+        open_calls += 1
+        return real_open(path, flags)
+
+    def fragmented_read(descriptor: int, size: int) -> bytes:
+        nonlocal read_calls
+        read_calls += 1
+        if interruptions:
+            raise interruptions.pop(0)
+        return real_read(descriptor, min(size, 4_096))
+
+    monkeypatch.setattr(supervision_module.os, "open", counted_open)
+    monkeypatch.setattr(supervision_module.os, "read", fragmented_read)
+    bundle = supervision_module.load_authenticated_r4_review_bundle(root)
+
+    assert bundle.read_count == 6
+    assert open_calls == 6
+    assert not interruptions
+    assert read_calls > open_calls
+    assert read_calls <= (
+        supervision_module.R4_REVIEW_BUNDLE_READ_COUNT
+        * supervision_module.MAX_R4_SOURCE_READ_SYSCALLS
+    )
+
+
+def test_review_bundle_bounds_perpetual_eintr_without_reopening(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, _, _ = _write_review_tree(tmp_path)
+    real_open = supervision_module.os.open
+    open_calls = 0
+    read_calls = 0
+
+    def counted_open(path, flags):
+        nonlocal open_calls
+        open_calls += 1
+        return real_open(path, flags)
+
+    def interrupted_read(descriptor: int, size: int) -> bytes:
+        nonlocal read_calls
+        del descriptor, size
+        read_calls += 1
+        raise OSError(errno.EINTR, "interrupted")
+
+    monkeypatch.setattr(supervision_module.os, "open", counted_open)
+    monkeypatch.setattr(supervision_module.os, "read", interrupted_read)
+    with pytest.raises(ValueError, match="bounded read syscall count"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+    assert open_calls == 1
+    assert read_calls == supervision_module.MAX_R4_SOURCE_READ_SYSCALLS
+
+
+def test_review_bundle_validates_each_nonmanifest_source_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, _, _ = _write_review_tree(tmp_path)
+    real_validator = supervision_module._record_count_from_authenticated_bytes
+    real_manifest_decoder = R4ReviewManifest.from_json_bytes
+    validations: list[str] = []
+    manifest_decodes = 0
+
+    def counted_validator(path: str, raw: bytes) -> int:
+        validations.append(path)
+        return real_validator(path, raw)
+
+    def counted_manifest_decoder(cls, raw: bytes) -> R4ReviewManifest:
+        nonlocal manifest_decodes
+        del cls
+        manifest_decodes += 1
+        return real_manifest_decoder(raw)
+
+    monkeypatch.setattr(
+        supervision_module, "_record_count_from_authenticated_bytes", counted_validator
+    )
+    monkeypatch.setattr(
+        R4ReviewManifest, "from_json_bytes", classmethod(counted_manifest_decoder)
+    )
+    supervision_module.load_authenticated_r4_review_bundle(root)
+    assert manifest_decodes == 1
+    assert tuple(validations) == (*_REVIEW_CHILD_PATHS, _SCENARIO_SOURCE_PATH)
 
 
 def test_review_bundle_rejects_missing_source(tmp_path: Path) -> None:
@@ -1325,7 +1447,7 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervi
                                                                                                                        'diagnostic_role': 'owner',
                                                                                                                        'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
                                                                                                                        'owner_ref': 'mutation-partition',
-                                                                                                                       'source_ast_sha256': '5a1978769743263aab76e9a3230d9fc02ececcd9247fcbdf61e70a21893c92be'},
+                                                                                                                       'source_ast_sha256': '746ec6715b63ac6b657914f496ca8db132f48499a1e0605616bf21956cb7f1f5'},
  'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_missing_source': {'activation_phase': 'R4',
                                                                                        'assertion_ref': 'assertion:r4-review-bundle-rejects-missing-source',
                                                                                        'diagnostic_role': 'owner',
@@ -1421,4 +1543,34 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervi
                                                                                                  'diagnostic_role': 'owner',
                                                                                                  'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
                                                                                                  'owner_ref': 'mutation-partition',
-                                                                                                 'source_ast_sha256': 'fd06350e80e4273c9d438c8fbb9be4972959a2fa26b953eb4969799d8eb4dafa'}}
+                                                                                                 'source_ast_sha256': 'fd06350e80e4273c9d438c8fbb9be4972959a2fa26b953eb4969799d8eb4dafa'},
+ 'tests/test_r4_supervision_contracts.py::test_authenticated_review_bundle_has_no_public_mint_api': {'activation_phase': 'R4',
+                                                                                                     'assertion_ref': 'assertion:r4-authenticated-bundle-no-public-mint',
+                                                                                                     'diagnostic_role': 'owner',
+                                                                                                     'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                     'owner_ref': 'mutation-partition',
+                                                                                                     'source_ast_sha256': '83c2d8f4e17ad3196176299f7a4ab2361bc58e58cb802dbfc312edf8d3baf6f2'},
+ 'tests/test_r4_supervision_contracts.py::test_reader_failure_prevents_authenticated_bundle_creation': {'activation_phase': 'R4',
+                                                                                                        'assertion_ref': 'assertion:r4-authenticated-bundle-requires-reader',
+                                                                                                        'diagnostic_role': 'owner',
+                                                                                                        'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                        'owner_ref': 'mutation-partition',
+                                                                                                        'source_ast_sha256': '89a4ec7af2719fca945fd6437101f1419e54642468b052e9e78ac1bd21401b21'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_retries_eintr_and_partial_reads_without_reopening': {'activation_phase': 'R4',
+                                                                                                                  'assertion_ref': 'assertion:r4-review-bundle-partial-eintr-same-descriptor',
+                                                                                                                  'diagnostic_role': 'owner',
+                                                                                                                  'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                                  'owner_ref': 'mutation-partition',
+                                                                                                                  'source_ast_sha256': '81817db87c80a34a24895e18004072cbcbc58216afd3620d4f4ec21456dc4efd'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_bounds_perpetual_eintr_without_reopening': {'activation_phase': 'R4',
+                                                                                                         'assertion_ref': 'assertion:r4-review-bundle-bounded-perpetual-eintr',
+                                                                                                         'diagnostic_role': 'owner',
+                                                                                                         'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                         'owner_ref': 'mutation-partition',
+                                                                                                         'source_ast_sha256': 'cf0f7cb273cb13d4ec7f62f0b0a8ecb2f36a90374a7c64b97ca430f4dc6f5d08'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_validates_each_nonmanifest_source_once': {'activation_phase': 'R4',
+                                                                                                       'assertion_ref': 'assertion:r4-review-bundle-single-source-validation',
+                                                                                                       'diagnostic_role': 'owner',
+                                                                                                       'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                       'owner_ref': 'mutation-partition',
+                                                                                                       'source_ast_sha256': '859713c8add8377cae91a2fbd8d87d82c15728316b740852958ecc73b848bfff'}}
