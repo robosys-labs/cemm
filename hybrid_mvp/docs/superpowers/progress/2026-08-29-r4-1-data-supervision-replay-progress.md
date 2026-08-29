@@ -18,7 +18,7 @@ been added after the work exists.
 
 | Task | Deliverable | State | Commit ref | Test receipt | Review checkpoint | Artifact ref | Unresolved decision |
 |---|---|---|---|---|---|---|---|
-| T01 | Govern the executable replay and create the progress owner | in_progress | CR-T01 | TR-T01 and TR-T01-REVIEW | RC-T01 pending | AR-T01 pending | none beyond verification evidence |
+| T01 | Govern the executable replay and create the progress owner | complete | CR-T01, CR-T01-ALIGN, CR-T01-HARDEN, CR-T01-CLAIMS, and CR-T01-TENSE | TR-T01-TENSE, TR-R4-SELECTOR, TR-INVENTORY-G0, TR-INVENTORY-R4, and TR-STATIC | RC-T01 satisfied | AR-T01 satisfied | none |
 | T02 | Add strict reviewed-source schemas and immutable decoders | pending | pending | pending | pending | pending | exact bounded source limits |
 | T03 | Authenticate the review manifest and source bundle | pending | pending | pending | RC-SOURCE required | pending | reviewer refs, policy, and exact source membership |
 | T04 | Check in the independently reviewed source package | pending | pending | pending | RC-SOURCE required | pending | diagnostic-only classifications and exact reviewed bytes |
@@ -46,7 +46,8 @@ been added after the work exists.
 | CR-T01 | `27b8a5a1295b8f49c30a63e67110b71b19a0c122` | Initial Task 1 governance/tracker commit; exact-mapping review fix follows separately |
 | CR-T01-ALIGN | `86eb9fb7a5841c0fa246a9453d99a033cab6e13c` | Task 1 exact plan-mapping review fix |
 | CR-T01-HARDEN | `28ddd332afe590f75f617bc381628b2c9f4797da` | Task 1 quality hardening commit |
-| CR-T01-CLAIMS | pending | Task 1 authority-claim mutation fix; recorded only after it exists |
+| CR-T01-CLAIMS | `69b2363f014b5758aff1f19749d0f33b672b99a4` | Reject positive tracker authority/completion claims and arbitrary task states |
+| CR-T01-TENSE | `17786dffd31691d843668c096c1f33cc06c9d844` | Cover tracker authority-claim tense, aspect, helper, and spelling variants |
 | CR-SOURCE-FREEZE | pending | Reviewed source parent for deterministic publication |
 | CR-ARTIFACT | pending | Artifact-only publication commit |
 | CR-CLOSEOUT | pending | Final governance-only closeout commit, if required |
@@ -64,9 +65,11 @@ been added after the work exists.
 | TR-T01-HARDEN | Task 1 governance hardening GREEN | The exact TR-T01-HARDEN-RED command returned 1 passed after hardening |
 | TR-T01-CLAIMS-RED | Task 1 authority/state mutation RED | `python -m pytest tests/test_replay_governance.py::test_r4_1_replay_tracker_is_operational_not_status_authority -q -p no:cacheprovider` returned 1 failed because the appended positive tracker claim was not rejected |
 | TR-T01-CLAIMS | Task 1 authority/state mutation GREEN | The exact TR-T01-CLAIMS-RED command returned 1 passed after positive-claim and arbitrary-state rejection |
+| TR-T01-TENSE-RED | Task 1 authority-claim tense mutation RED | `python -m pytest tests/test_replay_governance.py::test_r4_1_replay_tracker_is_operational_not_status_authority -q -p no:cacheprovider` returned 1 failed because a past-tense admission claim was not rejected |
+| TR-T01-TENSE | Task 1 authority-claim tense mutation GREEN | The exact TR-T01-TENSE-RED command returned 1 passed after independent admit, authorize, and declare-complete tense/aspect coverage with negative-disclaimer controls |
 | TR-R4-SELECTOR | Exact R4 selector/config GREEN | `python -m pytest tests/test_replay_governance.py::test_r4_1_replay_tracker_is_operational_not_status_authority tests/test_validation_gate.py::test_r4_gate_plans_are_exact_bounded_and_single_process -q -p no:cacheprovider` returned 2 passed |
-| TR-INVENTORY-G0 | G0 source-only inventory reconstruction | `python scripts/check_test_inventory.py --phase G0 --source-only` passed: inventory `test_inventory:c715e262526c0ea26a6fef90`, literal metadata `literal_test_metadata:a44a54856723a6674b8922b3`, active set `active_test_nodes:7ec97bc4c63c6824928f9681` with 190 nodes, collectable set `collectable_test_nodes:7344a87282c6685a08348d3c` with 1,836 nodes |
-| TR-INVENTORY-R4 | R4 source-only inventory reconstruction | `python scripts/check_test_inventory.py --phase R4 --source-only` passed: inventory `test_inventory:c715e262526c0ea26a6fef90`, literal metadata `literal_test_metadata:a44a54856723a6674b8922b3`, active set `active_test_nodes:5c2d7d60fdea1668c75dc4fb` with 1,554 nodes, collectable set `collectable_test_nodes:7344a87282c6685a08348d3c` with 1,836 nodes |
+| TR-INVENTORY-G0 | G0 source-only inventory reconstruction | `python scripts/check_test_inventory.py --phase G0 --source-only` passed: inventory `test_inventory:c715e262526c0ea26a6fef90`, literal metadata `literal_test_metadata:d20d307eeae959dd7b7dc2cc`, active set `active_test_nodes:7ec97bc4c63c6824928f9681` with 190 nodes, collectable set `collectable_test_nodes:7344a87282c6685a08348d3c` with 1,836 nodes |
+| TR-INVENTORY-R4 | R4 source-only inventory reconstruction | `python scripts/check_test_inventory.py --phase R4 --source-only` passed: inventory `test_inventory:c715e262526c0ea26a6fef90`, literal metadata `literal_test_metadata:d20d307eeae959dd7b7dc2cc`, active set `active_test_nodes:5c2d7d60fdea1668c75dc4fb` with 1,554 nodes, collectable set `collectable_test_nodes:7344a87282c6685a08348d3c` with 1,836 nodes |
 | TR-STATIC | Task 1 static validation | `python -m py_compile tests/test_replay_governance.py tests/test_validation_gate.py`; `python -m json.tool docs/DOCUMENT_AUTHORITY.json`; `python -m json.tool configs/validation_gates.json`; `git diff --check`; all exited 0 in the final pre-commit check |
 | TR-DETERMINISM | Two byte-identical candidate trees | pending |
 | TR-PREADMISSION | Bounded governed validation | pending |
@@ -78,7 +81,7 @@ been added after the work exists.
 |---|---|---|
 | RC-DESIGN | satisfied | CR-DESIGN |
 | RC-PLAN | satisfied | CR-PLAN and exact document-authority ordering |
-| RC-T01 | pending | Task 1 self-review plus fresh verification |
+| RC-T01 | satisfied | Requirements review PASS and quality review APPROVED for CR-T01 through CR-T01-TENSE, with the focused, selector, inventory, metadata, compile, JSON, and diff evidence recorded above |
 | RC-SOURCE | pending | Separate human approval of exact reviewed source bytes before artifact publication |
 | RC-CODE-DATA | pending | Independent code and reviewed-data findings resolved against frozen source |
 | RC-ARTIFACT | pending | Exact source-parent and byte-identical artifact tree reviewed |
@@ -88,7 +91,7 @@ been added after the work exists.
 
 | Ref | State | Path or identity |
 |---|---|---|
-| AR-T01 | pending | This tracker, `docs/DOCUMENT_AUTHORITY.json`, governed test-node metadata, and its existing validation input |
+| AR-T01 | satisfied | `docs/superpowers/progress/2026-08-29-r4-1-data-supervision-replay-progress.md`; `docs/DOCUMENT_AUTHORITY.json`; `tests/test_replay_governance.py::test_r4_1_replay_tracker_is_operational_not_status_authority`; `tests/test_validation_gate.py::test_r4_gate_plans_are_exact_bounded_and_single_process`; `configs/validation_gates.json::r4_phase_tests`; inventory `test_inventory:c715e262526c0ea26a6fef90`; literal metadata `literal_test_metadata:d20d307eeae959dd7b7dc2cc`; G0 selector `active_test_nodes:7ec97bc4c63c6824928f9681`; R4 selector `active_test_nodes:5c2d7d60fdea1668c75dc4fb` |
 | AR-REVIEW-MANIFEST | pending | `data/review/r4_1/REVIEW_MANIFEST.json` |
 | AR-SUPERVISION | pending | Reviewed proposal, realization, mutation, and purpose source package |
 | AR-BUILD | pending | `artifacts/r4/BUILD_RECEIPT.json` at ABI 5 plus its exact artifact graph |
