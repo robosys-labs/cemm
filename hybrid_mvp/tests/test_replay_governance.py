@@ -73,6 +73,9 @@ R4_1_REPLAY_DESIGN = (
 R4_1_REPLAY_PLAN = (
     "docs/superpowers/plans/2026-08-29-r4-1-data-supervision-replay-plan.md"
 )
+R4_1_REPLAY_PROGRESS = (
+    "docs/superpowers/progress/2026-08-29-r4-1-data-supervision-replay-progress.md"
+)
 
 GOVERNING_DOCUMENTS = (
     "AGENTS.md",
@@ -131,6 +134,7 @@ HISTORICAL_EVIDENCE = (
     "docs/superpowers/plans/2026-08-29-hybrid-authority-cleanup-plan.md",
     "docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md",
     "docs/superpowers/progress/2026-08-22-r5-r6-plan-readiness-review.md",
+    R4_1_REPLAY_PROGRESS,
     "docs/superpowers/specs/2026-08-12-r1-legacy-test-retirement-design.md",
     "docs/superpowers/specs/2026-08-29-hybrid-authority-cleanup-design.md",
     "artifacts/",
@@ -163,6 +167,7 @@ HISTORICAL_STATUS_DOCUMENTS = (
     "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
     "docs/superpowers/specs/2026-08-12-r4-repository-owned-admission-design.md",
     "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
+    R4_1_REPLAY_PROGRESS,
 )
 
 
@@ -894,7 +899,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:corrective-tracker-is-operational-not-status-authority",
         "diagnostic_role": "phase",
         "introduced_by_task": "R4-Partition-Corrective-Task-1",
-        "source_ast_sha256": "523f5ccfefa21a5e35710d140014c041e0ef2ba768ffe3d111aadf65a3993d97"
+        "source_ast_sha256": "c54970815aa2889d6a0af91930550a66bf14856feea202ea019c6aa845bb60b9"
     },
     "tests/test_replay_governance.py::test_r4_partition_corrective_documents_are_superseded": {
         "activation_phase": "G0",
@@ -1370,10 +1375,45 @@ def test_r4_partition_defect_binding_matches_invalidated_source_base(
 
 
 def test_corrective_tracker_is_operational_not_status_authority() -> None:
-    text = (ROOT / "docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md").read_text(encoding="utf-8")
-    assert "governance/replay_status.jsonl" in text
-    assert "never replay-status authority" in text
+    authority = _strict_document_authority()
+    assert authority["governing_documents"].index(R4_1_REPLAY_PLAN) == (
+        authority["governing_documents"].index(R4_1_REPLAY_DESIGN) + 1
+    )
+    classifications = (
+        *authority["governing_documents"],
+        *authority["superseded_execution_claims"],
+        *authority["historical_evidence"],
+    )
+    assert classifications.count(R4_1_REPLAY_PROGRESS) == 1
+    assert R4_1_REPLAY_PROGRESS in authority["historical_evidence"]
+
+    text = (ROOT / R4_1_REPLAY_PROGRESS).read_text(encoding="utf-8")
+    assert "operational evidence only" in text.casefold()
+    assert (
+        "governance/replay_status.jsonl is the sole phase-status authority"
+        in text
+    )
+    assert "does not copy a mutable phase matrix" in text
+    assert "does not claim replay completion" in text
     assert not re.search(r"run:[0-9a-f]{24}", text)
+    assert not re.search(r"^\|\s*(?:G0|R[1-8])\s*\|", text, re.MULTILINE)
+
+    task_rows = re.findall(r"^\|\s*T(\d{2})\s*\|", text, re.MULTILINE)
+    assert task_rows == [f"{index:02d}" for index in range(1, 19)]
+    for required_register in (
+        "Commit references",
+        "Test receipts",
+        "Review checkpoints",
+        "Artifact references",
+        "Unresolved decisions",
+    ):
+        assert f"## {required_register}" in text
+
+    status = effective_replay_status(
+        read_hash_chain(ROOT / "governance/replay_status.jsonl")
+    )
+    assert status["R4"] == "red"
+    assert all(status[f"R{index}"] == "red" for index in range(5, 9))
 
 
 _R5_SUCCESSOR_CONTRACT = {
