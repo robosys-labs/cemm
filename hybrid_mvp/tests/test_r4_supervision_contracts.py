@@ -2,11 +2,22 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import FrozenInstanceError
+import hashlib
 import json
+import os
 from pathlib import Path
+from types import MappingProxyType
 
 import pytest
 from jsonschema import Draft202012Validator
+import cemm_authoritative_hybrid.r4_supervision as supervision_module
+
+from cemm_authoritative_hybrid.canonical import stable_ref
+from cemm_authoritative_hybrid.r4_purpose import (
+    DenominatorMinimum,
+    PurposeContract,
+    PurposeMembership,
+)
 
 from cemm_authoritative_hybrid.r4_supervision import (
     MAX_BLUEPRINT_ACTIONS,
@@ -815,6 +826,392 @@ def test_supervision_schemas_are_strict_draft_2020_12_and_match_decoders() -> No
         ProposalTarget.from_dict(proposal)
 
 
+_REVIEW_MANIFEST_PATH = "data/review/r4_1/REVIEW_MANIFEST.json"
+_SCENARIO_SOURCE_PATH = "data/scenarios/use_cases.jsonl"
+_REVIEW_CHILD_PATHS = (
+    "data/review/r4_1/mutation_contracts.jsonl",
+    "data/review/r4_1/proposal_supervision.jsonl",
+    "data/review/r4_1/purpose_contract.json",
+    "data/review/r4_1/realization_supervision.jsonl",
+)
+
+
+def _purpose_source() -> bytes:
+    purposes = ("train", "selection", "calibration", "frozen_test")
+    memberships = tuple(
+        PurposeMembership.create(
+            source_case_ref=f"expanded_case_v2:{index:024x}",
+            classification="semantic_supervision",
+            purpose=purpose,
+            duplicate_risk_group_refs=(),
+            diagnostic_reason_ref=None,
+            review_refs=(REVIEW_REF,),
+        )
+        for index, purpose in enumerate(purposes, 1)
+    )
+    minima = tuple(
+        DenominatorMinimum.create(
+            denominator_ref=f"denominator:semantic-expression-{purpose}",
+            denominator_family="semantic_expression",
+            purpose=purpose,
+            minimum=1,
+            review_refs=(REVIEW_REF,),
+        )
+        for purpose in purposes
+    )
+    return PurposeContract.create(
+        source_set_ref="r4_source_set_v1:0123456789abcdef01234567",
+        memberships=memberships,
+        duplicate_risk_groups=(),
+        challenge_holdouts=(),
+        denominator_minima=minima,
+        review_refs=(REVIEW_REF,),
+        solver_output_is_authority=False,
+    ).to_json_bytes()
+
+
+def _record_count(path: str, raw: bytes) -> int:
+    return 1 if path.endswith(".json") else len(raw.splitlines())
+
+
+def _bundle_ref(child_bytes: dict[str, bytes], scenario_bytes: bytes) -> str:
+    return stable_ref(
+        "r4_review_bundle_v1",
+        {
+            "scenario_source": {
+                "path": _SCENARIO_SOURCE_PATH,
+                "sha256": hashlib.sha256(scenario_bytes).hexdigest(),
+                "record_count": _record_count(_SCENARIO_SOURCE_PATH, scenario_bytes),
+            },
+            "sources": [
+                {
+                    "path": path,
+                    "sha256": hashlib.sha256(child_bytes[path]).hexdigest(),
+                    "record_count": _record_count(path, child_bytes[path]),
+                }
+                for path in _REVIEW_CHILD_PATHS
+            ],
+        },
+    )
+
+
+def _write_review_tree(
+    tmp_path: Path,
+    *,
+    count_override: tuple[str, int] | None = None,
+    sha_override: tuple[str, str] | None = None,
+    bundle_ref: str | None = None,
+) -> tuple[Path, R4ReviewManifest, dict[str, bytes]]:
+    root = tmp_path / "candidate"
+    child_bytes = {
+        _REVIEW_CHILD_PATHS[0]: _mutation().to_json_bytes(),
+        _REVIEW_CHILD_PATHS[1]: _derive_target().to_json_bytes(),
+        _REVIEW_CHILD_PATHS[2]: _purpose_source(),
+        _REVIEW_CHILD_PATHS[3]: _realization().to_json_bytes(),
+    }
+    scenario_bytes = (ROOT / _SCENARIO_SOURCE_PATH).read_bytes()
+    all_bytes = {_SCENARIO_SOURCE_PATH: scenario_bytes, **child_bytes}
+    for relative, raw in all_bytes.items():
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(raw)
+    sources = []
+    for index, path in enumerate(_REVIEW_CHILD_PATHS, 1):
+        raw = child_bytes[path]
+        count = _record_count(path, raw)
+        sha = hashlib.sha256(raw).hexdigest()
+        if count_override is not None and count_override[0] == path:
+            count = count_override[1]
+        if sha_override is not None and sha_override[0] == path:
+            sha = sha_override[1]
+        sources.append(
+            ReviewSourceFile.create(
+                source_ref=f"reviewed_source:{index:024x}",
+                path=path,
+                sha256=sha,
+                record_count=count,
+                review_refs=(REVIEW_REF,),
+            )
+        )
+    manifest = R4ReviewManifest.create(
+        review_policy_ref="review_policy:r4_1",
+        reviewer_refs=("reviewer:human-1",),
+        reviewed_base_revision="a" * 40,
+        authority_generation="authority-v1-2026-07-29",
+        source_bundle_ref=bundle_ref or _bundle_ref(child_bytes, scenario_bytes),
+        scenario_source_sha256=hashlib.sha256(scenario_bytes).hexdigest(),
+        sources=tuple(sources),
+        approval_state="approved",
+        supersedes_refs=("r4_build_v4:0123456789abcdef01234567",),
+        runtime_observations_are_source_authority=False,
+        bootstrap_outputs_are_source_authority=False,
+    )
+    manifest_path = root / _REVIEW_MANIFEST_PATH
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_bytes(manifest.to_json_bytes())
+    return root, manifest, all_bytes
+
+
+def test_review_bundle_reads_exactly_five_reviewed_sources_plus_scenario_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, manifest, all_bytes = _write_review_tree(tmp_path)
+    calls: list[str] = []
+    real_reader = supervision_module._read_regular_file_once
+
+    def counted_reader(project_root: Path, relative_path: str, *, maximum: int) -> bytes:
+        calls.append(relative_path)
+        return real_reader(project_root, relative_path, maximum=maximum)
+
+    monkeypatch.setattr(supervision_module, "_read_regular_file_once", counted_reader)
+    bundle = supervision_module.load_authenticated_r4_review_bundle(root)
+
+    assert bundle.manifest == manifest
+    assert bundle.reviewed_base_revision == manifest.reviewed_base_revision
+    assert bundle.authority_generation == manifest.authority_generation
+    assert bundle.source_bundle_ref == manifest.source_bundle_ref
+    assert bundle.read_count == 6
+    assert tuple(calls) == (_REVIEW_MANIFEST_PATH, *_REVIEW_CHILD_PATHS, _SCENARIO_SOURCE_PATH)
+    assert len(calls) == len(set(calls))
+    assert bundle.source_bytes == MappingProxyType(all_bytes)
+    assert bundle.manifest_bytes == manifest.to_json_bytes()
+    assert bundle.manifest_sha256 == hashlib.sha256(bundle.manifest_bytes).hexdigest()
+    assert bundle.aggregate_bytes == len(bundle.manifest_bytes) + sum(map(len, all_bytes.values()))
+    assert supervision_module.MAX_R4_REVIEW_BUNDLE_BYTES == (
+        6 * supervision_module.MAX_R4_SOURCE_BYTES
+    )
+    with pytest.raises(FrozenInstanceError):
+        bundle.read_count = 7
+    with pytest.raises(TypeError, match="use .*create"):
+        type(bundle)()
+
+
+def test_review_bundle_rejects_missing_source(tmp_path: Path) -> None:
+    root, _, _ = _write_review_tree(tmp_path)
+    (root / _REVIEW_CHILD_PATHS[0]).unlink()
+    with pytest.raises(ValueError, match="unavailable|missing"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_extra_source_membership(tmp_path: Path) -> None:
+    root, manifest, _ = _write_review_tree(tmp_path)
+    row = deepcopy(manifest.as_dict())
+    extra = deepcopy(row["sources"][-1])
+    extra["path"] = "artifacts/r4/observed-extra.jsonl"
+    extra["source_ref"] = "reviewed_source:" + "f" * 24
+    row["sources"].append(extra)
+    (root / _REVIEW_MANIFEST_PATH).write_bytes(
+        json.dumps(row, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+    )
+    with pytest.raises(ValueError, match="sources exceeds|exact R4.1 reviewed source|source path"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_duplicate_source_membership(tmp_path: Path) -> None:
+    root, manifest, _ = _write_review_tree(tmp_path)
+    row = deepcopy(manifest.as_dict())
+    row["sources"][1]["path"] = row["sources"][0]["path"]
+    (root / _REVIEW_MANIFEST_PATH).write_bytes(
+        json.dumps(row, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+    )
+    with pytest.raises(ValueError, match="duplicate identities|every exact R4.1"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_lexical_path_escape(tmp_path: Path) -> None:
+    root, manifest, _ = _write_review_tree(tmp_path)
+    row = deepcopy(manifest.as_dict())
+    row["sources"][0]["path"] = "data/review/r4_1/../../../artifacts/r4/episodes.jsonl"
+    (root / _REVIEW_MANIFEST_PATH).write_bytes(
+        json.dumps(row, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+    )
+    with pytest.raises(ValueError, match="source path|approved namespace"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_wrong_record_count(tmp_path: Path) -> None:
+    path = _REVIEW_CHILD_PATHS[1]
+    root, _, _ = _write_review_tree(tmp_path, count_override=(path, 2))
+    with pytest.raises(ValueError, match="record count"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_wrong_source_sha(tmp_path: Path) -> None:
+    path = _REVIEW_CHILD_PATHS[3]
+    root, _, _ = _write_review_tree(tmp_path, sha_override=(path, "0" * 64))
+    with pytest.raises(ValueError, match="SHA-256"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_wrong_source_bundle_ref(tmp_path: Path) -> None:
+    root, _, _ = _write_review_tree(
+        tmp_path, bundle_ref="r4_review_bundle_v1:" + "f" * 24
+    )
+    with pytest.raises(ValueError, match="source-bundle"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_symlink_escape_and_hardlink_alias(tmp_path: Path) -> None:
+    root, _, _ = _write_review_tree(tmp_path)
+    target = root / _REVIEW_CHILD_PATHS[0]
+    outside = tmp_path / "outside.jsonl"
+    outside.write_bytes(target.read_bytes())
+    target.unlink()
+    try:
+        target.symlink_to(outside)
+    except OSError:
+        pytest.fail("test host must support the symlink safety contract")
+    with pytest.raises(ValueError, match="link|reparse|regular"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+    root, _, _ = _write_review_tree(tmp_path / "hardlink")
+    target = root / _REVIEW_CHILD_PATHS[0]
+    alias = tmp_path / "source-alias.jsonl"
+    try:
+        os.link(target, alias)
+    except OSError:
+        pytest.fail("test host must support the hardlink safety contract")
+    with pytest.raises(ValueError, match="hardlink|link count"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_short_read(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root, _, _ = _write_review_tree(tmp_path)
+    real_reader = supervision_module._read_descriptor_bytes
+
+    def short_reader(descriptor: int, path: Path, *, maximum: int) -> bytes:
+        raw = real_reader(descriptor, path, maximum=maximum)
+        return raw[:-1]
+
+    monkeypatch.setattr(supervision_module, "_read_descriptor_bytes", short_reader)
+    with pytest.raises(ValueError, match="short read|changed while being read"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_growth_after_stat(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root, _, _ = _write_review_tree(tmp_path)
+    real_reader = supervision_module._read_descriptor_bytes
+
+    def growing_reader(descriptor: int, path: Path, *, maximum: int) -> bytes:
+        return real_reader(descriptor, path, maximum=maximum) + b"x"
+
+    monkeypatch.setattr(supervision_module, "_read_descriptor_bytes", growing_reader)
+    with pytest.raises(ValueError, match="grew|changed while being read"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_hostile_file_replacement(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, _, _ = _write_review_tree(tmp_path)
+    target = root / _REVIEW_CHILD_PATHS[1]
+    real_probe = supervision_module._path_identity
+    probes = 0
+
+    def replacement_probe(path: Path):
+        nonlocal probes
+        identity = real_probe(path)
+        if path == target:
+            probes += 1
+            if probes == 2:
+                return identity._replace(file_index=identity.file_index + 1)
+        return identity
+
+    monkeypatch.setattr(supervision_module, "_path_identity", replacement_probe)
+    with pytest.raises(ValueError, match="replaced|changed while being read"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_ancestor_directory_replacement(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, _, _ = _write_review_tree(tmp_path)
+    target = root / _REVIEW_MANIFEST_PATH
+    ancestor = target.parent
+    real_probe = supervision_module._path_identity
+    probes = 0
+
+    def replacement_probe(path: Path):
+        nonlocal probes
+        identity = real_probe(path)
+        if path == ancestor:
+            probes += 1
+            if probes == 2:
+                return identity._replace(file_index=identity.file_index + 1)
+        return identity
+
+    monkeypatch.setattr(supervision_module, "_path_identity", replacement_probe)
+    with pytest.raises(ValueError, match="ancestor.*replaced|changed while being read"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_crlf_jsonl_normalization(tmp_path: Path) -> None:
+    root, _, _ = _write_review_tree(tmp_path)
+    proposal_path = root / _REVIEW_CHILD_PATHS[1]
+    proposal_path.write_bytes(proposal_path.read_bytes().replace(b"\n", b"\r\n"))
+    with pytest.raises(ValueError, match="LF-only|canonical JSONL"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_self_referential_commit_identity(tmp_path: Path) -> None:
+    root, manifest, _ = _write_review_tree(tmp_path)
+    row = manifest.as_dict()
+    row["containing_commit_revision"] = "b" * 40
+    (root / _REVIEW_MANIFEST_PATH).write_bytes(
+        json.dumps(row, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+    )
+    with pytest.raises(ValueError, match="self-referential|unknown fields"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_rejects_unapproved_manifest_state(tmp_path: Path) -> None:
+    root, manifest, _ = _write_review_tree(tmp_path)
+    row = manifest.as_dict()
+    row["approval_state"] = "draft"
+    (root / _REVIEW_MANIFEST_PATH).write_bytes(
+        json.dumps(row, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+    )
+    with pytest.raises(ValueError, match="approval_state must be approved"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
+def test_review_bundle_enforces_existing_byte_record_depth_and_ref_bounds(
+    tmp_path: Path,
+) -> None:
+    proposal_path = _REVIEW_CHILD_PATHS[1]
+
+    root, _, _ = _write_review_tree(tmp_path / "bytes")
+    (root / proposal_path).write_bytes(
+        b"x" * (supervision_module.MAX_R4_SOURCE_BYTES + 1)
+    )
+    with pytest.raises(ValueError, match="byte bounds"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+    root, _, _ = _write_review_tree(tmp_path / "records")
+    (root / proposal_path).write_bytes(_derive_target().to_json_bytes() * 4_097)
+    with pytest.raises(ValueError, match="record count bounds"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+    root, _, _ = _write_review_tree(tmp_path / "depth")
+    nested: object = "leaf"
+    for _ in range(66):
+        nested = [nested]
+    (root / proposal_path).write_bytes(
+        json.dumps({"nested": nested}, separators=(",", ":")).encode() + b"\n"
+    )
+    with pytest.raises(ValueError, match="nesting exceeds"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+    root, _, _ = _write_review_tree(tmp_path / "refs")
+    row = _derive_target().as_dict()
+    row["review_refs"] = [f"source_review:{index:024x}" for index in range(129)]
+    (root / proposal_path).write_bytes(
+        json.dumps(row, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+    )
+    with pytest.raises(ValueError, match="128 rows"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
+
+
 __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervision_contracts_are_factory_only_frozen_and_canonical[_manifest]': {'activation_phase': 'R4',
                                                                                                                          'assertion_ref': 'assertion:r4-supervision-contracts-factory-only-frozen-canonical',
                                                                                                                          'diagnostic_role': 'owner',
@@ -922,4 +1319,106 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervi
                                                                                                                   'diagnostic_role': 'owner',
                                                                                                                   'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                   'owner_ref': 'mutation-partition',
-                                                                                                                  'source_ast_sha256': '29175e5eaf7883d50223ff0194d16a6cb83b393a7aa32261f46378af53b8df0d'}}
+                                                                                                                  'source_ast_sha256': '29175e5eaf7883d50223ff0194d16a6cb83b393a7aa32261f46378af53b8df0d'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_reads_exactly_five_reviewed_sources_plus_scenario_once': {'activation_phase': 'R4',
+                                                                                                                       'assertion_ref': 'assertion:r4-review-bundle-read-once-exact-membership',
+                                                                                                                       'diagnostic_role': 'owner',
+                                                                                                                       'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                                       'owner_ref': 'mutation-partition',
+                                                                                                                       'source_ast_sha256': '5a1978769743263aab76e9a3230d9fc02ececcd9247fcbdf61e70a21893c92be'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_missing_source': {'activation_phase': 'R4',
+                                                                                       'assertion_ref': 'assertion:r4-review-bundle-rejects-missing-source',
+                                                                                       'diagnostic_role': 'owner',
+                                                                                       'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                       'owner_ref': 'mutation-partition',
+                                                                                       'source_ast_sha256': '9c052aebf0f33885dfab952689d77e311e42070d995aabe574cc273add077097'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_extra_source_membership': {'activation_phase': 'R4',
+                                                                                                'assertion_ref': 'assertion:r4-review-bundle-rejects-extra-source',
+                                                                                                'diagnostic_role': 'owner',
+                                                                                                'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                'owner_ref': 'mutation-partition',
+                                                                                                'source_ast_sha256': '4dab05e49f9dbf6dd2114ebf5a80912a921f1a899d36e4f665ce97e5fb2e2814'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_duplicate_source_membership': {'activation_phase': 'R4',
+                                                                                                    'assertion_ref': 'assertion:r4-review-bundle-rejects-duplicate-source',
+                                                                                                    'diagnostic_role': 'owner',
+                                                                                                    'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                    'owner_ref': 'mutation-partition',
+                                                                                                    'source_ast_sha256': '5dc4a026e2d56f13eaeb35e2ceba930a4d65ad23f47c180a842a38a7b2e2fed7'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_lexical_path_escape': {'activation_phase': 'R4',
+                                                                                            'assertion_ref': 'assertion:r4-review-bundle-rejects-path-escape',
+                                                                                            'diagnostic_role': 'owner',
+                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                            'owner_ref': 'mutation-partition',
+                                                                                            'source_ast_sha256': 'ef1557050a0af63fc0519e1290c88ace54bc585dc97c6538fcafae43d71c85eb'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_wrong_record_count': {'activation_phase': 'R4',
+                                                                                           'assertion_ref': 'assertion:r4-review-bundle-rejects-record-count',
+                                                                                           'diagnostic_role': 'owner',
+                                                                                           'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                           'owner_ref': 'mutation-partition',
+                                                                                           'source_ast_sha256': '119fcb605a5b02d441142f75cd282a8f6a30e6473d071b770560ee1057962bcd'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_wrong_source_sha': {'activation_phase': 'R4',
+                                                                                         'assertion_ref': 'assertion:r4-review-bundle-rejects-source-sha',
+                                                                                         'diagnostic_role': 'owner',
+                                                                                         'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                         'owner_ref': 'mutation-partition',
+                                                                                         'source_ast_sha256': 'bc7b2e9da1d0105e06af4bfb2fb167e74bbd0d2efa8dd7f157a8a303313d5fc3'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_wrong_source_bundle_ref': {'activation_phase': 'R4',
+                                                                                                'assertion_ref': 'assertion:r4-review-bundle-rejects-bundle-ref',
+                                                                                                'diagnostic_role': 'owner',
+                                                                                                'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                'owner_ref': 'mutation-partition',
+                                                                                                'source_ast_sha256': '35052e91456d43e9b3f670b93125e9c245c19bccccf84db8ffeef52a1a90eec4'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_symlink_escape_and_hardlink_alias': {'activation_phase': 'R4',
+                                                                                                          'assertion_ref': 'assertion:r4-review-bundle-rejects-link-alias',
+                                                                                                          'diagnostic_role': 'owner',
+                                                                                                          'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                          'owner_ref': 'mutation-partition',
+                                                                                                          'source_ast_sha256': '0445165457f128eed26a334ef46096b442a635fe6cbee6af0d23b81faa2133b1'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_short_read': {'activation_phase': 'R4',
+                                                                                   'assertion_ref': 'assertion:r4-review-bundle-rejects-short-read',
+                                                                                   'diagnostic_role': 'owner',
+                                                                                   'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                   'owner_ref': 'mutation-partition',
+                                                                                   'source_ast_sha256': 'e679cf4c51d7aaf66de7117c65eef6106978d3dacfd7fefd80ee1fa6cb6b4bca'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_growth_after_stat': {'activation_phase': 'R4',
+                                                                                          'assertion_ref': 'assertion:r4-review-bundle-rejects-growth-after-stat',
+                                                                                          'diagnostic_role': 'owner',
+                                                                                          'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                          'owner_ref': 'mutation-partition',
+                                                                                          'source_ast_sha256': '71d7b842b2381eda0b809ca06ba37dd03968d82353f01229cbe3d558f7406016'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_hostile_file_replacement': {'activation_phase': 'R4',
+                                                                                                 'assertion_ref': 'assertion:r4-review-bundle-rejects-file-replacement',
+                                                                                                 'diagnostic_role': 'owner',
+                                                                                                 'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                 'owner_ref': 'mutation-partition',
+                                                                                                 'source_ast_sha256': '7b47a8f2f4cd079e2311c17556344398d6bf031ca08e25edec28d6e6b01ba43d'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_self_referential_commit_identity': {'activation_phase': 'R4',
+                                                                                                         'assertion_ref': 'assertion:r4-review-bundle-rejects-self-reference',
+                                                                                                         'diagnostic_role': 'owner',
+                                                                                                         'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                         'owner_ref': 'mutation-partition',
+                                                                                                         'source_ast_sha256': '4f7c50e2961954458f2d05f528cce6b053715a464cfebdfb6ccb3401aa04a484'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_unapproved_manifest_state': {'activation_phase': 'R4',
+                                                                                                  'assertion_ref': 'assertion:r4-review-bundle-rejects-unapproved-manifest',
+                                                                                                  'diagnostic_role': 'owner',
+                                                                                                  'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                  'owner_ref': 'mutation-partition',
+                                                                                                  'source_ast_sha256': 'e57767b0d605de235e87ac48f2444ec86518f2ca27c5cf9f40e297c7163582a2'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_enforces_existing_byte_record_depth_and_ref_bounds': {'activation_phase': 'R4',
+                                                                                                                   'assertion_ref': 'assertion:r4-review-bundle-enforces-source-bounds',
+                                                                                                                   'diagnostic_role': 'owner',
+                                                                                                                   'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                                   'owner_ref': 'mutation-partition',
+                                                                                                                   'source_ast_sha256': 'e51e6ed86188c23ee5e3592498285786f2d9c18a9e3084473cd1f6f4606f04ab'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_ancestor_directory_replacement': {'activation_phase': 'R4',
+                                                                                                       'assertion_ref': 'assertion:r4-review-bundle-rejects-ancestor-replacement',
+                                                                                                       'diagnostic_role': 'owner',
+                                                                                                       'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                       'owner_ref': 'mutation-partition',
+                                                                                                       'source_ast_sha256': '425ad4ae62f6739318e1dfb56f61e9fc9d919884ce90b2fe8f92c6878b6554d0'},
+ 'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_crlf_jsonl_normalization': {'activation_phase': 'R4',
+                                                                                                 'assertion_ref': 'assertion:r4-review-bundle-rejects-jsonl-normalization',
+                                                                                                 'diagnostic_role': 'owner',
+                                                                                                 'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
+                                                                                                 'owner_ref': 'mutation-partition',
+                                                                                                 'source_ast_sha256': 'fd06350e80e4273c9d438c8fbb9be4972959a2fa26b953eb4969799d8eb4dafa'}}

@@ -6,11 +6,16 @@ consult runtime observations, bootstrap proposals, or verifier selections.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import os
+from pathlib import Path
 import re
+import stat
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any, Mapping, NamedTuple
 
 from ._r4_source_codec import (
+    MAX_R4_SOURCE_BYTES,
     MAX_R4_SOURCE_RECORDS,
     MAX_R4_TEXT_CHARS,
     canonical_json_bytes,
@@ -55,11 +60,22 @@ MAX_REALIZATION_BINDINGS = 64
 MAX_REFERENCE_FORMS = 16
 MAX_LITERAL_ALIGNMENTS = 64
 
+R4_REVIEW_MANIFEST_PATH = "data/review/r4_1/REVIEW_MANIFEST.json"
+R4_SCENARIO_SOURCE_PATH = "data/scenarios/use_cases.jsonl"
+R4_REVIEW_SOURCE_FILE_COUNT = 5  # manifest plus the four child owners below
+R4_REVIEW_BUNDLE_READ_COUNT = 6  # reviewed package plus the scenario source
+MAX_R4_REVIEW_BUNDLE_BYTES = R4_REVIEW_BUNDLE_READ_COUNT * MAX_R4_SOURCE_BYTES
+
 _SOURCE_PATHS = (
     "data/review/r4_1/mutation_contracts.jsonl",
     "data/review/r4_1/proposal_supervision.jsonl",
     "data/review/r4_1/purpose_contract.json",
     "data/review/r4_1/realization_supervision.jsonl",
+)
+_ALL_AUTHENTICATED_SOURCE_PATHS = (
+    R4_REVIEW_MANIFEST_PATH,
+    *_SOURCE_PATHS,
+    R4_SCENARIO_SOURCE_PATH,
 )
 _ABI_VERSIONS = {
     "mutation_contract": 1,
@@ -136,6 +152,226 @@ _COPY_SOURCE_KINDS = frozenset(
     {"reviewed_literal", "decision_literal", "effect_literal", "obligation_literal"}
 )
 _LANGUAGE_RE = re.compile(r"[a-z]{2,8}(?:-[A-Za-z0-9]{1,8})*\Z")
+_WINDOWS_REPARSE_POINT = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x0400)
+
+
+class _FileIdentity(NamedTuple):
+    device: int
+    file_index: int
+    mode: int
+    size: int
+    mtime_ns: int
+    ctime_ns: int
+    link_count: int
+    file_attributes: int
+
+
+def _identity_from_stat(metadata: os.stat_result) -> _FileIdentity:
+    return _FileIdentity(
+        device=metadata.st_dev,
+        file_index=metadata.st_ino,
+        mode=metadata.st_mode,
+        size=metadata.st_size,
+        mtime_ns=metadata.st_mtime_ns,
+        ctime_ns=metadata.st_ctime_ns,
+        link_count=metadata.st_nlink,
+        file_attributes=getattr(metadata, "st_file_attributes", 0),
+    )
+
+
+def _path_identity(path: Path) -> _FileIdentity:
+    try:
+        return _identity_from_stat(os.lstat(path))
+    except OSError as exc:
+        raise ValueError(f"reviewed source is unavailable or missing: {path}") from exc
+
+
+def _descriptor_identity(descriptor: int) -> _FileIdentity:
+    try:
+        return _identity_from_stat(os.fstat(descriptor))
+    except OSError as exc:
+        raise ValueError("cannot inspect opened reviewed source") from exc
+
+
+def _is_link_or_reparse(identity: _FileIdentity) -> bool:
+    return stat.S_ISLNK(identity.mode) or bool(
+        identity.file_attributes & _WINDOWS_REPARSE_POINT
+    )
+
+
+def _same_open_file(left: _FileIdentity, right: _FileIdentity) -> bool:
+    # Windows may expose a different ctime through fstat immediately after an
+    # open.  Device/file index, type, size, mtime, link count and reparse state
+    # are the portable identity/change evidence used here.
+    return (
+        left.device,
+        left.file_index,
+        stat.S_IFMT(left.mode),
+        left.size,
+        left.mtime_ns,
+        left.link_count,
+        left.file_attributes & _WINDOWS_REPARSE_POINT,
+    ) == (
+        right.device,
+        right.file_index,
+        stat.S_IFMT(right.mode),
+        right.size,
+        right.mtime_ns,
+        right.link_count,
+        right.file_attributes & _WINDOWS_REPARSE_POINT,
+    )
+
+
+def _canonical_project_root(project_root: str | Path) -> Path:
+    raw = os.fspath(project_root)
+    if type(raw) is not str or not raw or "\x00" in raw:
+        raise ValueError("reviewed source root must be one nonempty filesystem path")
+    candidate = Path(raw).absolute()
+    try:
+        resolved = candidate.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise ValueError("reviewed source root is unavailable") from exc
+    identity = _path_identity(candidate)
+    if (
+        candidate != resolved
+        or not stat.S_ISDIR(identity.mode)
+        or _is_link_or_reparse(identity)
+    ):
+        raise ValueError("reviewed source root must be one canonical directory")
+    return resolved
+
+
+def _assert_regular_source_path(
+    project_root: Path, relative_path: str
+) -> tuple[Path, _FileIdentity, tuple[tuple[Path, _FileIdentity], ...]]:
+    if relative_path not in _ALL_AUTHENTICATED_SOURCE_PATHS:
+        raise ValueError("reviewed source path is outside the exact approved namespaces")
+    path = project_root.joinpath(*relative_path.split("/"))
+    try:
+        path.relative_to(project_root)
+    except ValueError as exc:
+        raise ValueError("reviewed source path escapes the project root") from exc
+    current = project_root
+    ancestors: list[tuple[Path, _FileIdentity]] = [
+        (project_root, _path_identity(project_root))
+    ]
+    for component in relative_path.split("/")[:-1]:
+        current = current / component
+        identity = _path_identity(current)
+        if not stat.S_ISDIR(identity.mode) or _is_link_or_reparse(identity):
+            raise ValueError("reviewed source path traverses a link or reparse point")
+        ancestors.append((current, identity))
+    identity = _path_identity(path)
+    if not stat.S_ISREG(identity.mode) or _is_link_or_reparse(identity):
+        raise ValueError("reviewed source must be a regular non-link file")
+    if identity.link_count != 1:
+        raise ValueError("reviewed source hardlink/link count is not one")
+    return path, identity, tuple(ancestors)
+
+
+def _read_descriptor_bytes(descriptor: int, path: Path, *, maximum: int) -> bytes:
+    del path  # retained as a deterministic hostile-I/O seam
+    try:
+        return os.read(descriptor, maximum + 1)
+    except OSError as exc:
+        raise ValueError("cannot read reviewed source") from exc
+
+
+def _read_regular_file_once(
+    project_root: Path, relative_path: str, *, maximum: int
+) -> bytes:
+    path, before_path, ancestors = _assert_regular_source_path(project_root, relative_path)
+    if before_path.size <= 0 or before_path.size > maximum:
+        raise ValueError("reviewed source violates byte bounds")
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    descriptor: int | None = None
+    try:
+        descriptor = os.open(path, flags)
+        opened = _descriptor_identity(descriptor)
+        if not _same_open_file(opened, before_path):
+            raise ValueError("reviewed source was replaced before open")
+        raw = _read_descriptor_bytes(descriptor, path, maximum=maximum)
+        after_descriptor = _descriptor_identity(descriptor)
+    except ValueError:
+        raise
+    except OSError as exc:
+        raise ValueError("cannot open reviewed source without following links") from exc
+    finally:
+        if descriptor is not None:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+    after_path = _path_identity(path)
+    for ancestor, before_ancestor in ancestors:
+        after_ancestor = _path_identity(ancestor)
+        if (
+            not stat.S_ISDIR(after_ancestor.mode)
+            or _is_link_or_reparse(after_ancestor)
+            or not _same_open_file(after_ancestor, before_ancestor)
+        ):
+            raise ValueError(
+                "reviewed source ancestor was replaced or changed while being read"
+            )
+    if not _same_open_file(after_descriptor, opened) or not _same_open_file(after_path, opened):
+        raise ValueError("reviewed source was replaced or changed while being read")
+    if len(raw) < opened.size:
+        raise ValueError("reviewed source short read or changed while being read")
+    if len(raw) > opened.size:
+        raise ValueError("reviewed source grew or changed while being read")
+    return raw
+
+
+def _record_count_from_authenticated_bytes(path: str, raw: bytes) -> int:
+    if path.endswith(".json"):
+        if path == "data/review/r4_1/purpose_contract.json":
+            from .r4_purpose import PurposeContract
+
+            PurposeContract.from_json_bytes(raw)
+        else:
+            strict_decode(raw, lambda value: value, owner=f"reviewed source {path}")
+        return 1
+    if not raw.endswith(b"\n"):
+        raise ValueError(f"reviewed source {path} must be LF terminated")
+    if b"\r" in raw:
+        raise ValueError(f"reviewed source {path} must use canonical LF-only JSONL")
+    lines = raw[:-1].split(b"\n")
+    if not lines or len(lines) > MAX_R4_SOURCE_RECORDS or any(not line for line in lines):
+        raise ValueError(f"reviewed source {path} violates record count bounds")
+    for index, line in enumerate(lines, 1):
+        record = line + b"\n"
+        if path == "data/review/r4_1/mutation_contracts.jsonl":
+            MutationContract.from_json_bytes(record)
+        elif path == "data/review/r4_1/proposal_supervision.jsonl":
+            ProposalTarget.from_json_bytes(record)
+        elif path == "data/review/r4_1/realization_supervision.jsonl":
+            RealizationRow.from_json_bytes(record)
+        elif path == R4_SCENARIO_SOURCE_PATH:
+            from .r4_contracts import ReviewedScenario
+
+            scenario = strict_decode(
+                record,
+                ReviewedScenario.from_dict,
+                owner=f"reviewed source {path} record {index}",
+            )
+            if scenario.review_status != "reviewed":
+                raise ValueError("scenario source contains an unreviewed scenario")
+        else:
+            raise ValueError("reviewed JSONL source path has no exact decoder owner")
+    return len(lines)
+
+
+def _source_bundle_ref(
+    sources: tuple["AuthenticatedR4SourceBytes", ...],
+    scenario_source: "AuthenticatedR4SourceBytes",
+) -> str:
+    return stable_ref(
+        "r4_review_bundle_v1",
+        {
+            "scenario_source": scenario_source.identity_dict(),
+            "sources": [source.identity_dict() for source in sources],
+        },
+    )
 
 
 def _factory_only(owner: str) -> TypeError:
@@ -289,6 +525,17 @@ class R4ReviewManifest:
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "R4ReviewManifest":
+        if type(value) is dict and frozenset(value).intersection(
+            {
+                "containing_commit_revision",
+                "manifest_commit_revision",
+                "source_commit_revision",
+                "generator_source_revision",
+            }
+        ):
+            raise ValueError(
+                "self-referential containing-commit identity is forbidden in the review manifest"
+            )
         row = exact_fields(value, cls._FIELDS, "R4ReviewManifest")
         exact_abi(row["abi_version"], R4_REVIEW_MANIFEST_ABI_VERSION, "R4 Review Manifest")
         if type(row["abi_versions"]) is not dict or set(row["abi_versions"]) != set(_ABI_VERSIONS):
@@ -305,6 +552,193 @@ class R4ReviewManifest:
     @classmethod
     def from_json_bytes(cls, raw: object) -> "R4ReviewManifest":
         return strict_decode(raw, cls.from_dict, owner="R4 review manifest")
+
+
+@dataclass(frozen=True, init=False)
+class AuthenticatedR4SourceBytes:
+    path: str
+    raw_bytes: bytes
+    sha256: str
+    record_count: int
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("AuthenticatedR4SourceBytes")
+
+    @classmethod
+    def create(cls, *, path: str, raw_bytes: bytes) -> "AuthenticatedR4SourceBytes":
+        if path not in (*_SOURCE_PATHS, R4_SCENARIO_SOURCE_PATH):
+            raise ValueError("authenticated source path is outside the exact bundle membership")
+        if type(raw_bytes) is not bytes:
+            raise TypeError("authenticated source bytes must be exact immutable bytes")
+        count = _record_count_from_authenticated_bytes(path, raw_bytes)
+        return construct(
+            cls,
+            path=path,
+            raw_bytes=raw_bytes,
+            sha256=hashlib.sha256(raw_bytes).hexdigest(),
+            record_count=count,
+        )
+
+    def identity_dict(self) -> dict[str, object]:
+        return {
+            "path": self.path,
+            "sha256": self.sha256,
+            "record_count": self.record_count,
+        }
+
+
+@dataclass(frozen=True, init=False)
+class AuthenticatedR4ReviewBundle:
+    manifest: R4ReviewManifest
+    manifest_bytes: bytes
+    manifest_sha256: str
+    sources: tuple[AuthenticatedR4SourceBytes, ...]
+    scenario_source: AuthenticatedR4SourceBytes
+    reviewed_base_revision: str
+    authority_generation: str
+    source_bundle_ref: str
+    read_count: int
+    aggregate_bytes: int
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("AuthenticatedR4ReviewBundle")
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        manifest: R4ReviewManifest,
+        manifest_bytes: bytes,
+        sources: tuple[AuthenticatedR4SourceBytes, ...],
+        scenario_source: AuthenticatedR4SourceBytes,
+        read_count: int,
+        aggregate_bytes: int,
+    ) -> "AuthenticatedR4ReviewBundle":
+        canonical_manifest = _canonical_nested(manifest, R4ReviewManifest, "manifest")
+        if type(manifest_bytes) is not bytes or manifest_bytes != canonical_manifest.to_json_bytes():
+            raise ValueError("authenticated manifest bytes are not canonical")
+        if (
+            type(sources) is not tuple
+            or len(sources) != len(_SOURCE_PATHS)
+            or any(type(source) is not AuthenticatedR4SourceBytes for source in sources)
+            or tuple(source.path for source in sources) != _SOURCE_PATHS
+        ):
+            raise ValueError("authenticated child source membership is not exact")
+        canonical_sources = tuple(
+            AuthenticatedR4SourceBytes.create(path=source.path, raw_bytes=source.raw_bytes)
+            for source in sources
+        )
+        if canonical_sources != sources:
+            raise ValueError("authenticated child source bytes are not canonical")
+        if type(scenario_source) is not AuthenticatedR4SourceBytes:
+            raise TypeError("scenario source must be exact AuthenticatedR4SourceBytes")
+        canonical_scenario = AuthenticatedR4SourceBytes.create(
+            path=scenario_source.path, raw_bytes=scenario_source.raw_bytes
+        )
+        if canonical_scenario != scenario_source or scenario_source.path != R4_SCENARIO_SOURCE_PATH:
+            raise ValueError("authenticated scenario source is not canonical")
+        exact_reads = exact_int(
+            read_count,
+            "review bundle read_count",
+            minimum=R4_REVIEW_BUNDLE_READ_COUNT,
+            maximum=R4_REVIEW_BUNDLE_READ_COUNT,
+        )
+        exact_aggregate = exact_int(
+            aggregate_bytes,
+            "review bundle aggregate_bytes",
+            minimum=1,
+            maximum=MAX_R4_REVIEW_BUNDLE_BYTES,
+        )
+        recomputed_aggregate = len(manifest_bytes) + sum(
+            len(source.raw_bytes) for source in (*canonical_sources, canonical_scenario)
+        )
+        if exact_aggregate != recomputed_aggregate:
+            raise ValueError("review bundle aggregate byte count does not reconstruct")
+        computed_ref = _source_bundle_ref(canonical_sources, canonical_scenario)
+        if computed_ref != canonical_manifest.source_bundle_ref:
+            raise ValueError("review manifest source-bundle content ref does not reconstruct")
+        return construct(
+            cls,
+            manifest=canonical_manifest,
+            manifest_bytes=manifest_bytes,
+            manifest_sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+            sources=canonical_sources,
+            scenario_source=canonical_scenario,
+            reviewed_base_revision=canonical_manifest.reviewed_base_revision,
+            authority_generation=canonical_manifest.authority_generation,
+            source_bundle_ref=computed_ref,
+            read_count=exact_reads,
+            aggregate_bytes=exact_aggregate,
+        )
+
+    @property
+    def source_bytes(self) -> Mapping[str, bytes]:
+        return MappingProxyType(
+            {
+                self.scenario_source.path: self.scenario_source.raw_bytes,
+                **{source.path: source.raw_bytes for source in self.sources},
+            }
+        )
+
+
+def load_authenticated_r4_review_bundle(
+    project_root: str | Path,
+) -> AuthenticatedR4ReviewBundle:
+    """Read and authenticate the exact six-file R4.1 reviewed-source bundle.
+
+    The manifest and each named source are opened once.  No directory listing,
+    runtime observation, bootstrap output, or generated artifact is consulted.
+    The descriptor/path/ancestor identity checks detect stable replacement
+    observed across the read within the portable metadata exposed by the host
+    OS.  A transient ancestor swap restored before the post-read probe, a remote
+    filesystem snapshot, and a cryptographic filesystem transaction are outside
+    this cross-platform guarantee.
+    """
+
+    root = _canonical_project_root(project_root)
+    read_paths: set[str] = set()
+    aggregate_bytes = 0
+
+    def read(relative_path: str) -> bytes:
+        nonlocal aggregate_bytes
+        if relative_path in read_paths:
+            raise ValueError(f"duplicate reviewed source read is forbidden: {relative_path}")
+        read_paths.add(relative_path)
+        raw = _read_regular_file_once(root, relative_path, maximum=MAX_R4_SOURCE_BYTES)
+        aggregate_bytes += len(raw)
+        if aggregate_bytes > MAX_R4_REVIEW_BUNDLE_BYTES:
+            raise ValueError("review bundle violates aggregate byte bounds")
+        return raw
+
+    manifest_bytes = read(R4_REVIEW_MANIFEST_PATH)
+    manifest = R4ReviewManifest.from_json_bytes(manifest_bytes)
+    sources: list[AuthenticatedR4SourceBytes] = []
+    for source_record in manifest.sources:
+        raw = read(source_record.path)
+        source = AuthenticatedR4SourceBytes.create(
+            path=source_record.path, raw_bytes=raw
+        )
+        if source.record_count != source_record.record_count:
+            raise ValueError(f"reviewed source record count mismatch: {source.path}")
+        if source.sha256 != source_record.sha256:
+            raise ValueError(f"reviewed source SHA-256 mismatch: {source.path}")
+        sources.append(source)
+    scenario_raw = read(R4_SCENARIO_SOURCE_PATH)
+    scenario = AuthenticatedR4SourceBytes.create(
+        path=R4_SCENARIO_SOURCE_PATH, raw_bytes=scenario_raw
+    )
+    if scenario.sha256 != manifest.scenario_source_sha256:
+        raise ValueError("reviewed scenario source SHA-256 mismatch")
+    if read_paths != set(_ALL_AUTHENTICATED_SOURCE_PATHS):
+        raise ValueError("review bundle read membership is not exact")
+    return AuthenticatedR4ReviewBundle.create(
+        manifest=manifest,
+        manifest_bytes=manifest_bytes,
+        sources=tuple(sources),
+        scenario_source=scenario,
+        read_count=len(read_paths),
+        aggregate_bytes=aggregate_bytes,
+    )
 
 
 @dataclass(frozen=True, init=False)
@@ -881,9 +1315,16 @@ class MutationContract:
 
 
 __all__ = [
+    "AuthenticatedR4ReviewBundle",
+    "AuthenticatedR4SourceBytes",
+    "MAX_R4_REVIEW_BUNDLE_BYTES",
     "MUTATION_CONTRACT_ABI_VERSION",
     "PROPOSAL_SUPERVISION_ABI_VERSION",
     "R4_REVIEW_MANIFEST_ABI_VERSION",
+    "R4_REVIEW_BUNDLE_READ_COUNT",
+    "R4_REVIEW_MANIFEST_PATH",
+    "R4_REVIEW_SOURCE_FILE_COUNT",
+    "R4_SCENARIO_SOURCE_PATH",
     "REALIZATION_SUPERVISION_ABI_VERSION",
     "MAX_BLUEPRINT_ACTIONS",
     "MAX_DERIVATIONS_PER_CASE",
@@ -901,4 +1342,5 @@ __all__ = [
     "ReferenceFormChoice",
     "ReviewSourceFile",
     "TypedAbstention",
+    "load_authenticated_r4_review_bundle",
 ]
