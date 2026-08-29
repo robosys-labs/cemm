@@ -17,24 +17,24 @@ test, review, and artifact evidence has been added after the work exists.
 
 | Task | Deliverable | State | Commit ref | Test receipt | Review checkpoint | Artifact ref | Unresolved decision |
 |---|---|---|---|---|---|---|---|
-| T01 | Govern the executable replay and create this progress owner | in_progress | pending task commit | TR-T01 pending | RC-T01 pending | AR-T01 pending | none beyond verification evidence |
-| T02 | Define strict R4.1 reviewed-source schemas and decoders | pending | pending | pending | pending | pending | exact bounded source limits |
-| T03 | Author the review manifest and reviewed source package | pending | pending | pending | RC-SOURCE required | pending | reviewer refs, policy, and exact source membership |
-| T04 | Compile expected cycle contracts and exact expanded cases independently | pending | pending | pending | pending | pending | diagnostic-only classifications |
-| T05 | Compile proposal derivations and explicit abstention supervision | pending | pending | pending | RC-SOURCE required | pending | reviewed blueprint reuse boundary |
-| T06 | Compile realization signatures, surfaces, slots, perspective, and alignments | pending | pending | pending | RC-SOURCE required | pending | authorized surface variants and literal-copy spans |
-| T07 | Externalize mutation contracts and independent mutation observations | pending | pending | pending | RC-SOURCE required | pending | reviewed mutation family coverage |
-| T08 | Compile explicit purpose membership and duplicate-risk evidence | pending | pending | pending | RC-SOURCE required | pending | reviewed duplicate groups and challenge holdouts |
-| T09 | Enforce fixed class-local semantic denominators and sufficiency | pending | pending | pending | RC-SOURCE required | pending | exact positive minima and source-support evidence |
-| T10 | Join compact `R4SupervisedCase` rows and four purpose payloads | pending | pending | pending | pending | pending | final supervised versus diagnostic universe |
-| T11 | Emit the ABI 5 artifact graph, train capability, and candidate authorization | pending | pending | pending | pending | pending | exact artifact-byte bounds |
-| T12 | Independently reconstruct reviewed source, supervision, allocation, and artifacts | pending | pending | pending | pending | pending | no unresolved decision recorded yet |
-| T13 | Hard-cut train access to the ABI 2 authenticated supervision batch | pending | pending | pending | pending | pending | exact future R5 consumer handoff fields |
-| T14 | Reconcile validation owners, inventory evidence, ABI docs, and hard-cut guards | pending | pending | pending | pending | pending | selector/input changes only if existing ownership requires them |
-| T15 | Run deterministic double generation and focused/full governed validation | pending | pending | pending | pending | pending | publication checkpoint identities |
-| T16 | Freeze source after independent code and reviewed-data review | pending | pending | pending | RC-CODE-DATA required | pending | reviewer findings and required amendments |
-| T17 | Publish the artifact-only commit from the exact reviewed source parent | pending | pending | pending | RC-ARTIFACT required | pending | exact source-parent and artifact-tree identities |
-| T18 | Run clean repository admission, append the reviewed transition, and reconstruct closeout | pending | pending | pending | RC-ADMISSION required | pending | exact admission and ledger record refs |
+| T01 | Govern the executable replay and create the progress owner | in_progress | CR-T01 | TR-T01 and TR-T01-REVIEW | RC-T01 pending | AR-T01 pending | none beyond verification evidence |
+| T02 | Add strict reviewed-source schemas and immutable decoders | pending | pending | pending | pending | pending | exact bounded source limits |
+| T03 | Authenticate the review manifest and source bundle | pending | pending | pending | RC-SOURCE required | pending | reviewer refs, policy, and exact source membership |
+| T04 | Check in the independently reviewed source package | pending | pending | pending | RC-SOURCE required | pending | diagnostic-only classifications and exact reviewed bytes |
+| T05 | Compile proposal derivations and typed abstentions independently | pending | pending | pending | RC-SOURCE required | pending | reviewed blueprint reuse boundary |
+| T06 | Compile ResponseMeaning-to-surface supervision independently | pending | pending | pending | RC-SOURCE required | pending | authorized surface variants and literal-copy spans |
+| T07 | Make mutation truth independent of mutation execution | pending | pending | pending | RC-SOURCE required | pending | reviewed mutation family coverage |
+| T08 | Replace global semantic union with reviewed purpose ownership | pending | pending | pending | RC-SOURCE required | pending | reviewed duplicate groups and challenge holdouts |
+| T09 | Prove fixed class-local semantic sufficiency | pending | pending | pending | RC-SOURCE required | pending | exact positive minima and source-support evidence |
+| T10 | Build compact supervised cases and four payloads | pending | pending | pending | pending | pending | final supervised versus diagnostic universe |
+| T11 | Version the R4 artifact graph to ABI 5 | pending | pending | pending | pending | pending | exact artifact-byte bounds |
+| T12 | Independently reconstruct admission and train access | pending | pending | pending | pending | pending | exact independent reconstruction and ABI 2 train boundary |
+| T13 | Quarantine ineligible R5 supervision consumers | pending | pending | pending | pending | pending | exact blocked consumer set before the R5 plan |
+| T14 | Retire predecessor current paths and migrate exact test authority | pending | pending | pending | pending | pending | selector/input changes only when exact ownership requires them |
+| T15 | Generate twice, review data, and publish the artifact-only commit | pending | pending | pending | RC-CODE-DATA and RC-ARTIFACT required | pending | exact source-parent and byte-identical artifact-tree identities |
+| T16 | Run clean repository-owned admission | pending | pending | pending | RC-ADMISSION required | pending | exact clean admission receipt and run refs |
+| T17 | Append R4 green and close the replay | pending | pending | pending | RC-ADMISSION required | pending | exact append-only ledger record and closeout refs |
+| T18 | Produce the R5 handoff audit without implementing R5 | pending | pending | pending | pending | pending | exact eligible handoff evidence and confirmed R5 quarantine |
 
 ## Commit references
 
@@ -42,7 +42,7 @@ test, review, and artifact evidence has been added after the work exists.
 |---|---|---|
 | CR-DESIGN | `ef9fd67d2b896b61c5a8ba12acace8b9ed188324` | Approved R4.1 replay design |
 | CR-PLAN | `44f12a2aa7cb6c0d0c3175ebddd3f163c33ccdcf` | Governing executable replay plan and Task 1 source base |
-| CR-T01 | pending | Task 1 governance/tracker commit; recorded only after commit exists |
+| CR-T01 | `27b8a5a1295b8f49c30a63e67110b71b19a0c122` | Initial Task 1 governance/tracker commit; exact-mapping review fix follows separately |
 | CR-SOURCE-FREEZE | pending | Reviewed source parent for deterministic publication |
 | CR-ARTIFACT | pending | Artifact-only publication commit |
 | CR-CLOSEOUT | pending | Final governance-only closeout commit, if required |
@@ -54,6 +54,8 @@ test, review, and artifact evidence has been added after the work exists.
 | TR-ENTRY | Focused entry baseline | Task dispatch reports 108 passing tests; no repository receipt ref was supplied |
 | TR-T01-RED | Task 1 governance RED | One pytest process; focused 4-node command; 2 failed and 2 passed because the tracker file/classification did not yet exist |
 | TR-T01 | Task 1 focused governance GREEN | One pytest process; same focused 4-node command; 4 passed after authority/tracker implementation |
+| TR-T01-REVIEW-RED | Task 1 exact task mapping RED | One pytest process; exact tracker test failed at T01 before the reviewed one-for-one mapping was applied |
+| TR-T01-REVIEW | Task 1 exact task mapping GREEN | One pytest process; exact tracker test passed after T01-T18 were aligned verbatim |
 | TR-INVENTORY | G0/R4 source-only inventory reconstruction | pending |
 | TR-DETERMINISM | Two byte-identical candidate trees | pending |
 | TR-PREADMISSION | Bounded governed validation | pending |

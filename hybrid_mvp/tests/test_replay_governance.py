@@ -899,7 +899,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:corrective-tracker-is-operational-not-status-authority",
         "diagnostic_role": "phase",
         "introduced_by_task": "R4-Partition-Corrective-Task-1",
-        "source_ast_sha256": "c54970815aa2889d6a0af91930550a66bf14856feea202ea019c6aa845bb60b9"
+        "source_ast_sha256": "cd96540b3cda28ba5c60d0cc6fe851d546bc59b0961c5b41f5298a64721c70a4"
     },
     "tests/test_replay_governance.py::test_r4_partition_corrective_documents_are_superseded": {
         "activation_phase": "G0",
@@ -1398,8 +1398,30 @@ def test_corrective_tracker_is_operational_not_status_authority() -> None:
     assert not re.search(r"run:[0-9a-f]{24}", text)
     assert not re.search(r"^\|\s*(?:G0|R[1-8])\s*\|", text, re.MULTILINE)
 
-    task_rows = re.findall(r"^\|\s*T(\d{2})\s*\|", text, re.MULTILINE)
-    assert task_rows == [f"{index:02d}" for index in range(1, 19)]
+    task_rows = re.findall(
+        r"^\|\s*T(\d{2})\s*\|\s*([^|]+?)\s*\|", text, re.MULTILINE
+    )
+    expected_tasks = (
+        ("01", "Govern the executable replay and create the progress owner"),
+        ("02", "Add strict reviewed-source schemas and immutable decoders"),
+        ("03", "Authenticate the review manifest and source bundle"),
+        ("04", "Check in the independently reviewed source package"),
+        ("05", "Compile proposal derivations and typed abstentions independently"),
+        ("06", "Compile ResponseMeaning-to-surface supervision independently"),
+        ("07", "Make mutation truth independent of mutation execution"),
+        ("08", "Replace global semantic union with reviewed purpose ownership"),
+        ("09", "Prove fixed class-local semantic sufficiency"),
+        ("10", "Build compact supervised cases and four payloads"),
+        ("11", "Version the R4 artifact graph to ABI 5"),
+        ("12", "Independently reconstruct admission and train access"),
+        ("13", "Quarantine ineligible R5 supervision consumers"),
+        ("14", "Retire predecessor current paths and migrate exact test authority"),
+        ("15", "Generate twice, review data, and publish the artifact-only commit"),
+        ("16", "Run clean repository-owned admission"),
+        ("17", "Append R4 green and close the replay"),
+        ("18", "Produce the R5 handoff audit without implementing R5"),
+    )
+    assert task_rows == list(expected_tasks)
     for required_register in (
         "Commit references",
         "Test receipts",
