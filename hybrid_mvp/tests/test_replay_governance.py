@@ -899,7 +899,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r4-1-replay-tracker-is-operational-not-status-authority",
         "diagnostic_role": "phase",
         "introduced_by_task": "R4.1-Data-Supervision-Task-1",
-        "source_ast_sha256": "4b5b1fdd381ebfd64bbda762fc3ec789ef05188fbaaa1e70c8b87b4cd9f24c8e"
+        "source_ast_sha256": "f8007cd38fe875863fcfff176618419196d404ec40e5681170519dd15ef0f293"
     },
     "tests/test_replay_governance.py::test_r4_partition_corrective_documents_are_superseded": {
         "activation_phase": "G0",
@@ -1388,6 +1388,21 @@ def test_r4_1_replay_tracker_is_operational_not_status_authority() -> None:
     assert R4_1_REPLAY_PROGRESS in authority["historical_evidence"]
 
     text = (ROOT / R4_1_REPLAY_PROGRESS).read_text(encoding="utf-8")
+
+    def assert_no_positive_tracker_claims(candidate: str) -> None:
+        assert not re.search(
+            r"^\s*this tracker\s+(?:(?:now|also|hereby)\s+)*"
+            r"(?:admits?|authori[sz]e[sd]?|"
+            r"declares?\b[^\r\n]*\b(?:replay\s+)?complete(?:d)?)\b",
+            candidate,
+            re.IGNORECASE | re.MULTILINE,
+        )
+
+    def assert_task_states_are_governed(
+        candidate_rows: list[tuple[str, str, str]], vocabulary: list[str]
+    ) -> None:
+        assert all(state in vocabulary for _task, _title, state in candidate_rows)
+
     assert "operational evidence only" in text.casefold()
     sole_authority_declaration = (
         "governance/replay_status.jsonl is the sole phase-status authority"
@@ -1404,6 +1419,11 @@ def test_r4_1_replay_tracker_is_operational_not_status_authority() -> None:
     assert "does not claim replay completion" in text
     assert not re.search(r"run:[0-9a-f]{24}", text)
     assert not re.search(r"^\|\s*(?:G0|R[1-8])\s*\|", text, re.MULTILINE)
+    assert_no_positive_tracker_claims(text)
+    with pytest.raises(AssertionError):
+        assert_no_positive_tracker_claims(
+            text + "\nThis tracker admits R4 and declares the replay complete.\n"
+        )
 
     task_rows = re.findall(
         r"^\|\s*T(\d{2})\s*\|\s*([^|]+?)\s*\|\s*([a-z_]+)\s*\|",
@@ -1420,13 +1440,30 @@ def test_r4_1_replay_tracker_is_operational_not_status_authority() -> None:
     ]
     state_vocabulary = re.search(r"^State vocabulary: ([^\r\n]+)$", text, re.MULTILINE)
     assert state_vocabulary is not None
-    assert re.findall(r"`([^`]+)`", state_vocabulary.group(1)) == [
+    vocabulary = re.findall(r"`([^`]+)`", state_vocabulary.group(1))
+    assert vocabulary == [
         "in_progress",
         "pending",
         "blocked",
         "stopped",
         "complete",
     ]
+    assert_task_states_are_governed(task_rows, vocabulary)
+    invalid_state_text, replacement_count = re.subn(
+        r"(^\|\s*T18\s*\|[^|]+\|\s*)pending(\s*\|)",
+        r"\1invented\2",
+        text,
+        count=1,
+        flags=re.MULTILINE,
+    )
+    assert replacement_count == 1
+    invalid_state_rows = re.findall(
+        r"^\|\s*T(\d{2})\s*\|\s*([^|]+?)\s*\|\s*([a-z_]+)\s*\|",
+        invalid_state_text,
+        re.MULTILINE,
+    )
+    with pytest.raises(AssertionError):
+        assert_task_states_are_governed(invalid_state_rows, vocabulary)
     for required_register in (
         "Commit references",
         "Test receipts",

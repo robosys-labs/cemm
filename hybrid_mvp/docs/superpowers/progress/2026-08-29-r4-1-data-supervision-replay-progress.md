@@ -45,7 +45,8 @@ been added after the work exists.
 | CR-PLAN | `44f12a2aa7cb6c0d0c3175ebddd3f163c33ccdcf` | Governing executable replay plan and Task 1 source base |
 | CR-T01 | `27b8a5a1295b8f49c30a63e67110b71b19a0c122` | Initial Task 1 governance/tracker commit; exact-mapping review fix follows separately |
 | CR-T01-ALIGN | `86eb9fb7a5841c0fa246a9453d99a033cab6e13c` | Task 1 exact plan-mapping review fix |
-| CR-T01-HARDEN | pending | Task 1 quality hardening commit; recorded only after it exists |
+| CR-T01-HARDEN | `28ddd332afe590f75f617bc381628b2c9f4797da` | Task 1 quality hardening commit |
+| CR-T01-CLAIMS | pending | Task 1 authority-claim mutation fix; recorded only after it exists |
 | CR-SOURCE-FREEZE | pending | Reviewed source parent for deterministic publication |
 | CR-ARTIFACT | pending | Artifact-only publication commit |
 | CR-CLOSEOUT | pending | Final governance-only closeout commit, if required |
@@ -61,9 +62,11 @@ been added after the work exists.
 | TR-T01-REVIEW | Task 1 exact task mapping GREEN | The exact TR-T01-REVIEW-RED command returned 1 passed after verbatim alignment |
 | TR-T01-HARDEN-RED | Task 1 governance hardening RED | `python -m pytest tests/test_replay_governance.py::test_r4_1_replay_tracker_is_operational_not_status_authority -q -p no:cacheprovider` returned 1 failed because terminal `complete` was absent |
 | TR-T01-HARDEN | Task 1 governance hardening GREEN | The exact TR-T01-HARDEN-RED command returned 1 passed after hardening |
+| TR-T01-CLAIMS-RED | Task 1 authority/state mutation RED | `python -m pytest tests/test_replay_governance.py::test_r4_1_replay_tracker_is_operational_not_status_authority -q -p no:cacheprovider` returned 1 failed because the appended positive tracker claim was not rejected |
+| TR-T01-CLAIMS | Task 1 authority/state mutation GREEN | The exact TR-T01-CLAIMS-RED command returned 1 passed after positive-claim and arbitrary-state rejection |
 | TR-R4-SELECTOR | Exact R4 selector/config GREEN | `python -m pytest tests/test_replay_governance.py::test_r4_1_replay_tracker_is_operational_not_status_authority tests/test_validation_gate.py::test_r4_gate_plans_are_exact_bounded_and_single_process -q -p no:cacheprovider` returned 2 passed |
-| TR-INVENTORY-G0 | G0 source-only inventory reconstruction | `python scripts/check_test_inventory.py --phase G0 --source-only` passed: inventory `test_inventory:c715e262526c0ea26a6fef90`, literal metadata `literal_test_metadata:695c3fed30206ad5371a8433`, active set `active_test_nodes:7ec97bc4c63c6824928f9681` with 190 nodes, collectable set `collectable_test_nodes:7344a87282c6685a08348d3c` with 1,836 nodes |
-| TR-INVENTORY-R4 | R4 source-only inventory reconstruction | `python scripts/check_test_inventory.py --phase R4 --source-only` passed: inventory `test_inventory:c715e262526c0ea26a6fef90`, literal metadata `literal_test_metadata:695c3fed30206ad5371a8433`, active set `active_test_nodes:5c2d7d60fdea1668c75dc4fb` with 1,554 nodes, collectable set `collectable_test_nodes:7344a87282c6685a08348d3c` with 1,836 nodes |
+| TR-INVENTORY-G0 | G0 source-only inventory reconstruction | `python scripts/check_test_inventory.py --phase G0 --source-only` passed: inventory `test_inventory:c715e262526c0ea26a6fef90`, literal metadata `literal_test_metadata:a44a54856723a6674b8922b3`, active set `active_test_nodes:7ec97bc4c63c6824928f9681` with 190 nodes, collectable set `collectable_test_nodes:7344a87282c6685a08348d3c` with 1,836 nodes |
+| TR-INVENTORY-R4 | R4 source-only inventory reconstruction | `python scripts/check_test_inventory.py --phase R4 --source-only` passed: inventory `test_inventory:c715e262526c0ea26a6fef90`, literal metadata `literal_test_metadata:a44a54856723a6674b8922b3`, active set `active_test_nodes:5c2d7d60fdea1668c75dc4fb` with 1,554 nodes, collectable set `collectable_test_nodes:7344a87282c6685a08348d3c` with 1,836 nodes |
 | TR-STATIC | Task 1 static validation | `python -m py_compile tests/test_replay_governance.py tests/test_validation_gate.py`; `python -m json.tool docs/DOCUMENT_AUTHORITY.json`; `python -m json.tool configs/validation_gates.json`; `git diff --check`; all exited 0 in the final pre-commit check |
 | TR-DETERMINISM | Two byte-identical candidate trees | pending |
 | TR-PREADMISSION | Bounded governed validation | pending |
