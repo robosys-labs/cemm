@@ -48,7 +48,10 @@
   ],
   "path_base": "hybrid_mvp/",
   "root_adoption_requires_separate_review": true,
-  "root_runtime_authority": "../AGENTS.md",
+  "root_runtime_authority": {
+    "path": "../AGENTS.md",
+    "sha256": "b453d142dc482be4fe56077b24d5fd0bce8a20ef57e0fe71d563d07b76e54768"
+  },
   "schema": "cemm-hybrid-document-authority-v1",
   "scope": "hybrid_mvp/",
   "superseded_execution_claims": [
