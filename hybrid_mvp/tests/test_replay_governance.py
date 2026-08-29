@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import copy
 import hashlib
 import importlib.util
@@ -456,6 +457,14 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Authority-Cleanup-Task-2",
         "owner_ref": "governance",
         "source_ast_sha256": "5ed3abe50f1d59971eb16ad611af1ca8a7b3c30bd88ac11d89f8f2c1bde9c14c"
+    },
+    "tests/test_replay_governance.py::test_r5_placeholder_docstrings_do_not_claim_admitted_semantics": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:r5-placeholder-docstrings-are-truthful",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-3",
+        "owner_ref": "governance",
+        "source_ast_sha256": "6fad6ec0e2bc594ecf20ba45bef06e852d9b4fd410be38504003f894ef597520"
     },
     "tests/test_replay_governance.py::test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix": {
         "activation_phase": "G0",
@@ -1084,6 +1093,40 @@ def test_superseded_execution_documents_have_prominent_successor_banners() -> No
         banner = "\n".join((ROOT / relative).read_text(encoding="utf-8").splitlines()[:14])
         assert "superseded" in banner.casefold(), relative
         assert "governance/replay_status.jsonl" in banner, relative
+
+
+def test_r5_placeholder_docstrings_do_not_claim_admitted_semantics() -> None:
+    realization = (
+        ROOT / "src/cemm_authoritative_hybrid/realization.py"
+    ).read_text(encoding="utf-8")
+    training = (
+        ROOT / "src/cemm_authoritative_hybrid/training.py"
+    ).read_text(encoding="utf-8")
+    assert "marker-based diagnostic" in realization
+    assert "does not establish canonical-expression equivalence" in realization
+    assert "collision-prone diagnostic bucket" in training
+    assert "not reviewed derivation supervision" in training
+    assert "input utterance is not an authorized response target" in training
+    tree = ast.parse(training)
+    classes = {
+        node.name: node for node in tree.body if isinstance(node, ast.ClassDef)
+    }
+    proposal_fit = next(
+        node
+        for node in classes["ReleaseProposalTrainer"].body
+        if isinstance(node, ast.FunctionDef) and node.name == "fit"
+    )
+    realizer_fit = next(
+        node
+        for node in classes["ReleaseRealizerTrainer"].body
+        if isinstance(node, ast.FunctionDef) and node.name == "fit"
+    )
+    assert "input utterance is not an authorized response target" not in (
+        ast.get_docstring(proposal_fit) or ""
+    )
+    assert "input utterance is not an authorized response target" in (
+        ast.get_docstring(realizer_fit) or ""
+    )
 
 
 def test_r4_partition_corrective_documents_are_superseded() -> None:

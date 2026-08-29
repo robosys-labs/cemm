@@ -1,18 +1,9 @@
-"""Constrained neural realization with independent equivalence verification.
+"""Pre-R5 constrained-realization scaffold with marker-based diagnostic checks.
 
-This module owns :class:`RealizationReceipt`, :class:`EquivalenceReceipt`,
-:class:`RealizationVerifier`, :class:`SafeRealizer`, and
-:class:`NeuralConstrainedRealizer`.
-
-The realizer consumes ONLY :class:`ResponseMeaning` (not input text), uses
-allowed designation forms, language features, and bounded dialogue style. The
-verifier re-orients generated text with output grammar excluded from input
-classification, obtains candidate programs, and proves equivalence to the
-response contract.
-
-Candidate failure tries the bounded neural beam; total failure invokes
-:class:`SafeRealizer` only for reviewed failure meanings. Normal answers cannot
-silently fall back to canned text.
+The module contains historical neural and safe-realizer experiments. Its
+current verifier checks bounded surface markers and leakage conditions; it does
+not reconstruct Program ABI 2 through VERIFY and does not establish canonical-
+expression equivalence. The R5 realization owner remains unadmitted.
 """
 
 from __future__ import annotations
@@ -146,13 +137,11 @@ _SAFE_SURFACES: dict[str, str] = {
 
 
 class RealizationVerifier:
-    """Independently verifies that generated text is equivalent to the response contract.
+    """Run the bounded pre-R5 marker-based diagnostic.
 
-    Re-orients generated text with output grammar excluded from input
-    classification, obtains candidate programs, and proves equivalence to the
-    response contract. Checks: binding preservation, participant perspective,
-    polarity, modality, status, epistemic qualifiers, absence of internal
-    semantic refs, and non-empty output for authorized response actions.
+    This check can reject empty, leaking, polarity-, modality-, status- or
+    perspective-inconsistent surfaces. It does not establish canonical-expression equivalence
+    and cannot authorize normal release realization.
     """
 
     def __init__(
@@ -167,7 +156,7 @@ class RealizationVerifier:
     def verify(
         self, response_meaning: ResponseMeaning, surface: str
     ) -> EquivalenceReceipt:
-        """Verify that ``surface`` is semantically equivalent to ``response_meaning``."""
+        """Return the bounded marker-based diagnostic receipt for ``surface``."""
         if not surface or not surface.strip():
             # Non-empty output required for authorized response actions.
             if response_meaning.discourse_action in (
@@ -368,19 +357,11 @@ class SafeRealizer:
 
 
 class NeuralConstrainedRealizer:
-    """Constrained neural realizer with independent equivalence verification.
+    """Historical constrained-realizer scaffold, unavailable for R5 activation.
 
-    Consumes ONLY :class:`ResponseMeaning` (not input text), uses allowed
-    designation forms, language features, and bounded dialogue style. The
-    verifier re-orients generated text with output grammar excluded from input
-    classification, obtains candidate programs, and proves equivalence to the
-    response contract.
-
-    Candidate failure tries the bounded neural beam; total failure invokes
-    :class:`SafeRealizer` only for reviewed failure meanings. Every normal
-    realization receipt records the loaded model identity and decoder invocation
-    count. Test-only zero-weight clones cannot pass artifact activation and
-    exist only to prove learned-weight dependence.
+    The decoder and marker-based diagnostic provide weight-use and failure-path
+    evidence only. They do not preserve the complete Response Meaning ABI 2 or
+    prove a semantic round trip.
     """
 
     def __init__(

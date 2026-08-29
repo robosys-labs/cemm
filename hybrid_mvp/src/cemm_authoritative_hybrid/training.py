@@ -526,11 +526,11 @@ def _encode_response_meaning_features(rm: dict[str, Any]) -> torch.Tensor:
 
 
 def _surface_to_target(surface: str, vocab_size: int) -> int:
-    """Map a surface string to a target token index for training.
+    """Map a surface to a collision-prone diagnostic bucket.
 
-    The target is always non-zero (1 to vocab_size-1) so that the network
-    learns to produce non-zero logits for valid surfaces. Token 0 is reserved
-    for "invalid" (low-confidence) outputs.
+    This pre-R5 helper is neither reversible token supervision nor a dynamic
+    pointer target. It is ineligible for model publication and remains visible so
+    the R5 repair cannot mistake the scaffold for reviewed realization gold.
     """
     raw = int(hashlib.sha256(surface.encode("utf-8")).hexdigest(), 16) % (vocab_size - 1)
     return raw + 1  # Shift to range [1, vocab_size-1]
@@ -755,7 +755,12 @@ def _validated_train_batch(batch: AuthenticatedR4TrainBatch) -> tuple[AuthenticE
 
 
 def _selected_program_actions(episode: AuthenticEpisode) -> tuple[ProgramAction, ...]:
-    """Return the exact verifier-selected Program ABI 2 action sequence."""
+    """Return verifier-selected actions for diagnostic replay.
+
+    The sequence is runtime/bootstrap lineage, not reviewed derivation supervision,
+    and cannot become release proposal gold without an independent reviewed
+    derivation contract.
+    """
     cycle = episode.observed_cycle
     proposal = cycle.proposal
     verification = cycle.verification
@@ -1023,7 +1028,12 @@ class ReleaseRealizerTrainer:
         self._root = Path(root) if root is not None else Path.cwd()
 
     def fit(self, train_batch: AuthenticatedR4TrainBatch) -> dict:
-        """Train only from one externally authenticated immutable R4 train batch."""
+        """Exercise the pre-admission trainer on an authenticated R4 snapshot.
+
+        Snapshot authentication does not authorize the current labels: the input utterance is not an authorized response target.
+        R5 activation remains blocked until reviewed ResponseMeaning-to-surface
+        supervision replaces this scaffold.
+        """
         episodes = _validated_train_batch(train_batch)
         dataset_hash = train_batch.snapshot.payload_sha256
         _set_deterministic_seeds(self._seed)
