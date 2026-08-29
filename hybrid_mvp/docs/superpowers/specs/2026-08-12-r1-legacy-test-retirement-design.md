@@ -5,7 +5,7 @@
 > is derived from
 > [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
 
-**Status:** approved design; implementation pending
+**Status at publication:** approved design; implementation was later completed
 **Date:** 2026-08-12
 **Scope:** obsolete R1 phase tests and their governed inventory records
 **Starting commit:** `8cd27234454caae6942888c18b5d497d6d2490ee`

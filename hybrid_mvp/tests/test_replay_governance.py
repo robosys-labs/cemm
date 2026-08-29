@@ -9,6 +9,7 @@ import os
 import re
 import subprocess
 import sys
+from collections import Counter
 from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 
@@ -51,6 +52,19 @@ REJECTED_ACTIVE_INSTRUCTIONS = (
     "preserve every exact protected identity from the seven r4 axes as a namespaced leakage hyperedge",
     "candidate minima are derived only from component support",
     "the input surface is the realization target",
+    "current-source r4 build receipt abi 4 admission",
+    "current r4 abi-4 admission",
+    "rebuild the global four-class artifacts",
+    "the receipt reconstructs build receipt abi 4",
+    "global four-class graph",
+    "g0-r4 are green",
+    "preserves the admitted g0-r4 contract",
+)
+
+R5_CONDITIONAL_DOCUMENTS = (
+    "docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md",
+    "docs/superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md",
+    "docs/superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md",
 )
 
 GOVERNING_DOCUMENTS = (
@@ -432,7 +446,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Authority-Cleanup-Task-1",
         "owner_ref": "governance",
-        "source_ast_sha256": "e9f7a6b008392d5d88b6ce4915dc51a3026079ed77bb8e6d03b42e6e0f26e716"
+        "source_ast_sha256": "d74d016b5ec477aac3a78b3e715fdb0b6ffdbcde59ceccb72f84de6c031ca50a"
     },
     "tests/test_replay_governance.py::test_r4_1_amendment_owns_authentic_r5_prerequisites": {
         "activation_phase": "G0",
@@ -464,7 +478,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Authority-Cleanup-Task-3",
         "owner_ref": "governance",
-        "source_ast_sha256": "6fad6ec0e2bc594ecf20ba45bef06e852d9b4fd410be38504003f894ef597520"
+        "source_ast_sha256": "b0343442a4fa2160c28462a3d2c408dfcc350ca61cc88b6d1c0b157199169c11"
     },
     "tests/test_replay_governance.py::test_active_hybrid_workflows_cannot_rewrite_governed_source": {
         "activation_phase": "G0",
@@ -473,6 +487,22 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Authority-Cleanup-Task-4",
         "owner_ref": "governance",
         "source_ast_sha256": "0c03ae5af33f1797613c3120bb16e31a647afb5855dbbb9bf885c03784b1cea3"
+    },
+    "tests/test_replay_governance.py::test_governing_r5_documents_require_external_r4_1_prerequisite": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governing-r5-documents-require-external-r4-1",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-5-Review",
+        "owner_ref": "governance",
+        "source_ast_sha256": "f7bf70f52e424ceb6e0dc943cb8ad5273a8eab8f97d1526a28aab36db4185f3a"
+    },
+    "tests/test_replay_governance.py::test_historical_markdown_documents_have_status_neutral_banners": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:historical-markdown-has-status-neutral-banners",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-5-Review",
+        "owner_ref": "governance",
+        "source_ast_sha256": "c80f29e5f4cd9d604977e37b2c3e2306222b976735ca6bf3ad7cbdb1e2f62fa9"
     },
     "tests/test_replay_governance.py::test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix": {
         "activation_phase": "G0",
@@ -1063,11 +1093,13 @@ def test_authority_cleanup_classifies_every_authority_like_document_once() -> No
         tuple(authority["historical_evidence"]),
     )
     classified = set().union(*(set(rows) for rows in classes))
+    counts = Counter(relative for rows in classes for relative in rows)
     markdown = {
         path.relative_to(ROOT).as_posix()
         for path in (ROOT / "docs").rglob("*.md")
     }
     assert markdown | AUTHORITY_LIKE_ROOT_FILES <= classified
+    assert all(count == 1 for count in counts.values()), counts
     for index, left in enumerate(classes):
         for right in classes[index + 1 :]:
             assert set(left).isdisjoint(right)
@@ -1103,6 +1135,34 @@ def test_superseded_execution_documents_have_prominent_successor_banners() -> No
         assert "governance/replay_status.jsonl" in banner, relative
 
 
+def test_governing_r5_documents_require_external_r4_1_prerequisite() -> None:
+    authority = _authority()
+    governing = set(authority["governing_documents"])
+    for relative in R5_CONDITIONAL_DOCUMENTS:
+        assert relative in governing
+        raw = (ROOT / relative).read_text(encoding="utf-8").casefold()
+        text = re.sub(r"\s+", " ", raw)
+        assert "r4.1 is an external prerequisite" in text, relative
+        assert "fresh r4.1 admission" in text, relative
+        assert "governance/replay_status.jsonl" in text, relative
+
+
+def test_historical_markdown_documents_have_status_neutral_banners() -> None:
+    authority = _authority()
+    historical = tuple(
+        relative
+        for relative in authority["historical_evidence"]
+        if relative.endswith(".md")
+    )
+    assert historical
+    for relative in historical:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        banner = "\n".join(text.splitlines()[:14])
+        assert "historical" in banner.casefold(), relative
+        assert "governance/replay_status.jsonl" in banner, relative
+        assert re.search(r"^\*\*status:\*\*", "\n".join(text.splitlines()[:24]), re.I | re.M) is None, relative
+
+
 def test_r5_placeholder_docstrings_do_not_claim_admitted_semantics() -> None:
     realization = (
         ROOT / "src/cemm_authoritative_hybrid/realization.py"
@@ -1110,14 +1170,34 @@ def test_r5_placeholder_docstrings_do_not_claim_admitted_semantics() -> None:
     training = (
         ROOT / "src/cemm_authoritative_hybrid/training.py"
     ).read_text(encoding="utf-8")
-    assert "marker-based diagnostic" in realization
-    assert "does not establish canonical-expression equivalence" in realization
-    assert "collision-prone diagnostic bucket" in training
-    assert "not reviewed derivation supervision" in training
-    assert "input utterance is not an authorized response target" in training
-    tree = ast.parse(training)
+    realization_tree = ast.parse(realization)
+    realization_classes = {
+        node.name: node
+        for node in realization_tree.body
+        if isinstance(node, ast.ClassDef)
+    }
+    assert "marker-based diagnostic" in (ast.get_docstring(realization_tree) or "")
+    verifier_doc = ast.get_docstring(realization_classes["RealizationVerifier"]) or ""
+    assert "does not establish canonical-expression equivalence" in verifier_doc
+    realizer_doc = ast.get_docstring(realization_classes["NeuralConstrainedRealizer"]) or ""
+    assert "marker-based diagnostic" in realizer_doc
+
+    training_tree = ast.parse(training)
+    training_functions = {
+        node.name: node
+        for node in training_tree.body
+        if isinstance(node, ast.FunctionDef)
+    }
+    assert "collision-prone diagnostic bucket" in (
+        ast.get_docstring(training_functions["_surface_to_target"]) or ""
+    )
+    assert "not reviewed derivation supervision" in (
+        ast.get_docstring(training_functions["_selected_program_actions"]) or ""
+    )
     classes = {
-        node.name: node for node in tree.body if isinstance(node, ast.ClassDef)
+        node.name: node
+        for node in training_tree.body
+        if isinstance(node, ast.ClassDef)
     }
     proposal_fit = next(
         node

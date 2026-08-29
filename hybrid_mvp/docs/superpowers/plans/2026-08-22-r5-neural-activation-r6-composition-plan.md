@@ -5,6 +5,9 @@
 > realization publication or activation task in this document is executable
 > until fresh R4.1 admission authenticates semantically useful purpose classes,
 > independent reviewed derivations and reviewed response surfaces.
+> R4.1 is an external prerequisite implemented and admitted outside this
+> document. Current status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
 
 **Date:** 2026-08-22  
 **Status:** reviewed pre-implementation work plan  
@@ -19,7 +22,7 @@
 
 ## Global invariants
 
-- R4 must be current green before Task 2.
+- Fresh R4.1 admission must be current before Task 2.
 - `governance/test_inventory.json` remains byte-identical.
 - R5 foundation behavior remains red/not-admitted until Task 16.
 - Frozen test is not opened, enumerated, hashed, counted, or logged.
@@ -60,20 +63,24 @@
 
 **Stop:** do not modify runtime/model/training source in this task.
 
-## Task 1 — Restore and admit current R4 ABI 4 predecessor
+## Task 1 — Confirm the external R4.1 admission prerequisite
 
-1. Verify the latest effective R4 status.
-2. If red, run the repository-owned corrective controller against the exact
-   committed source.
-3. Rebuild the global four-class artifacts twice and require byte identity.
-4. Run R4 owners, phase, and admission from a clean commit.
-5. Load the receipt with the authoritative loader and prove ABI 4 evidence.
-6. Append one green R4 status row through the governed updater.
-7. Verify chain, source ancestry, clean state, and remote branch equality.
-8. Commit and push evidence/status in bounded chunks.
+R4.1 is an external prerequisite. This plan cannot implement, rebuild, publish,
+or admit it.
 
-**Acceptance:** effective G0-R4 green, R5-R8 red.  
-**Stop:** no R5 training before this acceptance passes.
+1. Read effective status and exact admission identities only from the replay
+   ledger.
+2. Require one fresh R4.1 admission produced by the separately governed R4.1
+   implementation plan.
+3. Verify that admission authenticates meaningful purpose-class semantic
+   coverage, independent derivation and abstention supervision, and reviewed
+   ResponseMeaning-to-surface supervision.
+4. Verify source ancestry, clean state, and remote equality without modifying
+   R4 evidence or appending status.
+5. Stop this plan if any prerequisite is absent, stale, ambiguous, or red.
+
+**Acceptance:** fresh R4.1 admission is current; this task creates no artifacts or status row.
+**Stop:** no R5 implementation or training before this acceptance passes.
 
 ## Task 2 — Freeze R5/R6 ABIs, validation skeleton, and resource budget
 
@@ -528,7 +535,7 @@ G0 green
 R1 green
 R2 green
 R3 green
-R4 green (current ABI 4)
+R4.1 green (fresh data/supervision admission)
 R5 green (neural activation)
 R6 green (one composition root, one HTTP adapter, all frozen budgets)
 R7 red (frozen-test evaluation not yet run)

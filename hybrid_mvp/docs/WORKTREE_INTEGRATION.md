@@ -1,5 +1,10 @@
 # Parallel Worktree Integration Receipt
 
+> **Historical evidence:** This document is retained for analysis and forensic
+> provenance only. It owns no current execution or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl).
+
 The MVP was developed in four independent Git worktrees and merged into an isolated integration branch.
 
 ## 1. Worktree ownership

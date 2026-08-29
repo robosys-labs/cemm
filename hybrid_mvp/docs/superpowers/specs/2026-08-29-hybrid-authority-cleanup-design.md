@@ -5,7 +5,7 @@
 > is derived from
 > [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
 
-**Status:** approved design; implementation pending
+**Status at publication:** approved design; implementation was later completed
 
 **Scope:** `hybrid_mvp/` plus active GitHub workflows capable of mutating it
 

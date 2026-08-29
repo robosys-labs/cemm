@@ -1,24 +1,24 @@
 # R5 Hard-Cut Foundation Design
 
-> **Activation refinement (2026-08-22):** this document remains the
-> governing R5 hard-cut and 17/25/1 disposition contract. Neural
-> activation and R6 composition are governed by the
-> [R5 Neural Activation and R6 Composition Design](2026-08-22-r5-neural-activation-r6-composition-design.md)
-> and its implementation plan. The refinement introduces no compatibility
-> path and cannot execute until a current R4 Build Receipt ABI 4 admission
-> is green.
+> **R4.1 prerequisite:** This document remains the governing R5 hard-cut and
+> 17/25/1 disposition contract. R4.1 is an external prerequisite implemented
+> and admitted outside this document. Neural activation and R6 composition
+> cannot execute until fresh R4.1 admission proves the August 29
+> data/supervision contract. Current status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
 
 **Date:** 2026-08-13
-**Status:** approved design; implementation pending
+**Status at publication:** approved hard-cut design; foundation implementation was later completed
 **Scope:** `hybrid_mvp/` R5 test, governance, validation, and active-document foundation
 
 ## 1. Decision
 
-R5 begins with a hard-cut foundation before neural proposal or realization is
-implemented. This increment removes tests and fixtures that exist only for
+R5 uses a hard-cut foundation before neural proposal or realization is
+implemented. The foundation removes tests and fixtures that exist only for
 retired semantic, runtime, Program ABI, training, model, or artifact paths. It
-preserves the admitted G0-R4 contract and converts every still-valid frozen R5
-assertion into an explicit current-owner obligation.
+preserves the semantic/runtime hard-cut invariants without asserting current
+phase admission and converts every still-valid frozen R5 assertion into an
+explicit current-owner obligation.
 
 The frozen predecessor inventory remains immutable evidence. Deleting a test
 file does not erase its assertion lineage. Each of the 43 frozen R5 source-test
@@ -26,22 +26,22 @@ assertions must receive exactly one reviewed disposition: a current successor,
 an explicit retirement, or a deferral to the neural-activation increment.
 The inventory-derived partition is exact: 17 successors, 25 deferrals, and 1 explicit retirement.
 
-This foundation does not make R5 green. It makes R5 truthfully red for one
-reason: selected neural proposal and realization owners and their admitted
-artifacts do not yet exist.
+This document owns no R5 phase status. At publication, selected neural proposal
+and realization owners and their admitted artifacts did not yet exist.
 
 ## 2. Goals
 
-1. Preserve every current G0-R4 test, gate, artifact, and green replay claim.
+1. Preserve every non-retired semantic, runtime, gate, artifact, and lineage
+   invariant from the predecessor foundation without copying replay status.
 2. Remove legacy test-support modules and every test whose only purpose is to
    exercise a retired path.
 3. Give all 43 frozen R5 assertions an auditable, exact disposition without
    mutating the frozen inventory.
 4. Define current R5 owner boundaries and source-only validation without
    claiming activation or admission.
-5. Update active architecture, ABI, status, acceptance, governance, and roadmap
-   documents so that they describe the closed R4 boundary and the actual R5
-   work remaining.
+5. Update active architecture, ABI, acceptance, governance, and roadmap
+   documents so they route through the external R4.1 prerequisite and describe
+   the actual R5 work remaining without copying status.
 6. Add anti-bloat enforcement that prevents legacy fixture imports,
    compatibility-only model paths, and preservation-only tests from returning.
 
@@ -51,7 +51,7 @@ artifacts do not yet exist.
   or neural realizer.
 - It does not create selected checkpoints, production model manifests, or R5
   admission receipts.
-- It does not change the five semantic operators, the admitted R1-R4 runtime,
+- It does not change the five semantic operators, canonical runtime invariants,
   or repository-owned R4 evidence.
 - It does not weaken existing exact gates or make obsolete tests pass through
   compatibility shims.
@@ -126,7 +126,7 @@ in an exact machine-checked obligation manifest until a successor consumes it.
 
 ### 6.1 Preserved tests
 
-All currently active G0-R4 lineage leaves remain present and executable. Tests
+All non-retired predecessor lineage leaves remain present and executable. Tests
 that assert absence of a retired subsystem may remain only when the absence is
 an active security or architectural invariant, not when the test merely pads
 coverage.
@@ -214,15 +214,15 @@ artifact extends its lineage evidence; it does not replace or reinterpret it.
 
 ## 9. Documentation migration
 
-Active documentation must agree on the following facts:
+Active documentation must agree on the following status-neutral facts:
 
-- G0-R4 are green and R4 uses repository-owned artifact integrity.
-- R5 is red and begins at neural proposal/realization activation.
-- The hard-cut foundation removes legacy test/runtime/model scaffolding but is
-  not R5 admission.
-- Current R5 data has four access classes: train, selection, calibration, and
-  frozen test.
-- Production activation requires a selected proposer and realizer to execute
+- replay status and admission identities come only from the ledger;
+- fresh R4.1 admission is an external prerequisite for R5 implementation;
+- the hard-cut foundation removes legacy test/runtime/model scaffolding but is
+  not R5 admission;
+- R5 purpose classes remain isolated, and their usable membership is determined
+  only by the freshly admitted R4.1 contract;
+- production activation requires a selected proposer and realizer to execute
   through the public composition root with model-derived confidence,
   calibration, weight-use, and byte-reproduction evidence.
 
@@ -248,7 +248,7 @@ The release foundation fails closed when:
 - R5 is reported green without authentic neural admission evidence;
 - an active document describes the external R4 manifest, legacy trainer stack,
   or obsolete R5 donor architecture as current;
-- removal changes a current G0-R4 active node set without an approved lineage
+- removal changes a non-retired predecessor active node set without an approved lineage
   migration;
 - a validation gate broadens selectors merely to accommodate historical tests.
 
@@ -266,13 +266,11 @@ Completion requires fresh evidence that:
 3. no active test imports or loads retired fixture support;
 4. retired support files and preservation-only tests are absent;
 5. every current R5 foundation owner test passes;
-6. R5 source-only inventory verification passes while R5 effective status
-   remains red;
-7. G0, R1, R2, R3, and R4 phase gates remain green;
-8. the complete replay chain still reports G0-R4 green and R5-R8 red;
-9. strict anti-bloat and legacy audits report zero active findings;
-10. documentation authority and inventory receipts reconstruct exactly;
-11. the worktree contains no unreviewed generated or runtime-state files.
+6. R5 source-only inventory verification passes;
+7. the complete replay chain validates and remains the sole status owner;
+8. strict anti-bloat and legacy audits report zero active findings;
+9. documentation authority and inventory receipts reconstruct exactly;
+10. the worktree contains no unreviewed generated or runtime-state files.
 
 The raw historical pytest collection is not a release authority. The governed
 inventory, exact owner/phase selectors, assertion dispositions, and anti-bloat
@@ -281,8 +279,9 @@ audits define the executable suite after the hard cut.
 ## 12. Completion state and next increment
 
 This foundation is complete when the authoritative suite is smaller, all
-remaining tests describe current contracts, documentation is truthful, G0-R4
-remain admitted, and R5 has a precise source-only owner boundary.
+remaining tests describe current contracts, documentation is truthful, the
+predecessor hard-cut invariants remain enforced, and R5 has a precise
+source-only owner boundary.
 
 The following increment, `R5-Neural-Activation`, will implement and admit:
 

@@ -5,11 +5,14 @@
 > realization publication or activation task in this document is executable
 > until fresh R4.1 admission authenticates semantically useful purpose classes,
 > independent reviewed derivations and reviewed response surfaces.
+> R4.1 is an external prerequisite implemented and admitted outside this
+> document. Current status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
 
 **Date:** 2026-08-22  
 **Status:** reviewed pre-implementation target design  
 **Scope:** `hybrid_mvp/` only  
-**Predecessors:** R5 hard-cut foundation; current-source R4 Build Receipt ABI 4 admission  
+**Predecessors:** R5 hard-cut foundation; separately implemented and freshly admitted R4.1 data/supervision contract
 **Supersession:** refines the R5/R6 portions of the 2026-07-31 master plan; does not weaken the R5 foundation hard cut
 
 ## 1. Decision
@@ -17,7 +20,7 @@
 R5 and R6 are implemented as two separately admitted increments:
 
 ```text
-current R4 ABI-4 admission
+fresh R4.1 admission
   -> R5 neural activation
        -> proposer training and selection
        -> realizer training and selection
@@ -37,20 +40,18 @@ owners retain semantic truth, effects, legality, and equivalence authority. R6
 does not add intelligence; it exposes the admitted runtime through one
 composition root.
 
-## 2. Non-negotiable predecessor
+## 2. Non-negotiable external predecessor
 
+R4.1 is an external prerequisite. This design neither implements nor admits it.
 No R5 implementation, training, selection, calibration, activation, or
-admission may execute unless:
+admission may execute unless the ledger identifies one fresh R4.1 admission
+whose reviewed contracts authenticate meaningful purpose-class semantic
+coverage, independent derivation and abstention supervision, and reviewed
+ResponseMeaning-to-surface supervision. The implementation head must descend
+monotonically from that admitted source and the governed checkout must be clean.
 
-1. effective governance status is green through R4;
-2. the R4 green row consumes one passed current-source admission receipt;
-3. the receipt reconstructs Build Receipt ABI 4;
-4. the global four-class graph, split manifest, sufficiency, class
-   capabilities, class authorizations, and artifact graph all reconstruct;
-5. the implementation head descends monotonically from the admitted source;
-6. the governed checkout is clean.
-
-Historical ABI 3 reconstruction is diagnostic only and cannot authorize R5.
+Historical R4 partition or receipt reconstruction is diagnostic only and cannot
+authorize R5.
 
 ## 3. Ownership boundaries
 
@@ -450,7 +451,7 @@ but cached diagnostics never admit.
 
 Stop and retain red status when any of these holds:
 
-- R4 is not current green;
+- fresh R4.1 admission is absent or no longer current;
 - a worker can discover a sibling data class;
 - frozen test is touched before R7;
 - a bootstrap or static release path remains reachable;

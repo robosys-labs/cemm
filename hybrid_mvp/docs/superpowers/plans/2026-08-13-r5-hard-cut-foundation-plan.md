@@ -6,10 +6,10 @@
 > [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
 
 > **Activation refinement (2026-08-22):** this completed foundation plan
-> remains authoritative for legacy removal, the five foundation owners,
-> and the 17/25/1 predecessor disposition. The
+> records the legacy removal, five foundation owners, and 17/25/1 predecessor
+> disposition. The governing foundation design and
 > [R5 Neural Activation and R6 Composition Plan](2026-08-22-r5-neural-activation-r6-composition-plan.md)
-> governs all later activation and R6 work; it does not reopen any retired
+> own the applicable current constraints; they do not reopen any retired
 > fixture, bootstrap, compatibility, or fallback path.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
