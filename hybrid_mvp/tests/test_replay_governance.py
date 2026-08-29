@@ -67,10 +67,15 @@ R5_CONDITIONAL_DOCUMENTS = (
     "docs/superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md",
 )
 
+R4_1_REPLAY_DESIGN = (
+    "docs/superpowers/specs/2026-08-29-r4-1-data-supervision-replay-design.md"
+)
+
 GOVERNING_DOCUMENTS = (
     "AGENTS.md",
     R4_1_AMENDMENT,
     "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
+    R4_1_REPLAY_DESIGN,
     "README.md",
     "INTEGRATION.md",
     "docs/ARCHITECTURE.md",
@@ -454,7 +459,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Authority-Cleanup-Task-1",
         "owner_ref": "governance",
-        "source_ast_sha256": "be6df0f7f7bb1d9df2d1312888e2ed90f4db25a664d7b0033d3de5fe4727c11c"
+        "source_ast_sha256": "31d6bb98ec96694c0b151c3a7f09b35fc6b26d15b99f7bc9de9c54debe3c0f35"
     },
     "tests/test_replay_governance.py::test_governing_documents_do_not_prescribe_rejected_r4_r5_paths": {
         "activation_phase": "G0",
@@ -1110,11 +1115,35 @@ def test_authority_cleanup_classifies_every_authority_like_document_once() -> No
 def test_r4_1_amendment_owns_authentic_r5_prerequisites() -> None:
     authority = _authority()
     assert R4_1_AMENDMENT in authority["governing_documents"]
+    assert R4_1_REPLAY_DESIGN in authority["governing_documents"]
     text = (ROOT / R4_1_AMENDMENT).read_text(encoding="utf-8")
     for marker in REQUIRED_R5_PREREQUISITE_MARKERS:
         assert marker in text
     assert "governance/replay_status.jsonl" in text
     assert "root adoption" in text.casefold()
+
+    registry = (ROOT / "docs/ABI_REGISTRY.md").read_text(encoding="utf-8")
+    design = (ROOT / R4_1_REPLAY_DESIGN).read_text(encoding="utf-8")
+    target_abis = {
+        "R4 Review Manifest": 1,
+        "Proposal Supervision": 1,
+        "Realization Supervision": 1,
+        "Mutation Contract": 1,
+        "Purpose Contract": 1,
+        "R4 Supervised Case": 1,
+        "Duplicate-Risk Evidence": 1,
+        "Class-local Sufficiency": 1,
+        "R4 Split Manifest": 2,
+        "R4 Class Capability": 2,
+        "R4 Class Authorization": 2,
+        "R4 Build Receipt": 5,
+    }
+    for abi_name, version in target_abis.items():
+        assert f"| {abi_name} | {version} |" in design
+        assert f"| {abi_name} ABI | **{version}** |" in registry
+    assert "Current candidates require the exact ABI 4 evidence set" not in registry
+    assert "Build Receipt ABI 4 and its global semantic-union evidence" in registry
+    assert "the later repository admission receipt authenticates" in registry
 
 
 def test_governing_documents_do_not_prescribe_rejected_r4_r5_paths() -> None:

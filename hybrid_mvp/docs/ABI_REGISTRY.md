@@ -204,11 +204,13 @@ current R4 inputs and are deliberately absent from the active allocation table.
 R4 Build Receipt ABI 3 is historical evidence only. It may be reconstructed
 solely for the exact admitted historical source/receipt tuple through the
 source-pinned validation policy; no current candidate may decode, submit, or
-admit ABI 3 evidence. Current candidates require the exact ABI 4 evidence set.
-The registered target contracts below do not claim that replacement four-class
-artifacts have been committed, admitted, or activated.
+admit ABI 3 evidence. Build Receipt ABI 4 and its global semantic-union evidence
+are also ineligible predecessor candidates under the approved R4.1 amendment.
+No current R4 candidate is admissible until the ABI 5 target evidence set below
+is implemented. The registered target contracts do not claim that replacement
+artifacts have been committed, admitted or activated.
 
-## R3 implemented and R4.1 target ABI allocation
+## R3 implemented, R4 predecessor and approved R4.1 target allocation
 
 | ABI / required contract | Version | Canonical owner | Persistence | Validator / compiler | Admission | Activation gate |
 |---|---:|---|---|---|---|---|
@@ -223,13 +225,21 @@ artifacts have been committed, admitted, or activated.
 | R4 Class Authorization ABI | **1** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized trust projection | `R4ClassAuthorization.from_json_bytes` and `r4_partition_access.py` | implemented predecessor | Artifact binding remains necessary but is not semantic admission. |
 | Partition Config ABI | **1** | `src/cemm_authoritative_hybrid/r4_partition_config.py` | Reviewed predecessor configuration | `R4PartitionConfig.from_json_bytes` | implemented predecessor; ineligible for R4.1 | Solver-selected or trimmed minima cannot serve as reviewed configuration authority. |
 | R4 Build Receipt ABI | **4** | `src/cemm_authoritative_hybrid/r4_pipeline.py` | Serialized predecessor artifact-graph root | `R4BuildReceipt.from_json_bytes` and `verify_r4_admission` | implemented predecessor; requires fresh R4.1 admission | Integrity reconstruction remains necessary, but the receipt cannot admit the rejected partition or supervision contracts. |
-| Reviewed derivation supervision | pre-ABI | required R4.1 owner not yet implemented | Reviewed target contract | strict decoder and independent compiler required | target; requires fresh R4.1 admission | Gold derivations compile independently of bootstrap or runtime proposal output. |
-| Purpose-class membership | pre-ABI | required R4.1 owner not yet implemented | Reviewed target contract | strict decoder and duplicate-risk grouping validator required | target; requires fresh R4.1 admission | Lineage grouping is separate from semantic stratification and challenge holdout. |
-| Class-local semantic sufficiency | pre-ABI | required R4.1 owner not yet implemented | Reviewed target contract | strict decoder and reviewed-minima validator required | target; requires fresh R4.1 admission | Every purpose class proves its own semantic denominators without trimming. |
-| Reviewed response-realization supervision | pre-ABI | required R4.1/R5 owner not yet implemented | Reviewed target contract | strict decoder and semantic round-trip compiler required | future owner; unavailable before R4.1 | ResponseMeaning-to-surface targets preserve slots, perspective and literal-copy alignment. |
+| R4 Review Manifest ABI | **1** | `src/cemm_authoritative_hybrid/r4_supervision.py` | Reviewed source root | strict decoder plus content-addressed source-bundle reconstruction | approved R4.1 target; implementation pending | Binds the reviewed base, exact source files, hashes, counts, reviewer identity and source-bundle identity without self-referential commit identity. |
+| Proposal Supervision ABI | **1** | `src/cemm_authoritative_hybrid/r4_supervision.py` | Reviewed semantic gold | `ReviewedDerivationCompiler` plus exact-expression validator | approved R4.1 target; implementation pending | Gold derivations compile independently of bootstrap selection, runtime proposal output and predecessor subset/intersection expectations. |
+| Realization Supervision ABI | **1** | `src/cemm_authoritative_hybrid/r4_supervision.py` | Reviewed response gold | `ReviewedRealizationCompiler` plus semantic round-trip validator | approved R4.1 target; implementation pending | ResponseMeaning-to-surface targets preserve slots, perspective and literal-copy alignment; input utterances never author response targets. |
+| Mutation Contract ABI | **1** | `src/cemm_authoritative_hybrid/r4_supervision.py` | Reviewed mutation truth | strict decoder plus independent mutation-contract compiler | approved R4.1 target; implementation pending | Expected earliest owner, effect class and admissible observation are reviewer-authored, not derived from the mutation executor under test. |
+| Purpose Contract ABI | **1** | `src/cemm_authoritative_hybrid/r4_purpose.py` | Reviewed purpose and sufficiency policy | strict decoder plus purpose-membership validator | approved R4.1 target; implementation pending | Declares source-case classification, supervised-universe membership, purpose, split eligibility and untrimmed class-local minima. |
+| R4 Supervised Case ABI | **1** | `src/cemm_authoritative_hybrid/r4_supervision.py` | Compact compiled candidate | strict decoder plus source-to-case reconstruction | approved R4.1 target; implementation pending | Inlines complete canonical expression gold and expected contract while keeping observed cycles diagnostic and non-authoritative. |
+| Duplicate-Risk Evidence ABI | **1** | `src/cemm_authoritative_hybrid/r4_purpose.py` | Deterministic candidate evidence | transitive reviewed-group reconstruction | approved R4.1 target; implementation pending | Reviewed overlap membership forms transitive components; every component stays in one purpose and split. |
+| Class-local Sufficiency ABI | **1** | `src/cemm_authoritative_hybrid/r4_purpose.py` | Deterministic admission evidence | exact denominator reconstruction plus reviewed-minima validator | approved R4.1 target; implementation pending | Every admitted purpose class proves its own semantic denominators with no solver selection, trimming or feasibility downgrade. |
+| R4 Split Manifest ABI | **2** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized candidate partition | strict decoder plus deterministic purpose/split reconstruction | approved R4.1 target; implementation pending | Splits are exhaustive over the supervised universe; diagnostic-only source cases remain outside training/evaluation payloads. |
+| R4 Class Capability ABI | **2** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized single-class projection | strict decoder plus `r4_partition_access.py` | approved R4.1 target; implementation pending | Grants access only to one admitted purpose-class payload and its exact evidence identities. |
+| R4 Class Authorization ABI | **2** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized candidate-time trust projection | strict decoder plus artifact-graph reconstruction | approved R4.1 target; implementation pending | Binds the candidate graph without an admission reference; the later repository admission receipt authenticates this exact ref and SHA after admission succeeds. |
+| R4 Build Receipt ABI | **5** | `src/cemm_authoritative_hybrid/r4_pipeline.py` | Serialized artifact-graph root | `verify_r4_admission` plus full source and evidence reconstruction | approved R4.1 target; implementation pending | The only current-admission target; binds review, supervision, purpose, partition, sufficiency, capability and authorization evidence after independent validation. |
 
 Corpus Review Manifest ABI 2, Approved R4 Build ABI 1, R4 Build Receipt
 ABI 2, Partition Axis Manifest ABI 2, and Training Allowlist ABI 2 are retired.
 They have no active candidate decoder, verifier, authorization role, or
-compatibility path. Historical ABI 3 reconstruction is the single bounded
-exception described above and cannot authorize current artifacts.
+compatibility path. Source-pinned ABI 3 and ABI 4 reconstruction is bounded to
+historical or predecessor evidence and cannot authorize current artifacts or R5.
