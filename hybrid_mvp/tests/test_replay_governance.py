@@ -909,7 +909,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r4-1-replay-tracker-is-operational-not-status-authority",
         "diagnostic_role": "phase",
         "introduced_by_task": "R4.1-Data-Supervision-Task-1",
-        "source_ast_sha256": "4568909a3f83088617186bf14f5000c5cf3e4f5ab2c46d33b9f7bfb83a62a2dc"
+        "source_ast_sha256": "d6a10b948868188c71281845b31df37ec689c9e955680d57539919e836b94cd6"
     },
     "tests/test_replay_governance.py::test_r4_partition_corrective_documents_are_superseded": {
         "activation_phase": "G0",
@@ -2082,6 +2082,9 @@ def test_r4_1_replay_tracker_is_operational_not_status_authority() -> None:
     correction_plan_text = (ROOT / R4_1_SOURCE_READINESS_PLAN).read_text(
         encoding="utf-8"
     )
+    correction_design_text = (ROOT / R4_1_SOURCE_READINESS_DESIGN).read_text(
+        encoding="utf-8"
+    )
     task_3 = re.search(
         r"^## Task 3:.*?(?=^## Task 4:)",
         plan_text,
@@ -2096,6 +2099,44 @@ def test_r4_1_replay_tracker_is_operational_not_status_authority() -> None:
     assert not re.search(
         r"^## Task (?:[1-9]|1[0-8]):", correction_plan_text, re.MULTILINE
     )
+    for marker in (
+        "must not accept a caller-supplied `RevisionPin`",
+        "bounded consumption",
+        "GroundedSelectorBinding",
+        "StructuralSelectorBinding",
+        "SourceAssignmentBlueprint",
+        "verification_rejection",
+        "every supervised case",
+        "cross-source semantic validator",
+        "R5 safe gap and rejection surfaces",
+        "successor-universe-derived",
+    ):
+        assert marker in correction_design_text
+    for marker in (
+        "hostile caller-supplied revision pins",
+        "infinite iterators",
+        "SourceAssignmentBlueprint",
+        "verification_rejection",
+        "cross-source semantic validator",
+        "docs/superpowers/reviews/2026-08-30-r4-1-source-readiness-approval.md",
+        "historical_evidence",
+        "atomically promote the exact verified A bytes",
+        "apply the exact approved scenario patch",
+        "successor-universe-derived",
+    ):
+        assert marker in correction_plan_text
+    for abi_name in (
+        "R4 Review Manifest ABI",
+        "Proposal Supervision ABI",
+        "Realization Supervision ABI",
+        "Mutation Contract ABI",
+        "Purpose Contract ABI",
+    ):
+        assert abi_name in correction_plan_text
+    assert "git add hybrid_mvp/" not in correction_plan_text
+    assert "| RC-SOURCE-READINESS | pending |" in text
+    assert re.search(r"^\| T03 \|[^\r\n]*\| in_progress \|", text, re.MULTILINE)
+    assert re.search(r"^\| T04 \|[^\r\n]*\| pending \|", text, re.MULTILINE)
     plan_tasks = re.findall(
         r"^## Task ([1-9]|1[0-8]): ([^\r\n]+)$", plan_text, re.MULTILINE
     )

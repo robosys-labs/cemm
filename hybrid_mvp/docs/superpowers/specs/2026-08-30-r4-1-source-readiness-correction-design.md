@@ -63,9 +63,21 @@ candidates until the human decision in section 8; they cannot silently enter a
 supervised purpose.
 
 Source expansion must have one public, deterministic, model-free seam. It may
-compile reviewed structural contracts using pinned semantic authority, but it
-must not call PROPOSE, VERIFY, EVALUATE, EFFECT, REALIZE, a learned model, the
-bootstrap proposer, or an observed episode. `scripts/expand_r4_cases.py` is
+compile reviewed structural contracts using authenticated semantic authority,
+but it must not accept a caller-supplied `RevisionPin`. The seam internally
+derives an exact source-only pin from the authenticated authority generation,
+with world, session, episode and effect revisions all zero and
+`model_identity: null`. A dedicated immutable source snapshot with those exact
+semantics is an equivalent implementation. Hostile caller state and a model
+identity can therefore never enter source-case identity.
+
+The seam must not call PROPOSE, VERIFY, EVALUATE, EFFECT, REALIZE, a learned
+model, the bootstrap proposer or an observed episode. The seam guarantees
+bounded consumption before materialization for scenario iterables, per-scenario
+environment iterables and the aggregate expanded-case stream. It rejects a
+hostile or infinite iterator at the configured next-item bound and exposes
+deterministic operation counters; converting an unbounded iterable to `tuple`
+or `list` before the bound is forbidden. `scripts/expand_r4_cases.py` is
 currently broken because it constructs `CaseExpander` without its required
 compiler and passes a contract as the `revision_pin`. The correction restores
 the repository-owned seam and makes the CLI a thin consumer of it.
@@ -85,20 +97,40 @@ separate from `expected_expression_relation`, whose closed values are:
 A conflict relation never means multi-root and never licenses subset,
 intersection or application-set matching.
 
-Blueprint actions use case-local bounded integer selector handles. Each handle
-resolves through exactly one immutable `SelectorBinding` carrying:
+Blueprint actions use case-local bounded integer selector handles.
+`SelectorBinding` is a closed tagged union:
 
-- the handle;
-- the expected graph-component identity;
-- the expected semantic kind;
-- an exact source `SourceSpan` over the reviewed expanded-case surface; and
-- the source-local selector value required by the Program ABI 2 action.
+- `GroundedSelectorBinding` carries case and surface identity, expected graph-
+  component identity, expected semantic kind, one or more exact `SourceSpan`
+  values, and the reviewed source-unit/contribution selector needed by a
+  Program ABI 2 action;
+- `StructuralSelectorBinding` carries only a typed Program-local identity for a
+  declaration, local ref, structural tag, closed literal, mode or context
+  constant that is not grounded in an observed unit.
 
-Handles are dense, unique and bounded per case. Bindings are immutable,
-content-addressed and validated before any blueprint action is compiled. An
-action cannot supply a raw phrase, regex, internal-ref spelling, unbound local
-ref, bootstrap candidate or observed program identity. All source spans satisfy
-`0 <= start < end <= len(surface)` and must slice the reviewed surface exactly.
+The structural variant cannot carry source spans, case/surface evidence,
+semantic kind or pretend to be grounded authority. The grounded variant cannot
+omit them. Handles are dense, unique and bounded per case. Bindings are
+immutable, content-addressed and validated before any blueprint action is
+compiled. An action cannot supply a raw phrase, regex, internal-ref spelling,
+unbound local ref, bootstrap candidate or observed program identity. Every
+grounded span satisfies `0 <= start < end <= len(surface)` and slices the exact
+reviewed surface.
+
+Each derivation also owns a complete bounded `SourceAssignmentBlueprint`.
+Every entry names source geometry or a source-unit selector, contribution kind,
+assignment kind, target action and role when consumed, residual kind when
+retained, and exact criticality. Across one derivation, every observed unit is
+covered exactly once: it is consumed into one semantic role or retained as one
+typed residual. Critical residuals make the target non-executable. No compiler
+may infer assignments from action shapes or fill omitted coverage.
+
+`target_kind: verification_rejection` is an exact fourth proposal outcome,
+separate from derive, typed abstention and diagnostic exclusion. Its reviewed
+contract contains no expression refs and owns the adversarial or mutation
+blueprint/payload, expected VERIFY owner, expected error code, rejection
+disposition and criticality. It cannot be folded into a generic gap or inferred
+from observed verifier output.
 
 ## 5. Realization Supervision ABI 1 in-place repair
 
@@ -108,20 +140,26 @@ scenario assertion compiler, expected response contract, ResponseMeaning
 construction and realization supervision signature. Bare status strings may
 not be normalized only at the final supervision decoder.
 
-The response signature includes `expected_expression_relation` as well as the
-complete expression set, bindings, discourse action, polarity, modality,
-epistemic status, speaker, addressee and semantic slots. This prevents a
-single-expression response and an unresolved conflict response from sharing a
-signature.
+The response signature contains a closed tagged response subject:
 
-For the present audited universe, exactly the 248 semantic cases are
-realizer-eligible and each receives exactly one initial reviewed realization
-row. The 112 gap, 20 verification-rejection and 20 restart-diagnostic
-candidates receive no realization row in the first publication. A later ABI 1
-bundle may contain up to four reviewed variants per eligible case, but initial
-publication deliberately contains one. Bundle-wide eligibility and
-completeness remain the owner of main replay Task 6; the source decoder only
-enforces row-local exactness and bounded variants.
+- `expression_set` with `expected_expression_relation` equal to `single` or
+  `conflict` and the complete expression set;
+- `typed_gap` with relation `none` and one exact typed gap subject;
+- `verifier_rejection` with relation `none` and one exact reviewed rejection
+  subject.
+
+The signature also covers bindings, discourse action, polarity, modality,
+epistemic status, speaker, addressee and semantic slots. This prevents a
+single-expression response, unresolved conflict, safe gap response and safe
+rejection response from sharing a signature.
+
+Every supervised case receives exactly one initial reviewed realization row:
+semantic, explicit gap and verification rejection. Only diagnostic restart
+cases are excluded. Later ABI 1 bundles may contain up to four reviewed
+variants per supervised case. Eligibility and exact counts are always
+successor-universe-derived; neither the decoder nor the plan may hard-code 248
+or any audited predecessor count. R5 safe gap and rejection surfaces and their
+canaries are explicit publication prerequisites, not deferred UI fallbacks.
 
 Alignment is a closed tagged union:
 
@@ -146,6 +184,8 @@ purpose and member purpose are no longer duplicated:
 - a grouped supervised membership has `purpose: null` and inherits the group's
   purpose;
 - an ungrouped supervised singleton owns one direct purpose;
+- a `verification_rejection` membership is supervised and follows the same
+  direct/group purpose rule;
 - a diagnostic membership has neither a purpose nor group membership.
 
 Group overlap is resolved through transitive connected components. Every group
@@ -161,23 +201,56 @@ case, group, component, purpose and denominator indexes once, then performs
 linear passes over records and memberships. It may not use pairwise whole-
 corpus scans or a completion solver.
 
-## 7. Trust, performance and gate budget
+## 7. Cross-source ownership and gate budget
+
+One bounded cross-source semantic validator lives under the existing
+`r4_supervision` authenticated-bundle ownership. It adds no gate, owner or
+process. Given one authenticated snapshot, it joins the canonical source
+universe, proposal rows, realization rows and purpose contract through indexed
+maps and validates:
+
+- every span and grounded selector belongs to its exact case/surface;
+- exactly one ProposalTarget exists for every supervised case and none for a
+  diagnostic case;
+- exactly one initial realization variant exists for every supervised case,
+  with at most four variants after initial publication, and none for a
+  diagnostic case;
+- exactly one PurposeMembership exists for every source case, including the
+  `verification_rejection` classification; and
+- no source case or source row is missing, duplicated or extra.
+
+Ownership is explicit. JSON Schema owns structural/tag/bound validation. A row
+decoder owns content refs and row-local semantic invariants. A file loader owns
+canonical bytes, record counts, duplicate row identity and file-local bounds.
+The cross-source semantic validator owns case-set completeness and joins. Main
+Tasks 5 and 6 own independent compilation and equivalence; they do not discover
+eligibility for the first time.
 
 - No new validation tier, phase, owner or pytest process is introduced.
 - Corrected tests join existing R4 selectors and run in their existing single
   process.
 - No corrected source owner is imported by the normal runtime hot path.
-- Source files are decoded once; joins use bounded indexes.
+- Source files are decoded once; joins use bounded indexes and linear operation
+  counters.
 - Source expansion is bounded by scenarios, surfaces, environments, actions,
-  selector bindings, graph depth, realization variants, slots, alignments,
-  groups, memberships, components and denominator rows.
+  selector bindings, assignment blueprints, aggregate cases, graph depth,
+  realization variants, slots, alignments, groups, memberships, components and
+  denominator rows. Every iterable is bounded while being consumed, before
+  materialization.
 - The solver is not called during source validation, worksheet generation,
   build or admission.
 - No runtime, bootstrap, model, solver or observed output may author a source
   classification, expression, selector binding, response surface, mutation
   truth, purpose or minimum.
 
-## 8. Human structural decisions
+The five Task 2/3 ABI registry rows are reconciled exactly once during SR1:
+`R4 Review Manifest ABI`, `Proposal Supervision ABI`, `Realization Supervision
+ABI`, `Mutation Contract ABI` and `Purpose Contract ABI`. Each row must state
+that its strict decoder (and the review-manifest authenticated loader) is
+implemented while compiler, reviewed data, publication and admission remain
+pending as applicable. Reconciliation makes no activation claim.
+
+## 8. Human structural decisions and canonical patch
 
 The source-readiness review must make all of the following decisions together:
 
@@ -196,15 +269,28 @@ The source-readiness review must make all of the following decisions together:
    denominator registry and fixed positive minima.
 
 Draft worksheets may be generated from reviewed source structure only. They
-must identify every proposed row and decision explicitly and remain outside
-`data/review/r4_1/`. A draft is not authority merely because it is canonical,
-complete or compiler-valid.
+must include the exact proposed scenario patch and generator decisions for all
+eight structural families, identify every proposed row and decision explicitly,
+and remain outside `data/review/r4_1/`. A draft is not authority merely because
+it is canonical, complete or compiler-valid.
 
 ## 9. Resume condition
 
 Main replay Task 4 may resume only after SR1-SR5 of the companion correction
 plan are implemented, all existing R4 owners and source-only inventories pass,
-and a human records one exact approval covering the successor source universe
-and all section 8 decisions. SR6 records that approval and stops. Task 4 then
-checks in the approved source package under the existing publication and review
-gates; the correction plan itself never checks in `data/review/r4_1/`.
+and a human approves one exact scenario patch plus all section 8 decisions.
+
+SR6 first applies that exact approved patch to
+`scripts/generate_scenarios.py`, regenerates `data/scenarios/use_cases.jsonl`
+through the canonical generator, reconstructs the model-free successor
+universe, and verifies its identities and successor-universe-derived counts.
+That canonical source change is one commit. Only then does a second commit add
+the exact approval evidence and operational tracker update. The approval
+document is classified exactly once in `docs/DOCUMENT_AUTHORITY.json` as
+historical/operational review evidence, with the exhaustive authority-like
+classification test updated atomically.
+
+SR6 stops there. Task 4 packages the updated canonical source under
+`data/review/r4_1/` and obtains the existing second data review. Neither SR6
+commit checks in `data/review/r4_1/`, promotes R4, activates an ABI or publishes
+an artifact.

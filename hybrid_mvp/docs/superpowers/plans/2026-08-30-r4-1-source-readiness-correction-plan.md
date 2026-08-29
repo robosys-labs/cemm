@@ -4,10 +4,10 @@
 > `subagent-driven-development` (recommended) or `executing-plans` to implement
 > this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the canonical source universe and unpublished Proposal,
-Realization and Purpose ABI 1 contracts fit for human-authored R4.1 source,
-then obtain explicit source-readiness approval without checking in the source
-package.
+**Goal:** Make the canonical source universe and all five unpublished R4.1
+review-source ABI 1 contracts fit for human-authored source, apply the exact
+approved canonical scenario patch, and record source-readiness approval without
+checking in the `data/review/r4_1/` package.
 
 **Architecture:** Correct the earliest source owners in dependency order:
 model-free source expansion, proposal truth, realization truth and purpose
@@ -34,7 +34,9 @@ Draft 2020-12, SHA-256 content refs, pytest, PowerShell and Git.
 - Keep T03 `in_progress`, T04 `pending`, R4 red and R5-R8 red.
 - Do not use runtime cycles, bootstrap proposals, verifier selections, model
   output, solver output or observed artifacts to fill reviewed fields.
-- Repair the three unpublished ABI 1 contracts in place; do not mint ABI 2.
+- Repair the unpublished Proposal, Realization and Purpose ABI 1 shapes in
+  place, preserve Review Manifest and Mutation ABI 1, and reconcile all five
+  registry rows exactly once; do not mint ABI 2 or claim activation.
 - Add no phase, validation tier, owner, pytest process or runtime hot-path scan.
 - Add tests to existing R4 owner selectors and update metadata, selector inputs
   and inventory evidence atomically with each executable test change.
@@ -68,6 +70,7 @@ git diff --check
 | `src/cemm_authoritative_hybrid/r4_expansion.py` | canonical model-free source expansion seam |
 | `scripts/expand_r4_cases.py` | thin bounded CLI over the canonical seam |
 | `src/cemm_authoritative_hybrid/r4_supervision.py` | Proposal and Realization Supervision ABI 1 |
+| `src/cemm_authoritative_hybrid/r4_supervision.py` | existing authenticated-bundle owner for one bounded cross-source semantic validator |
 | `schemas/r4_proposal_supervision.schema.json` | exact proposal wire shape |
 | `schemas/r4_realization_supervision.schema.json` | exact realization wire shape |
 | `src/cemm_authoritative_hybrid/r4_purpose.py` | Purpose Contract ABI 1 and indexed component validation |
@@ -86,6 +89,7 @@ git diff --check
 - Modify: `src/cemm_authoritative_hybrid/r4_contracts.py`
 - Modify: `src/cemm_authoritative_hybrid/r4_expansion.py`
 - Rewrite: `scripts/expand_r4_cases.py`
+- Modify: `docs/ABI_REGISTRY.md`
 - Modify: `tests/test_scenario_coverage.py`
 - Modify: `tests/test_semantic_episode.py`
 - Modify: `tests/test_r4_assertion_compiler.py`
@@ -143,19 +147,27 @@ git diff --check
   assertions map only to `restart_diagnostic_candidate`. No competency-category
   string or runtime result may override structured assertion kind.
 
-- [ ] **Step 5: Add the canonical model-free expansion seam.**
+- [ ] **Step 5: Add the canonical model-free expansion seam and hostile-input tests.**
 
   Expose a bounded function in `r4_expansion.py` that accepts exact reviewed
-  scenarios, an exact expected-contract compiler, a revision pin and reviewed
-  environments; returns one immutable source-universe value containing
-  canonical cases, dispositions and counters; and imports no proposer, runtime,
-  model, solver or episode builder.
+  scenarios, authenticated authority and reviewed environments. It must not
+  accept a caller `RevisionPin`. It internally constructs the source-only pin
+  from the authenticated authority generation with all revisions zero and
+  `model_identity=None`, or uses an equivalent dedicated source snapshot.
+  Tests pass hostile caller-supplied revision pins and model identities through
+  every public seam and require rejection before identity construction.
+
+  Consume scenario iterables, every environment iterable and the aggregate
+  case stream with a bounded next-item loop before materialization. Tests use
+  infinite iterators and side-effecting iterators to prove failure at the exact
+  bound and operation counts linear in accepted scenarios, environments and
+  emitted cases. No `tuple(iterable)` or `list(iterable)` may precede the bound.
 
 - [ ] **Step 6: Rewrite the expansion CLI as a thin consumer.**
 
-  Construct `CaseExpander(compiler)` exactly once and call
-  `expand(..., revision_pin=pin, environments=...)`. Delete the invalid dummy
-  contract and `CaseExpander().expand(scenario, contract)` call. Add an
+  Construct the source-only expander exactly once and let it derive its own
+  source snapshot. Delete the invalid dummy contract, caller pin and
+  `CaseExpander().expand(scenario, contract)` call. Add an
   import-safe `main(argv: Sequence[str] | None = None) -> int`, bounded reads,
   canonical LF JSONL, atomic replace and a printed deterministic summary.
 
@@ -165,16 +177,26 @@ git diff --check
   reject imports/calls of PROPOSE, VERIFY, EVALUATE, EFFECT, REALIZE, runtime,
   bootstrap, model, solver and observed episode owners.
 
-- [ ] **Step 8: Refresh exact metadata/selectors and run inventory checks.**
+- [ ] **Step 8: Reconcile all five ABI registry rows exactly once.**
+
+  Update `R4 Review Manifest ABI`, `Proposal Supervision ABI`, `Realization
+  Supervision ABI`, `Mutation Contract ABI` and `Purpose Contract ABI` together.
+  State that strict decoders are implemented and the review-manifest
+  authenticated loader is implemented, while compiler, checked-in reviewed
+  data, publication and admission remain pending as applicable. Add an exact
+  registry test and make no activation claim. Later SRs must not rewrite these
+  implementation-state cells piecemeal.
+
+- [ ] **Step 9: Refresh exact metadata/selectors and run inventory checks.**
 
   Keep source-expansion nodes in `r4_surface_expansion_owner_tests`; place
   strict source/contract nodes in their existing R4 owners. Add only exact
   changed inputs. Do not add a step or process.
 
-- [ ] **Step 9: Commit.**
+- [ ] **Step 10: Commit.**
 
   ```powershell
-  git add hybrid_mvp/scripts hybrid_mvp/src hybrid_mvp/tests hybrid_mvp/data/scenarios hybrid_mvp/configs hybrid_mvp/governance
+  git add scripts src tests data/scenarios docs/ABI_REGISTRY.md configs governance
   git commit -m "fix(r4): establish reviewed source universe hard cut"
   ```
 
@@ -189,16 +211,18 @@ families are not yet source rows.
 - Modify: `src/cemm_authoritative_hybrid/r4_supervision.py`
 - Modify: `schemas/r4_proposal_supervision.schema.json`
 - Modify: `tests/test_r4_supervision_contracts.py`
-- Modify: `docs/ABI_REGISTRY.md` only to clarify the unchanged unpublished ABI
-  1 shape; do not claim activation
+- Verify: the five-row `docs/ABI_REGISTRY.md` reconciliation committed in SR1;
+  do not edit implementation state or claim activation here
 
 - [ ] **Step 1: Write RED tests for the repaired wire contract.**
 
   Cover exact `match_policy`, closed `expected_expression_relation`, relation/
   cardinality parity, verification rejection distinct from abstention, dense
   integer handles, duplicate/unbound handles, graph-component mismatch,
-  semantic-kind mismatch, invalid/cross-surface spans, raw phrase/regex/internal
-  ref selectors and conflict-as-multi-root substitution.
+  semantic-kind mismatch, invalid/cross-surface spans, structural bindings that
+  falsely carry spans/kinds, grounded bindings that omit case/surface evidence,
+  raw phrase/regex/internal ref selectors, incomplete source assignments and
+  conflict-as-multi-root substitution.
 
   ```python
   assert target.match_policy == "exact"
@@ -214,15 +238,29 @@ families are not yet source rows.
   python -m pytest tests/test_r4_supervision_contracts.py -q -p no:cacheprovider -k "proposal or selector or blueprint or abstention"
   ```
 
-- [ ] **Step 3: Replace string selectors with `SelectorBinding`.**
+- [ ] **Step 3: Replace string selectors with a closed binding union.**
 
-  Add frozen, factory-only `SourceSpan` and `SelectorBinding` values. Each
-  binding contains an integer case-local handle, expected graph-component ref,
-  semantic kind, exact source span and the bounded source-local Program ABI 2
-  value. Blueprint actions carry handles only. Validate all bindings before
-  validating actions.
+  Add frozen, factory-only `SourceSpan`, `GroundedSelectorBinding` and
+  `StructuralSelectorBinding` values beneath a closed `SelectorBinding` union.
+  A grounded binding contains an integer handle, exact case/surface identities,
+  graph-component ref, semantic kind, bounded nonempty exact spans and one
+  reviewed source-unit/contribution selector. A structural binding contains an
+  integer handle and typed Program-local declaration/ref/tag/closed literal
+  only; it rejects case/surface evidence, semantic kind and spans. Blueprint
+  actions carry handles only. Validate the complete binding table before
+  actions.
 
-- [ ] **Step 4: Separate equality policy from expression relation.**
+- [ ] **Step 4: Add complete reviewed source assignments.**
+
+  Add a frozen, factory-only, bounded `SourceAssignmentBlueprint` to every
+  derivation. Each entry owns source geometry/source-unit selector,
+  contribution kind, assignment kind, target action/role for consumption,
+  residual kind for retention and criticality. Validate every observed unit is
+  assigned exactly once as consumed or typed residual; reject missing,
+  duplicate, inferred and critical-residual-executable cases.
+
+- [ ] **Step 5: Separate equality policy from expression relation and add the
+  exact rejection target.**
 
   Replace `expression_relation: "exact"` with
   `match_policy: "exact"` and `expected_expression_relation`. Enforce:
@@ -237,19 +275,25 @@ families are not yet source rows.
   A conflict row contains alternative complete expression refs. It cannot bind
   them as simultaneous graph components.
 
-- [ ] **Step 5: Update Draft 2020-12 schema and parity tests.**
+  `target_kind: verification_rejection` contains no expressions or abstention.
+  It owns one reviewed adversarial/mutation blueprint or payload plus exact
+  expected VERIFY owner, error code, rejection disposition and criticality.
+  Schema and decoder reject a generic gap alias and any observed verifier result
+  used as the reviewed expectation.
+
+- [ ] **Step 6: Update Draft 2020-12 schema and parity tests.**
 
   Use exact tagged unions, integer/span maxima and `additionalProperties:
   false`. Keep semantic cross-field checks in the decoder and structural checks
   in the schema; adversarially prove neither accepts a shape the other rejects.
 
-- [ ] **Step 6: Run both R4 source-contract modules in one process.**
+- [ ] **Step 7: Run both R4 source-contract modules in one process.**
 
   ```powershell
   python -m pytest tests/test_r4_supervision_contracts.py tests/test_r4_purpose_contracts.py -q -p no:cacheprovider
   ```
 
-- [ ] **Step 7: Refresh metadata/selectors, run G0/R4 source-only inventory and commit.**
+- [ ] **Step 8: Refresh metadata/selectors, run G0/R4 source-only inventory and commit.**
 
   ```powershell
   git commit -m "fix(r4): repair proposal supervision abi 1"
@@ -278,8 +322,9 @@ program authority; conflict alternatives remain distinct from multi-root.
   Reject bare epistemic strings, a response signature without
   `expected_expression_relation`, self-supplied literal/input-surface authority,
   unknown alignment tags, missing/duplicate required-slot coverage, more than
-  four variants, more than one initial variant, and realization rows for gap,
-  verification-rejection or restart-diagnostic cases.
+  four variants, missing initial variants for semantic/gap/rejection cases, and
+  any realization row for a restart-diagnostic case. Add explicit R5 canaries
+  requiring safe authorized surfaces for typed gaps and verifier rejections.
 
 - [ ] **Step 2: Run focused tests and confirm RED at the earliest owner.**
 
@@ -294,9 +339,12 @@ program authority; conflict alternatives remain distinct from multi-root.
   verification. Delete late prefixing and bare-string fallback maps. Unknown
   refs fail closed.
 
-- [ ] **Step 4: Put expression relation into the response signature.**
+- [ ] **Step 4: Add the closed response-subject union.**
 
-  The content-addressed signature covers relation, complete expression refs,
+  Add exact `expression_set`, `typed_gap` and `verifier_rejection` subjects.
+  Expression subjects carry `single` or `conflict` plus complete expression
+  refs. Gap and rejection subjects carry relation `none` plus their exact typed
+  subject and no expressions. The content-addressed signature also covers
   bindings, action, polarity, modality, epistemic status, speaker, addressee and
   exact semantic slots.
 
@@ -311,37 +359,49 @@ program authority; conflict alternatives remain distinct from multi-root.
 - [ ] **Step 6: Enforce row-local coverage and initial-publication bounds.**
 
   Required slots are covered exactly once by output alignment or reviewed
-  omission. Permit at most four variants in ABI 1 generally, but require exactly
-  one initial row for each current semantic case. Keep bundle-wide `248` current
-  completeness in the future main Task 6 compiler checkpoint, not a decoder
-  that cannot see the bundle.
+  omission. Permit at most four variants in ABI 1 generally. Initial source
+  requires exactly one variant for every supervised semantic, explicit-gap and
+  verification-rejection case and zero for diagnostic restart. All totals are
+  successor-universe-derived; do not hard-code 248 or another predecessor count.
+  File-local duplicate identity remains loader-owned and cross-source
+  completeness is verified in SR4 before main Tasks 5 and 6 compile/equivalence
+  work.
 
-- [ ] **Step 7: Update schema/parity, run one-process contract tests, refresh
+- [ ] **Step 7: Add R5 safe-surface canaries without activating R5.**
+
+  Require every supervised gap/rejection response subject to select one
+  reviewed safe authorized surface with exact semantic slots, epistemic status
+  and round-trip subject equivalence. Empty strings, input echo and UI fallback
+  placeholders fail. Keep the canaries in an existing R4/R5 boundary owner and
+  do not mint a train/evaluation capability.
+
+- [ ] **Step 8: Update schema/parity, run one-process contract tests, refresh
   metadata/inventory and commit.**
 
   ```powershell
   git commit -m "fix(r4): repair realization supervision abi 1"
   ```
 
-**Checkpoint SR3:** the audited current semantic universe has an unambiguous
-one-row realization contract; nonsemantic cases cannot acquire output gold.
+**Checkpoint SR3:** every supervised source kind has an unambiguous safe
+realization row shape; only diagnostic restart is excluded.
 
 ## SR4: Repair Purpose Contract ABI 1
 
 **Files:**
 
 - Modify: `src/cemm_authoritative_hybrid/r4_purpose.py`
+- Modify: `src/cemm_authoritative_hybrid/r4_supervision.py`
 - Modify: `schemas/r4_purpose_contract.schema.json`
 - Modify: `tests/test_r4_purpose_contracts.py`
-- Modify: `docs/ABI_REGISTRY.md` only to clarify the unchanged unpublished ABI
-  1 shape
+- Verify: the five-row `docs/ABI_REGISTRY.md` reconciliation committed in SR1
 
 - [ ] **Step 1: Write RED group-ownership and denominator tests.**
 
   Reject a grouped member with direct purpose, a group without purpose, a
-  diagnostic with purpose/group, overlapping groups with different purposes,
-  unknown component membership, conflict-set-derived groups, incomplete
-  denominator-by-four-purpose products and denominator-family drift.
+  diagnostic with purpose/group, a `verification_rejection` classified as gap
+  or diagnostic, overlapping groups with different purposes, unknown component
+  membership, conflict-set-derived groups, incomplete denominator-by-four-
+  purpose products and denominator-family drift.
 
 - [ ] **Step 2: Add a linear-operation counter test.**
 
@@ -359,7 +419,8 @@ one-row realization contract; nonsemantic cases cannot acquire output gold.
 
   Add exact `purpose` to `DuplicateRiskGroup`. Require grouped supervised
   memberships to have `purpose: null`; require ungrouped supervised memberships
-  to have one direct purpose; require diagnostics to have neither.
+  to have one direct purpose; add the exact supervised classification
+  `verification_rejection`; require diagnostics to have neither.
 
 - [ ] **Step 5: Validate transitive components with indexed union/find.**
 
@@ -374,7 +435,25 @@ one-row realization contract; nonsemantic cases cannot acquire output gold.
   purposes and require one shared denominator family. Minimums remain positive,
   reviewer-authored and immutable; do not derive or trim them.
 
-- [ ] **Step 7: Update schema/parity, run both contract modules in one process,
+- [ ] **Step 7: Add one bounded cross-source semantic validator.**
+
+  Implement it under the existing `r4_supervision` authenticated-bundle owner,
+  consuming the already-decoded source universe, proposals, realizations and
+  purpose contract once. With bounded indexes, require exact selector case/
+  surface ownership and spans; exactly one ProposalTarget and one initial
+  RealizationRow for every supervised case; zero of both for diagnostics; max
+  four realization variants; exactly one PurposeMembership for every source
+  case; and no missing/extra/duplicate cases or rows. Add hostile shuffled,
+  missing, duplicate, cross-case and over-bound fixtures plus linear operation-
+  count assertions. Do not add a gate step, owner or process.
+
+  Keep ownership boundaries executable: schema handles structure/tags/bounds;
+  row decoders handle content refs and row-local invariants; file loaders handle
+  canonical bytes/count/duplicate identity; this validator handles joins and
+  bundle completeness. Main Tasks 5 and 6 compile and prove equivalence; they
+  do not discover supervised eligibility.
+
+- [ ] **Step 8: Update schema/parity, run both contract modules in one process,
   refresh metadata/inventory and commit.**
 
   ```powershell
@@ -418,7 +497,10 @@ transitive, and validation remains linearly bounded.
   `op:type`/`role:type`); four true multi-root non-conflict families; the legacy
   conditional choice; restart diagnostic approval; exact designation/output
   decisions; mutation truth; duplicate groups; purposes; holdouts;
-  denominators; and fixed positive minima.
+  denominators; and fixed positive minima. It must also carry the exact proposed
+  patch to `scripts/generate_scenarios.py`, the exact resulting scenario rows,
+  and generator decisions needed to reproduce all eight families. A prose-only
+  family approval is insufficient.
 
 - [ ] **Step 4: Generate twice and compare byte identities.**
 
@@ -430,14 +512,23 @@ transitive, and validation remains linearly bounded.
   Expected: exact file-name, byte-length and SHA-256 equality. This proves only
   deterministic drafting, not review.
 
-- [ ] **Step 5: Run contract, selector, inventory and static gates; commit the
+- [ ] **Step 5: Promote only the verified A bytes.**
+
+  After A/B equality succeeds, atomically promote the exact verified A bytes
+  from `artifacts/review_drafts/r4_1-a` to
+  `artifacts/review_drafts/r4_1` using the repository canonical file-set
+  publisher. Recompute file names, lengths and SHA-256 after promotion and
+  require equality with A. Do not rerun the worksheet generator for the final
+  path and do not silently regenerate on a missing or mismatched file.
+
+- [ ] **Step 6: Run contract, selector, inventory and static gates; commit the
   generator and reproducible draft aids.**
 
   ```powershell
   git commit -m "feat(r4): produce source readiness review worksheets"
   ```
 
-- [ ] **Step 6: Stop for human review.**
+- [ ] **Step 7: Stop for human review.**
 
   Present exact worksheet refs/hashes and the successor scenario/expanded-case
   counts. Do not interpret silence, a passing compiler or a prior general
@@ -447,14 +538,22 @@ transitive, and validation remains linearly bounded.
 realization, mutation, purpose and minima decisions are explicit, but Task 4
 remains blocked and no reviewed source package exists.
 
-## SR6: Record source-readiness approval and resume the parent plan
+## SR6: Apply the approved canonical source patch and record approval
 
 **Files (only after explicit human approval):**
 
+SR6 must apply the exact approved scenario patch before it records approval
+evidence.
+
+- Modify: `scripts/generate_scenarios.py`
+- Regenerate: `data/scenarios/use_cases.jsonl`
+- Modify: `data/scenarios/SCENARIO_COVERAGE.md`
+- Modify exact source-universe tests and metadata/selectors as required
 - Add: `docs/superpowers/reviews/2026-08-30-r4-1-source-readiness-approval.md`
+- Modify: `docs/DOCUMENT_AUTHORITY.json`
 - Modify: `docs/superpowers/progress/2026-08-29-r4-1-data-supervision-replay-progress.md`
-- Modify the existing tracker/governance test only if its approved-ref
-  assertions require the new receipt; do not add a node
+- Modify the existing tracker/governance test to enforce the approval
+  document's exhaustive classification; do not add a node
 
 - [ ] **Step 1: Validate approval completeness.**
 
@@ -464,26 +563,53 @@ remains blocked and no reviewed source package exists.
   designation/output/mutation/purpose/minima decisions. Reject partial or
   conditional approval.
 
-- [ ] **Step 2: Write a RED governance assertion for exact approval binding.**
+- [ ] **Step 2: Write RED canonical-source and approval-classification tests.**
+
+  Require the checked-in generator diff to equal the exact approved scenario
+  patch, canonical regeneration to equal checked-in `use_cases.jsonl`, and the
+  model-free successor universe to match the approved identities and
+  successor-universe-derived counts. Separately require the future approval doc
+  to appear exactly once in `docs/DOCUMENT_AUTHORITY.json` under
+  `historical_evidence`, never `governing_documents`, with the exhaustive
+  authority-like classification test still complete.
+
+- [ ] **Step 3: Apply the exact approved scenario patch and commit it.**
+
+  Apply the exact approved scenario patch to `generate_scenarios.py`; do not
+  reinterpret its choices. Regenerate `data/scenarios/use_cases.jsonl` using the
+  canonical generator, reconstruct through the model-free seam, verify exact
+  successor identities/counts and all structural constraints, refresh metadata/
+  selectors/inventory, and commit before writing approval evidence.
+
+  ```powershell
+  git commit -m "data(r4): apply approved source readiness scenario patch"
+  ```
+
+  This commit still contains no `data/review/r4_1/` package.
+
+- [ ] **Step 4: Bind approval to the committed canonical source.**
 
   Require the approval doc to bind every SR1-SR5 commit and worksheet identity,
-  and require the tracker checkpoint to reference that exact document without
-  phase/admission/completion claims.
+  the exact approved scenario-patch commit, regenerated scenario/source-universe
+  identities and counts. Require the tracker checkpoint to reference that exact
+  document without phase/admission/completion claims.
 
-- [ ] **Step 3: Add the approval record and update operational tracking.**
+- [ ] **Step 5: Add the approval evidence and update operational tracking.**
 
   Mark `RC-SOURCE-READINESS` satisfied only. Keep T03 `in_progress`, T04
   `pending`, `RC-SOURCE` pending, the source directory absent and phase status
-  solely in `governance/replay_status.jsonl`.
+  solely in `governance/replay_status.jsonl`. Classify the approval doc exactly
+  once as `historical_evidence` in `docs/DOCUMENT_AUTHORITY.json` and update the
+  existing exhaustive authority-like classification test atomically.
 
-- [ ] **Step 4: Run focused governance, exact selectors, G0/R4 source-only
-  inventory, compile/JSON/diff checks and commit.**
+- [ ] **Step 6: Run focused governance, exact selectors, G0/R4 source-only
+  inventory, compile/JSON/diff checks and commit the second change.**
 
   ```powershell
   git commit -m "docs(r4): record source readiness approval"
   ```
 
-- [ ] **Step 5: Stop before source check-in.**
+- [ ] **Step 7: Stop before source check-in.**
 
   Return to main replay Task 4. That task, not this plan, checks in the exact
   approved `data/review/r4_1/` package, writes its manifest last, obtains the
