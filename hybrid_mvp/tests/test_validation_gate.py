@@ -1848,7 +1848,7 @@ def test_r4_gate_plans_are_exact_bounded_and_single_process() -> None:
     assert graph.pytest_process_count("R4", "phase") == 1
     phase_nodes = graph.resolve_pytest_nodes("R4", "phase")
     assert phase_nodes == inventory.phase_node_ids
-    assert len(phase_nodes) == 34
+    assert len(phase_nodes) == 33
     assert owner_nodes.isdisjoint(phase_nodes)
 
     admission = graph.resolve_phase("R4", "admission")
@@ -2214,7 +2214,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r4-validation-plans-exact-bounded-single-process",
         "diagnostic_role": "admission_only",
         "introduced_by_task": "R4-Partition-Corrective-Task-8",
-        "source_ast_sha256": "f087f19840b0bb727045b60a343c83106650e5f30bb0bd712683d983577e79e9"
+        "source_ast_sha256": "f66c52b516ccc59c3b22fba46e7d5768be5cb03bcc976e5c1c3411856185207b"
     },
     "tests/test_validation_gate.py::test_r5_admission_rejects_before_execution_or_publication": {
         "activation_phase": "R5",

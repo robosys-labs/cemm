@@ -894,12 +894,12 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "6b2315aab7f4ddce2e3d52eeba8adb519d8557346ac45adece0e35e0e54067eb"
     },
-    "tests/test_replay_governance.py::test_corrective_tracker_is_operational_not_status_authority": {
+    "tests/test_replay_governance.py::test_r4_1_replay_tracker_is_operational_not_status_authority": {
         "activation_phase": "R4",
-        "assertion_ref": "assertion:corrective-tracker-is-operational-not-status-authority",
+        "assertion_ref": "assertion:r4-1-replay-tracker-is-operational-not-status-authority",
         "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-1",
-        "source_ast_sha256": "cd96540b3cda28ba5c60d0cc6fe851d546bc59b0961c5b41f5298a64721c70a4"
+        "introduced_by_task": "R4.1-Data-Supervision-Task-1",
+        "source_ast_sha256": "4b5b1fdd381ebfd64bbda762fc3ec789ef05188fbaaa1e70c8b87b4cd9f24c8e"
     },
     "tests/test_replay_governance.py::test_r4_partition_corrective_documents_are_superseded": {
         "activation_phase": "G0",
@@ -1374,7 +1374,7 @@ def test_r4_partition_defect_binding_matches_invalidated_source_base(
     assert "r4_build_v3:5d5eee0ee8c0e7bb1bcba522" in design
 
 
-def test_corrective_tracker_is_operational_not_status_authority() -> None:
+def test_r4_1_replay_tracker_is_operational_not_status_authority() -> None:
     authority = _strict_document_authority()
     assert authority["governing_documents"].index(R4_1_REPLAY_PLAN) == (
         authority["governing_documents"].index(R4_1_REPLAY_DESIGN) + 1
@@ -1389,9 +1389,16 @@ def test_corrective_tracker_is_operational_not_status_authority() -> None:
 
     text = (ROOT / R4_1_REPLAY_PROGRESS).read_text(encoding="utf-8")
     assert "operational evidence only" in text.casefold()
-    assert (
+    sole_authority_declaration = (
         "governance/replay_status.jsonl is the sole phase-status authority"
-        in text
+    )
+    assert text.count(sole_authority_declaration) == 1
+    other_text = text.replace(sole_authority_declaration, "", 1)
+    assert not re.search(
+        r"(?:phase|replay)[ -]status.{0,80}\bauthorit(?:y|ies)\b"
+        r"|\bauthorit(?:y|ies)\b.{0,80}(?:phase|replay)[ -]status",
+        other_text,
+        re.IGNORECASE | re.DOTALL,
     )
     assert "does not copy a mutable phase matrix" in text
     assert "does not claim replay completion" in text
@@ -1399,29 +1406,27 @@ def test_corrective_tracker_is_operational_not_status_authority() -> None:
     assert not re.search(r"^\|\s*(?:G0|R[1-8])\s*\|", text, re.MULTILINE)
 
     task_rows = re.findall(
-        r"^\|\s*T(\d{2})\s*\|\s*([^|]+?)\s*\|", text, re.MULTILINE
+        r"^\|\s*T(\d{2})\s*\|\s*([^|]+?)\s*\|\s*([a-z_]+)\s*\|",
+        text,
+        re.MULTILINE,
     )
-    expected_tasks = (
-        ("01", "Govern the executable replay and create the progress owner"),
-        ("02", "Add strict reviewed-source schemas and immutable decoders"),
-        ("03", "Authenticate the review manifest and source bundle"),
-        ("04", "Check in the independently reviewed source package"),
-        ("05", "Compile proposal derivations and typed abstentions independently"),
-        ("06", "Compile ResponseMeaning-to-surface supervision independently"),
-        ("07", "Make mutation truth independent of mutation execution"),
-        ("08", "Replace global semantic union with reviewed purpose ownership"),
-        ("09", "Prove fixed class-local semantic sufficiency"),
-        ("10", "Build compact supervised cases and four payloads"),
-        ("11", "Version the R4 artifact graph to ABI 5"),
-        ("12", "Independently reconstruct admission and train access"),
-        ("13", "Quarantine ineligible R5 supervision consumers"),
-        ("14", "Retire predecessor current paths and migrate exact test authority"),
-        ("15", "Generate twice, review data, and publish the artifact-only commit"),
-        ("16", "Run clean repository-owned admission"),
-        ("17", "Append R4 green and close the replay"),
-        ("18", "Produce the R5 handoff audit without implementing R5"),
+    plan_text = (ROOT / R4_1_REPLAY_PLAN).read_text(encoding="utf-8")
+    plan_tasks = re.findall(
+        r"^## Task ([1-9]|1[0-8]): ([^\r\n]+)$", plan_text, re.MULTILINE
     )
-    assert task_rows == list(expected_tasks)
+    assert [int(number) for number, _title in plan_tasks] == list(range(1, 19))
+    assert [(number, title) for number, title, _state in task_rows] == [
+        (f"{int(number):02d}", title) for number, title in plan_tasks
+    ]
+    state_vocabulary = re.search(r"^State vocabulary: ([^\r\n]+)$", text, re.MULTILINE)
+    assert state_vocabulary is not None
+    assert re.findall(r"`([^`]+)`", state_vocabulary.group(1)) == [
+        "in_progress",
+        "pending",
+        "blocked",
+        "stopped",
+        "complete",
+    ]
     for required_register in (
         "Commit references",
         "Test receipts",
@@ -1434,7 +1439,8 @@ def test_corrective_tracker_is_operational_not_status_authority() -> None:
     status = effective_replay_status(
         read_hash_chain(ROOT / "governance/replay_status.jsonl")
     )
-    assert status["R4"] == "red"
+    task_states = {task_id: state for task_id, _title, state in task_rows}
+    assert status["R4"] == ("green" if task_states["17"] == "complete" else "red")
     assert all(status[f"R{index}"] == "red" for index in range(5, 9))
 
 

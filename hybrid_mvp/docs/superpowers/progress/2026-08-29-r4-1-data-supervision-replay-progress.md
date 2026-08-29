@@ -11,9 +11,10 @@ evidence, and the append-only ledger before any release decision.
 
 ## Task register
 
-State vocabulary: `in_progress`, `pending`, `blocked`, `stopped`. A task state
-is not a phase state. No task is recorded as complete until its exact commit,
-test, review, and artifact evidence has been added after the work exists.
+State vocabulary: `in_progress`, `pending`, `blocked`, `stopped`, `complete`
+`complete` is terminal. A task state is not a phase state. No task is recorded
+as complete until its exact commit, test, review, and artifact evidence has
+been added after the work exists.
 
 | Task | Deliverable | State | Commit ref | Test receipt | Review checkpoint | Artifact ref | Unresolved decision |
 |---|---|---|---|---|---|---|---|
@@ -43,6 +44,8 @@ test, review, and artifact evidence has been added after the work exists.
 | CR-DESIGN | `ef9fd67d2b896b61c5a8ba12acace8b9ed188324` | Approved R4.1 replay design |
 | CR-PLAN | `44f12a2aa7cb6c0d0c3175ebddd3f163c33ccdcf` | Governing executable replay plan and Task 1 source base |
 | CR-T01 | `27b8a5a1295b8f49c30a63e67110b71b19a0c122` | Initial Task 1 governance/tracker commit; exact-mapping review fix follows separately |
+| CR-T01-ALIGN | `86eb9fb7a5841c0fa246a9453d99a033cab6e13c` | Task 1 exact plan-mapping review fix |
+| CR-T01-HARDEN | pending | Task 1 quality hardening commit; recorded only after it exists |
 | CR-SOURCE-FREEZE | pending | Reviewed source parent for deterministic publication |
 | CR-ARTIFACT | pending | Artifact-only publication commit |
 | CR-CLOSEOUT | pending | Final governance-only closeout commit, if required |
@@ -52,11 +55,16 @@ test, review, and artifact evidence has been added after the work exists.
 | Ref | Scope | Evidence |
 |---|---|---|
 | TR-ENTRY | Focused entry baseline | Task dispatch reports 108 passing tests; no repository receipt ref was supplied |
-| TR-T01-RED | Task 1 governance RED | One pytest process; focused 4-node command; 2 failed and 2 passed because the tracker file/classification did not yet exist |
-| TR-T01 | Task 1 focused governance GREEN | One pytest process; same focused 4-node command; 4 passed after authority/tracker implementation |
-| TR-T01-REVIEW-RED | Task 1 exact task mapping RED | One pytest process; exact tracker test failed at T01 before the reviewed one-for-one mapping was applied |
-| TR-T01-REVIEW | Task 1 exact task mapping GREEN | One pytest process; exact tracker test passed after T01-T18 were aligned verbatim |
-| TR-INVENTORY | G0/R4 source-only inventory reconstruction | pending |
+| TR-T01-RED | Task 1 governance RED | `python -m pytest tests/test_replay_governance.py -q -p no:cacheprovider -k "document_authority_is_scoped_and_classifications_are_exact or authority_cleanup_classifies_every_authority_like_document_once or corrective_tracker_is_operational_not_status_authority or initial_replay_status_is_truthful_and_receipt_free"` returned 2 failed, 2 passed before the tracker/classification existed |
+| TR-T01 | Task 1 focused governance GREEN | The exact TR-T01-RED command returned 4 passed after initial implementation |
+| TR-T01-REVIEW-RED | Task 1 exact task mapping RED | `python -m pytest tests/test_replay_governance.py::test_corrective_tracker_is_operational_not_status_authority -q -p no:cacheprovider` returned 1 failed before exact T01-T18 alignment |
+| TR-T01-REVIEW | Task 1 exact task mapping GREEN | The exact TR-T01-REVIEW-RED command returned 1 passed after verbatim alignment |
+| TR-T01-HARDEN-RED | Task 1 governance hardening RED | `python -m pytest tests/test_replay_governance.py::test_r4_1_replay_tracker_is_operational_not_status_authority -q -p no:cacheprovider` returned 1 failed because terminal `complete` was absent |
+| TR-T01-HARDEN | Task 1 governance hardening GREEN | The exact TR-T01-HARDEN-RED command returned 1 passed after hardening |
+| TR-R4-SELECTOR | Exact R4 selector/config GREEN | `python -m pytest tests/test_replay_governance.py::test_r4_1_replay_tracker_is_operational_not_status_authority tests/test_validation_gate.py::test_r4_gate_plans_are_exact_bounded_and_single_process -q -p no:cacheprovider` returned 2 passed |
+| TR-INVENTORY-G0 | G0 source-only inventory reconstruction | `python scripts/check_test_inventory.py --phase G0 --source-only` passed: inventory `test_inventory:c715e262526c0ea26a6fef90`, literal metadata `literal_test_metadata:695c3fed30206ad5371a8433`, active set `active_test_nodes:7ec97bc4c63c6824928f9681` with 190 nodes, collectable set `collectable_test_nodes:7344a87282c6685a08348d3c` with 1,836 nodes |
+| TR-INVENTORY-R4 | R4 source-only inventory reconstruction | `python scripts/check_test_inventory.py --phase R4 --source-only` passed: inventory `test_inventory:c715e262526c0ea26a6fef90`, literal metadata `literal_test_metadata:695c3fed30206ad5371a8433`, active set `active_test_nodes:5c2d7d60fdea1668c75dc4fb` with 1,554 nodes, collectable set `collectable_test_nodes:7344a87282c6685a08348d3c` with 1,836 nodes |
+| TR-STATIC | Task 1 static validation | `python -m py_compile tests/test_replay_governance.py tests/test_validation_gate.py`; `python -m json.tool docs/DOCUMENT_AUTHORITY.json`; `python -m json.tool configs/validation_gates.json`; `git diff --check`; all exited 0 in the final pre-commit check |
 | TR-DETERMINISM | Two byte-identical candidate trees | pending |
 | TR-PREADMISSION | Bounded governed validation | pending |
 | TR-ADMISSION | Clean repository-owned R4 admission | pending |
