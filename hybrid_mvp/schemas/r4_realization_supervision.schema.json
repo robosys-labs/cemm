@@ -1,0 +1,69 @@
+{
+  "$id": "https://robosys-labs.github.io/cemm/schemas/r4_realization_supervision.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "abi_version": {"const": 1},
+    "realization_ref": {"pattern": "^realization_supervision_v1:[0-9a-f]{24}$", "type": "string"},
+    "source_case_ref": {"pattern": "^expanded_case_v2:[0-9a-f]{24}$", "type": "string"},
+    "response_signature_ref": {"pattern": "^response_signature:[0-9a-f]{24}$", "type": "string"},
+    "expression_refs": {"items": {"pattern": "^expression:[0-9a-f]{24}$", "type": "string"}, "maxItems": 64, "minItems": 1, "type": "array", "uniqueItems": true},
+    "discourse_action_ref": {"$ref": "#/$defs/ref"},
+    "polarity_ref": {"pattern": "^polarity:[^\\s:][^\\s]*$", "type": "string"},
+    "modality_ref": {"pattern": "^modality:[^\\s:][^\\s]*$", "type": "string"},
+    "epistemic_status_ref": {"pattern": "^epistemic_status:[^\\s:][^\\s]*$", "type": "string"},
+    "output_speaker_ref": {"pattern": "^participant:[^\\s:][^\\s]*$", "type": "string"},
+    "output_addressee_ref": {"pattern": "^participant:[^\\s:][^\\s]*$", "type": "string"},
+    "authorized_surface": {"maxLength": 16384, "minLength": 1, "type": "string"},
+    "language": {"pattern": "^[a-z]{2,8}(-[A-Za-z0-9]{1,8})*$", "type": "string"},
+    "semantic_slots": {"items": {"$ref": "#/$defs/slot"}, "maxItems": 64, "minItems": 1, "type": "array", "uniqueItems": true},
+    "reference_forms": {"items": {"$ref": "#/$defs/referenceForm"}, "maxItems": 16, "type": "array", "uniqueItems": true},
+    "literal_alignments": {"items": {"$ref": "#/$defs/alignment"}, "maxItems": 64, "type": "array", "uniqueItems": true},
+    "review_refs": {"$ref": "#/$defs/nonemptyRefs"}
+  },
+  "required": ["abi_version", "realization_ref", "source_case_ref", "response_signature_ref", "expression_refs", "discourse_action_ref", "polarity_ref", "modality_ref", "epistemic_status_ref", "output_speaker_ref", "output_addressee_ref", "authorized_surface", "language", "semantic_slots", "reference_forms", "literal_alignments", "review_refs"],
+  "title": "CEMM Realization Supervision ABI 1",
+  "type": "object",
+  "$defs": {
+    "alignment": {
+      "additionalProperties": false,
+      "properties": {
+        "abi_version": {"const": 1},
+        "alignment_ref": {"pattern": "^literal_alignment_v1:[0-9a-f]{24}$", "type": "string"},
+        "slot_ref": {"pattern": "^response_slot:[^\\s:][^\\s]*$", "type": "string"},
+        "copy_source_kind": {"enum": ["reviewed_literal", "decision_literal", "effect_literal", "obligation_literal"]},
+        "copy_source_ref": {"$ref": "#/$defs/ref"},
+        "source_literal": {"maxLength": 16384, "minLength": 1, "type": "string"},
+        "source_start": {"maximum": 16384, "minimum": 0, "type": "integer"},
+        "source_end": {"maximum": 16384, "minimum": 0, "type": "integer"},
+        "surface_start": {"maximum": 16384, "minimum": 0, "type": "integer"},
+        "surface_end": {"maximum": 16384, "minimum": 0, "type": "integer"}
+      },
+      "required": ["abi_version", "alignment_ref", "slot_ref", "copy_source_kind", "copy_source_ref", "source_literal", "source_start", "source_end", "surface_start", "surface_end"],
+      "type": "object"
+    },
+    "nonemptyRefs": {"items": {"$ref": "#/$defs/ref"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+    "ref": {"maxLength": 512, "minLength": 3, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$", "type": "string"},
+    "referenceForm": {
+      "additionalProperties": false,
+      "properties": {
+        "abi_version": {"const": 1},
+        "participant_ref": {"pattern": "^participant:[^\\s:][^\\s]*$", "type": "string"},
+        "surface_form": {"maxLength": 128, "minLength": 1, "type": "string"}
+      },
+      "required": ["abi_version", "participant_ref", "surface_form"],
+      "type": "object"
+    },
+    "slot": {
+      "additionalProperties": false,
+      "properties": {
+        "abi_version": {"const": 1},
+        "slot_ref": {"pattern": "^response_slot:[^\\s:][^\\s]*$", "type": "string"},
+        "semantic_ref": {"$ref": "#/$defs/ref"},
+        "required": {"type": "boolean"}
+      },
+      "required": ["abi_version", "slot_ref", "semantic_ref", "required"],
+      "type": "object"
+    }
+  }
+}

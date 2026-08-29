@@ -1,0 +1,87 @@
+{
+  "$id": "https://robosys-labs.github.io/cemm/schemas/r4_purpose_contract.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "abi_version": {"const": 1},
+    "purpose_contract_ref": {"pattern": "^purpose_contract_v1:[0-9a-f]{24}$", "type": "string"},
+    "source_set_ref": {"pattern": "^r4_source_set_v1:[0-9a-f]{24}$", "type": "string"},
+    "memberships": {"items": {"$ref": "#/$defs/membership"}, "maxItems": 4096, "minItems": 1, "type": "array", "uniqueItems": true},
+    "duplicate_risk_groups": {"items": {"$ref": "#/$defs/group"}, "maxItems": 4096, "type": "array", "uniqueItems": true},
+    "challenge_holdouts": {"items": {"$ref": "#/$defs/holdout"}, "maxItems": 1024, "type": "array", "uniqueItems": true},
+    "denominator_minima": {"items": {"$ref": "#/$defs/minimum"}, "maxItems": 4096, "minItems": 4, "type": "array", "uniqueItems": true},
+    "review_refs": {"$ref": "#/$defs/nonemptyRefs"},
+    "solver_output_is_authority": {"const": false}
+  },
+  "required": ["abi_version", "purpose_contract_ref", "source_set_ref", "memberships", "duplicate_risk_groups", "challenge_holdouts", "denominator_minima", "review_refs", "solver_output_is_authority"],
+  "title": "CEMM Purpose Contract ABI 1",
+  "type": "object",
+  "$defs": {
+    "caseRef": {"pattern": "^expanded_case_v2:[0-9a-f]{24}$", "type": "string"},
+    "caseRefs": {"items": {"$ref": "#/$defs/caseRef"}, "maxItems": 4096, "minItems": 1, "type": "array", "uniqueItems": true},
+    "group": {
+      "additionalProperties": false,
+      "properties": {
+        "abi_version": {"const": 1},
+        "group_ref": {"pattern": "^duplicate_risk_group:[^\\s:][^\\s]*$", "type": "string"},
+        "namespace": {"enum": ["source_case_lineage", "paraphrase_family", "normalization_family", "mutation_lineage", "environment_provenance", "trajectory_lineage"]},
+        "member_case_refs": {"allOf": [{"$ref": "#/$defs/caseRefs"}, {"minItems": 2}]},
+        "reason_ref": {"$ref": "#/$defs/ref"},
+        "review_refs": {"$ref": "#/$defs/nonemptyRefs"}
+      },
+      "required": ["abi_version", "group_ref", "namespace", "member_case_refs", "reason_ref", "review_refs"],
+      "type": "object"
+    },
+    "holdout": {
+      "additionalProperties": false,
+      "properties": {
+        "abi_version": {"const": 1},
+        "holdout_ref": {"pattern": "^challenge_holdout:[^\\s:][^\\s]*$", "type": "string"},
+        "identity_namespace": {"enum": ["semantic_identity", "operator", "role", "mode", "participant", "topology", "response_action", "realization_action"]},
+        "identity_ref": {"$ref": "#/$defs/ref"},
+        "purpose": {"$ref": "#/$defs/purpose"},
+        "member_case_refs": {"$ref": "#/$defs/caseRefs"},
+        "reason_ref": {"$ref": "#/$defs/ref"},
+        "review_refs": {"$ref": "#/$defs/nonemptyRefs"}
+      },
+      "required": ["abi_version", "holdout_ref", "identity_namespace", "identity_ref", "purpose", "member_case_refs", "reason_ref", "review_refs"],
+      "type": "object"
+    },
+    "membership": {
+      "additionalProperties": false,
+      "oneOf": [
+        {"properties": {"classification": {"enum": ["semantic_supervision", "typed_abstention"]}, "purpose": {"$ref": "#/$defs/purpose"}, "diagnostic_reason_ref": {"type": "null"}}},
+        {"properties": {"classification": {"const": "diagnostic_only"}, "purpose": {"type": "null"}, "diagnostic_reason_ref": {"$ref": "#/$defs/ref"}}}
+      ],
+      "properties": {
+        "abi_version": {"const": 1},
+        "membership_ref": {"pattern": "^purpose_membership_v1:[0-9a-f]{24}$", "type": "string"},
+        "source_case_ref": {"$ref": "#/$defs/caseRef"},
+        "classification": {"enum": ["semantic_supervision", "typed_abstention", "diagnostic_only"]},
+        "purpose": {"oneOf": [{"$ref": "#/$defs/purpose"}, {"type": "null"}]},
+        "duplicate_risk_group_refs": {"items": {"pattern": "^duplicate_risk_group:[^\\s:][^\\s]*$", "type": "string"}, "maxItems": 128, "type": "array", "uniqueItems": true},
+        "diagnostic_reason_ref": {"oneOf": [{"$ref": "#/$defs/ref"}, {"type": "null"}]},
+        "review_refs": {"$ref": "#/$defs/nonemptyRefs"}
+      },
+      "required": ["abi_version", "membership_ref", "source_case_ref", "classification", "purpose", "duplicate_risk_group_refs", "diagnostic_reason_ref", "review_refs"],
+      "type": "object"
+    },
+    "minimum": {
+      "additionalProperties": false,
+      "properties": {
+        "abi_version": {"const": 1},
+        "minimum_ref": {"pattern": "^denominator_minimum_v1:[0-9a-f]{24}$", "type": "string"},
+        "denominator_ref": {"pattern": "^denominator:[^\\s:][^\\s]*$", "type": "string"},
+        "denominator_family": {"enum": ["semantic_expression", "operator", "mode", "role", "state_compatibility", "topology", "typed_abstention", "critical_residual", "transition_effect", "no_effect", "response_meaning", "perspective_reference", "literal_copy"]},
+        "purpose": {"$ref": "#/$defs/purpose"},
+        "minimum": {"maximum": 4096, "minimum": 1, "type": "integer"},
+        "review_refs": {"$ref": "#/$defs/nonemptyRefs"}
+      },
+      "required": ["abi_version", "minimum_ref", "denominator_ref", "denominator_family", "purpose", "minimum", "review_refs"],
+      "type": "object"
+    },
+    "nonemptyRefs": {"items": {"$ref": "#/$defs/ref"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+    "purpose": {"enum": ["train", "selection", "calibration", "frozen_test"]},
+    "ref": {"maxLength": 512, "minLength": 3, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$", "type": "string"}
+  }
+}

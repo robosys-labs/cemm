@@ -1,0 +1,55 @@
+{
+  "$id": "https://robosys-labs.github.io/cemm/schemas/r4_review_manifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "abi_version": {"const": 1},
+    "manifest_ref": {"pattern": "^r4_review_manifest_v1:[0-9a-f]{24}$", "type": "string"},
+    "review_policy_ref": {"$ref": "#/$defs/ref"},
+    "reviewer_refs": {"$ref": "#/$defs/nonemptyRefs"},
+    "reviewed_base_revision": {"pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$", "type": "string"},
+    "authority_generation": {"maxLength": 512, "minLength": 1, "type": "string"},
+    "source_bundle_ref": {"pattern": "^r4_review_bundle_v1:[0-9a-f]{24}$", "type": "string"},
+    "scenario_source_sha256": {"$ref": "#/$defs/sha256"},
+    "sources": {"items": {"$ref": "#/$defs/source"}, "maxItems": 4, "minItems": 4, "type": "array", "uniqueItems": true},
+    "abi_versions": {"$ref": "#/$defs/abiVersions"},
+    "approval_state": {"const": "approved"},
+    "supersedes_refs": {"$ref": "#/$defs/refs"},
+    "runtime_observations_are_source_authority": {"const": false},
+    "bootstrap_outputs_are_source_authority": {"const": false}
+  },
+  "required": ["abi_version", "manifest_ref", "review_policy_ref", "reviewer_refs", "reviewed_base_revision", "authority_generation", "source_bundle_ref", "scenario_source_sha256", "sources", "abi_versions", "approval_state", "supersedes_refs", "runtime_observations_are_source_authority", "bootstrap_outputs_are_source_authority"],
+  "title": "CEMM R4 Review Manifest ABI 1",
+  "type": "object",
+  "$defs": {
+    "abiVersions": {
+      "additionalProperties": false,
+      "properties": {
+        "mutation_contract": {"const": 1},
+        "proposal_supervision": {"const": 1},
+        "purpose_contract": {"const": 1},
+        "r4_review_manifest": {"const": 1},
+        "realization_supervision": {"const": 1}
+      },
+      "required": ["mutation_contract", "proposal_supervision", "purpose_contract", "r4_review_manifest", "realization_supervision"],
+      "type": "object"
+    },
+    "nonemptyRefs": {"items": {"$ref": "#/$defs/ref"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+    "ref": {"maxLength": 512, "minLength": 3, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$", "type": "string"},
+    "refs": {"items": {"$ref": "#/$defs/ref"}, "maxItems": 128, "type": "array", "uniqueItems": true},
+    "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "abi_version": {"const": 1},
+        "source_ref": {"pattern": "^reviewed_source:[0-9a-f]{24}$", "type": "string"},
+        "path": {"enum": ["data/review/r4_1/mutation_contracts.jsonl", "data/review/r4_1/proposal_supervision.jsonl", "data/review/r4_1/purpose_contract.json", "data/review/r4_1/realization_supervision.jsonl"]},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "record_count": {"maximum": 4096, "minimum": 1, "type": "integer"},
+        "review_refs": {"$ref": "#/$defs/nonemptyRefs"}
+      },
+      "required": ["abi_version", "source_ref", "path", "sha256", "record_count", "review_refs"],
+      "type": "object"
+    }
+  }
+}

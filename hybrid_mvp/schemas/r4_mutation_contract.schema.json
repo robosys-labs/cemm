@@ -1,0 +1,28 @@
+{
+  "$id": "https://robosys-labs.github.io/cemm/schemas/r4_mutation_contract.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "oneOf": [
+    {"properties": {"effect_kind": {"const": "effect"}, "expected_effect_ref": {"$ref": "#/$defs/ref"}}},
+    {"properties": {"effect_kind": {"const": "no_effect"}, "expected_effect_ref": {"type": "null"}}}
+  ],
+  "properties": {
+    "abi_version": {"const": 1},
+    "mutation_contract_ref": {"pattern": "^mutation_contract_v1:[0-9a-f]{24}$", "type": "string"},
+    "mutation_family_ref": {"pattern": "^mutation_family:[^\\s:][^\\s]*$", "type": "string"},
+    "source_case_ref": {"pattern": "^expanded_case_v2:[0-9a-f]{24}$", "type": "string"},
+    "changed_dimension_ref": {"$ref": "#/$defs/ref"},
+    "expected_earliest_owner": {"enum": ["orient", "propose", "verify", "evaluate", "effect", "realize"]},
+    "disposition": {"enum": ["accept", "reject", "frontier"]},
+    "effect_kind": {"enum": ["effect", "no_effect"]},
+    "expected_effect_ref": {"oneOf": [{"$ref": "#/$defs/ref"}, {"type": "null"}]},
+    "review_refs": {"$ref": "#/$defs/nonemptyRefs"}
+  },
+  "required": ["abi_version", "mutation_contract_ref", "mutation_family_ref", "source_case_ref", "changed_dimension_ref", "expected_earliest_owner", "disposition", "effect_kind", "expected_effect_ref", "review_refs"],
+  "title": "CEMM Mutation Contract ABI 1",
+  "type": "object",
+  "$defs": {
+    "nonemptyRefs": {"items": {"$ref": "#/$defs/ref"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+    "ref": {"maxLength": 512, "minLength": 3, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$", "type": "string"}
+  }
+}
