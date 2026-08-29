@@ -859,6 +859,7 @@ Expected: exactly ten workflow deletions plus the governance test change.
 
 - Modify only if required by existing deterministic owner: `governance/test_inventory.json`
 - Modify only if inventory bytes changed: `docs/DOCUMENT_AUTHORITY.json`
+- Modify if the focused suite exposes its stale authority assertion: `tests/test_r3_plan_contract.py`
 - Verify: all files changed since `0e5cc801`
 
 - [ ] **Step 1: Verify no computed metadata token remains**
@@ -923,6 +924,7 @@ $bad = @($changed | Where-Object {
   $_ -notlike 'hybrid_mvp/src/cemm_authoritative_hybrid/realization.py' -and
   $_ -notlike 'hybrid_mvp/src/cemm_authoritative_hybrid/training.py' -and
   $_ -notlike 'hybrid_mvp/tests/test_replay_governance.py' -and
+  $_ -notlike 'hybrid_mvp/tests/test_r3_plan_contract.py' -and
   $_ -notlike '.github/workflows/*'
 })
 if ($bad.Count) { throw "path outside cleanup boundary: $($bad -join ', ')" }
