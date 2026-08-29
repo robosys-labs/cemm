@@ -279,6 +279,13 @@ non-authoritative work aids, but the task stops before checking in
 derivations/abstentions, realization rows, mutation truth, duplicate-risk
 groups, purpose membership and minima. Compiler success is not review.
 
+**Mandatory source-readiness correction:** Task 4 is blocked until
+`docs/superpowers/plans/2026-08-30-r4-1-source-readiness-correction-plan.md`
+SR1-SR5 pass and SR6 records the exact human approval. That correction removes
+the duplicate gap owner, repairs the unpublished Proposal/Realization/Purpose
+ABI 1 source shapes, reconstructs the model-free source universe and stops
+before source check-in. It does not promote R4 or satisfy `RC-SOURCE`.
+
 ## Task 4: Check in the independently reviewed source package
 
 **Files:**

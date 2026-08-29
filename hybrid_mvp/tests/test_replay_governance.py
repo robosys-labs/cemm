@@ -73,6 +73,14 @@ R4_1_REPLAY_DESIGN = (
 R4_1_REPLAY_PLAN = (
     "docs/superpowers/plans/2026-08-29-r4-1-data-supervision-replay-plan.md"
 )
+R4_1_SOURCE_READINESS_DESIGN = (
+    "docs/superpowers/specs/"
+    "2026-08-30-r4-1-source-readiness-correction-design.md"
+)
+R4_1_SOURCE_READINESS_PLAN = (
+    "docs/superpowers/plans/"
+    "2026-08-30-r4-1-source-readiness-correction-plan.md"
+)
 R4_1_REPLAY_PROGRESS = (
     "docs/superpowers/progress/2026-08-29-r4-1-data-supervision-replay-progress.md"
 )
@@ -83,6 +91,8 @@ GOVERNING_DOCUMENTS = (
     "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
     R4_1_REPLAY_DESIGN,
     R4_1_REPLAY_PLAN,
+    R4_1_SOURCE_READINESS_DESIGN,
+    R4_1_SOURCE_READINESS_PLAN,
     "README.md",
     "INTEGRATION.md",
     "docs/ARCHITECTURE.md",
@@ -899,7 +909,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r4-1-replay-tracker-is-operational-not-status-authority",
         "diagnostic_role": "phase",
         "introduced_by_task": "R4.1-Data-Supervision-Task-1",
-        "source_ast_sha256": "6004947a410e6f2120f71155ec749f27c9d305c04ae4c346327af9ba29431e95"
+        "source_ast_sha256": "4568909a3f83088617186bf14f5000c5cf3e4f5ab2c46d33b9f7bfb83a62a2dc"
     },
     "tests/test_replay_governance.py::test_r4_partition_corrective_documents_are_superseded": {
         "activation_phase": "G0",
@@ -1971,6 +1981,11 @@ def test_r4_1_replay_tracker_is_operational_not_status_authority() -> None:
     assert authority["governing_documents"].index(R4_1_REPLAY_PLAN) == (
         authority["governing_documents"].index(R4_1_REPLAY_DESIGN) + 1
     )
+    main_plan_index = authority["governing_documents"].index(R4_1_REPLAY_PLAN)
+    assert authority["governing_documents"][main_plan_index + 1 : main_plan_index + 3] == [
+        R4_1_SOURCE_READINESS_DESIGN,
+        R4_1_SOURCE_READINESS_PLAN,
+    ]
     classifications = (
         *authority["governing_documents"],
         *authority["superseded_execution_claims"],
@@ -2064,6 +2079,23 @@ def test_r4_1_replay_tracker_is_operational_not_status_authority() -> None:
         re.MULTILINE,
     )
     plan_text = (ROOT / R4_1_REPLAY_PLAN).read_text(encoding="utf-8")
+    correction_plan_text = (ROOT / R4_1_SOURCE_READINESS_PLAN).read_text(
+        encoding="utf-8"
+    )
+    task_3 = re.search(
+        r"^## Task 3:.*?(?=^## Task 4:)",
+        plan_text,
+        re.MULTILINE | re.DOTALL,
+    )
+    assert task_3 is not None
+    assert R4_1_SOURCE_READINESS_PLAN in task_3.group(0)
+    assert "Task 4 is blocked" in task_3.group(0)
+    assert re.findall(r"^## SR([1-6]):", correction_plan_text, re.MULTILINE) == list(
+        "123456"
+    )
+    assert not re.search(
+        r"^## Task (?:[1-9]|1[0-8]):", correction_plan_text, re.MULTILINE
+    )
     plan_tasks = re.findall(
         r"^## Task ([1-9]|1[0-8]): ([^\r\n]+)$", plan_text, re.MULTILINE
     )
