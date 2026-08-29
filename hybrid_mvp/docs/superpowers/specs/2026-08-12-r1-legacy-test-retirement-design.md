@@ -1,6 +1,11 @@
 # Hybrid MVP R1 Legacy-Test Retirement Design
 
-**Status:** approved design; implementation pending
+> **Completed historical evidence:** This document records an earlier tranche;
+> it is not an executable current plan and owns no phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
+**Status at publication:** approved design; implementation was later completed
 **Date:** 2026-08-12
 **Scope:** obsolete R1 phase tests and their governed inventory records
 **Starting commit:** `8cd27234454caae6942888c18b5d497d6d2490ee`

@@ -1,0 +1,123 @@
+{
+  "$id": "https://robosys-labs.github.io/cemm/schemas/r4_partition_evidence.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "abi_version": {"const": 3},
+    "components": {
+      "items": {"$ref": "#/$defs/component"},
+      "maxItems": 4096,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "config_ref": {"$ref": "#/$defs/ref"},
+    "evidence_ref": {"$ref": "#/$defs/ref"},
+    "hyperedges": {
+      "items": {"$ref": "#/$defs/hyperedge"},
+      "maxItems": 32768,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "labels": {
+      "items": {"$ref": "#/$defs/label"},
+      "maxItems": 32768,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "source_set_ref": {"$ref": "#/$defs/ref"}
+  },
+  "required": [
+    "abi_version",
+    "evidence_ref",
+    "source_set_ref",
+    "config_ref",
+    "hyperedges",
+    "labels",
+    "components"
+  ],
+  "title": "CEMM R4 Partition Evidence ABI 3",
+  "type": "object",
+  "$defs": {
+    "axis": {
+      "enum": [
+        "general",
+        "lexical",
+        "semantic_target",
+        "topology",
+        "dialogue",
+        "mutation",
+        "realization"
+      ]
+    },
+    "component": {
+      "additionalProperties": false,
+      "properties": {
+        "component_ref": {"$ref": "#/$defs/ref"},
+        "hyperedge_refs": {
+          "items": {"$ref": "#/$defs/ref"},
+          "maxItems": 32768,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "member_refs": {"$ref": "#/$defs/memberRefs"},
+        "partition_abi_version": {"const": 3},
+        "source_set_ref": {"$ref": "#/$defs/ref"},
+        "split": {"$ref": "#/$defs/split"}
+      },
+      "required": [
+        "component_ref",
+        "source_set_ref",
+        "partition_abi_version",
+        "member_refs",
+        "hyperedge_refs",
+        "split"
+      ],
+      "type": "object"
+    },
+    "hyperedge": {
+      "additionalProperties": false,
+      "properties": {
+        "axis": {"$ref": "#/$defs/axis"},
+        "hyperedge_ref": {"$ref": "#/$defs/ref"},
+        "key_namespace": {"maxLength": 128, "minLength": 1, "type": "string"},
+        "key_ref": {"$ref": "#/$defs/ref"},
+        "member_refs": {
+          "items": {"$ref": "#/$defs/ref"},
+          "maxItems": 4096,
+          "minItems": 2,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": ["axis", "key_namespace", "key_ref", "member_refs", "hyperedge_ref"],
+      "type": "object"
+    },
+    "label": {
+      "additionalProperties": false,
+      "properties": {
+        "label_ref": {"$ref": "#/$defs/ref"},
+        "member_refs": {"$ref": "#/$defs/memberRefs"},
+        "namespace": {"maxLength": 128, "minLength": 1, "type": "string"}
+      },
+      "required": ["namespace", "label_ref", "member_refs"],
+      "type": "object"
+    },
+    "memberRefs": {
+      "items": {"$ref": "#/$defs/ref"},
+      "maxItems": 4096,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "ref": {
+      "maxLength": 512,
+      "minLength": 3,
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$",
+      "type": "string"
+    },
+    "split": {"enum": ["train", "selection", "calibration", "frozen_test"]}
+  }
+}

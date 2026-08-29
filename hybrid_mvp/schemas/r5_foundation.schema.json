@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cemm.invalid/schemas/r5_foundation.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "phase",
+    "increment",
+    "effective_replay_status",
+    "admission_available",
+    "owners",
+    "data_access_classes",
+    "neural_activation_task_ref"
+  ],
+  "properties": {
+    "schema": {"const": "cemm-r5-foundation-contract-v1"},
+    "phase": {"const": "R5"},
+    "increment": {"const": "hard-cut-foundation"},
+    "effective_replay_status": {"const": "red"},
+    "admission_available": {"const": false},
+    "owners": {
+      "const": [
+        "artifact-contract",
+        "data-isolation",
+        "legacy-hard-cut",
+        "proposal-contract",
+        "realization-contract"
+      ]
+    },
+    "data_access_classes": {
+      "const": ["calibration", "frozen_test", "selection", "train"]
+    },
+    "neural_activation_task_ref": {"const": "R5-Neural-Activation"}
+  }
+}

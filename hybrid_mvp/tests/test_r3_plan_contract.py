@@ -36,12 +36,13 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "R3-Task-0",
         "source_ast_sha256": "b7a8efe6155e0ffc60384fb074a64da02af48bebf113952f2cbb3ff112f142b2"
     },
-    "tests/test_r3_plan_contract.py::test_r3_cannot_be_admitted_while_r2_is_non_green": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:r3-cannot-be-admitted-while-r2-is-non-green",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R3-Task-0",
-        "source_ast_sha256": "813c189159f72ce5d0a5931a20be16de09d6ba21005c4e0c86ca8272a21eede1"
+    "tests/test_r3_plan_contract.py::test_completed_r3_plan_is_historical_evidence_not_authority": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:completed-r3-plan-is-historical-not-authority",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-5",
+        "owner_ref": "governance",
+        "source_ast_sha256": "c6ec17008d6f0e51415686ee369d3094de3d36e4651f89a4d591eb3b69a9378c"
     },
     "tests/test_r3_plan_contract.py::test_r3_owner_groups_within_eight_step_limit": {
         "activation_phase": "R3",
@@ -108,13 +109,16 @@ def test_r3_validation_gates_define_r3_phase() -> None:
     assert "r3_activation_canaries" in admission, "R3 admission missing r3_activation_canaries"
 
 
-def test_r3_cannot_be_admitted_while_r2_is_non_green() -> None:
-    """R3 admission must require R2 green status."""
+def test_completed_r3_plan_is_historical_evidence_not_authority() -> None:
+    """The completed R3 plan remains evidence but cannot authorize new work."""
     with open(_AUTHORITY, "r", encoding="utf-8") as f:
         authority = json.load(f)
-    governing = authority.get("governing_documents", [])
     r3_plan = "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-cognition-activation-plan.md"
-    assert r3_plan in governing, "R3 plan not in governing documents"
+    assert r3_plan in authority.get("historical_evidence", [])
+    assert r3_plan not in authority.get("governing_documents", [])
+    banner = "\n".join((_ROOT / r3_plan).read_text(encoding="utf-8").splitlines()[:14])
+    assert "completed historical evidence" in banner.casefold()
+    assert "governance/replay_status.jsonl" in banner
 
 
 def test_r3_owner_groups_within_eight_step_limit() -> None:

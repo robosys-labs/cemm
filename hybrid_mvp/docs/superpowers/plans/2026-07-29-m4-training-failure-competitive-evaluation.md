@@ -1,5 +1,12 @@
 # Milestone 4 Training, Failure Coverage, and Competitive Evaluation Implementation Plan
 
+> **Superseded execution evidence:** This document is retained for forensic
+> history only. It cannot authorize current work or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> The August 29 R4.1 data/supervision amendment supersedes conflicting
+> partition, feasibility, gold and realization instructions.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:test-driven-development for every task and superpowers:verification-before-completion before the milestone commit. Track work with the checkboxes below.
 
 **Goal:** Produce leakage-controlled semantic episodes, trained proposal and realization artifacts, calibrated safe failure behavior, and an honest same-hardware comparison with Qwen2.5-1.5B-Instruct.

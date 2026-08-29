@@ -1,5 +1,12 @@
 # Milestone 3 Cognition, Learning, and Realization Implementation Plan
 
+> **Superseded execution evidence:** This document is retained for forensic
+> history only. It cannot authorize current work or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> The August 29 R4.1 data/supervision amendment supersedes conflicting
+> partition, feasibility, gold and realization instructions.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:test-driven-development for every task and superpowers:verification-before-completion before the milestone commit. Track work with the checkboxes below.
 
 **Goal:** Complete the proof-bearing cognitive loop: query and inference, epistemic admission, state transitions, guarded effects, typed learning, dialogue reference, and semantically verified neural realization.

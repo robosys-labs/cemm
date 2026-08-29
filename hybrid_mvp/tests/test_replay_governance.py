@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import copy
 import hashlib
 import importlib.util
@@ -8,7 +9,8 @@ import os
 import re
 import subprocess
 import sys
-from pathlib import Path
+from collections import Counter
+from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 
 import pytest
@@ -27,19 +29,59 @@ from cemm_authoritative_hybrid.governance import (
 
 ROOT = Path(__file__).resolve().parents[1]
 
+R4_1_AMENDMENT = (
+    "docs/superpowers/specs/"
+    "2026-08-29-r4-1-data-supervision-corrective-amendment.md"
+)
+
+AUTHORITY_LIKE_ROOT_FILES = frozenset({
+    "AGENTS.md",
+    "README.md",
+    "INTEGRATION.md",
+})
+
+REQUIRED_R5_PREREQUISITE_MARKERS = (
+    "reviewed derivation supervision is independent of bootstrap output",
+    "every purpose class contains semantic evaluation denominators",
+    "reviewed ResponseMeaning-to-surface supervision",
+    "unsupported reviewed minima fail without trimming",
+)
+
+REJECTED_ACTIVE_INSTRUCTIONS = (
+    "builds one global connected-component graph",
+    "preserve every exact protected identity from the seven r4 axes as a namespaced leakage hyperedge",
+    "candidate minima are derived only from component support",
+    "the input surface is the realization target",
+    "current-source r4 build receipt abi 4 admission",
+    "current r4 abi-4 admission",
+    "rebuild the global four-class artifacts",
+    "the receipt reconstructs build receipt abi 4",
+    "global four-class graph",
+    "g0-r4 are green",
+    "preserves the admitted g0-r4 contract",
+)
+
+R5_CONDITIONAL_DOCUMENTS = (
+    "docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md",
+    "docs/superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md",
+    "docs/superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md",
+)
+
 GOVERNING_DOCUMENTS = (
     "AGENTS.md",
+    R4_1_AMENDMENT,
     "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
-    "docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md",
-    "docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md",
-    "docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md",
+    "README.md",
+    "INTEGRATION.md",
     "docs/ARCHITECTURE.md",
     "docs/ABI_REGISTRY.md",
-    "docs/superpowers/plans/2026-08-04-hybrid-mvp-r2-implementation-plan.md",
-    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-r4-implementation-plan.md",
-    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-cognition-activation-plan.md",
-    "docs/superpowers/specs/2026-08-12-r4-repository-owned-admission-design.md",
-    "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
+    "docs/REPLAY_GOVERNANCE.md",
+    "docs/IMPLEMENTATION_PLAN.md",
+    "docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md",
+    "docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md",
+    "docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md",
+    "docs/superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md",
+    "docs/superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md",
 )
 
 SUPERSEDED_EXECUTION_CLAIMS = (
@@ -53,14 +95,35 @@ SUPERSEDED_EXECUTION_CLAIMS = (
     "docs/superpowers/plans/2026-07-30-corrective-replay-plan.md",
     "docs/superpowers/specs/2026-08-12-r4-final-admission-closeout-design.md",
     "docs/superpowers/plans/2026-08-12-r4-final-admission-closeout-plan.md",
+    "docs/superpowers/plans/2026-08-04-hybrid-mvp-completion-critical-path.md",
+    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-r4-implementation-plan.md",
+    "docs/superpowers/specs/2026-08-12-r4-repository-owned-admission-design.md",
+    "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
+    "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
+    "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md",
 )
 
 HISTORICAL_EVIDENCE = (
-    "docs/EVALUATION_REPORT.md",
-    "docs/NEURAL_MODEL.md",
+    "docs/AUTHORITY_GOVERNANCE.md",
     "docs/COMPARISON.md",
+    "docs/EVALUATION_PROTOCOL.md",
+    "docs/EVALUATION_REPORT.md",
+    "docs/GRAPH_PROGRAM_ABI.md",
+    "docs/KNOWN_LIMITATIONS.md",
+    "docs/NEURAL_MODEL.md",
+    "docs/RUNTIME_AND_EFFECTS.md",
     "docs/RUNTIME_TRACES.md",
     "docs/WORKTREE_INTEGRATION.md",
+    "docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md",
+    "docs/superpowers/plans/2026-08-04-hybrid-mvp-r2-implementation-plan.md",
+    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-cognition-activation-plan.md",
+    "docs/superpowers/plans/2026-08-12-r1-legacy-test-retirement-plan.md",
+    "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md",
+    "docs/superpowers/plans/2026-08-29-hybrid-authority-cleanup-plan.md",
+    "docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md",
+    "docs/superpowers/progress/2026-08-22-r5-r6-plan-readiness-review.md",
+    "docs/superpowers/specs/2026-08-12-r1-legacy-test-retirement-design.md",
+    "docs/superpowers/specs/2026-08-29-hybrid-authority-cleanup-design.md",
     "artifacts/",
 )
 
@@ -72,6 +135,52 @@ ACTIVE_POINTERS = (
     "docs/ABI_REGISTRY.md",
     "docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md",
 )
+
+CURRENT_STATUS_DOCUMENTS = (
+    "README.md",
+    "INTEGRATION.md",
+    "docs/REPLAY_GOVERNANCE.md",
+    "docs/IMPLEMENTATION_PLAN.md",
+    "docs/ARCHITECTURE.md",
+)
+
+HISTORICAL_STATUS_DOCUMENTS = (
+    "docs/superpowers/plans/2026-08-04-hybrid-mvp-completion-critical-path.md",
+    "docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md",
+    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-r4-implementation-plan.md",
+    "docs/superpowers/plans/2026-08-05-hybrid-mvp-r3-cognition-activation-plan.md",
+    "docs/superpowers/plans/2026-08-04-hybrid-mvp-r2-implementation-plan.md",
+    "docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md",
+    "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
+    "docs/superpowers/specs/2026-08-12-r4-repository-owned-admission-design.md",
+    "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
+)
+
+
+def _assert_current_status_document(relative: str, text: str) -> None:
+    folded = text.casefold()
+    normalized = re.sub(r"\s+", " ", folded)
+    assert "governance/replay_status.jsonl" in text, relative
+    assert (
+        "status is derived" in normalized
+        or "current replay status and exact admission identities are derived only from"
+        in normalized
+    ), relative
+    assert re.search(r"\bG0-R\d\b.*\bR\d-R8\b", text) is None, relative
+    assert re.search(r"\brun:[0-9a-f]{24}\b", text) is None, relative
+    assert "c:\\dev\\cemm\\.worktrees\\hybrid-mvp-g0-r1" not in folded, relative
+    assert "requires external corpus review" not in folded, relative
+
+
+def _assert_historical_status_document(relative: str, text: str) -> None:
+    banner = "\n".join(text.splitlines()[:14])
+    assert "governance/replay_status.jsonl" in banner, relative
+    assert re.search(r"\b(?:historical|completed|superseded)\b", banner, re.I), relative
+    assert re.search(
+        r"^\*\*(?:plan )?status:\*\*",
+        "\n".join(text.splitlines()[:24]),
+        re.I | re.M,
+    ) is None, relative
 
 
 __cemm_test_inventory__ = {
@@ -219,6 +328,14 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "2339dfa89ac4231e90089984be2669fd615e04bb45486eaf2c147d8590353e8d"
     },
+    "tests/test_replay_governance.py::test_r4_preflight_allows_only_abi3_and_abi4_admission_evidence": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-preflight-allows-only-abi3-and-abi4-admission-evidence",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Partition-Corrective-Task-8",
+        "owner_ref": "governance",
+        "source_ast_sha256": "50522aed292e8ff86c63ccbc39c0c0feaf2004c1801a795e0e02b1348832e57c"
+    },
     "tests/test_replay_governance.py::test_candidate_reconstructs_prior_admissions_before_any_transition[green]": {
         "activation_phase": "G0",
         "assertion_ref": "assertion:candidate-reconstructs-prior-admissions-before-any-transition",
@@ -321,7 +438,71 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-1",
         "owner_ref": "governance",
-        "source_ast_sha256": "3b123c5d608b9e17d3c0c51d720edc8a5ee3de42e07b47d2dcfd4143c642b9a6"
+        "source_ast_sha256": "810dda2e63ef27ba21103bcd024a8d6d73b335d0ca869a018c0b87c28dfbcbb8"
+    },
+    "tests/test_replay_governance.py::test_authority_cleanup_classifies_every_authority_like_document_once": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:authority-cleanup-classifies-documents-exactly",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-1",
+        "owner_ref": "governance",
+        "source_ast_sha256": "d74d016b5ec477aac3a78b3e715fdb0b6ffdbcde59ceccb72f84de6c031ca50a"
+    },
+    "tests/test_replay_governance.py::test_r4_1_amendment_owns_authentic_r5_prerequisites": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:r4-1-amendment-owns-r5-prerequisites",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-1",
+        "owner_ref": "governance",
+        "source_ast_sha256": "be6df0f7f7bb1d9df2d1312888e2ed90f4db25a664d7b0033d3de5fe4727c11c"
+    },
+    "tests/test_replay_governance.py::test_governing_documents_do_not_prescribe_rejected_r4_r5_paths": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governing-documents-reject-r4-r5-regression-paths",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "250745edec4ddfd193f33babb82ba2cff3cdccd5f7f1b7d9fe7f8580d788fe0b"
+    },
+    "tests/test_replay_governance.py::test_superseded_execution_documents_have_prominent_successor_banners": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:superseded-documents-have-successor-banners",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "5ed3abe50f1d59971eb16ad611af1ca8a7b3c30bd88ac11d89f8f2c1bde9c14c"
+    },
+    "tests/test_replay_governance.py::test_r5_placeholder_docstrings_do_not_claim_admitted_semantics": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:r5-placeholder-docstrings-are-truthful",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-3",
+        "owner_ref": "governance",
+        "source_ast_sha256": "b0343442a4fa2160c28462a3d2c408dfcc350ca61cc88b6d1c0b157199169c11"
+    },
+    "tests/test_replay_governance.py::test_active_hybrid_workflows_cannot_rewrite_governed_source": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:active-hybrid-workflows-cannot-rewrite-source",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-4",
+        "owner_ref": "governance",
+        "source_ast_sha256": "0c03ae5af33f1797613c3120bb16e31a647afb5855dbbb9bf885c03784b1cea3"
+    },
+    "tests/test_replay_governance.py::test_governing_r5_documents_require_external_r4_1_prerequisite": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governing-r5-documents-require-external-r4-1",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-5-Review",
+        "owner_ref": "governance",
+        "source_ast_sha256": "bbd1a5f56497e8cb9d3b56d23c0d80448839e1f638b3d8db386d62c56a945a5a"
+    },
+    "tests/test_replay_governance.py::test_historical_markdown_documents_have_status_neutral_banners": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:historical-markdown-has-status-neutral-banners",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-5-Review",
+        "owner_ref": "governance",
+        "source_ast_sha256": "0ba98465f4dda3fb20fb6ce790f26f5421ef1fa7389d7f0f61b2eba2d87dbdc4"
     },
     "tests/test_replay_governance.py::test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix": {
         "activation_phase": "G0",
@@ -515,6 +696,14 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "fb7309e4eb1a59e8540ea67f1c3fe9c1a61474777e391b3e54ae409493e55078"
     },
+    "tests/test_replay_governance.py::test_r4_multi_admission_verify_uses_historical_evidence_without_live_files": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-multi-admission-verify-uses-historical-evidence-without-live-files",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Partition-Corrective-Task-8",
+        "owner_ref": "governance",
+        "source_ast_sha256": "2e6db4931f48f9230a3d67b9bfadc91c8f83f6dff2b96d5895c9f1c63f06d321"
+    },
     "tests/test_replay_governance.py::test_red_candidate_without_prior_admissions_scans_dirty_status_once": {
         "activation_phase": "G0",
         "assertion_ref": "assertion:red-candidate-without-prior-admissions-scans-dirty-status-once",
@@ -690,13 +879,137 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "G0-Task-2",
         "owner_ref": "governance",
         "source_ast_sha256": "6b2315aab7f4ddce2e3d52eeba8adb519d8557346ac45adece0e35e0e54067eb"
+    },
+    "tests/test_replay_governance.py::test_corrective_tracker_is_operational_not_status_authority": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:corrective-tracker-is-operational-not-status-authority",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R4-Partition-Corrective-Task-1",
+        "source_ast_sha256": "523f5ccfefa21a5e35710d140014c041e0ef2ba768ffe3d111aadf65a3993d97"
+    },
+    "tests/test_replay_governance.py::test_r4_partition_corrective_documents_are_superseded": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:r4-partition-corrective-documents-are-superseded",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-1",
+        "owner_ref": "governance",
+        "source_ast_sha256": "624ebbe3db3db3b638eba09857c8c147e802a77777ac66c7461551c83f7bc15f"
+    },
+    "tests/test_replay_governance.py::test_r4_partition_defect_binding_matches_current_pre_invalidation_artifacts": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-partition-defect-binding-matches-current-pre-invalidation-artifacts",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R4-Partition-Corrective-Task-1",
+        "source_ast_sha256": "6ede0f0b23177148ad344b7d69bb6245bc197d0531e3b2659a5f4b659a9db0d3"
+    },
+
+    "tests/test_replay_governance.py::test_r4_partition_defect_binding_matches_invalidated_source_base": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-partition-defect-binding-matches-current-pre-invalidation-artifacts",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R4-Partition-Corrective-Task-2",
+        "source_ast_sha256": "24d967e42130097eafa992acdb96f565dc5b7b91b0310dd8a55f804537dc475b",
+        "supersedes_node_id": "tests/test_replay_governance.py::test_r4_partition_defect_binding_matches_current_pre_invalidation_artifacts"
+    },
+    "tests/test_replay_governance.py::test_r5_governing_plan_uses_exact_frozen_inventory_partition": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-governing-plan-uses-exact-frozen-inventory-partition",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-0",
+        "source_ast_sha256": "51d3975e9ebf074c3b68b816112b5883abe1c90a846b7c837b5c5c6ccf4dd3c3"
+    },
+    "tests/test_replay_governance.py::test_r5_appendix_guard_rejects_wrong_section_and_owner_mutations": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-appendix-guard-rejects-wrong-section-and-owner-mutations",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-0-Review-Fix",
+        "source_ast_sha256": "7eefb5752b86c7ae24fad2ad5d38003ed6c472062df52bba56f207ff10cd6295"
+    },
+    "tests/test_replay_governance.py::test_r5_active_docs_publish_truthful_foundation_boundary": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-active-docs-publish-truthful-foundation-boundary",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "R5-Task-9",
+        "source_ast_sha256": "6854ac97c28b1334d8ef959322c67f7513e901b7da949543a43e9a6db9290d68"
     }
 }
 
-def _authority() -> dict[str, object]:
-    return json.loads(
-        (ROOT / "docs/DOCUMENT_AUTHORITY.json").read_text(encoding="utf-8")
+def _strict_json_object(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if type(key) is not str or key in result:
+            raise ValueError(f"duplicate or non-string JSON key: {key!r}")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite_json(value: str) -> object:
+    raise ValueError(f"non-finite JSON value: {value}")
+
+
+def _strict_document_authority() -> dict[str, object]:
+    raw = (ROOT / "docs/DOCUMENT_AUTHORITY.json").read_bytes()
+    assert raw.endswith(b"\n")
+    authority = json.loads(
+        raw.decode("utf-8", errors="strict"),
+        object_pairs_hook=_strict_json_object,
+        parse_constant=_reject_nonfinite_json,
     )
+    assert type(authority) is dict
+    return authority
+
+
+def _authority() -> dict[str, object]:
+    return _strict_document_authority()
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _bounded_git_blob_at(
+    source_base: str,
+    relative: str,
+    *,
+    maximum: int,
+) -> bytes:
+    assert re.fullmatch(r"[0-9a-f]{40}(?:[0-9a-f]{24})?", source_base)
+    path = PurePosixPath(relative)
+    assert not path.is_absolute()
+    assert path.parts and ".." not in path.parts and "\\" not in relative
+    assert path.as_posix() == relative
+    assert type(maximum) is int and maximum > 0
+    expression = f"{source_base}:hybrid_mvp/{relative}"
+    metadata = governance._run_bounded_git_stdout(
+        (
+            "git",
+            "--no-replace-objects",
+            "-C",
+            str(ROOT.parent),
+            "cat-file",
+            "--batch-check=%(objectname) %(objecttype) %(objectsize)",
+        ),
+        max_bytes=512,
+        input_bytes=(expression + "\n").encode("ascii"),
+    )
+    rows = metadata.splitlines()
+    assert len(rows) == 1
+    fields = rows[0].split()
+    assert len(fields) == 3
+    object_id = fields[0].decode("ascii")
+    object_type = fields[1].decode("ascii")
+    size = int(fields[2])
+    assert re.fullmatch(r"[0-9a-f]{40}(?:[0-9a-f]{24})?", object_id)
+    assert object_type == "blob"
+    assert 0 < size <= maximum
+    blobs = governance._git_batch_load_checked_blobs(
+        ROOT.parent,
+        (governance._CheckedBlob(source_base, object_id, size),),
+    )
+    assert set(blobs) == {source_base}
+    return blobs[source_base]
 
 
 def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
@@ -714,7 +1027,7 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
     assert authority["generated_artifacts_are_authority"] is False
     assert authority["root_adoption_requires_separate_review"] is True
 
-    amendment = (ROOT / GOVERNING_DOCUMENTS[1]).read_text(encoding="utf-8")
+    amendment = (ROOT / GOVERNING_DOCUMENTS[2]).read_text(encoding="utf-8")
     assert "SemanticSwitchProgram" in amendment
     assert "SemanticExpression" in amendment
     assert "VerifiedMeaning" in amendment
@@ -740,6 +1053,526 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
     root_authority = (ROOT / str(authority["root_runtime_authority"])).resolve()
     assert root_authority == (ROOT.parent / "AGENTS.md").resolve()
     assert root_authority.is_file()
+
+    for relative in CURRENT_STATUS_DOCUMENTS:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        _assert_current_status_document(relative, text)
+
+    mutation_source = (ROOT / CURRENT_STATUS_DOCUMENTS[0]).read_text(encoding="utf-8")
+    for mutation in (
+        mutation_source + "\nG0-R4 are green; R5-R8 are red.\n",
+        mutation_source + "\nAdmission run: run:0123456789abcdef01234567.\n",
+    ):
+        with pytest.raises(AssertionError):
+            _assert_current_status_document(CURRENT_STATUS_DOCUMENTS[0], mutation)
+
+    current_text = "\n".join(
+        (ROOT / relative).read_text(encoding="utf-8")
+        for relative in CURRENT_STATUS_DOCUMENTS
+    )
+    assert "cannot by itself establish class-local semantic usability" in current_text
+
+    for relative in HISTORICAL_STATUS_DOCUMENTS:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        _assert_historical_status_document(relative, text)
+
+    publication_status = "**Status at publication:**"
+    mutation_source = (ROOT / HISTORICAL_STATUS_DOCUMENTS[2]).read_text(encoding="utf-8")
+    assert publication_status in mutation_source
+    mutation = mutation_source.replace(publication_status, "**Status:**", 1)
+    with pytest.raises(AssertionError):
+        _assert_historical_status_document(HISTORICAL_STATUS_DOCUMENTS[2], mutation)
+
+
+
+def test_authority_cleanup_classifies_every_authority_like_document_once() -> None:
+    authority = _authority()
+    classes = (
+        tuple(authority["governing_documents"]),
+        tuple(authority["superseded_execution_claims"]),
+        tuple(authority["historical_evidence"]),
+    )
+    classified = set().union(*(set(rows) for rows in classes))
+    counts = Counter(relative for rows in classes for relative in rows)
+    markdown = {
+        path.relative_to(ROOT).as_posix()
+        for path in (ROOT / "docs").rglob("*.md")
+    }
+    assert markdown | AUTHORITY_LIKE_ROOT_FILES <= classified
+    assert all(count == 1 for count in counts.values()), counts
+    for index, left in enumerate(classes):
+        for right in classes[index + 1 :]:
+            assert set(left).isdisjoint(right)
+    assert authority["governing_documents"][0] == "AGENTS.md"
+    assert authority["governing_documents"][1] == R4_1_AMENDMENT
+
+
+def test_r4_1_amendment_owns_authentic_r5_prerequisites() -> None:
+    authority = _authority()
+    assert R4_1_AMENDMENT in authority["governing_documents"]
+    text = (ROOT / R4_1_AMENDMENT).read_text(encoding="utf-8")
+    for marker in REQUIRED_R5_PREREQUISITE_MARKERS:
+        assert marker in text
+    assert "governance/replay_status.jsonl" in text
+    assert "root adoption" in text.casefold()
+
+
+def test_governing_documents_do_not_prescribe_rejected_r4_r5_paths() -> None:
+    authority = _authority()
+    for relative in authority["governing_documents"]:
+        raw = (ROOT / relative).read_text(encoding="utf-8").casefold()
+        text = re.sub(r"-\s*\n\s*", "-", raw)
+        text = re.sub(r"\s+", " ", text)
+        for rejected in REJECTED_ACTIVE_INSTRUCTIONS:
+            assert rejected not in text, (relative, rejected)
+
+
+def test_superseded_execution_documents_have_prominent_successor_banners() -> None:
+    authority = _authority()
+    for relative in authority["superseded_execution_claims"]:
+        banner = "\n".join((ROOT / relative).read_text(encoding="utf-8").splitlines()[:14])
+        assert "superseded" in banner.casefold(), relative
+        assert "governance/replay_status.jsonl" in banner, relative
+
+
+def test_governing_r5_documents_require_external_r4_1_prerequisite() -> None:
+    authority = _authority()
+    governing = set(authority["governing_documents"])
+    for relative in R5_CONDITIONAL_DOCUMENTS:
+        assert relative in governing
+        raw = (ROOT / relative).read_text(encoding="utf-8").casefold()
+        text = re.sub(r"\s+", " ", raw)
+        assert "r4.1 is an external prerequisite" in text, relative
+        assert "fresh r4.1 admission" in text, relative
+        assert "cannot implement, rebuild, publish, or admit r4.1" in text, relative
+        assert "governance/replay_status.jsonl" in text, relative
+
+
+def test_historical_markdown_documents_have_status_neutral_banners() -> None:
+    authority = _authority()
+    historical = tuple(
+        relative
+        for relative in authority["historical_evidence"]
+        if relative.endswith(".md")
+    )
+    assert historical
+    for relative in historical:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        _assert_historical_status_document(relative, text)
+
+
+def test_r5_placeholder_docstrings_do_not_claim_admitted_semantics() -> None:
+    realization = (
+        ROOT / "src/cemm_authoritative_hybrid/realization.py"
+    ).read_text(encoding="utf-8")
+    training = (
+        ROOT / "src/cemm_authoritative_hybrid/training.py"
+    ).read_text(encoding="utf-8")
+    realization_tree = ast.parse(realization)
+    realization_classes = {
+        node.name: node
+        for node in realization_tree.body
+        if isinstance(node, ast.ClassDef)
+    }
+    assert "marker-based diagnostic" in (ast.get_docstring(realization_tree) or "")
+    verifier_doc = ast.get_docstring(realization_classes["RealizationVerifier"]) or ""
+    assert "does not establish canonical-expression equivalence" in verifier_doc
+    realizer_doc = ast.get_docstring(realization_classes["NeuralConstrainedRealizer"]) or ""
+    assert "marker-based diagnostic" in realizer_doc
+
+    training_tree = ast.parse(training)
+    training_functions = {
+        node.name: node
+        for node in training_tree.body
+        if isinstance(node, ast.FunctionDef)
+    }
+    assert "collision-prone diagnostic bucket" in (
+        ast.get_docstring(training_functions["_surface_to_target"]) or ""
+    )
+    assert "not reviewed derivation supervision" in (
+        ast.get_docstring(training_functions["_selected_program_actions"]) or ""
+    )
+    classes = {
+        node.name: node
+        for node in training_tree.body
+        if isinstance(node, ast.ClassDef)
+    }
+    proposal_fit = next(
+        node
+        for node in classes["ReleaseProposalTrainer"].body
+        if isinstance(node, ast.FunctionDef) and node.name == "fit"
+    )
+    realizer_fit = next(
+        node
+        for node in classes["ReleaseRealizerTrainer"].body
+        if isinstance(node, ast.FunctionDef) and node.name == "fit"
+    )
+    assert "input utterance is not an authorized response target" not in (
+        ast.get_docstring(proposal_fit) or ""
+    )
+    assert "input utterance is not an authorized response target" in (
+        ast.get_docstring(realizer_fit) or ""
+    )
+
+
+def test_active_hybrid_workflows_cannot_rewrite_governed_source() -> None:
+    workflows = ROOT.parent / ".github/workflows"
+    forbidden = (
+        "contents: write",
+        "git push",
+        ".github/r3_close_apply.py",
+        "base64 --decode",
+        "frombase64string",
+    )
+    offenders: list[tuple[str, str]] = []
+    for path in sorted((*workflows.glob("*.yml"), *workflows.glob("*.yaml"))):
+        text = path.read_text(encoding="utf-8").casefold()
+        for marker in forbidden:
+            if marker in text:
+                offenders.append((path.name, marker))
+    assert not offenders, offenders
+
+
+def test_r4_partition_corrective_documents_are_superseded() -> None:
+    authority = _strict_document_authority()
+    governing = set(authority["governing_documents"])
+    superseded = set(authority["superseded_execution_claims"])
+    paths = {
+        "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
+        "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md",
+    }
+    assert paths <= superseded
+    assert paths.isdisjoint(governing)
+
+
+def test_r4_partition_defect_binding_matches_current_pre_invalidation_artifacts() -> None:
+    allowlist = ROOT / "artifacts/r4/training_allowlist.json"
+    receipt = ROOT / "artifacts/r4/BUILD_RECEIPT.json"
+    design = (ROOT / "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md").read_text(encoding="utf-8")
+    assert _sha256(allowlist) == (
+        "3c47c3e66771add72a541342a5669ef5c93286356eb1ae0c0de9eb86d9b3d2db"
+    )
+    assert _sha256(receipt) == (
+        "0069ae2c8a301700498aba4801df96205f9166938e1b21d3336aa1768d75dec6"
+    )
+    assert "training_allowlist_v2:51c0cc234805cdda54f8e2c7" in design
+    assert "r4_build_v3:5d5eee0ee8c0e7bb1bcba522" in design
+
+
+def test_r4_partition_defect_binding_matches_invalidated_source_base(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    records = read_hash_chain(ROOT / "governance/replay_status.jsonl")
+    red_rows = [
+        record
+        for record in records[9:]
+        if record["phase"] == "R4" and record["status"] == "red"
+    ]
+    assert len(red_rows) == 1
+    red = red_rows[0]
+    sequence = red["sequence"]
+    assert type(sequence) is int and sequence > 0
+    assert red["predecessor_ref"] == records[sequence - 1]["record_ref"]
+    assert red["admission_gate_result_ref"] is None
+    assert red["admission_run_ref"] is None
+    assert red["rationale"] == "Invalidated R4 pending a fresh admission receipt."
+    source_base = red["source_base"]
+    assert type(source_base) is str
+
+    blocked = {
+        (ROOT / "artifacts/r4/training_allowlist.json").resolve(),
+        (ROOT / "artifacts/r4/BUILD_RECEIPT.json").resolve(),
+        (
+            ROOT
+            / "docs/superpowers/specs/"
+            "2026-08-14-r4-partition-corrective-replay-design.md"
+        ).resolve(),
+    }
+    original_read_bytes = Path.read_bytes
+    original_read_text = Path.read_text
+
+    def reject_current_bytes(path: Path) -> bytes:
+        if path.resolve() in blocked:
+            raise AssertionError("historical defect binding read a mutable current file")
+        return original_read_bytes(path)
+
+    def reject_current_text(
+        path: Path, *args: object, **kwargs: object
+    ) -> str:
+        if path.resolve() in blocked:
+            raise AssertionError("historical defect binding read a mutable current file")
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_bytes", reject_current_bytes)
+    monkeypatch.setattr(Path, "read_text", reject_current_text)
+
+    allowlist_raw = _bounded_git_blob_at(
+        source_base, "artifacts/r4/training_allowlist.json", maximum=1024 * 1024
+    )
+    receipt_raw = _bounded_git_blob_at(
+        source_base, "artifacts/r4/BUILD_RECEIPT.json", maximum=1024 * 1024
+    )
+    design_raw = _bounded_git_blob_at(
+        source_base,
+        "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
+        maximum=2 * 1024 * 1024,
+    )
+
+    assert hashlib.sha256(allowlist_raw).hexdigest() == (
+        "3c47c3e66771add72a541342a5669ef5c93286356eb1ae0c0de9eb86d9b3d2db"
+    )
+    assert hashlib.sha256(receipt_raw).hexdigest() == (
+        "0069ae2c8a301700498aba4801df96205f9166938e1b21d3336aa1768d75dec6"
+    )
+    allowlist = json.loads(allowlist_raw.decode("utf-8", errors="strict"))
+    receipt = json.loads(receipt_raw.decode("utf-8", errors="strict"))
+    design = design_raw.decode("utf-8", errors="strict")
+    assert allowlist["allowlist_ref"] == (
+        "training_allowlist_v2:51c0cc234805cdda54f8e2c7"
+    )
+    assert receipt["receipt_ref"] == "r4_build_v3:5d5eee0ee8c0e7bb1bcba522"
+    assert "training_allowlist_v2:51c0cc234805cdda54f8e2c7" in design
+    assert "r4_build_v3:5d5eee0ee8c0e7bb1bcba522" in design
+
+
+def test_corrective_tracker_is_operational_not_status_authority() -> None:
+    text = (ROOT / "docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md").read_text(encoding="utf-8")
+    assert "governance/replay_status.jsonl" in text
+    assert "never replay-status authority" in text
+    assert not re.search(r"run:[0-9a-f]{24}", text)
+
+
+_R5_SUCCESSOR_CONTRACT = {
+    "tests/test_artifact_security.py::test_current_model_lock_hash_is_stable": ("tests/test_r5_artifact_contract.py::test_current_model_lock_hash_is_stable", "artifact-contract"),
+    "tests/test_artifact_security.py::test_current_python_abi_matches_runtime": ("tests/test_r5_artifact_contract.py::test_current_python_abi_matches_runtime", "artifact-contract"),
+    "tests/test_artifact_security.py::test_identity_mismatch_fails_before_tensor_use": ("tests/test_r5_artifact_contract.py::test_identity_mismatch_fails_before_tensor_use", "artifact-contract"),
+    "tests/test_artifact_security.py::test_manifest_tamper_fails_before_tensor_use": ("tests/test_r5_artifact_contract.py::test_manifest_tamper_fails_before_tensor_use", "artifact-contract"),
+    "tests/test_artifact_security.py::test_metadata_tamper_fails_before_tensor_use": ("tests/test_r5_artifact_contract.py::test_metadata_tamper_fails_before_tensor_use", "artifact-contract"),
+    "tests/test_artifact_security.py::test_model_dependency_lock_mismatch_fails_before_tensor_use": ("tests/test_r5_artifact_contract.py::test_model_dependency_lock_mismatch_fails_before_tensor_use", "artifact-contract"),
+    "tests/test_artifact_security.py::test_no_production_module_calls_unsafe_torch_load": ("tests/test_r5_artifact_contract.py::test_no_production_module_calls_unsafe_torch_load", "artifact-contract"),
+    "tests/test_artifact_security.py::test_python_abi_mismatch_fails_before_tensor_use": ("tests/test_r5_artifact_contract.py::test_python_abi_mismatch_fails_before_tensor_use", "artifact-contract"),
+    "tests/test_artifact_security.py::test_safe_safetensors_load_file_is_allowed_in_source_scan": ("tests/test_r5_artifact_contract.py::test_safe_safetensors_load_file_is_allowed_in_source_scan", "artifact-contract"),
+    "tests/test_artifact_security.py::test_tail_tamper_fails_before_tensor_use": ("tests/test_r5_artifact_contract.py::test_tail_tamper_fails_before_tensor_use", "artifact-contract"),
+    "tests/test_artifact_security.py::test_valid_artifact_loads": ("tests/test_r5_artifact_contract.py::test_valid_artifact_loads", "artifact-contract"),
+    "tests/test_canonical.py::test_tensor_identity_changes_on_byte_tamper": ("tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_byte_tamper", "artifact-contract"),
+    "tests/test_canonical.py::test_tensor_identity_changes_on_dtype": ("tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_dtype", "artifact-contract"),
+    "tests/test_canonical.py::test_tensor_identity_changes_on_shape": ("tests/test_r5_artifact_contract.py::test_tensor_identity_changes_on_shape", "artifact-contract"),
+    "tests/test_canonical.py::test_tensor_identity_is_byte_and_shape_deterministic": ("tests/test_r5_artifact_contract.py::test_tensor_identity_is_byte_and_shape_deterministic", "artifact-contract"),
+    "tests/test_neural_proposer.py::test_release_runtime_requires_neural_switch_proposer": ("tests/test_r5_public_runtime_selection.py::test_release_runtime_requires_selected_neural_proposer", "proposal-contract"),
+    "tests/test_neural_weight_use.py::test_release_path_does_not_delegate_to_bootstrap": ("tests/test_r5_public_runtime_selection.py::test_release_runtime_does_not_delegate_to_bootstrap", "proposal-contract"),
+}
+
+_R5_DEFERRED_BY_OWNER = {
+    "calibration-contract": {
+        "tests/test_calibration.py::test_calibration_error_within_threshold",
+        "tests/test_calibration.py::test_calibration_pins_model_identities",
+        "tests/test_calibration.py::test_calibration_records_confidence_bins",
+    },
+    "reproduction-contract": {
+        "tests/test_model_reproducibility.py::test_reproducibility_receipt_exists",
+        "tests/test_model_reproducibility.py::test_reproducibility_receipt_records_proposal_identity",
+        "tests/test_model_reproducibility.py::test_reproducibility_receipt_records_realizer_identity",
+        "tests/test_model_reproducibility.py::test_reproducibility_receipt_records_scratch_outside_repo",
+        "tests/test_model_reproducibility.py::test_retraining_produces_same_proposal_identity",
+        "tests/test_model_reproducibility.py::test_retraining_produces_same_realizer_identity",
+    },
+    "proposal-contract": {
+        "tests/test_neural_proposer.py::test_internal_ref_spelling_does_not_affect_model_logits",
+        "tests/test_neural_proposer.py::test_neural_decoder_never_emits_masked_action",
+        "tests/test_neural_proposer.py::test_proposal_model_capacity_is_bounded",
+        "tests/test_training_isolation.py::test_model_uses_dynamic_semantic_slots_not_ref_spelling",
+        "tests/test_training_isolation.py::test_release_artifact_pins_all_semantic_inputs",
+    },
+    "weight-use-contract": {
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_answer_cannot_fall_back_when_network_fails",
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_invokes_loaded_weights",
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_records_decoder_invocations",
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_normal_realization_records_model_identity",
+        "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_zero_weight_realizer_loses_domain_generation_accuracy",
+        "tests/test_neural_weight_use.py::test_release_proposal_invokes_loaded_weights",
+        "tests/test_neural_weight_use.py::test_weight_ablation_breaks_learned_selection",
+    },
+    "selection-contract": {
+        "tests/test_production_proposer_cutover.py::test_compatible_new_designation_keeps_model_active",
+        "tests/test_production_proposer_cutover.py::test_neural_profile_loads_from_artifact",
+        "tests/test_training_isolation.py::test_combined_trainable_capacity_is_bounded",
+    },
+    "realization-contract": {
+        "tests/test_training_isolation.py::test_realizer_release_artifact_pins_all_semantic_inputs",
+    },
+}
+
+_R5_RETIRED_CONTRACT = {
+    "tests/test_neural_realizer_weight_use.py::TestNeuralRealizerWeightUse::test_failure_meaning_uses_safe_fallback": "`hybrid_mvp/AGENTS.md` section 7 requires zero fallback paths in final release gates; preserving this requirement would reintroduce forbidden fallback behavior."
+}
+
+
+def _markdown_code(cell: str) -> str:
+    assert cell.startswith("`") and cell.endswith("`")
+    return cell[1:-1]
+
+
+def _parse_r5_appendix(plan: str) -> dict[str, dict[str, str]]:
+    appendix = plan.split("## Appendix A: Exact frozen R5 disposition", 1)[1]
+    appendix = appendix.split("## Appendix B: Forbidden implementation shortcuts", 1)[0]
+    section = ""
+    parsed: dict[str, dict[str, str]] = {}
+    headings = {
+        "### Successor now — 17": "successor",
+        "### Explicit retirement — 1": "retired",
+        "### Deferred to R5-Neural-Activation — 25": "deferred",
+    }
+    for line in appendix.splitlines():
+        if line in headings:
+            section = headings[line]
+            continue
+        if not line.startswith("|") or line.startswith("|---") or "| # |" in line:
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        assert section
+        if section == "successor":
+            assert len(cells) == 5
+            _, source, assertion, successor, owner = cells
+            record = {"disposition": section, "assertion_ref": _markdown_code(assertion), "successor_node": _markdown_code(successor), "current_owner": _markdown_code(owner)}
+        elif section == "deferred":
+            assert len(cells) == 5
+            _, source, assertion, future_task, future_owner = cells
+            record = {"disposition": section, "assertion_ref": _markdown_code(assertion), "future_task": _markdown_code(future_task), "future_owner": _markdown_code(future_owner)}
+        else:
+            assert len(cells) == 4
+            _, source, assertion, reason = cells
+            record = {"disposition": section, "assertion_ref": _markdown_code(assertion), "retirement_reason": reason}
+        source_ref = _markdown_code(source)
+        assert source_ref not in parsed
+        parsed[source_ref] = record
+    return parsed
+
+
+def _validate_r5_appendix(plan: str, inventory: dict[str, object]) -> None:
+    inventory_rows = {
+        row["source_test_ref"]: row
+        for row in inventory["source_tests"]
+        if row["activation_phase"] == "R5"
+    }
+    deferred_contract = {
+        source_ref: owner
+        for owner, source_refs in _R5_DEFERRED_BY_OWNER.items()
+        for source_ref in source_refs
+    }
+    expected_refs = (
+        set(_R5_SUCCESSOR_CONTRACT)
+        | set(deferred_contract)
+        | set(_R5_RETIRED_CONTRACT)
+    )
+    parsed = _parse_r5_appendix(plan)
+
+    assert len(inventory_rows) == 43
+    assert len(_R5_SUCCESSOR_CONTRACT) == 17
+    assert len(deferred_contract) == 25
+    assert len(_R5_RETIRED_CONTRACT) == 1
+    assert expected_refs == set(inventory_rows) == set(parsed)
+    for source_ref, inventory_row in inventory_rows.items():
+        record = parsed[source_ref]
+        assert record["assertion_ref"] == inventory_row["assertion_ref"]
+        if source_ref in _R5_SUCCESSOR_CONTRACT:
+            successor, owner = _R5_SUCCESSOR_CONTRACT[source_ref]
+            assert record == {"disposition": "successor", "assertion_ref": inventory_row["assertion_ref"], "successor_node": successor, "current_owner": owner}
+        elif source_ref in deferred_contract:
+            assert record == {"disposition": "deferred", "assertion_ref": inventory_row["assertion_ref"], "future_task": "R5-Neural-Activation", "future_owner": deferred_contract[source_ref]}
+        else:
+            assert record == {"disposition": "retired", "assertion_ref": inventory_row["assertion_ref"], "retirement_reason": _R5_RETIRED_CONTRACT[source_ref]}
+
+
+def test_r5_governing_plan_uses_exact_frozen_inventory_partition() -> None:
+    inventory = json.loads(
+        (ROOT / "governance/test_inventory.json").read_text(encoding="utf-8")
+    )
+    plan = (
+        ROOT / "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md"
+    ).read_text(encoding="utf-8")
+    design = (
+        ROOT / "docs/superpowers/specs/2026-08-13-r5-hard-cut-foundation-design.md"
+    ).read_text(encoding="utf-8")
+
+    _validate_r5_appendix(plan, inventory)
+    assert "17 `successor`, 25 `deferred`, 1 `retired`" in plan
+    assert "counts `17/25/1`" in plan
+    assert "17 successors, 25 deferrals, and 1 explicit retirement" in design
+    assert "17 `successor`, 26 `deferred`, 0 `retired`" not in plan
+    assert "17/26/0" not in plan
+
+
+def test_r5_appendix_guard_rejects_wrong_section_and_owner_mutations() -> None:
+    inventory = json.loads(
+        (ROOT / "governance/test_inventory.json").read_text(encoding="utf-8")
+    )
+    plan = (
+        ROOT / "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md"
+    ).read_text(encoding="utf-8")
+    successor_row = next(
+        line
+        for line in plan.splitlines()
+        if "tests/test_artifact_security.py::test_current_model_lock_hash_is_stable"
+        in line
+    )
+    moved_to_deferred = plan.replace(successor_row + "\n", "", 1).replace(
+        "### Deferred to R5-Neural-Activation — 25",
+        "### Deferred to R5-Neural-Activation — 25\n\n" + successor_row,
+        1,
+    )
+    wrong_owner = plan.replace(
+        "`tests/test_r5_artifact_contract.py::test_current_model_lock_hash_is_stable` | `artifact-contract`",
+        "`tests/test_r5_artifact_contract.py::test_current_model_lock_hash_is_stable` | `proposal-contract`",
+        1,
+    )
+
+    for mutated in (moved_to_deferred, wrong_owner):
+        with pytest.raises(AssertionError):
+            _validate_r5_appendix(mutated, inventory)
+
+
+def test_r5_active_docs_publish_truthful_foundation_boundary() -> None:
+    architecture = (ROOT / "docs/ARCHITECTURE.md").read_text(encoding="utf-8")
+    registry = (ROOT / "docs/ABI_REGISTRY.md").read_text(encoding="utf-8")
+    master = (
+        ROOT
+        / "docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md"
+    ).read_text(encoding="utf-8")
+    r5_plan = (
+        ROOT / "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md"
+    ).read_text(encoding="utf-8")
+    gate_config = json.loads(
+        (ROOT / "configs/validation_gates.json").read_text(encoding="utf-8")
+    )
+
+    assert "R5 hard-cut foundation boundary" in architecture
+    assert "source, owner and phase gates pass" in architecture
+    assert "admission remains unavailable" in architecture
+    assert "R5-Neural-Activation" in architecture
+    assert "canonical train partition only" in architecture
+
+    assert "| R5 Test Disposition ABI | **1** |" in registry
+    assert "| R5 Foundation Contract ABI | **1** |" in registry
+    assert "scripts/generate_r5_test_dispositions.py" in registry
+    assert "schemas/r5_test_dispositions.schema.json" in registry
+    assert "schemas/r5_foundation.schema.json" in registry
+    assert "Deferral is not admission evidence" in registry
+
+    assert "## R5 hard-cut foundation addendum" in master
+    assert "17 successors, 25 deferrals and 1 retirement" in master
+    migrated_refs = re.findall(r"active_test_nodes:[0-9a-f]{24}", master)
+    assert len(migrated_refs) == len(set(migrated_refs)) == 2
+    assert "current source selection identities, not rewritten historical" in master
+    assert "zero-collection lineage carrier" in master
+    assert "Deferral is not admission" in master
+    assert "zero-collection" in r5_plan
+    assert "separate reviewed immutable-inventory migration" in r5_plan
+    assert "python scripts/update_replay_status.py --verify-chain" in r5_plan
+    assert "--show-effective" not in r5_plan
+    assert (
+        "tests/test_replay_governance.py::test_r5_active_docs_publish_truthful_foundation_boundary"
+        in gate_config["steps"]["r5_phase_tests"]["exact_nodes"]
+    )
 
 
 def test_governing_pointers_make_no_old_admission_claim() -> None:
@@ -1506,6 +2339,36 @@ def test_candidate_preflight_allows_exact_run_phase_and_fixed_evidence(
         script._preflight_owner_import("G0", run_ref)
 
 
+def test_r4_preflight_allows_only_abi3_and_abi4_admission_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    script = _load_update_script()
+    run_ref = "run:" + "1" * 24
+    exact_run = "artifacts/validation/runs/" + "1" * 24 + ".json"
+    r4_dirty = frozenset(
+        {
+            exact_run,
+            "artifacts/r4/training_allowlist.json",
+            "artifacts/r4/partition_evidence.json",
+            "artifacts/r4/splits/train.jsonl",
+        }
+    )
+    monkeypatch.setattr(script, "_dirty_hybrid_paths", lambda: r4_dirty)
+    script._preflight_owner_import("R4", run_ref)
+    assert script._PHASE_ADMISSION_EVIDENCE_PATHS["R4"] == (
+        script._R4_HISTORICAL_ABI3_EVIDENCE_PATHS
+        | script._R4_CURRENT_ABI4_EVIDENCE_PATHS
+    )
+
+    monkeypatch.setattr(
+        script,
+        "_dirty_hybrid_paths",
+        lambda: r4_dirty | {"artifacts/r4/legacy_compatibility.json"},
+    )
+    with pytest.raises(GovernanceError, match="dirty governed input"):
+        script._preflight_owner_import("R4", run_ref)
+
+
 def test_owner_loads_exact_reviewed_file_and_rejects_broad_error_alias(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -2009,6 +2872,58 @@ def test_multi_admission_verify_aggregates_exact_paths_before_dirty_narrowing(
         require_evidence_files=False,
     )
     assert allowed == frozenset((*paths_by_phase["G0"], *paths_by_phase["R1"]))
+
+
+def test_r4_multi_admission_verify_uses_historical_evidence_without_live_files(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    script = _load_update_script()
+    records = _initial_status_records()
+    g_gate, g_run = "gate_result:" + "2" * 24, "run:" + "2" * 24
+    r_gate, r_run = "gate_result:" + "3" * 24, "run:" + "3" * 24
+    _append_status(
+        records, phase="G0", status="green", gate_ref=g_gate, run_ref=g_run
+    )
+    _append_status(
+        records,
+        phase="R4",
+        status="green",
+        gate_ref=r_gate,
+        run_ref=r_run,
+        source_base="b" * 40,
+    )
+    paths_by_phase = {
+        "G0": (
+            "artifacts/validation/runs/" + "2" * 24 + ".json",
+        ),
+        "R4": (
+            "artifacts/r4/training_allowlist.json",
+            "artifacts/validation/runs/" + "3" * 24 + ".json",
+        ),
+    }
+
+    def loader(**kwargs):
+        phase = kwargs["phase"]
+        run_ref = g_run if phase == "G0" else r_run
+        return _receipt_for_admitted_run(records, run_ref), paths_by_phase[phase]
+
+    owner = script.AdmissionOwner(ValueError, loader, _accept_current_source_config)
+    dirty = frozenset(
+        {
+            *paths_by_phase["G0"],
+            *paths_by_phase["R4"],
+            "governance/replay_status.jsonl",
+        }
+    )
+    monkeypatch.setattr(script, "_dirty_hybrid_paths", lambda: dirty)
+    script._preflight_owner_import("G0", g_run, authenticated_ledger=True)
+    allowed = script._verify_admitted_runs(
+        records,
+        owner=owner,
+        dirty_paths=dirty,
+        require_evidence_files=False,
+    )
+    assert allowed == frozenset((*paths_by_phase["G0"], *paths_by_phase["R4"]))
 
 
 

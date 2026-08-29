@@ -11,9 +11,11 @@ from __future__ import annotations
 import ast
 from dataclasses import dataclass
 import hashlib
+import importlib.util
 import json
 from pathlib import Path, PurePosixPath
 import re
+import sys
 import tomllib
 from types import MappingProxyType
 from typing import Callable, Mapping, NoReturn
@@ -148,6 +150,9 @@ class InventoryResult:
     literal_metadata_ref: str
     active_node_set_ref: str
     collectable_node_set_ref: str
+    r5_disposition_receipt_ref: str | None
+    deferred_r5_assertion_refs: tuple[str, ...]
+    retired_r5_assertion_refs: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -156,6 +161,7 @@ class _ParsedModule:
     source_nodes: Mapping[str, ast.FunctionDef | ast.AsyncFunctionDef]
     case_node_ids: Mapping[str, tuple[str, ...]]
     metadata: Mapping[str, Mapping[str, object]]
+    pytest_collectable: bool
 
 
 def _canonical_json_bytes(value: object) -> bytes:
@@ -932,6 +938,56 @@ def _literal_metadata(
     return MappingProxyType(result)
 
 
+def _reject_class_test_control(node: ast.ClassDef, *, path: str) -> None:
+    for statement in node.body:
+        visitor = _TopLevelBindingVisitor()
+        visitor.visit(statement)
+        if "__test__" in visitor.names:
+            raise InventoryError(
+                f"{path} class {node.name} cannot bind pytest __test__ control"
+            )
+        if isinstance(statement, ast.ClassDef):
+            _reject_class_test_control(statement, path=path)
+
+
+def _module_pytest_collectable(tree: ast.Module, *, path: str) -> bool:
+    """Return pytest's exact literal module collection switch.
+
+    Only one top-level ``__test__ = <bool>`` assignment is statically
+    representable.  Dynamic, rebound, annotated, conditional, imported, or
+    class-local controls are rejected rather than guessed.
+    """
+
+    assignments: list[ast.Assign] = []
+    for statement in tree.body:
+        if (
+            isinstance(statement, ast.Assign)
+            and len(statement.targets) == 1
+            and isinstance(statement.targets[0], ast.Name)
+            and statement.targets[0].id == "__test__"
+        ):
+            assignments.append(statement)
+            continue
+        visitor = _TopLevelBindingVisitor()
+        visitor.visit(statement)
+        if "__test__" in visitor.names:
+            raise InventoryError(
+                f"{path} has dynamic or ambiguous pytest __test__ control"
+            )
+        if isinstance(statement, ast.ClassDef):
+            _reject_class_test_control(statement, path=path)
+    if len(assignments) > 1:
+        raise InventoryError(f"{path} rebinds pytest __test__ control")
+    if not assignments:
+        return True
+    value = assignments[0].value
+    if not isinstance(value, ast.Constant) or type(value.value) is not bool:
+        raise InventoryError(
+            f"{path} pytest __test__ control must be one literal bool"
+        )
+    return bool(value.value)
+
+
 def _verify_pytest_collection_contract(
     root: Path,
     *,
@@ -1025,6 +1081,7 @@ def _read_and_parse_modules(
             source_nodes=MappingProxyType(source_nodes),
             case_node_ids=MappingProxyType(case_ids),
             metadata=_literal_metadata(tree, path=relative),
+            pytest_collectable=_module_pytest_collectable(tree, path=relative),
         )
     return MappingProxyType(modules), parse_count
 
@@ -1176,6 +1233,12 @@ def _validate_current_source(
     frozenset[str],
 ]:
     current_sources, case_ids, metadata = _current_sources(modules)
+    physically_collectable_sources = frozenset(
+        source_ref
+        for module in modules.values()
+        if module.pytest_collectable
+        for source_ref in module.source_nodes
+    )
     frozen_source_refs = frozenset(source_records)
 
     for source_ref, frozen in source_records.items():
@@ -1184,9 +1247,12 @@ def _validate_current_source(
             raise InventoryError(f"same-ID source mutation detected for {source_ref}")
 
     current_later_nodes: set[str] = set()
+    collectable_later_nodes: set[str] = set()
     later_source_refs = sorted(set(current_sources) - set(frozen_source_refs))
     for source_ref in later_source_refs:
         current_later_nodes.update(case_ids[source_ref])
+        if source_ref in physically_collectable_sources:
+            collectable_later_nodes.update(case_ids[source_ref])
     metadata_nodes = set(metadata)
     if metadata_nodes & set(predecessor_cases):
         raise InventoryError(
@@ -1219,14 +1285,16 @@ def _validate_current_source(
     for source_ref, frozen in source_records.items():
         if source_ref not in current_sources:
             continue
+        if source_ref not in physically_collectable_sources:
+            continue
         collectable_frozen.update(frozen.case_node_ids)
         if frozen.classification == "retained":
             executable_frozen.update(frozen.case_node_ids)
     return (
         MappingProxyType(later_records),
         frozenset(executable_frozen),
-        frozenset(current_later_nodes),
-        frozenset(collectable_frozen | current_later_nodes),
+        frozenset(collectable_later_nodes),
+        frozenset(collectable_frozen | collectable_later_nodes),
     )
 
 
@@ -1332,11 +1400,14 @@ def _select_active_nodes(
     activation_by_node: Mapping[str, str],
     successor_by_node: Mapping[str, str],
     executable_nodes: frozenset[str],
+    excluded_roots: frozenset[str] = frozenset(),
 ) -> tuple[str, ...]:
     successor_nodes = frozenset(successor_by_node.values())
     roots = sorted(set(activation_by_node) - set(successor_nodes))
     active: list[str] = []
     for root in roots:
+        if root in excluded_roots:
+            continue
         if _phase_index(activation_by_node[root]) > _phase_index(phase):
             continue
         leaf = _leaf_at_phase(
@@ -1363,6 +1434,7 @@ def _validate_rewrite_lifecycle(
     activation_by_node: Mapping[str, str],
     successor_by_node: Mapping[str, str],
     executable_nodes: frozenset[str],
+    forbidden_successor_nodes: frozenset[str] = frozenset(),
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:
     deferred: list[str] = []
     due: list[str] = []
@@ -1381,6 +1453,11 @@ def _validate_rewrite_lifecycle(
             required = obligation["required_successor_node_ids"]
             assert isinstance(required, tuple)
             for successor in required:
+                if successor in forbidden_successor_nodes:
+                    raise InventoryError(
+                        f"due rewrite {rewrite_ref} cannot use deferred or retired "
+                        f"R5 node {successor}"
+                    )
                 if successor not in known_nodes:
                     raise InventoryError(
                         f"due rewrite {rewrite_ref} is missing successor {successor}"
@@ -1411,6 +1488,152 @@ def _validate_rewrite_lifecycle(
                         f"leaf {leaf}"
                     )
     return tuple(sorted(deferred)), tuple(sorted(due))
+
+
+def _load_r5_disposition_module(
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> object:
+    module_name = "_cemm_r5_test_dispositions_for_inventory"
+    loaded = sys.modules.get(module_name)
+    if loaded is not None and source_reader is None:
+        return loaded
+    module_path = Path(__file__).with_name("r5_test_dispositions.py")
+    if source_reader is not None:
+        try:
+            raw = source_reader(module_path)
+        except (OSError, ValueError) as exc:
+            raise InventoryError("cannot read the R5 disposition verifier") from exc
+        if type(raw) is not bytes:
+            raise InventoryError("source reader returned non-bytes")
+        module = type(sys)(module_name)
+        module.__file__ = str(module_path)
+        module.__package__ = "scripts"
+        sys.modules[module_name] = module
+        try:
+            exec(compile(raw, str(module_path), "exec"), module.__dict__)
+        except Exception:
+            sys.modules.pop(module_name, None)
+            raise
+        return module
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise InventoryError("cannot load the R5 disposition verifier")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        sys.modules.pop(module_name, None)
+        raise
+    return module
+
+
+def _validate_r5_disposition_overlay(
+    root: Path,
+    *,
+    inventory_ref: str,
+    source_records: Mapping[str, SourceTestRecord],
+    later_records: Mapping[str, LaterNodeRecord],
+    activation_by_node: Mapping[str, str],
+    successor_by_node: Mapping[str, str],
+    executable_nodes: frozenset[str],
+    literal_metadata_ref: str,
+    source_reader: Callable[[Path], bytes] | None = None,
+) -> tuple[str, frozenset[str], tuple[str, ...], tuple[str, ...]]:
+    module = _load_r5_disposition_module(source_reader)
+    try:
+        dispositions = module.load_r5_test_dispositions(  # type: ignore[attr-defined]
+            root,
+            expected_inventory_ref=inventory_ref,
+            source_reader=source_reader,
+        )
+    except ValueError as exc:
+        raise InventoryError(f"R5 disposition coverage is invalid: {exc}") from exc
+
+    excluded_nodes: set[str] = set()
+    deferred_assertions: list[str] = []
+    retired_assertions: list[str] = []
+    for row in dispositions.rows:
+        predecessor = row.predecessor_source_test_ref
+        source = source_records.get(predecessor)
+        if source is None:
+            raise InventoryError(f"R5 disposition predecessor is unknown: {predecessor}")
+        if row.disposition == "deferred":
+            for predecessor_node in source.case_node_ids:
+                descendant = successor_by_node.get(predecessor_node)
+                if descendant is not None:
+                    raise InventoryError(
+                        f"deferred R5 predecessor {predecessor_node} has executable "
+                        f"descendant {descendant}"
+                    )
+            excluded_nodes.update(source.case_node_ids)
+            deferred_assertions.append(row.assertion_ref)
+            continue
+        if row.disposition == "retired":
+            for predecessor_node in source.case_node_ids:
+                descendant = successor_by_node.get(predecessor_node)
+                if descendant is not None:
+                    raise InventoryError(
+                        f"retired R5 predecessor {predecessor_node} has executable "
+                        f"descendant {descendant}"
+                    )
+            excluded_nodes.update(source.case_node_ids)
+            retired_assertions.append(row.assertion_ref)
+            continue
+        for declared_successor in row.successor_node_ids:
+            current = declared_successor
+            seen: set[str] = set()
+            while current != predecessor:
+                if current in seen:
+                    raise InventoryError(
+                        f"R5 successor lineage cycle contains {current}"
+                    )
+                seen.add(current)
+                record = later_records.get(current)
+                if record is None:
+                    raise InventoryError(
+                        "R5 successor lacks literal executable metadata: "
+                        f"{current}"
+                    )
+                if record.activation_phase != "R5":
+                    raise InventoryError(
+                        f"R5 successor does not activate at R5: {current}"
+                    )
+                if record.assertion_ref != row.assertion_ref:
+                    raise InventoryError(
+                        f"R5 successor assertion identity drifted: {current}"
+                    )
+                if record.supersedes_node_id is None:
+                    raise InventoryError(
+                        f"R5 successor has no normal lineage predecessor: {current}"
+                    )
+                current = record.supersedes_node_id
+            leaf = _leaf_at_phase(
+                declared_successor,
+                phase="R5",
+                activation_by_node=activation_by_node,
+                successor_by_node=successor_by_node,
+            )
+            if leaf not in executable_nodes:
+                raise InventoryError(
+                    f"R5 successor resolves to non-executable current leaf {leaf}"
+                )
+
+    payload: dict[str, object] = {
+        "schema": module.RECEIPT_SCHEMA,  # type: ignore[attr-defined]
+        "inventory_ref": dispositions.inventory_ref,
+        "disposition_source_sha256": f"sha256:{dispositions.source_sha256}",
+        "literal_metadata_ref": literal_metadata_ref,
+        "counts": dispositions.counts,
+        "rows": [row.to_dict() for row in dispositions.rows],
+    }
+    receipt_ref = content_ref("r5_test_disposition_receipt", payload)
+    return (
+        receipt_ref,
+        frozenset(excluded_nodes),
+        tuple(sorted(deferred_assertions)),
+        tuple(sorted(retired_assertions)),
+    )
 
 
 def _normalized_later_metadata(
@@ -1560,11 +1783,38 @@ def load_and_verify(
         _retained_predecessors,
     ) = _build_lineages(source_records, later_records)
     executable_nodes = executable_frozen | executable_later
+    literal_metadata_ref = content_ref(
+        "literal_test_metadata", _normalized_later_metadata(later_records)
+    )
+    r5_disposition_receipt_ref: str | None = None
+    excluded_r5_nodes = frozenset()
+    deferred_r5_assertion_refs: tuple[str, ...] = ()
+    retired_r5_assertion_refs: tuple[str, ...] = ()
+    if _phase_index(checked_phase) >= _phase_index("R5"):
+        (
+            r5_disposition_receipt_ref,
+            excluded_r5_nodes,
+            deferred_r5_assertion_refs,
+            retired_r5_assertion_refs,
+        ) = _validate_r5_disposition_overlay(
+            root_path,
+            inventory_ref=str(top["inventory_ref"]),
+            source_records=source_records,
+            later_records=later_records,
+            activation_by_node=activation_by_node,
+            successor_by_node=successor_by_node,
+            executable_nodes=executable_nodes,
+            literal_metadata_ref=literal_metadata_ref,
+            source_reader=source_reader,
+        )
+        executable_nodes -= excluded_r5_nodes
+        collectable_nodes -= excluded_r5_nodes
     active = _select_active_nodes(
         checked_phase,
         activation_by_node=activation_by_node,
         successor_by_node=successor_by_node,
         executable_nodes=executable_nodes,
+        excluded_roots=excluded_r5_nodes,
     )
     deferred, due = _validate_rewrite_lifecycle(
         checked_phase,
@@ -1573,6 +1823,7 @@ def load_and_verify(
         activation_by_node=activation_by_node,
         successor_by_node=successor_by_node,
         executable_nodes=executable_nodes,
+        forbidden_successor_nodes=excluded_r5_nodes,
     )
 
     active_set = frozenset(active)
@@ -1615,13 +1866,14 @@ def load_and_verify(
         source_tests=source_records,
         later_nodes=later_records,
         parsed_module_count=parse_count,
-        literal_metadata_ref=content_ref(
-            "literal_test_metadata", _normalized_later_metadata(later_records)
-        ),
+        literal_metadata_ref=literal_metadata_ref,
         active_node_set_ref=content_ref("active_test_nodes", list(active)),
         collectable_node_set_ref=content_ref(
             "collectable_test_nodes", list(sorted(collectable_nodes))
         ),
+        r5_disposition_receipt_ref=r5_disposition_receipt_ref,
+        deferred_r5_assertion_refs=deferred_r5_assertion_refs,
+        retired_r5_assertion_refs=retired_r5_assertion_refs,
     )
 
 

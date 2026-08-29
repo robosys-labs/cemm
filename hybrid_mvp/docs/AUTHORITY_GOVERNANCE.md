@@ -1,5 +1,10 @@
 # Authority and Semantic Governance
 
+> **Historical evidence:** This document is retained for analysis and forensic
+> provenance only. It owns no current execution or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl).
+
 ## 1. Governing rule
 
 The neural system ranks programs. It does not own semantic truth or semantic vocabulary.

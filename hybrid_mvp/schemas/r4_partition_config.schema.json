@@ -1,0 +1,183 @@
+{
+  "$id": "https://robosys-labs.github.io/cemm/schemas/r4_partition_config.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "abi_version": {"const": 1},
+    "bounds": {"$ref": "#/$defs/bounds"},
+    "config_ref": {"$ref": "#/$defs/ref"},
+    "feasibility_basis_ref": {"$ref": "#/$defs/ref"},
+    "maxima": {
+      "items": {"$ref": "#/$defs/dimensionMaximum"},
+      "maxItems": 131072,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "minima": {
+      "items": {"$ref": "#/$defs/dimensionMinimum"},
+      "maxItems": 131072,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "minima_witness_ref": {"$ref": "#/$defs/ref"},
+    "objective": {"$ref": "#/$defs/objective"},
+    "seed": {"maximum": 9223372036854775807, "minimum": 0, "type": "integer"},
+    "target_weights": {
+      "items": false,
+      "maxItems": 4,
+      "minItems": 4,
+      "prefixItems": [
+        {"$ref": "#/$defs/trainWeight"},
+        {"$ref": "#/$defs/selectionWeight"},
+        {"$ref": "#/$defs/calibrationWeight"},
+        {"$ref": "#/$defs/frozenTestWeight"}
+      ],
+      "type": "array"
+    }
+  },
+  "required": [
+    "abi_version",
+    "config_ref",
+    "seed",
+    "target_weights",
+    "bounds",
+    "objective",
+    "minima",
+    "maxima",
+    "feasibility_basis_ref",
+    "minima_witness_ref"
+  ],
+  "title": "CEMM R4 Partition Config ABI 1",
+  "type": "object",
+  "$defs": {
+    "bounds": {
+      "additionalProperties": false,
+      "properties": {
+        "max_components": {"const": 4096},
+        "max_episode_input_bytes": {"const": 67108864},
+        "max_hyperedges": {"const": 32768},
+        "max_hyperedges_per_episode": {"const": 128},
+        "max_labels": {"const": 32768},
+        "max_labels_per_episode": {"const": 128},
+        "max_members_per_record": {"const": 4096},
+        "max_partition_artifact_bytes": {"const": 134217728},
+        "max_solver_key_ints": {"const": 128},
+        "max_solver_memory_bytes": {"const": 201326592},
+        "max_solver_seconds": {"const": 120},
+        "max_solver_states": {"const": 250000},
+        "max_source_episodes": {"const": 4096},
+        "max_total_hyperedge_memberships": {"const": 131072},
+        "max_total_label_memberships": {"const": 131072}
+      },
+      "required": [
+        "max_source_episodes",
+        "max_hyperedges",
+        "max_labels",
+        "max_members_per_record",
+        "max_hyperedges_per_episode",
+        "max_labels_per_episode",
+        "max_total_hyperedge_memberships",
+        "max_total_label_memberships",
+        "max_components",
+        "max_solver_states",
+        "max_solver_key_ints",
+        "max_solver_memory_bytes",
+        "max_solver_seconds",
+        "max_episode_input_bytes",
+        "max_partition_artifact_bytes"
+      ],
+      "type": "object"
+    },
+    "calibrationWeight": {
+      "additionalProperties": false,
+      "properties": {"split": {"const": "calibration"}, "weight": {"const": 15}},
+      "required": ["split", "weight"],
+      "type": "object"
+    },
+    "dimensionMaximum": {
+      "additionalProperties": false,
+      "properties": {
+        "dimension_ref": {"$ref": "#/$defs/ref"},
+        "maximum": {"maximum": 4096, "minimum": 1, "type": "integer"},
+        "split": {"$ref": "#/$defs/split"}
+      },
+      "required": ["dimension_ref", "split", "maximum"],
+      "type": "object"
+    },
+    "dimensionMinimum": {
+      "additionalProperties": false,
+      "properties": {
+        "dimension_ref": {"$ref": "#/$defs/ref"},
+        "minimum": {"maximum": 4096, "minimum": 1, "type": "integer"},
+        "split": {"$ref": "#/$defs/split"}
+      },
+      "required": ["dimension_ref", "split", "minimum"],
+      "type": "object"
+    },
+    "frozenTestWeight": {
+      "additionalProperties": false,
+      "properties": {"split": {"const": "frozen_test"}, "weight": {"const": 10}},
+      "required": ["split", "weight"],
+      "type": "object"
+    },
+    "objective": {
+      "additionalProperties": false,
+      "properties": {
+        "bound_violation_formula": {
+          "const": "sum(max(0, minimum[split,dimension] - observed[split,dimension]) + max(0, observed[split,dimension] - maximum[split,dimension]) for split in splits for dimension in configured_dimensions)"
+        },
+        "component_order_terms": {
+          "const": ["negative_member_count", "negative_rare_label_score", "component_ref"]
+        },
+        "label_deviation_formula": {
+          "const": "sum(label_weight[label_ref] * abs(ratio_denominator * class_label_count[split,label_ref] - global_label_member_count[label_ref] * target_weight[split]) for split in splits for label_ref in configured_label_refs)"
+        },
+        "lexicographic_terms": {
+          "const": ["size_deviation", "label_deviation", "bound_violation", "tie_break_ref"]
+        },
+        "rare_label_formula": {
+          "const": "sum(label_weight[label_ref] * (rarity_scale // global_label_member_count[label_ref]) for label_ref in component_label_refs)"
+        },
+        "rarity_scale": {"const": 1000000},
+        "ratio_denominator": {"const": 100},
+        "size_deviation_formula": {
+          "const": "sum(abs(ratio_denominator * class_count[split] - source_count * target_weight[split]) for split in splits)"
+        },
+        "tie_break_namespace": {"const": "r4_partition_tie"}
+      },
+      "required": [
+        "ratio_denominator",
+        "rarity_scale",
+        "component_order_terms",
+        "lexicographic_terms",
+        "rare_label_formula",
+        "size_deviation_formula",
+        "label_deviation_formula",
+        "bound_violation_formula",
+        "tie_break_namespace"
+      ],
+      "type": "object"
+    },
+    "ref": {
+      "maxLength": 512,
+      "minLength": 3,
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$",
+      "type": "string"
+    },
+    "selectionWeight": {
+      "additionalProperties": false,
+      "properties": {"split": {"const": "selection"}, "weight": {"const": 15}},
+      "required": ["split", "weight"],
+      "type": "object"
+    },
+    "split": {"enum": ["train", "selection", "calibration", "frozen_test"]},
+    "trainWeight": {
+      "additionalProperties": false,
+      "properties": {"split": {"const": "train"}, "weight": {"const": 60}},
+      "required": ["split", "weight"],
+      "type": "object"
+    }
+  }
+}

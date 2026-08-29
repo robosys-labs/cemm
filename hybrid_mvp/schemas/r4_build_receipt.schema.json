@@ -18,13 +18,17 @@
     "mutation_set_sha256",
     "mutation_observation_set_sha256",
     "structural_sufficiency_sha256",
-    "partition_manifest_sha256s",
-    "training_allowlist_sha256",
+    "partition_evidence_sha256",
+    "split_manifest_sha256",
+    "partition_sufficiency_sha256",
+    "split_payload_sha256s",
+    "train_capability_sha256",
+    "train_authorization_sha256",
     "admission_state"
   ],
   "properties": {
-    "abi_version": {"const": 3},
-    "receipt_ref": {"type": "string", "pattern": "^r4_build_v3:[0-9a-f]{24}$"},
+    "abi_version": {"const": 4},
+    "receipt_ref": {"type": "string", "pattern": "^r4_build_v4:[0-9a-f]{24}$"},
     "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "authority_generation": {"type": "string", "minLength": 1},
     "abi_registry_ref": {"type": "string", "minLength": 1},
@@ -37,13 +41,23 @@
     "mutation_set_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
     "mutation_observation_set_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
     "structural_sufficiency_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
-    "partition_manifest_sha256s": {
+    "partition_evidence_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "split_manifest_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "partition_sufficiency_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "split_payload_sha256s": {
       "type": "array",
-      "minItems": 7,
-      "maxItems": 7,
-      "items": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+      "prefixItems": [
+        {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+      ],
+      "items": false,
+      "minItems": 4,
+      "maxItems": 4
     },
-    "training_allowlist_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "train_capability_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "train_authorization_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
     "admission_state": {"const": "candidate"}
   }
 }

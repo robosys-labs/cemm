@@ -1,6 +1,23 @@
 # Hybrid MVP R3–R4 Corrective-Replay Implementation Plan
 
-**Status:** implementation source complete; R3 and R4 remain red until separately admitted  
+> **Superseded execution evidence:** This document is retained for forensic
+> history only. It cannot authorize current work or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> The August 29 R4.1 data/supervision amendment supersedes conflicting
+> partition, feasibility, gold and realization instructions.
+
+> **Historical completion notice (2026-08-13):** R3 and R4 are admitted; the
+> body records their implementation-time procedure and is not current status.
+> Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> R4 external review was superseded by repository-owned artifact integrity.
+> Its independent-axis assignments, intersection-only training allowlist, and
+> related R4 partition completion steps are also narrowly superseded by the
+> 2026-08-14 partition corrective design and plan. R3 implementation history
+> remains unchanged.
+
+**Status at publication:** implementation source complete; R3 and R4 remain red until separately admitted
 **Date:** 2026-08-05  
 **Scope:** `hybrid_mvp/` only  
 **Required predecessor:** admitted R2 source lineage at or after `68c8c041376bcd1b0d17b7a51a676442418b26d3`

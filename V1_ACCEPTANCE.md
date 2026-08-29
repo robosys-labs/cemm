@@ -1,5 +1,7 @@
 # CEMM v1 Acceptance Contract
 
+> **Scope:** These checkboxes belong to the root runtime. Hybrid MVP admissions do not check root acceptance boxes or constitute root adoption; any adoption requires a separate reviewed decision.
+
 > **Status (v3.1.3):** Items marked `[x]` are verified by the passing
 > semantic-operational contract suite (`tests/test_semantic_operational_contract.py`,
 > 88 tests) and/or the phrase regression suite

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Fail-closed structural checks for the R3/R4 hard-cut implementation."""
+"""Fail-closed structural checks for the R3/R4 owners and R5 data hard cut."""
 from __future__ import annotations
 
 import ast
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -11,6 +12,66 @@ SRC = ROOT / "src" / "cemm_authoritative_hybrid"
 
 def _text(name: str) -> str:
     return (SRC / name).read_text(encoding="utf-8")
+
+
+def _assert_r5_partition_hard_cut() -> None:
+    retired_paths = (
+        SRC / "partitions.py",
+        ROOT / "scripts" / "partition_episodes.py",
+        ROOT / "scripts" / "calibrate_models.py",
+        ROOT / "scripts" / "evaluate_cemm.py",
+        ROOT / "configs" / "partitions.json",
+        ROOT / "data" / "partitions",
+        ROOT / "_test_eval.py",
+        ROOT / "_test_eval2.py",
+        ROOT / "_test_eval3.py",
+        ROOT / "_test_train.py",
+    )
+    survivors = tuple(
+        path.relative_to(ROOT).as_posix()
+        for path in retired_paths
+        if os.path.lexists(path)
+    )
+    if survivors:
+        raise ValueError(f"retired R5 partition authority remains: {survivors}")
+
+    legacy_data_path = "/".join(("data", "partitions"))
+    legacy_module = ".".join(("cemm_authoritative_hybrid", "partitions"))
+    legacy_imports = (
+        legacy_module,
+        "from ." + "partitions",
+        "from cemm_authoritative_hybrid import " + "partitions",
+    )
+    allowed_data_mentions = {
+        "src/cemm_authoritative_hybrid/r4_partition_access.py": 2,
+    }
+    offenders: list[str] = []
+    checker = Path(__file__).resolve()
+    text_suffixes = frozenset(
+        {".py", ".json", ".toml", ".yaml", ".yml", ".sh", ".ps1"}
+    )
+    for base in (SRC, ROOT / "configs", ROOT / "scripts"):
+        for path in sorted(base.rglob("*")):
+            if (
+                not path.is_file()
+                or path.resolve() == checker
+                or path.suffix.lower() not in text_suffixes
+            ):
+                continue
+            relative = path.relative_to(ROOT).as_posix()
+            text = path.read_text(encoding="utf-8")
+            data_mentions = text.count(legacy_data_path)
+            expected_mentions = allowed_data_mentions.get(relative, 0)
+            if data_mentions != expected_mentions:
+                offenders.append(
+                    f"{relative}:{legacy_data_path}:"
+                    f"expected={expected_mentions}:actual={data_mentions}"
+                )
+            for token in legacy_imports:
+                if token in text:
+                    offenders.append(f"{relative}:{token}")
+    if offenders:
+        raise ValueError(f"active legacy partition references remain: {offenders}")
 
 
 def main() -> int:
@@ -61,9 +122,10 @@ def main() -> int:
     for token in retired_tokens:
         if token in validation:
             raise ValueError(f"retired R4 external-review token remains in validation gate: {token}")
+    _assert_r5_partition_hard_cut()
     for path in SRC.glob("*.py"):
         ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    print("R3/R4 structural hard-cut checks passed")
+    print("R3/R4/R5 structural hard-cut checks passed")
     return 0
 
 

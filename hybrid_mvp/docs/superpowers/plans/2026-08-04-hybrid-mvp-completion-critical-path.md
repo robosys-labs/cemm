@@ -1,5 +1,18 @@
 # Hybrid MVP Completion Critical Path Implementation Plan
 
+> **Superseded execution evidence:** This document is retained for forensic
+> history only. It cannot authorize current work or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> The August 29 R4.1 data/supervision amendment supersedes conflicting
+> partition, feasibility, gold and realization instructions.
+
+> **Historical supersession notice (2026-08-13):** This plan's paths, status,
+> and execution instructions are retained as historical evidence, not current
+> routing. Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> Continue with the plan selected by `docs/DOCUMENT_AUTHORITY.json`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Complete the isolated Hybrid MVP as an authentic, independently verifiable six-phase semantic system, from the current red R1 candidate through clean R8 release proof, without treating construction programs as meaning or reusing invalid M4/R5 descendants.

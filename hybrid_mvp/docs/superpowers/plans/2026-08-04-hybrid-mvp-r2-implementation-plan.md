@@ -1,6 +1,16 @@
 # R2 Recursive Composition and Independent Verification Implementation Plan
 
-**Status:** implementation-ready remaining-work specification  
+> **Completed historical evidence:** This document records an earlier tranche;
+> it is not an executable current plan and owns no phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
+> **Historical completion notice (2026-08-13):** R2 has been admitted; this
+> remaining-work plan is retained for historical implementation provenance.
+> Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
+**Status at publication:** implementation-ready remaining-work specification
 **Date:** 2026-08-04  
 **Scope:** `hybrid_mvp/` only  
 **Audited branch:** `main`  

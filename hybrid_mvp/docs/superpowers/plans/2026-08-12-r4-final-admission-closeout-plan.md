@@ -1,5 +1,19 @@
 # Hybrid MVP R4 Final Admission Closeout Implementation Plan
 
+> **Superseded execution evidence:** This document is retained for forensic
+> history only. It cannot authorize current work or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> The August 29 R4.1 data/supervision amendment supersedes conflicting
+> partition, feasibility, gold and realization instructions.
+
+> **Superseded execution notice (2026-08-22):** this plan is historical
+> evidence only. Its external-review, independent-axis, training-allowlist,
+> and pre-corrective artifact procedures are superseded by the
+> repository-owned admission plan and the 2026-08-14 partition corrective
+> design/plan. Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Produce an authentic, deterministic, externally reviewed R4 artifact graph, admit R4 green on the preserved corrective-replay lineage, and merge the complete G0–R4 ancestry into `main` without history rewriting.

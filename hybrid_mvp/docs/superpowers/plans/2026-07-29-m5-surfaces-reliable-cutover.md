@@ -1,5 +1,12 @@
 # Milestone 5 Surfaces, Reliable Bundle, and Hard Cutover Implementation Plan
 
+> **Superseded execution evidence:** This document is retained for forensic
+> history only. It cannot authorize current work or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> The August 29 R4.1 data/supervision amendment supersedes conflicting
+> partition, feasibility, gold and realization instructions.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:test-driven-development for every task, browser:control-in-app-browser for the final web interaction test, and superpowers:verification-before-completion before the release commit. Track work with the checkboxes below.
 
 **Goal:** Expose one identical six-phase runtime through CLI, API, and web; prove a clean bundle installs and verifies; delete all superseded runtime/test/documentation paths; and safely apply the certified bundle.

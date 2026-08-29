@@ -1,5 +1,12 @@
 # CEMM Recursive Semantic Composition — Final Implementation Plan
 
+> **Root snapshot scope:** This completed plan is pinned to root preimage
+> `f20ed73c1c5d84fd4a468a8de6480cbc9eb767d9`; it is not the current Hybrid MVP
+> execution plan. The Hybrid MVP proof is governed by
+> [`hybrid_mvp/governance/replay_status.jsonl`](hybrid_mvp/governance/replay_status.jsonl)
+> and does not adopt its runtime or admissions into the root runtime. Root
+> adoption requires a separate reviewed decision.
+
 **Repository:** `robosys-labs/cemm`  
 **Target branch:** `main`  
 **Pinned preimage:** `f20ed73c1c5d84fd4a468a8de6480cbc9eb767d9`  

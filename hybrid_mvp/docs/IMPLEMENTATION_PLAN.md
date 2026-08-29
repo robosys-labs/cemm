@@ -1,11 +1,28 @@
 # Production Evolution Plan
 
-> **Planning status:** This original high-level outline is retained as historical
+> **Planning status:** This original high-level outline is retained as routing
 > context and does not carry execution or admission authority. Current work is
-> governed by the [approved 2026-08-02 semantic-algebra amendment](superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md), the [2026-07-31 corrective-replay design](superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md),
-> [master replay plan](superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md),
-> [G0-R1 implementation plan](superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md),
+> governed by the [August 29 R4.1 data/supervision amendment](superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md),
+> the [2026-08-02 semantic-algebra amendment](superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md),
 > and the machine-readable [document authority map](DOCUMENT_AUTHORITY.json).
+>
+> The reviewed pre-implementation R5/R6 readiness package is:
+>
+> - [R5/R6 Plan Readiness Review](superpowers/progress/2026-08-22-r5-r6-plan-readiness-review.md)
+> - [R5 Neural Activation and R6 Composition Design](superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md)
+> - [R5 Neural Activation and R6 Composition Plan](superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md)
+>
+> The R5/R6 package remains a conditional target beneath the August 29
+> amendment. Its efficiency and anti-bloat contract remains binding, but none
+> of its activation tasks can execute before authentic R4.1 admission.
+>
+> Current replay status and exact admission identities are derived only from
+> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl). This
+> page does not copy or promote phase status.
+>
+> R5 training, selection, calibration, frozen evaluation and realization
+> activation are unavailable until a fresh R4.1 admission proves meaningful
+> purpose-class semantic coverage and independent derivation/realization gold.
 
 ## Phase 1 — Evaluation expansion
 
@@ -68,11 +85,9 @@
 
 ## Phase 8 — Neural realization
 
-- exact `ResponseMeaning` input;
-- constrained pointer-aware generation;
-- multilingual language packs/models;
-- semantic-equivalence verifier;
-- deterministic fallback for critical operation and denial messages.
+Historical outline only. The active R5/R6 design requires exact
+`ResponseMeaning`, a constrained pointer-aware learned decoder, multilingual
+language packs, semantic round-trip verification, and **no normal fallback**.
 
 ## Phase 9 — Shadow comparison and cutover decision
 

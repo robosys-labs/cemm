@@ -1,5 +1,10 @@
 # Authoritative Hybrid MVP Evaluation Report
 
+> **Historical evidence:** This document is retained for analysis and forensic
+> provenance only. It owns no current execution or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl).
+
 ## 1. Evaluation scope
 
 This report evaluates the isolated MVP's architecture contracts and compact neural candidate-ranking task. It does not claim open-domain natural-language competence or parity with a general language model.

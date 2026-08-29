@@ -1,7 +1,24 @@
 # R4 Repository-Owned Admission Design
 
+> **Superseded execution evidence:** This document is retained for forensic
+> history only. It cannot authorize current work or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> The August 29 R4.1 data/supervision amendment supersedes conflicting
+> partition, feasibility, gold and realization instructions.
+
+> **Historical completion notice (2026-08-13):** This design is implemented and
+> R4 is admitted through repository-owned artifact integrity. Status is derived
+> only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> **Partition-boundary supersession (2026-08-22):** repository-owned
+> integrity remains governing, but the independent partition generation,
+> seven per-axis assignment checks, training allowlist, and Build Receipt ABI
+> 3 fields in this document are superseded by the 2026-08-14 partition
+> corrective design and plan.
+
 **Date:** 2026-08-12
-**Status:** approved design; implementation pending
+**Status at publication:** approved design; implementation pending
 **Scope:** `hybrid_mvp/` R4 admission and closeout only
 
 ## 1. Decision

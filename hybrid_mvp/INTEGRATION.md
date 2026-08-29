@@ -1,7 +1,8 @@
 # Hybrid MVP Integration
 
-This branch integrates the **CEMM Authoritative Hybrid MVP** worktree into the
-main CEMM repository as a top-level `hybrid_mvp/` subdirectory.
+The **CEMM Authoritative Hybrid MVP** is integrated as the top-level
+`hybrid_mvp/` subtree. It remains a separately governed proof: root adoption
+requires its own reviewed decision.
 
 ## Layout
 
@@ -22,8 +23,10 @@ hybrid_mvp/
 ## Status
 
 Inherited milestone receipts and generated artifacts are historical evidence,
-not current admission authority. Effective replay status is owned only by the
-append-only ledger specified in G0 Task 2. If that ledger is absent or fails
+not current admission authority. Current replay status and exact admission
+identities are derived only from
+[`governance/replay_status.jsonl`](governance/replay_status.jsonl). This page
+does not copy or promote phase status. If the ledger is absent or fails
 validation, no prose summary or inherited receipt can promote a replay phase.
 
 The corrective investigation found upstream contract, data and runtime drift,
@@ -46,9 +49,10 @@ pipeline, not a release or replay receipt.
 
 ## Next steps
 
-Proceed under the [semantic-algebra amendment](docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md), [approved design](docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md),
-[master replay plan](docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md)
-and [G0-R1 implementation plan](docs/superpowers/plans/2026-07-31-hybrid-mvp-g0-r1-implementation-plan.md).
-Those owners define replay order, performance-bounded validation tiers and
-admission commands; this integration note intentionally does not duplicate
-them.
+Proceed under the [August 29 R4.1 data/supervision amendment](docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md),
+the [semantic-algebra amendment](docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md),
+and the [document authority map](docs/DOCUMENT_AUTHORITY.json).
+
+R5 training, selection, calibration, frozen evaluation and realization
+activation are unavailable until a fresh R4.1 admission proves meaningful
+purpose-class semantic coverage and independent derivation/realization gold.

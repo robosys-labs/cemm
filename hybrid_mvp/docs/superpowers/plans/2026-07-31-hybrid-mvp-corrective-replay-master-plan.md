@@ -1,5 +1,14 @@
 # Hybrid MVP Corrective Replay Master Plan
 
+> **Historical progress notice (2026-08-13):** The phase allocation remains a
+> governing design, but status, paths, and completed execution steps in the body
+> are historical snapshots. Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> R4 now uses repository-owned artifact integrity. Its independent-axis
+> partition assignment, intersection allowlist, and external-review steps are
+> narrowly superseded by the 2026-08-14 partition corrective design and plan;
+> the remaining phase allocation stays governing.
+
 > **For Codex:** REQUIRED SUB-SKILL: Use `subagent-driven-development` to execute each detailed phase plan task-by-task, with test-first implementation, contract review, code-quality review, and controller verification.
 
 **Goal:** Rebuild the isolated Hybrid MVP into an authentic, independently verifiable six-phase proof without adopting the unsafe R1-R5 donor overlay or treating current M4 artifacts as valid training evidence.
@@ -407,3 +416,35 @@ A red receipt is useful evidence. It is never promoted by changing a label.
 # R4 supersession notice
 
 The R4 external-review and signed-manifest requirements in this plan are superseded by [R4 Repository-Owned Admission Plan](2026-08-12-r4-repository-owned-admission-plan.md). All non-R4 governance and implementation history remains authoritative where it does not conflict with that plan.
+
+## R5 hard-cut foundation addendum
+
+The [R5 hard-cut foundation design](../specs/2026-08-13-r5-hard-cut-foundation-design.md)
+and [implementation plan](2026-08-13-r5-hard-cut-foundation-plan.md) refine this
+plan without weakening its neural obligations. The foundation classifies the
+frozen R5 predecessor partition as exactly 17 successors, 25 deferrals and 1 retirement.
+Deferral is not admission: every deferred neural proposal,
+realization, weight-use, selection, calibration and reproduction assertion
+remains owned by `R5-Neural-Activation`.
+
+The four names `train`, `selection`, `calibration` and `frozen_test` are the
+future authorization vocabulary. At the foundation boundary, only the exact
+manifest-bound canonical train partition is physically open to release
+training. This addendum does not claim that selection, calibration or frozen
+test data has been materialized or opened, and it does not authorize R5
+admission. Replay status remains derived only from the append-only ledger.
+
+At the dated R5 hard-cut foundation implementation boundary, retired
+compatibility fixtures and tests were removed. Three still-valid
+R1/R2 assertions moved to current-ABI successors, changing the current source
+selector identities to `active_test_nodes:614d9a53a12a2af9f8521553` for R1 and
+`active_test_nodes:99397e3af1310ae238ebfada` for R2. These are current source selection identities, not rewritten historical admission receipts; the
+append-only ledger and its committed admission snapshots remain historical
+evidence.
+
+One temporary exact non-executable, zero-collection lineage carrier remains in
+`tests/test_six_phase_runtime.py`. A current nonfrozen supersession edge still
+needs that predecessor source identity. The carrier is statically constrained
+and cannot execute or become a runtime owner; removing it requires a separate
+reviewed immutable-inventory migration. This is the explicit divergence from
+the original blanket-deletion wording, not a compatibility-runtime exception.

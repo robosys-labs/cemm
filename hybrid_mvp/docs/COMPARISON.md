@@ -1,5 +1,10 @@
 # Comparison: Current CEMM, Earlier MVPs, and Authoritative Hybrid MVP
 
+> **Historical evidence:** This document is retained for analysis and forensic
+> provenance only. It owns no current execution or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl).
+
 ## 1. Design comparison
 
 | Property | Current CEMM baseline | Deterministic true-hybrid demonstrator | Earlier neural MVP | Authoritative hybrid MVP |

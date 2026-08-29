@@ -1,9 +1,19 @@
 # CEMM Hybrid MVP R3 Cognition Activation Implementation Plan
 
+> **Completed historical evidence:** This document records an earlier tranche;
+> it is not an executable current plan and owns no phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
+> **Historical completion notice (2026-08-13):** R3 has been admitted; this
+> plan's branch, head, gaps, and execution steps are historical snapshots.
+> Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
 **Reviewed source:** `robosys-labs/cemm`
 **Branch:** `codex/hybrid-mvp-r2`
 **Reviewed head:** `68c8c04` (R2 green admission)
-**Plan status:** Proposed governing implementation plan
+**Plan status at publication:** Proposed governing implementation plan
 **Scope:** `hybrid_mvp/` only
 **Predecessor:** R2 recursive semantic composition and exact verification
 **Successors:** R5 neural proposal/realization activation and later evaluation/release phases

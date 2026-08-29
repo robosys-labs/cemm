@@ -1,5 +1,9 @@
 # CEMM Authoritative Hybrid MVP Architecture
 
+> **Activation note:** Replay status is derived only from
+> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl). This
+> document describes architecture and does not own phase status.
+
 ## Purpose
 
 This isolated bundle combines three proven ideas without inheriting their unsafe shortcuts:
@@ -98,4 +102,35 @@ A learned cross-encoder-style scorer ranks candidate programs. The model owns ra
 
 R3 consumes only selected `VerifiedMeaning.expression` plus an independently verified `SituationContext`. It emits one canonical Decision, exactly one Effect/No-Effect receipt, and one `ResponseMeaning`, then stops at the R5 surface-realization contract. Program identity is derivation lineage only.
 
-R4 compiles reviewed assertions independently of PROPOSE, expands every reviewed surface and environment, executes the public R3 runtime, keeps expected and observed artifacts separate, labels mutations through authentic owners, seals independent partition axes, and requires external corpus review. R4 performs no training.
+R4.1 separates duplicate-risk grouping from semantic stratification. Reviewed
+lineage groups prevent source, paraphrase, normalization, mutation and
+environment duplicates from crossing a protected boundary. Operators, roles,
+modes, common participants, response actions, semantic targets and realization
+actions remain class-local coverage labels unless an explicit challenge-holdout
+contract promotes one identity into a holdout key. Every purpose class proves
+its own semantic denominators. Unsupported reviewed minima fail rather than
+being trimmed.
+
+Expected semantic expressions, reviewed derivations, typed abstentions and
+reviewed response surfaces are independently authored contracts. Runtime or
+bootstrap proposal output remains diagnostic lineage and cannot become gold.
+
+## R5 hard-cut foundation boundary
+
+The R5 hard-cut foundation is shaped so its source, owner and phase gates pass
+independently while admission remains unavailable until a separately reviewed
+activation increment provides its missing owners. This is a static architectural
+boundary, not a replay-status claim. Current status is derived only from the
+replay ledger named above; this document is not admission evidence.
+
+The foundation authenticates the artifact, proposal, data-isolation,
+realization and legacy-hard-cut boundaries without claiming that neural proposal
+or realization is active. Release training can open the authenticated,
+authorization- and capability-bound canonical train partition only. The isolated
+consumer receives one immutable train snapshot and its provenance; it receives
+no sibling class path, hash, ref, count, payload, or manifest identity. The
+`train`, `selection`, `calibration`, and `frozen_test` names are current R4
+purpose classes, but only the train class is consumable by the R5 foundation.
+Selection, calibration, and frozen-test access remain owned by
+`R5-Neural-Activation`. A deferred neural obligation is not an admitted model,
+checkpoint, calibration, or evaluation result.

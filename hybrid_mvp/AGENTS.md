@@ -16,11 +16,14 @@ structure is deleted.
 This contract governs only `hybrid_mvp/`. The repository-root `../AGENTS.md`
 continues to govern the root runtime, and Hybrid MVP adoption at root requires a
 separate reviewed decision. Document precedence within this subtree is owned by
-`docs/DOCUMENT_AUTHORITY.json`: the approved 2026-08-02 semantic-algebra
-amendment and the 2026-07-31 corrective-replay design/plans supersede conflicting
-execution or completion claims in the July 29 and July 30 documents. The
-amendment does not reactivate those superseded plans. Generated artifacts and inherited receipts are evidence,
-not authority. The append-only replay status ledger is introduced by G0 Task 2.
+`docs/DOCUMENT_AUTHORITY.json`. The approved 2026-08-29 R4.1 data/supervision
+amendment has precedence over conflicting partition, feasibility,
+proposal-gold, realization-target, and calibration instructions in earlier
+Hybrid documents. It does not promote a phase or reactivate a superseded plan.
+The 2026-08-02 semantic-algebra amendment and the 2026-07-31 corrective-replay
+design/plans retain their classified authority beneath it. Generated artifacts
+and inherited receipts are evidence, not authority. The append-only replay
+status ledger is introduced by G0 Task 2.
 
 ## 1. Unchanging thesis
 
@@ -144,6 +147,12 @@ The following are explicitly forbidden:
   program and semantic equality cannot use action-set, marker or string equality;
 - **self-authored gold:** bootstrap proposal output cannot become reviewed
   semantic-expression gold;
+- **self-satisfying corpus gates:** required semantic minima are reviewed input;
+  a solver cannot derive, trim, or weaken them to make a partition pass;
+- **input-as-output supervision:** user input surfaces cannot become response
+  realization targets;
+- **integrity-only admission:** artifact reconstruction without class-local
+  semantic usability and independent gold is insufficient for R5;
 - **unverified effects:** `EffectGateway` is the only owner of world mutation
   and external operation invocation, and only accepts verified decisions;
 - **unverified response focus:** verified semantic focus is recorded only after

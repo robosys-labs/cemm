@@ -1,5 +1,21 @@
 # R4 Repository-Owned Admission Implementation Plan
 
+> **Superseded execution evidence:** This document is retained for forensic
+> history only. It cannot authorize current work or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> The August 29 R4.1 data/supervision amendment supersedes conflicting
+> partition, feasibility, gold and realization instructions.
+
+> **Historical completion notice (2026-08-13):** R4 has been admitted; worktree
+> paths, cleanup commands, and task state in the body are historical, not current
+> routing. Status is derived only from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> **Partition-boundary supersession (2026-08-22):** the repository-owned
+> admission migration remains historical governing evidence, while its
+> Build Receipt ABI 3, per-axis partition, and training-allowlist tasks are
+> superseded by the 2026-08-14 partition corrective design and plan.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Retire the R4 external signed-manifest subsystem, replace it with exact repository-owned artifact-integrity admission, regenerate the R4 artifact graph, admit R4 green, and merge the closeout to `main`.

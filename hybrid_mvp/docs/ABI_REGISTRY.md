@@ -34,6 +34,8 @@ checkpoint, calibration, evaluation, activation and release artifact.
 | Realization Receipt ABI | **2** | `src/cemm_authoritative_hybrid/realization.py` | Serialized | `RealizationVerifier` | Surface is reinterpreted through the same evidence/proposal/compile/verify contracts and compared by canonical semantic expression. |
 | Phase Receipt ABI | 2 | `src/cemm_authoritative_hybrid/cycle.py` | Serialized when trace/evaluation enabled | `CycleFinalizer` | Each phase binds exact input/output refs, revisions, disposition, rejection codes and budget use. |
 | Cycle Result ABI | **3** | `src/cemm_authoritative_hybrid/r3_cycle.py` | Serialized | `CycleFinalizer` | R3 active target: one canonical six-phase result carrying EvaluationBundle, exact Effect/No-Effect receipt and ResponseMeaning. `cycle.py` ABI 2 is admitted predecessor history only and cannot serialize an R3-complete cycle. |
+| R5 Test Disposition ABI | **1** | `governance/r5_test_dispositions.json` | Reviewed governance input; generated receipt is evidence only | `schemas/r5_test_dispositions.schema.json`, `scripts/r5_test_dispositions.py`, `scripts/generate_r5_test_dispositions.py` | Requires an exact 17-successor/25-deferred/1-retired partition of the frozen R5 predecessor set. Deferral is not admission evidence, and `artifacts/validation/R5_TEST_DISPOSITIONS.json` is deterministic evidence rather than authority. |
+| R5 Foundation Contract ABI | **1** | `configs/r5_foundation.json` | Reviewed phase-boundary configuration | `schemas/r5_foundation.schema.json` and `tests/test_r5_foundation.py` | Declares five exact foundation owners, red effective status, unavailable admission and four future data-access classes. It does not activate a neural model or materialize selection, calibration or frozen-test partitions. |
 
 ## 2. Canonical program identity
 
@@ -173,6 +175,17 @@ release bundles
 
 No descendant generated under the duplicate/legacy program ABI may remain green.
 
+The R5 disposition receipt is regenerated with
+`python scripts/generate_r5_test_dispositions.py --output artifacts/validation/R5_TEST_DISPOSITIONS.json`,
+authenticated with
+`python scripts/generate_r5_test_dispositions.py --check artifacts/validation/R5_TEST_DISPOSITIONS.json`,
+and exercised by
+`python -m pytest tests/test_r5_legacy_hard_cut.py -q -p no:cacheprovider`.
+The foundation contract and its strict schema are checked by
+`python -m pytest tests/test_r5_foundation.py -q -p no:cacheprovider`. These
+commands validate evidence and configuration; neither command constitutes R5
+admission.
+
 ## 6. Forbidden compatibility
 
 - no duplicate `SemanticSwitchProgram`;
@@ -184,14 +197,39 @@ No descendant generated under the duplicate/legacy program ABI may remain green.
 - no evaluator accepting a raw program;
 - no old checkpoint loader translating Program ABI v1 at runtime.
 
-## R3–R4 implemented ABI allocation
+## R4 partition corrective hard cut
 
-| Query / Proof ABI | **1** | `src/cemm_authoritative_hybrid/r3_artifacts.py` | Episode-serializable | `ExpressionQueryOwner` | Expression-compiled query patterns, revision-pinned retrieval receipts and bounded proof DAGs; unknown is not false. |
-| Authentic Semantic Episode ABI | **3** | `src/cemm_authoritative_hybrid/r4_episodes.py` | Serialized corpus candidate | `AuthenticEpisodeBuilder` | Keeps expected contract, observed public-runtime cycle and comparison receipt separate; no bootstrap output authors semantic gold. |
-| Expected Cycle Contract ABI | **1** | `src/cemm_authoritative_hybrid/r4_contracts.py` | Serialized reviewed contract | `ExpectedCycleContractCompiler` | Total reviewed-assertion compilation with no PROPOSE/runtime dependency and no default-to-designation fallback. |
-| Semantic Mutation ABI | **2** | `src/cemm_authoritative_hybrid/r4_mutations.py` | Serialized corpus candidate | `MutationExecutor` | One declared semantic/environment/persistence change; the authentic execution owner, not the generator, supplies the observed earliest-owner result. |
-| Partition Axis Manifest ABI | **2** | `src/cemm_authoritative_hybrid/r4_partitions.py` | Serialized data boundary | `IndependentAxisPartitioner` | Uses transitive connected components for general, lexical, semantic-target, topology, dialogue, mutation and realization axes and proves exact source-universe coverage. |
-| Training Allowlist ABI | **2** | `src/cemm_authoritative_hybrid/r4_partitions.py` | Serialized training boundary | `IndependentAxisPartitioner` | Training refs are the exact intersection of all seven independently sealed train sets; validation/test refs cannot enter the allowlist. |
-| R4 Build Receipt ABI | **3** | `src/cemm_authoritative_hybrid/r4_pipeline.py` | Serialized admission-candidate evidence | `R4BuildReceipt.from_dict` + `verify_r4_admission` | Reconstructs every committed R4 artifact hash, binds exact generator source and authority generation, and remains `admission_state=candidate` until the governed admission receipt and replay ledger admit it. |
+Partition Axis Manifest ABI 2 and Training Allowlist ABI 2 are retired as
+current R4 inputs and are deliberately absent from the active allocation table.
+R4 Build Receipt ABI 3 is historical evidence only. It may be reconstructed
+solely for the exact admitted historical source/receipt tuple through the
+source-pinned validation policy; no current candidate may decode, submit, or
+admit ABI 3 evidence. Current candidates require the exact ABI 4 evidence set.
+The registered target contracts below do not claim that replacement four-class
+artifacts have been committed, admitted, or activated.
 
-Corpus Review Manifest ABI 2, Approved R4 Build ABI 1, and R4 Build Receipt ABI 2 are retired. They have no active decoder, verifier, or compatibility path.
+## R3 implemented and R4.1 target ABI allocation
+
+| ABI / required contract | Version | Canonical owner | Persistence | Validator / compiler | Admission | Activation gate |
+|---|---:|---|---|---|---|---|
+| Query / Proof ABI | **1** | `src/cemm_authoritative_hybrid/r3_artifacts.py` | Episode-serializable | `ExpressionQueryOwner` | implemented predecessor | Expression-compiled query patterns, revision-pinned retrieval receipts and bounded proof DAGs; unknown is not false. |
+| Authentic Semantic Episode ABI | **3** | `src/cemm_authoritative_hybrid/r4_episodes.py` | Serialized corpus candidate | `AuthenticEpisodeBuilder` | implemented predecessor | Keeps expected contract, observed public-runtime cycle and comparison receipt separate; no bootstrap output authors semantic gold. |
+| Expected Cycle Contract ABI | **1** | `src/cemm_authoritative_hybrid/r4_contracts.py` | Serialized reviewed contract | `ExpectedCycleContractCompiler` | implemented predecessor | Total reviewed-assertion compilation with no PROPOSE/runtime dependency and no default-to-designation fallback. |
+| Semantic Mutation ABI | **2** | `src/cemm_authoritative_hybrid/r4_mutations.py` | Serialized corpus candidate | `MutationExecutor` | implemented predecessor | One declared semantic/environment/persistence change; the authentic execution owner, not the generator, supplies the observed earliest-owner result. |
+| Partition Evidence ABI | **3** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized predecessor candidate | `GlobalLeakagePartitioner` plus `verify_partition_assignment` | implemented predecessor; ineligible for R4.1 | The global semantic-identity union is rejected; this decoder remains forensic source evidence only. |
+| R4 Split Manifest ABI | **1** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized predecessor candidate | `R4SplitManifest.from_dict` plus R4 admission reconstruction | implemented predecessor; requires R4.1 replacement | Existing class payload binding is insufficient without meaningful class-local semantic denominators. |
+| R4 Partition Sufficiency ABI | **1** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized predecessor candidate | `R4PartitionSufficiencyReceipt.from_dict` plus `r4_sufficiency.py` | implemented predecessor; requires R4.1 replacement | Existing non-vacuity checks do not authorize solver-trimmed minima or semantically empty held-out classes. |
+| R4 Class Capability ABI | **1** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized single-class projection | `R4ClassCapability.from_json_bytes` and `r4_partition_access.py` | implemented predecessor | Purpose isolation remains required but cannot compensate for defective class membership. |
+| R4 Class Authorization ABI | **1** | `src/cemm_authoritative_hybrid/r4_partition_contracts.py` | Serialized trust projection | `R4ClassAuthorization.from_json_bytes` and `r4_partition_access.py` | implemented predecessor | Artifact binding remains necessary but is not semantic admission. |
+| Partition Config ABI | **1** | `src/cemm_authoritative_hybrid/r4_partition_config.py` | Reviewed predecessor configuration | `R4PartitionConfig.from_json_bytes` | implemented predecessor; ineligible for R4.1 | Solver-selected or trimmed minima cannot serve as reviewed configuration authority. |
+| R4 Build Receipt ABI | **4** | `src/cemm_authoritative_hybrid/r4_pipeline.py` | Serialized predecessor artifact-graph root | `R4BuildReceipt.from_json_bytes` and `verify_r4_admission` | implemented predecessor; requires fresh R4.1 admission | Integrity reconstruction remains necessary, but the receipt cannot admit the rejected partition or supervision contracts. |
+| Reviewed derivation supervision | pre-ABI | required R4.1 owner not yet implemented | Reviewed target contract | strict decoder and independent compiler required | target; requires fresh R4.1 admission | Gold derivations compile independently of bootstrap or runtime proposal output. |
+| Purpose-class membership | pre-ABI | required R4.1 owner not yet implemented | Reviewed target contract | strict decoder and duplicate-risk grouping validator required | target; requires fresh R4.1 admission | Lineage grouping is separate from semantic stratification and challenge holdout. |
+| Class-local semantic sufficiency | pre-ABI | required R4.1 owner not yet implemented | Reviewed target contract | strict decoder and reviewed-minima validator required | target; requires fresh R4.1 admission | Every purpose class proves its own semantic denominators without trimming. |
+| Reviewed response-realization supervision | pre-ABI | required R4.1/R5 owner not yet implemented | Reviewed target contract | strict decoder and semantic round-trip compiler required | future owner; unavailable before R4.1 | ResponseMeaning-to-surface targets preserve slots, perspective and literal-copy alignment. |
+
+Corpus Review Manifest ABI 2, Approved R4 Build ABI 1, R4 Build Receipt
+ABI 2, Partition Axis Manifest ABI 2, and Training Allowlist ABI 2 are retired.
+They have no active candidate decoder, verifier, authorization role, or
+compatibility path. Historical ABI 3 reconstruction is the single bounded
+exception described above and cannot authorize current artifacts.

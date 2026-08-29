@@ -20,6 +20,7 @@ if str(SCRIPTS) not in sys.path:
 from cemm_authoritative_hybrid import process_control as process_control_module  # noqa: E402
 sys.modules["process_control"] = process_control_module
 import validation_gate as validation_gate_module  # noqa: E402
+import test_inventory_core as inventory_core_module  # noqa: E402
 from cemm_authoritative_hybrid.process_control import (  # noqa: E402
     ProcessControlError,
     ProcessErrorReason,
@@ -1120,6 +1121,36 @@ def test_g0_receipt_requires_exact_external_evidence_set(tmp_path: Path) -> None
             baseline_source_ref="58345240e67bf003e6ac7d5c68752e2e5eee4a7d",
         )
 
+    inventory_path = ROOT / "governance" / "test_inventory.json"
+    inventory_sha256 = inventory_core_module.verify_document_authority_pin(
+        ROOT, inventory_path
+    )
+    inventory = inventory_core_module.load_and_verify(
+        ROOT,
+        inventory_path,
+        phase="G0",
+        enforce_reviewed_counts=True,
+        expected_sha256=inventory_sha256,
+    )
+    graph, _ = validation_gate_module._load_gate_graph_with_source(
+        ROOT / "configs" / "validation_gates.json"
+    )
+    selector = validation_gate_module.validate_inventory_contract(
+        graph, inventory, phase="G0"
+    )
+    authority_raw = (ROOT / "docs" / "DOCUMENT_AUTHORITY.json").read_bytes()
+    expected_receipt = validation_gate_module._expected_g0_inventory_receipt(
+        authority_sha256=hashlib.sha256(authority_raw).hexdigest(),
+        inventory_sha256=inventory_sha256,
+        inventory=inventory,
+        selector=selector,
+    )
+    checked_in_receipt = validation_gate_module._load_canonical_g0_evidence(
+        (ROOT / "artifacts/validation/TEST_INVENTORY_RECEIPT.json").read_bytes(),
+        path=Path("artifacts/validation/TEST_INVENTORY_RECEIPT.json"),
+    )
+    assert checked_in_receipt == expected_receipt
+
 
 def test_current_source_config_rejects_alternate_receipt_plan(tmp_path: Path) -> None:
     receipt = _receipt(tmp_path)
@@ -1767,6 +1798,160 @@ def test_committed_tree_parser_rejects_ambiguous_or_unsafe_records(
             committed,
         )
 
+
+def test_r4_gate_plans_are_exact_bounded_and_single_process() -> None:
+    graph = validation_gate_module.load_gate_graph(
+        ROOT / "configs" / "validation_gates.json"
+    )
+    inventory_path = ROOT / "governance" / "test_inventory.json"
+    inventory = inventory_core_module.load_and_verify(
+        ROOT,
+        inventory_path,
+        phase="R4",
+        enforce_reviewed_counts=True,
+        expected_sha256=inventory_core_module.verify_document_authority_pin(
+            ROOT, inventory_path
+        ),
+    )
+    expected_steps = {
+        "artifact-integrity": "r4_artifact_integrity_owner_tests",
+        "expected-contract": "r4_contract_review_owner_tests",
+        "governance": "r4_governance_owner_tests",
+        "mutation-partition": "r4_data_owner_tests",
+        "structural-sufficiency": "r4_structural_sufficiency_owner_tests",
+        "surface-expansion": "r4_surface_expansion_owner_tests",
+    }
+    expected_counts = {
+        "artifact-integrity": 16,
+        "expected-contract": 33,
+        "governance": 2,
+        "mutation-partition": 36,
+        "structural-sufficiency": 2,
+        "surface-expansion": 2,
+    }
+
+    assert set(graph.phases["R4"].owners) == set(expected_steps)
+    assert set(inventory.owner_node_ids) == set(expected_steps)
+    owner_nodes: set[str] = set()
+    for owner, step_id in expected_steps.items():
+        resolved = graph.resolve_phase("R4", "owner", owner)
+        assert resolved == ("governance", "source_compile", step_id)
+        assert "r4_artifact_integrity" not in resolved
+        assert graph.pytest_process_count("R4", "owner", owner) == 1
+        selected = graph.resolve_pytest_nodes("R4", "owner", owner)
+        assert selected == inventory.owner_node_ids[owner]
+        assert len(selected) == expected_counts[owner]
+        owner_nodes.update(selected)
+
+    phase_resolved = graph.resolve_phase("R4", "phase")
+    assert phase_resolved == ("governance", "source_compile", "r4_phase_tests")
+    assert graph.pytest_process_count("R4", "phase") == 1
+    phase_nodes = graph.resolve_pytest_nodes("R4", "phase")
+    assert phase_nodes == inventory.phase_node_ids
+    assert len(phase_nodes) == 34
+    assert owner_nodes.isdisjoint(phase_nodes)
+
+    admission = graph.resolve_phase("R4", "admission")
+    assert admission == (
+        "governance",
+        "source_compile",
+        "authority_link",
+        "pytest_active",
+        "sqlite_activation",
+        "r4_artifact_integrity",
+    )
+    assert graph.pytest_process_count("R4", "admission") == 1
+    assert admission.count("r4_artifact_integrity") == 1
+
+    selected_steps = set(admission) | set(phase_resolved)
+    for owner in expected_steps:
+        selected_steps.update(graph.resolve_phase("R4", "owner", owner))
+    selected_steps.update(graph.resolve_phase("R5", "phase"))
+    for owner in graph.phases["R5"].owners:
+        selected_steps.update(graph.resolve_phase("R5", "owner", owner))
+    forbidden_inputs = {
+        "artifacts/r4/training_allowlist.json",
+        "configs/partitions.json",
+        "data/partitions/",
+        "scripts/partition_episodes.py",
+        "src/cemm_authoritative_hybrid/partitions.py",
+    }
+    for step_id in selected_steps:
+        inputs = tuple(graph.steps[step_id].material.get("inputs", ()))
+        assert not forbidden_inputs.intersection(inputs)
+        assert not any(path.startswith("artifacts/r4/partitions/") for path in inputs)
+
+
+def test_r5_gate_plans_are_exact_bounded_and_single_process() -> None:
+    graph = validation_gate_module.load_gate_graph(
+        ROOT / "configs" / "validation_gates.json"
+    )
+    inventory_path = ROOT / "governance" / "test_inventory.json"
+    inventory = inventory_core_module.load_and_verify(
+        ROOT,
+        inventory_path,
+        phase="R5",
+        enforce_reviewed_counts=True,
+        expected_sha256=inventory_core_module.verify_document_authority_pin(
+            ROOT, inventory_path
+        ),
+    )
+    expected_counts = {
+        "artifact-contract": 15,
+        "data-isolation": 17,
+        "legacy-hard-cut": 55,
+        "proposal-contract": 3,
+        "realization-contract": 1,
+    }
+
+    assert set(graph.phases["R5"].owners) == set(expected_counts)
+    for owner, expected_count in expected_counts.items():
+        resolved = graph.resolve_phase("R5", "owner", owner)
+        assert resolved == (
+            "governance",
+            "source_compile",
+            f"r5_{owner.replace('-', '_')}_owner_tests",
+        )
+        assert graph.pytest_process_count("R5", "owner", owner) == 1
+        assert len(graph.resolve_pytest_nodes("R5", "owner", owner)) == expected_count
+        assert graph.resolve_pytest_nodes("R5", "owner", owner) == (
+            inventory.owner_node_ids[owner]
+        )
+        assert len(resolved) <= graph.limits["max_steps_per_tier"]
+
+    assert graph.resolve_phase("R5", "phase") == (
+        "governance",
+        "source_compile",
+        "r5_phase_tests",
+    )
+    assert graph.pytest_process_count("R5", "phase") == 1
+    phase_nodes = set(graph.resolve_pytest_nodes("R5", "phase"))
+    assert graph.resolve_pytest_nodes("R5", "phase") == inventory.phase_node_ids
+    assert {
+        "tests/test_replay_governance.py::test_r5_active_docs_publish_truthful_foundation_boundary",
+        "tests/test_replay_governance.py::test_r5_appendix_guard_rejects_wrong_section_and_owner_mutations",
+        "tests/test_replay_governance.py::test_r5_governing_plan_uses_exact_frozen_inventory_partition",
+    }.issubset(phase_nodes)
+
+
+def test_r5_admission_rejects_before_execution_or_publication(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("R5 admission crossed the unavailable boundary")
+
+    monkeypatch.setattr(validation_gate_module, "_clean_git_snapshot", forbidden)
+    monkeypatch.setattr(validation_gate_module, "_temporary_run_root", forbidden)
+    monkeypatch.setattr(validation_gate_module, "write_receipt_exclusive", forbidden)
+
+    with pytest.raises(AdmissionValidationError, match=r"^R5 admission is not available$"):
+        validation_gate_module.run_validation(
+            ROOT,
+            phase="R5",
+            tier="admission",
+        )
+
+
 __cemm_test_inventory__ = {
     "tests/test_validation_gate.py::test_bounded_process_capture_cleans_up_when_thread_start_fails": {
         "activation_phase": "G0",
@@ -1886,7 +2071,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-4",
         "owner_ref": "validation-runner",
-        "source_ast_sha256": "4bc006fb3673a2be9c90e34dc12537a36558f83f319ef5af98eda509cb2951cd"
+        "source_ast_sha256": "122769a0b15a40aa12db5f98a7cd41dbfbd5f864078521e4dbb569a67b8e24e1"
     },
     "tests/test_validation_gate.py::test_git_snapshot_rejects_success_with_warning_stderr": {
         "activation_phase": "G0",
@@ -2023,6 +2208,27 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "G0-Task-4",
         "owner_ref": "validation-runner",
         "source_ast_sha256": "89fb93d771a17554797ef7c908d3b914504497a38d7555c4a8ce3dc109c67670"
+    },
+    "tests/test_validation_gate.py::test_r4_gate_plans_are_exact_bounded_and_single_process": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-validation-plans-exact-bounded-single-process",
+        "diagnostic_role": "admission_only",
+        "introduced_by_task": "R4-Partition-Corrective-Task-8",
+        "source_ast_sha256": "f087f19840b0bb727045b60a343c83106650e5f30bb0bd712683d983577e79e9"
+    },
+    "tests/test_validation_gate.py::test_r5_admission_rejects_before_execution_or_publication": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-admission-rejects-before-execution",
+        "diagnostic_role": "admission_only",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "source_ast_sha256": "2d21aab4aa96a44aee0e086641a841b86c5e3e749b35c7f8fd4894a670a1a388"
+    },
+    "tests/test_validation_gate.py::test_r5_gate_plans_are_exact_bounded_and_single_process": {
+        "activation_phase": "R5",
+        "assertion_ref": "assertion:r5-validation-plans-exact-bounded-single-process",
+        "diagnostic_role": "admission_only",
+        "introduced_by_task": "R5-Hard-Cut-Foundation",
+        "source_ast_sha256": "d23398f35138182bbca7eb829d5f447f701d47dad94823bb1d72cd983cffb244"
     },
     "tests/test_validation_gate.py::test_runner_records_injected_peak_rss": {
         "activation_phase": "G0",
