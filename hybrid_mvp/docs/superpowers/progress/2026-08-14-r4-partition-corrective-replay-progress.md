@@ -1,5 +1,10 @@
 # R4 Partition Corrective Replay Progress Tracker
 
+> **Completed historical evidence:** This document records an earlier tranche;
+> it is not an executable current plan and owns no phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
 **Tracker date:** 2026-08-22
 **Tracker role:** operational evidence; never replay-status authority
 **Effective status owner:** [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl)

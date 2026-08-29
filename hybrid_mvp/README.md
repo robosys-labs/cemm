@@ -34,14 +34,18 @@ ORIENT → PROPOSE → VERIFY → EVALUATE → EFFECT → REALIZE
 Stage 0–22 ordering is not an activation invariant. The legacy stage-bound
 architecture is superseded.
 
-## Replay status
+## Replay status and next authority
 
-Replay status is derived only from the append-only
-[`governance/replay_status.jsonl`](governance/replay_status.jsonl) ledger; this
-page is not a second authority. Read phase state and exact admission-run
-identities directly from that ledger. Use
-[`docs/DOCUMENT_AUTHORITY.json`](docs/DOCUMENT_AUTHORITY.json) for current
-execution-plan routing.
+Current replay status and exact admission identities are derived only from
+[`governance/replay_status.jsonl`](governance/replay_status.jsonl). This page
+does not copy or promote phase status. Use
+[`docs/DOCUMENT_AUTHORITY.json`](docs/DOCUMENT_AUTHORITY.json) for document
+precedence and the [August 29 R4.1 amendment](docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md)
+for the current data and supervision repair boundary.
+
+R5 training, selection, calibration, frozen evaluation and realization
+activation are unavailable until a fresh R4.1 admission proves meaningful
+purpose-class semantic coverage and independent derivation/realization gold.
 
 `SemanticSwitchProgram` is a construction procedure, not canonical meaning.
 Program identity is ordered and includes every dynamic pointer and binding.
@@ -130,9 +134,9 @@ unverified surfaces.
 
 - [`AGENTS.md`](AGENTS.md) — Hybrid MVP constitution and hard-cutover contract.
 - [`docs/DOCUMENT_AUTHORITY.json`](docs/DOCUMENT_AUTHORITY.json) — machine-readable document precedence and scope.
+- [`docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md`](docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md) — current R4.1 data/supervision repair contract and R5 prerequisite.
 - [`docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md`](docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md) — active Program→Expression corrective amendment.
 - [`docs/REPLAY_GOVERNANCE.md`](docs/REPLAY_GOVERNANCE.md) — precedence, evidence and status-ownership boundaries.
 - [`docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md`](docs/superpowers/specs/2026-07-31-hybrid-mvp-corrective-replay-admission-design.md) — approved corrective-replay design.
 - [`docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md`](docs/superpowers/plans/2026-07-31-hybrid-mvp-corrective-replay-master-plan.md) — governing replay sequence and admission boundaries.
-- [`docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md`](docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md) — current R5 hard-cut foundation tasks and checks.
 - [`docs/ABI_REGISTRY.md`](docs/ABI_REGISTRY.md) — active target ABIs and their activation gates.

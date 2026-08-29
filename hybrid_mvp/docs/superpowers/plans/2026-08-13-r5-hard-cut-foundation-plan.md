@@ -1,5 +1,10 @@
 # R5 Legacy Hard-Cut Foundation Implementation Plan
 
+> **Completed historical evidence:** This document records an earlier tranche;
+> it is not an executable current plan and owns no phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
 > **Activation refinement (2026-08-22):** this completed foundation plan
 > remains authoritative for legacy removal, the five foundation owners,
 > and the 17/25/1 predecessor disposition. The

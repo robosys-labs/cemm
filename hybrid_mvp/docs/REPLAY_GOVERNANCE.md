@@ -7,21 +7,25 @@ file. Its authority is intentionally limited to that subtree; the repository-roo
 `AGENTS.md` continues to govern the root runtime. Adoption outside the Hybrid MVP
 requires a separate reviewed decision.
 
-The ordered `governing_documents` list identifies the current Hybrid MVP
-contract, approved design, executable plans, architecture and ABI inventory.
-The 2026-08-02 semantic-algebra amendment has precedence over the July-31
-design and plans where they previously treated a `SemanticSwitchProgram` as
-canonical meaning. It amends those active documents in place; it does not
-reactivate any superseded July-29 or July-30 execution claim.
-Files listed under `superseded_execution_claims` remain useful evidence, but
-their milestone-completion and admission claims cannot authorize current work.
-The `historical_evidence` entries likewise cannot promote generated artifacts
-or test receipts into semantic or release authority.
+The three document classes are exact and disjoint. The ordered
+`governing_documents` list identifies current Hybrid law and routing. Files in
+`superseded_execution_claims` are forensic records whose instructions and
+completion claims cannot authorize current work. Files in `historical_evidence`
+record completed tranches, analysis or generated evidence and own no current
+execution or phase status.
 
-Corrective-replay status is a separate concern. Replay status is derived only
-from the append-only, machine-validated
-[`governance/replay_status.jsonl`](../governance/replay_status.jsonl) ledger
-introduced by G0 Task 2. Phase state and exact admission-run identities must be
-read from that ledger, not copied into routing prose. R4 admission uses
-repository-owned artifact integrity, not external review. Prose summaries and
-inherited receipts remain non-authoritative.
+The 2026-08-29 R4.1 data/supervision amendment is subordinate only to
+`AGENTS.md`. It rejects the two defective partition generations and owns the
+fresh R4.1 prerequisites for R5. The 2026-08-02 semantic-algebra amendment
+continues to distinguish `SemanticSwitchProgram` derivation from canonical
+`SemanticExpression` meaning. Neither amendment reactivates a superseded plan.
+
+Current replay status and exact admission identities are derived only from
+[`governance/replay_status.jsonl`](../governance/replay_status.jsonl). This page
+does not copy or promote phase status. Repository-owned artifact integrity is
+necessary but cannot by itself establish class-local semantic usability,
+independent gold, or R4.1 admission.
+
+R5 training, selection, calibration, frozen evaluation and realization
+activation are unavailable until a fresh R4.1 admission proves meaningful
+purpose-class semantic coverage and independent derivation/realization gold.

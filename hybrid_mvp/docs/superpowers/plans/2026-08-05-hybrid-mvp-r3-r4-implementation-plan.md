@@ -1,5 +1,12 @@
 # Hybrid MVP R3–R4 Corrective-Replay Implementation Plan
 
+> **Superseded execution evidence:** This document is retained for forensic
+> history only. It cannot authorize current work or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> The August 29 R4.1 data/supervision amendment supersedes conflicting
+> partition, feasibility, gold and realization instructions.
+
 > **Historical completion notice (2026-08-13):** R3 and R4 are admitted; the
 > body records their implementation-time procedure and is not current status.
 > Status is derived only from

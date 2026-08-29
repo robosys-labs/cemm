@@ -1,5 +1,10 @@
 # Hybrid MVP R1 Legacy-Test Retirement Implementation Plan
 
+> **Completed historical evidence:** This document records an earlier tranche;
+> it is not an executable current plan and owns no phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Retire three obsolete R1 predecessor tests already replaced by reviewed R3 successors, without adding runtime compatibility behavior, then prove G0 through R4 pass from the merged Hybrid MVP branch.

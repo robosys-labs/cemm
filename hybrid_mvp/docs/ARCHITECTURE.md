@@ -102,17 +102,18 @@ A learned cross-encoder-style scorer ranks candidate programs. The model owns ra
 
 R3 consumes only selected `VerifiedMeaning.expression` plus an independently verified `SituationContext`. It emits one canonical Decision, exactly one Effect/No-Effect receipt, and one `ResponseMeaning`, then stops at the R5 surface-realization contract. Program identity is derivation lineage only.
 
-R4 compiles reviewed assertions independently of PROPOSE, expands every
-reviewed surface and environment, executes the public R3 runtime, keeps expected
-and observed artifacts separate, and labels mutations through authentic owners.
-Its data boundary preserves the exact protected identities from all seven
-reviewed axes as namespaced leakage hyperedges, builds one global connected-
-component graph, and assigns each whole component exactly once to `train`,
-`selection`, `calibration`, or `frozen_test`. Per-axis rows remain reconstruction
-and stratification evidence; they are not independent assignments and are never
-intersected into a training allowlist. Repository-owned integrity reconstructs
-the global evidence, exact class payloads, sufficiency receipt, class-scoped
-capability/authorization, and Build Receipt ABI 4. R4 performs no training.
+R4.1 separates duplicate-risk grouping from semantic stratification. Reviewed
+lineage groups prevent source, paraphrase, normalization, mutation and
+environment duplicates from crossing a protected boundary. Operators, roles,
+modes, common participants, response actions, semantic targets and realization
+actions remain class-local coverage labels unless an explicit challenge-holdout
+contract promotes one identity into a holdout key. Every purpose class proves
+its own semantic denominators. Unsupported reviewed minima fail rather than
+being trimmed.
+
+Expected semantic expressions, reviewed derivations, typed abstentions and
+reviewed response surfaces are independently authored contracts. Runtime or
+bootstrap proposal output remains diagnostic lineage and cannot become gold.
 
 ## R5 hard-cut foundation boundary
 

@@ -1,5 +1,12 @@
 # R4 Partition Corrective Replay Implementation Plan
 
+> **Superseded execution evidence:** This document is retained for forensic
+> history only. It cannot authorize current work or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> The August 29 R4.1 data/supervision amendment supersedes conflicting
+> partition, feasibility, gold and realization instructions.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Invalidate the vacuous admitted R4 partition boundary, replace it with one globally coherent seven-axis leakage graph and four authenticated data classes, migrate the active R5 train-only foundation to the new R4 train capability, regenerate deterministic R4 artifacts, and re-admit R4 while R5 remains red.

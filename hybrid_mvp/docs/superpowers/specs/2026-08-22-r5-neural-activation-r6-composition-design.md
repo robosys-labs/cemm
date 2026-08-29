@@ -1,5 +1,11 @@
 # R5 Neural Activation and R6 Composition Design
 
+> **Conditional target:** The August 29 R4.1 data/supervision amendment has
+> precedence. No training, model selection, calibration, frozen evaluation,
+> realization publication or activation task in this document is executable
+> until fresh R4.1 admission authenticates semantically useful purpose classes,
+> independent reviewed derivations and reviewed response surfaces.
+
 **Date:** 2026-08-22  
 **Status:** reviewed pre-implementation target design  
 **Scope:** `hybrid_mvp/` only  

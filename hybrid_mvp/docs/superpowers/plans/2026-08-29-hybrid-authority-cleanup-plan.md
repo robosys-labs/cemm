@@ -1,5 +1,10 @@
 # Hybrid MVP Authority and Regression-Surface Cleanup Implementation Plan
 
+> **Completed historical evidence:** This document records an earlier tranche;
+> it is not an executable current plan and owns no phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make the Hybrid MVP expose one fail-closed authority path that rejects both defective R4 partition generations, blocks R5 until authentic supervision exists, describes placeholders truthfully, and prevents CI from rewriting governed source.

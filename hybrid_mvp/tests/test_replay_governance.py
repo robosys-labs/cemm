@@ -45,6 +45,13 @@ REQUIRED_R5_PREREQUISITE_MARKERS = (
     "unsupported reviewed minima fail without trimming",
 )
 
+REJECTED_ACTIVE_INSTRUCTIONS = (
+    "builds one global connected-component graph",
+    "preserve every exact protected identity from the seven r4 axes as a namespaced leakage hyperedge",
+    "candidate minima are derived only from component support",
+    "the input surface is the realization target",
+)
+
 GOVERNING_DOCUMENTS = (
     "AGENTS.md",
     R4_1_AMENDMENT,
@@ -137,8 +144,13 @@ HISTORICAL_STATUS_DOCUMENTS = (
 
 def _assert_current_status_document(relative: str, text: str) -> None:
     folded = text.casefold()
+    normalized = re.sub(r"\s+", " ", folded)
     assert "governance/replay_status.jsonl" in text, relative
-    assert "status is derived" in folded, relative
+    assert (
+        "status is derived" in normalized
+        or "current replay status and exact admission identities are derived only from"
+        in normalized
+    ), relative
     assert re.search(r"\bG0-R\d\b.*\bR\d-R8\b", text) is None, relative
     assert re.search(r"\brun:[0-9a-f]{24}\b", text) is None, relative
     assert "c:\\dev\\cemm\\.worktrees\\hybrid-mvp-g0-r1" not in folded, relative
@@ -411,7 +423,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-1",
         "owner_ref": "governance",
-        "source_ast_sha256": "29235c86026a04ba30cba6be6fe17fa1d474aaad7c8f5314f20b75654a605965"
+        "source_ast_sha256": "810dda2e63ef27ba21103bcd024a8d6d73b335d0ca869a018c0b87c28dfbcbb8"
     },
     "tests/test_replay_governance.py::test_authority_cleanup_classifies_every_authority_like_document_once": {
         "activation_phase": "G0",
@@ -428,6 +440,22 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Authority-Cleanup-Task-1",
         "owner_ref": "governance",
         "source_ast_sha256": "be6df0f7f7bb1d9df2d1312888e2ed90f4db25a664d7b0033d3de5fe4727c11c"
+    },
+    "tests/test_replay_governance.py::test_governing_documents_do_not_prescribe_rejected_r4_r5_paths": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:governing-documents-reject-r4-r5-regression-paths",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "250745edec4ddfd193f33babb82ba2cff3cdccd5f7f1b7d9fe7f8580d788fe0b"
+    },
+    "tests/test_replay_governance.py::test_superseded_execution_documents_have_prominent_successor_banners": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:superseded-documents-have-successor-banners",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Authority-Cleanup-Task-2",
+        "owner_ref": "governance",
+        "source_ast_sha256": "5ed3abe50f1d59971eb16ad611af1ca8a7b3c30bd88ac11d89f8f2c1bde9c14c"
     },
     "tests/test_replay_governance.py::test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix": {
         "activation_phase": "G0",
@@ -995,7 +1023,7 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
         (ROOT / relative).read_text(encoding="utf-8")
         for relative in CURRENT_STATUS_DOCUMENTS
     )
-    assert "repository-owned artifact integrity" in current_text
+    assert "cannot by itself establish class-local semantic usability" in current_text
 
     for relative in HISTORICAL_STATUS_DOCUMENTS:
         text = (ROOT / relative).read_text(encoding="utf-8")
@@ -1038,6 +1066,24 @@ def test_r4_1_amendment_owns_authentic_r5_prerequisites() -> None:
         assert marker in text
     assert "governance/replay_status.jsonl" in text
     assert "root adoption" in text.casefold()
+
+
+def test_governing_documents_do_not_prescribe_rejected_r4_r5_paths() -> None:
+    authority = _authority()
+    for relative in authority["governing_documents"]:
+        raw = (ROOT / relative).read_text(encoding="utf-8").casefold()
+        text = re.sub(r"-\s*\n\s*", "-", raw)
+        text = re.sub(r"\s+", " ", text)
+        for rejected in REJECTED_ACTIVE_INSTRUCTIONS:
+            assert rejected not in text, (relative, rejected)
+
+
+def test_superseded_execution_documents_have_prominent_successor_banners() -> None:
+    authority = _authority()
+    for relative in authority["superseded_execution_claims"]:
+        banner = "\n".join((ROOT / relative).read_text(encoding="utf-8").splitlines()[:14])
+        assert "superseded" in banner.casefold(), relative
+        assert "governance/replay_status.jsonl" in banner, relative
 
 
 def test_r4_partition_corrective_documents_are_superseded() -> None:

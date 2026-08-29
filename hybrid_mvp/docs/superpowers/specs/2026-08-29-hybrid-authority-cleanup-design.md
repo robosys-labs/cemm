@@ -1,5 +1,10 @@
 # Hybrid MVP Authority and Regression-Surface Cleanup Design
 
+> **Completed historical evidence:** This document records an earlier tranche;
+> it is not an executable current plan and owns no phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
 **Status:** approved design; implementation pending
 
 **Scope:** `hybrid_mvp/` plus active GitHub workflows capable of mutating it

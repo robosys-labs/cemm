@@ -1,5 +1,12 @@
 # Lean Authoritative Hybrid MVP Completion Design
 
+> **Superseded execution evidence:** This document is retained for forensic
+> history only. It cannot authorize current work or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> The August 29 R4.1 data/supervision amendment supersedes conflicting
+> partition, feasibility, gold and realization instructions.
+
 **Status:** confirmed implementation contract
 **Date:** 2026-07-29
 **Supersedes:** the stage-bound completion design previously stored at this path

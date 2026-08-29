@@ -1,5 +1,10 @@
 # CEMM Hybrid MVP R3 Cognition Activation Implementation Plan
 
+> **Completed historical evidence:** This document records an earlier tranche;
+> it is not an executable current plan and owns no phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
 > **Historical completion notice (2026-08-13):** R3 has been admitted; this
 > plan's branch, head, gaps, and execution steps are historical snapshots.
 > Status is derived only from

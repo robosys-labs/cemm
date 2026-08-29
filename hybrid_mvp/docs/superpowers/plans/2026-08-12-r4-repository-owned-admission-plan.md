@@ -1,5 +1,12 @@
 # R4 Repository-Owned Admission Implementation Plan
 
+> **Superseded execution evidence:** This document is retained for forensic
+> history only. It cannot authorize current work or phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> The August 29 R4.1 data/supervision amendment supersedes conflicting
+> partition, feasibility, gold and realization instructions.
+
 > **Historical completion notice (2026-08-13):** R4 has been admitted; worktree
 > paths, cleanup commands, and task state in the body are historical, not current
 > routing. Status is derived only from

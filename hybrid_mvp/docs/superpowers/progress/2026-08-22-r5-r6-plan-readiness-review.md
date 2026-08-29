@@ -1,5 +1,10 @@
 # R5/R6 Plan Readiness Review
 
+> **Completed historical evidence:** This document records an earlier tranche;
+> it is not an executable current plan and owns no phase status. Current status
+> is derived from
+> [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+
 **Date:** 2026-08-22  
 **Reviewed branch:** `agent/r4-task4-batch-publisher-20260816`  
 **Reviewed commit:** `5c704399b417414cf91211d6d9a9a8c8ce84767c`  
