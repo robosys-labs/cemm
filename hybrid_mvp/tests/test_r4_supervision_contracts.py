@@ -416,6 +416,26 @@ def test_supervision_decoders_reject_unknown_missing_abi_duplicate_and_noncanoni
     with pytest.raises(ValueError, match="non-finite JSON"):
         ProposalTarget.from_json_bytes(nonfinite)
 
+    bounded_deep = b'{"x":' + b"[" * 80 + b"0" + b"]" * 80 + b"}\n"
+    with pytest.raises(ValueError, match="nesting"):
+        ProposalTarget.from_json_bytes(bounded_deep)
+    parser_deep = b'{"x":' + b"[" * 1_500 + b"0" + b"]" * 1_500 + b"}\n"
+    with pytest.raises(ValueError, match="JSON|nesting"):
+        ProposalTarget.from_json_bytes(parser_deep)
+
+    surrogate = _abstain_target().to_json_bytes().replace(
+        b'"gap_kind_ref":"gap_kind:unresolved_designation"',
+        b'"gap_kind_ref":"gap_kind:\\ud800"',
+        1,
+    )
+    with pytest.raises(ValueError, match="Unicode|surrogate"):
+        ProposalTarget.from_json_bytes(surrogate)
+
+    unicode_row = _recreate_realization(
+        _realization(), authorized_surface="The lamp is ön."
+    )
+    assert RealizationRow.from_json_bytes(unicode_row.to_json_bytes()) == unicode_row
+
 
 def test_supervision_abi_fields_reject_booleans_at_top_and_nested_boundaries() -> None:
     for filename, value, decoder in (
@@ -718,6 +738,19 @@ def test_supervision_schemas_are_strict_draft_2020_12_and_match_decoders() -> No
         Draft202012Validator.check_schema(schema)
         assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
         assert_strict_objects(schema)
+
+        def assert_ref_string_bounds(value: object) -> None:
+            if type(value) is dict:
+                pattern = value.get("pattern")
+                if type(pattern) is str and ":" in pattern:
+                    assert value.get("maxLength") == 512
+                for child in value.values():
+                    assert_ref_string_bounds(child)
+            elif type(value) is list:
+                for child in value:
+                    assert_ref_string_bounds(child)
+
+        assert_ref_string_bounds(schema)
         validator = Draft202012Validator(schema)
         wire = instance.as_dict()
         assert validator.is_valid(wire)
@@ -755,6 +788,21 @@ def test_supervision_schemas_are_strict_draft_2020_12_and_match_decoders() -> No
         assert not Draft202012Validator(schema).is_valid(corrupt), filename
         with pytest.raises((TypeError, ValueError)):
             decoder.from_dict(corrupt)
+
+    proposal = _abstain_target().as_dict()
+    proposal["abstention"]["gap_kind_ref"] = "gap_kind:" + "x" * 600
+    schema = json.loads((SCHEMAS / "r4_proposal_supervision.schema.json").read_text(encoding="utf-8"))
+    assert not Draft202012Validator(schema).is_valid(proposal)
+    with pytest.raises(ValueError, match="512 characters"):
+        ProposalTarget.from_dict(proposal)
+
+    realization = _realization().as_dict()
+    realization["language"] = "en-" + "-".join(("abcdefgh",) * 8)
+    schema = json.loads((SCHEMAS / "r4_realization_supervision.schema.json").read_text(encoding="utf-8"))
+    assert schema["properties"]["language"]["maxLength"] == 64
+    assert not Draft202012Validator(schema).is_valid(realization)
+    with pytest.raises(ValueError, match="64 characters"):
+        RealizationRow.from_dict(realization)
 
     # Cross-action graph integrity and content-address reconstruction are
     # semantic decoder postconditions, not falsely represented as JSON Schema.
@@ -832,7 +880,7 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervi
                                                                                                                                   'diagnostic_role': 'owner',
                                                                                                                                   'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                                   'owner_ref': 'mutation-partition',
-                                                                                                                                  'source_ast_sha256': '299f6a73beefbc0b7d3d37951924c1cc86d382aba2573780d0d7302281878571'},
+                                                                                                                                  'source_ast_sha256': 'de02ae9d238978dd4e0f1440b79deee95f2130f8c87bb748932c56098442dd05'},
  'tests/test_r4_supervision_contracts.py::test_supervision_abi_fields_reject_booleans_at_top_and_nested_boundaries': {'activation_phase': 'R4',
                                                                                                                       'assertion_ref': 'assertion:r4-supervision-abi-exact-int-not-bool',
                                                                                                                       'diagnostic_role': 'owner',
@@ -874,4 +922,4 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervi
                                                                                                                   'diagnostic_role': 'owner',
                                                                                                                   'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                   'owner_ref': 'mutation-partition',
-                                                                                                                  'source_ast_sha256': '8e05430503736437279b76f9e1fae3fef19845674f0933d70b683b4fe1d7bf14'}}
+                                                                                                                  'source_ast_sha256': '29175e5eaf7883d50223ff0194d16a6cb83b393a7aa32261f46378af53b8df0d'}}

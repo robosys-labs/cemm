@@ -12,6 +12,7 @@ MAX_R4_SOURCE_BYTES = 16 * 1024 * 1024
 MAX_R4_SOURCE_RECORDS = 4_096
 MAX_R4_REFS_PER_RECORD = 128
 MAX_R4_TEXT_CHARS = 16_384
+MAX_R4_JSON_DEPTH = 64
 
 REVIEW_PROVENANCE_PREFIXES = ("source_review:",)
 REVIEWER_PREFIXES = ("reviewer:",)
@@ -31,19 +32,41 @@ def construct(cls: type[_T], **values: object) -> _T:
     return obj
 
 
+def _validate_json_tree(value: object) -> None:
+    stack = [(value, 0)]
+    while stack:
+        item, depth = stack.pop()
+        if depth > MAX_R4_JSON_DEPTH:
+            raise ValueError(f"JSON nesting exceeds {MAX_R4_JSON_DEPTH} levels")
+        if type(item) is str:
+            if any("\ud800" <= char <= "\udfff" for char in item):
+                raise ValueError("JSON contains a lone Unicode surrogate")
+        elif type(item) is dict:
+            for key, child in item.items():
+                if type(key) is str and any("\ud800" <= char <= "\udfff" for char in key):
+                    raise ValueError("JSON contains a lone Unicode surrogate")
+                stack.append((child, depth + 1))
+        elif type(item) is list:
+            stack.extend((child, depth + 1) for child in item)
+
+
 def canonical_json_bytes(value: Mapping[str, Any]) -> bytes:
     if type(value) is not dict:
         raise TypeError("canonical JSON payload must be an exact dict")
-    return (
-        json.dumps(
-            value,
-            allow_nan=False,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-        + b"\n"
-    )
+    _validate_json_tree(value)
+    try:
+        return (
+            json.dumps(
+                value,
+                allow_nan=False,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+            + b"\n"
+        )
+    except (RecursionError, UnicodeEncodeError) as exc:
+        raise ValueError("canonical JSON encoding is not bounded Unicode") from exc
 
 
 def _strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -76,11 +99,14 @@ def strict_decode(
         text = raw.decode("utf-8", errors="strict")
     except UnicodeDecodeError as exc:
         raise ValueError(f"serialized {owner} is not strict UTF-8") from exc
-    value = json.loads(
-        text,
-        object_pairs_hook=_strict_object,
-        parse_constant=_reject_nonfinite,
-    )
+    try:
+        value = json.loads(
+            text,
+            object_pairs_hook=_strict_object,
+            parse_constant=_reject_nonfinite,
+        )
+    except RecursionError as exc:
+        raise ValueError("serialized JSON exceeds the parser nesting bound") from exc
     if type(value) is not dict:
         raise TypeError(f"serialized {owner} must contain one exact object")
     if raw != canonical_json_bytes(value):
@@ -284,6 +310,7 @@ def exact_revision(value: object, name: str) -> str:
 
 
 __all__ = [
+    "MAX_R4_JSON_DEPTH",
     "MAX_R4_REFS_PER_RECORD",
     "MAX_R4_SOURCE_BYTES",
     "MAX_R4_SOURCE_RECORDS",

@@ -9,9 +9,9 @@
   ],
   "properties": {
     "abi_version": {"const": 1, "type": "integer"},
-    "mutation_contract_ref": {"pattern": "^mutation_contract_v1:[0-9a-f]{24}$", "type": "string"},
-    "mutation_family_ref": {"pattern": "^mutation_family:[^\\s:][^\\s]*$", "type": "string"},
-    "source_case_ref": {"pattern": "^expanded_case_v2:[0-9a-f]{24}$", "type": "string"},
+    "mutation_contract_ref": {"maxLength": 512, "pattern": "^mutation_contract_v1:[0-9a-f]{24}$", "type": "string"},
+    "mutation_family_ref": {"maxLength": 512, "pattern": "^mutation_family:[^\\s:][^\\s]*$", "type": "string"},
+    "source_case_ref": {"maxLength": 512, "pattern": "^expanded_case_v2:[0-9a-f]{24}$", "type": "string"},
     "changed_dimension_ref": {"$ref": "#/$defs/ref"},
     "expected_earliest_owner": {"enum": ["orient", "propose", "verify", "evaluate", "effect", "realize"]},
     "disposition": {"enum": ["accept", "reject", "frontier"]},
@@ -23,7 +23,7 @@
   "title": "CEMM Mutation Contract ABI 1",
   "type": "object",
   "$defs": {
-    "reviewRefs": {"items": {"pattern": "^source_review:[0-9a-f]{24}$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+    "reviewRefs": {"items": {"maxLength": 512, "pattern": "^source_review:[0-9a-f]{24}$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
     "ref": {"maxLength": 512, "minLength": 3, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$", "type": "string"}
   }
 }

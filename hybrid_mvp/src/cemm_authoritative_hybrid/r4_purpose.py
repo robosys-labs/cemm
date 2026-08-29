@@ -57,7 +57,7 @@ _CHALLENGE_NAMESPACES = frozenset(
     }
 )
 _CHALLENGE_IDENTITY_PREFIXES = {
-    "semantic_identity": ("event:", "concept:", "entity:", "relation:", "state_dimension:", "value:", "label_type:", "cap:"),
+    "semantic_identity": ("event:", "concept:", "entity:", "rel:", "dim:", "value:", "label:", "cap:"),
     "operator": ("op:",),
     "role": ("role:",),
     "mode": ("mode:",),

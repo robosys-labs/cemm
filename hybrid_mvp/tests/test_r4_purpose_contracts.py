@@ -437,6 +437,55 @@ def test_purpose_standalone_case_refs_and_challenge_identity_tags_are_exact() ->
             reason_ref="holdout_reason:tag-confusion",
             review_refs=(REVIEW_REF,),
         )
+
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    validator = Draft202012Validator(schema)
+    contract = _contract()
+    for index, (identity_namespace, identity_ref) in enumerate(
+        (
+            ("semantic_identity", "event:turn"),
+            ("semantic_identity", "concept:person"),
+            ("semantic_identity", "entity:lamp"),
+            ("semantic_identity", "rel:likes"),
+            ("semantic_identity", "dim:availability"),
+            ("semantic_identity", "value:online"),
+            ("semantic_identity", "label:name"),
+            ("semantic_identity", "cap:query"),
+            ("operator", "op:relation"),
+        ),
+        start=1,
+    ):
+        holdout = ChallengeHoldout.create(
+            holdout_ref=f"challenge_holdout:authority-{index}",
+            identity_namespace=identity_namespace,
+            identity_ref=identity_ref,
+            purpose="selection",
+            member_case_refs=(CASE_REFS[2],),
+            reason_ref="holdout_reason:authority-identity",
+            review_refs=(REVIEW_REF,),
+        )
+        valid = _recreate_contract(contract, challenge_holdouts=(holdout,))
+        assert validator.is_valid(valid.as_dict()), identity_ref
+        assert PurposeContract.from_dict(valid.as_dict()) == valid
+
+    for invented_ref in (
+        "relation:likes",
+        "state_dimension:availability",
+        "label_type:name",
+    ):
+        with pytest.raises(ValueError, match="identity.*namespace|namespace.*identity"):
+            ChallengeHoldout.create(
+                holdout_ref="challenge_holdout:invented-prefix",
+                identity_namespace="semantic_identity",
+                identity_ref=invented_ref,
+                purpose="selection",
+                member_case_refs=(CASE_REFS[2],),
+                reason_ref="holdout_reason:invented-prefix",
+                review_refs=(REVIEW_REF,),
+            )
+        corrupt = contract.as_dict()
+        corrupt["challenge_holdouts"][0]["identity_ref"] = invented_ref
+        assert not validator.is_valid(corrupt), invented_ref
     with pytest.raises(ValueError, match="identity.*namespace|namespace.*identity"):
         ChallengeHoldout.create(
             holdout_ref="challenge_holdout:non-kernel-operator",
@@ -513,6 +562,26 @@ def test_purpose_schema_is_strict_draft_2020_12_and_matches_decoder() -> None:
                 assert_strict_objects(child)
 
     assert_strict_objects(schema)
+
+    def assert_ref_string_bounds(value: object) -> None:
+        if type(value) is dict:
+            pattern = value.get("pattern")
+            if type(pattern) is str and ":" in pattern:
+                assert value.get("maxLength") == 512
+            for child in value.values():
+                assert_ref_string_bounds(child)
+        elif type(value) is list:
+            for child in value:
+                assert_ref_string_bounds(child)
+
+    assert_ref_string_bounds(schema)
+    for field in (
+        "memberships",
+        "duplicate_risk_groups",
+        "challenge_holdouts",
+        "denominator_minima",
+    ):
+        assert "uniqueItems" not in schema["properties"][field]
     validator = Draft202012Validator(schema)
     contract = _contract()
     wire = contract.as_dict()
@@ -552,6 +621,12 @@ def test_purpose_schema_is_strict_draft_2020_12_and_matches_decoder() -> None:
     assert "semantic postconditions" in schema["$comment"]
     with pytest.raises(ValueError, match="canonical"):
         PurposeContract.from_dict(corrupt)
+
+    duplicate = deepcopy(wire)
+    duplicate["memberships"].append(deepcopy(duplicate["memberships"][0]))
+    assert validator.is_valid(duplicate)
+    with pytest.raises(ValueError, match="duplicate source case membership"):
+        PurposeContract.from_dict(duplicate)
 
 
 __cemm_test_inventory__ = {'tests/test_r4_purpose_contracts.py::test_purpose_values_are_factory_only_frozen_and_canonical[value0]': {'activation_phase': 'R4',
@@ -631,7 +706,7 @@ __cemm_test_inventory__ = {'tests/test_r4_purpose_contracts.py::test_purpose_val
                                                                                                                  'diagnostic_role': 'owner',
                                                                                                                  'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                  'owner_ref': 'mutation-partition',
-                                                                                                                 'source_ast_sha256': '339cab0e37ab56ec9babf8e81e69d75afcc06a2e51fbb4f847dcb1803698ddf1'},
+                                                                                                                 'source_ast_sha256': 'f6d6d424320887cdb1d7cc22a030226c91ab0b598a24e41f57ca114c7f115074'},
  'tests/test_r4_purpose_contracts.py::test_purpose_rejects_asymmetric_group_membership_and_duplicate_holdout_identity': {'activation_phase': 'R4',
                                                                                                                          'assertion_ref': 'assertion:r4-purpose-group-bidirectional-holdout-identity-unique',
                                                                                                                          'diagnostic_role': 'owner',
@@ -649,4 +724,4 @@ __cemm_test_inventory__ = {'tests/test_r4_purpose_contracts.py::test_purpose_val
                                                                                                          'diagnostic_role': 'owner',
                                                                                                          'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                          'owner_ref': 'mutation-partition',
-                                                                                                         'source_ast_sha256': '9337e3f0eab4836e2dafe4ba6e2e9cf871ec0a62e9352b74597ff48d9a1d4e73'}}
+                                                                                                         'source_ast_sha256': '3f46ff05483a245631753b61429e98e9e5fb0ace6369c285e1d85a9549abcd9c'}}

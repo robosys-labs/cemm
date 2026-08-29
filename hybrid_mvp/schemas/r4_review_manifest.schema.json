@@ -5,12 +5,12 @@
   "additionalProperties": false,
   "properties": {
     "abi_version": {"const": 1, "type": "integer"},
-    "manifest_ref": {"pattern": "^r4_review_manifest_v1:[0-9a-f]{24}$", "type": "string"},
-    "review_policy_ref": {"pattern": "^review_policy:[^\\s:][^\\s]*$", "type": "string"},
-    "reviewer_refs": {"items": {"pattern": "^reviewer:[^\\s:][^\\s]*$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+    "manifest_ref": {"maxLength": 512, "pattern": "^r4_review_manifest_v1:[0-9a-f]{24}$", "type": "string"},
+    "review_policy_ref": {"maxLength": 512, "pattern": "^review_policy:[^\\s:][^\\s]*$", "type": "string"},
+    "reviewer_refs": {"items": {"maxLength": 512, "pattern": "^reviewer:[^\\s:][^\\s]*$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
     "reviewed_base_revision": {"pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$", "type": "string"},
     "authority_generation": {"maxLength": 512, "minLength": 1, "type": "string"},
-    "source_bundle_ref": {"pattern": "^r4_review_bundle_v1:[0-9a-f]{24}$", "type": "string"},
+    "source_bundle_ref": {"maxLength": 512, "pattern": "^r4_review_bundle_v1:[0-9a-f]{24}$", "type": "string"},
     "scenario_source_sha256": {"$ref": "#/$defs/sha256"},
     "sources": {
       "maxItems": 4,
@@ -45,7 +45,7 @@
       "required": ["mutation_contract", "proposal_supervision", "purpose_contract", "r4_review_manifest", "realization_supervision"],
       "type": "object"
     },
-    "reviewRefs": {"items": {"pattern": "^source_review:[0-9a-f]{24}$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+    "reviewRefs": {"items": {"maxLength": 512, "pattern": "^source_review:[0-9a-f]{24}$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
     "ref": {"maxLength": 512, "minLength": 3, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$", "type": "string"},
     "refs": {"items": {"$ref": "#/$defs/ref"}, "maxItems": 128, "type": "array", "uniqueItems": true},
     "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
@@ -53,7 +53,7 @@
       "additionalProperties": false,
       "properties": {
         "abi_version": {"const": 1, "type": "integer"},
-        "source_ref": {"pattern": "^reviewed_source:[0-9a-f]{24}$", "type": "string"},
+        "source_ref": {"maxLength": 512, "pattern": "^reviewed_source:[0-9a-f]{24}$", "type": "string"},
         "path": {"type": "string"},
         "sha256": {"$ref": "#/$defs/sha256"},
         "record_count": {"maximum": 4096, "minimum": 1, "type": "integer"},

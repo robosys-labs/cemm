@@ -5,12 +5,12 @@
   "additionalProperties": false,
   "properties": {
     "abi_version": {"const": 1, "type": "integer"},
-    "purpose_contract_ref": {"pattern": "^purpose_contract_v1:[0-9a-f]{24}$", "type": "string"},
-    "source_set_ref": {"pattern": "^r4_source_set_v1:[0-9a-f]{24}$", "type": "string"},
-    "memberships": {"items": {"$ref": "#/$defs/membership"}, "maxItems": 4096, "minItems": 1, "type": "array", "uniqueItems": true},
-    "duplicate_risk_groups": {"items": {"$ref": "#/$defs/group"}, "maxItems": 4096, "type": "array", "uniqueItems": true},
-    "challenge_holdouts": {"items": {"$ref": "#/$defs/holdout"}, "maxItems": 1024, "type": "array", "uniqueItems": true},
-    "denominator_minima": {"items": {"$ref": "#/$defs/minimum"}, "maxItems": 4096, "minItems": 4, "type": "array", "uniqueItems": true},
+    "purpose_contract_ref": {"maxLength": 512, "pattern": "^purpose_contract_v1:[0-9a-f]{24}$", "type": "string"},
+    "source_set_ref": {"maxLength": 512, "pattern": "^r4_source_set_v1:[0-9a-f]{24}$", "type": "string"},
+    "memberships": {"items": {"$ref": "#/$defs/membership"}, "maxItems": 4096, "minItems": 1, "type": "array"},
+    "duplicate_risk_groups": {"items": {"$ref": "#/$defs/group"}, "maxItems": 4096, "type": "array"},
+    "challenge_holdouts": {"items": {"$ref": "#/$defs/holdout"}, "maxItems": 1024, "type": "array"},
+    "denominator_minima": {"items": {"$ref": "#/$defs/minimum"}, "maxItems": 4096, "minItems": 4, "type": "array"},
     "review_refs": {"$ref": "#/$defs/reviewRefs"},
     "solver_output_is_authority": {"const": false, "type": "boolean"}
   },
@@ -18,13 +18,13 @@
   "title": "CEMM Purpose Contract ABI 1",
   "type": "object",
   "$defs": {
-    "caseRef": {"pattern": "^expanded_case_v2:[0-9a-f]{24}$", "type": "string"},
+    "caseRef": {"maxLength": 512, "pattern": "^expanded_case_v2:[0-9a-f]{24}$", "type": "string"},
     "caseRefs": {"items": {"$ref": "#/$defs/caseRef"}, "maxItems": 4096, "minItems": 1, "type": "array", "uniqueItems": true},
     "group": {
       "additionalProperties": false,
       "properties": {
         "abi_version": {"const": 1, "type": "integer"},
-        "group_ref": {"pattern": "^duplicate_risk_group:[^\\s:][^\\s]*$", "type": "string"},
+        "group_ref": {"maxLength": 512, "pattern": "^duplicate_risk_group:[^\\s:][^\\s]*$", "type": "string"},
         "namespace": {"enum": ["source_case_lineage", "paraphrase_family", "normalization_family", "mutation_lineage", "environment_provenance", "trajectory_lineage"]},
         "member_case_refs": {"allOf": [{"$ref": "#/$defs/caseRefs"}, {"minItems": 2}]},
         "reason_ref": {"$ref": "#/$defs/ref"},
@@ -36,18 +36,18 @@
     "holdout": {
       "additionalProperties": false,
       "oneOf": [
-        {"properties": {"identity_namespace": {"const": "semantic_identity"}, "identity_ref": {"pattern": "^(event|concept|entity|relation|state_dimension|value|label_type|cap):[^\\s:][^\\s]*$"}}},
-        {"properties": {"identity_namespace": {"const": "operator"}, "identity_ref": {"pattern": "^op:(designation|type|relation|state|event)$"}}},
-        {"properties": {"identity_namespace": {"const": "role"}, "identity_ref": {"pattern": "^role:[^\\s:][^\\s]*$"}}},
-        {"properties": {"identity_namespace": {"const": "mode"}, "identity_ref": {"pattern": "^mode:[^\\s:][^\\s]*$"}}},
-        {"properties": {"identity_namespace": {"const": "participant"}, "identity_ref": {"pattern": "^participant:[^\\s:][^\\s]*$"}}},
-        {"properties": {"identity_namespace": {"const": "topology"}, "identity_ref": {"pattern": "^topology:[^\\s:][^\\s]*$"}}},
-        {"properties": {"identity_namespace": {"const": "response_action"}, "identity_ref": {"pattern": "^response_action:[^\\s:][^\\s]*$"}}},
-        {"properties": {"identity_namespace": {"const": "realization_action"}, "identity_ref": {"pattern": "^realization_action:[^\\s:][^\\s]*$"}}}
+        {"properties": {"identity_namespace": {"const": "semantic_identity"}, "identity_ref": {"maxLength": 512, "pattern": "^(event|concept|entity|rel|dim|value|label|cap):[^\\s:][^\\s]*$"}}},
+        {"properties": {"identity_namespace": {"const": "operator"}, "identity_ref": {"maxLength": 512, "pattern": "^op:(designation|type|relation|state|event)$"}}},
+        {"properties": {"identity_namespace": {"const": "role"}, "identity_ref": {"maxLength": 512, "pattern": "^role:[^\\s:][^\\s]*$"}}},
+        {"properties": {"identity_namespace": {"const": "mode"}, "identity_ref": {"maxLength": 512, "pattern": "^mode:[^\\s:][^\\s]*$"}}},
+        {"properties": {"identity_namespace": {"const": "participant"}, "identity_ref": {"maxLength": 512, "pattern": "^participant:[^\\s:][^\\s]*$"}}},
+        {"properties": {"identity_namespace": {"const": "topology"}, "identity_ref": {"maxLength": 512, "pattern": "^topology:[^\\s:][^\\s]*$"}}},
+        {"properties": {"identity_namespace": {"const": "response_action"}, "identity_ref": {"maxLength": 512, "pattern": "^response_action:[^\\s:][^\\s]*$"}}},
+        {"properties": {"identity_namespace": {"const": "realization_action"}, "identity_ref": {"maxLength": 512, "pattern": "^realization_action:[^\\s:][^\\s]*$"}}}
       ],
       "properties": {
         "abi_version": {"const": 1, "type": "integer"},
-        "holdout_ref": {"pattern": "^challenge_holdout:[^\\s:][^\\s]*$", "type": "string"},
+        "holdout_ref": {"maxLength": 512, "pattern": "^challenge_holdout:[^\\s:][^\\s]*$", "type": "string"},
         "identity_namespace": {"enum": ["semantic_identity", "operator", "role", "mode", "participant", "topology", "response_action", "realization_action"]},
         "identity_ref": {"$ref": "#/$defs/ref"},
         "purpose": {"$ref": "#/$defs/purpose"},
@@ -66,11 +66,11 @@
       ],
       "properties": {
         "abi_version": {"const": 1, "type": "integer"},
-        "membership_ref": {"pattern": "^purpose_membership_v1:[0-9a-f]{24}$", "type": "string"},
+        "membership_ref": {"maxLength": 512, "pattern": "^purpose_membership_v1:[0-9a-f]{24}$", "type": "string"},
         "source_case_ref": {"$ref": "#/$defs/caseRef"},
         "classification": {"enum": ["semantic_supervision", "typed_abstention", "diagnostic_only"]},
         "purpose": {"oneOf": [{"$ref": "#/$defs/purpose"}, {"type": "null"}]},
-        "duplicate_risk_group_refs": {"items": {"pattern": "^duplicate_risk_group:[^\\s:][^\\s]*$", "type": "string"}, "maxItems": 128, "type": "array", "uniqueItems": true},
+        "duplicate_risk_group_refs": {"items": {"maxLength": 512, "pattern": "^duplicate_risk_group:[^\\s:][^\\s]*$", "type": "string"}, "maxItems": 128, "type": "array", "uniqueItems": true},
         "diagnostic_reason_ref": {"oneOf": [{"$ref": "#/$defs/ref"}, {"type": "null"}]},
         "review_refs": {"$ref": "#/$defs/reviewRefs"}
       },
@@ -81,8 +81,8 @@
       "additionalProperties": false,
       "properties": {
         "abi_version": {"const": 1, "type": "integer"},
-        "minimum_ref": {"pattern": "^denominator_minimum_v1:[0-9a-f]{24}$", "type": "string"},
-        "denominator_ref": {"pattern": "^denominator:[^\\s:][^\\s]*$", "type": "string"},
+        "minimum_ref": {"maxLength": 512, "pattern": "^denominator_minimum_v1:[0-9a-f]{24}$", "type": "string"},
+        "denominator_ref": {"maxLength": 512, "pattern": "^denominator:[^\\s:][^\\s]*$", "type": "string"},
         "denominator_family": {"enum": ["semantic_expression", "operator", "mode", "role", "state_compatibility", "topology", "typed_abstention", "critical_residual", "transition_effect", "no_effect", "response_meaning", "perspective_reference", "literal_copy"]},
         "purpose": {"$ref": "#/$defs/purpose"},
         "minimum": {"maximum": 4096, "minimum": 1, "type": "integer"},
@@ -91,7 +91,7 @@
       "required": ["abi_version", "minimum_ref", "denominator_ref", "denominator_family", "purpose", "minimum", "review_refs"],
       "type": "object"
     },
-    "reviewRefs": {"items": {"pattern": "^source_review:[0-9a-f]{24}$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+    "reviewRefs": {"items": {"maxLength": 512, "pattern": "^source_review:[0-9a-f]{24}$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
     "purpose": {"enum": ["train", "selection", "calibration", "frozen_test"]},
     "ref": {"maxLength": 512, "minLength": 3, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$", "type": "string"}
   }
