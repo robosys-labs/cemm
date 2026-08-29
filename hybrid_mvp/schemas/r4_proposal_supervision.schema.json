@@ -1,13 +1,14 @@
 {
   "$id": "https://robosys-labs.github.io/cemm/schemas/r4_proposal_supervision.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Schema owns structural, namespace, tagged-action and bounded-list parity. The decoder owns content-address reconstruction plus action ordering, local declaration/use and root semantic postconditions.",
   "additionalProperties": false,
   "oneOf": [
     {"properties": {"target_kind": {"const": "derive"}, "expected_expression_refs": {"minItems": 1}, "derivations": {"minItems": 1}, "abstention": {"type": "null"}}},
     {"properties": {"target_kind": {"const": "abstain"}, "expected_expression_refs": {"maxItems": 0}, "derivations": {"maxItems": 0}, "abstention": {"$ref": "#/$defs/abstention"}}}
   ],
   "properties": {
-    "abi_version": {"const": 1},
+    "abi_version": {"const": 1, "type": "integer"},
     "proposal_target_ref": {"pattern": "^proposal_supervision_v1:[0-9a-f]{24}$", "type": "string"},
     "source_case_ref": {"$ref": "#/$defs/caseRef"},
     "target_kind": {"enum": ["derive", "abstain"]},
@@ -15,7 +16,7 @@
     "expression_relation": {"const": "exact"},
     "derivations": {"items": {"$ref": "#/$defs/blueprint"}, "maxItems": 16, "type": "array", "uniqueItems": true},
     "abstention": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/abstention"}]},
-    "review_refs": {"$ref": "#/$defs/nonemptyRefs"}
+    "review_refs": {"$ref": "#/$defs/reviewRefs"}
   },
   "required": ["abi_version", "proposal_target_ref", "source_case_ref", "target_kind", "expected_expression_refs", "expression_relation", "derivations", "abstention", "review_refs"],
   "title": "CEMM Proposal Supervision ABI 1",
@@ -24,7 +25,7 @@
     "abstention": {
       "additionalProperties": false,
       "properties": {
-        "abi_version": {"const": 1},
+        "abi_version": {"const": 1, "type": "integer"},
         "abstention_ref": {"pattern": "^typed_abstention_v1:[0-9a-f]{24}$", "type": "string"},
         "gap_kind_ref": {"pattern": "^gap_kind:[^\\s:][^\\s]*$", "type": "string"},
         "critical": {"type": "boolean"},
@@ -36,12 +37,25 @@
     },
     "action": {
       "additionalProperties": false,
+      "oneOf": [
+        {"properties": {"action_type": {"const": "select_context"}, "selectors": {"$ref": "#/$defs/selectContextArgs"}}},
+        {"properties": {"action_type": {"const": "select_mode"}, "selectors": {"$ref": "#/$defs/selectModeArgs"}}},
+        {"properties": {"action_type": {"const": "select_designation"}, "selectors": {"$ref": "#/$defs/selectDesignationArgs"}}},
+        {"properties": {"action_type": {"const": "instantiate_operator"}, "selectors": {"$ref": "#/$defs/instantiateArgs"}}},
+        {"properties": {"action_type": {"const": "bind_role"}, "selectors": {"$ref": "#/$defs/bindRoleArgs"}}},
+        {"properties": {"action_type": {"const": "bind_reference"}, "selectors": {"$ref": "#/$defs/bindReferenceArgs"}}},
+        {"properties": {"action_type": {"const": "bind_nested_application"}, "selectors": {"oneOf": [{"$ref": "#/$defs/nestedRoleArgs"}, {"$ref": "#/$defs/nestedLinkArgs"}]}}},
+        {"properties": {"action_type": {"const": "attach_scope"}, "selectors": {"$ref": "#/$defs/scopeArgs"}}},
+        {"properties": {"action_type": {"const": "project_variable"}, "selectors": {"$ref": "#/$defs/variableArgs"}}},
+        {"properties": {"action_type": {"const": "propose_transition"}, "selectors": {"$ref": "#/$defs/transitionArgs"}}},
+        {"properties": {"action_type": {"enum": ["complete_program", "abstain"]}, "selectors": {"maxItems": 0, "type": "array"}}}
+      ],
       "properties": {
-        "abi_version": {"const": 1},
+        "abi_version": {"const": 1, "type": "integer"},
         "action_ref": {"pattern": "^derivation_action_v1:[0-9a-f]{24}$", "type": "string"},
         "action_index": {"maximum": 207, "minimum": 0, "type": "integer"},
         "action_type": {"enum": ["select_context", "select_mode", "select_designation", "instantiate_operator", "bind_role", "bind_reference", "bind_nested_application", "attach_scope", "project_variable", "propose_transition", "complete_program", "abstain"]},
-        "selectors": {"items": {"$ref": "#/$defs/selector"}, "maxItems": 27, "type": "array", "uniqueItems": true}
+        "selectors": {"maxItems": 27, "type": "array", "uniqueItems": true}
       },
       "required": ["abi_version", "action_ref", "action_index", "action_type", "selectors"],
       "type": "object"
@@ -49,28 +63,75 @@
     "blueprint": {
       "additionalProperties": false,
       "properties": {
-        "abi_version": {"const": 1},
+        "abi_version": {"const": 1, "type": "integer"},
         "blueprint_ref": {"pattern": "^derivation_blueprint_v1:[0-9a-f]{24}$", "type": "string"},
-        "program_abi_version": {"const": 2},
+        "program_abi_version": {"const": 2, "type": "integer"},
+        "action_abi_ref": {"const": "action_abi:e0e334d5657a9e7d02c9f563"},
         "actions": {"items": {"$ref": "#/$defs/action"}, "maxItems": 208, "minItems": 3, "type": "array", "uniqueItems": true},
-        "root_local_refs": {"items": {"$ref": "#/$defs/ref"}, "maxItems": 8, "minItems": 1, "type": "array", "uniqueItems": true}
+        "root_local_refs": {"items": {"$ref": "#/$defs/localNodeRef"}, "maxItems": 8, "minItems": 1, "type": "array", "uniqueItems": true}
       },
-      "required": ["abi_version", "blueprint_ref", "program_abi_version", "actions", "root_local_refs"],
+      "required": ["abi_version", "blueprint_ref", "program_abi_version", "action_abi_ref", "actions", "root_local_refs"],
       "type": "object"
     },
     "caseRef": {"pattern": "^expanded_case_v2:[0-9a-f]{24}$", "type": "string"},
-    "nonemptyRefs": {"items": {"$ref": "#/$defs/ref"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
-    "ref": {"maxLength": 512, "minLength": 3, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$", "type": "string"},
+    "reviewRefs": {"items": {"pattern": "^source_review:[0-9a-f]{24}$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
     "selector": {
       "additionalProperties": false,
+      "oneOf": [
+        {"properties": {"selector_kind": {"const": "context_slot"}, "value_ref": {"pattern": "^proposal_context:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "mode_slot"}, "value_ref": {"pattern": "^mode_slot:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "designation_slot"}, "value_ref": {"pattern": "^designation_slot:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "local_node"}, "value_ref": {"$ref": "#/$defs/localNodeRef"}}},
+        {"properties": {"selector_kind": {"const": "frame_slot"}, "value_ref": {"pattern": "^application_frame_slot:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "role_ref"}, "value_ref": {"pattern": "^role:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "contribution_slot"}, "value_ref": {"pattern": "^contribution_slot:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "reference_slot"}, "value_ref": {"pattern": "^reference_slot:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "scope_slot"}, "value_ref": {"pattern": "^scope_slot:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "expression_link_slot"}, "value_ref": {"pattern": "^expression_link_slot:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "variable_slot"}, "value_ref": {"pattern": "^variable_slot:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "transition_slot"}, "value_ref": {"pattern": "^transition_slot:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "source_geometry"}, "value_ref": {"pattern": "^source_geometry:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "semantic_kind"}, "value_ref": {"pattern": "^semantic_kind:[^\\s:][^\\s]*$"}}},
+        {"properties": {"selector_kind": {"const": "variant_tag"}, "value_ref": {"enum": ["action_variant:role", "action_variant:link"]}}}
+      ],
       "properties": {
-        "abi_version": {"const": 1},
+        "abi_version": {"const": 1, "type": "integer"},
         "selector_ref": {"pattern": "^derivation_selector_v1:[0-9a-f]{24}$", "type": "string"},
-        "selector_kind": {"enum": ["context_slot", "mode_slot", "designation_slot", "local_node", "frame_slot", "role_ref", "contribution_slot", "reference_slot", "scope_slot", "expression_link_slot", "variable_slot", "transition_slot", "source_geometry", "semantic_kind"]},
-        "value_ref": {"$ref": "#/$defs/ref"}
+        "selector_kind": {"type": "string"},
+        "value_ref": {"type": "string"}
       },
       "required": ["abi_version", "selector_ref", "selector_kind", "value_ref"],
       "type": "object"
-    }
+    },
+    "context": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "context_slot"}}}]},
+    "mode": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "mode_slot"}}}]},
+    "designation": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "designation_slot"}}}]},
+    "application": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "local_node"}, "value_ref": {"pattern": "^application:"}}}]},
+    "local": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "local_node"}}}]},
+    "frame": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "frame_slot"}}}]},
+    "role": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "role_ref"}}}]},
+    "contribution": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "contribution_slot"}}}]},
+    "reference": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "reference_slot"}}}]},
+    "scopeLocal": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "local_node"}, "value_ref": {"pattern": "^scope:"}}}]},
+    "scopeSlot": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "scope_slot"}}}]},
+    "binderLocal": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "local_node"}, "value_ref": {"pattern": "^binder:"}}}]},
+    "variableSlot": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "variable_slot"}}}]},
+    "transitionSlot": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "transition_slot"}}}]},
+    "linkLocal": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "local_node"}, "value_ref": {"pattern": "^expression_link:"}}}]},
+    "linkSlot": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "expression_link_slot"}}}]},
+    "roleTag": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "variant_tag"}, "value_ref": {"const": "action_variant:role"}}}]},
+    "linkTag": {"allOf": [{"$ref": "#/$defs/selector"}, {"properties": {"selector_kind": {"const": "variant_tag"}, "value_ref": {"const": "action_variant:link"}}}]},
+    "localNodeRef": {"pattern": "^(application|expression_link|scope|binder|local_node):[^\\s:][^\\s]*$", "type": "string"},
+    "selectContextArgs": {"maxItems": 1, "minItems": 1, "prefixItems": [{"$ref": "#/$defs/context"}], "type": "array"},
+    "selectModeArgs": {"maxItems": 1, "minItems": 1, "prefixItems": [{"$ref": "#/$defs/mode"}], "type": "array"},
+    "selectDesignationArgs": {"maxItems": 1, "minItems": 1, "prefixItems": [{"$ref": "#/$defs/designation"}], "type": "array"},
+    "instantiateArgs": {"maxItems": 2, "minItems": 2, "prefixItems": [{"$ref": "#/$defs/application"}, {"$ref": "#/$defs/frame"}], "type": "array"},
+    "bindRoleArgs": {"maxItems": 3, "minItems": 3, "prefixItems": [{"$ref": "#/$defs/application"}, {"$ref": "#/$defs/role"}, {"$ref": "#/$defs/contribution"}], "type": "array"},
+    "bindReferenceArgs": {"maxItems": 3, "minItems": 3, "prefixItems": [{"$ref": "#/$defs/application"}, {"$ref": "#/$defs/role"}, {"$ref": "#/$defs/reference"}], "type": "array"},
+    "nestedRoleArgs": {"maxItems": 4, "minItems": 4, "prefixItems": [{"$ref": "#/$defs/roleTag"}, {"$ref": "#/$defs/application"}, {"$ref": "#/$defs/role"}, {"$ref": "#/$defs/local"}], "type": "array"},
+    "nestedLinkArgs": {"items": {"$ref": "#/$defs/local"}, "maxItems": 27, "minItems": 5, "prefixItems": [{"$ref": "#/$defs/linkTag"}, {"$ref": "#/$defs/linkLocal"}, {"$ref": "#/$defs/linkSlot"}], "type": "array"},
+    "scopeArgs": {"maxItems": 3, "minItems": 3, "prefixItems": [{"$ref": "#/$defs/scopeLocal"}, {"$ref": "#/$defs/scopeSlot"}, {"$ref": "#/$defs/local"}], "type": "array"},
+    "variableArgs": {"maxItems": 3, "minItems": 3, "prefixItems": [{"$ref": "#/$defs/binderLocal"}, {"$ref": "#/$defs/variableSlot"}, {"$ref": "#/$defs/local"}], "type": "array"},
+    "transitionArgs": {"maxItems": 2, "minItems": 2, "prefixItems": [{"$ref": "#/$defs/transitionSlot"}, {"$ref": "#/$defs/application"}], "type": "array"}
   }
 }

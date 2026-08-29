@@ -1825,7 +1825,7 @@ def test_r4_gate_plans_are_exact_bounded_and_single_process() -> None:
         "artifact-integrity": 16,
         "expected-contract": 33,
         "governance": 2,
-        "mutation-partition": 60,
+        "mutation-partition": 70,
         "structural-sufficiency": 2,
         "surface-expansion": 2,
     }
@@ -2214,7 +2214,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r4-validation-plans-exact-bounded-single-process",
         "diagnostic_role": "admission_only",
         "introduced_by_task": "R4-Partition-Corrective-Task-8",
-        "source_ast_sha256": "da81a11607875dd4b7f88e85eb877d3ef9ea52057139b49b05cc381867dbc24b"
+        "source_ast_sha256": "a1d2b2c3e1574b53074b9500a7261a59c6fe96f1bbb1675a1700608c386da7a9"
     },
     "tests/test_validation_gate.py::test_r5_admission_rejects_before_execution_or_publication": {
         "activation_phase": "R5",

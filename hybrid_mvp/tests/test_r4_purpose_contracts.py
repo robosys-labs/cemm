@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 from jsonschema import Draft202012Validator
+import cemm_authoritative_hybrid.r4_purpose as purpose_module
 
 from cemm_authoritative_hybrid.r4_purpose import (
     MAX_DENOMINATOR_MINIMA,
@@ -101,7 +102,7 @@ def _contract() -> PurposeContract:
             ChallengeHoldout.create(
                 holdout_ref="challenge_holdout:selection-gap",
                 identity_namespace="semantic_identity",
-                identity_ref="gap_kind:unresolved_designation",
+                identity_ref="concept:unresolved-designation",
                 purpose="selection",
                 member_case_refs=(CASE_REFS[2],),
                 reason_ref="holdout_reason:unseen-gap",
@@ -112,6 +113,20 @@ def _contract() -> PurposeContract:
         review_refs=(REVIEW_REF,),
         solver_output_is_authority=False,
     )
+
+
+def _recreate_contract(contract: PurposeContract, **changes) -> PurposeContract:
+    values = {
+        "source_set_ref": contract.source_set_ref,
+        "memberships": contract.memberships,
+        "duplicate_risk_groups": contract.duplicate_risk_groups,
+        "challenge_holdouts": contract.challenge_holdouts,
+        "denominator_minima": contract.denominator_minima,
+        "review_refs": contract.review_refs,
+        "solver_output_is_authority": contract.solver_output_is_authority,
+    }
+    values.update(changes)
+    return PurposeContract.create(**values)
 
 
 @pytest.mark.parametrize(
@@ -128,7 +143,7 @@ def _contract() -> PurposeContract:
         ChallengeHoldout.create(
             holdout_ref="challenge_holdout:selection-gap",
             identity_namespace="semantic_identity",
-            identity_ref="gap_kind:unresolved_designation",
+            identity_ref="concept:unresolved-designation",
             purpose="selection",
             member_case_refs=(CASE_REFS[2],),
             reason_ref="holdout_reason:unseen-gap",
@@ -176,6 +191,15 @@ def test_membership_classification_is_total_and_diagnostic_rows_never_enter_a_pu
             purpose=None,
             duplicate_risk_group_refs=(),
             diagnostic_reason_ref=None,
+            review_refs=(REVIEW_REF,),
+        )
+    with pytest.raises(ValueError, match="diagnostic-only.*group"):
+        PurposeMembership.create(
+            source_case_ref=CASE_REFS[0],
+            classification="diagnostic_only",
+            purpose=None,
+            duplicate_risk_group_refs=("duplicate_risk_group:family-a",),
+            diagnostic_reason_ref="diagnostic_reason:comparison-only",
             review_refs=(REVIEW_REF,),
         )
 
@@ -346,6 +370,133 @@ def test_purpose_contract_rejects_solver_authority_unknown_missing_abi_and_nonca
         PurposeContract.from_json_bytes(pretty)
 
 
+def test_purpose_abi_fields_reject_booleans_at_top_and_nested_boundaries() -> None:
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    contract = _contract()
+    paths = []
+
+    def collect_paths(node, path=()):
+        if type(node) is dict:
+            if "abi_version" in node:
+                paths.append(path + ("abi_version",))
+            for key, child in node.items():
+                collect_paths(child, path + (key,))
+        elif type(node) is list:
+            for index, child in enumerate(node):
+                collect_paths(child, path + (index,))
+
+    collect_paths(contract.as_dict())
+    for path in paths:
+        wire = deepcopy(contract.as_dict())
+        cursor = wire
+        for part in path[:-1]:
+            cursor = cursor[part]
+        cursor[path[-1]] = True
+        assert not Draft202012Validator(schema).is_valid(wire), path
+        with pytest.raises((TypeError, ValueError), match="ABI|abi_version"):
+            PurposeContract.from_dict(wire)
+
+    raw = contract.to_json_bytes().replace(b'"abi_version":1', b'"abi_version":true', 1)
+    with pytest.raises((TypeError, ValueError), match="ABI|abi_version"):
+        PurposeContract.from_json_bytes(raw)
+    nested_raw = contract.to_json_bytes().replace(
+        b'"memberships":[{"abi_version":1',
+        b'"memberships":[{"abi_version":true',
+        1,
+    )
+    with pytest.raises((TypeError, ValueError), match="ABI|abi_version"):
+        PurposeContract.from_json_bytes(nested_raw)
+
+
+def test_purpose_standalone_case_refs_and_challenge_identity_tags_are_exact() -> None:
+    with pytest.raises(ValueError, match="content ref"):
+        DuplicateRiskGroup.create(
+            group_ref="duplicate_risk_group:bad-case",
+            namespace="source_case_lineage",
+            member_case_refs=(CASE_REFS[1], "expanded_case_v2:not-a-hash"),
+            reason_ref="duplicate_reason:bad-case",
+            review_refs=(REVIEW_REF,),
+        )
+    with pytest.raises(ValueError, match="content ref"):
+        ChallengeHoldout.create(
+            holdout_ref="challenge_holdout:bad-case",
+            identity_namespace="semantic_identity",
+            identity_ref="concept:gap",
+            purpose="selection",
+            member_case_refs=("expanded_case_v2:not-a-hash",),
+            reason_ref="holdout_reason:bad-case",
+            review_refs=(REVIEW_REF,),
+        )
+    with pytest.raises(ValueError, match="identity.*namespace|namespace.*identity"):
+        ChallengeHoldout.create(
+            holdout_ref="challenge_holdout:tag-confusion",
+            identity_namespace="operator",
+            identity_ref="participant:user",
+            purpose="selection",
+            member_case_refs=(CASE_REFS[2],),
+            reason_ref="holdout_reason:tag-confusion",
+            review_refs=(REVIEW_REF,),
+        )
+    with pytest.raises(ValueError, match="identity.*namespace|namespace.*identity"):
+        ChallengeHoldout.create(
+            holdout_ref="challenge_holdout:non-kernel-operator",
+            identity_namespace="operator",
+            identity_ref="op:learn",
+            purpose="selection",
+            member_case_refs=(CASE_REFS[2],),
+            reason_ref="holdout_reason:non-kernel-operator",
+            review_refs=(REVIEW_REF,),
+        )
+
+
+def test_purpose_rejects_asymmetric_group_membership_and_duplicate_holdout_identity() -> None:
+    contract = _contract()
+    changed = list(contract.memberships)
+    changed[2] = PurposeMembership.create(
+        source_case_ref=CASE_REFS[2],
+        classification="typed_abstention",
+        purpose="selection",
+        duplicate_risk_group_refs=("duplicate_risk_group:family-a",),
+        diagnostic_reason_ref=None,
+        review_refs=(REVIEW_REF,),
+    )
+    with pytest.raises(ValueError, match="both ways|not contain|asymmetric"):
+        _recreate_contract(contract, memberships=tuple(changed))
+
+    original = contract.challenge_holdouts[0]
+    duplicate = ChallengeHoldout.create(
+        holdout_ref="challenge_holdout:different-ref",
+        identity_namespace=original.identity_namespace,
+        identity_ref=original.identity_ref,
+        purpose=original.purpose,
+        member_case_refs=original.member_case_refs,
+        reason_ref=original.reason_ref,
+        review_refs=original.review_refs,
+    )
+    with pytest.raises(ValueError, match="duplicate holdout identity"):
+        _recreate_contract(
+            contract,
+            challenge_holdouts=tuple(
+                sorted((original, duplicate), key=lambda item: item.holdout_ref)
+            ),
+        )
+
+
+def test_purpose_parent_factory_rejects_forged_nested_values(monkeypatch) -> None:
+    contract = _contract()
+    valid = contract.memberships[0]
+    forged = object.__new__(PurposeMembership)
+    for name, value in valid.__dict__.items():
+        object.__setattr__(forged, name, value)
+    object.__setattr__(forged, "membership_ref", "purpose_membership_v1:" + "f" * 24)
+    with pytest.raises(ValueError, match="canonical|membership"):
+        _recreate_contract(contract, memberships=(forged,) + contract.memberships[1:])
+
+    monkeypatch.setattr(purpose_module, "MAX_AGGREGATE_MEMBERSHIP_LINKS", 4)
+    with pytest.raises(ValueError, match="aggregate membership"):
+        _recreate_contract(contract)
+
+
 def test_purpose_schema_is_strict_draft_2020_12_and_matches_decoder() -> None:
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(schema)
@@ -377,43 +528,68 @@ def test_purpose_schema_is_strict_draft_2020_12_and_matches_decoder() -> None:
         with pytest.raises((TypeError, ValueError)):
             PurposeContract.from_dict(corrupt)
 
+    adversarial = []
+    corrupt = deepcopy(wire)
+    corrupt["memberships"][0]["review_refs"] = ["runtime_review:forbidden"]
+    adversarial.append(corrupt)
+    corrupt = deepcopy(wire)
+    corrupt["challenge_holdouts"][0]["identity_namespace"] = "operator"
+    corrupt["challenge_holdouts"][0]["identity_ref"] = "participant:user"
+    adversarial.append(corrupt)
+    corrupt = deepcopy(wire)
+    corrupt["duplicate_risk_groups"][0]["member_case_refs"][0] = "expanded_case_v2:not-a-hash"
+    adversarial.append(corrupt)
+    for corrupt in adversarial:
+        assert not validator.is_valid(corrupt)
+        with pytest.raises((TypeError, ValueError)):
+            PurposeContract.from_dict(corrupt)
+
+    # Cross-row bidirectionality, uniqueness and aggregate link accounting are
+    # semantic decoder postconditions that Draft 2020-12 cannot express.
+    corrupt = deepcopy(wire)
+    corrupt["purpose_contract_ref"] = "purpose_contract_v1:" + "f" * 24
+    assert validator.is_valid(corrupt)
+    assert "semantic postconditions" in schema["$comment"]
+    with pytest.raises(ValueError, match="canonical"):
+        PurposeContract.from_dict(corrupt)
+
 
 __cemm_test_inventory__ = {'tests/test_r4_purpose_contracts.py::test_purpose_values_are_factory_only_frozen_and_canonical[value0]': {'activation_phase': 'R4',
                                                                                                            'assertion_ref': 'assertion:r4-purpose-values-factory-only-frozen-canonical',
                                                                                                            'diagnostic_role': 'owner',
                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                            'owner_ref': 'mutation-partition',
-                                                                                                           'source_ast_sha256': '51d31b8ffb10c3233f81f685500854db4b920912161ff957d41b609cb52381f0'},
+                                                                                                           'source_ast_sha256': 'f0768055a74a43a0bc7efc0cf28c2b6a93c954c95960f766f7f910c3936487ef'},
  'tests/test_r4_purpose_contracts.py::test_purpose_values_are_factory_only_frozen_and_canonical[value1]': {'activation_phase': 'R4',
                                                                                                            'assertion_ref': 'assertion:r4-purpose-values-factory-only-frozen-canonical',
                                                                                                            'diagnostic_role': 'owner',
                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                            'owner_ref': 'mutation-partition',
-                                                                                                           'source_ast_sha256': '51d31b8ffb10c3233f81f685500854db4b920912161ff957d41b609cb52381f0'},
+                                                                                                           'source_ast_sha256': 'f0768055a74a43a0bc7efc0cf28c2b6a93c954c95960f766f7f910c3936487ef'},
  'tests/test_r4_purpose_contracts.py::test_purpose_values_are_factory_only_frozen_and_canonical[value2]': {'activation_phase': 'R4',
                                                                                                            'assertion_ref': 'assertion:r4-purpose-values-factory-only-frozen-canonical',
                                                                                                            'diagnostic_role': 'owner',
                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                            'owner_ref': 'mutation-partition',
-                                                                                                           'source_ast_sha256': '51d31b8ffb10c3233f81f685500854db4b920912161ff957d41b609cb52381f0'},
+                                                                                                           'source_ast_sha256': 'f0768055a74a43a0bc7efc0cf28c2b6a93c954c95960f766f7f910c3936487ef'},
  'tests/test_r4_purpose_contracts.py::test_purpose_values_are_factory_only_frozen_and_canonical[value3]': {'activation_phase': 'R4',
                                                                                                            'assertion_ref': 'assertion:r4-purpose-values-factory-only-frozen-canonical',
                                                                                                            'diagnostic_role': 'owner',
                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                            'owner_ref': 'mutation-partition',
-                                                                                                           'source_ast_sha256': '51d31b8ffb10c3233f81f685500854db4b920912161ff957d41b609cb52381f0'},
+                                                                                                           'source_ast_sha256': 'f0768055a74a43a0bc7efc0cf28c2b6a93c954c95960f766f7f910c3936487ef'},
  'tests/test_r4_purpose_contracts.py::test_purpose_values_are_factory_only_frozen_and_canonical[value4]': {'activation_phase': 'R4',
                                                                                                            'assertion_ref': 'assertion:r4-purpose-values-factory-only-frozen-canonical',
                                                                                                            'diagnostic_role': 'owner',
                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                            'owner_ref': 'mutation-partition',
-                                                                                                           'source_ast_sha256': '51d31b8ffb10c3233f81f685500854db4b920912161ff957d41b609cb52381f0'},
+                                                                                                           'source_ast_sha256': 'f0768055a74a43a0bc7efc0cf28c2b6a93c954c95960f766f7f910c3936487ef'},
  'tests/test_r4_purpose_contracts.py::test_membership_classification_is_total_and_diagnostic_rows_never_enter_a_purpose': {'activation_phase': 'R4',
                                                                                                                            'assertion_ref': 'assertion:r4-purpose-membership-total-diagnostic-isolated',
                                                                                                                            'diagnostic_role': 'owner',
                                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                            'owner_ref': 'mutation-partition',
-                                                                                                                           'source_ast_sha256': '8c5465694f4861d27e48dfe93d4b0b92604fa2d12ddefd773a1070d5521999d0'},
+                                                                                                                           'source_ast_sha256': 'b2e14e858bdc3df5a225c7b594b501c6a826e631ee168efec7f5f09870dda3d9'},
  'tests/test_r4_purpose_contracts.py::test_duplicate_groups_are_explicit_reviewed_lineage_not_semantic_union_keys': {'activation_phase': 'R4',
                                                                                                                      'assertion_ref': 'assertion:r4-duplicate-groups-reviewed-lineage-not-semantic-union',
                                                                                                                      'diagnostic_role': 'owner',
@@ -444,9 +620,33 @@ __cemm_test_inventory__ = {'tests/test_r4_purpose_contracts.py::test_purpose_val
                                                                                                                                   'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                                   'owner_ref': 'mutation-partition',
                                                                                                                                   'source_ast_sha256': '3ee9cd1ca4796d53cdfd64c8cc9458fa56198843556d37f0f7a0740559310ef4'},
+ 'tests/test_r4_purpose_contracts.py::test_purpose_abi_fields_reject_booleans_at_top_and_nested_boundaries': {'activation_phase': 'R4',
+                                                                                                              'assertion_ref': 'assertion:r4-purpose-abi-exact-int-not-bool',
+                                                                                                              'diagnostic_role': 'owner',
+                                                                                                              'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
+                                                                                                              'owner_ref': 'mutation-partition',
+                                                                                                              'source_ast_sha256': 'fa0332a6e08db35f8d6f0217befbc0d5309042915b0b1adfae24c9c728a3c1c8'},
+ 'tests/test_r4_purpose_contracts.py::test_purpose_standalone_case_refs_and_challenge_identity_tags_are_exact': {'activation_phase': 'R4',
+                                                                                                                 'assertion_ref': 'assertion:r4-purpose-case-and-identity-tags-exact',
+                                                                                                                 'diagnostic_role': 'owner',
+                                                                                                                 'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
+                                                                                                                 'owner_ref': 'mutation-partition',
+                                                                                                                 'source_ast_sha256': '339cab0e37ab56ec9babf8e81e69d75afcc06a2e51fbb4f847dcb1803698ddf1'},
+ 'tests/test_r4_purpose_contracts.py::test_purpose_rejects_asymmetric_group_membership_and_duplicate_holdout_identity': {'activation_phase': 'R4',
+                                                                                                                         'assertion_ref': 'assertion:r4-purpose-group-bidirectional-holdout-identity-unique',
+                                                                                                                         'diagnostic_role': 'owner',
+                                                                                                                         'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
+                                                                                                                         'owner_ref': 'mutation-partition',
+                                                                                                                         'source_ast_sha256': '3294aba252a93d9b98cc6f7ecb3b817abfa843cbb7c928f787a1a8a1d8d23f97'},
+ 'tests/test_r4_purpose_contracts.py::test_purpose_parent_factory_rejects_forged_nested_values': {'activation_phase': 'R4',
+                                                                                                  'assertion_ref': 'assertion:r4-purpose-parent-rejects-forged-nested-and-aggregate-bound',
+                                                                                                  'diagnostic_role': 'owner',
+                                                                                                  'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
+                                                                                                  'owner_ref': 'mutation-partition',
+                                                                                                  'source_ast_sha256': '1a849abd5e3d6c80d7f104869321328186a4bbd8ebfd505743e3e39ac00d3b55'},
  'tests/test_r4_purpose_contracts.py::test_purpose_schema_is_strict_draft_2020_12_and_matches_decoder': {'activation_phase': 'R4',
                                                                                                          'assertion_ref': 'assertion:r4-purpose-schema-draft-2020-12-decoder-parity',
                                                                                                          'diagnostic_role': 'owner',
                                                                                                          'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                          'owner_ref': 'mutation-partition',
-                                                                                                         'source_ast_sha256': 'c9c016d103e08046754b4e2e343f4ece1d0a9bae9b9c1ec8f802ff833e6a8e07'}}
+                                                                                                         'source_ast_sha256': '9337e3f0eab4836e2dafe4ba6e2e9cf871ec0a62e9352b74597ff48d9a1d4e73'}}

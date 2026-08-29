@@ -13,6 +13,9 @@ MAX_R4_SOURCE_RECORDS = 4_096
 MAX_R4_REFS_PER_RECORD = 128
 MAX_R4_TEXT_CHARS = 16_384
 
+REVIEW_PROVENANCE_PREFIXES = ("source_review:",)
+REVIEWER_PREFIXES = ("reviewer:",)
+
 _REF_RE = re.compile(r"[A-Za-z][A-Za-z0-9_.-]*:[^\s:][^\s]*\Z")
 _CONTENT_REF_RE = re.compile(r"[A-Za-z][A-Za-z0-9_.-]*:[0-9a-f]{24}\Z")
 _SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
@@ -94,6 +97,12 @@ def exact_ref(value: object, name: str, *, prefix: str | None = None) -> str:
     return text
 
 
+def exact_abi(value: object, expected: int, owner: str) -> int:
+    if type(value) is not int or value != expected:
+        raise ValueError(f"unsupported {owner} ABI")
+    return value
+
+
 def exact_content_ref(value: object, name: str, *, prefix: str | None = None) -> str:
     text = exact_text(value, name)
     if _CONTENT_REF_RE.fullmatch(text) is None:
@@ -113,9 +122,21 @@ def exact_review_refs(
     *,
     maximum: int = MAX_R4_REFS_PER_RECORD,
 ) -> tuple[str, ...]:
+    refs = exact_content_ref_tuple(value, name, nonempty=True, maximum=maximum)
+    if any(not ref.startswith(REVIEW_PROVENANCE_PREFIXES) for ref in refs):
+        raise ValueError(f"{name} must contain typed review provenance refs")
+    return refs
+
+
+def exact_reviewer_refs(
+    value: object,
+    name: str = "reviewer_refs",
+    *,
+    maximum: int = MAX_R4_REFS_PER_RECORD,
+) -> tuple[str, ...]:
     refs = exact_ref_tuple(value, name, nonempty=True, maximum=maximum)
-    if any("review" not in ref.partition(":")[0] for ref in refs):
-        raise ValueError(f"{name} must contain reviewed provenance refs")
+    if any(not ref.startswith(REVIEWER_PREFIXES) for ref in refs):
+        raise ValueError(f"{name} must contain typed reviewer refs")
     return refs
 
 
@@ -137,7 +158,7 @@ def exact_ref_tuple(
     refs = tuple(exact_ref(item, f"{name} item", prefix=prefix) for item in value)
     if len(refs) != len(set(refs)):
         raise ValueError(f"{name} must contain unique refs")
-    if canonical_order and refs != tuple(sorted(refs)):
+    if canonical_order and any(left >= right for left, right in zip(refs, refs[1:])):
         raise ValueError(f"{name} must be in canonical order")
     return refs
 
@@ -159,7 +180,7 @@ def exact_content_ref_tuple(
     refs = tuple(exact_content_ref(item, f"{name} item", prefix=prefix) for item in value)
     if len(refs) != len(set(refs)):
         raise ValueError(f"{name} must contain unique refs")
-    if refs != tuple(sorted(refs)):
+    if any(left >= right for left, right in zip(refs, refs[1:])):
         raise ValueError(f"{name} must be in canonical order")
     return refs
 
@@ -222,7 +243,9 @@ def exact_value_tuple(
     identities = tuple(identity(row) for row in rows)
     if len(identities) != len(set(identities)):
         raise ValueError(f"{name} contains duplicate identities")
-    if canonical_order and identities != tuple(sorted(identities)):
+    if canonical_order and any(
+        left >= right for left, right in zip(identities, identities[1:])
+    ):
         raise ValueError(f"{name} must be in canonical order")
     return rows
 
@@ -266,7 +289,7 @@ __all__ = [
     "MAX_R4_SOURCE_RECORDS",
     "MAX_R4_TEXT_CHARS",
     "canonical_json_bytes",
-    "construct",
+    "exact_abi",
     "exact_bool",
     "exact_case_ref",
     "exact_content_ref",
@@ -276,6 +299,7 @@ __all__ = [
     "exact_ref",
     "exact_ref_tuple",
     "exact_review_refs",
+    "exact_reviewer_refs",
     "exact_revision",
     "exact_sha256",
     "exact_text",
