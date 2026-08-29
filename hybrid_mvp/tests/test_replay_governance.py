@@ -70,12 +70,16 @@ R5_CONDITIONAL_DOCUMENTS = (
 R4_1_REPLAY_DESIGN = (
     "docs/superpowers/specs/2026-08-29-r4-1-data-supervision-replay-design.md"
 )
+R4_1_REPLAY_PLAN = (
+    "docs/superpowers/plans/2026-08-29-r4-1-data-supervision-replay-plan.md"
+)
 
 GOVERNING_DOCUMENTS = (
     "AGENTS.md",
     R4_1_AMENDMENT,
     "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
     R4_1_REPLAY_DESIGN,
+    R4_1_REPLAY_PLAN,
     "README.md",
     "INTEGRATION.md",
     "docs/ARCHITECTURE.md",
@@ -459,7 +463,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Authority-Cleanup-Task-1",
         "owner_ref": "governance",
-        "source_ast_sha256": "31d6bb98ec96694c0b151c3a7f09b35fc6b26d15b99f7bc9de9c54debe3c0f35"
+        "source_ast_sha256": "a0041e50313daf623ecc51f3696332456e724c966876e01072a1d76ce19b836d"
     },
     "tests/test_replay_governance.py::test_governing_documents_do_not_prescribe_rejected_r4_r5_paths": {
         "activation_phase": "G0",
@@ -1116,6 +1120,7 @@ def test_r4_1_amendment_owns_authentic_r5_prerequisites() -> None:
     authority = _authority()
     assert R4_1_AMENDMENT in authority["governing_documents"]
     assert R4_1_REPLAY_DESIGN in authority["governing_documents"]
+    assert R4_1_REPLAY_PLAN in authority["governing_documents"]
     text = (ROOT / R4_1_AMENDMENT).read_text(encoding="utf-8")
     for marker in REQUIRED_R5_PREREQUISITE_MARKERS:
         assert marker in text
