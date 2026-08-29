@@ -8,6 +8,7 @@
 > R4.1 is an external prerequisite implemented and admitted outside this
 > document. Current status is derived only from
 > [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> This document cannot implement, rebuild, publish, or admit R4.1.
 
 **Date:** 2026-08-22  
 **Status:** reviewed pre-implementation target design  

@@ -494,7 +494,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Authority-Cleanup-Task-5-Review",
         "owner_ref": "governance",
-        "source_ast_sha256": "f7bf70f52e424ceb6e0dc943cb8ad5273a8eab8f97d1526a28aab36db4185f3a"
+        "source_ast_sha256": "bbd1a5f56497e8cb9d3b56d23c0d80448839e1f638b3d8db386d62c56a945a5a"
     },
     "tests/test_replay_governance.py::test_historical_markdown_documents_have_status_neutral_banners": {
         "activation_phase": "G0",
@@ -502,7 +502,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Authority-Cleanup-Task-5-Review",
         "owner_ref": "governance",
-        "source_ast_sha256": "c80f29e5f4cd9d604977e37b2c3e2306222b976735ca6bf3ad7cbdb1e2f62fa9"
+        "source_ast_sha256": "0ba98465f4dda3fb20fb6ce790f26f5421ef1fa7389d7f0f61b2eba2d87dbdc4"
     },
     "tests/test_replay_governance.py::test_every_suffix_record_binds_commit_ancestor_monotonic_exact_prefix": {
         "activation_phase": "G0",
@@ -1144,6 +1144,7 @@ def test_governing_r5_documents_require_external_r4_1_prerequisite() -> None:
         text = re.sub(r"\s+", " ", raw)
         assert "r4.1 is an external prerequisite" in text, relative
         assert "fresh r4.1 admission" in text, relative
+        assert "cannot implement, rebuild, publish, or admit r4.1" in text, relative
         assert "governance/replay_status.jsonl" in text, relative
 
 
@@ -1157,10 +1158,7 @@ def test_historical_markdown_documents_have_status_neutral_banners() -> None:
     assert historical
     for relative in historical:
         text = (ROOT / relative).read_text(encoding="utf-8")
-        banner = "\n".join(text.splitlines()[:14])
-        assert "historical" in banner.casefold(), relative
-        assert "governance/replay_status.jsonl" in banner, relative
-        assert re.search(r"^\*\*status:\*\*", "\n".join(text.splitlines()[:24]), re.I | re.M) is None, relative
+        _assert_historical_status_document(relative, text)
 
 
 def test_r5_placeholder_docstrings_do_not_claim_admitted_semantics() -> None:

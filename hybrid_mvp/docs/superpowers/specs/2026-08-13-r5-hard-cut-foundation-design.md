@@ -6,6 +6,7 @@
 > cannot execute until fresh R4.1 admission proves the August 29
 > data/supervision contract. Current status is derived only from
 > [`governance/replay_status.jsonl`](../../../governance/replay_status.jsonl).
+> This document cannot implement, rebuild, publish, or admit R4.1.
 
 **Date:** 2026-08-13
 **Status at publication:** approved hard-cut design; foundation implementation was later completed
