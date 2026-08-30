@@ -8,9 +8,17 @@ const impactContent = document.getElementById("impact-content");
 const confirmImpact = document.getElementById("confirm-impact");
 const toast = document.getElementById("toast");
 const navigation = Array.from(document.querySelectorAll("[data-section]"));
+const modeNavigation = Array.from(document.querySelectorAll("[data-mode]"));
+const guidedProgress = document.getElementById("guided-progress");
+const advancedNavigation = document.getElementById("advanced-nav");
 
 const view = {
   bootstrap: null,
+  guidedBootstrap: null,
+  mode: "guided",
+  guidedStarted: false,
+  guidedItem: null,
+  guidedAfterRef: null,
   section: "dashboard",
   filter: "unresolved",
   query: "",
@@ -255,6 +263,77 @@ function renderDashboard() {
   reviewerPanel.append(node("hr"), shutdown);
   append(layout, primary, reviewerPanel);
   workspace.append(layout);
+}
+
+function renderGuidedStart() {
+  workspace.replaceChildren();
+  guidedProgress.textContent = "Ready to begin · decisions are saved only after confirmation";
+  const shell = node("section", "guided-shell panel");
+  append(
+    shell,
+    node("p", "eyebrow", "R4.1 accountable review"),
+    node("h2", "", "Verify one semantic decision at a time"),
+    node(
+      "p",
+      "guided-lead",
+      "You are verifying the bounded semantic supervision CEMM will use for R4.1. The system will explain each decision and show its evidence. It will not choose meaning for you."
+    )
+  );
+  const hasProgress = view.bootstrap.reviewer_refs.length > 0
+    || Object.values(view.bootstrap.review_counts).some((value) => value === 0);
+  const actions = node("div", "button-row guided-actions");
+  const start = node(
+    "button",
+    "button primary",
+    hasProgress ? "Resume guided review" : "Start guided review"
+  );
+  start.type = "button";
+  start.addEventListener("click", () => runMutation(async () => {
+    view.guidedStarted = true;
+    await loadGuidedNext(null);
+  }));
+  const advanced = node("button", "button secondary", "Open Advanced Explorer");
+  advanced.type = "button";
+  advanced.addEventListener("click", () => switchMode("advanced"));
+  append(actions, start, advanced);
+  shell.append(actions);
+  const explanation = node("details", "technical-evidence");
+  explanation.append(node("summary", "", "What will I be asked to do?"));
+  explanation.append(node(
+    "p",
+    "",
+    "Read the displayed source and evidence, answer one neutral question, review the impact, then explicitly confirm or skip it for later."
+  ));
+  shell.append(explanation);
+  workspace.append(shell);
+}
+
+function renderGuidedHolding() {
+  workspace.replaceChildren();
+  const item = view.guidedItem;
+  guidedProgress.textContent = item ? `Current phase · ${item.phase}` : "Loading guided review";
+  const shell = node("section", "guided-shell panel");
+  append(
+    shell,
+    node("p", "eyebrow", item ? item.phase : "Guided review"),
+    node("h2", "", item && item.phase === "identity" ? "Identify the accountable reviewer" : "Guided decision ready"),
+    node("p", "guided-lead", item ? item.instruction || "Continue the guided review." : "Loading the next decision.")
+  );
+  workspace.append(shell);
+}
+
+async function loadGuidedNext(afterItemRef) {
+  const params = new URLSearchParams({after: afterItemRef || ""});
+  const envelope = await api(`/api/guided/next?${params.toString()}`);
+  view.guidedItem = envelope.result;
+  view.guidedAfterRef = afterItemRef;
+  renderCurrentSection();
+}
+
+function switchMode(mode) {
+  view.mode = mode;
+  if (mode === "advanced") view.section = "dashboard";
+  renderCurrentSection();
 }
 
 function renderToolbar() {
@@ -606,6 +685,12 @@ async function runMutation(operation) {
 }
 
 async function renderCurrentSection() {
+  advancedNavigation.hidden = view.mode !== "advanced";
+  guidedProgress.hidden = view.mode !== "guided";
+  for (const button of modeNavigation) {
+    if (button.dataset.mode === view.mode) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  }
   for (const button of navigation) {
     if (button.dataset.section === view.section) {
       button.setAttribute("aria-current", "page");
@@ -614,7 +699,10 @@ async function renderCurrentSection() {
     }
   }
   try {
-    if (view.section === "dashboard") renderDashboard();
+    if (view.mode === "guided") {
+      if (!view.guidedStarted) renderGuidedStart();
+      else renderGuidedHolding();
+    } else if (view.section === "dashboard") renderDashboard();
     else if (view.section === "export") renderExport();
     else await renderItems();
   } catch (error) {
@@ -624,8 +712,12 @@ async function renderCurrentSection() {
 }
 
 async function refresh() {
-  const envelope = await api("/api/bootstrap");
+  const [envelope, guidedEnvelope] = await Promise.all([
+    api("/api/bootstrap"),
+    api("/api/guided/bootstrap"),
+  ]);
   view.bootstrap = envelope.result;
+  view.guidedBootstrap = guidedEnvelope.result;
   renderStatusHeader();
   await renderCurrentSection();
 }
@@ -655,6 +747,10 @@ for (const button of navigation) {
     view.offset = 0;
     renderCurrentSection();
   });
+}
+
+for (const button of modeNavigation) {
+  button.addEventListener("click", () => switchMode(button.dataset.mode));
 }
 
 async function start() {

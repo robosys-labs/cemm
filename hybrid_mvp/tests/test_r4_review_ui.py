@@ -15,6 +15,7 @@ class _ShellParser(HTMLParser):
         super().__init__()
         self.ids: set[str] = set()
         self.sections: set[str] = set()
+        self.modes: set[str] = set()
         self.inline_handlers: list[str] = []
         self.scripts: list[dict[str, str | None]] = []
 
@@ -28,6 +29,8 @@ class _ShellParser(HTMLParser):
             self.ids.add(values["id"])
         if values.get("data-section"):
             self.sections.add(values["data-section"])
+        if values.get("data-mode"):
+            self.modes.add(values["data-mode"])
         self.inline_handlers.extend(
             key for key in values if key.casefold().startswith("on")
         )
@@ -89,6 +92,31 @@ def test_review_ui_javascript_is_thin_and_avoids_unsafe_dom_paths() -> None:
         "busyPreviousDisabled",
     ):
         assert required in source
+
+
+def test_review_ui_defaults_to_guided_start_and_preserves_advanced_explorer() -> None:
+    parser = _ShellParser()
+    parser.feed((UI_ROOT / "index.html").read_text(encoding="utf-8"))
+    source = (UI_ROOT / "app.js").read_text(encoding="utf-8")
+
+    assert "guided-progress" in parser.ids
+    assert parser.modes == {"guided", "advanced"}
+    assert "Start guided review" in source
+    assert "Resume guided review" in source
+    assert "Open Advanced Explorer" in source
+    assert 'mode: "guided"' in source
+
+
+def test_guided_ui_has_no_semantic_recommendation_or_preselection() -> None:
+    source = (UI_ROOT / "app.js").read_text(encoding="utf-8").casefold()
+    for forbidden in (
+        "recommended option",
+        "best choice",
+        "likely correct",
+        "checked = true",
+        "autoselect",
+    ):
+        assert forbidden not in source
 
 
 @pytest.mark.parametrize(

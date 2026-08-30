@@ -10,7 +10,12 @@
 <body>
   <a class="skip-link" href="#workspace">Skip to review workspace</a>
   <header id="status-header" aria-live="polite"></header>
-  <nav class="phase-nav" aria-label="Review phases">
+  <nav class="mode-nav" aria-label="Review mode">
+    <button type="button" data-mode="guided">Guided review</button>
+    <button type="button" data-mode="advanced">Advanced Explorer</button>
+  </nav>
+  <div id="guided-progress" aria-live="polite"></div>
+  <nav id="advanced-nav" class="phase-nav" aria-label="Review phases">
     <button type="button" data-section="dashboard">Dashboard</button>
     <button type="button" data-section="structural">Structural</button>
     <button type="button" data-section="purpose">Purpose</button>
