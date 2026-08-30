@@ -17,18 +17,18 @@ from cemm_authoritative_hybrid.r4_sufficiency import (
     StructuralSufficiencyReceipt,
 )
 
-__cemm_test_inventory__ = {'tests/test_r4_sufficiency.py::test_sufficiency_enforces_explicit_minimums': {'activation_phase': 'R4',
-                                                                               'assertion_ref': 'assertion:r4-sufficiency-enforces-explicit-minimums',
-                                                                               'diagnostic_role': 'owner',
-                                                                               'introduced_by_task': 'R4-Complete',
-                                                                               'owner_ref': 'structural-sufficiency',
-                                                                               'source_ast_sha256': 'f2a034e06d6090a4cfcf7160db50122d247a99d8171ef121f695be8b6f91c739'},
- 'tests/test_r4_sufficiency.py::test_sufficiency_reports_missing_dimension_without_vacuous_denominator': {'activation_phase': 'R4',
+__cemm_test_inventory__ = {'tests/test_r4_sufficiency.py::test_sufficiency_reports_missing_dimension_without_vacuous_denominator': {'activation_phase': 'R4',
                                                                                                           'assertion_ref': 'assertion:r4-sufficiency-reports-missing-dimension-without-vacuous-denominator',
                                                                                                           'diagnostic_role': 'owner',
                                                                                                           'introduced_by_task': 'R4-Complete',
                                                                                                           'owner_ref': 'structural-sufficiency',
-                                                                                                          'source_ast_sha256': '82e8e4f67ce51bad5b7efd9fd977daa0fc30ae1ce73c3ea4880ee258e1e92294'}}
+                                                                                                          'source_ast_sha256': '82e8e4f67ce51bad5b7efd9fd977daa0fc30ae1ce73c3ea4880ee258e1e92294'},
+ 'tests/test_r4_sufficiency.py::test_sufficiency_enforces_explicit_minimums': {'activation_phase': 'R4',
+                                                                               'assertion_ref': 'assertion:r4-sufficiency-enforces-explicit-minimums',
+                                                                               'diagnostic_role': 'owner',
+                                                                               'introduced_by_task': 'R4-Complete',
+                                                                               'owner_ref': 'structural-sufficiency',
+                                                                               'source_ast_sha256': '7e5df6489c70e509027732c2f54294ae04d12ff96de4768849f08563de7e954c'}}
 
 
 
@@ -75,7 +75,6 @@ def _contract(kind: str, fields: dict, index: int):
             "competency_category": kind,
             "semantic_assertions": [{"kind": kind, **fields}],
             "surface_examples": [f"surface {index}"],
-            "expected_gap_kind": None,
             "metadata": {},
         }
     )
@@ -103,7 +102,6 @@ def test_sufficiency_enforces_explicit_minimums() -> None:
                 {"kind": "relation", "subject": "entity:a", "relation": "rel:s", "object": "entity:c"},
             ],
             "surface_examples": ["combined"],
-            "expected_gap_kind": None,
             "metadata": {},
         }
     )

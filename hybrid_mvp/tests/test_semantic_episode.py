@@ -27,8 +27,6 @@ from cemm_authoritative_hybrid.episodes import (
     validate_episode,
     validate_training_source,
 )
-from cemm_authoritative_hybrid.gaps import GapKind
-
 ROOT = Path(__file__).parents[1]
 SCENARIOS_PATH = ROOT / "data" / "scenarios" / "use_cases.jsonl"
 EPISODES_PATH = ROOT / "data" / "episodes" / "all.jsonl"
@@ -174,16 +172,6 @@ def test_scenario_cases_cover_all_competency_categories(load_scenarios):
     actual = {case.competency_category for case in scenarios}
     missing = expected - actual
     assert not missing, f"Missing competency categories: {missing}"
-
-
-def test_scenario_gap_kinds_are_valid(load_scenarios):
-    valid_kinds = {kind.value for kind in GapKind}
-    scenarios = load_scenarios()
-    for case in scenarios:
-        if case.expected_gap_kind is not None:
-            assert case.expected_gap_kind in valid_kinds, (
-                f"{case.scenario_ref} has invalid gap kind: {case.expected_gap_kind}"
-            )
 
 
 # ---------------------------------------------------------------------------

@@ -1334,6 +1334,40 @@ def test_review_bundle_enforces_existing_byte_record_depth_and_ref_bounds(
         supervision_module.load_authenticated_r4_review_bundle(root)
 
 
+def test_sr1_r4_source_abi_registry_states_are_exact_and_nonactivating() -> None:
+    registry = (ROOT / "docs/ABI_REGISTRY.md").read_text(encoding="utf-8")
+    expected = {
+        "Expected Cycle Contract ABI": ("2", "implemented predecessor"),
+        "R4 Review Manifest ABI": (
+            "1",
+            "strict decoder and authenticated loader implemented; checked-in reviewed data, publication and admission pending",
+        ),
+        "Proposal Supervision ABI": (
+            "1",
+            "strict decoder implemented; source compiler, checked-in reviewed data, publication and admission pending",
+        ),
+        "Realization Supervision ABI": (
+            "1",
+            "strict decoder implemented; source compiler, checked-in reviewed data, publication and admission pending",
+        ),
+        "Mutation Contract ABI": (
+            "1",
+            "strict decoder implemented; source compiler, checked-in reviewed data, publication and admission pending",
+        ),
+        "Purpose Contract ABI": (
+            "1",
+            "strict decoder implemented; source compiler, checked-in reviewed data, publication and admission pending",
+        ),
+    }
+    for name, (version, state) in expected.items():
+        rows = [line for line in registry.splitlines() if line.startswith(f"| {name} |")]
+        assert len(rows) == 1
+        cells = [cell.strip() for cell in rows[0].strip("|").split("|")]
+        assert cells[1] == f"**{version}**"
+        assert cells[5] == state
+        assert "activated" not in cells[5]
+
+
 __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervision_contracts_are_factory_only_frozen_and_canonical[_manifest]': {'activation_phase': 'R4',
                                                                                                                          'assertion_ref': 'assertion:r4-supervision-contracts-factory-only-frozen-canonical',
                                                                                                                          'diagnostic_role': 'owner',
@@ -1436,12 +1470,6 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervi
                                                                                                                           'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                           'owner_ref': 'mutation-partition',
                                                                                                                           'source_ast_sha256': 'b40b3531171fd1d8b819a32d1313b8787917f494f92619eae6de4d4e1b85db3e'},
- 'tests/test_r4_supervision_contracts.py::test_supervision_schemas_are_strict_draft_2020_12_and_match_decoders': {'activation_phase': 'R4',
-                                                                                                                  'assertion_ref': 'assertion:r4-supervision-schemas-draft-2020-12-decoder-parity',
-                                                                                                                  'diagnostic_role': 'owner',
-                                                                                                                  'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
-                                                                                                                  'owner_ref': 'mutation-partition',
-                                                                                                                  'source_ast_sha256': '29175e5eaf7883d50223ff0194d16a6cb83b393a7aa32261f46378af53b8df0d'},
  'tests/test_r4_supervision_contracts.py::test_review_bundle_reads_exactly_five_reviewed_sources_plus_scenario_once': {'activation_phase': 'R4',
                                                                                                                        'assertion_ref': 'assertion:r4-review-bundle-read-once-exact-membership',
                                                                                                                        'diagnostic_role': 'owner',
@@ -1573,4 +1601,16 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervi
                                                                                                        'diagnostic_role': 'owner',
                                                                                                        'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
                                                                                                        'owner_ref': 'mutation-partition',
-                                                                                                       'source_ast_sha256': '859713c8add8377cae91a2fbd8d87d82c15728316b740852958ecc73b848bfff'}}
+                                                                                                       'source_ast_sha256': '859713c8add8377cae91a2fbd8d87d82c15728316b740852958ecc73b848bfff'},
+ 'tests/test_r4_supervision_contracts.py::test_sr1_r4_source_abi_registry_states_are_exact_and_nonactivating': {'activation_phase': 'R4',
+                                                                                                                'assertion_ref': 'assertion:r4-sr1-source-abi-registry-exact-nonactivating',
+                                                                                                                'diagnostic_role': 'owner',
+                                                                                                                'introduced_by_task': 'R4.1-SR1',
+                                                                                                                'owner_ref': 'mutation-partition',
+                                                                                                                'source_ast_sha256': 'd10f0de42d7bc2e824d92eaf0a1893282410968dfd45900c81f9b46864136086'},
+ 'tests/test_r4_supervision_contracts.py::test_supervision_schemas_are_strict_draft_2020_12_and_match_decoders': {'activation_phase': 'R4',
+                                                                                                                  'assertion_ref': 'assertion:r4-supervision-schemas-draft-2020-12-decoder-parity',
+                                                                                                                  'diagnostic_role': 'owner',
+                                                                                                                  'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
+                                                                                                                  'owner_ref': 'mutation-partition',
+                                                                                                                  'source_ast_sha256': '29175e5eaf7883d50223ff0194d16a6cb83b393a7aa32261f46378af53b8df0d'}}

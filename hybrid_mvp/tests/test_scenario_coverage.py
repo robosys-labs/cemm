@@ -3,7 +3,8 @@
 The scenario matrix covers all semantic competency categories. Each case
 specifies semantic assertions rather than exact prose. Each case has a unique
 scenario_ref, review_status="reviewed", a competency_category, semantic
-assertions, surface examples, and an expected_gap_kind (if any).
+assertions and surface examples. Structured ``kind: gap`` assertions are the
+sole exact source of expected gap truth.
 """
 
 from __future__ import annotations
@@ -12,10 +13,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-import pytest
-
 from cemm_authoritative_hybrid.episodes import ScenarioCase
-from cemm_authoritative_hybrid.gaps import GapKind
 
 ROOT = Path(__file__).parents[1]
 SCENARIOS_PATH = ROOT / "data" / "scenarios" / "use_cases.jsonl"
@@ -125,30 +123,6 @@ def test_all_competency_categories_covered():
     for cat in COMPETENCY_CATEGORIES:
         assert cat in categories, f"Missing competency category: {cat}"
         assert categories[cat] > 0, f"Empty competency category: {cat}"
-
-
-def test_every_gap_kind_represented():
-    """Every gap kind has at least one scenario with that expected_gap_kind."""
-    cases = _load_scenarios()
-    gap_kinds_in_scenarios = {
-        case.expected_gap_kind
-        for case in cases
-        if case.expected_gap_kind is not None
-    }
-    for kind in GapKind:
-        assert kind.value in gap_kinds_in_scenarios, (
-            f"No scenario for gap kind: {kind.value}"
-        )
-
-
-def test_gap_kind_scenarios_have_valid_kinds():
-    cases = _load_scenarios()
-    valid = {kind.value for kind in GapKind}
-    for case in cases:
-        if case.expected_gap_kind is not None:
-            assert case.expected_gap_kind in valid, (
-                f"{case.scenario_ref}: invalid gap kind {case.expected_gap_kind}"
-            )
 
 
 # ---------------------------------------------------------------------------

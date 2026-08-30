@@ -43,6 +43,7 @@ from ._r4_source_codec import (
 )
 from .canonical import stable_ref
 from .programs import ACTION_ABI_HASH, ACTION_ABI_SCHEMAS, PROGRAM_ABI_VERSION, SWITCH_ACTION_TYPES
+from .r4_contracts import SourceDisposition
 
 R4_REVIEW_MANIFEST_ABI_VERSION = 1
 PROPOSAL_SUPERVISION_ABI_VERSION = 1
@@ -67,6 +68,16 @@ R4_REVIEW_SOURCE_FILE_COUNT = 5  # manifest plus the four child owners below
 R4_REVIEW_BUNDLE_READ_COUNT = 6  # file opens/snapshots, not low-level read syscalls
 MAX_R4_REVIEW_BUNDLE_BYTES = R4_REVIEW_BUNDLE_READ_COUNT * MAX_R4_SOURCE_BYTES
 MAX_R4_SOURCE_READ_SYSCALLS = 8_192
+
+
+def source_disposition_is_supervision_eligible(
+    disposition: SourceDisposition,
+) -> bool:
+    """Return whether reviewed source truth may enter later supervision."""
+
+    if type(disposition) is not SourceDisposition:
+        raise TypeError("disposition must be exact SourceDisposition")
+    return disposition is not SourceDisposition.RESTART_DIAGNOSTIC_CANDIDATE
 
 _SOURCE_PATHS = (
     "data/review/r4_1/mutation_contracts.jsonl",
@@ -1306,5 +1317,7 @@ __all__ = [
     "ReferenceFormChoice",
     "ReviewSourceFile",
     "TypedAbstention",
+    "SourceDisposition",
+    "source_disposition_is_supervision_eligible",
     "load_authenticated_r4_review_bundle",
 ]

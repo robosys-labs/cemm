@@ -17,34 +17,59 @@ from cemm_authoritative_hybrid.r4_contracts import (
     ExpectedCycleContract,
     ExpectedCycleContractCompiler,
     ExpectedEffectKind,
+    ExpectedGapContract,
     ReviewedAssertion,
     ReviewedScenario,
 )
 
-__cemm_test_inventory__ = {'tests/test_r4_assertion_compiler.py::test_explicit_cycle_contract_rows_are_complete_and_override_defaults': {'activation_phase': 'R4',
-                                                                                                               'assertion_ref': 'assertion:r4-explicit-cycle-contract-rows-are-complete',
-                                                                                                               'diagnostic_role': 'owner',
-                                                                                                               'introduced_by_task': 'R4-Designation-Event-Tranche',
-                                                                                                               'owner_ref': 'expected-contract',
-                                                                                                               'source_ast_sha256': 'ddab9656dd2e73772790653452a6075d7e4b0a91279710ded58eb883d3a7d4be'},
- 'tests/test_r4_assertion_compiler.py::test_compiler_resets_situated_state_between_cases': {'activation_phase': 'R4',
-                                                                                            'assertion_ref': 'assertion:r4-compiler-resets-situated-state-between-cases',
-                                                                                            'diagnostic_role': 'owner',
-                                                                                            'introduced_by_task': 'R4-Complete',
-                                                                                            'owner_ref': 'expected-contract',
-                                                                                            'source_ast_sha256': 'e8c0c525b5fcb8bd409764402774eefc4ff3c7087b9556d1dc5f550cad76992d'},
+__cemm_test_inventory__ = {'tests/test_r4_assertion_compiler.py::test_unknown_assertion_kind_fails_closed': {'activation_phase': 'R4',
+                                                                                   'assertion_ref': 'assertion:r4-unknown-assertion-kind-fails-closed',
+                                                                                   'diagnostic_role': 'owner',
+                                                                                   'introduced_by_task': 'R4-Complete',
+                                                                                   'owner_ref': 'expected-contract',
+                                                                                   'source_ast_sha256': 'bfb2f2d5bfaa4a240f1c0339001bc8f7979c5b9f698d67d7a21ab38970027ef7'},
+ 'tests/test_r4_assertion_compiler.py::test_sr1_structured_gap_kinds_preserve_exact_owners': {'activation_phase': 'R4',
+                                                                                              'assertion_ref': 'assertion:r4-sr1-structured-gap-kinds-preserve-exact-owners',
+                                                                                              'diagnostic_role': 'owner',
+                                                                                              'introduced_by_task': 'R4.1-SR1',
+                                                                                              'owner_ref': 'expected-contract',
+                                                                                              'source_ast_sha256': 'ee926791b7c190eda0eb9939583034df550423e2b8898b56e6e5f4f93efc9011'},
+ 'tests/test_r4_assertion_compiler.py::test_sr1_adversarial_is_exact_verification_rejection': {'activation_phase': 'R4',
+                                                                                               'assertion_ref': 'assertion:r4-sr1-adversarial-is-exact-verification-rejection',
+                                                                                               'diagnostic_role': 'owner',
+                                                                                               'introduced_by_task': 'R4.1-SR1',
+                                                                                               'owner_ref': 'expected-contract',
+                                                                                               'source_ast_sha256': 'ff58b764484269ed144a2771e1f3683f5cebc18c8470583c256dc6b554027320'},
+ 'tests/test_r4_assertion_compiler.py::test_sr1_adversarial_and_gap_cannot_mix': {'activation_phase': 'R4',
+                                                                                  'assertion_ref': 'assertion:r4-sr1-adversarial-and-gap-cannot-mix',
+                                                                                  'diagnostic_role': 'owner',
+                                                                                  'introduced_by_task': 'R4.1-SR1',
+                                                                                  'owner_ref': 'expected-contract',
+                                                                                  'source_ast_sha256': '2bcf5149765444c3c022684b79fbac8fa80acccd6977f6481a8b6ea05b7eb689'},
+ 'tests/test_r4_assertion_compiler.py::test_sr1_old_abi2_generic_gap_rows_fail_closed': {'activation_phase': 'R4',
+                                                                                         'assertion_ref': 'assertion:r4-sr1-old-abi2-generic-gap-rows-fail-closed',
+                                                                                         'diagnostic_role': 'owner',
+                                                                                         'introduced_by_task': 'R4.1-SR1',
+                                                                                         'owner_ref': 'expected-contract',
+                                                                                         'source_ast_sha256': '07211bf87892b397a761aebc7b56cd4f051cc5315328a6affd53b8d46661cdcc'},
  'tests/test_r4_assertion_compiler.py::test_core_reviewed_assertion_families_compile_without_propose': {'activation_phase': 'R4',
                                                                                                         'assertion_ref': 'assertion:r4-core-reviewed-assertion-families-compile-without-propose',
                                                                                                         'diagnostic_role': 'owner',
                                                                                                         'introduced_by_task': 'R4-Complete',
                                                                                                         'owner_ref': 'expected-contract',
                                                                                                         'source_ast_sha256': '92dc4bd6f5b0c93e8e05cf61acf47e135898e73cec8b82e7ba5996721ce875b9'},
- 'tests/test_r4_assertion_compiler.py::test_unknown_assertion_kind_fails_closed': {'activation_phase': 'R4',
-                                                                                   'assertion_ref': 'assertion:r4-unknown-assertion-kind-fails-closed',
-                                                                                   'diagnostic_role': 'owner',
-                                                                                   'introduced_by_task': 'R4-Complete',
-                                                                                   'owner_ref': 'expected-contract',
-                                                                                   'source_ast_sha256': 'bfb2f2d5bfaa4a240f1c0339001bc8f7979c5b9f698d67d7a21ab38970027ef7'}}
+ 'tests/test_r4_assertion_compiler.py::test_explicit_cycle_contract_rows_are_complete_and_override_defaults': {'activation_phase': 'R4',
+                                                                                                               'assertion_ref': 'assertion:r4-explicit-cycle-contract-rows-are-complete',
+                                                                                                               'diagnostic_role': 'owner',
+                                                                                                               'introduced_by_task': 'R4-Designation-Event-Tranche',
+                                                                                                               'owner_ref': 'expected-contract',
+                                                                                                               'source_ast_sha256': 'bd67178ca9b3635a3521e7117169aa17f59548e0a472ca2fe84c86da7e1090f0'},
+ 'tests/test_r4_assertion_compiler.py::test_compiler_resets_situated_state_between_cases': {'activation_phase': 'R4',
+                                                                                            'assertion_ref': 'assertion:r4-compiler-resets-situated-state-between-cases',
+                                                                                            'diagnostic_role': 'owner',
+                                                                                            'introduced_by_task': 'R4-Complete',
+                                                                                            'owner_ref': 'expected-contract',
+                                                                                            'source_ast_sha256': '18044cd2bafe34c53b9f8f12b2cbe162fc35ad3502fb8077df57f58ecbd98ef6'}}
 
 
 
@@ -130,7 +155,6 @@ def _compile(kind: str, fields: dict):
             "competency_category": kind,
             "semantic_assertions": [{"kind": kind, **fields}],
             "surface_examples": ["surface one", "surface two"],
-            "expected_gap_kind": None,
             "metadata": {},
         }
     )
@@ -224,7 +248,6 @@ def test_explicit_cycle_contract_rows_are_complete_and_override_defaults() -> No
                 },
             ],
             "surface_examples": ["hello"],
-            "expected_gap_kind": None,
             "metadata": {},
         }
     )
@@ -270,7 +293,6 @@ def test_explicit_cycle_contract_rows_are_complete_and_override_defaults() -> No
                 },
             ],
             "surface_examples": ["hello"],
-            "expected_gap_kind": None,
             "metadata": {},
         }
     )
@@ -300,7 +322,6 @@ def test_compiler_resets_situated_state_between_cases() -> None:
                 {"kind": "query", "dimension": "dim:power", "target": "entity:lamp"}
             ],
             "surface_examples": ["is the lamp on?"],
-            "expected_gap_kind": None,
             "metadata": {},
         }
     )
@@ -318,7 +339,6 @@ def test_compiler_resets_situated_state_between_cases() -> None:
                 }
             ],
             "surface_examples": ["a likes b"],
-            "expected_gap_kind": None,
             "metadata": {},
         }
     )
@@ -361,4 +381,107 @@ def test_unknown_assertion_kind_fails_closed() -> None:
             assertions=(assertion,),
             situation_constraints={},
             revision_pin=_pin(),
+        )
+
+
+def test_sr1_structured_gap_kinds_preserve_exact_owners() -> None:
+    rows = [
+        ("evidence", "form-context"),
+        ("designation", "form-context"),
+        ("reference", "form-context"),
+        ("authority", "authority-link"),
+        ("proposal", "recursive-composer"),
+        ("verification", "exact-verifier"),
+        ("inference", "decision-query-proof"),
+        ("state", "epistemic-state"),
+        ("transition", "capability-effect"),
+        ("learning", "learning-dialogue"),
+        ("resource", "capability-effect"),
+        ("permission", "capability-effect"),
+        ("adapter", "capability-effect"),
+        ("operation", "capability-effect"),
+        ("storage", "persistence-recovery"),
+        ("realization", "response-contract"),
+        ("performance", "runtime-activation"),
+        ("implementation", "runtime-activation"),
+    ]
+    for gap_kind, owner in rows:
+        contract = _compile(
+            "gap", {"gap_kind": gap_kind, "description": f"{gap_kind} gap"}
+        )
+        assert contract.outcome_kind.value == "gap"
+        assert contract.expected_gap is not None
+        assert contract.expected_gap.kind == gap_kind
+        assert contract.expected_gap.recommended_owner == owner
+
+
+def test_sr1_adversarial_is_exact_verification_rejection() -> None:
+    contract = _compile(
+        "adversarial",
+        {
+            "attack": "unknown_operator",
+            "operator": "op:invented",
+            "expected_owner": "exact-verifier",
+            "expected_error_code": "verification:unknown_operator",
+        },
+    )
+    assert contract.outcome_kind.value == "verification_rejection"
+    assert contract.expression_relation.value == "none"
+    assert contract.expected_gap is not None
+    assert contract.expected_gap.kind == "verification"
+    assert contract.expected_gap.recommended_owner == "exact-verifier"
+    assert contract.expected_gap.safe_response_action == "reject_candidate"
+    assert contract.expected_gap.error_code == "verification:unknown_operator"
+    for invalid in (None, 7, True):
+        with pytest.raises((TypeError, ValueError), match="expected_error_code"):
+            _compile(
+                "adversarial",
+                {
+                    "attack": "unknown_operator",
+                    "expected_error_code": invalid,
+                },
+            )
+
+
+def test_sr1_adversarial_and_gap_cannot_mix() -> None:
+    with pytest.raises(ValueError, match="gap.*adversarial|mixed"):
+        ReviewedScenario.from_dict(
+            {
+                "scenario_ref": "scenario:mixed-rejection",
+                "review_status": "reviewed",
+                "competency_category": "adversarial_programs",
+                "semantic_assertions": [
+                    {
+                        "kind": "gap",
+                        "gap_kind": "verification",
+                        "description": "gap",
+                    },
+                    {"kind": "adversarial", "attack": "unknown_operator"},
+                ],
+                "surface_examples": ["attack"],
+                "metadata": {},
+            }
+        )
+
+
+def test_sr1_old_abi2_generic_gap_rows_fail_closed() -> None:
+    with pytest.raises(ValueError, match="recommended owner mismatch"):
+        ExpectedGapContract.from_dict(
+            {
+                "kind": "proposal",
+                "status": "proposal_abstained",
+                "recommended_owner": "training",
+                "safe_response_action": "request_proposal_review",
+                "error_code": "proposal:critical_residual",
+            }
+        )
+    with pytest.raises(ValueError, match="unsupported expected gap kind"):
+        ExpectedGapContract.from_dict(
+            {
+                "kind": "semantic",
+                "status": "gap",
+                "recommended_owner": "runtime",
+                "safe_response_action": "stop_without_surface",
+                "error_code": None,
+            }
         )

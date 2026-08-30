@@ -61,6 +61,8 @@ __all__ = [
     "ReviewedAssertion",
     "ReviewedScenario",
     "AssertionRegistry",
+    "SourceDisposition",
+    "classify_source_disposition",
     "ExpectedOutcomeKind",
     "ExpressionRelation",
     "ExpectedEffectKind",
@@ -176,7 +178,6 @@ class ReviewedScenario:
     competency_category: str
     assertions: tuple[ReviewedAssertion, ...]
     surface_examples: tuple[str, ...]
-    expected_gap_kind: str | None
     metadata: Mapping[str, Any]
 
     def __init__(self, *_args: Any, **_kwargs: Any) -> None:
@@ -191,13 +192,21 @@ class ReviewedScenario:
         competency_category: str,
         assertions: tuple[ReviewedAssertion, ...],
         surface_examples: tuple[str, ...],
-        expected_gap_kind: str | None,
         metadata: Mapping[str, Any],
     ) -> "ReviewedScenario":
         if type(assertions) is not tuple or not assertions or len(assertions) > _MAX_ASSERTIONS:
             raise ValueError("scenario requires a bounded nonempty assertion tuple")
         if any(type(row) is not ReviewedAssertion for row in assertions):
             raise TypeError("scenario assertions must be ReviewedAssertion values")
+        kinds = tuple(row.kind for row in assertions)
+        if kinds.count("gap") > 1:
+            raise ValueError("multiple structured gap assertions are forbidden")
+        if "gap" in kinds and any(kind not in {"gap", "mode"} for kind in kinds):
+            raise ValueError(
+                "structured gap cannot be mixed with semantic or adversarial truth"
+            )
+        if any(kind in {"adversarial", "adversarial_program"} for kind in kinds) and len(kinds) != 1:
+            raise ValueError("adversarial truth cannot be mixed with other assertions")
         if type(surface_examples) is not tuple or not surface_examples or len(surface_examples) > _MAX_SURFACES:
             raise ValueError("scenario requires bounded nonempty surface examples")
         surfaces = tuple(
@@ -211,7 +220,6 @@ class ReviewedScenario:
             "competency_category": exact_text(competency_category, "competency_category"),
             "assertions": assertions,
             "surface_examples": surfaces,
-            "expected_gap_kind": optional_text(expected_gap_kind, "expected_gap_kind"),
             "metadata": _json_mapping(metadata, "scenario metadata"),
         }.items():
             object.__setattr__(obj, name, item)
@@ -226,12 +234,13 @@ class ReviewedScenario:
                 {"kind": row.kind, **thaw_json(row.fields)} for row in self.assertions
             ],
             "surface_examples": list(self.surface_examples),
-            "expected_gap_kind": self.expected_gap_kind,
             "metadata": thaw_json(self.metadata),
         }
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "ReviewedScenario":
+        if "expected_gap_kind" in value:
+            raise ValueError("ReviewedScenario unknown field: expected_gap_kind")
         row = exact_fields(
             value,
             frozenset(
@@ -241,7 +250,6 @@ class ReviewedScenario:
                     "competency_category",
                     "semantic_assertions",
                     "surface_examples",
-                    "expected_gap_kind",
                     "metadata",
                 }
             ),
@@ -267,6 +275,21 @@ class ReviewedScenario:
                     review_refs=(review_ref,),
                 )
             )
+        families = tuple(
+            AssertionRegistry.SPECS[assertion.kind].family
+            if assertion.kind in AssertionRegistry.SPECS
+            else assertion.kind
+            for assertion in assertions
+        )
+        gap_count = families.count("gap")
+        if gap_count > 1:
+            raise ValueError("multiple structured gap assertions are forbidden")
+        if gap_count and any(family not in {"gap", "contract"} for family in families):
+            raise ValueError(
+                "structured gap cannot be mixed with semantic or adversarial truth"
+            )
+        if "adversarial" in families and len(families) != 1:
+            raise ValueError("adversarial truth cannot be mixed with other assertions")
         if type(row["surface_examples"]) is not list or type(row["metadata"]) is not dict:
             raise TypeError("scenario wire collections are invalid")
         return cls.create(
@@ -275,7 +298,6 @@ class ReviewedScenario:
             competency_category=row["competency_category"],
             assertions=tuple(assertions),
             surface_examples=tuple(row["surface_examples"]),
-            expected_gap_kind=row["expected_gap_kind"],
             metadata=row["metadata"],
         )
 
@@ -429,6 +451,37 @@ class ExpectedOutcomeKind(Enum):
     REALIZATION_EQUIVALENCE = "realization_equivalence"
 
 
+class SourceDisposition(Enum):
+    SEMANTIC = "semantic"
+    EXPLICIT_GAP = "explicit_gap"
+    VERIFICATION_REJECTION = "verification_rejection"
+    RESTART_DIAGNOSTIC_CANDIDATE = "restart_diagnostic_candidate"
+
+
+def classify_source_disposition(scenario: ReviewedScenario) -> SourceDisposition:
+    """Classify reviewed truth without competency or runtime overrides."""
+
+    if type(scenario) is not ReviewedScenario:
+        raise TypeError("scenario must be exact ReviewedScenario")
+    families = tuple(
+        AssertionRegistry.validate(assertion).family
+        for assertion in scenario.assertions
+    )
+    if families.count("gap") == 1 and all(
+        family in {"gap", "contract"} for family in families
+    ):
+        return SourceDisposition.EXPLICIT_GAP
+    if families == ("adversarial",):
+        return SourceDisposition.VERIFICATION_REJECTION
+    if families == ("restart",):
+        return SourceDisposition.RESTART_DIAGNOSTIC_CANDIDATE
+    if any(
+        family in {"gap", "adversarial", "restart"} for family in families
+    ):
+        raise ValueError("source disposition families cannot be mixed")
+    return SourceDisposition.SEMANTIC
+
+
 class ExpressionRelation(Enum):
     SINGLE = "single"
     ALL = "all"
@@ -576,6 +629,14 @@ class ExpectedGapContract:
         for name in ("kind", "status", "recommended_owner", "safe_response_action"):
             exact_text(getattr(self, name), name)
         optional_text(self.error_code, "error_code")
+        expected_owner = _GAP_OWNER_BY_KIND.get(self.kind)
+        if expected_owner is None:
+            raise ValueError(f"unsupported expected gap kind: {self.kind}")
+        if self.recommended_owner != expected_owner:
+            raise ValueError(
+                "expected gap recommended owner mismatch: "
+                f"{self.kind} requires {expected_owner}"
+            )
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -590,6 +651,30 @@ class ExpectedGapContract:
     def from_dict(cls, value: Mapping[str, Any]) -> "ExpectedGapContract":
         row = exact_fields(value, frozenset({"kind", "status", "recommended_owner", "safe_response_action", "error_code"}), "ExpectedGapContract")
         return cls(**row)
+
+
+_GAP_OWNER_BY_KIND: Mapping[str, str] = MappingProxyType(
+    {
+        "evidence": "form-context",
+        "designation": "form-context",
+        "reference": "form-context",
+        "authority": "authority-link",
+        "proposal": "recursive-composer",
+        "verification": "exact-verifier",
+        "inference": "decision-query-proof",
+        "state": "epistemic-state",
+        "transition": "capability-effect",
+        "learning": "learning-dialogue",
+        "resource": "capability-effect",
+        "permission": "capability-effect",
+        "adapter": "capability-effect",
+        "operation": "capability-effect",
+        "storage": "persistence-recovery",
+        "realization": "response-contract",
+        "performance": "runtime-activation",
+        "implementation": "runtime-activation",
+    }
+)
 
 
 @dataclass(frozen=True, init=False)
@@ -676,6 +761,16 @@ class ExpectedCycleContract:
             raise ValueError("gap/rejection expected outcomes require expected_gap")
         if outcome not in {ExpectedOutcomeKind.GAP, ExpectedOutcomeKind.VERIFICATION_REJECTION} and gap is not None:
             raise ValueError("semantic/non-gap expected outcome cannot carry expected_gap")
+        if outcome is ExpectedOutcomeKind.VERIFICATION_REJECTION and (
+            gap is None
+            or gap.kind != "verification"
+            or gap.recommended_owner != "exact-verifier"
+            or gap.safe_response_action != "reject_candidate"
+            or gap.error_code is None
+        ):
+            raise ValueError(
+                "verification rejection requires exact verifier/error/safe action"
+            )
         values = {
             "scenario_ref": exact_text(raw.pop("scenario_ref"), "scenario_ref"),
             "case_ref": exact_text(raw.pop("case_ref"), "case_ref"),
@@ -1116,6 +1211,11 @@ class ExpectedCycleContractCompiler:
         gap = gaps[0] if gaps else None
         if gap is None:
             outcome, relation, owner = self._outcome(families, expressions)
+        elif "adversarial" in families:
+            outcome = ExpectedOutcomeKind.VERIFICATION_REJECTION
+            relation = ExpressionRelation.NONE
+            owner = "exact-verifier"
+            expressions = []
         else:
             outcome = ExpectedOutcomeKind.GAP
             relation = ExpressionRelation.NONE
@@ -1132,7 +1232,7 @@ class ExpectedCycleContractCompiler:
                 kind=(
                     "verification"
                     if outcome is ExpectedOutcomeKind.VERIFICATION_REJECTION
-                    else "semantic"
+                    else "proposal"
                 ),
                 status=(
                     "rejected"
@@ -1375,12 +1475,17 @@ class ExpectedCycleContractCompiler:
             )
         if family == "gap":
             kind = exact_text(fields["gap_kind"], "gap_kind")
+            owner = self._gap_owner(kind)
+            observed_kind = fields.get("observed_kind")
+            if observed_kind is not None and observed_kind != kind:
+                raise ValueError("structured gap observed_kind conflicts with gap_kind")
+            supplied_owner = fields.get("recommended_owner", fields.get("owner"))
+            if supplied_owner is not None and supplied_owner != owner:
+                raise ValueError("structured gap recommended owner conflicts with gap_kind")
             return (), normalized, None, ExpectedGapContract(
-                kind=str(fields.get("observed_kind", "proposal")),
+                kind=kind,
                 status=str(fields.get("status", "proposal_abstained")),
-                recommended_owner=str(
-                    fields.get("recommended_owner", fields.get("owner", "training"))
-                ),
+                recommended_owner=owner,
                 safe_response_action=str(
                     fields.get("safe_response_action", "request_proposal_review")
                 ),
@@ -1396,12 +1501,22 @@ class ExpectedCycleContractCompiler:
             return (), normalized, self._mode_field(fields), None
         if family == "adversarial":
             attack = exact_text(fields["attack"], "attack")
+            owner = exact_text(
+                fields.get("expected_owner", "exact-verifier"),
+                "adversarial expected_owner",
+            )
+            if owner != "exact-verifier":
+                raise ValueError("adversarial assertion requires exact-verifier owner")
+            error_code = exact_text(
+                fields.get("expected_error_code", f"verification:{attack}"),
+                "adversarial expected_error_code",
+            )
             return (), normalized, None, ExpectedGapContract(
-                "proposal",
-                "proposal_abstained",
-                str(fields.get("expected_owner", "training")),
-                "request_proposal_review",
-                str(fields.get("expected_error_code", "proposal:critical_residual")),
+                "verification",
+                "verification_rejected",
+                owner,
+                "reject_candidate",
+                error_code,
             )
         if family in {"restart", "realization_equivalence"}:
             return (), normalized, None, None
@@ -2433,26 +2548,10 @@ class ExpectedCycleContractCompiler:
 
     @staticmethod
     def _gap_owner(kind: str) -> str:
-        return {
-            "evidence": "form-context",
-            "designation": "form-context",
-            "reference": "form-context",
-            "authority": "authority-link",
-            "proposal": "recursive-composer",
-            "verification": "exact-verifier",
-            "inference": "decision-query-proof",
-            "state": "epistemic-state",
-            "transition": "capability-effect",
-            "learning": "learning-dialogue",
-            "resource": "capability-effect",
-            "permission": "capability-effect",
-            "adapter": "capability-effect",
-            "operation": "capability-effect",
-            "storage": "persistence-recovery",
-            "realization": "response-contract",
-            "performance": "runtime-activation",
-            "implementation": "runtime-activation",
-        }.get(kind, "runtime")
+        owner = _GAP_OWNER_BY_KIND.get(kind)
+        if owner is None:
+            raise ValueError(f"unsupported expected gap kind: {kind}")
+        return owner
 
     def _contracts(
         self,

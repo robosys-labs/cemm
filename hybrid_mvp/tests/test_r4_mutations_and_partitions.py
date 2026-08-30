@@ -165,7 +165,6 @@ def _case_contract():
                 }
             ],
             "surface_examples": ["a likes b"],
-            "expected_gap_kind": None,
             "metadata": {},
         }
     )
@@ -216,9 +215,15 @@ def _mutation_evidence() -> tuple[tuple[SemanticMutation, ...], tuple[MutationOb
 def _gap_evidence_counts() -> tuple[Counter[str], Counter[str], set[str]]:
     scenarios = _jsonl(ROOT / "data/scenarios/use_cases.jsonl")
     scenario_kind = {
-        row["scenario_ref"]: row["expected_gap_kind"]
+        row["scenario_ref"]: gaps[0]["gap_kind"]
         for row in scenarios
-        if row.get("expected_gap_kind") is not None
+        if (
+            gaps := [
+                assertion
+                for assertion in row["semantic_assertions"]
+                if assertion["kind"] == "gap"
+            ]
+        )
     }
     cases = _jsonl(ROOT / "artifacts/r4/expanded_cases.jsonl")
     case_kind = {
