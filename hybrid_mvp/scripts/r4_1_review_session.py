@@ -19,6 +19,7 @@ from cemm_authoritative_hybrid._r4_source_codec import exact_reviewer_refs
 
 from scripts.build_r4_1_review_selection import (
     SelectionContext,
+    SelectionEvaluation,
     evaluate_selection,
     load_selection_context,
 )
@@ -61,6 +62,55 @@ class ReviewIndexes:
     intersecting_case_count: int
     multi_unit_case_count: int
     exact_empty_count: int
+
+
+@dataclass(frozen=True)
+class ReviewAction:
+    action_kind: str
+    target_refs: tuple[str, ...]
+    selected_value: object
+
+    def __post_init__(self) -> None:
+        if type(self.action_kind) is not str or not self.action_kind:
+            raise TypeError("review action kind must be an exact string")
+        if type(self.target_refs) is not tuple:
+            raise TypeError("review action target refs must be an exact tuple")
+        if (
+            not self.target_refs
+            or len(self.target_refs) > 512
+            or any(type(ref) is not str or not ref for ref in self.target_refs)
+            or self.target_refs != tuple(sorted(set(self.target_refs)))
+        ):
+            raise ValueError("review action target refs are not canonical")
+
+    @classmethod
+    def structural(
+        cls,
+        *,
+        row_ref: str,
+        selected_option_ref: str,
+    ) -> "ReviewAction":
+        return cls("structural", (row_ref,), selected_option_ref)
+
+    @classmethod
+    def purpose(
+        cls,
+        *,
+        row_refs: tuple[str, ...],
+        option_label: str,
+    ) -> "ReviewAction":
+        return cls("purpose", row_refs, option_label)
+
+
+@dataclass(frozen=True)
+class ActionPreview:
+    preview_hash: str
+    state_revision: int
+    action: ReviewAction
+    affected_refs: tuple[str, ...]
+    cleared_refs: tuple[str, ...]
+    requires_clear_confirmation: bool
+    resulting_counts: Mapping[str, int]
 
 
 def _optional_metadata(path: Path) -> os.stat_result | None:
@@ -425,6 +475,8 @@ class ReviewSession:
         self.template_sha256 = template_sha256
         self.state_revision = 0
         self.audit_warning = audit_warning
+        self._pending_preview: ActionPreview | None = None
+        self._pending_preview_state: dict[str, object] | None = None
 
     @property
     def state(self) -> Mapping[str, object]:
@@ -538,6 +590,8 @@ class ReviewSession:
         self._state = candidate
         self._working_raw = raw
         self.state_revision += 1
+        self._pending_preview = None
+        self._pending_preview_state = None
         try:
             _append_journal_entry(
                 path=self.paths.journal_path,
@@ -577,6 +631,322 @@ class ReviewSession:
                 "kind": "set_reviewers",
                 "reviewer_refs": list(exact),
             },
+        )
+
+    def evaluation(self) -> SelectionEvaluation:
+        return evaluate_selection(
+            context=self.context,
+            selection=self._state,
+            require_complete=False,
+        )
+
+    @staticmethod
+    def _selection_by_ref(
+        state: Mapping[str, object],
+        *,
+        field: str,
+        ref_field: str,
+    ) -> dict[str, dict[str, object]]:
+        rows = state[field]
+        if type(rows) is not list:
+            raise ValueError(f"working selection {field} is invalid")
+        return {row[ref_field]: row for row in rows}
+
+    @staticmethod
+    def _selected_source_option(
+        source: Mapping[str, object],
+        option_ref: str,
+    ) -> Mapping[str, object]:
+        if type(option_ref) is not str:
+            raise TypeError("selected option ref must be an exact string")
+        matches = [
+            option
+            for option in source["options"]
+            if option["option_ref"] == option_ref
+            and option["selectable"] is True
+        ]
+        if len(matches) != 1:
+            raise ValueError("review action names an unavailable option")
+        return matches[0]
+
+    def _apply_structural_action(
+        self,
+        *,
+        candidate: dict[str, object],
+        action: ReviewAction,
+    ) -> tuple[tuple[str, ...], set[str]]:
+        if len(action.target_refs) != 1:
+            raise ValueError("structural action requires one exact row")
+        row_ref = action.target_refs[0]
+        if type(row_ref) is not str or row_ref not in self.indexes.structural_rows_by_ref:
+            raise ValueError("structural action references an unknown row")
+        source = self.indexes.structural_rows_by_ref[row_ref]
+        option = self._selected_source_option(source, action.selected_value)
+        selections = self._selection_by_ref(
+            candidate,
+            field="structural_selections",
+            ref_field="row_ref",
+        )
+        selections[row_ref]["selected_option_ref"] = option["option_ref"]
+        cleared: set[str] = set()
+        if source["row_kind"] == "legacy_conditional":
+            generator = next(
+                row
+                for row in self.indexes.structural_rows_by_ref.values()
+                if row["row_kind"] == "generator_patch"
+            )
+            generator_ref = generator["row_ref"]
+            selected_ref = selections[generator_ref]["selected_option_ref"]
+            if selected_ref is not None:
+                selected_generator = self._selected_source_option(
+                    generator,
+                    selected_ref,
+                )
+                if selected_generator["label"] != option["label"]:
+                    selections[generator_ref]["selected_option_ref"] = None
+                    cleared.add(generator_ref)
+        return (row_ref,), cleared
+
+    def _apply_purpose_action(
+        self,
+        *,
+        candidate: dict[str, object],
+        action: ReviewAction,
+        before: SelectionEvaluation,
+    ) -> tuple[tuple[str, ...], set[str]]:
+        refs = action.target_refs
+        if (
+            type(refs) is not tuple
+            or not refs
+            or len(refs) > 512
+            or refs != tuple(sorted(set(refs)))
+            or any(type(ref) is not str for ref in refs)
+        ):
+            raise ValueError("purpose action requires sorted unique row refs")
+        if type(action.selected_value) is not str:
+            raise TypeError("purpose option label must be an exact string")
+        try:
+            sources = [self.indexes.purpose_rows_by_ref[ref] for ref in refs]
+        except KeyError as exc:
+            raise ValueError("purpose action references an unknown row") from exc
+        row_kinds = {source["row_kind"] for source in sources}
+        if len(row_kinds) != 1:
+            raise ValueError("purpose action must target one row kind")
+        if not set(refs) <= before.applicable_purpose_row_refs:
+            raise ValueError("purpose action targets a branch-inapplicable row")
+        options = []
+        for source in sources:
+            matches = [
+                option
+                for option in source["options"]
+                if option["label"] == action.selected_value
+                and option["selectable"] is True
+            ]
+            if len(matches) != 1:
+                raise ValueError(
+                    "purpose action label is unavailable for an exact member"
+                )
+            options.append(matches[0])
+        selections = self._selection_by_ref(
+            candidate,
+            field="purpose_selections",
+            ref_field="row_ref",
+        )
+        changed_case_refs: set[str] = set()
+        for ref, source, option in zip(refs, sources, options, strict=True):
+            if selections[ref]["selected_option_ref"] == option["option_ref"]:
+                continue
+            selections[ref]["selected_option_ref"] = option["option_ref"]
+            if source["row_kind"] == "membership":
+                changed_case_refs.add(source["source_case_ref"])
+            elif source["row_kind"] == "duplicate_group":
+                changed_case_refs.update(source["member_case_refs"])
+
+        cleared: set[str] = set()
+        if changed_case_refs:
+            recipes = self._selection_by_ref(
+                candidate,
+                field="proposal_recipe_selections",
+                ref_field="family_ref",
+            )
+            for family_ref, recipe in recipes.items():
+                if (
+                    recipe["purpose_recipes"]
+                    and changed_case_refs.intersection(recipe["member_case_refs"])
+                ):
+                    recipe["purpose_recipes"] = []
+                    cleared.add(family_ref)
+        return refs, cleared
+
+    @staticmethod
+    def _clear_stale_refs(
+        candidate: dict[str, object],
+        stale_refs: tuple[str, ...],
+    ) -> set[str]:
+        stale = set(stale_refs)
+        cleared: set[str] = set()
+        for row in candidate["purpose_selections"]:
+            if row["row_ref"] in stale and row["selected_option_ref"] is not None:
+                row["selected_option_ref"] = None
+                cleared.add(row["row_ref"])
+        for row in candidate["proposal_recipe_selections"]:
+            if row["family_ref"] in stale and row["purpose_recipes"]:
+                row["purpose_recipes"] = []
+                cleared.add(row["family_ref"])
+        for row in candidate["designation_selections"]:
+            if row["source_case_ref"] in stale and (
+                row["decision"] is not None
+                or row["approved_binding_refs"] is not None
+            ):
+                row["decision"] = None
+                row["approved_binding_refs"] = None
+                cleared.add(row["source_case_ref"])
+        return cleared
+
+    @staticmethod
+    def _resulting_counts(
+        evaluation: SelectionEvaluation,
+    ) -> Mapping[str, int]:
+        purpose_counts = {
+            purpose: sum(
+                selected == purpose
+                for selected in evaluation.case_purposes.values()
+            )
+            for purpose in ("train", "selection", "calibration", "frozen_test")
+        }
+        return MappingProxyType(
+            {
+                "active_case": len(evaluation.active_case_refs),
+                "active_supervised_case": len(
+                    evaluation.active_supervised_case_refs
+                ),
+                "blocking_error": len(evaluation.blocking_errors),
+                "blocking_rejection": len(
+                    evaluation.blocking_rejection_refs
+                ),
+                "calibration": purpose_counts["calibration"],
+                "denominator_shortfall": int(
+                    "selected purpose denominator minimum is not satisfied"
+                    in evaluation.blocking_errors
+                ),
+                "frozen_test": purpose_counts["frozen_test"],
+                "holdout_conflict": int(
+                    "challenge holdout crosses selected case purposes"
+                    in evaluation.blocking_errors
+                ),
+                "selection": purpose_counts["selection"],
+                "stale_selection": len(evaluation.stale_selection_refs),
+                "train": purpose_counts["train"],
+                "unresolved_designation": (
+                    evaluation.unresolved_designation_count
+                ),
+                "unresolved_purpose": evaluation.unresolved_purpose_count,
+                "unresolved_recipe": evaluation.unresolved_recipe_count,
+                "unresolved_structural": (
+                    evaluation.unresolved_structural_count
+                ),
+            }
+        )
+
+    def preview(self, action: ReviewAction) -> ActionPreview:
+        if not self._reviewers():
+            raise ValueError("review action requires an accountable reviewer")
+        if type(action) is not ReviewAction:
+            raise TypeError("review action must be exact")
+        before = self.evaluation()
+        candidate = copy.deepcopy(self._state)
+        if action.action_kind == "structural":
+            affected, cleared = self._apply_structural_action(
+                candidate=candidate,
+                action=action,
+            )
+        elif action.action_kind == "purpose":
+            affected, cleared = self._apply_purpose_action(
+                candidate=candidate,
+                action=action,
+                before=before,
+            )
+        else:
+            raise ValueError("review action kind is unavailable")
+        intermediate = evaluate_selection(
+            context=self.context,
+            selection=candidate,
+            require_complete=False,
+        )
+        cleared.update(
+            self._clear_stale_refs(candidate, intermediate.stale_selection_refs)
+        )
+        resulting = evaluate_selection(
+            context=self.context,
+            selection=candidate,
+            require_complete=False,
+        )
+        cleared_refs = tuple(sorted(cleared))
+        state_sha256 = hashlib.sha256(_json_bytes(candidate)).hexdigest()
+        preview_hash = stable_ref(
+            "r4_review_action_preview",
+            {
+                "action": {
+                    "action_kind": action.action_kind,
+                    "selected_value": action.selected_value,
+                    "target_refs": list(action.target_refs),
+                },
+                "affected_refs": list(affected),
+                "cleared_refs": list(cleared_refs),
+                "resulting_state_sha256": state_sha256,
+                "state_revision": self.state_revision,
+            },
+        )
+        preview = ActionPreview(
+            preview_hash=preview_hash,
+            state_revision=self.state_revision,
+            action=action,
+            affected_refs=affected,
+            cleared_refs=cleared_refs,
+            requires_clear_confirmation=bool(cleared_refs),
+            resulting_counts=self._resulting_counts(resulting),
+        )
+        self._pending_preview = preview
+        self._pending_preview_state = candidate
+        return preview
+
+    def apply(
+        self,
+        *,
+        preview_hash: str,
+        expected_revision: int,
+    ) -> Mapping[str, object]:
+        pending = self._pending_preview
+        candidate = self._pending_preview_state
+        if (
+            pending is None
+            or candidate is None
+            or type(preview_hash) is not str
+            or type(expected_revision) is not int
+            or preview_hash != pending.preview_hash
+            or expected_revision != pending.state_revision
+            or expected_revision != self.state_revision
+        ):
+            raise ValueError("stale preview cannot be applied")
+        self._commit_working_state(
+            candidate_state=candidate,
+            action={
+                "kind": "apply_review_action",
+                "preview_hash": pending.preview_hash,
+                "action_kind": pending.action.action_kind,
+                "target_refs": list(pending.action.target_refs),
+                "selected_value": pending.action.selected_value,
+                "affected_refs": list(pending.affected_refs),
+                "cleared_refs": list(pending.cleared_refs),
+            },
+        )
+        return MappingProxyType(
+            {
+                "affected_refs": list(pending.affected_refs),
+                "audit_warning": self.audit_warning,
+                "cleared_refs": list(pending.cleared_refs),
+                "state_revision": self.state_revision,
+            }
         )
 
     def bootstrap(self) -> Mapping[str, object]:

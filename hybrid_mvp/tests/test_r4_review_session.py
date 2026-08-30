@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Mapping
 
 import pytest
 
@@ -12,7 +13,7 @@ from scripts.build_r4_1_review_worksheets import (
     _json_bytes,
     build_review_worksheet_draft,
 )
-from scripts.r4_1_review_session import ReviewPaths, ReviewSession
+from scripts.r4_1_review_session import ReviewAction, ReviewPaths, ReviewSession
 
 ROOT = Path(__file__).parents[1]
 
@@ -278,3 +279,211 @@ def test_journal_entry_cap_never_blocks_valid_working_state(
     assert session.state["reviewer_refs"] == ["reviewer:son", "reviewer:two"]
     assert session.audit_warning == "action journal unavailable: ValueError"
     assert review_paths.journal_path.read_bytes() == first_entry
+
+
+def _option_ref(row: Mapping[str, object], label: str) -> str:
+    return next(
+        option["option_ref"]
+        for option in row["options"]
+        if option["label"] == label
+    )
+
+
+@pytest.fixture
+def started_session(review_paths: ReviewPaths) -> ReviewSession:
+    session = ReviewSession.open(review_paths)
+    session.set_reviewers(("reviewer:son",))
+    return session
+
+
+def _select_all_structural_approvals(session: ReviewSession) -> None:
+    labels = {
+        "composed_expression_proposal": "approve_exact_proposal",
+        "conflict_preservation": "preserve_as_alternatives",
+        "legacy_conditional": "retain_typed_proposal_gaps",
+        "restart_diagnostic": "approve_diagnostic_only",
+        "generator_patch": "retain_typed_proposal_gaps",
+    }
+    for row in session.indexes.structural_rows_by_ref.values():
+        preview = session.preview(
+            ReviewAction.structural(
+                row_ref=row["row_ref"],
+                selected_option_ref=_option_ref(
+                    row,
+                    labels[row["row_kind"]],
+                ),
+            )
+        )
+        session.apply(
+            preview_hash=preview.preview_hash,
+            expected_revision=preview.state_revision,
+        )
+
+
+def test_structural_change_previews_and_clears_exact_dependent_rows(
+    started_session: ReviewSession,
+) -> None:
+    _select_all_structural_approvals(started_session)
+    candidate_case = next(
+        row
+        for row in started_session.indexes.source_cases_by_ref.values()
+        if row["universe"] == "candidate"
+    )
+    membership = next(
+        row
+        for row in started_session.indexes.purpose_rows_by_ref.values()
+        if row["row_kind"] == "membership"
+        and row["source_case_ref"] == candidate_case["case_ref"]
+    )
+    membership_preview = started_session.preview(
+        ReviewAction.purpose(
+            row_refs=(membership["row_ref"],),
+            option_label="direct_train",
+        )
+    )
+    started_session.apply(
+        preview_hash=membership_preview.preview_hash,
+        expected_revision=membership_preview.state_revision,
+    )
+    proposal = next(
+        row
+        for row in started_session.indexes.structural_rows_by_ref.values()
+        if row["row_kind"] == "composed_expression_proposal"
+        and row["subject_ref"] == candidate_case["scenario_ref"]
+    )
+
+    preview = started_session.preview(
+        ReviewAction.structural(
+            row_ref=proposal["row_ref"],
+            selected_option_ref=_option_ref(proposal, "reject_exact_proposal"),
+        )
+    )
+    assert preview.requires_clear_confirmation is True
+    assert membership["row_ref"] in preview.cleared_refs
+
+    result = started_session.apply(
+        preview_hash=preview.preview_hash,
+        expected_revision=preview.state_revision,
+    )
+    assert set(result["cleared_refs"]) == set(preview.cleared_refs)
+    assert started_session.evaluation().blocking_errors == ()
+
+
+def test_branch_change_previews_incompatible_generator_patch_clear(
+    started_session: ReviewSession,
+) -> None:
+    _select_all_structural_approvals(started_session)
+    branch = next(
+        row
+        for row in started_session.indexes.structural_rows_by_ref.values()
+        if row["row_kind"] == "legacy_conditional"
+    )
+    generator = next(
+        row
+        for row in started_session.indexes.structural_rows_by_ref.values()
+        if row["row_kind"] == "generator_patch"
+    )
+
+    preview = started_session.preview(
+        ReviewAction.structural(
+            row_ref=branch["row_ref"],
+            selected_option_ref=_option_ref(
+                branch,
+                "retire_with_reserved_indices",
+            ),
+        )
+    )
+
+    assert generator["row_ref"] in preview.cleared_refs
+    assert preview.requires_clear_confirmation is True
+
+
+def test_stale_preview_cannot_apply(started_session: ReviewSession) -> None:
+    row = next(iter(started_session.indexes.structural_rows_by_ref.values()))
+    preview = started_session.preview(
+        ReviewAction.structural(
+            row_ref=row["row_ref"],
+            selected_option_ref=row["options"][0]["option_ref"],
+        )
+    )
+    started_session.set_reviewers(("reviewer:second", "reviewer:son"))
+    with pytest.raises(ValueError, match="stale preview"):
+        started_session.apply(
+            preview_hash=preview.preview_hash,
+            expected_revision=preview.state_revision,
+        )
+
+
+def test_anonymous_session_cannot_preview_mutation(
+    review_paths: ReviewPaths,
+) -> None:
+    session = ReviewSession.open(review_paths)
+    row = next(iter(session.indexes.structural_rows_by_ref.values()))
+
+    with pytest.raises(ValueError, match="reviewer"):
+        session.preview(
+            ReviewAction.structural(
+                row_ref=row["row_ref"],
+                selected_option_ref=row["options"][0]["option_ref"],
+            )
+        )
+
+
+def test_review_action_rejects_non_tuple_target_refs(
+    started_session: ReviewSession,
+) -> None:
+    row = next(iter(started_session.indexes.structural_rows_by_ref.values()))
+
+    with pytest.raises(TypeError, match="target refs"):
+        started_session.preview(
+            ReviewAction(
+                action_kind="structural",
+                target_refs=[row["row_ref"]],
+                selected_value=row["options"][0]["option_ref"],
+            )
+        )
+
+
+def test_purpose_cohort_preview_resolves_every_row_local_option(
+    started_session: ReviewSession,
+) -> None:
+    _select_all_structural_approvals(started_session)
+    rows = [
+        row
+        for row in started_session.indexes.purpose_rows_by_ref.values()
+        if row["row_kind"] == "membership"
+        and any(
+            option["label"] == "direct_train" and option["selectable"] is True
+            for option in row["options"]
+        )
+    ][:2]
+    refs = tuple(sorted(row["row_ref"] for row in rows))
+
+    preview = started_session.preview(
+        ReviewAction.purpose(row_refs=refs, option_label="direct_train")
+    )
+
+    assert preview.affected_refs == refs
+    result = started_session.apply(
+        preview_hash=preview.preview_hash,
+        expected_revision=preview.state_revision,
+    )
+    assert result["affected_refs"] == list(refs)
+    selected_by_ref = {
+        row["row_ref"]: row["selected_option_ref"]
+        for row in started_session.state["purpose_selections"]
+    }
+    assert all(selected_by_ref[row["row_ref"]] == _option_ref(row, "direct_train") for row in rows)
+
+    denominator = next(
+        row
+        for row in started_session.indexes.purpose_rows_by_ref.values()
+        if row["row_kind"] == "denominator"
+    )
+    with pytest.raises(ValueError, match="one row kind"):
+        started_session.preview(
+            ReviewAction.purpose(
+                row_refs=tuple(sorted((refs[0], denominator["row_ref"]))),
+                option_label="direct_train",
+            )
+        )
