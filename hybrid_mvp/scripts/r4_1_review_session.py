@@ -171,6 +171,69 @@ class ReviewAction:
             {"decision": decision, "individual": individual},
         )
 
+    @classmethod
+    def from_wire(cls, value: object) -> "ReviewAction":
+        if type(value) is not dict or set(value) != {
+            "action_kind",
+            "target_refs",
+            "selected_value",
+        }:
+            raise ValueError("review action wire fields are invalid")
+        kind = value["action_kind"]
+        refs = value["target_refs"]
+        selected = value["selected_value"]
+        if type(kind) is not str or type(refs) is not list:
+            raise TypeError("review action wire types are invalid")
+        exact_refs = tuple(refs)
+        if kind == "structural":
+            if len(exact_refs) != 1 or type(selected) is not str:
+                raise ValueError("structural action wire value is invalid")
+            return cls.structural(
+                row_ref=exact_refs[0],
+                selected_option_ref=selected,
+            )
+        if kind == "purpose":
+            if type(selected) is not str:
+                raise ValueError("purpose action wire value is invalid")
+            return cls.purpose(
+                row_refs=exact_refs,
+                option_label=selected,
+            )
+        if kind == "recipe":
+            if len(exact_refs) != 1 or type(selected) is not dict:
+                raise ValueError("recipe action wire value is invalid")
+            if set(selected) != {
+                "decision",
+                "purpose",
+                "reviewed_parameters",
+            }:
+                raise ValueError("recipe action wire fields are invalid")
+            return cls.recipe(
+                family_ref=exact_refs[0],
+                purpose=selected["purpose"],
+                decision=selected["decision"],
+                reviewed_parameters=selected["reviewed_parameters"],
+            )
+        if kind == "designation_cohort":
+            if len(exact_refs) != 1 or type(selected) is not str:
+                raise ValueError("designation cohort wire value is invalid")
+            return cls.designation_cohort(
+                cohort_ref=exact_refs[0],
+                decision=selected,
+            )
+        if kind == "designation_cases":
+            if type(selected) is not dict or set(selected) != {
+                "decision",
+                "individual",
+            }:
+                raise ValueError("designation case action wire value is invalid")
+            return cls.designation_cases(
+                case_refs=exact_refs,
+                decision=selected["decision"],
+                individual=selected["individual"],
+            )
+        raise ValueError("review action wire kind is unavailable")
+
 
 @dataclass(frozen=True)
 class ActionPreview:
