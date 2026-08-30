@@ -33,7 +33,14 @@ MAX_CHALLENGE_HOLDOUTS = 1_024
 MAX_DENOMINATOR_MINIMA = 4_096
 MAX_AGGREGATE_MEMBERSHIP_LINKS = 65_536
 
-_CLASSIFICATIONS = frozenset({"semantic_supervision", "typed_abstention", "diagnostic_only"})
+_CLASSIFICATIONS = frozenset(
+    {
+        "semantic_supervision",
+        "typed_abstention",
+        "verification_rejection",
+        "diagnostic_only",
+    }
+)
 _DUPLICATE_NAMESPACES = frozenset(
     {
         "source_case_lineage",
@@ -147,16 +154,21 @@ class PurposeMembership:
             raise ValueError("unsupported source-case classification")
         purpose_value = None if purpose is None else _purpose(purpose)
         reason = _optional_ref(diagnostic_reason_ref, "diagnostic_reason_ref")
+        groups = exact_ref_tuple(duplicate_risk_group_refs, "duplicate_risk_group_refs", nonempty=False, maximum=128, prefix="duplicate_risk_group:")
         if kind == "diagnostic_only":
             if purpose_value is not None:
                 raise ValueError("diagnostic-only membership cannot enter a purpose")
             if reason is None:
                 raise ValueError("diagnostic reason is required")
-        elif purpose_value is None or reason is not None:
-            raise ValueError("supervised membership requires one purpose and no diagnostic reason")
-        groups = exact_ref_tuple(duplicate_risk_group_refs, "duplicate_risk_group_refs", nonempty=False, maximum=128, prefix="duplicate_risk_group:")
-        if kind == "diagnostic_only" and groups:
-            raise ValueError("diagnostic-only membership cannot enter a duplicate-risk group")
+            if groups:
+                raise ValueError("diagnostic-only membership cannot enter a duplicate-risk group")
+        else:
+            if reason is not None:
+                raise ValueError("supervised membership cannot carry a diagnostic reason")
+            if groups and purpose_value is not None:
+                raise ValueError("grouped supervised membership cannot own a direct purpose")
+            if not groups and purpose_value is None:
+                raise ValueError("ungrouped supervised membership requires one direct purpose")
         material = {"abi_version": PURPOSE_CONTRACT_ABI_VERSION, "source_case_ref": exact_case_ref(source_case_ref), "classification": kind, "purpose": purpose_value, "duplicate_risk_group_refs": list(groups), "diagnostic_reason_ref": reason, "review_refs": list(exact_review_refs(review_refs))}
         return construct(cls, membership_ref=stable_ref("purpose_membership_v1", material), duplicate_risk_group_refs=groups, review_refs=tuple(material["review_refs"]), **{key: value for key, value in material.items() if key not in {"duplicate_risk_group_refs", "review_refs"}})
 
@@ -178,33 +190,34 @@ class DuplicateRiskGroup:
     abi_version: int
     group_ref: str
     namespace: str
+    purpose: str
     member_case_refs: tuple[str, ...]
     reason_ref: str
     review_refs: tuple[str, ...]
 
-    _FIELDS = frozenset({"abi_version", "group_ref", "namespace", "member_case_refs", "reason_ref", "review_refs"})
+    _FIELDS = frozenset({"abi_version", "group_ref", "namespace", "purpose", "member_case_refs", "reason_ref", "review_refs"})
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
         raise _factory_only("DuplicateRiskGroup")
 
     @classmethod
-    def create(cls, *, group_ref: str, namespace: str, member_case_refs: tuple[str, ...], reason_ref: str, review_refs: tuple[str, ...]) -> "DuplicateRiskGroup":
+    def create(cls, *, group_ref: str, namespace: str, purpose: str, member_case_refs: tuple[str, ...], reason_ref: str, review_refs: tuple[str, ...]) -> "DuplicateRiskGroup":
         exact_namespace = exact_text(namespace, "namespace", maximum=64)
         if exact_namespace not in _DUPLICATE_NAMESPACES:
             raise ValueError("unsupported duplicate-risk namespace")
         members = exact_content_ref_tuple(member_case_refs, "member_case_refs", nonempty=True, maximum=MAX_GROUP_MEMBERS, prefix="expanded_case_v2:")
         if len(members) < 2:
             raise ValueError("duplicate-risk group requires at least two members")
-        return construct(cls, abi_version=PURPOSE_CONTRACT_ABI_VERSION, group_ref=exact_ref(group_ref, "group_ref", prefix="duplicate_risk_group:"), namespace=exact_namespace, member_case_refs=members, reason_ref=exact_ref(reason_ref, "reason_ref"), review_refs=exact_review_refs(review_refs))
+        return construct(cls, abi_version=PURPOSE_CONTRACT_ABI_VERSION, group_ref=exact_ref(group_ref, "group_ref", prefix="duplicate_risk_group:"), namespace=exact_namespace, purpose=_purpose(purpose), member_case_refs=members, reason_ref=exact_ref(reason_ref, "reason_ref"), review_refs=exact_review_refs(review_refs))
 
     def as_dict(self) -> dict[str, Any]:
-        return {"abi_version": self.abi_version, "group_ref": self.group_ref, "namespace": self.namespace, "member_case_refs": list(self.member_case_refs), "reason_ref": self.reason_ref, "review_refs": list(self.review_refs)}
+        return {"abi_version": self.abi_version, "group_ref": self.group_ref, "namespace": self.namespace, "purpose": self.purpose, "member_case_refs": list(self.member_case_refs), "reason_ref": self.reason_ref, "review_refs": list(self.review_refs)}
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "DuplicateRiskGroup":
         row = exact_fields(value, cls._FIELDS, "DuplicateRiskGroup")
         exact_abi(row["abi_version"], PURPOSE_CONTRACT_ABI_VERSION, "Purpose Contract")
-        rebuilt = cls.create(group_ref=row["group_ref"], namespace=row["namespace"], member_case_refs=wire_ref_tuple(row["member_case_refs"], "member_case_refs", nonempty=True, maximum=MAX_GROUP_MEMBERS, prefix="expanded_case_v2:"), reason_ref=row["reason_ref"], review_refs=wire_ref_tuple(row["review_refs"], "review_refs", nonempty=True))
+        rebuilt = cls.create(group_ref=row["group_ref"], namespace=row["namespace"], purpose=row["purpose"], member_case_refs=wire_ref_tuple(row["member_case_refs"], "member_case_refs", nonempty=True, maximum=MAX_GROUP_MEMBERS, prefix="expanded_case_v2:"), reason_ref=row["reason_ref"], review_refs=wire_ref_tuple(row["review_refs"], "review_refs", nonempty=True))
         if rebuilt.as_dict() != dict(row):
             raise ValueError("non-canonical DuplicateRiskGroup")
         return rebuilt
@@ -289,6 +302,135 @@ class DenominatorMinimum:
         return rebuilt
 
 
+def _validate_purpose_relationships(
+    memberships: tuple[PurposeMembership, ...],
+    duplicate_risk_groups: tuple[DuplicateRiskGroup, ...],
+    challenge_holdouts: tuple[ChallengeHoldout, ...],
+    denominator_minima: tuple[DenominatorMinimum, ...],
+) -> int:
+    """Validate indexed SR4 semantic relations and return logical work units."""
+
+    operations = 0
+    membership_by_case: dict[str, PurposeMembership] = {}
+    membership_groups_by_case: dict[str, frozenset[str]] = {}
+    for membership in memberships:
+        operations += 1 + len(membership.duplicate_risk_group_refs)
+        membership_by_case[membership.source_case_ref] = membership
+        membership_groups_by_case[membership.source_case_ref] = frozenset(
+            membership.duplicate_risk_group_refs
+        )
+
+    group_by_ref: dict[str, DuplicateRiskGroup] = {}
+    group_members_by_ref: dict[str, frozenset[str]] = {}
+    for group in duplicate_risk_groups:
+        operations += 1 + len(group.member_case_refs)
+        group_by_ref[group.group_ref] = group
+        group_members_by_ref[group.group_ref] = frozenset(group.member_case_refs)
+
+    parent: dict[str, str] = {}
+    rank: dict[str, int] = {}
+
+    def find(case_ref: str) -> str:
+        nonlocal operations
+        operations += 1
+        root = case_ref
+        while parent[root] != root:
+            operations += 1
+            root = parent[root]
+        while parent[case_ref] != case_ref:
+            operations += 1
+            next_ref = parent[case_ref]
+            parent[case_ref] = root
+            case_ref = next_ref
+        return root
+
+    def union(left: str, right: str) -> None:
+        nonlocal operations
+        operations += 1
+        left_root = find(left)
+        right_root = find(right)
+        if left_root == right_root:
+            return
+        left_rank = rank[left_root]
+        right_rank = rank[right_root]
+        if left_rank < right_rank:
+            left_root, right_root = right_root, left_root
+        parent[right_root] = left_root
+        if left_rank == right_rank:
+            rank[left_root] += 1
+
+    for group in duplicate_risk_groups:
+        first_member = group.member_case_refs[0]
+        for member_case_ref in group.member_case_refs:
+            operations += 1
+            if member_case_ref not in membership_by_case:
+                raise ValueError("duplicate-risk group contains an unknown source case")
+        for member_case_ref in group.member_case_refs:
+            operations += 1
+            if group.group_ref not in membership_groups_by_case[member_case_ref]:
+                raise ValueError("group membership is not declared by every member")
+            if member_case_ref not in parent:
+                parent[member_case_ref] = member_case_ref
+                rank[member_case_ref] = 0
+            if member_case_ref != first_member:
+                union(first_member, member_case_ref)
+
+    for membership in memberships:
+        for group_ref in membership.duplicate_risk_group_refs:
+            operations += 1
+            group = group_by_ref.get(group_ref)
+            if group is None:
+                raise ValueError(
+                    "purpose membership references an unknown duplicate-risk group"
+                )
+            if membership.source_case_ref not in group_members_by_ref[group_ref]:
+                raise ValueError("group membership must be declared both ways")
+
+    purpose_by_component: dict[str, str] = {}
+    for group in duplicate_risk_groups:
+        operations += 1
+        root = find(group.member_case_refs[0])
+        component_purpose = purpose_by_component.get(root)
+        if component_purpose is not None and component_purpose != group.purpose:
+            raise ValueError("duplicate-risk component must remain in one purpose")
+        purpose_by_component[root] = group.purpose
+
+    effective_purpose_by_case: dict[str, str | None] = {}
+    for membership in memberships:
+        operations += 1
+        if membership.duplicate_risk_group_refs:
+            root = find(membership.source_case_ref)
+            effective_purpose_by_case[membership.source_case_ref] = (
+                purpose_by_component[root]
+            )
+        else:
+            effective_purpose_by_case[membership.source_case_ref] = membership.purpose
+
+    for holdout in challenge_holdouts:
+        for member_case_ref in holdout.member_case_refs:
+            operations += 1
+            if member_case_ref not in membership_by_case:
+                raise ValueError("challenge holdout contains an unknown source case")
+            if effective_purpose_by_case[member_case_ref] != holdout.purpose:
+                raise ValueError("challenge holdout members must match its purpose")
+
+    purposes_by_denominator: dict[str, set[str]] = {}
+    family_by_denominator: dict[str, str] = {}
+    for minimum in denominator_minima:
+        operations += 1
+        family = family_by_denominator.setdefault(
+            minimum.denominator_ref, minimum.denominator_family
+        )
+        if family != minimum.denominator_family:
+            raise ValueError("each denominator ref must use one family")
+        purposes_by_denominator.setdefault(minimum.denominator_ref, set()).add(
+            minimum.purpose
+        )
+    if any(purposes != set(PURPOSES) for purposes in purposes_by_denominator.values()):
+        raise ValueError("each denominator ref must cover all four purposes")
+    return operations
+
+
 @dataclass(frozen=True, init=False)
 class PurposeContract:
     abi_version: int
@@ -330,7 +472,9 @@ class PurposeContract:
         )
         if type(challenge_holdouts) is not tuple or len(challenge_holdouts) > MAX_CHALLENGE_HOLDOUTS or any(type(item) is not ChallengeHoldout for item in challenge_holdouts):
             raise ValueError("challenge holdouts violate their bound")
-        _bounded_link_count(challenge_holdouts, "member_case_refs", aggregate_links)
+        aggregate_links = _bounded_link_count(
+            challenge_holdouts, "member_case_refs", aggregate_links
+        )
         canonical_holdouts = tuple(
             _canonical_nested(item, ChallengeHoldout, "challenge holdout")
             for item in challenge_holdouts
@@ -361,48 +505,17 @@ class PurposeContract:
             for left, right in zip(minimum_identities, minimum_identities[1:])
         ):
             raise ValueError("denominator minima must be in canonical order")
-        known_cases = set(case_refs)
-        membership_by_case = {item.source_case_ref: item for item in canonical_memberships}
-        membership_groups_by_case = {
-            item.source_case_ref: frozenset(item.duplicate_risk_group_refs)
-            for item in canonical_memberships
-        }
-        group_members_by_ref = {
-            item.group_ref: frozenset(item.member_case_refs) for item in canonical_groups
-        }
-        group_refs = set(group_members_by_ref)
-        for group in canonical_groups:
-            unknown = set(group.member_case_refs) - known_cases
-            if unknown:
-                raise ValueError("duplicate-risk group contains an unknown source case")
-            member_rows = tuple(membership_by_case[case_ref] for case_ref in group.member_case_refs)
-            if any(group.group_ref not in membership_groups_by_case[row.source_case_ref] for row in member_rows):
-                raise ValueError("group membership is not declared by every member")
-            purposes = {row.purpose for row in member_rows}
-            if len(purposes) != 1 or None in purposes:
-                raise ValueError("duplicate-risk group must remain in one purpose")
-        for row in canonical_memberships:
-            unknown_groups = membership_groups_by_case[row.source_case_ref] - group_refs
-            if unknown_groups:
-                raise ValueError("purpose membership references an unknown duplicate-risk group")
-            if any(
-                row.source_case_ref not in group_members_by_ref[group_ref]
-                for group_ref in membership_groups_by_case[row.source_case_ref]
-            ):
-                raise ValueError("group membership must be declared both ways")
         holdout_identities = tuple(
             (item.identity_namespace, item.identity_ref) for item in canonical_holdouts
         )
         if len(holdout_identities) != len(set(holdout_identities)):
             raise ValueError("duplicate holdout identity tuple")
-        for holdout in canonical_holdouts:
-            unknown = set(holdout.member_case_refs) - known_cases
-            if unknown:
-                raise ValueError("challenge holdout contains an unknown source case")
-            if any(membership_by_case[case_ref].purpose != holdout.purpose for case_ref in holdout.member_case_refs):
-                raise ValueError("challenge holdout members must match its purpose")
-        if {item.purpose for item in canonical_minima} != set(PURPOSES):
-            raise ValueError("denominator minima must cover all four purposes")
+        _validate_purpose_relationships(
+            canonical_memberships,
+            canonical_groups,
+            canonical_holdouts,
+            canonical_minima,
+        )
         solver_authority = exact_bool(solver_output_is_authority, "solver_output_is_authority")
         if solver_authority:
             raise ValueError("solver output cannot be purpose authority")
@@ -427,6 +540,19 @@ class PurposeContract:
     @classmethod
     def from_json_bytes(cls, raw: object) -> "PurposeContract":
         return strict_decode(raw, cls.from_dict, owner="purpose contract")
+
+
+def _validation_operation_count_for_test(contract: PurposeContract) -> int:
+    """Return deterministic semantic-validation work for bounded test fixtures."""
+
+    if type(contract) is not PurposeContract:
+        raise TypeError("contract must be exact PurposeContract")
+    return _validate_purpose_relationships(
+        contract.memberships,
+        contract.duplicate_risk_groups,
+        contract.challenge_holdouts,
+        contract.denominator_minima,
+    )
 
 
 __all__ = [

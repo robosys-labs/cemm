@@ -275,7 +275,7 @@ purpose-scoped consumer:
 ```text
 case/surface/language and reviewed environment
 inline expected cycle contract and complete canonical expression gold
-reviewed derivation programs or typed abstention target
+reviewed derivation programs, typed abstention or verifier-rejection target
 reviewed response supervision instances
 duplicate-risk group and purpose refs
 review/source provenance
@@ -294,10 +294,11 @@ Authentic episodes, comparison receipts and mutation observations remain in the
 global R4 diagnostic artifact graph. They are not copied into purpose payloads.
 
 The source universe contains every exact expanded case. Every source case is
-classified exactly once as semantic supervision, typed abstention or reviewed
-diagnostic-only evidence. Semantic and abstention cases form the supervised
-universe: each is assigned to exactly one purpose and appears in exactly one
-purpose payload. Diagnostic-only cases require a reviewed reason, remain only
+classified exactly once as semantic supervision, typed abstention,
+verification rejection or reviewed diagnostic-only evidence. Semantic,
+abstention and verification-rejection cases form the supervised universe: each
+is assigned to exactly one purpose and appears in exactly one purpose payload.
+Diagnostic-only cases require a reviewed reason, remain only
 in the diagnostic artifact graph, receive no purpose assignment and do not
 count toward minima. The four purpose payloads are disjoint and exhaustive over
 the supervised universe, while the supervised and diagnostic-only universes are
@@ -310,7 +311,7 @@ The target allocation is:
 | Contract | Target ABI | Notes |
 |---|---:|---|
 | R4 Review Manifest | 1 | Root of reviewed source package |
-| Proposal Supervision | 1 | Reviewed derivation or typed abstention |
+| Proposal Supervision | 1 | Reviewed derivation, typed abstention or verifier rejection |
 | Realization Supervision | 1 | ResponseMeaning signature and aligned surface |
 | Mutation Contract | 1 | Independent mutation truth |
 | Purpose Contract | 1 | Duplicate groups, membership and fixed minima |
@@ -485,6 +486,8 @@ R4.1 is complete only when:
 - all reviewed source bytes authenticate through one manifest;
 - every eligible semantic case has independent compiling derivation gold;
 - every gap case has explicit typed abstention gold;
+- every verification-rejection case has explicit verifier-rejection gold and
+  is never collapsed into abstention or diagnostic evidence;
 - every realizer-eligible case has reviewed ResponseMeaning-to-surface
   supervision with exact perspective and literal alignment;
 - mutation expectations are independent of execution output;

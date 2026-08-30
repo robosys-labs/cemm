@@ -439,11 +439,15 @@ realization row shape; only diagnostic restart is excluded.
 
   Implement it under the existing `r4_supervision` authenticated-bundle owner,
   consuming the already-decoded source universe, proposals, realizations and
-  purpose contract once. With bounded indexes, require exact selector case/
-  surface ownership and spans; exactly one ProposalTarget and one initial
-  RealizationRow for every supervised case; zero of both for diagnostics; max
-  four realization variants; exactly one PurposeMembership for every source
-  case; and no missing/extra/duplicate cases or rows. Add hostile shuffled,
+  purpose contract once. Rebind retained typed records to their authenticated
+  canonical bytes without a second decode. With bounded indexes, require exact
+  selector case/surface ownership and spans while treating runtime `unit:*` and
+  contribution-slot identifiers as case-local; require exact source parity for
+  gap kind, verifier error code, response semantics and language; require
+  exactly one ProposalTarget and one initial RealizationRow for every supervised
+  case; zero of both for diagnostics; max four realization variants; exactly
+  one PurposeMembership for every source case; and no missing/extra/duplicate
+  cases or rows. Add hostile shuffled,
   missing, duplicate, cross-case and over-bound fixtures plus linear operation-
   count assertions. Do not add a gate step, owner or process.
 

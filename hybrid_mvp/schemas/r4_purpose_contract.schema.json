@@ -1,7 +1,7 @@
 {
   "$id": "https://robosys-labs.github.io/cemm/schemas/r4_purpose_contract.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "Schema owns structural, namespace, tagged-union and per-list bounded parity. The decoder owns content-address reconstruction, canonical ordering, cross-row bidirectionality/uniqueness, aggregate membership bounds and purpose-consistency semantic postconditions.",
+  "$comment": "Schema owns structural, namespace, tagged-union and per-list bounded parity. The decoder owns content-address reconstruction, canonical ordering, cross-row bidirectionality/uniqueness, aggregate membership bounds, transitive component purpose, inherited holdout purpose and denominator Cartesian-family semantic postconditions.",
   "additionalProperties": false,
   "properties": {
     "abi_version": {"const": 1, "type": "integer"},
@@ -26,11 +26,12 @@
         "abi_version": {"const": 1, "type": "integer"},
         "group_ref": {"maxLength": 512, "pattern": "^duplicate_risk_group:[^\\s:][^\\s]*$", "type": "string"},
         "namespace": {"enum": ["source_case_lineage", "paraphrase_family", "normalization_family", "mutation_lineage", "environment_provenance", "trajectory_lineage"]},
+        "purpose": {"$ref": "#/$defs/purpose"},
         "member_case_refs": {"allOf": [{"$ref": "#/$defs/caseRefs"}, {"minItems": 2}]},
         "reason_ref": {"$ref": "#/$defs/ref"},
         "review_refs": {"$ref": "#/$defs/reviewRefs"}
       },
-      "required": ["abi_version", "group_ref", "namespace", "member_case_refs", "reason_ref", "review_refs"],
+      "required": ["abi_version", "group_ref", "namespace", "purpose", "member_case_refs", "reason_ref", "review_refs"],
       "type": "object"
     },
     "holdout": {
@@ -61,14 +62,15 @@
     "membership": {
       "additionalProperties": false,
       "oneOf": [
-        {"properties": {"classification": {"enum": ["semantic_supervision", "typed_abstention"]}, "purpose": {"$ref": "#/$defs/purpose"}, "diagnostic_reason_ref": {"type": "null"}}},
+        {"properties": {"classification": {"enum": ["semantic_supervision", "typed_abstention", "verification_rejection"]}, "purpose": {"type": "null"}, "duplicate_risk_group_refs": {"minItems": 1}, "diagnostic_reason_ref": {"type": "null"}}},
+        {"properties": {"classification": {"enum": ["semantic_supervision", "typed_abstention", "verification_rejection"]}, "purpose": {"$ref": "#/$defs/purpose"}, "duplicate_risk_group_refs": {"maxItems": 0}, "diagnostic_reason_ref": {"type": "null"}}},
         {"properties": {"classification": {"const": "diagnostic_only"}, "purpose": {"type": "null"}, "diagnostic_reason_ref": {"$ref": "#/$defs/ref"}, "duplicate_risk_group_refs": {"maxItems": 0}}}
       ],
       "properties": {
         "abi_version": {"const": 1, "type": "integer"},
         "membership_ref": {"maxLength": 512, "pattern": "^purpose_membership_v1:[0-9a-f]{24}$", "type": "string"},
         "source_case_ref": {"$ref": "#/$defs/caseRef"},
-        "classification": {"enum": ["semantic_supervision", "typed_abstention", "diagnostic_only"]},
+        "classification": {"enum": ["semantic_supervision", "typed_abstention", "verification_rejection", "diagnostic_only"]},
         "purpose": {"oneOf": [{"$ref": "#/$defs/purpose"}, {"type": "null"}]},
         "duplicate_risk_group_refs": {"items": {"maxLength": 512, "pattern": "^duplicate_risk_group:[^\\s:][^\\s]*$", "type": "string"}, "maxItems": 128, "type": "array", "uniqueItems": true},
         "diagnostic_reason_ref": {"oneOf": [{"$ref": "#/$defs/ref"}, {"type": "null"}]},

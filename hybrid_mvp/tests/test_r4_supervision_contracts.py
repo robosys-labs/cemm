@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import FrozenInstanceError
 import errno
+from functools import lru_cache
 import hashlib
 import json
 import os
@@ -14,6 +15,9 @@ from jsonschema import Draft202012Validator
 import cemm_authoritative_hybrid.r4_supervision as supervision_module
 
 from cemm_authoritative_hybrid.canonical import stable_ref
+from cemm_authoritative_hybrid.authority import AuthorityLinker
+from cemm_authoritative_hybrid.r4_contracts import ReviewedScenario
+from cemm_authoritative_hybrid.r4_expansion import expand_reviewed_source_universe
 from cemm_authoritative_hybrid.r4_purpose import (
     DenominatorMinimum,
     PurposeContract,
@@ -88,8 +92,11 @@ def _sr2_blueprint(
     local_suffix: str = "0",
     roots: tuple[str, ...] | None = None,
     source_assignment_blueprint=None,
+    source_case_ref: str = CASE_REF,
+    surface_ref: str = "reviewed_surface:0123456789abcdef01234567",
+    source_selector_suffix: str = "",
+    source_span_end: int = 4,
 ):
-    surface_ref = "reviewed_surface:0123456789abcdef01234567"
     selected_roots = roots or (f"application:{local_suffix}",)
     bindings = [
         supervision_module.StructuralSelectorBinding.create(
@@ -129,7 +136,7 @@ def _sr2_blueprint(
             supervision_module.GroundedSelectorBinding.create(
                 selector_handle=frame_handle,
                 selector_kind="frame_slot",
-                source_case_ref=CASE_REF,
+                source_case_ref=source_case_ref,
                 surface_ref=surface_ref,
                 graph_component_ref=f"application_frame_slot:event-{frame_handle}",
                 semantic_kind_ref="semantic_kind:event_type",
@@ -137,11 +144,13 @@ def _sr2_blueprint(
                     supervision_module.SourceSpan.create(
                         surface_ref=surface_ref,
                         start=0,
-                        end=4,
+                        end=source_span_end,
                     ),
                 ),
                 source_selector_kind="contribution",
-                source_selector_ref=f"contribution_slot:predicate-{frame_handle}",
+                source_selector_ref=(
+                    f"contribution_slot:predicate-{frame_handle}{source_selector_suffix}"
+                ),
             )
         )
         actions.append(
@@ -160,11 +169,13 @@ def _sr2_blueprint(
     )
     if source_assignment_blueprint is None:
         source_assignment_blueprint = supervision_module.SourceAssignmentBlueprint.create(
-            observed_source_unit_refs=("unit:0",),
+            observed_source_unit_refs=(f"unit:0{source_selector_suffix}",),
             assignments=(
                 supervision_module.SourceAssignmentEntry.create(
-                    source_unit_ref="unit:0",
-                    contribution_slot_ref="contribution_slot:predicate-3",
+                    source_unit_ref=f"unit:0{source_selector_suffix}",
+                    contribution_slot_ref=(
+                        f"contribution_slot:predicate-3{source_selector_suffix}"
+                    ),
                     contribution_kind="predicate",
                     assignment_kind="predicate",
                     target_action_index=2,
@@ -183,9 +194,14 @@ def _sr2_blueprint(
     )
 
 
-def _sr2_derive_target(expected_expression_refs, derivations):
+def _sr2_derive_target(
+    expected_expression_refs,
+    derivations,
+    *,
+    source_case_ref: str = CASE_REF,
+):
     return supervision_module.ProposalTarget.create(
-        source_case_ref=CASE_REF,
+        source_case_ref=source_case_ref,
         target_kind="derive",
         expected_expression_refs=tuple(expected_expression_refs),
         match_policy="exact",
@@ -259,6 +275,22 @@ def _recreate_realization(row: RealizationRow, **changes) -> RealizationRow:
     }
     values.update(changes)
     return RealizationRow.create(**values)
+
+
+def _recreate_proposal(row: ProposalTarget, **changes) -> ProposalTarget:
+    values = {
+        "source_case_ref": row.source_case_ref,
+        "target_kind": row.target_kind,
+        "expected_expression_refs": row.expected_expression_refs,
+        "match_policy": row.match_policy,
+        "expected_expression_relation": row.expected_expression_relation,
+        "derivations": row.derivations,
+        "abstention": row.abstention,
+        "verification_rejection": row.verification_rejection,
+        "review_refs": row.review_refs,
+    }
+    values.update(changes)
+    return ProposalTarget.create(**values)
 
 
 def _mutation() -> MutationContract:
@@ -608,18 +640,18 @@ def test_realization_file_decoder_rejects_duplicate_identity_and_fifth_variant()
         for index in range(MAX_REALIZATION_VARIANTS_PER_CASE)
     )
     path = "data/review/r4_1/realization_supervision.jsonl"
-    assert supervision_module._record_count_from_authenticated_bytes(
+    assert supervision_module._decode_authenticated_source(
         path, b"".join(row.to_json_bytes() for row in rows)
-    ) == MAX_REALIZATION_VARIANTS_PER_CASE
+    ).record_count == MAX_REALIZATION_VARIANTS_PER_CASE
     with pytest.raises(ValueError, match="duplicate row identity"):
-        supervision_module._record_count_from_authenticated_bytes(
+        supervision_module._decode_authenticated_source(
             path, rows[0].to_json_bytes() + rows[0].to_json_bytes()
         )
     fifth = _recreate_realization(
         _realization(), authorized_surface="The lamp is on, variant five."
     )
     with pytest.raises(ValueError, match="exceeds four variants"):
-        supervision_module._record_count_from_authenticated_bytes(
+        supervision_module._decode_authenticated_source(
             path, b"".join(row.to_json_bytes() for row in (*rows, fifth))
         )
 
@@ -1124,7 +1156,7 @@ def _purpose_source() -> bytes:
     )
     minima = tuple(
         DenominatorMinimum.create(
-            denominator_ref=f"denominator:semantic-expression-{purpose}",
+            denominator_ref="denominator:semantic-expression",
             denominator_family="semantic_expression",
             purpose=purpose,
             minimum=1,
@@ -1166,6 +1198,792 @@ def _bundle_ref(child_bytes: dict[str, bytes], scenario_bytes: bytes) -> str:
             ],
         },
     )
+
+
+@lru_cache(maxsize=1)
+def _cross_source_authority():
+    return AuthorityLinker().link_path(ROOT / "data/authority/manifest.json")
+
+
+def _cross_source_rows(*, mixed: bool = False):
+    all_lines = (ROOT / _SCENARIO_SOURCE_PATH).read_bytes().splitlines()
+    selected_lines = (
+        tuple(all_lines[index] for index in (0, 39, 145, 180, 190))
+        if mixed
+        else (all_lines[0],)
+    )
+    scenarios = tuple(
+        ReviewedScenario.from_dict(json.loads(line)) for line in selected_lines
+    )
+    universe = expand_reviewed_source_universe(
+        scenarios, authority=_cross_source_authority()
+    )
+    proposals = []
+    realizations = []
+    for index, case in enumerate(universe.cases):
+        disposition = case.source_disposition.value
+        if disposition == "restart_diagnostic_candidate":
+            continue
+        if disposition == "semantic":
+            expression_refs = tuple(
+                sorted(
+                    expression.expression_ref
+                    for expression in case.contract.expected_expressions
+                )
+            )
+            blueprints = tuple(
+                _sr2_blueprint(
+                    expression_ref,
+                    local_suffix=f"{index}-{alternative_index}",
+                    source_case_ref=case.case_ref,
+                    surface_ref=case.surface_ref,
+                    source_span_end=min(4, len(case.surface)),
+                )
+                for alternative_index, expression_ref in enumerate(expression_refs)
+            )
+            proposal = _sr2_derive_target(
+                expression_refs,
+                blueprints,
+                source_case_ref=case.case_ref,
+            )
+            subject = ExpressionSetResponseSubject.create(
+                expected_expression_relation=case.contract.expression_relation.value,
+                expression_refs=expression_refs,
+            )
+            authorized_surface = "Acknowledged."
+            slot_ref = "response_slot:subject"
+        elif disposition == "explicit_gap":
+            abstention = TypedAbstention.create(
+                gap_kind_ref=f"gap_kind:{case.contract.expected_gap.kind}",
+                critical=True,
+                earliest_owner="propose",
+                safe_disposition="frontier",
+            )
+            proposal = ProposalTarget.create(
+                source_case_ref=case.case_ref,
+                target_kind="abstain",
+                expected_expression_refs=(),
+                match_policy="exact",
+                expected_expression_relation="none",
+                derivations=(),
+                abstention=abstention,
+                verification_rejection=None,
+                review_refs=(REVIEW_REF,),
+            )
+            subject = TypedGapResponseSubject.create(typed_gap=abstention)
+            authorized_surface = "I need more reviewed evidence before I can answer."
+            slot_ref = "response_slot:gap"
+        else:
+            rejection = VerificationRejection.create(
+                input_kind="mutation_payload",
+                adversarial_blueprint_ref=None,
+                mutation_payload_ref=stable_ref(
+                    "mutation_payload", {"source_case_ref": case.case_ref}
+                ),
+                expected_owner="verify",
+                verification_error_code=(
+                    "verification_error:"
+                    + case.contract.expected_gap.error_code.split(":", 1)[1]
+                ),
+                rejection_disposition="reject",
+                critical=True,
+            )
+            proposal = ProposalTarget.create(
+                source_case_ref=case.case_ref,
+                target_kind="verification_rejection",
+                expected_expression_refs=(),
+                match_policy="exact",
+                expected_expression_relation="none",
+                derivations=(),
+                abstention=None,
+                verification_rejection=rejection,
+                review_refs=(REVIEW_REF,),
+            )
+            subject = VerifierRejectionResponseSubject.create(
+                verifier_rejection=rejection
+            )
+            authorized_surface = "I rejected that invalid candidate."
+            slot_ref = "response_slot:verifier_rejection"
+        proposals.append(proposal)
+        slot = RealizationSlot.create(
+            slot_ref=slot_ref,
+            semantic_ref=(
+                subject.response_subject_ref
+                if type(subject) is ExpressionSetResponseSubject
+                else (
+                    subject.typed_gap.abstention_ref
+                    if type(subject) is TypedGapResponseSubject
+                    else subject.verifier_rejection.verification_rejection_ref
+                )
+            ),
+            required=True,
+            qualifier_refs=(),
+        )
+        realizations.append(
+            RealizationRow.create(
+                source_case_ref=case.case_ref,
+                response_subject=subject,
+                bindings=(),
+                discourse_action_ref=(
+                    f"response_action:{case.contract.expected_response.discourse_action}"
+                ),
+                polarity_ref=case.contract.expected_response.polarity_ref,
+                modality_ref=case.contract.expected_response.modality_ref,
+                epistemic_status_ref=(
+                    case.contract.expected_response.epistemic_status_ref
+                ),
+                output_speaker_ref="participant:system",
+                output_addressee_ref="participant:user",
+                authorized_surface=authorized_surface,
+                language=case.language,
+                semantic_slots=(slot,),
+                alignments=(
+                    LiteralAlignment.create(
+                        slot_ref=slot.slot_ref,
+                        literal_source_ref=stable_ref(
+                            "reviewed_literal",
+                            {
+                                "literal": authorized_surface,
+                                "language": case.language,
+                                "review_refs": [REVIEW_REF],
+                            },
+                        ),
+                        surface_start=0,
+                        surface_end=len(authorized_surface),
+                    ),
+                ),
+                review_refs=(REVIEW_REF,),
+            )
+        )
+    classification_by_disposition = {
+        "semantic": "semantic_supervision",
+        "explicit_gap": "typed_abstention",
+        "verification_rejection": "verification_rejection",
+        "restart_diagnostic_candidate": "diagnostic_only",
+    }
+    memberships = []
+    for case in sorted(universe.cases, key=lambda item: item.case_ref):
+        classification = classification_by_disposition[case.source_disposition.value]
+        diagnostic = classification == "diagnostic_only"
+        memberships.append(
+            PurposeMembership.create(
+                source_case_ref=case.case_ref,
+                classification=classification,
+                purpose=None if diagnostic else "train",
+                duplicate_risk_group_refs=(),
+                diagnostic_reason_ref=(
+                    "diagnostic_reason:restart-review" if diagnostic else None
+                ),
+                review_refs=(REVIEW_REF,),
+            )
+        )
+    minima = tuple(
+        DenominatorMinimum.create(
+            denominator_ref="denominator:semantic-expression",
+            denominator_family="semantic_expression",
+            purpose=purpose,
+            minimum=1,
+            review_refs=(REVIEW_REF,),
+        )
+        for purpose in ("train", "selection", "calibration", "frozen_test")
+    )
+    purpose = PurposeContract.create(
+        source_set_ref=universe.source_set_ref,
+        memberships=tuple(memberships),
+        duplicate_risk_groups=(),
+        challenge_holdouts=(),
+        denominator_minima=minima,
+        review_refs=(REVIEW_REF,),
+        solver_output_is_authority=False,
+    )
+    return b"\n".join(selected_lines) + b"\n", universe, tuple(proposals), tuple(realizations), purpose
+
+
+def _write_cross_source_tree(
+    tmp_path: Path,
+    *,
+    proposals=None,
+    realizations=None,
+    purpose=None,
+    mixed: bool = False,
+):
+    scenario_bytes, universe, default_proposals, default_realizations, default_purpose = (
+        _cross_source_rows(mixed=mixed)
+    )
+    proposal_rows = default_proposals if proposals is None else tuple(proposals)
+    realization_rows = default_realizations if realizations is None else tuple(realizations)
+    purpose_row = default_purpose if purpose is None else purpose
+    root = tmp_path / "cross-source"
+    child_bytes = {
+        _REVIEW_CHILD_PATHS[0]: MutationContract.create(
+            mutation_family_ref="mutation_family:polarity",
+            source_case_ref=universe.cases[0].case_ref,
+            changed_dimension_ref="dimension:polarity",
+            expected_earliest_owner="verify",
+            disposition="reject",
+            effect_kind="no_effect",
+            expected_effect_ref=None,
+            review_refs=(REVIEW_REF,),
+        ).to_json_bytes(),
+        _REVIEW_CHILD_PATHS[1]: b"".join(
+            row.to_json_bytes() for row in proposal_rows
+        ),
+        _REVIEW_CHILD_PATHS[2]: purpose_row.to_json_bytes(),
+        _REVIEW_CHILD_PATHS[3]: b"".join(
+            row.to_json_bytes() for row in realization_rows
+        ),
+    }
+    for relative, raw in {_SCENARIO_SOURCE_PATH: scenario_bytes, **child_bytes}.items():
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(raw)
+    source_rows = tuple(
+        ReviewSourceFile.create(
+            source_ref=f"reviewed_source:{index:024x}",
+            path=path,
+            sha256=hashlib.sha256(child_bytes[path]).hexdigest(),
+            record_count=_record_count(path, child_bytes[path]),
+            review_refs=(REVIEW_REF,),
+        )
+        for index, path in enumerate(_REVIEW_CHILD_PATHS, 1)
+    )
+    manifest = R4ReviewManifest.create(
+        review_policy_ref="review_policy:r4_1",
+        reviewer_refs=("reviewer:human-1",),
+        reviewed_base_revision="a" * 40,
+        authority_generation=_cross_source_authority().generation,
+        source_bundle_ref=_bundle_ref(child_bytes, scenario_bytes),
+        scenario_source_sha256=hashlib.sha256(scenario_bytes).hexdigest(),
+        sources=source_rows,
+        approval_state="approved",
+        supersedes_refs=(),
+        runtime_observations_are_source_authority=False,
+        bootstrap_outputs_are_source_authority=False,
+    )
+    manifest_target = root / _REVIEW_MANIFEST_PATH
+    manifest_target.parent.mkdir(parents=True, exist_ok=True)
+    manifest_target.write_bytes(manifest.to_json_bytes())
+    return root, universe
+
+
+def test_authenticated_cross_source_validator_is_complete_decode_once_and_linear(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, universe = _write_cross_source_tree(tmp_path)
+    bundle = supervision_module.load_authenticated_r4_review_bundle(root)
+    assert len(bundle.scenarios) == 1
+    assert len(bundle.proposal_targets) == len(universe.cases)
+    assert len(bundle.realization_rows) == len(universe.cases)
+
+    def forbid_decode(*_args, **_kwargs):
+        raise AssertionError("authenticated source was decoded more than once")
+
+    monkeypatch.setattr(ProposalTarget, "from_json_bytes", forbid_decode)
+    monkeypatch.setattr(RealizationRow, "from_json_bytes", forbid_decode)
+    monkeypatch.setattr(PurposeContract, "from_json_bytes", forbid_decode)
+    result = supervision_module.validate_authenticated_r4_source_semantics(
+        bundle, authority=_cross_source_authority()
+    )
+    assert result.source_case_count == len(universe.cases)
+    assert result.supervised_case_count == len(universe.cases)
+    assert result.diagnostic_case_count == 0
+    assert result.operation_count <= 40 * len(universe.cases) + 16
+
+    forged = object.__new__(supervision_module.AuthenticatedR4ReviewBundle)
+    for name, value in bundle.__dict__.items():
+        object.__setattr__(forged, name, value)
+    object.__setattr__(forged, "_seal", object())
+    with pytest.raises(ValueError, match="authenticated loader"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            forged, authority=_cross_source_authority()
+        )
+
+    proposal_path = "data/review/r4_1/proposal_supervision.jsonl"
+    original_source = next(
+        source for source in bundle.sources if source.path == proposal_path
+    )
+    forged_source = object.__new__(supervision_module.AuthenticatedR4SourceBytes)
+    for name, value in original_source.__dict__.items():
+        object.__setattr__(forged_source, name, value)
+    altered_records = original_source.records[1:]
+    object.__setattr__(forged_source, "records", altered_records)
+    forged_sources = tuple(
+        forged_source if source.path == proposal_path else source
+        for source in bundle.sources
+    )
+    rebound = object.__new__(supervision_module.AuthenticatedR4ReviewBundle)
+    for name, value in bundle.__dict__.items():
+        object.__setattr__(rebound, name, value)
+    object.__setattr__(rebound, "sources", forged_sources)
+    object.__setattr__(rebound, "proposal_targets", altered_records)
+    with pytest.raises(ValueError, match="retained typed records.*authenticated bytes"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            rebound, authority=_cross_source_authority()
+        )
+
+
+def test_authenticated_cross_source_validator_rejects_missing_and_duplicate_rows(
+    tmp_path: Path,
+) -> None:
+    _, universe, proposals, realizations, purpose = _cross_source_rows()
+    shuffled_root, _ = _write_cross_source_tree(
+        tmp_path / "shuffled",
+        proposals=tuple(reversed(proposals)),
+        realizations=tuple(reversed(realizations)),
+    )
+    shuffled_result = supervision_module.validate_authenticated_r4_source_semantics(
+        supervision_module.load_authenticated_r4_review_bundle(shuffled_root),
+        authority=_cross_source_authority(),
+    )
+    assert shuffled_result.source_case_count == len(universe.cases)
+
+    root, _ = _write_cross_source_tree(tmp_path / "missing", proposals=proposals[1:])
+    bundle = supervision_module.load_authenticated_r4_review_bundle(root)
+    with pytest.raises(ValueError, match="proposal.*missing|missing.*proposal"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            bundle, authority=_cross_source_authority()
+        )
+
+    missing_realization_root, _ = _write_cross_source_tree(
+        tmp_path / "missing-realization", realizations=realizations[1:]
+    )
+    with pytest.raises(ValueError, match="exactly one initial realization"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            supervision_module.load_authenticated_r4_review_bundle(
+                missing_realization_root
+            ),
+            authority=_cross_source_authority(),
+        )
+
+    duplicate_root, _ = _write_cross_source_tree(
+        tmp_path / "duplicate", realizations=realizations + (realizations[0],)
+    )
+    with pytest.raises(ValueError, match="duplicate row identity"):
+        supervision_module.load_authenticated_r4_review_bundle(duplicate_root)
+
+    duplicate_proposal_root, _ = _write_cross_source_tree(
+        tmp_path / "duplicate-proposal", proposals=proposals + (proposals[0],)
+    )
+    with pytest.raises(ValueError, match="duplicate row identity"):
+        supervision_module.load_authenticated_r4_review_bundle(
+            duplicate_proposal_root
+        )
+
+    second_review_ref = "source_review:ffffffffffffffffffffffff"
+    second_proposal = _recreate_proposal(
+        proposals[0], review_refs=(second_review_ref,)
+    )
+    second_proposal_root, _ = _write_cross_source_tree(
+        tmp_path / "second-proposal",
+        proposals=proposals + (second_proposal,),
+    )
+    second_proposal_bundle = supervision_module.load_authenticated_r4_review_bundle(
+        second_proposal_root
+    )
+    with pytest.raises(ValueError, match="duplicate rows for one case"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            second_proposal_bundle, authority=_cross_source_authority()
+        )
+
+    base = realizations[0]
+    variant_surface = base.authorized_surface + " Confirmed."
+    variant = _recreate_realization(
+        base,
+        authorized_surface=variant_surface,
+        alignments=(
+            LiteralAlignment.create(
+                slot_ref=base.semantic_slots[0].slot_ref,
+                literal_source_ref=stable_ref(
+                    "reviewed_literal",
+                    {
+                        "literal": variant_surface,
+                        "language": base.language,
+                        "review_refs": [REVIEW_REF],
+                    },
+                ),
+                surface_start=0,
+                surface_end=len(variant_surface),
+            ),
+        ),
+    )
+    variants_root, _ = _write_cross_source_tree(
+        tmp_path / "variants", realizations=realizations + (variant,)
+    )
+    variants_bundle = supervision_module.load_authenticated_r4_review_bundle(
+        variants_root
+    )
+    assert len(variants_bundle.realization_rows) == len(realizations) + 1
+    with pytest.raises(ValueError, match="exactly one initial realization"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            variants_bundle, authority=_cross_source_authority()
+        )
+
+    extra_case_ref = "expanded_case_v2:ffffffffffffffffffffffff"
+    extra_blueprint = _sr2_blueprint(
+        proposals[0].expected_expression_refs[0],
+        source_case_ref=extra_case_ref,
+        surface_ref=universe.cases[0].surface_ref,
+        source_span_end=min(4, len(universe.cases[0].surface)),
+    )
+    extra_proposal = _recreate_proposal(
+        proposals[0],
+        source_case_ref=extra_case_ref,
+        derivations=(extra_blueprint,),
+    )
+    extra_realization = _recreate_realization(
+        realizations[0], source_case_ref=extra_case_ref
+    )
+    extra_rows_root, _ = _write_cross_source_tree(
+        tmp_path / "extra-rows",
+        proposals=proposals + (extra_proposal,),
+        realizations=realizations + (extra_realization,),
+    )
+    with pytest.raises(ValueError, match="extra source case"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            supervision_module.load_authenticated_r4_review_bundle(extra_rows_root),
+            authority=_cross_source_authority(),
+        )
+
+    missing_membership = PurposeContract.create(
+        source_set_ref=purpose.source_set_ref,
+        memberships=purpose.memberships[1:],
+        duplicate_risk_groups=purpose.duplicate_risk_groups,
+        challenge_holdouts=purpose.challenge_holdouts,
+        denominator_minima=purpose.denominator_minima,
+        review_refs=purpose.review_refs,
+        solver_output_is_authority=False,
+    )
+    missing_membership_root, _ = _write_cross_source_tree(
+        tmp_path / "missing-membership", purpose=missing_membership
+    )
+    with pytest.raises(ValueError, match="purpose membership is missing"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            supervision_module.load_authenticated_r4_review_bundle(
+                missing_membership_root
+            ),
+            authority=_cross_source_authority(),
+        )
+
+    extra_membership = PurposeMembership.create(
+        source_case_ref=extra_case_ref,
+        classification="semantic_supervision",
+        purpose="train",
+        duplicate_risk_group_refs=(),
+        diagnostic_reason_ref=None,
+        review_refs=(REVIEW_REF,),
+    )
+    extra_purpose = PurposeContract.create(
+        source_set_ref=purpose.source_set_ref,
+        memberships=tuple(
+            sorted(
+                purpose.memberships + (extra_membership,),
+                key=lambda row: row.source_case_ref,
+            )
+        ),
+        duplicate_risk_groups=purpose.duplicate_risk_groups,
+        challenge_holdouts=purpose.challenge_holdouts,
+        denominator_minima=purpose.denominator_minima,
+        review_refs=purpose.review_refs,
+        solver_output_is_authority=False,
+    )
+    extra_membership_root, _ = _write_cross_source_tree(
+        tmp_path / "extra-membership", purpose=extra_purpose
+    )
+    with pytest.raises(ValueError, match="purpose contract contains an extra"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            supervision_module.load_authenticated_r4_review_bundle(
+                extra_membership_root
+            ),
+            authority=_cross_source_authority(),
+        )
+
+
+def test_cross_source_validator_covers_four_dispositions_and_rejects_alias_echo_and_wrong_set(
+    tmp_path: Path,
+) -> None:
+    scenario_bytes, universe, proposals, realizations, purpose = _cross_source_rows(
+        mixed=True
+    )
+    del scenario_bytes
+    conflict_cases = tuple(
+        case
+        for case in universe.cases
+        if case.contract.expression_relation.value == "conflict"
+    )
+    assert conflict_cases
+    assert any(
+        tuple(
+            expression.expression_ref
+            for expression in case.contract.expected_expressions
+        )
+        != tuple(
+            sorted(
+                expression.expression_ref
+                for expression in case.contract.expected_expressions
+            )
+        )
+        for case in conflict_cases
+    )
+    root, _ = _write_cross_source_tree(tmp_path / "complete", mixed=True)
+    result = supervision_module.validate_authenticated_r4_source_semantics(
+        supervision_module.load_authenticated_r4_review_bundle(root),
+        authority=_cross_source_authority(),
+    )
+    assert result.source_case_count == len(universe.cases)
+    assert result.supervised_case_count == sum(
+        case.source_disposition.value != "restart_diagnostic_candidate"
+        for case in universe.cases
+    )
+    assert result.diagnostic_case_count == sum(
+        case.source_disposition.value == "restart_diagnostic_candidate"
+        for case in universe.cases
+    )
+
+    diagnostic_case = next(
+        case
+        for case in universe.cases
+        if case.source_disposition.value == "restart_diagnostic_candidate"
+    )
+    safe_proposal_index = next(
+        index for index, row in enumerate(proposals) if row.target_kind == "abstain"
+    )
+    diagnostic_proposal = _recreate_proposal(
+        proposals[safe_proposal_index], source_case_ref=diagnostic_case.case_ref
+    )
+    diagnostic_realization = _recreate_realization(
+        realizations[safe_proposal_index], source_case_ref=diagnostic_case.case_ref
+    )
+    diagnostic_rows_root, _ = _write_cross_source_tree(
+        tmp_path / "diagnostic-rows",
+        proposals=proposals + (diagnostic_proposal,),
+        realizations=realizations + (diagnostic_realization,),
+        mixed=True,
+    )
+    with pytest.raises(ValueError, match="diagnostic source case cannot carry"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            supervision_module.load_authenticated_r4_review_bundle(
+                diagnostic_rows_root
+            ),
+            authority=_cross_source_authority(),
+        )
+
+    # Runtime form-unit and contribution-slot refs are case-local. Reusing their
+    # raw values in different cases must not create a false cross-case alias.
+    supervised_proposals = tuple(proposals)
+    if len(supervised_proposals) > 1:
+        first_assignment = supervised_proposals[0].derivations[0].source_assignment_blueprint.assignments[0]
+        second_assignment = supervised_proposals[1].derivations[0].source_assignment_blueprint.assignments[0]
+        assert first_assignment.source_unit_ref == second_assignment.source_unit_ref
+        assert first_assignment.contribution_slot_ref == second_assignment.contribution_slot_ref
+
+    safe_index = next(
+        index
+        for index, row in enumerate(realizations)
+        if type(row.response_subject)
+        in {TypedGapResponseSubject, VerifierRejectionResponseSubject}
+    )
+    safe_row = realizations[safe_index]
+    source_case = next(
+        case for case in universe.cases if case.case_ref == safe_row.source_case_ref
+    )
+    echo = _recreate_realization(
+        safe_row,
+        authorized_surface=source_case.surface,
+        alignments=(
+            LiteralAlignment.create(
+                slot_ref=safe_row.semantic_slots[0].slot_ref,
+                literal_source_ref=stable_ref(
+                    "reviewed_literal",
+                    {
+                        "literal": source_case.surface,
+                        "language": safe_row.language,
+                        "review_refs": [REVIEW_REF],
+                    },
+                ),
+                surface_start=0,
+                surface_end=len(source_case.surface),
+            ),
+        ),
+    )
+    echo_rows = realizations[:safe_index] + (echo,) + realizations[safe_index + 1 :]
+    echo_root, _ = _write_cross_source_tree(
+        tmp_path / "echo", realizations=echo_rows, mixed=True
+    )
+    with pytest.raises(ValueError, match="cannot echo the input surface"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            supervision_module.load_authenticated_r4_review_bundle(echo_root),
+            authority=_cross_source_authority(),
+        )
+
+    first_case = next(
+        case
+        for case in universe.cases
+        if case.case_ref == proposals[0].source_case_ref
+    )
+    cross_surface_blueprint = _sr2_blueprint(
+        proposals[0].expected_expression_refs[0],
+        source_case_ref=first_case.case_ref,
+        surface_ref="reviewed_surface:ffffffffffffffffffffffff",
+        source_span_end=min(4, len(first_case.surface)),
+    )
+    aliased = _recreate_proposal(
+        proposals[0], derivations=(cross_surface_blueprint,)
+    )
+    aliased_root, _ = _write_cross_source_tree(
+        tmp_path / "alias",
+        proposals=(aliased,) + proposals[1:],
+        mixed=True,
+    )
+    with pytest.raises(ValueError, match="cross-case or cross-surface ownership"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            supervision_module.load_authenticated_r4_review_bundle(aliased_root),
+            authority=_cross_source_authority(),
+        )
+
+    gap_index = next(
+        index for index, row in enumerate(proposals) if row.target_kind == "abstain"
+    )
+    wrong_gap = TypedAbstention.create(
+        gap_kind_ref="gap_kind:authority",
+        critical=proposals[gap_index].abstention.critical,
+        earliest_owner=proposals[gap_index].abstention.earliest_owner,
+        safe_disposition=proposals[gap_index].abstention.safe_disposition,
+    )
+    wrong_gap_proposal = _recreate_proposal(
+        proposals[gap_index], abstention=wrong_gap
+    )
+    wrong_gap_subject = TypedGapResponseSubject.create(typed_gap=wrong_gap)
+    gap_slot = realizations[gap_index].semantic_slots[0]
+    wrong_gap_slot = RealizationSlot.create(
+        slot_ref=gap_slot.slot_ref,
+        semantic_ref=wrong_gap_subject.typed_gap.abstention_ref,
+        required=gap_slot.required,
+        qualifier_refs=gap_slot.qualifier_refs,
+    )
+    wrong_gap_realization = _recreate_realization(
+        realizations[gap_index],
+        response_subject=wrong_gap_subject,
+        semantic_slots=(wrong_gap_slot,),
+    )
+    wrong_gap_root, _ = _write_cross_source_tree(
+        tmp_path / "wrong-gap",
+        proposals=proposals[:gap_index]
+        + (wrong_gap_proposal,)
+        + proposals[gap_index + 1 :],
+        realizations=realizations[:gap_index]
+        + (wrong_gap_realization,)
+        + realizations[gap_index + 1 :],
+        mixed=True,
+    )
+    with pytest.raises(ValueError, match="gap kind.*source truth"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            supervision_module.load_authenticated_r4_review_bundle(wrong_gap_root),
+            authority=_cross_source_authority(),
+        )
+
+    rejection_index = next(
+        index
+        for index, row in enumerate(proposals)
+        if row.target_kind == "verification_rejection"
+    )
+    original_rejection = proposals[rejection_index].verification_rejection
+    wrong_rejection = VerificationRejection.create(
+        input_kind=original_rejection.input_kind,
+        adversarial_blueprint_ref=original_rejection.adversarial_blueprint_ref,
+        mutation_payload_ref=original_rejection.mutation_payload_ref,
+        expected_owner=original_rejection.expected_owner,
+        verification_error_code="verification_error:wrong",
+        rejection_disposition=original_rejection.rejection_disposition,
+        critical=original_rejection.critical,
+    )
+    wrong_rejection_proposal = _recreate_proposal(
+        proposals[rejection_index], verification_rejection=wrong_rejection
+    )
+    wrong_rejection_subject = VerifierRejectionResponseSubject.create(
+        verifier_rejection=wrong_rejection
+    )
+    rejection_slot = realizations[rejection_index].semantic_slots[0]
+    wrong_rejection_slot = RealizationSlot.create(
+        slot_ref=rejection_slot.slot_ref,
+        semantic_ref=(
+            wrong_rejection_subject.verifier_rejection.verification_rejection_ref
+        ),
+        required=rejection_slot.required,
+        qualifier_refs=rejection_slot.qualifier_refs,
+    )
+    wrong_rejection_realization = _recreate_realization(
+        realizations[rejection_index],
+        response_subject=wrong_rejection_subject,
+        semantic_slots=(wrong_rejection_slot,),
+    )
+    wrong_rejection_root, _ = _write_cross_source_tree(
+        tmp_path / "wrong-rejection",
+        proposals=proposals[:rejection_index]
+        + (wrong_rejection_proposal,)
+        + proposals[rejection_index + 1 :],
+        realizations=realizations[:rejection_index]
+        + (wrong_rejection_realization,)
+        + realizations[rejection_index + 1 :],
+        mixed=True,
+    )
+    with pytest.raises(ValueError, match="verification error.*source truth"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            supervision_module.load_authenticated_r4_review_bundle(
+                wrong_rejection_root
+            ),
+            authority=_cross_source_authority(),
+        )
+
+    language_row = realizations[0]
+    wrong_language = _recreate_realization(
+        language_row,
+        language="fr",
+        alignments=(
+            LiteralAlignment.create(
+                slot_ref=language_row.semantic_slots[0].slot_ref,
+                literal_source_ref=stable_ref(
+                    "reviewed_literal",
+                    {
+                        "literal": language_row.authorized_surface,
+                        "language": "fr",
+                        "review_refs": [REVIEW_REF],
+                    },
+                ),
+                surface_start=0,
+                surface_end=len(language_row.authorized_surface),
+            ),
+        ),
+    )
+    wrong_language_root, _ = _write_cross_source_tree(
+        tmp_path / "wrong-language",
+        realizations=(wrong_language,) + realizations[1:],
+        mixed=True,
+    )
+    with pytest.raises(ValueError, match="language.*source truth"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            supervision_module.load_authenticated_r4_review_bundle(
+                wrong_language_root
+            ),
+            authority=_cross_source_authority(),
+        )
+
+    wrong_set = PurposeContract.create(
+        source_set_ref="r4_source_set_v1:ffffffffffffffffffffffff",
+        memberships=purpose.memberships,
+        duplicate_risk_groups=purpose.duplicate_risk_groups,
+        challenge_holdouts=purpose.challenge_holdouts,
+        denominator_minima=purpose.denominator_minima,
+        review_refs=purpose.review_refs,
+        solver_output_is_authority=False,
+    )
+    wrong_root, _ = _write_cross_source_tree(
+        tmp_path / "wrong-set", purpose=wrong_set, mixed=True
+    )
+    with pytest.raises(ValueError, match="source-set ref"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            supervision_module.load_authenticated_r4_review_bundle(wrong_root),
+            authority=_cross_source_authority(),
+        )
 
 
 def _write_review_tree(
@@ -1354,12 +2172,12 @@ def test_review_bundle_validates_each_nonmanifest_source_once(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     root, _, _ = _write_review_tree(tmp_path)
-    real_validator = supervision_module._record_count_from_authenticated_bytes
+    real_validator = supervision_module._decode_authenticated_source
     real_manifest_decoder = R4ReviewManifest.from_json_bytes
     validations: list[str] = []
     manifest_decodes = 0
 
-    def counted_validator(path: str, raw: bytes) -> int:
+    def counted_validator(path: str, raw: bytes):
         validations.append(path)
         return real_validator(path, raw)
 
@@ -1370,7 +2188,7 @@ def test_review_bundle_validates_each_nonmanifest_source_once(
         return real_manifest_decoder(raw)
 
     monkeypatch.setattr(
-        supervision_module, "_record_count_from_authenticated_bytes", counted_validator
+        supervision_module, "_decode_authenticated_source", counted_validator
     )
     monkeypatch.setattr(
         R4ReviewManifest, "from_json_bytes", classmethod(counted_manifest_decoder)
@@ -1570,7 +2388,7 @@ def test_review_bundle_rejects_unapproved_manifest_state(tmp_path: Path) -> None
 
 
 def test_review_bundle_enforces_existing_byte_record_depth_and_ref_bounds(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     proposal_path = _REVIEW_CHILD_PATHS[1]
 
@@ -1585,6 +2403,22 @@ def test_review_bundle_enforces_existing_byte_record_depth_and_ref_bounds(
     (root / proposal_path).write_bytes(_derive_target().to_json_bytes() * 4_097)
     with pytest.raises(ValueError, match="record count bounds"):
         supervision_module.load_authenticated_r4_review_bundle(root)
+
+    decoder_calls = 0
+    original_decoder = ProposalTarget.from_json_bytes
+
+    def counted_decoder(raw: bytes):
+        nonlocal decoder_calls
+        decoder_calls += 1
+        return original_decoder(raw)
+
+    monkeypatch.setattr(ProposalTarget, "from_json_bytes", counted_decoder)
+    with pytest.raises(ValueError, match="record count bounds"):
+        supervision_module._decode_authenticated_source(
+            proposal_path,
+            b"{}\n" * (supervision_module.MAX_R4_SOURCE_RECORDS + 1),
+        )
+    assert decoder_calls == 0
 
     root, _, _ = _write_review_tree(tmp_path / "depth")
     nested: object = "leaf"
@@ -2095,7 +2929,25 @@ def test_sr1_r4_source_abi_registry_states_are_exact_and_nonactivating() -> None
         assert "activated" not in cells[5]
 
 
-__cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr2_selector_binding_union_uses_dense_handles_and_exact_grounding': {'activation_phase': 'R4',
+__cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_authenticated_cross_source_validator_is_complete_decode_once_and_linear': {'activation_phase': 'R4',
+                                                                                                                          'assertion_ref': 'assertion:r4-sr4-cross-source-decode-once-complete-linear',
+                                                                                                                          'diagnostic_role': 'owner',
+                                                                                                                          'introduced_by_task': 'R4.1-SR4',
+                                                                                                                          'owner_ref': 'mutation-partition',
+                                                                                                                          'source_ast_sha256': 'd04b335f6e15e70b5cb1d986891ebdd1af3181131c65fe90b9ea0f7c345944c1'},
+ 'tests/test_r4_supervision_contracts.py::test_authenticated_cross_source_validator_rejects_missing_and_duplicate_rows': {'activation_phase': 'R4',
+                                                                                                                          'assertion_ref': 'assertion:r4-sr4-cross-source-rejects-missing-duplicate',
+                                                                                                                          'diagnostic_role': 'owner',
+                                                                                                                          'introduced_by_task': 'R4.1-SR4',
+                                                                                                                          'owner_ref': 'mutation-partition',
+                                                                                                                          'source_ast_sha256': '1bd8c57bfd8987101f08415756ac968218900f251c16a6ff2f63c55209f54eac'},
+ 'tests/test_r4_supervision_contracts.py::test_cross_source_validator_covers_four_dispositions_and_rejects_alias_echo_and_wrong_set': {'activation_phase': 'R4',
+                                                                                                                                       'assertion_ref': 'assertion:r4-sr4-cross-source-four-dispositions-alias-echo-set',
+                                                                                                                                       'diagnostic_role': 'owner',
+                                                                                                                                       'introduced_by_task': 'R4.1-SR4',
+                                                                                                                                       'owner_ref': 'mutation-partition',
+                                                                                                                                       'source_ast_sha256': '18d720071ca29e617ba6cc58a6bb723824dcfbdbaab71dd87f607789b0eaa53f'},
+ 'tests/test_r4_supervision_contracts.py::test_sr2_selector_binding_union_uses_dense_handles_and_exact_grounding': {'activation_phase': 'R4',
                                                                                                                     'assertion_ref': 'assertion:r4-sr2-selector-union-dense-exact-grounding',
                                                                                                                     'diagnostic_role': 'owner',
                                                                                                                     'introduced_by_task': 'R4.1-Source-Readiness-SR2',
@@ -2184,7 +3036,7 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr2_sel
                                                                                                                         'diagnostic_role': 'owner',
                                                                                                                         'introduced_by_task': 'R4.1-Source-Readiness-SR3',
                                                                                                                         'owner_ref': 'mutation-partition',
-                                                                                                                        'source_ast_sha256': 'd6e2d7201a152732c7290a8e46ca63590834a907bea972c6e7186a83c2e6065c'},
+                                                                                                                        'source_ast_sha256': '7831188b53d1d69ec5e7e00cfdebac4d5e0313429dd6fda739864980499d6945'},
  'tests/test_r4_supervision_contracts.py::test_mutation_contract_is_reviewed_truth_not_an_observation_echo': {'activation_phase': 'R4',
                                                                                                               'assertion_ref': 'assertion:r4-mutation-contract-reviewed-truth-not-observation-echo',
                                                                                                               'diagnostic_role': 'owner',
@@ -2322,7 +3174,7 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr2_sel
                                                                                                                    'diagnostic_role': 'owner',
                                                                                                                    'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
                                                                                                                    'owner_ref': 'mutation-partition',
-                                                                                                                   'source_ast_sha256': 'e51e6ed86188c23ee5e3592498285786f2d9c18a9e3084473cd1f6f4606f04ab'},
+                                                                                                                   'source_ast_sha256': 'd3a019a48d5484c162357fe6c22d6782550b31e5af4d23fe68ba5d66150cf665'},
  'tests/test_r4_supervision_contracts.py::test_review_bundle_rejects_ancestor_directory_replacement': {'activation_phase': 'R4',
                                                                                                        'assertion_ref': 'assertion:r4-review-bundle-rejects-ancestor-replacement',
                                                                                                        'diagnostic_role': 'owner',
@@ -2364,7 +3216,7 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr2_sel
                                                                                                        'diagnostic_role': 'owner',
                                                                                                        'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
                                                                                                        'owner_ref': 'mutation-partition',
-                                                                                                       'source_ast_sha256': '859713c8add8377cae91a2fbd8d87d82c15728316b740852958ecc73b848bfff'},
+                                                                                                       'source_ast_sha256': '9d75c68f44bbcca687281a2a493f85da0e98d899eb6e449926c2d922961dbfa7'},
  'tests/test_r4_supervision_contracts.py::test_sr1_r4_source_abi_registry_states_are_exact_and_nonactivating': {'activation_phase': 'R4',
                                                                                                                 'assertion_ref': 'assertion:r4-sr1-source-abi-registry-exact-nonactivating',
                                                                                                                 'diagnostic_role': 'owner',

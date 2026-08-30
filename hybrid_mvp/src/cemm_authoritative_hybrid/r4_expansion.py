@@ -90,6 +90,15 @@ class SourceUniverse:
             self, "operation_counts", MappingProxyType(dict(self.operation_counts))
         )
 
+    @property
+    def source_set_ref(self) -> str:
+        """Canonical content identity for the exact expanded case membership."""
+
+        return stable_ref(
+            "r4_source_set_v1",
+            sorted(case.case_ref for case in self.cases),
+        )
+
 
 def _mapping(value: object, name: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):

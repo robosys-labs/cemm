@@ -73,6 +73,7 @@ R4_REVIEW_SOURCE_FILE_COUNT = 5  # manifest plus the four child owners below
 R4_REVIEW_BUNDLE_READ_COUNT = 6  # file opens/snapshots, not low-level read syscalls
 MAX_R4_REVIEW_BUNDLE_BYTES = R4_REVIEW_BUNDLE_READ_COUNT * MAX_R4_SOURCE_BYTES
 MAX_R4_SOURCE_READ_SYSCALLS = 8_192
+_AUTHENTICATED_BUNDLE_SEAL = object()
 
 
 def source_disposition_is_supervision_eligible(
@@ -189,6 +190,11 @@ class _FileIdentity(NamedTuple):
     ctime_ns: int
     link_count: int
     file_attributes: int
+
+
+class _DecodedR4Source(NamedTuple):
+    records: tuple[object, ...]
+    record_count: int
 
 
 def _identity_from_stat(metadata: os.stat_result) -> _FileIdentity:
@@ -363,52 +369,63 @@ def _read_regular_file_once(
     return raw
 
 
-def _record_count_from_authenticated_bytes(path: str, raw: bytes) -> int:
+def _decode_authenticated_source(path: str, raw: bytes) -> _DecodedR4Source:
     if path.endswith(".json"):
         if path == "data/review/r4_1/purpose_contract.json":
             from .r4_purpose import PurposeContract
 
-            PurposeContract.from_json_bytes(raw)
+            record = PurposeContract.from_json_bytes(raw)
         else:
-            strict_decode(raw, lambda value: value, owner=f"reviewed source {path}")
-        return 1
+            record = strict_decode(
+                raw, lambda value: value, owner=f"reviewed source {path}"
+            )
+        return _DecodedR4Source((record,), 1)
     if not raw.endswith(b"\n"):
         raise ValueError(f"reviewed source {path} must be LF terminated")
     if b"\r" in raw:
         raise ValueError(f"reviewed source {path} must use canonical LF-only JSONL")
-    lines = raw[:-1].split(b"\n")
-    if not lines or len(lines) > MAX_R4_SOURCE_RECORDS or any(not line for line in lines):
+    line_count = raw.count(b"\n")
+    if line_count < 1 or line_count > MAX_R4_SOURCE_RECORDS:
         raise ValueError(f"reviewed source {path} violates record count bounds")
-    realization_refs: set[str] = set()
+    lines = raw[:-1].split(b"\n")
+    if len(lines) != line_count or any(not line for line in lines):
+        raise ValueError(f"reviewed source {path} violates record count bounds")
+    records: list[object] = []
+    row_refs: set[str] = set()
     realization_variants_by_case: dict[str, int] = {}
     for index, line in enumerate(lines, 1):
         record = line + b"\n"
         if path == "data/review/r4_1/mutation_contracts.jsonl":
-            MutationContract.from_json_bytes(record)
+            decoded = MutationContract.from_json_bytes(record)
+            row_ref = decoded.mutation_contract_ref
         elif path == "data/review/r4_1/proposal_supervision.jsonl":
-            ProposalTarget.from_json_bytes(record)
+            decoded = ProposalTarget.from_json_bytes(record)
+            row_ref = decoded.proposal_target_ref
         elif path == "data/review/r4_1/realization_supervision.jsonl":
-            realization = RealizationRow.from_json_bytes(record)
-            if realization.realization_ref in realization_refs:
-                raise ValueError("realization supervision contains a duplicate row identity")
-            realization_refs.add(realization.realization_ref)
-            count = realization_variants_by_case.get(realization.source_case_ref, 0) + 1
+            decoded = RealizationRow.from_json_bytes(record)
+            row_ref = decoded.realization_ref
+            count = realization_variants_by_case.get(decoded.source_case_ref, 0) + 1
             if count > MAX_REALIZATION_VARIANTS_PER_CASE:
                 raise ValueError("realization supervision exceeds four variants for one case")
-            realization_variants_by_case[realization.source_case_ref] = count
+            realization_variants_by_case[decoded.source_case_ref] = count
         elif path == R4_SCENARIO_SOURCE_PATH:
             from .r4_contracts import ReviewedScenario
 
-            scenario = strict_decode(
+            decoded = strict_decode(
                 record,
                 ReviewedScenario.from_dict,
                 owner=f"reviewed source {path} record {index}",
             )
-            if scenario.review_status != "reviewed":
+            row_ref = decoded.scenario_ref
+            if decoded.review_status != "reviewed":
                 raise ValueError("scenario source contains an unreviewed scenario")
         else:
             raise ValueError("reviewed JSONL source path has no exact decoder owner")
-    return len(lines)
+        if row_ref in row_refs:
+            raise ValueError(f"reviewed source {path} contains a duplicate row identity")
+        row_refs.add(row_ref)
+        records.append(decoded)
+    return _DecodedR4Source(tuple(records), len(records))
 
 
 def _source_bundle_ref(
@@ -629,6 +646,7 @@ class AuthenticatedR4SourceBytes:
     raw_bytes: bytes
     sha256: str
     record_count: int
+    records: tuple[object, ...]
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
         raise _factory_only("AuthenticatedR4SourceBytes")
@@ -639,13 +657,14 @@ class AuthenticatedR4SourceBytes:
             raise ValueError("authenticated source path is outside the exact bundle membership")
         if type(raw_bytes) is not bytes:
             raise TypeError("authenticated source bytes must be exact immutable bytes")
-        count = _record_count_from_authenticated_bytes(path, raw_bytes)
+        decoded = _decode_authenticated_source(path, raw_bytes)
         return construct(
             cls,
             path=path,
             raw_bytes=raw_bytes,
             sha256=hashlib.sha256(raw_bytes).hexdigest(),
-            record_count=count,
+            record_count=decoded.record_count,
+            records=decoded.records,
         )
 
     def identity_dict(self) -> dict[str, object]:
@@ -668,6 +687,12 @@ class AuthenticatedR4ReviewBundle:
     source_bundle_ref: str
     read_count: int
     aggregate_bytes: int
+    scenarios: tuple[object, ...]
+    proposal_targets: tuple[object, ...]
+    realization_rows: tuple[object, ...]
+    mutation_contracts: tuple[object, ...]
+    purpose_contract: object
+    _seal: object
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
         raise TypeError(
@@ -740,6 +765,12 @@ def load_authenticated_r4_review_bundle(
     computed_ref = _source_bundle_ref(exact_sources, scenario)
     if computed_ref != manifest.source_bundle_ref:
         raise ValueError("review manifest source-bundle content ref does not reconstruct")
+    sources_by_path = {source.path: source for source in exact_sources}
+    purpose_records = sources_by_path[
+        "data/review/r4_1/purpose_contract.json"
+    ].records
+    if len(purpose_records) != 1:
+        raise ValueError("purpose contract source must contain exactly one record")
     return construct(
         AuthenticatedR4ReviewBundle,
         manifest=manifest,
@@ -752,6 +783,428 @@ def load_authenticated_r4_review_bundle(
         source_bundle_ref=computed_ref,
         read_count=len(read_paths),
         aggregate_bytes=aggregate_bytes,
+        scenarios=scenario.records,
+        proposal_targets=sources_by_path[
+            "data/review/r4_1/proposal_supervision.jsonl"
+        ].records,
+        realization_rows=sources_by_path[
+            "data/review/r4_1/realization_supervision.jsonl"
+        ].records,
+        mutation_contracts=sources_by_path[
+            "data/review/r4_1/mutation_contracts.jsonl"
+        ].records,
+        purpose_contract=purpose_records[0],
+        _seal=_AUTHENTICATED_BUNDLE_SEAL,
+    )
+
+
+@dataclass(frozen=True)
+class CrossSourceValidationResult:
+    """Non-authoritative, non-serialized diagnostics for one bound snapshot."""
+
+    source_bundle_ref: str
+    authority_generation: str
+    source_set_ref: str
+    source_case_count: int
+    supervised_case_count: int
+    diagnostic_case_count: int
+    proposal_count: int
+    realization_count: int
+    membership_count: int
+    operation_count: int
+
+
+def validate_authenticated_r4_source_semantics(
+    bundle: AuthenticatedR4ReviewBundle,
+    *,
+    authority: object,
+) -> CrossSourceValidationResult:
+    """Validate the already-decoded R4.1 source snapshot with linear joins.
+
+    This is part of the existing authenticated-bundle owner.  It does not
+    compile gold, call a solver/model/runtime, or create an admission gate.
+    """
+
+    from .authority import LinkedAuthority
+    from .r4_expansion import expand_reviewed_source_universe
+    from .r4_purpose import PurposeContract, PurposeMembership
+
+    if type(bundle) is not AuthenticatedR4ReviewBundle:
+        raise TypeError("bundle must be an exact authenticated R4 review bundle")
+    if getattr(bundle, "_seal", None) is not _AUTHENTICATED_BUNDLE_SEAL:
+        raise ValueError("review bundle was not minted by the authenticated loader")
+
+    if (
+        type(bundle.manifest_bytes) is not bytes
+        or bundle.manifest.to_json_bytes() != bundle.manifest_bytes
+        or hashlib.sha256(bundle.manifest_bytes).hexdigest()
+        != bundle.manifest_sha256
+    ):
+        raise ValueError("retained manifest does not match authenticated bytes")
+
+    def verify_retained_source(source: AuthenticatedR4SourceBytes) -> int:
+        if type(source) is not AuthenticatedR4SourceBytes:
+            raise TypeError("authenticated bundle source is not exact")
+        if (
+            type(source.raw_bytes) is not bytes
+            or hashlib.sha256(source.raw_bytes).hexdigest() != source.sha256
+            or len(source.records) != source.record_count
+        ):
+            raise ValueError("retained typed records do not match authenticated bytes")
+        digest = hashlib.sha256()
+        for record in source.records:
+            if source.path == R4_SCENARIO_SOURCE_PATH:
+                from .r4_contracts import ReviewedScenario
+
+                if type(record) is not ReviewedScenario:
+                    raise TypeError("retained scenario record is not exact")
+                encoded = canonical_json_bytes(record.as_dict())
+            elif source.path == "data/review/r4_1/mutation_contracts.jsonl":
+                if type(record) is not MutationContract:
+                    raise TypeError("retained mutation record is not exact")
+                encoded = record.to_json_bytes()
+            elif source.path == "data/review/r4_1/proposal_supervision.jsonl":
+                if type(record) is not ProposalTarget:
+                    raise TypeError("retained proposal record is not exact")
+                encoded = record.to_json_bytes()
+            elif source.path == "data/review/r4_1/realization_supervision.jsonl":
+                if type(record) is not RealizationRow:
+                    raise TypeError("retained realization record is not exact")
+                encoded = record.to_json_bytes()
+            elif source.path == "data/review/r4_1/purpose_contract.json":
+                if type(record) is not PurposeContract:
+                    raise TypeError("retained purpose record is not exact")
+                encoded = record.to_json_bytes()
+            else:
+                raise ValueError("authenticated bundle contains an unknown source path")
+            digest.update(encoded)
+        if digest.hexdigest() != source.sha256:
+            raise ValueError("retained typed records do not match authenticated bytes")
+        return len(source.records)
+
+    sources_by_path = {source.path: source for source in bundle.sources}
+    if (
+        len(sources_by_path) != len(_SOURCE_PATHS)
+        or tuple(sources_by_path) != _SOURCE_PATHS
+        or bundle.scenarios is not bundle.scenario_source.records
+        or bundle.proposal_targets
+        is not sources_by_path["data/review/r4_1/proposal_supervision.jsonl"].records
+        or bundle.realization_rows
+        is not sources_by_path["data/review/r4_1/realization_supervision.jsonl"].records
+        or bundle.mutation_contracts
+        is not sources_by_path["data/review/r4_1/mutation_contracts.jsonl"].records
+        or len(sources_by_path["data/review/r4_1/purpose_contract.json"].records)
+        != 1
+        or bundle.purpose_contract
+        is not sources_by_path["data/review/r4_1/purpose_contract.json"].records[0]
+    ):
+        raise ValueError("authenticated bundle typed projections do not match source ownership")
+    rebound_records = verify_retained_source(bundle.scenario_source)
+    for source in bundle.sources:
+        rebound_records += verify_retained_source(source)
+    if (
+        _source_bundle_ref(bundle.sources, bundle.scenario_source)
+        != bundle.source_bundle_ref
+        or bundle.source_bundle_ref != bundle.manifest.source_bundle_ref
+        or bundle.authority_generation != bundle.manifest.authority_generation
+        or bundle.reviewed_base_revision
+        != bundle.manifest.reviewed_base_revision
+        or bundle.scenario_source.sha256
+        != bundle.manifest.scenario_source_sha256
+        or tuple(
+            (source.path, source.sha256, source.record_count)
+            for source in bundle.sources
+        )
+        != tuple(
+            (source.path, source.sha256, source.record_count)
+            for source in bundle.manifest.sources
+        )
+    ):
+        raise ValueError("retained source bundle identity does not reconstruct")
+    if type(authority) is not LinkedAuthority:
+        raise TypeError("authority must be exact LinkedAuthority")
+    if authority.generation != bundle.authority_generation:
+        raise ValueError("authority generation differs from the authenticated review bundle")
+    if any(type(row) is not ProposalTarget for row in bundle.proposal_targets):
+        raise TypeError("authenticated proposal projection is not exact")
+    if any(type(row) is not RealizationRow for row in bundle.realization_rows):
+        raise TypeError("authenticated realization projection is not exact")
+    if any(type(row) is not MutationContract for row in bundle.mutation_contracts):
+        raise TypeError("authenticated mutation projection is not exact")
+    if type(bundle.purpose_contract) is not PurposeContract:
+        raise TypeError("authenticated purpose projection is not exact")
+
+    universe = expand_reviewed_source_universe(
+        bundle.scenarios,
+        authority=authority,
+    )
+    operations = sum(universe.operation_counts.values()) + rebound_records
+
+    cases_by_ref: dict[str, object] = {}
+    for case in universe.cases:
+        operations += 1
+        if case.case_ref in cases_by_ref:
+            raise ValueError("source universe contains a duplicate case identity")
+        cases_by_ref[case.case_ref] = case
+    source_set_ref = universe.source_set_ref
+    purpose_contract = bundle.purpose_contract
+    if purpose_contract.source_set_ref != source_set_ref:
+        raise ValueError("purpose contract source-set ref does not reconstruct")
+
+    proposals_by_case: dict[str, ProposalTarget] = {}
+    selector_owner: dict[tuple[str, str, str], str] = {}
+    selector_geometry: dict[tuple[str, str, str], tuple[object, ...]] = {}
+
+    def bind_selector_owner(
+        key: tuple[str, str, str], surface_ref: str, geometry: tuple[object, ...]
+    ) -> None:
+        nonlocal operations
+        operations += 1
+        previous_owner = selector_owner.get(key)
+        if previous_owner is not None and previous_owner != surface_ref:
+            raise ValueError("reviewed source selector crosses its case surface")
+        previous_geometry = selector_geometry.get(key)
+        if geometry and previous_geometry is not None and previous_geometry != geometry:
+            raise ValueError("reviewed source selector has inconsistent grounded geometry")
+        selector_owner[key] = surface_ref
+        if geometry:
+            selector_geometry[key] = geometry
+
+    for proposal in bundle.proposal_targets:
+        operations += 1
+        case = cases_by_ref.get(proposal.source_case_ref)
+        if case is None:
+            raise ValueError("proposal supervision contains an extra source case")
+        if proposal.source_case_ref in proposals_by_case:
+            raise ValueError("proposal supervision contains duplicate rows for one case")
+        proposals_by_case[proposal.source_case_ref] = proposal
+        for derivation in proposal.derivations:
+            operations += 1
+            for assignment in derivation.source_assignment_blueprint.assignments:
+                operations += 1
+                bind_selector_owner(
+                    (
+                        proposal.source_case_ref,
+                        "source_unit",
+                        assignment.source_unit_ref,
+                    ),
+                    case.surface_ref,
+                    (),
+                )
+                bind_selector_owner(
+                    (
+                        proposal.source_case_ref,
+                        "contribution",
+                        assignment.contribution_slot_ref,
+                    ),
+                    case.surface_ref,
+                    (),
+                )
+            for binding in derivation.selector_bindings:
+                operations += 1
+                if type(binding) is not GroundedSelectorBinding:
+                    continue
+                if (
+                    binding.source_case_ref != proposal.source_case_ref
+                    or binding.surface_ref != case.surface_ref
+                ):
+                    raise ValueError("grounded selector has cross-case or cross-surface ownership")
+                spans = tuple(
+                    (span.surface_ref, span.start, span.end) for span in binding.spans
+                )
+                for span in binding.spans:
+                    operations += 1
+                    if (
+                        span.surface_ref != case.surface_ref
+                        or span.start < 0
+                        or span.end <= span.start
+                        or span.end > len(case.surface)
+                    ):
+                        raise ValueError("grounded selector span is outside its exact source surface")
+                selector_key = (
+                    proposal.source_case_ref,
+                    binding.source_selector_kind,
+                    binding.source_selector_ref,
+                )
+                if selector_key not in selector_owner:
+                    raise ValueError(
+                        "grounded selector is not declared by its source assignment blueprint"
+                    )
+                bind_selector_owner(
+                    selector_key,
+                    case.surface_ref,
+                    (
+                        binding.graph_component_ref,
+                        binding.semantic_kind_ref,
+                        spans,
+                    ),
+                )
+
+    realizations_by_case: dict[str, list[RealizationRow]] = {}
+    for realization in bundle.realization_rows:
+        operations += 1
+        if realization.source_case_ref not in cases_by_ref:
+            raise ValueError("realization supervision contains an extra source case")
+        rows = realizations_by_case.setdefault(realization.source_case_ref, [])
+        rows.append(realization)
+        if len(rows) > MAX_REALIZATION_VARIANTS_PER_CASE:
+            raise ValueError("realization supervision exceeds four variants for one case")
+
+    memberships_by_case: dict[str, PurposeMembership] = {}
+    for membership in purpose_contract.memberships:
+        operations += 1
+        if membership.source_case_ref not in cases_by_ref:
+            raise ValueError("purpose contract contains an extra source case")
+        if membership.source_case_ref in memberships_by_case:
+            raise ValueError("purpose contract contains duplicate membership for one case")
+        memberships_by_case[membership.source_case_ref] = membership
+
+    for mutation in bundle.mutation_contracts:
+        operations += 1
+        if mutation.source_case_ref not in cases_by_ref:
+            raise ValueError("mutation contract contains an orphan source case")
+
+    expected_classification = {
+        SourceDisposition.SEMANTIC: "semantic_supervision",
+        SourceDisposition.EXPLICIT_GAP: "typed_abstention",
+        SourceDisposition.VERIFICATION_REJECTION: "verification_rejection",
+        SourceDisposition.RESTART_DIAGNOSTIC_CANDIDATE: "diagnostic_only",
+    }
+    supervised_count = 0
+    diagnostic_count = 0
+    for case_ref, case in cases_by_ref.items():
+        operations += 1
+        disposition = case.source_disposition
+        eligible = source_disposition_is_supervision_eligible(disposition)
+        proposal = proposals_by_case.get(case_ref)
+        realization_rows = realizations_by_case.get(case_ref, [])
+        membership = memberships_by_case.get(case_ref)
+        if membership is None:
+            raise ValueError("purpose membership is missing for a source case")
+        if membership.classification != expected_classification[disposition]:
+            raise ValueError("purpose membership classification disagrees with source disposition")
+        if not eligible:
+            diagnostic_count += 1
+            if proposal is not None or realization_rows:
+                raise ValueError("diagnostic source case cannot carry proposal or realization supervision")
+            continue
+
+        supervised_count += 1
+        if proposal is None:
+            raise ValueError("proposal supervision is missing for a supervised source case")
+        if len(realization_rows) != 1:
+            raise ValueError("exactly one initial realization is required for each supervised source case")
+        realization = realization_rows[0]
+        expected_response = case.contract.expected_response
+        if (
+            realization.language != case.language
+            or realization.discourse_action_ref
+            != f"response_action:{expected_response.discourse_action}"
+            or realization.polarity_ref != expected_response.polarity_ref
+            or realization.modality_ref != expected_response.modality_ref
+            or realization.epistemic_status_ref
+            != expected_response.epistemic_status_ref
+        ):
+            if realization.language != case.language:
+                raise ValueError("realization language disagrees with reviewed source truth")
+            raise ValueError("realization response contract disagrees with reviewed source truth")
+
+        if disposition is SourceDisposition.SEMANTIC:
+            expected_refs = tuple(
+                sorted(
+                    expression.expression_ref
+                    for expression in case.contract.expected_expressions
+                )
+            )
+            relation = case.contract.expression_relation.value
+            if relation == "single":
+                expected_relation = "single"
+            elif relation in {"any", "conflict"}:
+                expected_relation = "conflict"
+            else:
+                raise ValueError("semantic source relation is not representable by proposal ABI 1")
+            if (
+                proposal.target_kind != "derive"
+                or proposal.expected_expression_refs != expected_refs
+                or proposal.expected_expression_relation != expected_relation
+            ):
+                raise ValueError("proposal expression target disagrees with reviewed source truth")
+            subject = realization.response_subject
+            if (
+                type(subject) is not ExpressionSetResponseSubject
+                or subject.expression_refs != proposal.expected_expression_refs
+                or subject.expected_expression_relation
+                != proposal.expected_expression_relation
+            ):
+                raise ValueError("realization subject disagrees with the proposal expression set")
+        elif disposition is SourceDisposition.EXPLICIT_GAP:
+            if proposal.target_kind != "abstain" or proposal.abstention is None:
+                raise ValueError("explicit gap requires one typed abstention proposal")
+            expected_gap = case.contract.expected_gap
+            if (
+                expected_gap is None
+                or proposal.abstention.gap_kind_ref
+                != f"gap_kind:{expected_gap.kind}"
+            ):
+                raise ValueError("proposal gap kind disagrees with reviewed source truth")
+            subject = realization.response_subject
+            if (
+                type(subject) is not TypedGapResponseSubject
+                or subject.typed_gap != proposal.abstention
+            ):
+                raise ValueError("gap realization subject disagrees with proposal truth")
+            if realization.authorized_surface.strip().casefold() == case.surface.strip().casefold():
+                raise ValueError("safe gap realization cannot echo the input surface")
+        else:
+            if (
+                proposal.target_kind != "verification_rejection"
+                or proposal.verification_rejection is None
+            ):
+                raise ValueError("verification source requires one rejection proposal")
+            expected_gap = case.contract.expected_gap
+            if expected_gap is None or expected_gap.error_code is None:
+                raise ValueError("verification source truth has no exact error code")
+            error_namespace, separator, error_name = expected_gap.error_code.partition(":")
+            if separator != ":" or error_namespace != "verification" or not error_name:
+                raise ValueError("verification source truth error code is not canonical")
+            if (
+                proposal.verification_rejection.verification_error_code
+                != f"verification_error:{error_name}"
+            ):
+                raise ValueError(
+                    "proposal verification error disagrees with reviewed source truth"
+                )
+            subject = realization.response_subject
+            if (
+                type(subject) is not VerifierRejectionResponseSubject
+                or subject.verifier_rejection != proposal.verification_rejection
+            ):
+                raise ValueError("rejection realization subject disagrees with proposal truth")
+            if realization.authorized_surface.strip().casefold() == case.surface.strip().casefold():
+                raise ValueError("safe rejection realization cannot echo the input surface")
+
+    if set(proposals_by_case) != {
+        case_ref
+        for case_ref, case in cases_by_ref.items()
+        if source_disposition_is_supervision_eligible(case.source_disposition)
+    }:
+        raise ValueError("proposal supervision case membership is not exact")
+    if set(realizations_by_case) != set(proposals_by_case):
+        raise ValueError("realization supervision case membership is not exact")
+    if set(memberships_by_case) != set(cases_by_ref):
+        raise ValueError("purpose membership case coverage is not exact")
+
+    return CrossSourceValidationResult(
+        source_bundle_ref=bundle.source_bundle_ref,
+        authority_generation=bundle.authority_generation,
+        source_set_ref=source_set_ref,
+        source_case_count=len(cases_by_ref),
+        supervised_case_count=supervised_count,
+        diagnostic_case_count=diagnostic_count,
+        proposal_count=len(proposals_by_case),
+        realization_count=len(bundle.realization_rows),
+        membership_count=len(memberships_by_case),
+        operation_count=operations,
     )
 
 
@@ -2700,6 +3153,7 @@ __all__ = [
     "MAX_SOURCE_ASSIGNMENTS",
     "MAX_SOURCE_SPANS",
     "BlueprintAction",
+    "CrossSourceValidationResult",
     "DerivationBlueprint",
     "DesignationAlignment",
     "ExpressionSetResponseSubject",
@@ -2732,4 +3186,5 @@ __all__ = [
     "response_subject_from_dict",
     "source_disposition_is_supervision_eligible",
     "load_authenticated_r4_review_bundle",
+    "validate_authenticated_r4_source_semantics",
 ]

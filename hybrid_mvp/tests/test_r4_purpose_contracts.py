@@ -32,7 +32,7 @@ def _memberships() -> tuple[PurposeMembership, ...]:
         PurposeMembership.create(
             source_case_ref=CASE_REFS[0],
             classification="semantic_supervision",
-            purpose="train",
+            purpose=None,
             duplicate_risk_group_refs=("duplicate_risk_group:family-a",),
             diagnostic_reason_ref=None,
             review_refs=(REVIEW_REF,),
@@ -40,7 +40,7 @@ def _memberships() -> tuple[PurposeMembership, ...]:
         PurposeMembership.create(
             source_case_ref=CASE_REFS[1],
             classification="semantic_supervision",
-            purpose="train",
+            purpose=None,
             duplicate_risk_group_refs=("duplicate_risk_group:family-a",),
             diagnostic_reason_ref=None,
             review_refs=(REVIEW_REF,),
@@ -75,7 +75,7 @@ def _memberships() -> tuple[PurposeMembership, ...]:
 def _minima() -> tuple[DenominatorMinimum, ...]:
     return tuple(
         DenominatorMinimum.create(
-            denominator_ref=f"denominator:semantic-expression-{purpose}",
+            denominator_ref="denominator:semantic-expression",
             denominator_family="semantic_expression",
             purpose=purpose,
             minimum=1,
@@ -93,6 +93,7 @@ def _contract() -> PurposeContract:
             DuplicateRiskGroup.create(
                 group_ref="duplicate_risk_group:family-a",
                 namespace="paraphrase_family",
+                purpose="train",
                 member_case_refs=CASE_REFS[:2],
                 reason_ref="duplicate_reason:reviewed-paraphrase",
                 review_refs=(REVIEW_REF,),
@@ -136,6 +137,7 @@ def _recreate_contract(contract: PurposeContract, **changes) -> PurposeContract:
         DuplicateRiskGroup.create(
             group_ref="duplicate_risk_group:family-a",
             namespace="paraphrase_family",
+            purpose="train",
             member_case_refs=CASE_REFS[:2],
             reason_ref="duplicate_reason:reviewed-paraphrase",
             review_refs=(REVIEW_REF,),
@@ -210,6 +212,7 @@ def test_duplicate_groups_are_explicit_reviewed_lineage_not_semantic_union_keys(
         "role",
         "mode",
         "semantic_target",
+        "conflict_set",
         "topology",
         "response_action",
     ):
@@ -217,6 +220,7 @@ def test_duplicate_groups_are_explicit_reviewed_lineage_not_semantic_union_keys(
             DuplicateRiskGroup.create(
                 group_ref="duplicate_risk_group:bad",
                 namespace=forbidden,
+                purpose="train",
                 member_case_refs=CASE_REFS[:2],
                 reason_ref="duplicate_reason:bad",
                 review_refs=(REVIEW_REF,),
@@ -226,6 +230,7 @@ def test_duplicate_groups_are_explicit_reviewed_lineage_not_semantic_union_keys(
         DuplicateRiskGroup.create(
             group_ref="duplicate_risk_group:duplicate",
             namespace="mutation_lineage",
+            purpose="train",
             member_case_refs=(CASE_REFS[0], CASE_REFS[0]),
             reason_ref="duplicate_reason:mutation",
             review_refs=(REVIEW_REF,),
@@ -249,16 +254,36 @@ def test_purpose_contract_rejects_duplicate_unknown_and_cross_purpose_group_memb
     changed[1] = PurposeMembership.create(
         source_case_ref=CASE_REFS[1],
         classification="semantic_supervision",
-        purpose="selection",
-        duplicate_risk_group_refs=("duplicate_risk_group:family-a",),
+        purpose=None,
+        duplicate_risk_group_refs=(
+            "duplicate_risk_group:family-a",
+            "duplicate_risk_group:family-b",
+        ),
         diagnostic_reason_ref=None,
         review_refs=(REVIEW_REF,),
     )
-    with pytest.raises(ValueError, match="one purpose"):
+    changed[2] = PurposeMembership.create(
+        source_case_ref=CASE_REFS[2],
+        classification="typed_abstention",
+        purpose=None,
+        duplicate_risk_group_refs=("duplicate_risk_group:family-b",),
+        diagnostic_reason_ref=None,
+        review_refs=(REVIEW_REF,),
+    )
+    cross_purpose_group = DuplicateRiskGroup.create(
+        group_ref="duplicate_risk_group:family-b",
+        namespace="normalization_family",
+        purpose="selection",
+        member_case_refs=CASE_REFS[1:3],
+        reason_ref="duplicate_reason:normalization",
+        review_refs=(REVIEW_REF,),
+    )
+    with pytest.raises(ValueError, match="component.*one purpose"):
         PurposeContract.create(
             source_set_ref=contract.source_set_ref,
             memberships=tuple(changed),
-            duplicate_risk_groups=contract.duplicate_risk_groups,
+            duplicate_risk_groups=contract.duplicate_risk_groups
+            + (cross_purpose_group,),
             challenge_holdouts=contract.challenge_holdouts,
             denominator_minima=contract.denominator_minima,
             review_refs=contract.review_refs,
@@ -268,6 +293,7 @@ def test_purpose_contract_rejects_duplicate_unknown_and_cross_purpose_group_memb
     bad_group = DuplicateRiskGroup.create(
         group_ref="duplicate_risk_group:unknown-case",
         namespace="source_case_lineage",
+        purpose="train",
         member_case_refs=(CASE_REFS[0], "expanded_case_v2:ffffffffffffffffffffffff"),
         reason_ref="duplicate_reason:lineage",
         review_refs=(REVIEW_REF,),
@@ -413,6 +439,7 @@ def test_purpose_standalone_case_refs_and_challenge_identity_tags_are_exact() ->
         DuplicateRiskGroup.create(
             group_ref="duplicate_risk_group:bad-case",
             namespace="source_case_lineage",
+            purpose="train",
             member_case_refs=(CASE_REFS[1], "expanded_case_v2:not-a-hash"),
             reason_ref="duplicate_reason:bad-case",
             review_refs=(REVIEW_REF,),
@@ -504,7 +531,7 @@ def test_purpose_rejects_asymmetric_group_membership_and_duplicate_holdout_ident
     changed[2] = PurposeMembership.create(
         source_case_ref=CASE_REFS[2],
         classification="typed_abstention",
-        purpose="selection",
+        purpose=None,
         duplicate_risk_group_refs=("duplicate_risk_group:family-a",),
         diagnostic_reason_ref=None,
         review_refs=(REVIEW_REF,),
@@ -629,36 +656,341 @@ def test_purpose_schema_is_strict_draft_2020_12_and_matches_decoder() -> None:
         PurposeContract.from_dict(duplicate)
 
 
-__cemm_test_inventory__ = {'tests/test_r4_purpose_contracts.py::test_purpose_values_are_factory_only_frozen_and_canonical[value0]': {'activation_phase': 'R4',
+def _sr4_cartesian_minima(
+    denominator_ref: str = "denominator:semantic-expression",
+    denominator_family: str = "semantic_expression",
+) -> tuple[DenominatorMinimum, ...]:
+    return tuple(
+        DenominatorMinimum.create(
+            denominator_ref=denominator_ref,
+            denominator_family=denominator_family,
+            purpose=purpose,
+            minimum=1,
+            review_refs=(REVIEW_REF,),
+        )
+        for purpose in ("train", "selection", "calibration", "frozen_test")
+    )
+
+
+def _sr4_component_contract(
+    *, second_group_purpose: str = "train", holdout_purpose: str = "train"
+) -> PurposeContract:
+    group_refs_by_case = (
+        ("duplicate_risk_group:family-a",),
+        ("duplicate_risk_group:family-a", "duplicate_risk_group:family-b"),
+        ("duplicate_risk_group:family-b",),
+    )
+    memberships = tuple(
+        PurposeMembership.create(
+            source_case_ref=case_ref,
+            classification="semantic_supervision",
+            purpose=None,
+            duplicate_risk_group_refs=group_refs,
+            diagnostic_reason_ref=None,
+            review_refs=(REVIEW_REF,),
+        )
+        for case_ref, group_refs in zip(CASE_REFS[:3], group_refs_by_case)
+    )
+    groups = (
+        DuplicateRiskGroup.create(
+            group_ref="duplicate_risk_group:family-a",
+            namespace="paraphrase_family",
+            purpose="train",
+            member_case_refs=CASE_REFS[:2],
+            reason_ref="duplicate_reason:reviewed-paraphrase-a",
+            review_refs=(REVIEW_REF,),
+        ),
+        DuplicateRiskGroup.create(
+            group_ref="duplicate_risk_group:family-b",
+            namespace="normalization_family",
+            purpose=second_group_purpose,
+            member_case_refs=CASE_REFS[1:3],
+            reason_ref="duplicate_reason:reviewed-paraphrase-b",
+            review_refs=(REVIEW_REF,),
+        ),
+    )
+    holdout = ChallengeHoldout.create(
+        holdout_ref="challenge_holdout:inherited-purpose",
+        identity_namespace="semantic_identity",
+        identity_ref="concept:grouped-case",
+        purpose=holdout_purpose,
+        member_case_refs=(CASE_REFS[2],),
+        reason_ref="holdout_reason:inherited-purpose",
+        review_refs=(REVIEW_REF,),
+    )
+    return PurposeContract.create(
+        source_set_ref="r4_source_set_v1:0123456789abcdef01234567",
+        memberships=memberships,
+        duplicate_risk_groups=groups,
+        challenge_holdouts=(holdout,),
+        denominator_minima=_sr4_cartesian_minima(),
+        review_refs=(REVIEW_REF,),
+        solver_output_is_authority=False,
+    )
+
+
+def test_sr4_group_owns_purpose_and_membership_is_exact_tagged_union() -> None:
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    schema_validator = Draft202012Validator(schema)
+    base_wire = _sr4_component_contract().as_dict()
+
+    def schema_accepts_membership(wire: dict) -> bool:
+        candidate = deepcopy(base_wire)
+        candidate["memberships"][0] = deepcopy(wire)
+        return schema_validator.is_valid(candidate)
+
+    positive_memberships = []
+    for classification in (
+        "semantic_supervision",
+        "typed_abstention",
+        "verification_rejection",
+    ):
+        grouped = PurposeMembership.create(
+            source_case_ref=CASE_REFS[0],
+            classification=classification,
+            purpose=None,
+            duplicate_risk_group_refs=("duplicate_risk_group:family-a",),
+            diagnostic_reason_ref=None,
+            review_refs=(REVIEW_REF,),
+        )
+        assert grouped.purpose is None
+        positive_memberships.append(grouped)
+        with pytest.raises(ValueError, match="grouped.*purpose"):
+            PurposeMembership.create(
+                source_case_ref=CASE_REFS[0],
+                classification=classification,
+                purpose="train",
+                duplicate_risk_group_refs=("duplicate_risk_group:family-a",),
+                diagnostic_reason_ref=None,
+                review_refs=(REVIEW_REF,),
+            )
+
+    direct = PurposeMembership.create(
+        source_case_ref=CASE_REFS[0],
+        classification="verification_rejection",
+        purpose="selection",
+        duplicate_risk_group_refs=(),
+        diagnostic_reason_ref=None,
+        review_refs=(REVIEW_REF,),
+    )
+    assert direct.purpose == "selection"
+    positive_memberships.append(direct)
+    with pytest.raises(ValueError, match="ungrouped.*purpose"):
+        PurposeMembership.create(
+            source_case_ref=CASE_REFS[0],
+            classification="semantic_supervision",
+            purpose=None,
+            duplicate_risk_group_refs=(),
+            diagnostic_reason_ref=None,
+            review_refs=(REVIEW_REF,),
+        )
+
+    diagnostic = PurposeMembership.create(
+        source_case_ref=CASE_REFS[1],
+        classification="diagnostic_only",
+        purpose=None,
+        duplicate_risk_group_refs=(),
+        diagnostic_reason_ref="diagnostic_reason:restart-review",
+        review_refs=(REVIEW_REF,),
+    )
+    positive_memberships.append(diagnostic)
+    for membership in positive_memberships:
+        wire = membership.as_dict()
+        assert schema_accepts_membership(wire)
+        assert PurposeMembership.from_dict(deepcopy(wire)) == membership
+
+    invalid_memberships = []
+    grouped_with_purpose = deepcopy(positive_memberships[0].as_dict())
+    grouped_with_purpose["purpose"] = "train"
+    invalid_memberships.append(grouped_with_purpose)
+    direct_without_purpose = deepcopy(direct.as_dict())
+    direct_without_purpose["purpose"] = None
+    invalid_memberships.append(direct_without_purpose)
+    diagnostic_with_group = deepcopy(diagnostic.as_dict())
+    diagnostic_with_group["duplicate_risk_group_refs"] = [
+        "duplicate_risk_group:family-a"
+    ]
+    invalid_memberships.append(diagnostic_with_group)
+    for wire in invalid_memberships:
+        assert not schema_accepts_membership(wire)
+        with pytest.raises((TypeError, ValueError)):
+            PurposeMembership.from_dict(wire)
+
+    group = DuplicateRiskGroup.create(
+        group_ref="duplicate_risk_group:family-a",
+        namespace="paraphrase_family",
+        purpose="train",
+        member_case_refs=CASE_REFS[:2],
+        reason_ref="duplicate_reason:reviewed-paraphrase",
+        review_refs=(REVIEW_REF,),
+    )
+    assert group.purpose == "train"
+    assert "purpose" in schema["$defs"]["group"]["required"]
+    assert "verification_rejection" in schema["$defs"]["membership"][
+        "properties"
+    ]["classification"]["enum"]
+    missing_group_purpose = _sr4_component_contract().as_dict()
+    del missing_group_purpose["duplicate_risk_groups"][0]["purpose"]
+    assert not Draft202012Validator(schema).is_valid(missing_group_purpose)
+    with pytest.raises((TypeError, ValueError), match="fields|purpose"):
+        PurposeContract.from_dict(missing_group_purpose)
+
+
+def test_sr4_overlapping_groups_resolve_one_inherited_purpose_for_holdouts() -> None:
+    contract = _sr4_component_contract()
+    assert contract.challenge_holdouts[0].purpose == "train"
+    with pytest.raises(ValueError, match="component.*one purpose"):
+        _sr4_component_contract(second_group_purpose="selection")
+    with pytest.raises(ValueError, match="holdout.*purpose"):
+        _sr4_component_contract(holdout_purpose="selection")
+
+
+def test_sr4_denominator_ref_requires_exact_four_purpose_cartesian_family() -> None:
+    contract = _sr4_component_contract()
+    with pytest.raises(ValueError, match="each denominator.*four purposes"):
+        _recreate_contract(contract, denominator_minima=contract.denominator_minima[:-1])
+
+    drifted = list(contract.denominator_minima)
+    drifted[1] = DenominatorMinimum.create(
+        denominator_ref=drifted[1].denominator_ref,
+        denominator_family="operator",
+        purpose=drifted[1].purpose,
+        minimum=drifted[1].minimum,
+        review_refs=drifted[1].review_refs,
+    )
+    with pytest.raises(ValueError, match="denominator.*one family"):
+        _recreate_contract(contract, denominator_minima=tuple(drifted))
+
+    distributed = tuple(
+        DenominatorMinimum.create(
+            denominator_ref=f"denominator:distributed-{purpose}",
+            denominator_family="semantic_expression",
+            purpose=purpose,
+            minimum=1,
+            review_refs=(REVIEW_REF,),
+        )
+        for purpose in ("train", "selection", "calibration", "frozen_test")
+    )
+    with pytest.raises(ValueError, match="each denominator.*four purposes"):
+        _recreate_contract(contract, denominator_minima=distributed)
+
+
+def _sr4_overlapping_chain_contract(size: int) -> PurposeContract:
+    case_refs = tuple(
+        f"expanded_case_v2:{index:024x}" for index in range(1, size + 1)
+    )
+    group_refs = tuple(
+        f"duplicate_risk_group:chain-{index:04d}" for index in range(size - 1)
+    )
+    memberships = []
+    for index, case_ref in enumerate(case_refs):
+        member_groups = tuple(
+            group_refs[group_index]
+            for group_index in (index - 1, index)
+            if 0 <= group_index < len(group_refs)
+        )
+        memberships.append(
+            PurposeMembership.create(
+                source_case_ref=case_ref,
+                classification="semantic_supervision",
+                purpose=None,
+                duplicate_risk_group_refs=member_groups,
+                diagnostic_reason_ref=None,
+                review_refs=(REVIEW_REF,),
+            )
+        )
+    groups = tuple(
+        DuplicateRiskGroup.create(
+            group_ref=group_ref,
+            namespace="source_case_lineage",
+            purpose="train",
+            member_case_refs=case_refs[index : index + 2],
+            reason_ref="duplicate_reason:reviewed-chain",
+            review_refs=(REVIEW_REF,),
+        )
+        for index, group_ref in enumerate(group_refs)
+    )
+    return PurposeContract.create(
+        source_set_ref="r4_source_set_v1:0123456789abcdef01234567",
+        memberships=tuple(memberships),
+        duplicate_risk_groups=groups,
+        challenge_holdouts=(),
+        denominator_minima=_sr4_cartesian_minima(),
+        review_refs=(REVIEW_REF,),
+        solver_output_is_authority=False,
+    )
+
+
+def test_sr4_indexed_component_validation_has_deterministic_linear_operation_count() -> None:
+    small = _sr4_overlapping_chain_contract(16)
+    large = _sr4_overlapping_chain_contract(32)
+    small_count = purpose_module._validation_operation_count_for_test(small)
+    large_count = purpose_module._validation_operation_count_for_test(large)
+    small_size = len(small.memberships) + sum(
+        len(row.duplicate_risk_group_refs) for row in small.memberships
+    ) + sum(len(group.member_case_refs) for group in small.duplicate_risk_groups)
+    large_size = len(large.memberships) + sum(
+        len(row.duplicate_risk_group_refs) for row in large.memberships
+    ) + sum(len(group.member_case_refs) for group in large.duplicate_risk_groups)
+    assert small_count <= 8 * small_size
+    assert large_count <= 8 * large_size
+    assert large_count <= 2 * small_count + 32
+
+
+__cemm_test_inventory__ = {'tests/test_r4_purpose_contracts.py::test_sr4_denominator_ref_requires_exact_four_purpose_cartesian_family': {'activation_phase': 'R4',
+                                                                                                               'assertion_ref': 'assertion:r4-sr4-denominator-cartesian-four-purpose-family',
+                                                                                                               'diagnostic_role': 'owner',
+                                                                                                               'introduced_by_task': 'R4.1-SR4',
+                                                                                                               'owner_ref': 'mutation-partition',
+                                                                                                               'source_ast_sha256': '7d5c4f1ffe8bd49b3a318e0499787254336dc923ad7165661cb4fa96d583ae41'},
+ 'tests/test_r4_purpose_contracts.py::test_sr4_group_owns_purpose_and_membership_is_exact_tagged_union': {'activation_phase': 'R4',
+                                                                                                          'assertion_ref': 'assertion:r4-sr4-group-purpose-membership-tagged-union',
+                                                                                                          'diagnostic_role': 'owner',
+                                                                                                          'introduced_by_task': 'R4.1-SR4',
+                                                                                                          'owner_ref': 'mutation-partition',
+                                                                                                          'source_ast_sha256': 'b36c207dbb1d9dc11e4e762509c926cb8ed3bf63f0253369ae251d1c40d4e595'},
+ 'tests/test_r4_purpose_contracts.py::test_sr4_indexed_component_validation_has_deterministic_linear_operation_count': {'activation_phase': 'R4',
+                                                                                                                        'assertion_ref': 'assertion:r4-sr4-purpose-component-linear-operations',
+                                                                                                                        'diagnostic_role': 'owner',
+                                                                                                                        'introduced_by_task': 'R4.1-SR4',
+                                                                                                                        'owner_ref': 'mutation-partition',
+                                                                                                                        'source_ast_sha256': '01d34dac4e5503f2986b5ff3d729d292c3928f0116a869305fbaf6ef8e05aef2'},
+ 'tests/test_r4_purpose_contracts.py::test_sr4_overlapping_groups_resolve_one_inherited_purpose_for_holdouts': {'activation_phase': 'R4',
+                                                                                                                'assertion_ref': 'assertion:r4-sr4-overlapping-groups-inherited-purpose',
+                                                                                                                'diagnostic_role': 'owner',
+                                                                                                                'introduced_by_task': 'R4.1-SR4',
+                                                                                                                'owner_ref': 'mutation-partition',
+                                                                                                                'source_ast_sha256': '5ea11e60659ac9c9add2ade3cf972c9dd15357ccdcaab67f526159b61477140b'},
+ 'tests/test_r4_purpose_contracts.py::test_purpose_values_are_factory_only_frozen_and_canonical[value0]': {'activation_phase': 'R4',
                                                                                                            'assertion_ref': 'assertion:r4-purpose-values-factory-only-frozen-canonical',
                                                                                                            'diagnostic_role': 'owner',
                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                            'owner_ref': 'mutation-partition',
-                                                                                                           'source_ast_sha256': 'f0768055a74a43a0bc7efc0cf28c2b6a93c954c95960f766f7f910c3936487ef'},
+                                                                                                           'source_ast_sha256': 'a43a0ca034ab9bfa2522085925d6340175f08f85f0748db48ce2cb47b63bbffa'},
  'tests/test_r4_purpose_contracts.py::test_purpose_values_are_factory_only_frozen_and_canonical[value1]': {'activation_phase': 'R4',
                                                                                                            'assertion_ref': 'assertion:r4-purpose-values-factory-only-frozen-canonical',
                                                                                                            'diagnostic_role': 'owner',
                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                            'owner_ref': 'mutation-partition',
-                                                                                                           'source_ast_sha256': 'f0768055a74a43a0bc7efc0cf28c2b6a93c954c95960f766f7f910c3936487ef'},
+                                                                                                           'source_ast_sha256': 'a43a0ca034ab9bfa2522085925d6340175f08f85f0748db48ce2cb47b63bbffa'},
  'tests/test_r4_purpose_contracts.py::test_purpose_values_are_factory_only_frozen_and_canonical[value2]': {'activation_phase': 'R4',
                                                                                                            'assertion_ref': 'assertion:r4-purpose-values-factory-only-frozen-canonical',
                                                                                                            'diagnostic_role': 'owner',
                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                            'owner_ref': 'mutation-partition',
-                                                                                                           'source_ast_sha256': 'f0768055a74a43a0bc7efc0cf28c2b6a93c954c95960f766f7f910c3936487ef'},
+                                                                                                           'source_ast_sha256': 'a43a0ca034ab9bfa2522085925d6340175f08f85f0748db48ce2cb47b63bbffa'},
  'tests/test_r4_purpose_contracts.py::test_purpose_values_are_factory_only_frozen_and_canonical[value3]': {'activation_phase': 'R4',
                                                                                                            'assertion_ref': 'assertion:r4-purpose-values-factory-only-frozen-canonical',
                                                                                                            'diagnostic_role': 'owner',
                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                            'owner_ref': 'mutation-partition',
-                                                                                                           'source_ast_sha256': 'f0768055a74a43a0bc7efc0cf28c2b6a93c954c95960f766f7f910c3936487ef'},
+                                                                                                           'source_ast_sha256': 'a43a0ca034ab9bfa2522085925d6340175f08f85f0748db48ce2cb47b63bbffa'},
  'tests/test_r4_purpose_contracts.py::test_purpose_values_are_factory_only_frozen_and_canonical[value4]': {'activation_phase': 'R4',
                                                                                                            'assertion_ref': 'assertion:r4-purpose-values-factory-only-frozen-canonical',
                                                                                                            'diagnostic_role': 'owner',
                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                            'owner_ref': 'mutation-partition',
-                                                                                                           'source_ast_sha256': 'f0768055a74a43a0bc7efc0cf28c2b6a93c954c95960f766f7f910c3936487ef'},
+                                                                                                           'source_ast_sha256': 'a43a0ca034ab9bfa2522085925d6340175f08f85f0748db48ce2cb47b63bbffa'},
  'tests/test_r4_purpose_contracts.py::test_membership_classification_is_total_and_diagnostic_rows_never_enter_a_purpose': {'activation_phase': 'R4',
                                                                                                                            'assertion_ref': 'assertion:r4-purpose-membership-total-diagnostic-isolated',
                                                                                                                            'diagnostic_role': 'owner',
@@ -670,13 +1002,13 @@ __cemm_test_inventory__ = {'tests/test_r4_purpose_contracts.py::test_purpose_val
                                                                                                                      'diagnostic_role': 'owner',
                                                                                                                      'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                      'owner_ref': 'mutation-partition',
-                                                                                                                     'source_ast_sha256': '7f797f45e898e9b273ae56293ba4a06fa5a739080a1c8345200b57095732d188'},
+                                                                                                                     'source_ast_sha256': '04155e8d17f21efc70cc0fc93318b65d5e935dcbce4784d132831970fa576e99'},
  'tests/test_r4_purpose_contracts.py::test_purpose_contract_rejects_duplicate_unknown_and_cross_purpose_group_members': {'activation_phase': 'R4',
                                                                                                                          'assertion_ref': 'assertion:r4-purpose-contract-rejects-duplicate-unknown-cross-purpose',
                                                                                                                          'diagnostic_role': 'owner',
                                                                                                                          'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                          'owner_ref': 'mutation-partition',
-                                                                                                                         'source_ast_sha256': '882b042fb8e3ec453430335d3cbb42293385c54030f1aae83abeab4f56fadb36'},
+                                                                                                                         'source_ast_sha256': '89a28331a0b16807777fe174f88359ebe000d0eb37eae9dd3bba7190b4b5edec'},
  'tests/test_r4_purpose_contracts.py::test_challenge_holdouts_are_separate_reviewed_identity_contracts': {'activation_phase': 'R4',
                                                                                                           'assertion_ref': 'assertion:r4-challenge-holdouts-separate-reviewed-identity',
                                                                                                           'diagnostic_role': 'owner',
@@ -706,13 +1038,13 @@ __cemm_test_inventory__ = {'tests/test_r4_purpose_contracts.py::test_purpose_val
                                                                                                                  'diagnostic_role': 'owner',
                                                                                                                  'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                  'owner_ref': 'mutation-partition',
-                                                                                                                 'source_ast_sha256': 'f6d6d424320887cdb1d7cc22a030226c91ab0b598a24e41f57ca114c7f115074'},
+                                                                                                                 'source_ast_sha256': 'f49706bbba46d38cbd7539310ede70aeaf83bdaf6ff5171e8a6d0b480cdfd025'},
  'tests/test_r4_purpose_contracts.py::test_purpose_rejects_asymmetric_group_membership_and_duplicate_holdout_identity': {'activation_phase': 'R4',
                                                                                                                          'assertion_ref': 'assertion:r4-purpose-group-bidirectional-holdout-identity-unique',
                                                                                                                          'diagnostic_role': 'owner',
                                                                                                                          'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                          'owner_ref': 'mutation-partition',
-                                                                                                                         'source_ast_sha256': '3294aba252a93d9b98cc6f7ecb3b817abfa843cbb7c928f787a1a8a1d8d23f97'},
+                                                                                                                         'source_ast_sha256': '90003e8ebc05fddacb3d308e39b405d9555160b015983f6930dd674ebbdb0f8d'},
  'tests/test_r4_purpose_contracts.py::test_purpose_parent_factory_rejects_forged_nested_values': {'activation_phase': 'R4',
                                                                                                   'assertion_ref': 'assertion:r4-purpose-parent-rejects-forged-nested-and-aggregate-bound',
                                                                                                   'diagnostic_role': 'owner',

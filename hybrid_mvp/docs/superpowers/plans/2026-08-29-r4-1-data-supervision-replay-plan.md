@@ -297,10 +297,14 @@ before source check-in. It does not promote R4 or satisfy `RC-SOURCE`.
 - [ ] Record reviewer refs, reviewed base, authority generation, supersession
   ancestry and explicit exclusion of bootstrap/runtime authority.
 - [ ] Classify every exact expanded source case once. No implicit default to
-  semantic, abstention or diagnostic-only is permitted.
+  semantic, abstention, verification rejection or diagnostic-only is
+  permitted.
 - [ ] Require one or more reviewed derivation blueprints for every semantic
-  case and one typed abstention target for every gap case.
-- [ ] Require realization rows for every declared realizer-eligible case.
+  case, one typed abstention target for every gap case and one distinct
+  verifier-rejection target for every verification-rejection case.
+- [ ] Require exactly one initial realization row for every supervised case and
+  none for diagnostic-only cases; later variants require separately governed
+  authenticated lineage and remain fail-closed here.
 - [ ] Declare mutation truth independently of the executor.
 - [ ] Declare duplicate-risk groups, group purposes, optional challenge
   holdouts, finite denominator registry and fixed positive minima.
@@ -335,6 +339,8 @@ Any semantic correction restarts review and changes its bundle ref.
   meaning.
 - [ ] Compile typed abstention rows into explicit proposal targets; never drop
   them from the supervised universe.
+- [ ] Preserve verifier-rejection targets as supervised rejection truth; never
+  reinterpret them as typed abstention or diagnostic-only evidence.
 - [ ] Add multilingual and unseen-synonym tests showing role/affordance reuse
   without form-pack or phrase-template growth.
 - [ ] Run compiler owner tests and relevant assertion-compiler tests.
@@ -462,7 +468,8 @@ Any semantic correction restarts review and changes its bundle ref.
 - [ ] Join via exact indexed case refs and reject one-to-zero, one-to-many and
   cross-source joins.
 - [ ] Prove source-universe classification and supervised-universe partition
-  exhaustiveness independently.
+  exhaustiveness independently across semantic, typed-abstention,
+  verification-rejection and diagnostic-only classifications.
 - [ ] Serialize one sorted canonical JSONL payload per purpose.
 - [ ] Keep episodes and mutation observations in the diagnostic graph only.
 - [ ] Add payload size and field-set assertions demonstrating the compact
@@ -625,7 +632,7 @@ all critical/important findings before generating checked-in artifacts.
   directory.
 - [ ] Require byte-identical relative path sets and file bytes.
 - [ ] Run independent admission against temporary candidate A.
-- [ ] Review case counts, semantic/abstention/diagnostic classification,
+- [ ] Review case counts, semantic/abstention/verification-rejection/diagnostic classification,
   purpose distribution, duplicate components, every class-local denominator,
   payload byte sizes and absence of forbidden fields.
 - [ ] Obtain final data review of exact source and generated receipt identities.
@@ -698,6 +705,8 @@ Before Task 15, executable tests must reject:
 - empty derivation supervision;
 - semantic case without a compiling derivation;
 - gap case without typed abstention;
+- verification-rejection case without distinct verifier-rejection proposal and
+  realization supervision;
 - bootstrap/runtime program substituted for reviewed derivation;
 - exact expression replaced by subset/intersection acceptance;
 - input surface substituted for response target;
