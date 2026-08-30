@@ -150,13 +150,9 @@ change a content hash, approve a recipe or participate in deterministic
 publication. Authoring and publication must succeed with all LLM access
 disabled.
 
-The two discarded NAMELESS sources are completely out of scope:
-
-- `C:\Users\Son\cowork\MELM\melm\contracts\nameless\_extracted\_verbs.json`
-- `C:\dev\nameless_vector\verb_state`
-
-They must not appear in fetch configuration, evidence manifests, hashes,
-normalizers, candidates, tests or fallback paths.
+No source outside the explicit staged allowlist may appear in fetch
+configuration, evidence manifests, hashes, normalizers, candidates, tests or
+fallback paths.
 
 ## 5. Review-context identity
 
