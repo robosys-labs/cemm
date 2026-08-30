@@ -1823,11 +1823,11 @@ def test_r4_gate_plans_are_exact_bounded_and_single_process() -> None:
     }
     expected_counts = {
         "artifact-integrity": 16,
-        "expected-contract": 33,
+        "expected-contract": 42,
         "governance": 2,
-        "mutation-partition": 92,
+        "mutation-partition": 93,
         "structural-sufficiency": 2,
-        "surface-expansion": 2,
+        "surface-expansion": 8,
     }
 
     assert set(graph.phases["R4"].owners) == set(expected_steps)
@@ -2214,7 +2214,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r4-validation-plans-exact-bounded-single-process",
         "diagnostic_role": "admission_only",
         "introduced_by_task": "R4-Partition-Corrective-Task-8",
-        "source_ast_sha256": "369622ecfcc3d9b3cb53a246ab860d3f52ee81c3148ff107727fc7e41050e73c"
+        "source_ast_sha256": "8658dc10d8c53e790bd7075192cabf8917e01766c3535ebafb83519747a5af45"
     },
     "tests/test_validation_gate.py::test_r5_admission_rejects_before_execution_or_publication": {
         "activation_phase": "R5",
