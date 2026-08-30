@@ -42,6 +42,7 @@ from ._r4_source_codec import (
     wire_value_tuple,
 )
 from .canonical import stable_ref
+from .contributions import ContributionKind
 from .programs import ACTION_ABI_HASH, ACTION_ABI_SCHEMAS, PROGRAM_ABI_VERSION, SWITCH_ACTION_TYPES
 from .r4_contracts import SourceDisposition
 
@@ -57,6 +58,9 @@ MAX_SELECTORS_PER_ACTION = max(
     for variants in ACTION_ABI_SCHEMAS.values()
     for variant in variants
 )
+MAX_SELECTOR_BINDINGS = 1_024
+MAX_SOURCE_ASSIGNMENTS = 64
+MAX_SOURCE_SPANS = 64
 MAX_REALIZATION_SLOTS = 64
 MAX_REALIZATION_BINDINGS = 64
 MAX_REFERENCE_FORMS = 16
@@ -97,42 +101,52 @@ _ABI_VERSIONS = {
     "r4_review_manifest": 1,
     "realization_supervision": 1,
 }
-_SAFE_SELECTOR_KINDS = frozenset(
-    {
-        "context_slot",
-        "mode_slot",
-        "designation_slot",
-        "local_node",
-        "frame_slot",
-        "role_ref",
-        "contribution_slot",
-        "reference_slot",
-        "scope_slot",
-        "expression_link_slot",
-        "variable_slot",
-        "transition_slot",
-        "source_geometry",
-        "semantic_kind",
-        "variant_tag",
-    }
-)
-_SELECTOR_PREFIXES: Mapping[str, tuple[str, ...]] = {
+_STRUCTURAL_SELECTOR_PREFIXES: Mapping[str, tuple[str, ...]] = {
+    "context_slot": ("proposal_context:",),
+    "mode_slot": ("mode_slot:",),
+    "local_node": ("application:", "expression_link:", "scope:", "binder:", "local_node:"),
+    "role_ref": ("role:",),
+    "variant_tag": ("action_variant:",),
+}
+_GROUNDED_SELECTOR_PREFIXES: Mapping[str, tuple[str, ...]] = {
     "context_slot": ("proposal_context:",),
     "mode_slot": ("mode_slot:",),
     "designation_slot": ("designation_slot:",),
-    "local_node": ("application:", "expression_link:", "scope:", "binder:", "local_node:"),
     "frame_slot": ("application_frame_slot:",),
-    "role_ref": ("role:",),
     "contribution_slot": ("contribution_slot:",),
     "reference_slot": ("reference_slot:",),
     "scope_slot": ("scope_slot:",),
     "expression_link_slot": ("expression_link_slot:",),
     "variable_slot": ("variable_slot:",),
     "transition_slot": ("transition_slot:",),
-    "source_geometry": ("source_geometry:",),
-    "semantic_kind": ("semantic_kind:",),
-    "variant_tag": ("action_variant:",),
 }
+_SOURCE_SELECTOR_PREFIXES: Mapping[str, tuple[str, ...]] = {
+    "source_unit": ("unit:",),
+    "contribution": ("contribution_slot:",),
+}
+_SAFE_SELECTOR_REF_RE = re.compile(
+    r"[A-Za-z][A-Za-z0-9_.-]*:[A-Za-z0-9][A-Za-z0-9_.-]*\Z"
+)
+_CONTRIBUTION_KINDS = frozenset(ContributionKind.__args__)
+_ASSIGNMENT_KINDS = frozenset(
+    {"role", "predicate", "reference", "scope", "qualifier", "discourse", "connector", "residual"}
+)
+_SOURCE_ASSIGNMENT_COMPATIBILITY = frozenset(
+    {
+        ("predicate", "predicate", "instantiate_operator"),
+        ("anchor", "role", "bind_role"),
+        ("literal", "role", "bind_role"),
+        ("qualifier", "qualifier", "bind_role"),
+        ("reference", "reference", "bind_reference"),
+        ("scope", "scope", "attach_scope"),
+        ("connector", "connector", "bind_nested_application"),
+        ("discourse", "discourse", "select_mode"),
+        ("discourse", "discourse", "bind_nested_application"),
+        ("discourse", "discourse", "propose_transition"),
+        ("open_variable", "role", "project_variable"),
+        ("binder", "role", "project_variable"),
+    }
+)
 _ACTION_FIELD_SHAPES: Mapping[str, tuple[str, tuple[str, ...]]] = {
     "proposal_context_ref": ("context_slot", ("proposal_context:",)),
     "mode_slot_ref": ("mode_slot", ("mode_slot:",)),
@@ -413,6 +427,20 @@ def _wire_optional_ref(value: object, name: str) -> str | None:
     return exact_ref(value, name)
 
 
+def _exact_selector_ref(
+    value: object,
+    name: str,
+    *,
+    prefixes: tuple[str, ...],
+) -> str:
+    ref = exact_ref(value, name)
+    if not ref.startswith(prefixes) or _SAFE_SELECTOR_REF_RE.fullmatch(ref) is None:
+        raise ValueError(
+            f"{name} must be one exact typed selector ref without regex, raw phrase, or nested internal-ref spelling"
+        )
+    return ref
+
+
 def _canonical_nested(value: object, expected_type: type[Any], name: str) -> Any:
     if type(value) is not expected_type:
         raise TypeError(f"{name} must be exact {expected_type.__name__}")
@@ -425,16 +453,21 @@ def _canonical_nested(value: object, expected_type: type[Any], name: str) -> Any
     return rebuilt
 
 
-def _matches_action_variant(selectors: tuple["DerivationSelector", ...], variant: tuple[str, ...]) -> bool:
+def _matches_action_variant(
+    bindings: tuple["SelectorBinding", ...],
+    selector_handles: tuple[int, ...],
+    variant: tuple[str, ...],
+) -> bool:
     repeated = variant[-1:] == ("operand_node_refs[2:24]",)
     if repeated:
-        if not len(variant) + 1 <= len(selectors) <= len(variant) + 23:
+        if not len(variant) + 1 <= len(selector_handles) <= len(variant) + 23:
             return False
-        fields = variant[:-1] + (variant[-1],) * (len(selectors) - len(variant) + 1)
+        fields = variant[:-1] + (variant[-1],) * (len(selector_handles) - len(variant) + 1)
     else:
-        if len(selectors) != len(variant):
+        if len(selector_handles) != len(variant):
             return False
         fields = variant
+    selectors = tuple(bindings[handle] for handle in selector_handles)
     return all(
         selector.selector_kind == _ACTION_FIELD_SHAPES[field][0]
         and (
@@ -716,38 +749,454 @@ def load_authenticated_r4_review_bundle(
 
 
 @dataclass(frozen=True, init=False)
-class DerivationSelector:
+class SourceSpan:
     abi_version: int
-    selector_ref: str
+    span_ref: str
+    surface_ref: str
+    start: int
+    end: int
+
+    _FIELDS = frozenset({"abi_version", "span_ref", "surface_ref", "start", "end"})
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("SourceSpan")
+
+    @classmethod
+    def create(cls, *, surface_ref: str, start: int, end: int) -> "SourceSpan":
+        surface = exact_content_ref(surface_ref, "surface_ref", prefix="reviewed_surface:")
+        first = exact_int(start, "source span start", maximum=MAX_R4_TEXT_CHARS)
+        last = exact_int(end, "source span end", maximum=MAX_R4_TEXT_CHARS)
+        if last <= first:
+            raise ValueError("source span must have positive width")
+        material = {
+            "abi_version": PROPOSAL_SUPERVISION_ABI_VERSION,
+            "surface_ref": surface,
+            "start": first,
+            "end": last,
+        }
+        return construct(cls, span_ref=stable_ref("source_span_v1", material), **material)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "abi_version": self.abi_version,
+            "span_ref": self.span_ref,
+            "surface_ref": self.surface_ref,
+            "start": self.start,
+            "end": self.end,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "SourceSpan":
+        row = exact_fields(value, cls._FIELDS, "SourceSpan")
+        exact_abi(row["abi_version"], PROPOSAL_SUPERVISION_ABI_VERSION, "Proposal Supervision")
+        rebuilt = cls.create(surface_ref=row["surface_ref"], start=row["start"], end=row["end"])
+        if rebuilt.as_dict() != dict(row):
+            raise ValueError("non-canonical SourceSpan")
+        return rebuilt
+
+
+@dataclass(frozen=True, init=False)
+class GroundedSelectorBinding:
+    abi_version: int
+    binding_ref: str
+    binding_kind: str
+    selector_handle: int
+    selector_kind: str
+    source_case_ref: str
+    surface_ref: str
+    graph_component_ref: str
+    semantic_kind_ref: str
+    spans: tuple[SourceSpan, ...]
+    source_selector_kind: str
+    source_selector_ref: str
+
+    _FIELDS = frozenset(
+        {
+            "abi_version", "binding_ref", "binding_kind", "selector_handle",
+            "selector_kind", "source_case_ref", "surface_ref", "graph_component_ref",
+            "semantic_kind_ref", "spans", "source_selector_kind", "source_selector_ref",
+        }
+    )
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("GroundedSelectorBinding")
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        selector_handle: int,
+        selector_kind: str,
+        source_case_ref: str,
+        surface_ref: str,
+        graph_component_ref: str,
+        semantic_kind_ref: str,
+        spans: tuple[SourceSpan, ...],
+        source_selector_kind: str,
+        source_selector_ref: str,
+    ) -> "GroundedSelectorBinding":
+        handle = exact_int(selector_handle, "selector_handle", maximum=MAX_SELECTOR_BINDINGS - 1)
+        kind = exact_text(selector_kind, "selector_kind", maximum=64)
+        if kind not in _GROUNDED_SELECTOR_PREFIXES:
+            raise ValueError("grounded selector kind is not closed or requires structural ownership")
+        component = _exact_selector_ref(
+            graph_component_ref,
+            "graph_component_ref",
+            prefixes=_GROUNDED_SELECTOR_PREFIXES[kind],
+        )
+        semantic_kind = _exact_selector_ref(
+            semantic_kind_ref,
+            "semantic kind ref",
+            prefixes=("semantic_kind:",),
+        )
+        surface = exact_content_ref(surface_ref, "surface_ref", prefix="reviewed_surface:")
+        if type(spans) is not tuple or not spans or len(spans) > MAX_SOURCE_SPANS:
+            raise ValueError("grounded selector requires bounded nonempty source spans")
+        if any(type(item) is not SourceSpan for item in spans):
+            raise TypeError("grounded selector spans must contain exact SourceSpan values")
+        canonical_spans = tuple(_canonical_nested(item, SourceSpan, "source span") for item in spans)
+        if any(item.surface_ref != surface for item in canonical_spans):
+            raise ValueError("grounded selector span surface does not match its exact surface")
+        if any(
+            left.start > right.start or left.end > right.start
+            for left, right in zip(canonical_spans, canonical_spans[1:])
+        ):
+            raise ValueError("grounded selector spans must be ordered and non-overlapping")
+        selector_source_kind = exact_text(source_selector_kind, "source selector kind", maximum=32)
+        if selector_source_kind not in _SOURCE_SELECTOR_PREFIXES:
+            raise ValueError("source selector kind must be exact unit or contribution")
+        selector_source_ref = _exact_selector_ref(
+            source_selector_ref,
+            "source selector ref",
+            prefixes=_SOURCE_SELECTOR_PREFIXES[selector_source_kind],
+        )
+        material = {
+            "abi_version": PROPOSAL_SUPERVISION_ABI_VERSION,
+            "binding_kind": "grounded",
+            "selector_handle": handle,
+            "selector_kind": kind,
+            "source_case_ref": exact_case_ref(source_case_ref),
+            "surface_ref": surface,
+            "graph_component_ref": component,
+            "semantic_kind_ref": semantic_kind,
+            "spans": [item.as_dict() for item in canonical_spans],
+            "source_selector_kind": selector_source_kind,
+            "source_selector_ref": selector_source_ref,
+        }
+        return construct(
+            cls,
+            binding_ref=stable_ref("grounded_selector_binding_v1", material),
+            spans=canonical_spans,
+            **{key: item for key, item in material.items() if key != "spans"},
+        )
+
+    @property
+    def value_ref(self) -> str:
+        return self.graph_component_ref
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "abi_version": self.abi_version,
+            "binding_ref": self.binding_ref,
+            "binding_kind": self.binding_kind,
+            "selector_handle": self.selector_handle,
+            "selector_kind": self.selector_kind,
+            "source_case_ref": self.source_case_ref,
+            "surface_ref": self.surface_ref,
+            "graph_component_ref": self.graph_component_ref,
+            "semantic_kind_ref": self.semantic_kind_ref,
+            "spans": [item.as_dict() for item in self.spans],
+            "source_selector_kind": self.source_selector_kind,
+            "source_selector_ref": self.source_selector_ref,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "GroundedSelectorBinding":
+        row = exact_fields(value, cls._FIELDS, "GroundedSelectorBinding")
+        exact_abi(row["abi_version"], PROPOSAL_SUPERVISION_ABI_VERSION, "Proposal Supervision")
+        if row["binding_kind"] != "grounded":
+            raise ValueError("grounded selector binding has the wrong union tag")
+        rebuilt = cls.create(
+            selector_handle=row["selector_handle"],
+            selector_kind=row["selector_kind"],
+            source_case_ref=row["source_case_ref"],
+            surface_ref=row["surface_ref"],
+            graph_component_ref=row["graph_component_ref"],
+            semantic_kind_ref=row["semantic_kind_ref"],
+            spans=wire_value_tuple(row["spans"], "spans", SourceSpan.from_dict, nonempty=True, maximum=MAX_SOURCE_SPANS),
+            source_selector_kind=row["source_selector_kind"],
+            source_selector_ref=row["source_selector_ref"],
+        )
+        if rebuilt.as_dict() != dict(row):
+            raise ValueError("non-canonical GroundedSelectorBinding")
+        return rebuilt
+
+
+@dataclass(frozen=True, init=False)
+class StructuralSelectorBinding:
+    abi_version: int
+    binding_ref: str
+    binding_kind: str
+    selector_handle: int
     selector_kind: str
     value_ref: str
 
-    _FIELDS = frozenset({"abi_version", "selector_ref", "selector_kind", "value_ref"})
+    _FIELDS = frozenset({"abi_version", "binding_ref", "binding_kind", "selector_handle", "selector_kind", "value_ref"})
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
-        raise _factory_only("DerivationSelector")
+        raise _factory_only("StructuralSelectorBinding")
 
     @classmethod
-    def create(cls, *, selector_kind: str, value_ref: str) -> "DerivationSelector":
+    def create(cls, *, selector_handle: int, selector_kind: str, value_ref: str) -> "StructuralSelectorBinding":
+        handle = exact_int(selector_handle, "selector_handle", maximum=MAX_SELECTOR_BINDINGS - 1)
         kind = exact_text(selector_kind, "selector_kind", maximum=64)
-        if kind not in _SAFE_SELECTOR_KINDS:
-            raise ValueError("unsafe selector kind; raw phrase, regex, and internal-ref spelling selectors are forbidden")
-        ref = exact_ref(value_ref, "selector value_ref")
-        if not ref.startswith(_SELECTOR_PREFIXES[kind]):
-            raise ValueError("source-local selector kind and value namespace disagree")
-        material = {"abi_version": PROPOSAL_SUPERVISION_ABI_VERSION, "selector_kind": kind, "value_ref": ref}
-        return construct(cls, selector_ref=stable_ref("derivation_selector_v1", material), **material)
+        if kind not in _STRUCTURAL_SELECTOR_PREFIXES:
+            raise ValueError("structural selector kind is closed; raw phrase, regex, and internal-ref spelling are forbidden")
+        ref = _exact_selector_ref(
+            value_ref,
+            "structural selector value_ref",
+            prefixes=_STRUCTURAL_SELECTOR_PREFIXES[kind],
+        )
+        if kind == "variant_tag" and ref not in {"action_variant:role", "action_variant:link"}:
+            raise ValueError("structural selector closed literal is forbidden")
+        material = {
+            "abi_version": PROPOSAL_SUPERVISION_ABI_VERSION,
+            "binding_kind": "structural",
+            "selector_handle": handle,
+            "selector_kind": kind,
+            "value_ref": ref,
+        }
+        return construct(cls, binding_ref=stable_ref("structural_selector_binding_v1", material), **material)
 
     def as_dict(self) -> dict[str, Any]:
-        return {"abi_version": self.abi_version, "selector_ref": self.selector_ref, "selector_kind": self.selector_kind, "value_ref": self.value_ref}
+        return {
+            "abi_version": self.abi_version,
+            "binding_ref": self.binding_ref,
+            "binding_kind": self.binding_kind,
+            "selector_handle": self.selector_handle,
+            "selector_kind": self.selector_kind,
+            "value_ref": self.value_ref,
+        }
 
     @classmethod
-    def from_dict(cls, value: Mapping[str, Any]) -> "DerivationSelector":
-        row = exact_fields(value, cls._FIELDS, "DerivationSelector")
+    def from_dict(cls, value: Mapping[str, Any]) -> "StructuralSelectorBinding":
+        row = exact_fields(value, cls._FIELDS, "StructuralSelectorBinding")
         exact_abi(row["abi_version"], PROPOSAL_SUPERVISION_ABI_VERSION, "Proposal Supervision")
-        rebuilt = cls.create(selector_kind=row["selector_kind"], value_ref=row["value_ref"])
+        if row["binding_kind"] != "structural":
+            raise ValueError("structural selector binding has the wrong union tag")
+        rebuilt = cls.create(selector_handle=row["selector_handle"], selector_kind=row["selector_kind"], value_ref=row["value_ref"])
         if rebuilt.as_dict() != dict(row):
-            raise ValueError("non-canonical DerivationSelector")
+            raise ValueError("non-canonical StructuralSelectorBinding")
+        return rebuilt
+
+
+SelectorBinding = GroundedSelectorBinding | StructuralSelectorBinding
+
+
+def selector_binding_from_dict(value: Mapping[str, Any]) -> SelectorBinding:
+    if type(value) is not dict:
+        raise TypeError("selector binding must be an exact object")
+    tag = value.get("binding_kind")
+    if tag == "grounded":
+        return GroundedSelectorBinding.from_dict(value)
+    if tag == "structural":
+        return StructuralSelectorBinding.from_dict(value)
+    raise ValueError("selector binding has an unsupported closed union tag")
+
+
+def _canonical_selector_binding(value: object) -> SelectorBinding:
+    if type(value) not in {GroundedSelectorBinding, StructuralSelectorBinding}:
+        raise TypeError("selector bindings must contain exact closed-union values")
+    try:
+        rebuilt = selector_binding_from_dict(value.as_dict())
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise ValueError("selector binding is not canonical") from exc
+    if rebuilt != value:
+        raise ValueError("selector binding is not canonical")
+    return rebuilt
+
+
+@dataclass(frozen=True, init=False)
+class SourceAssignmentEntry:
+    abi_version: int
+    assignment_ref: str
+    source_unit_ref: str
+    contribution_slot_ref: str
+    contribution_kind: str
+    assignment_kind: str
+    target_action_index: int | None
+    target_role_ref: str | None
+    residual_kind: str | None
+    critical: bool
+
+    _FIELDS = frozenset(
+        {
+            "abi_version", "assignment_ref", "source_unit_ref", "contribution_slot_ref", "contribution_kind",
+            "assignment_kind", "target_action_index", "target_role_ref", "residual_kind", "critical",
+        }
+    )
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("SourceAssignmentEntry")
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        source_unit_ref: str,
+        contribution_slot_ref: str,
+        contribution_kind: str,
+        assignment_kind: str,
+        target_action_index: int | None,
+        target_role_ref: str | None,
+        residual_kind: str | None,
+        critical: bool,
+    ) -> "SourceAssignmentEntry":
+        contribution = exact_text(contribution_kind, "contribution_kind", maximum=32)
+        if contribution not in _CONTRIBUTION_KINDS:
+            raise ValueError("source assignment has an unsupported contribution kind")
+        assignment = exact_text(assignment_kind, "assignment_kind", maximum=32)
+        if assignment not in _ASSIGNMENT_KINDS:
+            raise ValueError("source assignment has an unsupported assignment kind")
+        action_index = None if target_action_index is None else exact_int(target_action_index, "target_action_index", maximum=MAX_BLUEPRINT_ACTIONS - 1)
+        role = None if target_role_ref is None else _exact_selector_ref(
+            target_role_ref, "target_role_ref", prefixes=("role:",)
+        )
+        residual = None if residual_kind is None else exact_text(residual_kind, "residual_kind", maximum=32)
+        is_critical = exact_bool(critical, "critical")
+        if assignment == "residual":
+            if (
+                action_index is not None
+                or role is not None
+                or residual not in _CONTRIBUTION_KINDS
+                or residual != contribution
+            ):
+                raise ValueError("residual assignment requires only one typed residual kind")
+        else:
+            if action_index is None or residual is not None:
+                raise ValueError("consumed assignment requires a target action and no residual kind")
+            requires_role = assignment in {"reference", "qualifier"} or (
+                assignment == "role" and contribution not in {"binder", "open_variable"}
+            )
+            if requires_role != (role is not None):
+                raise ValueError("consumed assignment target-role ownership is incompatible with its contribution")
+        material = {
+            "abi_version": PROPOSAL_SUPERVISION_ABI_VERSION,
+            "source_unit_ref": _exact_selector_ref(
+                source_unit_ref, "source_unit_ref", prefixes=("unit:",)
+            ),
+            "contribution_slot_ref": _exact_selector_ref(
+                contribution_slot_ref,
+                "contribution_slot_ref",
+                prefixes=("contribution_slot:",),
+            ),
+            "contribution_kind": contribution,
+            "assignment_kind": assignment,
+            "target_action_index": action_index,
+            "target_role_ref": role,
+            "residual_kind": residual,
+            "critical": is_critical,
+        }
+        return construct(cls, assignment_ref=stable_ref("source_assignment_blueprint_entry_v1", material), **material)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "abi_version": self.abi_version,
+            "assignment_ref": self.assignment_ref,
+            "source_unit_ref": self.source_unit_ref,
+            "contribution_slot_ref": self.contribution_slot_ref,
+            "contribution_kind": self.contribution_kind,
+            "assignment_kind": self.assignment_kind,
+            "target_action_index": self.target_action_index,
+            "target_role_ref": self.target_role_ref,
+            "residual_kind": self.residual_kind,
+            "critical": self.critical,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "SourceAssignmentEntry":
+        row = exact_fields(value, cls._FIELDS, "SourceAssignmentEntry")
+        exact_abi(row["abi_version"], PROPOSAL_SUPERVISION_ABI_VERSION, "Proposal Supervision")
+        rebuilt = cls.create(
+            source_unit_ref=row["source_unit_ref"], contribution_slot_ref=row["contribution_slot_ref"],
+            contribution_kind=row["contribution_kind"],
+            assignment_kind=row["assignment_kind"], target_action_index=row["target_action_index"],
+            target_role_ref=row["target_role_ref"], residual_kind=row["residual_kind"], critical=row["critical"],
+        )
+        if rebuilt.as_dict() != dict(row):
+            raise ValueError("non-canonical SourceAssignmentEntry")
+        return rebuilt
+
+
+@dataclass(frozen=True, init=False)
+class SourceAssignmentBlueprint:
+    abi_version: int
+    source_assignment_blueprint_ref: str
+    observed_source_unit_refs: tuple[str, ...]
+    assignments: tuple[SourceAssignmentEntry, ...]
+
+    _FIELDS = frozenset({"abi_version", "source_assignment_blueprint_ref", "observed_source_unit_refs", "assignments"})
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("SourceAssignmentBlueprint")
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        observed_source_unit_refs: tuple[str, ...],
+        assignments: tuple[SourceAssignmentEntry, ...],
+    ) -> "SourceAssignmentBlueprint":
+        observed = exact_ref_tuple(
+            observed_source_unit_refs,
+            "observed_source_unit_refs",
+            nonempty=True,
+            maximum=MAX_SOURCE_ASSIGNMENTS,
+            prefix="unit:",
+            canonical_order=False,
+        )
+        if type(assignments) is not tuple or not assignments or len(assignments) > MAX_SOURCE_ASSIGNMENTS:
+            raise ValueError("source assignments must be bounded and nonempty")
+        if any(type(item) is not SourceAssignmentEntry for item in assignments):
+            raise TypeError("source assignments must contain exact SourceAssignmentEntry values")
+        canonical = tuple(_canonical_nested(item, SourceAssignmentEntry, "source assignment") for item in assignments)
+        if tuple(item.source_unit_ref for item in canonical) != observed:
+            raise ValueError("source assignments must cover the declared observed source units exactly once in order")
+        material = {
+            "abi_version": PROPOSAL_SUPERVISION_ABI_VERSION,
+            "observed_source_unit_refs": list(observed),
+            "assignments": [item.as_dict() for item in canonical],
+        }
+        return construct(
+            cls,
+            source_assignment_blueprint_ref=stable_ref("source_assignment_blueprint_v1", material),
+            observed_source_unit_refs=observed,
+            assignments=canonical,
+            abi_version=PROPOSAL_SUPERVISION_ABI_VERSION,
+        )
+
+    @property
+    def has_critical_residual(self) -> bool:
+        return any(item.assignment_kind == "residual" and item.critical for item in self.assignments)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "abi_version": self.abi_version,
+            "source_assignment_blueprint_ref": self.source_assignment_blueprint_ref,
+            "observed_source_unit_refs": list(self.observed_source_unit_refs),
+            "assignments": [item.as_dict() for item in self.assignments],
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "SourceAssignmentBlueprint":
+        row = exact_fields(value, cls._FIELDS, "SourceAssignmentBlueprint")
+        exact_abi(row["abi_version"], PROPOSAL_SUPERVISION_ABI_VERSION, "Proposal Supervision")
+        rebuilt = cls.create(
+            observed_source_unit_refs=wire_ref_tuple(row["observed_source_unit_refs"], "observed_source_unit_refs", nonempty=True, maximum=MAX_SOURCE_ASSIGNMENTS, prefix="unit:", canonical_order=False),
+            assignments=wire_value_tuple(row["assignments"], "assignments", SourceAssignmentEntry.from_dict, nonempty=True, maximum=MAX_SOURCE_ASSIGNMENTS),
+        )
+        if rebuilt.as_dict() != dict(row):
+            raise ValueError("non-canonical SourceAssignmentBlueprint")
         return rebuilt
 
 
@@ -757,42 +1206,56 @@ class BlueprintAction:
     action_ref: str
     action_index: int
     action_type: str
-    selectors: tuple[DerivationSelector, ...]
+    selector_handles: tuple[int, ...]
 
-    _FIELDS = frozenset({"abi_version", "action_ref", "action_index", "action_type", "selectors"})
+    _FIELDS = frozenset({"abi_version", "action_ref", "action_index", "action_type", "selector_handles"})
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
         raise _factory_only("BlueprintAction")
 
     @classmethod
-    def create(cls, *, action_index: int, action_type: str, selectors: tuple[DerivationSelector, ...]) -> "BlueprintAction":
+    def create(cls, *, action_index: int, action_type: str, selector_handles: tuple[int, ...]) -> "BlueprintAction":
         index = exact_int(action_index, "action_index", maximum=MAX_BLUEPRINT_ACTIONS - 1)
         action = exact_text(action_type, "action_type", maximum=64)
         if action not in SWITCH_ACTION_TYPES:
             raise ValueError("unsupported Program ABI 2 action type")
-        if type(selectors) is not tuple or len(selectors) > MAX_SELECTORS_PER_ACTION or any(type(item) is not DerivationSelector for item in selectors):
-            raise TypeError("selectors must be a bounded exact DerivationSelector tuple")
-        canonical_selectors = tuple(
-            _canonical_nested(item, DerivationSelector, "selector") for item in selectors
-        )
-        if not any(
-            _matches_action_variant(canonical_selectors, variant)
+        if type(selector_handles) is not tuple or len(selector_handles) > MAX_SELECTORS_PER_ACTION:
+            raise TypeError("selector_handles must be a bounded exact integer tuple")
+        handles = tuple(exact_int(item, "selector handle", maximum=MAX_SELECTOR_BINDINGS - 1) for item in selector_handles)
+        if len(handles) != len(set(handles)):
+            raise ValueError("action contains duplicate selector handles")
+        repeated_lengths = tuple(
+            range(len(variant) + 1, len(variant) + 24)
+            if variant[-1:] == ("operand_node_refs[2:24]",)
+            else (len(variant),)
             for variant in ACTION_ABI_SCHEMAS[action]
-        ):
-            raise ValueError("selectors do not match the Program ABI 2 action shape")
-        if len({item.selector_ref for item in canonical_selectors}) != len(canonical_selectors):
-            raise ValueError("action contains duplicate selectors")
-        material = {"abi_version": PROPOSAL_SUPERVISION_ABI_VERSION, "action_index": index, "action_type": action, "selectors": [item.as_dict() for item in canonical_selectors]}
-        return construct(cls, action_ref=stable_ref("derivation_action_v1", material), selectors=canonical_selectors, **{key: val for key, val in material.items() if key != "selectors"})
+        )
+        if len(handles) not in {length for lengths in repeated_lengths for length in lengths}:
+            raise ValueError("selector handle count does not match the Program ABI 2 action shape")
+        material = {
+            "abi_version": PROPOSAL_SUPERVISION_ABI_VERSION,
+            "action_index": index,
+            "action_type": action,
+            "selector_handles": list(handles),
+        }
+        return construct(cls, action_ref=stable_ref("derivation_action_v1", material), selector_handles=handles, **{key: item for key, item in material.items() if key != "selector_handles"})
 
     def as_dict(self) -> dict[str, Any]:
-        return {"abi_version": self.abi_version, "action_ref": self.action_ref, "action_index": self.action_index, "action_type": self.action_type, "selectors": [item.as_dict() for item in self.selectors]}
+        return {
+            "abi_version": self.abi_version,
+            "action_ref": self.action_ref,
+            "action_index": self.action_index,
+            "action_type": self.action_type,
+            "selector_handles": list(self.selector_handles),
+        }
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "BlueprintAction":
         row = exact_fields(value, cls._FIELDS, "BlueprintAction")
         exact_abi(row["abi_version"], PROPOSAL_SUPERVISION_ABI_VERSION, "Proposal Supervision")
-        rebuilt = cls.create(action_index=row["action_index"], action_type=row["action_type"], selectors=wire_value_tuple(row["selectors"], "selectors", DerivationSelector.from_dict, nonempty=False, maximum=MAX_SELECTORS_PER_ACTION))
+        if type(row["selector_handles"]) is not list:
+            raise TypeError("selector_handles wire value must be an exact list")
+        rebuilt = cls.create(action_index=row["action_index"], action_type=row["action_type"], selector_handles=tuple(row["selector_handles"]))
         if rebuilt.as_dict() != dict(row):
             raise ValueError("non-canonical BlueprintAction")
         return rebuilt
@@ -804,16 +1267,38 @@ class DerivationBlueprint:
     blueprint_ref: str
     program_abi_version: int
     action_abi_ref: str
+    selector_bindings: tuple[SelectorBinding, ...]
     actions: tuple[BlueprintAction, ...]
     root_local_refs: tuple[str, ...]
+    expected_expression_ref: str
+    source_assignment_blueprint: SourceAssignmentBlueprint
 
-    _FIELDS = frozenset({"abi_version", "blueprint_ref", "program_abi_version", "action_abi_ref", "actions", "root_local_refs"})
+    _FIELDS = frozenset(
+        {
+            "abi_version", "blueprint_ref", "program_abi_version", "action_abi_ref",
+            "selector_bindings", "actions", "root_local_refs", "expected_expression_ref",
+            "source_assignment_blueprint",
+        }
+    )
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
         raise _factory_only("DerivationBlueprint")
 
     @classmethod
-    def create(cls, *, actions: tuple[BlueprintAction, ...], root_local_refs: tuple[str, ...]) -> "DerivationBlueprint":
+    def create(
+        cls,
+        *,
+        selector_bindings: tuple[SelectorBinding, ...],
+        actions: tuple[BlueprintAction, ...],
+        root_local_refs: tuple[str, ...],
+        expected_expression_ref: str,
+        source_assignment_blueprint: SourceAssignmentBlueprint,
+    ) -> "DerivationBlueprint":
+        if type(selector_bindings) is not tuple or not selector_bindings or len(selector_bindings) > MAX_SELECTOR_BINDINGS:
+            raise ValueError("selector binding table must be bounded and nonempty")
+        canonical_bindings = tuple(_canonical_selector_binding(item) for item in selector_bindings)
+        if tuple(item.selector_handle for item in canonical_bindings) != tuple(range(len(canonical_bindings))):
+            raise ValueError("selector binding handles must be dense, unique and in exact order")
         if type(actions) is not tuple or not actions or len(actions) > MAX_BLUEPRINT_ACTIONS:
             raise ValueError("derivation blueprint violates its action bound")
         if any(type(item) is not BlueprintAction for item in actions):
@@ -828,10 +1313,23 @@ class DerivationBlueprint:
             raise ValueError("derive blueprint must select context/mode and end complete_program")
         if "abstain" in types or types.count("select_context") != 1 or types.count("select_mode") != 1 or types.count("complete_program") != 1:
             raise ValueError("derive blueprint has an invalid Program ABI 2 terminal structure")
+        used_handles = {
+            handle for action in canonical_actions for handle in action.selector_handles
+        }
+        if any(handle >= len(canonical_bindings) for handle in used_handles):
+            raise ValueError("blueprint action contains an unbound selector handle")
+        if used_handles != set(range(len(canonical_bindings))):
+            raise ValueError("every selector binding handle must be referenced by an action exactly as reviewed")
+        for action in canonical_actions:
+            if not any(
+                _matches_action_variant(canonical_bindings, action.selector_handles, variant)
+                for variant in ACTION_ABI_SCHEMAS[action.action_type]
+            ):
+                raise ValueError("selector bindings do not match the Program ABI 2 action shape")
         roots = exact_ref_tuple(root_local_refs, "root_local_refs", nonempty=True, maximum=8)
         declared: set[str] = set()
         for action in canonical_actions:
-            selectors = action.selectors
+            selectors = tuple(canonical_bindings[handle] for handle in action.selector_handles)
             declarations: tuple[str, ...] = ()
             uses: tuple[str, ...] = ()
             if action.action_type == "instantiate_operator":
@@ -856,11 +1354,84 @@ class DerivationBlueprint:
             declared.update(declarations)
         if any(root not in declared for root in roots):
             raise ValueError("blueprint root is not a declared source-local node")
-        material = {"abi_version": PROPOSAL_SUPERVISION_ABI_VERSION, "program_abi_version": PROGRAM_ABI_VERSION, "action_abi_ref": ACTION_ABI_HASH, "actions": [item.as_dict() for item in canonical_actions], "root_local_refs": list(roots)}
-        return construct(cls, blueprint_ref=stable_ref("derivation_blueprint_v1", material), actions=canonical_actions, root_local_refs=roots, abi_version=PROPOSAL_SUPERVISION_ABI_VERSION, program_abi_version=PROGRAM_ABI_VERSION, action_abi_ref=ACTION_ABI_HASH)
+        assignment_blueprint = _canonical_nested(
+            source_assignment_blueprint, SourceAssignmentBlueprint, "source_assignment_blueprint"
+        )
+        for assignment in assignment_blueprint.assignments:
+            if assignment.target_action_index is None:
+                continue
+            if assignment.target_action_index >= len(canonical_actions):
+                raise ValueError("source assignment target action is not in the blueprint")
+            target_action = canonical_actions[assignment.target_action_index]
+            compatibility = (
+                assignment.contribution_kind,
+                assignment.assignment_kind,
+                target_action.action_type,
+            )
+            if compatibility not in _SOURCE_ASSIGNMENT_COMPATIBILITY:
+                raise ValueError(
+                    "source assignment contribution, assignment kind and target action are incompatible"
+                )
+            target_bindings = tuple(
+                canonical_bindings[handle] for handle in target_action.selector_handles
+            )
+            if target_action.action_type == "bind_nested_application" and (
+                not target_bindings or target_bindings[0].value_ref != "action_variant:link"
+            ):
+                raise ValueError("connector/discourse assignment requires the link action variant")
+            contribution_bindings = tuple(
+                row
+                for row in target_bindings
+                if type(row) is GroundedSelectorBinding
+                and row.source_selector_kind == "contribution"
+                and row.source_selector_ref == assignment.contribution_slot_ref
+            )
+            if len(contribution_bindings) != 1:
+                raise ValueError(
+                    "source assignment contribution slot must resolve once through its target action"
+                )
+            if assignment.target_role_ref is not None:
+                if not any(
+                    row.selector_kind == "role_ref" and row.value_ref == assignment.target_role_ref
+                    for row in target_bindings
+                ):
+                    raise ValueError("source assignment target role is not bound by its target action")
+        expression_ref = exact_content_ref(expected_expression_ref, "expected_expression_ref", prefix="expression:")
+        material = {
+            "abi_version": PROPOSAL_SUPERVISION_ABI_VERSION,
+            "program_abi_version": PROGRAM_ABI_VERSION,
+            "action_abi_ref": ACTION_ABI_HASH,
+            "selector_bindings": [item.as_dict() for item in canonical_bindings],
+            "actions": [item.as_dict() for item in canonical_actions],
+            "root_local_refs": list(roots),
+            "expected_expression_ref": expression_ref,
+            "source_assignment_blueprint": assignment_blueprint.as_dict(),
+        }
+        return construct(
+            cls,
+            blueprint_ref=stable_ref("derivation_blueprint_v1", material),
+            selector_bindings=canonical_bindings,
+            actions=canonical_actions,
+            root_local_refs=roots,
+            expected_expression_ref=expression_ref,
+            source_assignment_blueprint=assignment_blueprint,
+            abi_version=PROPOSAL_SUPERVISION_ABI_VERSION,
+            program_abi_version=PROGRAM_ABI_VERSION,
+            action_abi_ref=ACTION_ABI_HASH,
+        )
 
     def as_dict(self) -> dict[str, Any]:
-        return {"abi_version": self.abi_version, "blueprint_ref": self.blueprint_ref, "program_abi_version": self.program_abi_version, "action_abi_ref": self.action_abi_ref, "actions": [item.as_dict() for item in self.actions], "root_local_refs": list(self.root_local_refs)}
+        return {
+            "abi_version": self.abi_version,
+            "blueprint_ref": self.blueprint_ref,
+            "program_abi_version": self.program_abi_version,
+            "action_abi_ref": self.action_abi_ref,
+            "selector_bindings": [item.as_dict() for item in self.selector_bindings],
+            "actions": [item.as_dict() for item in self.actions],
+            "root_local_refs": list(self.root_local_refs),
+            "expected_expression_ref": self.expected_expression_ref,
+            "source_assignment_blueprint": self.source_assignment_blueprint.as_dict(),
+        }
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "DerivationBlueprint":
@@ -869,7 +1440,19 @@ class DerivationBlueprint:
         exact_abi(row["program_abi_version"], PROGRAM_ABI_VERSION, "Program")
         if row["action_abi_ref"] != ACTION_ABI_HASH:
             raise ValueError("unsupported Program action ABI")
-        rebuilt = cls.create(actions=wire_value_tuple(row["actions"], "actions", BlueprintAction.from_dict, nonempty=True, maximum=MAX_BLUEPRINT_ACTIONS), root_local_refs=wire_ref_tuple(row["root_local_refs"], "root_local_refs", nonempty=True, maximum=8))
+        if type(row["selector_bindings"]) is not list or not row["selector_bindings"] or len(row["selector_bindings"]) > MAX_SELECTOR_BINDINGS:
+            raise ValueError("selector binding wire table violates its bound")
+        if any(type(item) is not dict for item in row["selector_bindings"]):
+            raise TypeError("selector binding wire rows must be exact objects")
+        if type(row["source_assignment_blueprint"]) is not dict:
+            raise TypeError("source_assignment_blueprint must be an exact object")
+        rebuilt = cls.create(
+            selector_bindings=tuple(selector_binding_from_dict(item) for item in row["selector_bindings"]),
+            actions=wire_value_tuple(row["actions"], "actions", BlueprintAction.from_dict, nonempty=True, maximum=MAX_BLUEPRINT_ACTIONS),
+            root_local_refs=wire_ref_tuple(row["root_local_refs"], "root_local_refs", nonempty=True, maximum=8),
+            expected_expression_ref=row["expected_expression_ref"],
+            source_assignment_blueprint=SourceAssignmentBlueprint.from_dict(row["source_assignment_blueprint"]),
+        )
         if rebuilt.as_dict() != dict(row):
             raise ValueError("non-canonical DerivationBlueprint")
         return rebuilt
@@ -914,30 +1497,167 @@ class TypedAbstention:
 
 
 @dataclass(frozen=True, init=False)
+class VerificationRejection:
+    abi_version: int
+    verification_rejection_ref: str
+    input_kind: str
+    adversarial_blueprint_ref: str | None
+    mutation_payload_ref: str | None
+    expected_owner: str
+    verification_error_code: str
+    rejection_disposition: str
+    critical: bool
+
+    _FIELDS = frozenset(
+        {
+            "abi_version", "verification_rejection_ref", "input_kind",
+            "adversarial_blueprint_ref", "mutation_payload_ref", "expected_owner",
+            "verification_error_code", "rejection_disposition", "critical",
+        }
+    )
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("VerificationRejection")
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        input_kind: str,
+        adversarial_blueprint_ref: str | None,
+        mutation_payload_ref: str | None,
+        expected_owner: str,
+        verification_error_code: str,
+        rejection_disposition: str,
+        critical: bool,
+    ) -> "VerificationRejection":
+        kind = exact_text(input_kind, "verification rejection input_kind", maximum=32)
+        if kind not in {"adversarial_blueprint", "mutation_payload"}:
+            raise ValueError("verification rejection requires an exact adversarial blueprint or mutation payload input")
+        adversarial = None if adversarial_blueprint_ref is None else exact_content_ref(
+            adversarial_blueprint_ref, "adversarial_blueprint_ref", prefix="adversarial_blueprint:"
+        )
+        mutation = None if mutation_payload_ref is None else exact_content_ref(
+            mutation_payload_ref, "mutation_payload_ref", prefix="mutation_payload:"
+        )
+        if (kind == "adversarial_blueprint") != (adversarial is not None) or (
+            kind == "mutation_payload"
+        ) != (mutation is not None):
+            raise ValueError("verification rejection input tag and payload do not match exactly")
+        if (adversarial is None) == (mutation is None):
+            raise ValueError("verification rejection requires exactly one reviewed input")
+        owner = exact_text(expected_owner, "verification rejection expected owner", maximum=16)
+        if owner != "verify":
+            raise ValueError("verification rejection expected owner must be verify")
+        error_code = exact_ref(
+            verification_error_code, "verification_error_code", prefix="verification_error:"
+        )
+        disposition = exact_text(rejection_disposition, "rejection_disposition", maximum=16)
+        if disposition != "reject":
+            raise ValueError("verification rejection disposition must be reject")
+        material = {
+            "abi_version": PROPOSAL_SUPERVISION_ABI_VERSION,
+            "input_kind": kind,
+            "adversarial_blueprint_ref": adversarial,
+            "mutation_payload_ref": mutation,
+            "expected_owner": owner,
+            "verification_error_code": error_code,
+            "rejection_disposition": disposition,
+            "critical": exact_bool(critical, "critical"),
+        }
+        return construct(
+            cls,
+            verification_rejection_ref=stable_ref("verification_rejection_v1", material),
+            **material,
+        )
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "abi_version": self.abi_version,
+            "verification_rejection_ref": self.verification_rejection_ref,
+            "input_kind": self.input_kind,
+            "adversarial_blueprint_ref": self.adversarial_blueprint_ref,
+            "mutation_payload_ref": self.mutation_payload_ref,
+            "expected_owner": self.expected_owner,
+            "verification_error_code": self.verification_error_code,
+            "rejection_disposition": self.rejection_disposition,
+            "critical": self.critical,
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "VerificationRejection":
+        row = exact_fields(value, cls._FIELDS, "VerificationRejection")
+        exact_abi(row["abi_version"], PROPOSAL_SUPERVISION_ABI_VERSION, "Proposal Supervision")
+        rebuilt = cls.create(
+            input_kind=row["input_kind"],
+            adversarial_blueprint_ref=row["adversarial_blueprint_ref"],
+            mutation_payload_ref=row["mutation_payload_ref"],
+            expected_owner=row["expected_owner"],
+            verification_error_code=row["verification_error_code"],
+            rejection_disposition=row["rejection_disposition"],
+            critical=row["critical"],
+        )
+        if rebuilt.as_dict() != dict(row):
+            raise ValueError("non-canonical VerificationRejection")
+        return rebuilt
+
+
+@dataclass(frozen=True, init=False)
 class ProposalTarget:
     abi_version: int
     proposal_target_ref: str
     source_case_ref: str
     target_kind: str
     expected_expression_refs: tuple[str, ...]
-    expression_relation: str
+    match_policy: str
+    expected_expression_relation: str
     derivations: tuple[DerivationBlueprint, ...]
     abstention: TypedAbstention | None
+    verification_rejection: VerificationRejection | None
     review_refs: tuple[str, ...]
 
-    _FIELDS = frozenset({"abi_version", "proposal_target_ref", "source_case_ref", "target_kind", "expected_expression_refs", "expression_relation", "derivations", "abstention", "review_refs"})
+    _FIELDS = frozenset(
+        {
+            "abi_version", "proposal_target_ref", "source_case_ref", "target_kind",
+            "expected_expression_refs", "match_policy", "expected_expression_relation",
+            "derivations", "abstention", "verification_rejection", "review_refs",
+        }
+    )
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
         raise _factory_only("ProposalTarget")
 
     @classmethod
-    def create(cls, *, source_case_ref: str, target_kind: str, expected_expression_refs: tuple[str, ...], expression_relation: str, derivations: tuple[DerivationBlueprint, ...], abstention: TypedAbstention | None, review_refs: tuple[str, ...]) -> "ProposalTarget":
-        kind = exact_text(target_kind, "target_kind", maximum=16)
-        if kind not in {"derive", "abstain"}:
+    def create(
+        cls,
+        *,
+        source_case_ref: str,
+        target_kind: str,
+        expected_expression_refs: tuple[str, ...],
+        match_policy: str,
+        expected_expression_relation: str,
+        derivations: tuple[DerivationBlueprint, ...],
+        abstention: TypedAbstention | None,
+        verification_rejection: VerificationRejection | None,
+        review_refs: tuple[str, ...],
+    ) -> "ProposalTarget":
+        case_ref = exact_case_ref(source_case_ref)
+        kind = exact_text(target_kind, "target_kind", maximum=32)
+        if kind not in {"derive", "abstain", "verification_rejection"}:
             raise ValueError("unsupported proposal target kind")
-        if expression_relation != "exact":
-            raise ValueError("proposal supervision requires exact expression relation")
-        expressions = exact_content_ref_tuple(expected_expression_refs, "expected_expression_refs", nonempty=kind == "derive", maximum=64, prefix="expression:")
+        policy = exact_text(match_policy, "match_policy", maximum=5)
+        if policy != "exact":
+            raise ValueError("proposal supervision match_policy must be exact")
+        relation = exact_text(expected_expression_relation, "expected_expression_relation", maximum=16)
+        if relation not in {"none", "single", "conflict"}:
+            raise ValueError("unsupported expected expression relation")
+        expressions = exact_content_ref_tuple(
+            expected_expression_refs,
+            "expected_expression_refs",
+            nonempty=kind == "derive",
+            maximum=MAX_DERIVATIONS_PER_CASE,
+            prefix="expression:",
+        )
         if type(derivations) is not tuple or len(derivations) > MAX_DERIVATIONS_PER_CASE:
             raise ValueError("proposal target violates its derivation bound")
         if any(type(item) is not DerivationBlueprint for item in derivations):
@@ -950,19 +1670,90 @@ class ProposalTarget:
             if abstention is None
             else _canonical_nested(abstention, TypedAbstention, "abstention")
         )
+        canonical_rejection = (
+            None
+            if verification_rejection is None
+            else _canonical_nested(
+                verification_rejection, VerificationRejection, "verification_rejection"
+            )
+        )
         if len({item.blueprint_ref for item in canonical_derivations}) != len(canonical_derivations):
             raise ValueError("proposal target contains duplicate derivations")
         if tuple(item.blueprint_ref for item in canonical_derivations) != tuple(sorted(item.blueprint_ref for item in canonical_derivations)):
             raise ValueError("derivations must be in canonical order")
-        if kind == "derive" and (not canonical_derivations or canonical_abstention is not None):
-            raise ValueError("derive target requires derivations and no abstention")
-        if kind == "abstain" and (expressions or canonical_derivations or type(canonical_abstention) is not TypedAbstention):
-            raise ValueError("abstain target requires only one typed abstention")
-        material = {"abi_version": PROPOSAL_SUPERVISION_ABI_VERSION, "source_case_ref": exact_case_ref(source_case_ref), "target_kind": kind, "expected_expression_refs": list(expressions), "expression_relation": "exact", "derivations": [item.as_dict() for item in canonical_derivations], "abstention": None if canonical_abstention is None else canonical_abstention.as_dict(), "review_refs": list(exact_review_refs(review_refs))}
-        return construct(cls, proposal_target_ref=stable_ref("proposal_supervision_v1", material), expected_expression_refs=expressions, derivations=canonical_derivations, abstention=canonical_abstention, review_refs=tuple(material["review_refs"]), **{key: val for key, val in material.items() if key not in {"expected_expression_refs", "derivations", "abstention", "review_refs"}})
+        grounded_bindings = tuple(
+            binding
+            for derivation in canonical_derivations
+            for binding in derivation.selector_bindings
+            if type(binding) is GroundedSelectorBinding
+        )
+        if any(binding.source_case_ref != case_ref for binding in grounded_bindings):
+            raise ValueError("grounded selector binding belongs to a different source case")
+        if len({binding.surface_ref for binding in grounded_bindings}) > 1:
+            raise ValueError("grounded selector bindings cross exact source surfaces")
+        if kind == "derive":
+            required_relation = "single" if len(expressions) == 1 else "conflict"
+            if relation != required_relation:
+                raise ValueError("derive expression cardinality and expected relation disagree")
+            if not canonical_derivations or canonical_abstention is not None or canonical_rejection is not None:
+                raise ValueError("derive target requires derivations and no abstention or rejection")
+            mapped = {item.expected_expression_ref for item in canonical_derivations}
+            if mapped != set(expressions):
+                raise ValueError("derive alternatives must each be explicitly mapped by a derivation")
+            if any(item.source_assignment_blueprint.has_critical_residual for item in canonical_derivations):
+                raise ValueError("critical residual makes a derive target non-executable")
+        elif kind == "abstain":
+            if relation != "none" or expressions or canonical_derivations or type(canonical_abstention) is not TypedAbstention or canonical_rejection is not None:
+                raise ValueError("abstain target requires relation none and only one typed abstention")
+        elif (
+            relation != "none"
+            or expressions
+            or canonical_derivations
+            or canonical_abstention is not None
+            or type(canonical_rejection) is not VerificationRejection
+        ):
+            raise ValueError("verification rejection target requires relation none and only exact rejection truth")
+        material = {
+            "abi_version": PROPOSAL_SUPERVISION_ABI_VERSION,
+            "source_case_ref": case_ref,
+            "target_kind": kind,
+            "expected_expression_refs": list(expressions),
+            "match_policy": "exact",
+            "expected_expression_relation": relation,
+            "derivations": [item.as_dict() for item in canonical_derivations],
+            "abstention": None if canonical_abstention is None else canonical_abstention.as_dict(),
+            "verification_rejection": None if canonical_rejection is None else canonical_rejection.as_dict(),
+            "review_refs": list(exact_review_refs(review_refs)),
+        }
+        return construct(
+            cls,
+            proposal_target_ref=stable_ref("proposal_supervision_v1", material),
+            expected_expression_refs=expressions,
+            derivations=canonical_derivations,
+            abstention=canonical_abstention,
+            verification_rejection=canonical_rejection,
+            review_refs=tuple(material["review_refs"]),
+            **{
+                key: val
+                for key, val in material.items()
+                if key not in {"expected_expression_refs", "derivations", "abstention", "verification_rejection", "review_refs"}
+            },
+        )
 
     def as_dict(self) -> dict[str, Any]:
-        return {"abi_version": self.abi_version, "proposal_target_ref": self.proposal_target_ref, "source_case_ref": self.source_case_ref, "target_kind": self.target_kind, "expected_expression_refs": list(self.expected_expression_refs), "expression_relation": self.expression_relation, "derivations": [item.as_dict() for item in self.derivations], "abstention": None if self.abstention is None else self.abstention.as_dict(), "review_refs": list(self.review_refs)}
+        return {
+            "abi_version": self.abi_version,
+            "proposal_target_ref": self.proposal_target_ref,
+            "source_case_ref": self.source_case_ref,
+            "target_kind": self.target_kind,
+            "expected_expression_refs": list(self.expected_expression_refs),
+            "match_policy": self.match_policy,
+            "expected_expression_relation": self.expected_expression_relation,
+            "derivations": [item.as_dict() for item in self.derivations],
+            "abstention": None if self.abstention is None else self.abstention.as_dict(),
+            "verification_rejection": None if self.verification_rejection is None else self.verification_rejection.as_dict(),
+            "review_refs": list(self.review_refs),
+        }
 
     def to_json_bytes(self) -> bytes:
         return canonical_json_bytes(self.as_dict())
@@ -973,7 +1764,19 @@ class ProposalTarget:
         exact_abi(row["abi_version"], PROPOSAL_SUPERVISION_ABI_VERSION, "Proposal Supervision")
         if row["abstention"] is not None and type(row["abstention"]) is not dict:
             raise TypeError("abstention must be an exact object or null")
-        rebuilt = cls.create(source_case_ref=row["source_case_ref"], target_kind=row["target_kind"], expected_expression_refs=wire_content_ref_tuple(row["expected_expression_refs"], "expected_expression_refs", nonempty=row["target_kind"] == "derive", maximum=64, prefix="expression:"), expression_relation=row["expression_relation"], derivations=wire_value_tuple(row["derivations"], "derivations", DerivationBlueprint.from_dict, nonempty=row["target_kind"] == "derive", maximum=MAX_DERIVATIONS_PER_CASE), abstention=None if row["abstention"] is None else TypedAbstention.from_dict(row["abstention"]), review_refs=wire_ref_tuple(row["review_refs"], "review_refs", nonempty=True))
+        if row["verification_rejection"] is not None and type(row["verification_rejection"]) is not dict:
+            raise TypeError("verification_rejection must be an exact object or null")
+        rebuilt = cls.create(
+            source_case_ref=row["source_case_ref"],
+            target_kind=row["target_kind"],
+            expected_expression_refs=wire_content_ref_tuple(row["expected_expression_refs"], "expected_expression_refs", nonempty=row["target_kind"] == "derive", maximum=MAX_DERIVATIONS_PER_CASE, prefix="expression:"),
+            match_policy=row["match_policy"],
+            expected_expression_relation=row["expected_expression_relation"],
+            derivations=wire_value_tuple(row["derivations"], "derivations", DerivationBlueprint.from_dict, nonempty=row["target_kind"] == "derive", maximum=MAX_DERIVATIONS_PER_CASE),
+            abstention=None if row["abstention"] is None else TypedAbstention.from_dict(row["abstention"]),
+            verification_rejection=None if row["verification_rejection"] is None else VerificationRejection.from_dict(row["verification_rejection"]),
+            review_refs=wire_ref_tuple(row["review_refs"], "review_refs", nonempty=True),
+        )
         if rebuilt.proposal_target_ref != row["proposal_target_ref"] or rebuilt.as_dict() != dict(row):
             raise ValueError("non-canonical ProposalTarget")
         return rebuilt
@@ -1304,9 +2107,12 @@ __all__ = [
     "MAX_BLUEPRINT_ACTIONS",
     "MAX_DERIVATIONS_PER_CASE",
     "MAX_REALIZATION_BINDINGS",
+    "MAX_SELECTOR_BINDINGS",
+    "MAX_SOURCE_ASSIGNMENTS",
+    "MAX_SOURCE_SPANS",
     "BlueprintAction",
     "DerivationBlueprint",
-    "DerivationSelector",
+    "GroundedSelectorBinding",
     "LiteralAlignment",
     "MutationContract",
     "ProposalTarget",
@@ -1316,8 +2122,15 @@ __all__ = [
     "RealizationSlot",
     "ReferenceFormChoice",
     "ReviewSourceFile",
+    "SelectorBinding",
+    "SourceAssignmentBlueprint",
+    "SourceAssignmentEntry",
+    "SourceSpan",
+    "StructuralSelectorBinding",
     "TypedAbstention",
+    "VerificationRejection",
     "SourceDisposition",
+    "selector_binding_from_dict",
     "source_disposition_is_supervision_eligible",
     "load_authenticated_r4_review_bundle",
 ]

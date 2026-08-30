@@ -25,7 +25,6 @@ from cemm_authoritative_hybrid.r4_supervision import (
     MAX_DERIVATIONS_PER_CASE,
     BlueprintAction,
     DerivationBlueprint,
-    DerivationSelector,
     LiteralAlignment,
     MutationContract,
     ProposalTarget,
@@ -45,50 +44,14 @@ CASE_REF = "expanded_case_v2:0123456789abcdef01234567"
 REVIEW_REF = "source_review:0123456789abcdef01234567"
 
 
-def _selector(kind: str, value_ref: str) -> DerivationSelector:
-    return DerivationSelector.create(selector_kind=kind, value_ref=value_ref)
-
-
 def _blueprint() -> DerivationBlueprint:
-    return DerivationBlueprint.create(
-        actions=(
-            BlueprintAction.create(
-                action_index=0,
-                action_type="select_context",
-                selectors=(_selector("context_slot", "proposal_context:case-1"),),
-            ),
-            BlueprintAction.create(
-                action_index=1,
-                action_type="select_mode",
-                selectors=(_selector("mode_slot", "mode_slot:observe"),),
-            ),
-            BlueprintAction.create(
-                action_index=2,
-                action_type="instantiate_operator",
-                selectors=(
-                    _selector("local_node", "application:0"),
-                    _selector("frame_slot", "application_frame_slot:event"),
-                ),
-            ),
-            BlueprintAction.create(
-                action_index=3,
-                action_type="complete_program",
-                selectors=(),
-            ),
-        ),
-        root_local_refs=("application:0",),
-    )
+    return _sr2_blueprint("expression:0123456789abcdef01234567")
 
 
 def _derive_target() -> ProposalTarget:
-    return ProposalTarget.create(
-        source_case_ref=CASE_REF,
-        target_kind="derive",
-        expected_expression_refs=("expression:0123456789abcdef01234567",),
-        expression_relation="exact",
-        derivations=(_blueprint(),),
-        abstention=None,
-        review_refs=(REVIEW_REF,),
+    return _sr2_derive_target(
+        ("expression:0123456789abcdef01234567",),
+        (_blueprint(),),
     )
 
 
@@ -97,7 +60,8 @@ def _abstain_target() -> ProposalTarget:
         source_case_ref="expanded_case_v2:1123456789abcdef01234567",
         target_kind="abstain",
         expected_expression_refs=(),
-        expression_relation="exact",
+        match_policy="exact",
+        expected_expression_relation="none",
         derivations=(),
         abstention=TypedAbstention.create(
             gap_kind_ref="gap_kind:unresolved_designation",
@@ -105,6 +69,124 @@ def _abstain_target() -> ProposalTarget:
             earliest_owner="orient",
             safe_disposition="frontier",
         ),
+        verification_rejection=None,
+        review_refs=(REVIEW_REF,),
+    )
+
+
+def _sr2_blueprint(
+    expected_expression_ref: str,
+    *,
+    local_suffix: str = "0",
+    roots: tuple[str, ...] | None = None,
+    source_assignment_blueprint=None,
+):
+    surface_ref = "reviewed_surface:0123456789abcdef01234567"
+    selected_roots = roots or (f"application:{local_suffix}",)
+    bindings = [
+        supervision_module.StructuralSelectorBinding.create(
+            selector_handle=0,
+            selector_kind="context_slot",
+            value_ref="proposal_context:case-1",
+        ),
+        supervision_module.StructuralSelectorBinding.create(
+            selector_handle=1,
+            selector_kind="mode_slot",
+            value_ref="mode_slot:observe",
+        ),
+    ]
+    actions = [
+        supervision_module.BlueprintAction.create(
+            action_index=0,
+            action_type="select_context",
+            selector_handles=(0,),
+        ),
+        supervision_module.BlueprintAction.create(
+            action_index=1,
+            action_type="select_mode",
+            selector_handles=(1,),
+        ),
+    ]
+    for root in selected_roots:
+        local_handle = len(bindings)
+        bindings.append(
+            supervision_module.StructuralSelectorBinding.create(
+                selector_handle=local_handle,
+                selector_kind="local_node",
+                value_ref=root,
+            )
+        )
+        frame_handle = len(bindings)
+        bindings.append(
+            supervision_module.GroundedSelectorBinding.create(
+                selector_handle=frame_handle,
+                selector_kind="frame_slot",
+                source_case_ref=CASE_REF,
+                surface_ref=surface_ref,
+                graph_component_ref=f"application_frame_slot:event-{frame_handle}",
+                semantic_kind_ref="semantic_kind:event_type",
+                spans=(
+                    supervision_module.SourceSpan.create(
+                        surface_ref=surface_ref,
+                        start=0,
+                        end=4,
+                    ),
+                ),
+                source_selector_kind="contribution",
+                source_selector_ref=f"contribution_slot:predicate-{frame_handle}",
+            )
+        )
+        actions.append(
+            supervision_module.BlueprintAction.create(
+                action_index=len(actions),
+                action_type="instantiate_operator",
+                selector_handles=(local_handle, frame_handle),
+            )
+        )
+    actions.append(
+        supervision_module.BlueprintAction.create(
+            action_index=len(actions),
+            action_type="complete_program",
+            selector_handles=(),
+        )
+    )
+    if source_assignment_blueprint is None:
+        source_assignment_blueprint = supervision_module.SourceAssignmentBlueprint.create(
+            observed_source_unit_refs=("unit:0",),
+            assignments=(
+                supervision_module.SourceAssignmentEntry.create(
+                    source_unit_ref="unit:0",
+                    contribution_slot_ref="contribution_slot:predicate-3",
+                    contribution_kind="predicate",
+                    assignment_kind="predicate",
+                    target_action_index=2,
+                    target_role_ref=None,
+                    residual_kind=None,
+                    critical=False,
+                ),
+            ),
+        )
+    return supervision_module.DerivationBlueprint.create(
+        selector_bindings=tuple(bindings),
+        actions=tuple(actions),
+        root_local_refs=selected_roots,
+        expected_expression_ref=expected_expression_ref,
+        source_assignment_blueprint=source_assignment_blueprint,
+    )
+
+
+def _sr2_derive_target(expected_expression_refs, derivations):
+    return supervision_module.ProposalTarget.create(
+        source_case_ref=CASE_REF,
+        target_kind="derive",
+        expected_expression_refs=tuple(expected_expression_refs),
+        match_policy="exact",
+        expected_expression_relation=(
+            "single" if len(expected_expression_refs) == 1 else "conflict"
+        ),
+        derivations=tuple(sorted(derivations, key=lambda row: row.blueprint_ref)),
+        abstention=None,
+        verification_rejection=None,
         review_refs=(REVIEW_REF,),
     )
 
@@ -282,9 +364,11 @@ def test_proposal_targets_separate_derivation_from_meaning_and_require_typed_abs
             source_case_ref=CASE_REF,
             target_kind="derive",
             expected_expression_refs=target.expected_expression_refs,
-            expression_relation="exact",
+            match_policy="exact",
+            expected_expression_relation="single",
             derivations=(),
             abstention=None,
+            verification_rejection=None,
             review_refs=(REVIEW_REF,),
         )
     with pytest.raises(ValueError, match="abstain target"):
@@ -292,9 +376,11 @@ def test_proposal_targets_separate_derivation_from_meaning_and_require_typed_abs
             source_case_ref=CASE_REF,
             target_kind="abstain",
             expected_expression_refs=(),
-            expression_relation="exact",
+            match_policy="exact",
+            expected_expression_relation="none",
             derivations=(),
             abstention=None,
+            verification_rejection=None,
             review_refs=(REVIEW_REF,),
         )
     with pytest.raises(ValueError, match="content ref"):
@@ -302,45 +388,48 @@ def test_proposal_targets_separate_derivation_from_meaning_and_require_typed_abs
             source_case_ref=CASE_REF,
             target_kind="derive",
             expected_expression_refs=("expression:not-content-addressed",),
-            expression_relation="exact",
+            match_policy="exact",
+            expected_expression_relation="single",
             derivations=target.derivations,
             abstention=None,
+            verification_rejection=None,
             review_refs=(REVIEW_REF,),
         )
 
 
 def test_derivation_blueprints_reject_unsafe_selectors_and_unbounded_lists() -> None:
-    with pytest.raises(ValueError, match="unsafe selector"):
-        DerivationSelector.create(selector_kind="raw_phrase", value_ref="literal:lamp")
-    with pytest.raises(ValueError, match="unsafe selector"):
-        DerivationSelector.create(selector_kind="regex", value_ref="literal:.*")
-    with pytest.raises(ValueError, match="unsafe selector"):
-        DerivationSelector.create(selector_kind="internal_ref_spelling", value_ref="literal:op-event")
-    with pytest.raises(ValueError, match="source-local selector"):
-        DerivationSelector.create(
-            selector_kind="context_slot",
-            value_ref="runtime_observation:forbidden",
-        )
+    for kind, value in (
+        ("raw_phrase", "literal:lamp"),
+        ("regex", "literal:.*"),
+        ("internal_ref_spelling", "literal:op-event"),
+        ("context_slot", "runtime_observation:forbidden"),
+    ):
+        with pytest.raises(ValueError, match="structural selector|forbidden"):
+            supervision_module.StructuralSelectorBinding.create(
+                selector_handle=0,
+                selector_kind=kind,
+                value_ref=value,
+            )
 
-    action = BlueprintAction.create(
-        action_index=0,
-        action_type="select_context",
-        selectors=(_selector("context_slot", "proposal_context:case-1"),),
-    )
+    target = _derive_target()
     with pytest.raises(ValueError, match="action bound"):
         DerivationBlueprint.create(
-            actions=tuple(action for _ in range(MAX_BLUEPRINT_ACTIONS + 1)),
-            root_local_refs=(),
+            selector_bindings=target.derivations[0].selector_bindings,
+            actions=tuple(target.derivations[0].actions[0] for _ in range(MAX_BLUEPRINT_ACTIONS + 1)),
+            root_local_refs=target.derivations[0].root_local_refs,
+            expected_expression_ref=target.derivations[0].expected_expression_ref,
+            source_assignment_blueprint=target.derivations[0].source_assignment_blueprint,
         )
-    target = _derive_target()
     with pytest.raises(ValueError, match="derivation bound"):
         ProposalTarget.create(
             source_case_ref=CASE_REF,
             target_kind="derive",
             expected_expression_refs=target.expected_expression_refs,
-            expression_relation="exact",
+            match_policy="exact",
+            expected_expression_relation="single",
             derivations=tuple(target.derivations[0] for _ in range(MAX_DERIVATIONS_PER_CASE + 1)),
             abstention=None,
+            verification_rejection=None,
             review_refs=(REVIEW_REF,),
         )
 
@@ -493,8 +582,8 @@ def test_supervision_abi_fields_reject_booleans_at_top_and_nested_boundaries() -
     with pytest.raises((TypeError, ValueError), match="ABI|abi_version"):
         ProposalTarget.from_json_bytes(raw)
     nested_raw = _derive_target().to_json_bytes().replace(
-        b'"selectors":[{"abi_version":1',
-        b'"selectors":[{"abi_version":true',
+        b'"selector_bindings":[{"abi_version":1',
+        b'"selector_bindings":[{"abi_version":true',
         1,
     )
     with pytest.raises((TypeError, ValueError), match="ABI|abi_version"):
@@ -513,9 +602,11 @@ def test_review_provenance_uses_closed_typed_namespaces() -> None:
                 source_case_ref=target.source_case_ref,
                 target_kind=target.target_kind,
                 expected_expression_refs=target.expected_expression_refs,
-                expression_relation=target.expression_relation,
+                match_policy=target.match_policy,
+                expected_expression_relation=target.expected_expression_relation,
                 derivations=target.derivations,
                 abstention=target.abstention,
+                verification_rejection=target.verification_rejection,
                 review_refs=(bad_ref,),
             )
 
@@ -537,147 +628,55 @@ def test_review_provenance_uses_closed_typed_namespaces() -> None:
 
 
 def test_blueprint_action_abi_enforces_ordered_shapes_and_local_graph_integrity() -> None:
-    with pytest.raises(ValueError, match="action (schema|shape)"):
-        BlueprintAction.create(
-            action_index=0,
-            action_type="select_context",
-            selectors=(_selector("mode_slot", "mode_slot:observe"),),
-        )
-    with pytest.raises(ValueError, match="action (schema|shape)"):
-        BlueprintAction.create(
-            action_index=0,
-            action_type="bind_nested_application",
-            selectors=(
-                _selector("variant_tag", "action_variant:role-extra"),
-                _selector("local_node", "application:0"),
-                _selector("role_ref", "role:content"),
-                _selector("local_node", "application:1"),
-            ),
+    blueprint = _blueprint()
+    wrong_context = supervision_module.StructuralSelectorBinding.create(
+        selector_handle=0,
+        selector_kind="mode_slot",
+        value_ref="mode_slot:observe",
+    )
+    with pytest.raises(ValueError, match="action shape"):
+        DerivationBlueprint.create(
+            selector_bindings=(wrong_context, *blueprint.selector_bindings[1:]),
+            actions=blueprint.actions,
+            root_local_refs=blueprint.root_local_refs,
+            expected_expression_ref=blueprint.expected_expression_ref,
+            source_assignment_blueprint=blueprint.source_assignment_blueprint,
         )
 
     duplicate_local = (
-        BlueprintAction.create(
-            action_index=0,
-            action_type="select_context",
-            selectors=(_selector("context_slot", "proposal_context:case-1"),),
-        ),
-        BlueprintAction.create(
-            action_index=1,
-            action_type="select_mode",
-            selectors=(_selector("mode_slot", "mode_slot:observe"),),
-        ),
-        BlueprintAction.create(
-            action_index=2,
-            action_type="instantiate_operator",
-            selectors=(
-                _selector("local_node", "application:0"),
-                _selector("frame_slot", "application_frame_slot:event"),
-            ),
-        ),
+        *blueprint.actions[:-1],
         BlueprintAction.create(
             action_index=3,
             action_type="instantiate_operator",
-            selectors=(
-                _selector("local_node", "application:0"),
-                _selector("frame_slot", "application_frame_slot:state"),
-            ),
+            selector_handles=(2, 3),
         ),
-        BlueprintAction.create(action_index=4, action_type="complete_program", selectors=()),
+        BlueprintAction.create(action_index=4, action_type="complete_program", selector_handles=()),
     )
     with pytest.raises(ValueError, match="duplicate local"):
-        DerivationBlueprint.create(actions=duplicate_local, root_local_refs=("application:0",))
-
-    use_before_declare = (
-        BlueprintAction.create(
-            action_index=0,
-            action_type="select_context",
-            selectors=(_selector("context_slot", "proposal_context:case-1"),),
-        ),
-        BlueprintAction.create(
-            action_index=1,
-            action_type="select_mode",
-            selectors=(_selector("mode_slot", "mode_slot:observe"),),
-        ),
-        BlueprintAction.create(
-            action_index=2,
-            action_type="bind_role",
-            selectors=(
-                _selector("local_node", "application:0"),
-                _selector("role_ref", "role:agent"),
-                _selector("contribution_slot", "contribution_slot:0"),
-            ),
-        ),
-        BlueprintAction.create(action_index=3, action_type="complete_program", selectors=()),
-    )
-    with pytest.raises(ValueError, match="before declaration"):
-        DerivationBlueprint.create(actions=use_before_declare, root_local_refs=("application:0",))
-
-    prefix = (
-        BlueprintAction.create(
-            action_index=0,
-            action_type="select_context",
-            selectors=(_selector("context_slot", "proposal_context:case-1"),),
-        ),
-        BlueprintAction.create(
-            action_index=1,
-            action_type="select_mode",
-            selectors=(_selector("mode_slot", "mode_slot:observe"),),
-        ),
-        BlueprintAction.create(
-            action_index=2,
-            action_type="instantiate_operator",
-            selectors=(_selector("local_node", "application:0"), _selector("frame_slot", "application_frame_slot:event")),
-        ),
-        BlueprintAction.create(
-            action_index=3,
-            action_type="instantiate_operator",
-            selectors=(_selector("local_node", "application:1"), _selector("frame_slot", "application_frame_slot:state")),
-        ),
-    )
-    role_nested = BlueprintAction.create(
-        action_index=4,
-        action_type="bind_nested_application",
-        selectors=(
-            _selector("variant_tag", "action_variant:role"),
-            _selector("local_node", "application:0"),
-            _selector("role_ref", "role:content"),
-            _selector("local_node", "application:1"),
-        ),
-    )
-    role_blueprint = DerivationBlueprint.create(
-        actions=prefix + (role_nested, BlueprintAction.create(action_index=5, action_type="complete_program", selectors=())),
-        root_local_refs=("application:0",),
-    )
-    assert role_blueprint.action_abi_ref.startswith("action_abi:")
-
-    link_nested = BlueprintAction.create(
-        action_index=4,
-        action_type="bind_nested_application",
-        selectors=(
-            _selector("variant_tag", "action_variant:link"),
-            _selector("local_node", "expression_link:0"),
-            _selector("expression_link_slot", "expression_link_slot:cause"),
-            _selector("local_node", "application:0"),
-            _selector("local_node", "application:1"),
-        ),
-    )
-    DerivationBlueprint.create(
-        actions=prefix + (link_nested, BlueprintAction.create(action_index=5, action_type="complete_program", selectors=())),
-        root_local_refs=("expression_link:0",),
-    )
+        DerivationBlueprint.create(
+            selector_bindings=blueprint.selector_bindings,
+            actions=duplicate_local,
+            root_local_refs=blueprint.root_local_refs,
+            expected_expression_ref=blueprint.expected_expression_ref,
+            source_assignment_blueprint=blueprint.source_assignment_blueprint,
+        )
+    assert blueprint.action_abi_ref.startswith("action_abi:")
 
 
 def test_parent_factories_reject_forged_nested_supervision_values() -> None:
-    valid = _selector("context_slot", "proposal_context:case-1")
-    forged = object.__new__(DerivationSelector)
+    blueprint = _blueprint()
+    valid = blueprint.selector_bindings[0]
+    forged = object.__new__(type(valid))
     for name, value in valid.__dict__.items():
         object.__setattr__(forged, name, value)
-    object.__setattr__(forged, "selector_ref", "derivation_selector_v1:" + "f" * 24)
-    with pytest.raises(ValueError, match="canonical|selector ref"):
-        BlueprintAction.create(
-            action_index=0,
-            action_type="select_context",
-            selectors=(forged,),
+    object.__setattr__(forged, "binding_ref", "structural_selector_binding_v1:" + "f" * 24)
+    with pytest.raises(ValueError, match="canonical"):
+        DerivationBlueprint.create(
+            selector_bindings=(forged, *blueprint.selector_bindings[1:]),
+            actions=blueprint.actions,
+            root_local_refs=blueprint.root_local_refs,
+            expected_expression_ref=blueprint.expected_expression_ref,
+            source_assignment_blueprint=blueprint.source_assignment_blueprint,
         )
 
     row = _realization()
@@ -763,6 +762,15 @@ def test_supervision_schemas_are_strict_draft_2020_12_and_match_decoders() -> No
                     assert_ref_string_bounds(child)
 
         assert_ref_string_bounds(schema)
+        if filename == "r4_proposal_supervision.schema.json":
+            for array_schema in (
+                schema["properties"]["derivations"],
+                schema["$defs"]["blueprint"]["properties"]["selector_bindings"],
+                schema["$defs"]["blueprint"]["properties"]["actions"],
+                schema["$defs"]["groundedSelectorBinding"]["properties"]["spans"],
+                schema["$defs"]["sourceAssignmentBlueprint"]["properties"]["assignments"],
+            ):
+                assert "uniqueItems" not in array_schema
         validator = Draft202012Validator(schema)
         wire = instance.as_dict()
         assert validator.is_valid(wire)
@@ -785,9 +793,18 @@ def test_supervision_schemas_are_strict_draft_2020_12_and_match_decoders() -> No
     manifest["sources"][1]["path"] = manifest["sources"][0]["path"]
     adversarial.append(("r4_review_manifest.schema.json", manifest, R4ReviewManifest))
     proposal = _derive_target().as_dict()
-    proposal["derivations"][0]["actions"][0]["selectors"][0] = _selector(
-        "mode_slot", "mode_slot:observe"
-    ).as_dict()
+    proposal["derivations"][0]["selector_bindings"][0]["selector_kind"] = "raw_phrase"
+    proposal["derivations"][0]["selector_bindings"][0]["value_ref"] = "literal:lamp"
+    adversarial.append(("r4_proposal_supervision.schema.json", proposal, ProposalTarget))
+    proposal = _derive_target().as_dict()
+    proposal["derivations"][0]["selector_bindings"][0]["value_ref"] = (
+        "proposal_context:resource:semantic_store"
+    )
+    adversarial.append(("r4_proposal_supervision.schema.json", proposal, ProposalTarget))
+    proposal = _derive_target().as_dict()
+    proposal["derivations"][0]["selector_bindings"][3]["graph_component_ref"] = (
+        "application_frame_slot:.*"
+    )
     adversarial.append(("r4_proposal_supervision.schema.json", proposal, ProposalTarget))
     realization = _realization().as_dict()
     realization["literal_alignments"][0]["copy_source_ref"] = "effect_literal:lamp"
@@ -1334,6 +1351,461 @@ def test_review_bundle_enforces_existing_byte_record_depth_and_ref_bounds(
         supervision_module.load_authenticated_r4_review_bundle(root)
 
 
+def test_sr2_selector_binding_union_uses_dense_handles_and_exact_grounding() -> None:
+    span = supervision_module.SourceSpan.create(
+        surface_ref="reviewed_surface:0123456789abcdef01234567",
+        start=0,
+        end=4,
+    )
+    grounded = supervision_module.GroundedSelectorBinding.create(
+        selector_handle=0,
+        selector_kind="contribution_slot",
+        source_case_ref=CASE_REF,
+        surface_ref=span.surface_ref,
+        graph_component_ref="contribution_slot:predicate-0",
+        semantic_kind_ref="semantic_kind:event_type",
+        spans=(span,),
+        source_selector_kind="contribution",
+        source_selector_ref="contribution_slot:predicate-0",
+    )
+    structural = supervision_module.StructuralSelectorBinding.create(
+        selector_handle=1,
+        selector_kind="local_node",
+        value_ref="application:0",
+    )
+    assert supervision_module.selector_binding_from_dict(grounded.as_dict()) == grounded
+    assert supervision_module.selector_binding_from_dict(structural.as_dict()) == structural
+    structural_with_evidence = structural.as_dict()
+    structural_with_evidence["spans"] = [span.as_dict()]
+    with pytest.raises(ValueError, match="fields mismatch"):
+        supervision_module.selector_binding_from_dict(structural_with_evidence)
+    with pytest.raises(TypeError, match="source_case_ref"):
+        supervision_module.GroundedSelectorBinding.create(
+            selector_handle=0,
+            selector_kind="contribution_slot",
+            surface_ref=span.surface_ref,
+            graph_component_ref="contribution_slot:predicate-0",
+            semantic_kind_ref="semantic_kind:event_type",
+            spans=(span,),
+            source_selector_kind="contribution",
+            source_selector_ref="contribution_slot:predicate-0",
+        )
+
+    with pytest.raises(ValueError, match="surface"):
+        supervision_module.GroundedSelectorBinding.create(
+            selector_handle=0,
+            selector_kind="contribution_slot",
+            source_case_ref=CASE_REF,
+            surface_ref=span.surface_ref,
+            graph_component_ref="contribution_slot:predicate-0",
+            semantic_kind_ref="semantic_kind:event_type",
+            spans=(
+                supervision_module.SourceSpan.create(
+                    surface_ref="reviewed_surface:1123456789abcdef01234567",
+                    start=0,
+                    end=4,
+                ),
+            ),
+            source_selector_kind="contribution",
+            source_selector_ref="contribution_slot:predicate-0",
+        )
+    for changes, error in (
+        ({"graph_component_ref": "reference_slot:0"}, "component"),
+        ({"graph_component_ref": "contribution_slot:.*"}, "component"),
+        ({"semantic_kind_ref": "role:event"}, "semantic kind"),
+        ({"semantic_kind_ref": "semantic_kind:resource:event"}, "semantic kind"),
+        ({"source_selector_kind": "raw_phrase"}, "source selector"),
+        ({"source_selector_ref": "observed_program:forbidden"}, "source selector"),
+        ({"source_selector_ref": "contribution_slot:.*"}, "source selector"),
+    ):
+        values = {
+            "selector_handle": 0,
+            "selector_kind": "contribution_slot",
+            "source_case_ref": CASE_REF,
+            "surface_ref": span.surface_ref,
+            "graph_component_ref": "contribution_slot:predicate-0",
+            "semantic_kind_ref": "semantic_kind:event_type",
+            "spans": (span,),
+            "source_selector_kind": "contribution",
+            "source_selector_ref": "contribution_slot:predicate-0",
+            **changes,
+        }
+        with pytest.raises((TypeError, ValueError), match=error):
+            supervision_module.GroundedSelectorBinding.create(**values)
+    with pytest.raises((TypeError, ValueError), match="positive|span"):
+        supervision_module.SourceSpan.create(
+            surface_ref=span.surface_ref,
+            start=4,
+            end=4,
+        )
+    for kind, value in (
+        ("raw_phrase", "literal:lamp"),
+        ("regex", "literal:.*"),
+        ("internal_ref_spelling", "literal:op-event"),
+        ("local_node", "bootstrap_candidate:forbidden"),
+        ("local_node", "application:.*"),
+        ("context_slot", "proposal_context:resource:semantic_store"),
+    ):
+        with pytest.raises(ValueError, match="structural selector|forbidden|regex|internal-ref"):
+            supervision_module.StructuralSelectorBinding.create(
+                selector_handle=1,
+                selector_kind=kind,
+                value_ref=value,
+            )
+
+    schema = json.loads(
+        (SCHEMAS / "r4_proposal_supervision.schema.json").read_text(encoding="utf-8")
+    )
+    valid_target = _sr2_derive_target(
+        ("expression:0123456789abcdef01234567",),
+        (_sr2_blueprint("expression:0123456789abcdef01234567"),),
+    ).as_dict()
+    invalid_structural = deepcopy(valid_target)
+    invalid_structural["derivations"][0]["selector_bindings"][0]["spans"] = [
+        span.as_dict()
+    ]
+    assert not Draft202012Validator(schema).is_valid(invalid_structural)
+    with pytest.raises(ValueError, match="fields mismatch"):
+        supervision_module.ProposalTarget.from_dict(invalid_structural)
+    invalid_grounded = deepcopy(valid_target)
+    invalid_grounded["derivations"][0]["selector_bindings"][3].pop("surface_ref")
+    assert not Draft202012Validator(schema).is_valid(invalid_grounded)
+    with pytest.raises(ValueError, match="fields mismatch"):
+        supervision_module.ProposalTarget.from_dict(invalid_grounded)
+
+
+def test_sr2_blueprint_resolves_handle_table_before_program_shape_validation() -> None:
+    blueprint = _sr2_blueprint("expression:0123456789abcdef01234567")
+    assert tuple(row.selector_handle for row in blueprint.selector_bindings) == tuple(
+        range(len(blueprint.selector_bindings))
+    )
+    assert blueprint.actions[0].selector_handles == (0,)
+    with pytest.raises(ValueError, match="duplicate"):
+        supervision_module.BlueprintAction.create(
+            action_index=0,
+            action_type="instantiate_operator",
+            selector_handles=(0, 0),
+        )
+    with pytest.raises(TypeError, match="int|integer"):
+        supervision_module.BlueprintAction.create(
+            action_index=0,
+            action_type="select_context",
+            selector_handles=(True,),
+        )
+
+    bindings = blueprint.selector_bindings
+    duplicate = object.__new__(type(bindings[1]))
+    for name, value in bindings[1].__dict__.items():
+        object.__setattr__(duplicate, name, value)
+    object.__setattr__(duplicate, "selector_handle", 0)
+    with pytest.raises((TypeError, ValueError), match="dense|canonical"):
+        supervision_module.DerivationBlueprint.create(
+            selector_bindings=(bindings[0], duplicate, *bindings[2:]),
+            actions=blueprint.actions,
+            root_local_refs=blueprint.root_local_refs,
+            expected_expression_ref=blueprint.expected_expression_ref,
+            source_assignment_blueprint=blueprint.source_assignment_blueprint,
+        )
+    bad_action = supervision_module.BlueprintAction.create(
+        action_index=0,
+        action_type="select_context",
+        selector_handles=(99,),
+    )
+    with pytest.raises(ValueError, match="unbound"):
+        supervision_module.DerivationBlueprint.create(
+            selector_bindings=bindings,
+            actions=(bad_action, *blueprint.actions[1:]),
+            root_local_refs=blueprint.root_local_refs,
+            expected_expression_ref=blueprint.expected_expression_ref,
+            source_assignment_blueprint=blueprint.source_assignment_blueprint,
+        )
+    unused_structural = supervision_module.StructuralSelectorBinding.create(
+        selector_handle=len(bindings),
+        selector_kind="local_node",
+        value_ref="application:unused",
+    )
+    unused_grounded = supervision_module.GroundedSelectorBinding.create(
+        selector_handle=len(bindings),
+        selector_kind="contribution_slot",
+        source_case_ref=CASE_REF,
+        surface_ref="reviewed_surface:0123456789abcdef01234567",
+        graph_component_ref="contribution_slot:unused",
+        semantic_kind_ref="semantic_kind:event_type",
+        spans=(
+            supervision_module.SourceSpan.create(
+                surface_ref="reviewed_surface:0123456789abcdef01234567",
+                start=0,
+                end=4,
+            ),
+        ),
+        source_selector_kind="contribution",
+        source_selector_ref="contribution_slot:unused",
+    )
+    for unused in (unused_structural, unused_grounded):
+        with pytest.raises(ValueError, match="every selector binding"):
+            supervision_module.DerivationBlueprint.create(
+                selector_bindings=(*bindings, unused),
+                actions=blueprint.actions,
+                root_local_refs=blueprint.root_local_refs,
+                expected_expression_ref=blueprint.expected_expression_ref,
+                source_assignment_blueprint=blueprint.source_assignment_blueprint,
+            )
+
+
+def test_sr2_source_assignments_are_complete_and_critical_residuals_are_not_executable() -> None:
+    assert supervision_module._SOURCE_ASSIGNMENT_COMPATIBILITY == frozenset(
+        {
+            ("predicate", "predicate", "instantiate_operator"),
+            ("anchor", "role", "bind_role"),
+            ("literal", "role", "bind_role"),
+            ("qualifier", "qualifier", "bind_role"),
+            ("reference", "reference", "bind_reference"),
+            ("scope", "scope", "attach_scope"),
+            ("connector", "connector", "bind_nested_application"),
+            ("discourse", "discourse", "select_mode"),
+            ("discourse", "discourse", "bind_nested_application"),
+            ("discourse", "discourse", "propose_transition"),
+            ("open_variable", "role", "project_variable"),
+            ("binder", "role", "project_variable"),
+        }
+    )
+    entry = supervision_module.SourceAssignmentEntry.create(
+        source_unit_ref="unit:0",
+        contribution_slot_ref="contribution_slot:predicate-3",
+        contribution_kind="predicate",
+        assignment_kind="predicate",
+        target_action_index=2,
+        target_role_ref=None,
+        residual_kind=None,
+        critical=False,
+    )
+    assignments = supervision_module.SourceAssignmentBlueprint.create(
+        observed_source_unit_refs=("unit:0",),
+        assignments=(entry,),
+    )
+    assert assignments.assignments[0].source_unit_ref == "unit:0"
+    with pytest.raises(ValueError, match="residual"):
+        supervision_module.SourceAssignmentEntry.create(
+            source_unit_ref="unit:0",
+            contribution_slot_ref="contribution_slot:residual-0",
+            contribution_kind="anchor",
+            assignment_kind="residual",
+            target_action_index=None,
+            target_role_ref=None,
+            residual_kind="discourse",
+            critical=True,
+        )
+    with pytest.raises(ValueError, match="cover"):
+        supervision_module.SourceAssignmentBlueprint.create(
+            observed_source_unit_refs=("unit:0", "unit:1"),
+            assignments=(entry,),
+        )
+    with pytest.raises(ValueError, match="duplicate|cover"):
+        supervision_module.SourceAssignmentBlueprint.create(
+            observed_source_unit_refs=("unit:0",),
+            assignments=(entry, entry),
+        )
+
+    wrong_pointer = supervision_module.SourceAssignmentEntry.create(
+        source_unit_ref="unit:0",
+        contribution_slot_ref="contribution_slot:fake",
+        contribution_kind="predicate",
+        assignment_kind="predicate",
+        target_action_index=2,
+        target_role_ref=None,
+        residual_kind=None,
+        critical=False,
+    )
+    with pytest.raises(ValueError, match="contribution slot"):
+        _sr2_blueprint(
+            "expression:0123456789abcdef01234567",
+            source_assignment_blueprint=supervision_module.SourceAssignmentBlueprint.create(
+                observed_source_unit_refs=("unit:0",),
+                assignments=(wrong_pointer,),
+            ),
+        )
+    wrong_action = supervision_module.SourceAssignmentEntry.create(
+        source_unit_ref="unit:0",
+        contribution_slot_ref="contribution_slot:predicate-3",
+        contribution_kind="scope",
+        assignment_kind="scope",
+        target_action_index=2,
+        target_role_ref=None,
+        residual_kind=None,
+        critical=False,
+    )
+    with pytest.raises(ValueError, match="incompatible"):
+        _sr2_blueprint(
+            "expression:0123456789abcdef01234567",
+            source_assignment_blueprint=supervision_module.SourceAssignmentBlueprint.create(
+                observed_source_unit_refs=("unit:0",),
+                assignments=(wrong_action,),
+            ),
+        )
+
+    base = _sr2_blueprint("expression:0123456789abcdef01234567")
+    grounded_mode = supervision_module.GroundedSelectorBinding.create(
+        selector_handle=1,
+        selector_kind="mode_slot",
+        source_case_ref=CASE_REF,
+        surface_ref="reviewed_surface:0123456789abcdef01234567",
+        graph_component_ref="mode_slot:observe",
+        semantic_kind_ref="semantic_kind:discourse",
+        spans=(
+            supervision_module.SourceSpan.create(
+                surface_ref="reviewed_surface:0123456789abcdef01234567",
+                start=0,
+                end=4,
+            ),
+        ),
+        source_selector_kind="contribution",
+        source_selector_ref="contribution_slot:mode-0",
+    )
+    discourse = supervision_module.SourceAssignmentEntry.create(
+        source_unit_ref="unit:0",
+        contribution_slot_ref="contribution_slot:mode-0",
+        contribution_kind="discourse",
+        assignment_kind="discourse",
+        target_action_index=1,
+        target_role_ref=None,
+        residual_kind=None,
+        critical=False,
+    )
+    discourse_blueprint = supervision_module.DerivationBlueprint.create(
+        selector_bindings=(base.selector_bindings[0], grounded_mode, *base.selector_bindings[2:]),
+        actions=base.actions,
+        root_local_refs=base.root_local_refs,
+        expected_expression_ref=base.expected_expression_ref,
+        source_assignment_blueprint=supervision_module.SourceAssignmentBlueprint.create(
+            observed_source_unit_refs=("unit:0",),
+            assignments=(discourse,),
+        ),
+    )
+    assert discourse_blueprint.source_assignment_blueprint.assignments == (discourse,)
+
+    critical = supervision_module.SourceAssignmentEntry.create(
+        source_unit_ref="unit:0",
+        contribution_slot_ref="contribution_slot:residual-0",
+        contribution_kind="discourse",
+        assignment_kind="residual",
+        target_action_index=None,
+        target_role_ref=None,
+        residual_kind="discourse",
+        critical=True,
+    )
+    critical_blueprint = _sr2_blueprint(
+        "expression:0123456789abcdef01234567",
+        source_assignment_blueprint=supervision_module.SourceAssignmentBlueprint.create(
+            observed_source_unit_refs=("unit:0",),
+            assignments=(critical,),
+        ),
+    )
+    with pytest.raises(ValueError, match="critical residual|executable"):
+        _sr2_derive_target(("expression:0123456789abcdef01234567",), (critical_blueprint,))
+
+
+def test_sr2_proposal_relation_and_verification_rejection_are_exact_and_distinct() -> None:
+    expression_a = "expression:0123456789abcdef01234567"
+    expression_b = "expression:1123456789abcdef01234567"
+    single = _sr2_derive_target((expression_a,), (_sr2_blueprint(expression_a),))
+    assert single.match_policy == "exact"
+    assert single.expected_expression_relation == "single"
+    class _StringLike(str):
+        pass
+
+    with pytest.raises(TypeError, match="exact str"):
+        supervision_module.ProposalTarget.create(
+            source_case_ref=single.source_case_ref,
+            target_kind=single.target_kind,
+            expected_expression_refs=single.expected_expression_refs,
+            match_policy=_StringLike("exact"),
+            expected_expression_relation=single.expected_expression_relation,
+            derivations=single.derivations,
+            abstention=None,
+            verification_rejection=None,
+            review_refs=single.review_refs,
+        )
+
+    conflict = _sr2_derive_target(
+        (expression_a, expression_b),
+        (_sr2_blueprint(expression_a), _sr2_blueprint(expression_b, local_suffix="1")),
+    )
+    assert conflict.expected_expression_relation == "conflict"
+    with pytest.raises(ValueError, match="alternative|mapped|conflict"):
+        _sr2_derive_target(
+            (expression_a, expression_b),
+            (_sr2_blueprint(expression_a, roots=("application:0", "application:1")),),
+        )
+    with pytest.raises(ValueError, match="case"):
+        supervision_module.ProposalTarget.create(
+            source_case_ref="expanded_case_v2:3123456789abcdef01234567",
+            target_kind="derive",
+            expected_expression_refs=(expression_a,),
+            match_policy="exact",
+            expected_expression_relation="single",
+            derivations=(_sr2_blueprint(expression_a),),
+            abstention=None,
+            verification_rejection=None,
+            review_refs=(REVIEW_REF,),
+        )
+
+    rejection = supervision_module.VerificationRejection.create(
+        input_kind="adversarial_blueprint",
+        adversarial_blueprint_ref="adversarial_blueprint:0123456789abcdef01234567",
+        mutation_payload_ref=None,
+        expected_owner="verify",
+        verification_error_code="verification_error:invalid-role",
+        rejection_disposition="reject",
+        critical=True,
+    )
+    target = supervision_module.ProposalTarget.create(
+        source_case_ref="expanded_case_v2:2123456789abcdef01234567",
+        target_kind="verification_rejection",
+        expected_expression_refs=(),
+        match_policy="exact",
+        expected_expression_relation="none",
+        derivations=(),
+        abstention=None,
+        verification_rejection=rejection,
+        review_refs=(REVIEW_REF,),
+    )
+    assert target.verification_rejection == rejection
+    assert target.abstention is None
+    proposal_schema = json.loads(
+        (SCHEMAS / "r4_proposal_supervision.schema.json").read_text(encoding="utf-8")
+    )
+    assert Draft202012Validator(proposal_schema).is_valid(target.as_dict())
+    assert supervision_module.ProposalTarget.from_json_bytes(target.to_json_bytes()) == target
+    legacy = target.as_dict()
+    legacy["expression_relation"] = "exact"
+    with pytest.raises(ValueError, match="fields mismatch"):
+        supervision_module.ProposalTarget.from_dict(legacy)
+    corrupt = target.as_dict()
+    corrupt["verification_rejection"]["observed_verifier_result"] = "reject"
+    with pytest.raises(ValueError, match="fields mismatch"):
+        supervision_module.ProposalTarget.from_dict(corrupt)
+    with pytest.raises(ValueError, match="owner"):
+        supervision_module.VerificationRejection.create(
+            input_kind="adversarial_blueprint",
+            adversarial_blueprint_ref="adversarial_blueprint:0123456789abcdef01234567",
+            mutation_payload_ref=None,
+            expected_owner="exact-verifier",
+            verification_error_code="verification_error:invalid-role",
+            rejection_disposition="reject",
+            critical=True,
+        )
+    with pytest.raises(ValueError, match="adversarial blueprint or mutation payload"):
+        supervision_module.VerificationRejection.create(
+            input_kind="gap",
+            adversarial_blueprint_ref=None,
+            mutation_payload_ref=None,
+            expected_owner="verify",
+            verification_error_code="verification_error:invalid-role",
+            rejection_disposition="reject",
+            critical=True,
+        )
+
+
 def test_sr1_r4_source_abi_registry_states_are_exact_and_nonactivating() -> None:
     registry = (ROOT / "docs/ABI_REGISTRY.md").read_text(encoding="utf-8")
     expected = {
@@ -1368,7 +1840,31 @@ def test_sr1_r4_source_abi_registry_states_are_exact_and_nonactivating() -> None
         assert "activated" not in cells[5]
 
 
-__cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervision_contracts_are_factory_only_frozen_and_canonical[_manifest]': {'activation_phase': 'R4',
+__cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr2_selector_binding_union_uses_dense_handles_and_exact_grounding': {'activation_phase': 'R4',
+                                                                                                                    'assertion_ref': 'assertion:r4-sr2-selector-union-dense-exact-grounding',
+                                                                                                                    'diagnostic_role': 'owner',
+                                                                                                                    'introduced_by_task': 'R4.1-Source-Readiness-SR2',
+                                                                                                                    'owner_ref': 'mutation-partition',
+                                                                                                                    'source_ast_sha256': 'f61eaaad2f37f61b53458eb5e9411824edecf0e46e0f2e73fb934bbdffef394b'},
+ 'tests/test_r4_supervision_contracts.py::test_sr2_blueprint_resolves_handle_table_before_program_shape_validation': {'activation_phase': 'R4',
+                                                                                                                      'assertion_ref': 'assertion:r4-sr2-blueprint-resolves-bounded-handle-table',
+                                                                                                                      'diagnostic_role': 'owner',
+                                                                                                                      'introduced_by_task': 'R4.1-Source-Readiness-SR2',
+                                                                                                                      'owner_ref': 'mutation-partition',
+                                                                                                                      'source_ast_sha256': 'a0303c26ff9780c443b579c7ae424304a2873b1fb15af38cee260f1af6335892'},
+ 'tests/test_r4_supervision_contracts.py::test_sr2_source_assignments_are_complete_and_critical_residuals_are_not_executable': {'activation_phase': 'R4',
+                                                                                                                                'assertion_ref': 'assertion:r4-sr2-source-assignments-complete-critical-residual-block',
+                                                                                                                                'diagnostic_role': 'owner',
+                                                                                                                                'introduced_by_task': 'R4.1-Source-Readiness-SR2',
+                                                                                                                                'owner_ref': 'mutation-partition',
+                                                                                                                                'source_ast_sha256': '8bfae109d748e158bf38b6f54ebce2c50cc9288eddc46ee7ea1be61f991edc42'},
+ 'tests/test_r4_supervision_contracts.py::test_sr2_proposal_relation_and_verification_rejection_are_exact_and_distinct': {'activation_phase': 'R4',
+                                                                                                                          'assertion_ref': 'assertion:r4-sr2-proposal-relation-verification-rejection-distinct',
+                                                                                                                          'diagnostic_role': 'owner',
+                                                                                                                          'introduced_by_task': 'R4.1-Source-Readiness-SR2',
+                                                                                                                          'owner_ref': 'mutation-partition',
+                                                                                                                          'source_ast_sha256': '24e7773b27f90f3f5a18647c9106ce619340da36408f9f77d93fac247ea89a88'},
+ 'tests/test_r4_supervision_contracts.py::test_supervision_contracts_are_factory_only_frozen_and_canonical[_manifest]': {'activation_phase': 'R4',
                                                                                                                          'assertion_ref': 'assertion:r4-supervision-contracts-factory-only-frozen-canonical',
                                                                                                                          'diagnostic_role': 'owner',
                                                                                                                          'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
@@ -1409,13 +1905,13 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervi
                                                                                                                                  'diagnostic_role': 'owner',
                                                                                                                                  'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                                  'owner_ref': 'mutation-partition',
-                                                                                                                                 'source_ast_sha256': '06b9f4c27877704cf2cdd4cb7e3578e5d5cbb211d7ac68328a5e7e20d44718c3'},
+                                                                                                                                 'source_ast_sha256': '024ad7862b627c1b9f61f0af3ff9dc5326af4f2d285e18d86cc9c5e4ba859011'},
  'tests/test_r4_supervision_contracts.py::test_derivation_blueprints_reject_unsafe_selectors_and_unbounded_lists': {'activation_phase': 'R4',
                                                                                                                     'assertion_ref': 'assertion:r4-derivation-blueprints-reject-unsafe-unbounded',
                                                                                                                     'diagnostic_role': 'owner',
                                                                                                                     'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                     'owner_ref': 'mutation-partition',
-                                                                                                                    'source_ast_sha256': '1adb769a0d940595736fb9b72b86549fa0619a99821e372335b051b051a61c06'},
+                                                                                                                    'source_ast_sha256': 'ef3a2a327b625a85e97932f4a2af615e08d7603bcdfa3cd9d7a120e699abcdec'},
  'tests/test_r4_supervision_contracts.py::test_realization_alignment_is_exact_bounded_and_never_input_as_output_gold': {'activation_phase': 'R4',
                                                                                                                         'assertion_ref': 'assertion:r4-realization-alignment-exact-bounded-no-input-gold',
                                                                                                                         'diagnostic_role': 'owner',
@@ -1439,25 +1935,25 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervi
                                                                                                                       'diagnostic_role': 'owner',
                                                                                                                       'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                       'owner_ref': 'mutation-partition',
-                                                                                                                      'source_ast_sha256': '602ba4058604f712e733f7c8e8b03977736719580b29ded5413cdb81d95ec61b'},
+                                                                                                                      'source_ast_sha256': '06ab98ac26e7c00ea2fbc6c51b25ff70ab49dfea9647e8bcad09a6de47a4ab94'},
  'tests/test_r4_supervision_contracts.py::test_review_provenance_uses_closed_typed_namespaces': {'activation_phase': 'R4',
                                                                                                  'assertion_ref': 'assertion:r4-review-provenance-closed-typed-namespaces',
                                                                                                  'diagnostic_role': 'owner',
                                                                                                  'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                  'owner_ref': 'mutation-partition',
-                                                                                                 'source_ast_sha256': '1674f992efdd957f87cd5fdc2fcd2cbb8ab604aabacf1bec0caaeb1e23fff79e'},
+                                                                                                 'source_ast_sha256': '757b126a0c26ceea360837d428947bee834bb25eaff2c9cef19a429c0c574247'},
  'tests/test_r4_supervision_contracts.py::test_blueprint_action_abi_enforces_ordered_shapes_and_local_graph_integrity': {'activation_phase': 'R4',
                                                                                                                          'assertion_ref': 'assertion:r4-blueprint-action-abi-local-graph-integrity',
                                                                                                                          'diagnostic_role': 'owner',
                                                                                                                          'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                          'owner_ref': 'mutation-partition',
-                                                                                                                         'source_ast_sha256': '9153f2f8681ec92a24f9c2b4d757237a5d077bf9b1ee5a271c902ba3c2914f85'},
+                                                                                                                         'source_ast_sha256': 'd88756d58c47089fbaf51839e91de6deb52323e2bbd659ee2cb897cce2e5b772'},
  'tests/test_r4_supervision_contracts.py::test_parent_factories_reject_forged_nested_supervision_values': {'activation_phase': 'R4',
                                                                                                            'assertion_ref': 'assertion:r4-supervision-parent-rejects-forged-nested-values',
                                                                                                            'diagnostic_role': 'owner',
                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                            'owner_ref': 'mutation-partition',
-                                                                                                           'source_ast_sha256': '7f93697f405a01bb0a5af6b583bac2719fe35660a645b793a1d2a860c9b180d7'},
+                                                                                                           'source_ast_sha256': '9ab1d4689989adbe343a10a9193376f918fa109b72ce3d0c32faea8f7f2f0b77'},
  'tests/test_r4_supervision_contracts.py::test_literal_alignment_kind_and_ref_namespace_cannot_be_confused': {'activation_phase': 'R4',
                                                                                                               'assertion_ref': 'assertion:r4-literal-alignment-tag-ref-exact',
                                                                                                               'diagnostic_role': 'owner',
@@ -1613,4 +2109,4 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_supervi
                                                                                                                   'diagnostic_role': 'owner',
                                                                                                                   'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                   'owner_ref': 'mutation-partition',
-                                                                                                                  'source_ast_sha256': '29175e5eaf7883d50223ff0194d16a6cb83b393a7aa32261f46378af53b8df0d'}}
+                                                                                                                  'source_ast_sha256': 'eac943addf8fb21f383678235ef1cd3da80fe215fb5b1c986f5fd647e90bda8e'}}
