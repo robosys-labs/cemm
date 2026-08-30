@@ -1131,14 +1131,14 @@ git diff --check
 Expected: all tests pass; SR5 remains isolated; lint, Python compilation,
 JavaScript syntax and diff integrity pass.
 
-- [ ] **Step 5: Commit documentation**
+- [x] **Step 5: Commit documentation**
 
 ```powershell
 git add artifacts/review_inputs/r4_1/README.md docs/superpowers/plans/2026-08-30-r4-1-supervision-authoring-automation-plan.md
 git commit -m "docs(r4): hand off guided accountable review"
 ```
 
-- [ ] **Step 6: Verify and push without rewriting remote history**
+- [x] **Step 6: Verify and push without rewriting remote history**
 
 ```powershell
 git fetch origin
