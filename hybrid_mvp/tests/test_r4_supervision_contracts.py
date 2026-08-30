@@ -2304,7 +2304,7 @@ def test_authenticated_review_bundle_has_no_public_mint_api(tmp_path: Path) -> N
     bundle_type = supervision_module.AuthenticatedR4ReviewBundle
     assert "create" not in bundle_type.__dict__
     assert "_mint_authenticated_r4_review_bundle" not in supervision_module.__all__
-    bundle = supervision_module.load_authenticated_r4_review_bundle(root)
+    supervision_module.load_authenticated_r4_review_bundle(root)
     with pytest.raises(TypeError, match="created only by load_authenticated"):
         bundle_type()
 
@@ -3301,6 +3301,54 @@ def test_sr5_worksheet_envelopes_rows_identities_and_source_joins_are_exact(
         "realization_supervision": 388,
         "mutation_truth": 388,
     }
+    proposal_rows = [
+        row
+        for row in supervision["rows"]
+        if row["row_kind"] == "proposal_supervision"
+    ]
+    assert all(
+        all(
+            row["source_projection"][field]
+            for field in (
+                "form_lattice_ref",
+                "grounding_ref",
+                "proposal_context_ref",
+            )
+        )
+        for row in proposal_rows
+    )
+    recipe_suggestions = [
+        row["source_projection"]["recipe_suggestion"] for row in proposal_rows
+    ]
+    assert len({row["suggestion_ref"] for row in recipe_suggestions}) == 388
+    assert len({row["family_ref"] for row in recipe_suggestions}) == 56
+    assert sum(row["family_definition"] is not None for row in recipe_suggestions) == 56
+    assert all(row["selectable"] is False for row in recipe_suggestions)
+    designation_rows = [
+        row
+        for row in supervision["rows"]
+        if row["row_kind"] == "designation_supervision"
+    ]
+    assert sum(bool(row["candidate_bindings"]) for row in designation_rows) == 327
+    assert sum(not row["candidate_bindings"] for row in designation_rows) == 61
+    assert all(
+        option["selectable"] is False
+        for row in designation_rows
+        for option in row["options"]
+    )
+    assert all(
+        {
+            "surface",
+            "start",
+            "end",
+            "unit_refs",
+            "designation_fact_ref",
+            "candidate_target_ref",
+        }
+        == set(binding)
+        for row in designation_rows
+        for binding in row["candidate_bindings"]
+    )
     assert all(row["options"] for row in supervision["rows"])
     assert all(
         option["selectable"] is False

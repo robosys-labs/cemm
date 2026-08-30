@@ -8,6 +8,25 @@
 
 **Tech Stack:** Python 3.11+, frozen dataclasses, canonical JSON/JSONL, JSON Schema Draft 2020-12, SHA-256 content identities, pytest, existing CEMM authority/form/grounding/Program/SemanticExpression/Response supervision ABIs.
 
+## Execution status
+
+| Task | Status | Evidence |
+|---|---|---|
+| 1-3 | complete | mutation ABI, review context and canonical designation authority committed |
+| 4-6 | complete | independent derivation/realization/mutation compilers committed |
+| 7 | complete | exact operation prerequisites source-owned and authority-linked |
+| 8 | complete | optional bounded local evidence sidecar committed |
+| 9 | complete | purpose-scoped worksheet-local recipes and explicit ancestry committed |
+| 10A | complete | one-pass source/context cache and exact designation/recipe suggestions |
+| 10B | pending reviewer selection input | purpose-scoped proposal expansion and mandatory derivation compilation |
+| 11-16 | pending | realization, mutation families, performance, publication and handoff |
+
+Task 10 was split after an executable full-universe probe found that purpose
+recipes cannot be authored from unresolved purpose options and that including
+the final purpose child in its own review-context input would be circular.
+The split adds no runtime ABI or release gate; it makes the already-required
+human decision an explicit bounded input between two draft generations.
+
 ---
 
 ## 1. Relationship to the governing replay
@@ -1428,7 +1447,29 @@ git commit -m "feat(r4): define purpose scoped authoring recipes"
 - Create: `tests/test_r4_review_worksheets.py`
 - Modify: `tests/test_r4_supervision_contracts.py`
 
-- [ ] **Step 1: Write failing full-case candidate inventory tests**
+### Task 10A: Generate source/context and designation evidence
+
+Task 10A is source-only and may run before purpose selection.  It builds and
+authenticates one FormLattice, GroundingResult and ProposalContext per eligible
+case, emits exact designation candidate sets and normalized proposal-recipe
+suggestions, and leaves every suggestion non-selectable.  These records do not
+pretend to be `AuthoringRecipe` values because that type requires a settled
+purpose.
+
+### Task 10B: Expand proposals after explicit reviewer selections
+
+Task 10B requires one canonical bounded reviewer-selection input that selects
+the structural branch, every purpose/group/holdout option and reviewed recipe
+parameters by exact worksheet option/row refs.  The input contains no
+`source_review`, manifest, bundle or child-row identity.  The final draft adds
+its bytes to the authenticated input set, computes the prospective review
+context and only then creates purpose-scoped `AuthoringRecipe` and
+`AuthoringCandidate` values.  A changed selection forces regeneration.
+
+Do not infer a purpose, auto-select a solver result, expand one case into all
+four purposes, or hash a final `PurposeContract` into the review-context input.
+
+- [x] **Step 1: Write failing source/context and designation inventory tests**
 
 ```python
 def test_proposal_and_designation_authoring_covers_successor_universe(
@@ -1455,11 +1496,16 @@ def test_designation_spans_come_from_form_geometry(authoring_result):
             assert case.surface[fact["source_start"]:fact["source_end"]] == fact["source_text"]
 ```
 
-Add exact tests for 61 reviewed-empty gap/rejection sets, 22 overlapping cases,
-no default concept, no ref-name lexicalization and no use of the old `_PROPOSALS`
-table as general designation authority.
+In Task 10A, apply the designation assertions to the source-only evidence
+result.  Apply the proposal `AuthoringCandidate` assertions only in Task 10B
+with a canonical reviewer-selection fixture.
 
-- [ ] **Step 2: Run tests and verify current 8/388 designation limitation**
+Add exact tests deriving 61 reviewed-empty gap/rejection sets, 12 cases with
+intersecting spans, 13 undirected overlap pairs and 21 cases with a multi-unit
+designation span.  Also prove no default concept, no ref-name lexicalization
+and no use of the old `_PROPOSALS` table as general designation authority.
+
+- [x] **Step 2: Run tests and verify current 8/388 designation limitation**
 
 ```powershell
 python -m pytest tests/test_r4_authoring_pipeline.py tests/test_r4_review_worksheets.py -k "proposal or designation" -q
@@ -1469,7 +1515,7 @@ Expected: failure because the current worksheet builder populates designation
 candidates only for eight structural proposal rows and emits no exact proposal
 records.
 
-- [ ] **Step 3: Add one source snapshot/context cache per case**
+- [x] **Step 3: Add one source snapshot/context cache per case (10A)**
 
 In the builder, authenticate and hash:
 
@@ -1480,16 +1526,25 @@ configs/proposal_release.json
 complete authority manifest/file closure
 r4 source expander/compiler closure
 three reviewed supervision compiler source closures
-purpose decisions
 review policy
 optional local evidence manifest
 ```
+
+Task 10B additionally authenticates the bounded reviewer-selection input.
+Task 10A must not pretend that unresolved purpose-decision worksheet rows are
+selected inputs.
 
 Build one FormLattice, GroundingResult and immutable ProposalContext per
 supervised case and store them in bounded dicts keyed by case ref. Expose
 operation counters proving one construction per case.
 
-- [ ] **Step 4: Generate proposal candidates by normalized family**
+- [x] **Step 4: Emit non-selectable normalized proposal recipe suggestions (10A)**
+
+The source-only draft may group complete normalized shapes and expose concrete
+case parameters.  It must not construct purpose-scoped recipes or selectable
+proposal rows before the reviewer-selection input exists.
+
+- [ ] **Step 4B: Validate selections and generate proposal candidates (10B)**
 
 Derive the complete family key from source-owned expression topology, mode,
 outcome, gap/rejection shape and relation. Expand the reviewed recipe to an
@@ -1499,7 +1554,7 @@ gap cases exact `TypedAbstention`, and rejection cases exact
 derivation before setting `selectable: true`; a failure emits an explicit
 exception and no proposed ABI row.
 
-- [ ] **Step 5: Generate canonical designation sets**
+- [x] **Step 5: Generate canonical designation sets**
 
 For each FormLattice unit span of at most eight units, use only
 `authority.designations.facts_for_surface`. Emit exact case/surface/span/fact
@@ -1507,7 +1562,7 @@ bindings in canonical geometry/ref order and preserve overlaps. Enforce eight
 targets per span. Emit an exact-empty set only for a nonsemantic source case
 when the independent full scan returns no facts.
 
-- [ ] **Step 6: Wire exact derivation compilation into cross-source validation**
+- [ ] **Step 6: Wire exact derivation compilation into cross-source validation (10B)**
 
 Pass the complete repository-owned per-case `ProposalContext` cache from Step 3
 to the one cross-source validator. Compile every semantic derivation with

@@ -62,8 +62,11 @@ Fresh source-only probes found:
 - designation authoring has 40 topology/kind families, 327 nonempty cases and
   61 exact-empty gap/rejection cases;
 - every semantic case has at least one explicit authority-backed designation,
-  with at most six matched spans per case, at most one target per span and 22
-  intentional overlap cases;
+  with at most six matched spans per case and at most one target per span;
+- exact FormLattice geometry contains 12 cases with intersecting designation
+  spans (13 undirected overlap pairs) and 21 cases with at least one
+  multi-unit designation span; the earlier count of 22 conflated these two
+  predicates and is retired;
 - the six currently applicable adversarial mutation families expand to 1,932
   contracts over the 388 supervised cases;
 - all 37 normal-effect cases join uniquely: 18 to reviewed adapter receipts and
@@ -181,6 +184,26 @@ with risk escalation for exceptions and conflicts. That act does not replace
 the separate second data-review checkpoint required later in main replay Task
 4. Adding an escalation reviewer changes the frozen reviewer set and therefore
 mints a new review-context and all dependent candidate identities.
+
+Purpose and structural-branch selection must precede purpose-scoped recipe
+expansion, but a final `PurposeContract` cannot be hashed as a review-context
+input because the contract itself names that review context.  Authoring is
+therefore a two-draft, one-publication workflow:
+
+1. the source-only draft emits structural, purpose, designation-geometry and
+   normalized recipe suggestions;
+2. an accountable reviewer writes one bounded, non-authoritative selection
+   input containing exact selected option refs and reviewed recipe parameters;
+3. the final draft authenticates that selection input with all other inputs,
+   computes the prospective non-circular review context, and expands concrete
+   purpose-scoped child rows; and
+4. one explicit final approval publishes the existing manifest and child ABIs.
+
+The selection input is worksheet-local.  It is not a runtime ABI, semantic
+authority, activation gate or published child.  Changing any selection forces
+complete deterministic regeneration and a new review context.  No recipe may
+be expanded by guessing a purpose, multiplying one case across four purposes,
+or reading an unresolved worksheet option as though it were selected.
 
 Every generated suggestion uses one closed, non-authoritative candidate
 envelope containing candidate kind, source case, purpose, recipe ref, exact

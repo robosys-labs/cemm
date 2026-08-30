@@ -20,10 +20,18 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
-from cemm_authoritative_hybrid.authority import AuthorityLinker, LinkedAuthority
-from cemm_authoritative_hybrid.canonical import stable_ref
-from cemm_authoritative_hybrid.r4_contracts import ReviewedScenario
-from cemm_authoritative_hybrid.r4_expansion import (
+from cemm_authoritative_hybrid.authority import (  # noqa: E402
+    AuthorityLinker,
+    LinkedAuthority,
+)
+from cemm_authoritative_hybrid.canonical import stable_ref  # noqa: E402
+from cemm_authoritative_hybrid.config import RuntimeConfig  # noqa: E402
+from cemm_authoritative_hybrid.r4_authoring import (  # noqa: E402
+    SourceAuthoringCache,
+    build_source_authoring_cache,
+)
+from cemm_authoritative_hybrid.r4_contracts import ReviewedScenario  # noqa: E402
+from cemm_authoritative_hybrid.r4_expansion import (  # noqa: E402
     SourceUniverse,
     expand_reviewed_source_universe,
 )
@@ -111,6 +119,12 @@ _COMPILER_MODULES = (
     "r3_persistence.py",
     "r4_contracts.py",
     "r4_expansion.py",
+    "_r4_source_codec.py",
+    "r4_authoring.py",
+    "r4_purpose.py",
+    "r4_realization_compiler.py",
+    "r4_review_context.py",
+    "r4_supervision.py",
     "recursive_composer/__init__.py",
     "recursive_composer/_core.py",
     "recursive_composer/_expand.py",
@@ -169,6 +183,7 @@ def _verify_compiler_module_closure(inputs: Mapping[str, bytes]) -> None:
         f"{package}.canonical",
         f"{package}.r4_contracts",
         f"{package}.r4_expansion",
+        f"{package}.r4_authoring",
     ]
     reached: set[str] = set()
 
@@ -1142,13 +1157,16 @@ def _validate_structural_rows(rows: Sequence[Mapping[str, Any]]) -> None:
 
 
 def _supervision_rows(
-    current_universe: SourceUniverse, candidate_universe: SourceUniverse
+    authoring_cache: SourceAuthoringCache,
 ) -> tuple[dict[str, Any], ...]:
     proposal_by_scenario = {item["scenario"]["scenario_ref"]: item for item in _PROPOSALS}
+    family_definition_owners: dict[str, str] = {}
+    for suggestion in authoring_cache.proposal_recipe_suggestions_by_case.values():
+        prior = family_definition_owners.get(suggestion.family_ref)
+        if prior is None or suggestion.source_case_ref < prior:
+            family_definition_owners[suggestion.family_ref] = suggestion.source_case_ref
     rows: list[dict[str, Any]] = []
-    for case in (*current_universe.cases, *candidate_universe.cases):
-        if case.source_disposition.value == "restart_diagnostic_candidate":
-            continue
+    for case in authoring_cache.cases:
         subject_ref = case.case_ref
         proposal = proposal_by_scenario.get(case.scenario_ref)
         expected_response = None if case.contract.expected_response is None else case.contract.expected_response.as_dict()
@@ -1172,17 +1190,31 @@ def _supervision_rows(
             "candidate_surface": None if proposal is None else proposal["candidate_output"],
         }
         designation_candidates = []
-        if proposal is not None:
-            surface = proposal["scenario"]["surface_examples"][0]
-            for start, end, target in proposal["designation_spans"]:
-                designation_candidates.append(
-                    {
-                        "surface": surface[start:end],
-                        "start": start,
-                        "end": end,
-                        "candidate_target_ref": target,
-                    }
-                )
+        designation_set = authoring_cache.designation_sets_by_case[case.case_ref]
+        for binding in designation_set.bindings:
+            designation_candidates.append(
+                {
+                    "surface": binding.source_text,
+                    "start": binding.source_start,
+                    "end": binding.source_end,
+                    "unit_refs": list(binding.unit_refs),
+                    "designation_fact_ref": binding.designation_fact_ref,
+                    "candidate_target_ref": binding.target_ref,
+                }
+            )
+        lattice = authoring_cache.form_lattices_by_case[case.case_ref]
+        grounding = authoring_cache.grounding_results_by_case[case.case_ref]
+        context = authoring_cache.proposal_contexts_by_case[case.case_ref]
+        recipe_suggestion = authoring_cache.proposal_recipe_suggestions_by_case[
+            case.case_ref
+        ]
+        recipe_projection = recipe_suggestion.as_dict()
+        family_definition = recipe_projection.pop("normalized_family_key")
+        recipe_projection["family_definition"] = (
+            family_definition
+            if family_definition_owners[recipe_suggestion.family_ref] == case.case_ref
+            else None
+        )
         rows.append(
             _decision(
                 row_kind="proposal_supervision",
@@ -1194,7 +1226,13 @@ def _supervision_rows(
                     "language": case.language,
                     "source_disposition": case.source_disposition.value,
                     "branch_applicability": branch_applicability,
-                    "source_projection": proposal_projection,
+                    "source_projection": {
+                        **proposal_projection,
+                        "form_lattice_ref": lattice.lattice_ref,
+                        "grounding_ref": grounding.grounding_ref,
+                        "proposal_context_ref": context.context_ref,
+                        "recipe_suggestion": recipe_projection,
+                    },
                 },
                 options=(
                     _option(
@@ -1229,6 +1267,7 @@ def _supervision_rows(
                     designation_subject,
                     "approve_exact_candidate_bindings",
                     {"bindings": designation_candidates},
+                    selectable=False,
                 ),
             )
         rows.append(
@@ -1558,6 +1597,23 @@ def _build_bytes(repository_root: Path) -> dict[str, bytes]:
         root / "scripts/generate_scenarios.py", maximum=MAX_INPUT_BYTES, owner="generator"
     )
     builder_raw = _read_regular(builder_path, maximum=MAX_INPUT_BYTES, owner="worksheet builder")
+    form_pack_raw = _read_regular(
+        root / "data/languages/en/forms.json",
+        maximum=MAX_INPUT_BYTES,
+        owner="form pack",
+    )
+    proposal_config_raw = _read_regular(
+        root / "configs/proposal_release.json",
+        maximum=MAX_INPUT_BYTES,
+        owner="proposal release config",
+    )
+    form_pack = _strict_json(form_pack_raw, owner="form pack")
+    proposal_config = _strict_json(
+        proposal_config_raw,
+        owner="proposal release config",
+    )
+    if type(form_pack) is not dict or type(proposal_config) is not dict:
+        raise ValueError("authoring form pack and proposal config must be exact objects")
     compiler_inputs = tuple(
         (
             relative,
@@ -1587,6 +1643,12 @@ def _build_bytes(repository_root: Path) -> dict[str, bytes]:
         raise ValueError("current source universe differs from audited boundary")
     proposal_scenarios = tuple(ReviewedScenario.from_dict(item["scenario"]) for item in _PROPOSALS)
     candidate_universe = expand_reviewed_source_universe(proposal_scenarios, authority=authority)
+    authoring_cache = build_source_authoring_cache(
+        cases=(*current_universe.cases, *candidate_universe.cases),
+        authority=authority,
+        form_pack=form_pack,
+        config=RuntimeConfig.release(),
+    )
     provisional = tuple(
         {
             "resulting_scenario_row": item["scenario"],
@@ -1612,6 +1674,8 @@ def _build_bytes(repository_root: Path) -> dict[str, bytes]:
                 _input_row("data/scenarios/use_cases.jsonl", scenario_raw),
                 _input_row("scripts/generate_scenarios.py", generator_raw),
                 _input_row("scripts/build_r4_1_review_worksheets.py", builder_raw),
+                _input_row("data/languages/en/forms.json", form_pack_raw),
+                _input_row("configs/proposal_release.json", proposal_config_raw),
                 *(_input_row(relative, raw) for relative, raw in compiler_inputs),
                 *authority_inputs,
             ),
@@ -1630,7 +1694,7 @@ def _build_bytes(repository_root: Path) -> dict[str, bytes]:
     worksheets = {
         "SOURCE_UNIVERSE.json": _envelope(schema=_SCHEMAS["SOURCE_UNIVERSE.json"], rows=source_worksheet_rows, inputs=inputs, snapshot=snapshot),
         "STRUCTURAL_DECISIONS.json": _envelope(schema=_SCHEMAS["STRUCTURAL_DECISIONS.json"], rows=structural_rows, inputs=inputs, snapshot=snapshot),
-        "SUPERVISION_DECISIONS.json": _envelope(schema=_SCHEMAS["SUPERVISION_DECISIONS.json"], rows=_supervision_rows(current_universe, candidate_universe), inputs=inputs, snapshot=snapshot),
+        "SUPERVISION_DECISIONS.json": _envelope(schema=_SCHEMAS["SUPERVISION_DECISIONS.json"], rows=_supervision_rows(authoring_cache), inputs=inputs, snapshot=snapshot),
         "PURPOSE_DECISIONS.json": _envelope(schema=_SCHEMAS["PURPOSE_DECISIONS.json"], rows=_purpose_rows(current_universe, candidate_universe), inputs=inputs, snapshot=snapshot),
     }
     json_payloads = {name: _json_bytes(value) for name, value in worksheets.items()}
@@ -1940,25 +2004,120 @@ def _validate_bundle_joins(decoded: Mapping[str, Mapping[str, Any]]) -> None:
         key for key in by_case_and_kind
     } != {(case_ref, kind) for case_ref in supervised for kind in required_supervision_kinds}:
         raise ValueError("supervision worksheet decision inventory is incomplete")
+    recipe_family_refs: set[str] = set()
+    recipe_family_definitions: dict[str, list[object]] = {}
+    recipe_suggestions: list[Mapping[str, Any]] = []
     for case_ref, source_case in supervised.items():
+        proposal = by_case_and_kind[(case_ref, "proposal_supervision")]
         designation = by_case_and_kind[(case_ref, "designation_supervision")]
         realization = by_case_and_kind[(case_ref, "realization_supervision")]
         proposal_spec = proposal_specs.get(source_case["scenario_ref"])
-        expected_bindings = [] if proposal_spec is None else [
-            {
-                "surface": proposal_spec["scenario"]["surface_examples"][0][start:end],
-                "start": start,
-                "end": end,
-                "candidate_target_ref": target,
-            }
-            for start, end, target in proposal_spec["designation_spans"]
-        ]
-        if designation["candidate_bindings"] != expected_bindings:
-            raise ValueError("designation candidate bindings differ from structural proposal")
+        recipe = proposal["source_projection"].get("recipe_suggestion")
+        if type(recipe) is not dict or set(recipe) != {
+            "suggestion_ref",
+            "source_case_ref",
+            "target_kind",
+            "family_ref",
+            "family_definition",
+            "case_parameters",
+            "selectable",
+        }:
+            raise ValueError("proposal recipe suggestion shape is invalid")
+        expected_target = {
+            "semantic": "derive",
+            "explicit_gap": "abstain",
+            "verification_rejection": "verification_rejection",
+        }[source_case["source_disposition"]]
+        if (
+            recipe["source_case_ref"] != case_ref
+            or recipe["target_kind"] != expected_target
+            or recipe["selectable"] is not False
+            or not str(recipe["suggestion_ref"]).startswith(
+                "proposal_recipe_suggestion:"
+            )
+            or not str(recipe["family_ref"]).startswith(
+                "proposal_recipe_family_suggestion:"
+            )
+            or type(recipe["case_parameters"]) is not dict
+            or (
+                recipe["family_definition"] is not None
+                and type(recipe["family_definition"]) is not list
+            )
+        ):
+            raise ValueError("proposal recipe suggestion is invalid")
+        recipe_family_refs.add(recipe["family_ref"])
+        recipe_suggestions.append(recipe)
+        if recipe["family_definition"] is not None:
+            if recipe["family_ref"] in recipe_family_definitions:
+                raise ValueError("proposal recipe family has duplicate definitions")
+            recipe_family_definitions[recipe["family_ref"]] = recipe[
+                "family_definition"
+            ]
+        binding_order = []
+        for binding in designation["candidate_bindings"]:
+            if type(binding) is not dict or set(binding) != {
+                "surface",
+                "start",
+                "end",
+                "unit_refs",
+                "designation_fact_ref",
+                "candidate_target_ref",
+            }:
+                raise ValueError("designation candidate binding shape is invalid")
+            start = binding["start"]
+            end = binding["end"]
+            if (
+                type(start) is not int
+                or type(end) is not int
+                or start < 0
+                or end <= start
+                or end > len(source_case["surface"])
+                or binding["surface"] != source_case["surface"][start:end]
+                or type(binding["unit_refs"]) is not list
+                or not 1 <= len(binding["unit_refs"]) <= 8
+                or not str(binding["designation_fact_ref"]).startswith("designation:")
+            ):
+                raise ValueError("designation candidate geometry is invalid")
+            binding_order.append(
+                (
+                    start,
+                    end,
+                    binding["candidate_target_ref"],
+                    binding["designation_fact_ref"],
+                )
+            )
+        if any(left >= right for left, right in zip(binding_order, binding_order[1:])):
+            raise ValueError("designation candidate bindings are not canonical")
         candidate_surface = realization["source_projection"]["candidate_surface"]
         expected_surface = None if proposal_spec is None else proposal_spec["candidate_output"]
         if candidate_surface != expected_surface:
             raise ValueError("realization candidate surface differs from structural proposal")
+    if recipe_family_refs != set(recipe_family_definitions):
+        raise ValueError("proposal recipe family catalog is incomplete")
+    for recipe in recipe_suggestions:
+        family_key = recipe_family_definitions[recipe["family_ref"]]
+        family_material = {
+            "target_kind": recipe["target_kind"],
+            "normalized_family_key": family_key,
+        }
+        if recipe["family_ref"] != stable_ref(
+            "proposal_recipe_family_suggestion",
+            family_material,
+        ):
+            raise ValueError("proposal recipe family identity does not reconstruct")
+        suggestion_material = {
+            "source_case_ref": recipe["source_case_ref"],
+            "target_kind": recipe["target_kind"],
+            "family_ref": recipe["family_ref"],
+            "normalized_family_key": family_key,
+            "case_parameters": recipe["case_parameters"],
+            "selectable": False,
+        }
+        if recipe["suggestion_ref"] != stable_ref(
+            "proposal_recipe_suggestion",
+            suggestion_material,
+        ):
+            raise ValueError("proposal recipe suggestion identity does not reconstruct")
 
     purpose = decoded["PURPOSE_DECISIONS.json"]["rows"]
     memberships = [row for row in purpose if row["row_kind"] == "membership"]
@@ -2112,6 +2271,8 @@ def _validate_bound_repository_inputs(
         "data/scenarios/use_cases.jsonl",
         "scripts/generate_scenarios.py",
         "scripts/build_r4_1_review_worksheets.py",
+        "data/languages/en/forms.json",
+        "configs/proposal_release.json",
         *(f"src/cemm_authoritative_hybrid/{name}" for name in _COMPILER_MODULES),
         "data/authority/manifest.json",
     }
@@ -2179,6 +2340,22 @@ def _validate_repository_semantics(
         candidate_scenarios,
         authority=authority,
     )
+    form_pack = _strict_json(
+        retained["data/languages/en/forms.json"],
+        owner="retained form pack",
+    )
+    proposal_config = _strict_json(
+        retained["configs/proposal_release.json"],
+        owner="retained proposal release config",
+    )
+    if type(form_pack) is not dict or type(proposal_config) is not dict:
+        raise ValueError("retained authoring inputs must be exact objects")
+    authoring_cache = build_source_authoring_cache(
+        cases=(*current_universe.cases, *candidate_universe.cases),
+        authority=authority,
+        form_pack=form_pack,
+        config=RuntimeConfig.release(),
+    )
     structural_proposals = tuple(
         {"resulting_scenario_row": item["scenario"]} for item in _PROPOSALS
     )
@@ -2204,7 +2381,7 @@ def _validate_repository_semantics(
     )
     if decoded["STRUCTURAL_DECISIONS.json"]["rows"] != list(expected_structural):
         raise ValueError("worksheet structural decisions do not reconstruct bound source")
-    expected_supervision = _supervision_rows(current_universe, candidate_universe)
+    expected_supervision = _supervision_rows(authoring_cache)
     if decoded["SUPERVISION_DECISIONS.json"]["rows"] != list(expected_supervision):
         raise ValueError("worksheet supervision decisions do not reconstruct bound source")
     expected_purpose = _purpose_rows(current_universe, candidate_universe)
