@@ -18,7 +18,7 @@
 | 8 | complete | optional bounded local evidence sidecar committed |
 | 9 | complete | purpose-scoped worksheet-local recipes and explicit ancestry committed |
 | 10A | complete | one-pass source/context cache and exact designation/recipe suggestions |
-| 10B | pending reviewer selection input | purpose-scoped proposal expansion and mandatory derivation compilation |
+| 10B | awaiting accountable selections | strict 1,056-target template/validator ready; purpose-scoped expansion remains disabled |
 | 11-16 | pending | realization, mutation families, performance, publication and handoff |
 
 Task 10 was split after an executable full-universe probe found that purpose
@@ -1468,6 +1468,15 @@ context and only then creates purpose-scoped `AuthoringRecipe` and
 
 Do not infer a purpose, auto-select a solver result, expand one case into all
 four purposes, or hash a final `PurposeContract` into the review-context input.
+
+The bounded handoff is now generated at
+`artifacts/review_inputs/r4_1/SELECTION_TEMPLATE.json` with identity
+`r4_authoring_selection_template:08b58fe89e8a11c92b188452` and SHA-256
+`44a9e1f1a0418fda4b8bfa9a790a8fdd2069eb62d7653b34f6cc996d66bed37d`.
+It covers 12 structural, 600 purpose, 56 proposal-family and 388 designation
+targets.  All selections, reviewer refs and purpose-scoped recipe parameters
+remain empty.  The template is inert and does not unblock expansion until a
+completed working copy passes the implemented strict selection validator.
 
 - [x] **Step 1: Write failing source/context and designation inventory tests**
 

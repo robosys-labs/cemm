@@ -1,0 +1,94 @@
+{
+  "$id": "https://robosys-labs.github.io/cemm/schemas/r4_authoring_selection.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Worksheet-local reviewer input only. This is not a runtime ABI, reviewed child source, manifest, or activation gate.",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "cemm-r4-authoring-review-selection-v1"},
+    "selection_template_ref": {"$ref": "#/$defs/templateRef"},
+    "selection_state": {"enum": ["unresolved", "reviewed"]},
+    "draft_input_set_ref": {"pattern": "^r4_1_review_input_set_v1:[0-9a-f]{24}$", "type": "string"},
+    "draft_worksheet_refs": {
+      "additionalProperties": false,
+      "properties": {
+        "STRUCTURAL_DECISIONS.json": {"$ref": "#/$defs/worksheetRef"},
+        "SUPERVISION_DECISIONS.json": {"$ref": "#/$defs/worksheetRef"},
+        "PURPOSE_DECISIONS.json": {"$ref": "#/$defs/worksheetRef"}
+      },
+      "required": ["STRUCTURAL_DECISIONS.json", "SUPERVISION_DECISIONS.json", "PURPOSE_DECISIONS.json"],
+      "type": "object"
+    },
+    "selection_schema_path": {"const": "schemas/r4_authoring_selection.schema.json"},
+    "selection_schema_sha256": {"$ref": "#/$defs/sha256"},
+    "reviewer_refs": {
+      "items": {"pattern": "^reviewer:[^\\s:][^\\s]*$", "type": "string"},
+      "maxItems": 128,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "structural_selections": {"items": {"$ref": "#/$defs/decisionSelection"}, "maxItems": 64, "minItems": 1, "type": "array"},
+    "purpose_selections": {"items": {"$ref": "#/$defs/decisionSelection"}, "maxItems": 4096, "minItems": 1, "type": "array"},
+    "proposal_recipe_selections": {"items": {"$ref": "#/$defs/recipeSelection"}, "maxItems": 512, "minItems": 1, "type": "array"},
+    "designation_selections": {"items": {"$ref": "#/$defs/designationSelection"}, "maxItems": 512, "minItems": 1, "type": "array"}
+  },
+  "required": ["schema", "selection_template_ref", "selection_state", "draft_input_set_ref", "draft_worksheet_refs", "selection_schema_path", "selection_schema_sha256", "reviewer_refs", "structural_selections", "purpose_selections", "proposal_recipe_selections", "designation_selections"],
+  "title": "CEMM R4 Authoring Review Selection",
+  "type": "object",
+  "$defs": {
+    "bindingRef": {"pattern": "^designation_binding_suggestion:[0-9a-f]{24}$", "type": "string"},
+    "caseRef": {"pattern": "^expanded_case_v2:[0-9a-f]{24}$", "type": "string"},
+    "decisionSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "row_ref": {"pattern": "^review_worksheet_row:[0-9a-f]{24}$", "type": "string"},
+        "row_kind": {"maxLength": 64, "minLength": 1, "type": "string"},
+        "subject_ref": {"$ref": "#/$defs/ref"},
+        "allowed_option_refs": {"items": {"$ref": "#/$defs/optionRef"}, "maxItems": 16, "minItems": 1, "type": "array", "uniqueItems": true},
+        "selected_option_ref": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/optionRef"}]}
+      },
+      "required": ["row_ref", "row_kind", "subject_ref", "allowed_option_refs", "selected_option_ref"],
+      "type": "object"
+    },
+    "designationSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "source_case_ref": {"$ref": "#/$defs/caseRef"},
+        "candidate_set_ref": {"pattern": "^designation_candidate_set:[0-9a-f]{24}$", "type": "string"},
+        "candidate_binding_refs": {"items": {"$ref": "#/$defs/bindingRef"}, "maxItems": 512, "type": "array", "uniqueItems": true},
+        "decision": {"enum": [null, "approve_candidate_bindings", "approve_exact_empty", "reject"]},
+        "approved_binding_refs": {"anyOf": [{"type": "null"}, {"items": {"$ref": "#/$defs/bindingRef"}, "maxItems": 512, "type": "array", "uniqueItems": true}]}
+      },
+      "required": ["source_case_ref", "candidate_set_ref", "candidate_binding_refs", "decision", "approved_binding_refs"],
+      "type": "object"
+    },
+    "familyRef": {"pattern": "^proposal_recipe_family_suggestion:[0-9a-f]{24}$", "type": "string"},
+    "optionRef": {"pattern": "^review_worksheet_option:[0-9a-f]{24}$", "type": "string"},
+    "recipeSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "family_ref": {"$ref": "#/$defs/familyRef"},
+        "target_kind": {"enum": ["derive", "abstain", "verification_rejection"]},
+        "family_definition": {"items": {}, "maxItems": 64, "minItems": 1, "type": "array"},
+        "member_case_refs": {"items": {"$ref": "#/$defs/caseRef"}, "maxItems": 512, "minItems": 1, "type": "array", "uniqueItems": true},
+        "purpose_recipes": {"items": {"$ref": "#/$defs/purposeRecipe"}, "maxItems": 4, "type": "array"}
+      },
+      "required": ["family_ref", "target_kind", "family_definition", "member_case_refs", "purpose_recipes"],
+      "type": "object"
+    },
+    "purposeRecipe": {
+      "additionalProperties": false,
+      "properties": {
+        "purpose": {"enum": ["train", "selection", "calibration", "frozen_test"]},
+        "member_case_refs": {"items": {"$ref": "#/$defs/caseRef"}, "maxItems": 512, "minItems": 1, "type": "array", "uniqueItems": true},
+        "decision": {"enum": ["approve", "reject"]},
+        "reviewed_parameters": {"maxProperties": 128, "type": "object"}
+      },
+      "required": ["purpose", "member_case_refs", "decision", "reviewed_parameters"],
+      "type": "object"
+    },
+    "ref": {"maxLength": 512, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$", "type": "string"},
+    "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "templateRef": {"pattern": "^r4_authoring_selection_template:[0-9a-f]{24}$", "type": "string"},
+    "worksheetRef": {"pattern": "^review_worksheet:[0-9a-f]{24}$", "type": "string"}
+  }
+}

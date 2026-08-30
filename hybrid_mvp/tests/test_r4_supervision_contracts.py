@@ -3331,6 +3331,11 @@ def test_sr5_worksheet_envelopes_rows_identities_and_source_joins_are_exact(
     ]
     assert sum(bool(row["candidate_bindings"]) for row in designation_rows) == 327
     assert sum(not row["candidate_bindings"] for row in designation_rows) == 61
+    assert len({row["candidate_set_ref"] for row in designation_rows}) == 388
+    assert all(
+        row["candidate_set_ref"].startswith("designation_candidate_set:")
+        for row in designation_rows
+    )
     assert all(
         option["selectable"] is False
         for row in designation_rows
@@ -3338,6 +3343,7 @@ def test_sr5_worksheet_envelopes_rows_identities_and_source_joins_are_exact(
     )
     assert all(
         {
+            "binding_ref",
             "surface",
             "start",
             "end",
@@ -3349,6 +3355,27 @@ def test_sr5_worksheet_envelopes_rows_identities_and_source_joins_are_exact(
         for row in designation_rows
         for binding in row["candidate_bindings"]
     )
+    hostile_designation = deepcopy(payloads)
+    hostile_row = next(
+        row
+        for row in hostile_designation["SUPERVISION_DECISIONS.json"]["rows"]
+        if row["row_kind"] == "designation_supervision"
+        and row["candidate_bindings"]
+    )
+    hostile_row["candidate_bindings"][0]["binding_ref"] = (
+        "designation_binding_suggestion:" + "0" * 24
+    )
+    with pytest.raises(ValueError, match="binding identity"):
+        worksheets._validate_bundle_joins(hostile_designation)
+    hostile_designation = deepcopy(payloads)
+    hostile_row = next(
+        row
+        for row in hostile_designation["SUPERVISION_DECISIONS.json"]["rows"]
+        if row["row_kind"] == "designation_supervision"
+    )
+    hostile_row["candidate_set_ref"] = "designation_candidate_set:" + "0" * 24
+    with pytest.raises(ValueError, match="candidate-set identity"):
+        worksheets._validate_bundle_joins(hostile_designation)
     assert all(row["options"] for row in supervision["rows"])
     assert all(
         option["selectable"] is False

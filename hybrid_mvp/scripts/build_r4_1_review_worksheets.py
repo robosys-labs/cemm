@@ -27,6 +27,8 @@ from cemm_authoritative_hybrid.authority import (  # noqa: E402
 from cemm_authoritative_hybrid.canonical import stable_ref  # noqa: E402
 from cemm_authoritative_hybrid.config import RuntimeConfig  # noqa: E402
 from cemm_authoritative_hybrid.r4_authoring import (  # noqa: E402
+    DesignationBindingSuggestion,
+    DesignationCandidateSet,
     SourceAuthoringCache,
     build_source_authoring_cache,
 )
@@ -1194,6 +1196,7 @@ def _supervision_rows(
         for binding in designation_set.bindings:
             designation_candidates.append(
                 {
+                    "binding_ref": binding.binding_ref,
                     "surface": binding.source_text,
                     "start": binding.source_start,
                     "end": binding.source_end,
@@ -1281,6 +1284,7 @@ def _supervision_rows(
                     "language": case.language,
                     "surface": case.surface,
                     "branch_applicability": branch_applicability,
+                    "candidate_set_ref": designation_set.candidate_set_ref,
                     "candidate_bindings": designation_candidates,
                 },
                 options=tuple(designation_options),
@@ -1812,7 +1816,8 @@ def _row_fields(schema: str, row_kind: str) -> frozenset[str]:
         },
         "designation_supervision": {
             "source_case_ref", "scenario_ref", "surface_ref", "language",
-            "surface", "branch_applicability", "candidate_bindings",
+            "surface", "branch_applicability", "candidate_set_ref",
+            "candidate_bindings",
         },
         "realization_supervision": {
             "source_case_ref", "scenario_ref", "surface_ref", "language",
@@ -2054,8 +2059,10 @@ def _validate_bundle_joins(decoded: Mapping[str, Mapping[str, Any]]) -> None:
                 "family_definition"
             ]
         binding_order = []
+        reconstructed_bindings = []
         for binding in designation["candidate_bindings"]:
             if type(binding) is not dict or set(binding) != {
+                "binding_ref",
                 "surface",
                 "start",
                 "end",
@@ -2075,9 +2082,25 @@ def _validate_bundle_joins(decoded: Mapping[str, Mapping[str, Any]]) -> None:
                 or binding["surface"] != source_case["surface"][start:end]
                 or type(binding["unit_refs"]) is not list
                 or not 1 <= len(binding["unit_refs"]) <= 8
+                or not str(binding["binding_ref"]).startswith(
+                    "designation_binding_suggestion:"
+                )
                 or not str(binding["designation_fact_ref"]).startswith("designation:")
             ):
                 raise ValueError("designation candidate geometry is invalid")
+            reconstructed = DesignationBindingSuggestion.create(
+                source_case_ref=case_ref,
+                surface_ref=designation["surface_ref"],
+                source_start=start,
+                source_end=end,
+                source_text=binding["surface"],
+                unit_refs=tuple(binding["unit_refs"]),
+                designation_fact_ref=binding["designation_fact_ref"],
+                target_ref=binding["candidate_target_ref"],
+            )
+            if binding["binding_ref"] != reconstructed.binding_ref:
+                raise ValueError("designation candidate binding identity is invalid")
+            reconstructed_bindings.append(reconstructed)
             binding_order.append(
                 (
                     start,
@@ -2088,6 +2111,13 @@ def _validate_bundle_joins(decoded: Mapping[str, Mapping[str, Any]]) -> None:
             )
         if any(left >= right for left, right in zip(binding_order, binding_order[1:])):
             raise ValueError("designation candidate bindings are not canonical")
+        reconstructed_set = DesignationCandidateSet.create(
+            source_case_ref=case_ref,
+            surface_ref=designation["surface_ref"],
+            bindings=tuple(reconstructed_bindings),
+        )
+        if designation.get("candidate_set_ref") != reconstructed_set.candidate_set_ref:
+            raise ValueError("designation candidate-set identity is invalid")
         candidate_surface = realization["source_projection"]["candidate_surface"]
         expected_surface = None if proposal_spec is None else proposal_spec["candidate_output"]
         if candidate_surface != expected_surface:
