@@ -120,6 +120,9 @@ async function recover(error) {
   if (error instanceof ApiError && error.status === 409) {
     showToast("Review state changed; reloaded current state.");
     await refresh();
+    if (view.mode === "guided" && view.guidedStarted) {
+      await loadGuidedNext(null);
+    }
     return;
   }
   showToast(`${error.message}. Review the action and try again.`);
@@ -280,8 +283,7 @@ function renderGuidedStart() {
       "You are verifying the bounded semantic supervision CEMM will use for R4.1. The system will explain each decision and show its evidence. It will not choose meaning for you."
     )
   );
-  const hasProgress = view.bootstrap.reviewer_refs.length > 0
-    || Object.values(view.bootstrap.review_counts).some((value) => value === 0);
+  const hasProgress = view.bootstrap.reviewer_refs.length > 0;
   const actions = node("div", "button-row guided-actions");
   const start = node(
     "button",
@@ -357,7 +359,7 @@ function renderGuidedItem() {
   }
   if (item.phase === "export") {
     guidedProgress.textContent = "Final step · validate and export";
-    renderExport();
+    renderGuidedCompletion(item);
     return;
   }
   workspace.replaceChildren();
@@ -389,6 +391,41 @@ function renderGuidedItem() {
   skip.type = "button";
   skip.addEventListener("click", skipGuidedItem);
   append(shell, question, skip, technicalEvidence(item.technical_evidence));
+  workspace.append(shell);
+}
+
+function renderGuidedCompletion(item) {
+  workspace.replaceChildren();
+  const shell = node("section", "guided-shell panel");
+  let title = "Review incomplete";
+  let copy = "Applicable decisions remain unresolved. Return to guided review and resolve or revisit them before export.";
+  let stateClass = "warning";
+  if (item.review_complete && !item.authoring_ready) {
+    title = "Review recorded; authoring blocked";
+    copy = "The accountable review is complete, but rejection decisions require repair before Task 10B can continue.";
+    stateClass = "danger-note";
+  } else if (item.review_complete && item.authoring_ready) {
+    title = "Review complete and authoring ready";
+    copy = "Every applicable decision is complete and no blocking rejection remains. Validate and export the exact selection.";
+    stateClass = "success-note";
+  }
+  append(shell, node("p", "eyebrow", "R4.1 review outcome"), node("h2", "", title), node("p", stateClass, copy));
+  if (item.review_complete) {
+    const receipt = node("div");
+    const exportButton = node("button", "button primary", "Validate and export exact selection");
+    exportButton.type = "button";
+    exportButton.addEventListener("click", () => runMutation(async () => {
+      const envelope = await api("/api/export", {method: "POST", body: currentRevisionBody()});
+      const pre = node("pre");
+      pre.textContent = JSON.stringify(envelope.result, null, 2);
+      receipt.replaceChildren(node("h3", "", "Validated export receipt"), pre);
+      showToast("Canonical reviewed selection exported.");
+    }));
+    append(shell, exportButton, receipt);
+  }
+  if (item.blocking_rejection_refs.length) {
+    shell.append(technicalEvidence({blocking_rejection_refs: item.blocking_rejection_refs}));
+  }
   workspace.append(shell);
 }
 

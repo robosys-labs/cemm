@@ -132,6 +132,16 @@ def test_guided_ui_uses_opaque_choices_and_skip_is_local_navigation() -> None:
     assert "sessionStorage" not in source
 
 
+def test_guided_completion_states_are_distinct() -> None:
+    source = (UI_ROOT / "app.js").read_text(encoding="utf-8")
+    for expected in (
+        "Review incomplete",
+        "Review recorded; authoring blocked",
+        "Review complete and authoring ready",
+    ):
+        assert expected in source
+
+
 @pytest.mark.parametrize(
     "contract",
     (
