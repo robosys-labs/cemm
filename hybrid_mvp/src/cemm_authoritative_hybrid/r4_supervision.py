@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import errno
 import hashlib
+import math
 import os
 from pathlib import Path
 import re
@@ -176,9 +177,93 @@ _ACTION_FIELD_SHAPES: Mapping[str, tuple[str, tuple[str, ...]]] = {
 }
 _OWNER_PHASES = frozenset({"orient", "propose", "verify", "evaluate", "effect", "realize"})
 _SAFE_DISPOSITIONS = frozenset({"frontier", "clarify", "reject"})
-_MUTATION_DISPOSITIONS = frozenset({"accept", "reject", "frontier"})
+_MUTATION_SCOPES = frozenset({"contract", "environment", "persistence"})
+_MUTATION_OWNERS = frozenset(
+    {"expected-contract-compiler", "semantic-expression", "EVALUATE", "EFFECT"}
+)
+_MUTATION_STATUSES = frozenset(
+    {"rejected", "denied", "adapter_missing", "contested", "stale_revision"}
+)
+_MUTATION_DISPOSITIONS = frozenset({"reject", "deny", "contest", "stale"})
+_MUTATION_ERROR_CODES = frozenset(
+    {
+        "invalid_role_ref",
+        "authority_ref_missing",
+        "unknown_root_ref",
+        "permission_missing",
+        "adapter_missing",
+        "untrusted_observation",
+        "stale_revision",
+        "decision_contract_mismatch",
+    }
+)
+_STATUS_DISPOSITION = {
+    "rejected": "reject",
+    "denied": "deny",
+    "adapter_missing": "deny",
+    "contested": "contest",
+    "stale_revision": "stale",
+}
 _LANGUAGE_RE = re.compile(r"[a-z]{2,8}(?:-[A-Za-z0-9]{1,8})*\Z")
 _WINDOWS_REPARSE_POINT = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x0400)
+
+
+def _mutation_path(value: object) -> tuple[str | int, ...]:
+    if type(value) is not tuple or not 1 <= len(value) <= 16:
+        raise TypeError("changed_path must be one bounded exact tuple")
+    if any(type(item) not in {str, int} for item in value):
+        raise TypeError("changed_path components must be exact strings or integers")
+    if any(type(item) is str and (not item or len(item) > 128) for item in value):
+        raise ValueError("changed_path string component is invalid")
+    if any(type(item) is int and not 0 <= item <= 4096 for item in value):
+        raise ValueError("changed_path index component is invalid")
+    return value
+
+
+def _freeze_mutation_json(value: object, name: str) -> object:
+    nodes = 0
+
+    def freeze(item: object, depth: int) -> object:
+        nonlocal nodes
+        nodes += 1
+        if nodes > 4_096 or depth > 16:
+            raise ValueError(f"{name} exceeds bounded JSON structure")
+        if item is None or type(item) in {bool, int}:
+            return item
+        if type(item) is float:
+            if not math.isfinite(item):
+                raise ValueError(f"{name} contains a non-finite number")
+            return item
+        if type(item) is str:
+            if len(item) > MAX_R4_TEXT_CHARS:
+                raise ValueError(f"{name} string exceeds {MAX_R4_TEXT_CHARS} characters")
+            return item
+        if type(item) is list:
+            if len(item) > 128:
+                raise ValueError(f"{name} array exceeds 128 items")
+            return tuple(freeze(child, depth + 1) for child in item)
+        if type(item) is dict:
+            if len(item) > 128:
+                raise ValueError(f"{name} object exceeds 128 fields")
+            if any(type(key) is not str or not key or len(key) > 128 for key in item):
+                raise TypeError(f"{name} object keys must be bounded exact strings")
+            return MappingProxyType(
+                {key: freeze(item[key], depth + 1) for key in sorted(item)}
+            )
+        raise TypeError(f"{name} must contain only exact JSON values")
+
+    frozen = freeze(value, 0)
+    if len(canonical_json_bytes({"value": _thaw_mutation_json(frozen)})) > MAX_R4_TEXT_CHARS:
+        raise ValueError(f"{name} exceeds bounded canonical JSON bytes")
+    return frozen
+
+
+def _thaw_mutation_json(value: object) -> object:
+    if type(value) is tuple:
+        return [_thaw_mutation_json(item) for item in value]
+    if isinstance(value, MappingProxyType):
+        return {key: _thaw_mutation_json(item) for key, item in value.items()}
+    return value
 
 
 class _FileIdentity(NamedTuple):
@@ -3081,37 +3166,173 @@ class MutationContract:
     mutation_contract_ref: str
     mutation_family_ref: str
     source_case_ref: str
+    scope: str
     changed_dimension_ref: str
+    selector_kind: str
+    changed_path: tuple[str | int, ...]
+    operation: str
+    expected_before: object
+    replacement_after: object
+    applicability_ref: str
     expected_earliest_owner: str
+    expected_status: str
+    expected_error_code: str
     disposition: str
     effect_kind: str
     expected_effect_ref: str | None
     review_refs: tuple[str, ...]
 
-    _FIELDS = frozenset({"abi_version", "mutation_contract_ref", "mutation_family_ref", "source_case_ref", "changed_dimension_ref", "expected_earliest_owner", "disposition", "effect_kind", "expected_effect_ref", "review_refs"})
+    _FIELDS = frozenset(
+        {
+            "abi_version",
+            "mutation_contract_ref",
+            "mutation_family_ref",
+            "source_case_ref",
+            "scope",
+            "changed_dimension_ref",
+            "selector_kind",
+            "changed_path",
+            "operation",
+            "expected_before",
+            "replacement_after",
+            "applicability_ref",
+            "expected_earliest_owner",
+            "expected_status",
+            "expected_error_code",
+            "disposition",
+            "effect_kind",
+            "expected_effect_ref",
+            "review_refs",
+        }
+    )
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
         raise _factory_only("MutationContract")
 
     @classmethod
-    def create(cls, *, mutation_family_ref: str, source_case_ref: str, changed_dimension_ref: str, expected_earliest_owner: str, disposition: str, effect_kind: str, expected_effect_ref: str | None, review_refs: tuple[str, ...]) -> "MutationContract":
-        owner = exact_text(expected_earliest_owner, "expected_earliest_owner", maximum=16)
-        if owner not in _OWNER_PHASES:
+    def create(
+        cls,
+        *,
+        mutation_family_ref: str,
+        source_case_ref: str,
+        scope: str,
+        changed_dimension_ref: str,
+        selector_kind: str,
+        changed_path: tuple[str | int, ...],
+        operation: str,
+        expected_before: object,
+        replacement_after: object,
+        applicability_ref: str,
+        expected_earliest_owner: str,
+        expected_status: str,
+        expected_error_code: str,
+        disposition: str,
+        effect_kind: str,
+        expected_effect_ref: str | None,
+        review_refs: tuple[str, ...],
+    ) -> "MutationContract":
+        exact_scope = exact_text(scope, "scope", maximum=16)
+        if exact_scope not in _MUTATION_SCOPES:
+            raise ValueError("unsupported mutation scope")
+        exact_selector_kind = exact_text(selector_kind, "selector_kind", maximum=16)
+        if exact_selector_kind != "json_path":
+            raise ValueError("unsupported mutation selector kind")
+        exact_operation = exact_text(operation, "operation", maximum=16)
+        if exact_operation != "replace":
+            raise ValueError("unsupported mutation operation")
+        path = _mutation_path(changed_path)
+        before = _freeze_mutation_json(expected_before, "expected_before")
+        after = _freeze_mutation_json(replacement_after, "replacement_after")
+        owner = exact_text(expected_earliest_owner, "expected_earliest_owner", maximum=32)
+        if owner not in _MUTATION_OWNERS:
             raise ValueError("unsupported expected earliest owner")
+        status = exact_text(expected_status, "expected_status", maximum=32)
+        if status not in _MUTATION_STATUSES:
+            raise ValueError("unsupported mutation status")
+        error_code = exact_text(expected_error_code, "expected_error_code", maximum=64)
+        if error_code not in _MUTATION_ERROR_CODES:
+            raise ValueError("unsupported mutation error code")
         exact_disposition = exact_text(disposition, "disposition", maximum=16)
         if exact_disposition not in _MUTATION_DISPOSITIONS:
             raise ValueError("unsupported mutation disposition")
+        if exact_disposition != _STATUS_DISPOSITION[status]:
+            raise ValueError("mutation status and disposition are incompatible")
         kind = exact_text(effect_kind, "effect_kind", maximum=16)
         if kind not in {"effect", "no_effect"}:
             raise ValueError("unsupported effect kind")
         effect_ref = _wire_optional_ref(expected_effect_ref, "expected_effect_ref")
         if (kind == "effect") != (effect_ref is not None):
             raise ValueError("effect ref must be present exactly for an effect contract")
-        material = {"abi_version": MUTATION_CONTRACT_ABI_VERSION, "mutation_family_ref": exact_ref(mutation_family_ref, "mutation_family_ref", prefix="mutation_family:"), "source_case_ref": exact_case_ref(source_case_ref), "changed_dimension_ref": exact_ref(changed_dimension_ref, "changed_dimension_ref"), "expected_earliest_owner": owner, "disposition": exact_disposition, "effect_kind": kind, "expected_effect_ref": effect_ref, "review_refs": list(exact_review_refs(review_refs))}
-        return construct(cls, mutation_contract_ref=stable_ref("mutation_contract_v1", material), review_refs=tuple(material["review_refs"]), **{key: val for key, val in material.items() if key != "review_refs"})
+        material = {
+            "abi_version": MUTATION_CONTRACT_ABI_VERSION,
+            "mutation_family_ref": exact_ref(
+                mutation_family_ref, "mutation_family_ref", prefix="mutation_family:"
+            ),
+            "source_case_ref": exact_case_ref(source_case_ref),
+            "scope": exact_scope,
+            "changed_dimension_ref": exact_ref(
+                changed_dimension_ref, "changed_dimension_ref"
+            ),
+            "selector_kind": exact_selector_kind,
+            "changed_path": list(path),
+            "operation": exact_operation,
+            "expected_before": _thaw_mutation_json(before),
+            "replacement_after": _thaw_mutation_json(after),
+            "applicability_ref": exact_ref(
+                applicability_ref,
+                "applicability_ref",
+                prefix="mutation_applicability:",
+            ),
+            "expected_earliest_owner": owner,
+            "expected_status": status,
+            "expected_error_code": error_code,
+            "disposition": exact_disposition,
+            "effect_kind": kind,
+            "expected_effect_ref": effect_ref,
+            "review_refs": list(exact_review_refs(review_refs)),
+        }
+        return construct(
+            cls,
+            mutation_contract_ref=stable_ref("mutation_contract_v1", material),
+            changed_path=path,
+            expected_before=before,
+            replacement_after=after,
+            review_refs=tuple(material["review_refs"]),
+            **{
+                key: val
+                for key, val in material.items()
+                if key
+                not in {
+                    "changed_path",
+                    "expected_before",
+                    "replacement_after",
+                    "review_refs",
+                }
+            },
+        )
 
     def as_dict(self) -> dict[str, Any]:
-        return {"abi_version": self.abi_version, "mutation_contract_ref": self.mutation_contract_ref, "mutation_family_ref": self.mutation_family_ref, "source_case_ref": self.source_case_ref, "changed_dimension_ref": self.changed_dimension_ref, "expected_earliest_owner": self.expected_earliest_owner, "disposition": self.disposition, "effect_kind": self.effect_kind, "expected_effect_ref": self.expected_effect_ref, "review_refs": list(self.review_refs)}
+        return {
+            "abi_version": self.abi_version,
+            "mutation_contract_ref": self.mutation_contract_ref,
+            "mutation_family_ref": self.mutation_family_ref,
+            "source_case_ref": self.source_case_ref,
+            "scope": self.scope,
+            "changed_dimension_ref": self.changed_dimension_ref,
+            "selector_kind": self.selector_kind,
+            "changed_path": list(self.changed_path),
+            "operation": self.operation,
+            "expected_before": _thaw_mutation_json(self.expected_before),
+            "replacement_after": _thaw_mutation_json(self.replacement_after),
+            "applicability_ref": self.applicability_ref,
+            "expected_earliest_owner": self.expected_earliest_owner,
+            "expected_status": self.expected_status,
+            "expected_error_code": self.expected_error_code,
+            "disposition": self.disposition,
+            "effect_kind": self.effect_kind,
+            "expected_effect_ref": self.expected_effect_ref,
+            "review_refs": list(self.review_refs),
+        }
 
     def to_json_bytes(self) -> bytes:
         return canonical_json_bytes(self.as_dict())
@@ -3120,7 +3341,27 @@ class MutationContract:
     def from_dict(cls, value: Mapping[str, Any]) -> "MutationContract":
         row = exact_fields(value, cls._FIELDS, "MutationContract")
         exact_abi(row["abi_version"], MUTATION_CONTRACT_ABI_VERSION, "Mutation Contract")
-        rebuilt = cls.create(mutation_family_ref=row["mutation_family_ref"], source_case_ref=row["source_case_ref"], changed_dimension_ref=row["changed_dimension_ref"], expected_earliest_owner=row["expected_earliest_owner"], disposition=row["disposition"], effect_kind=row["effect_kind"], expected_effect_ref=row["expected_effect_ref"], review_refs=wire_ref_tuple(row["review_refs"], "review_refs", nonempty=True))
+        if type(row["changed_path"]) is not list:
+            raise TypeError("changed_path wire value must be one exact array")
+        rebuilt = cls.create(
+            mutation_family_ref=row["mutation_family_ref"],
+            source_case_ref=row["source_case_ref"],
+            scope=row["scope"],
+            changed_dimension_ref=row["changed_dimension_ref"],
+            selector_kind=row["selector_kind"],
+            changed_path=tuple(row["changed_path"]),
+            operation=row["operation"],
+            expected_before=row["expected_before"],
+            replacement_after=row["replacement_after"],
+            applicability_ref=row["applicability_ref"],
+            expected_earliest_owner=row["expected_earliest_owner"],
+            expected_status=row["expected_status"],
+            expected_error_code=row["expected_error_code"],
+            disposition=row["disposition"],
+            effect_kind=row["effect_kind"],
+            expected_effect_ref=row["expected_effect_ref"],
+            review_refs=wire_ref_tuple(row["review_refs"], "review_refs", nonempty=True),
+        )
         if rebuilt.mutation_contract_ref != row["mutation_contract_ref"] or rebuilt.as_dict() != dict(row):
             raise ValueError("non-canonical MutationContract")
         return rebuilt

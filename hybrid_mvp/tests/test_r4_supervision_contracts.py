@@ -298,10 +298,28 @@ def _recreate_proposal(row: ProposalTarget, **changes) -> ProposalTarget:
 
 def _mutation() -> MutationContract:
     return MutationContract.create(
-        mutation_family_ref="mutation_family:polarity",
+        mutation_family_ref="mutation_family:invalid_role",
         source_case_ref=CASE_REF,
-        changed_dimension_ref="dimension:polarity",
-        expected_earliest_owner="verify",
+        scope="contract",
+        changed_dimension_ref="mutation_dimension:invalid_role",
+        selector_kind="json_path",
+        changed_path=(
+            "contract",
+            "expected_expressions",
+            0,
+            "applications",
+            0,
+            "roles",
+            0,
+            "role_ref",
+        ),
+        operation="replace",
+        expected_before="role:actor",
+        replacement_after="not-a-role",
+        applicability_ref="mutation_applicability:semantic_expression",
+        expected_earliest_owner="expected-contract-compiler",
+        expected_status="rejected",
+        expected_error_code="invalid_role_ref",
         disposition="reject",
         effect_kind="no_effect",
         expected_effect_ref=None,
@@ -663,17 +681,70 @@ def test_mutation_contract_is_reviewed_truth_not_an_observation_echo() -> None:
     contract = _mutation()
     assert contract.effect_kind == "no_effect"
     assert not any("observed" in key for key in contract.as_dict())
+    assert MutationContract.from_dict(contract.as_dict()) == contract
     with pytest.raises(ValueError, match="effect ref"):
         MutationContract.create(
             mutation_family_ref=contract.mutation_family_ref,
             source_case_ref=contract.source_case_ref,
+            scope=contract.scope,
             changed_dimension_ref=contract.changed_dimension_ref,
+            selector_kind=contract.selector_kind,
+            changed_path=contract.changed_path,
+            operation=contract.operation,
+            expected_before=contract.expected_before,
+            replacement_after=contract.replacement_after,
+            applicability_ref=contract.applicability_ref,
             expected_earliest_owner=contract.expected_earliest_owner,
-            disposition="accept",
+            expected_status=contract.expected_status,
+            expected_error_code=contract.expected_error_code,
+            disposition=contract.disposition,
             effect_kind="effect",
             expected_effect_ref=None,
             review_refs=contract.review_refs,
         )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("scope", "runtime"),
+        ("selector_kind", "regex"),
+        ("operation", "execute"),
+        ("expected_earliest_owner", "propose"),
+        ("expected_status", "accept"),
+        ("expected_error_code", ""),
+        ("disposition", "frontier"),
+    ],
+)
+def test_mutation_contract_rejects_non_governed_truth(field, value) -> None:
+    row = _mutation().as_dict()
+    row[field] = value
+    with pytest.raises((TypeError, ValueError)):
+        MutationContract.from_dict(row)
+
+
+def test_mutation_contract_rejects_old_wire_aliases_and_invalid_paths() -> None:
+    old = _mutation().as_dict()
+    for field in (
+        "scope",
+        "selector_kind",
+        "changed_path",
+        "operation",
+        "expected_before",
+        "replacement_after",
+        "applicability_ref",
+        "expected_status",
+        "expected_error_code",
+    ):
+        old.pop(field)
+    with pytest.raises((TypeError, ValueError), match="fields mismatch"):
+        MutationContract.from_dict(old)
+
+    for path in ((), ("x",) * 17, (True,), (-1,), (4097,), ("x" * 129,)):
+        row = _mutation().as_dict()
+        row["changed_path"] = list(path)
+        with pytest.raises((TypeError, ValueError)):
+            MutationContract.from_dict(row)
 
 
 def test_supervision_decoders_reject_unknown_missing_abi_duplicate_and_noncanonical_json() -> None:
@@ -1419,10 +1490,28 @@ def _write_cross_source_tree(
     root = tmp_path / "cross-source"
     child_bytes = {
         _REVIEW_CHILD_PATHS[0]: MutationContract.create(
-            mutation_family_ref="mutation_family:polarity",
+            mutation_family_ref="mutation_family:invalid_role",
             source_case_ref=universe.cases[0].case_ref,
-            changed_dimension_ref="dimension:polarity",
-            expected_earliest_owner="verify",
+            scope="contract",
+            changed_dimension_ref="mutation_dimension:invalid_role",
+            selector_kind="json_path",
+            changed_path=(
+                "contract",
+                "expected_expressions",
+                0,
+                "applications",
+                0,
+                "roles",
+                0,
+                "role_ref",
+            ),
+            operation="replace",
+            expected_before="role:actor",
+            replacement_after="not-a-role",
+            applicability_ref="mutation_applicability:semantic_expression",
+            expected_earliest_owner="expected-contract-compiler",
+            expected_status="rejected",
+            expected_error_code="invalid_role_ref",
             disposition="reject",
             effect_kind="no_effect",
             expected_effect_ref=None,
