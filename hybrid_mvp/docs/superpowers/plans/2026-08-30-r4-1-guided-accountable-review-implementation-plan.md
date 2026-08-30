@@ -57,7 +57,7 @@ generated language artifact, runtime import or additional validation process.
 - Create: `scripts/r4_1_guided_review.py`
 - Create: `tests/test_r4_guided_review.py`
 
-- [ ] **Step 1: Write failing catalog coverage and neutrality tests**
+- [x] **Step 1: Write failing catalog coverage and neutrality tests**
 
 Create `tests/test_r4_guided_review.py` with exact active row/choice coverage:
 
@@ -120,7 +120,7 @@ def test_guidance_covers_every_active_choice_without_recommendation() -> None:
             assert label not in {"default", "selected"}
 ```
 
-- [ ] **Step 2: Run the test and verify the module is absent**
+- [x] **Step 2: Run the test and verify the module is absent**
 
 Run:
 
@@ -130,7 +130,7 @@ python -m pytest tests/test_r4_guided_review.py::test_guidance_covers_every_acti
 
 Expected: collection fails with `ModuleNotFoundError: No module named 'scripts.r4_1_guided_review'`.
 
-- [ ] **Step 3: Add frozen catalog types and the exact active catalog**
+- [x] **Step 3: Add frozen catalog types and the exact active catalog**
 
 Create `scripts/r4_1_guided_review.py` with immutable types and a complete
 module-level catalog. Use plain-language labels such as **Use this exact
@@ -222,7 +222,7 @@ authoring is blocked:
 `approve_exact_proposal` and `reject_exact_proposal` use the literal definitions
 shown in the code block. Do not generate wording from option names at runtime.
 
-- [ ] **Step 4: Add source-row inventory comparison**
+- [x] **Step 4: Add source-row inventory comparison**
 
 Add a test that opens a real `ReviewSession`, obtains the active option labels
 from `session.indexes` plus recipe/designation choices, and asserts exact
@@ -253,7 +253,7 @@ Copy the existing `review_paths(tmp_path)` fixture from
 `tests/test_r4_review_session.py` into the new test module so it builds an exact
 temporary worksheet/template without importing another test module.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 Run:
 
@@ -264,7 +264,7 @@ python -m ruff check scripts/r4_1_guided_review.py tests/test_r4_guided_review.p
 
 Expected: all tests pass and Ruff reports `All checks passed!`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```powershell
 git add scripts/r4_1_guided_review.py tests/test_r4_guided_review.py
@@ -280,7 +280,7 @@ git commit -m "feat(r4): define neutral guided review vocabulary"
 - Modify: `scripts/r4_1_guided_review.py`
 - Modify: `tests/test_r4_guided_review.py`
 
-- [ ] **Step 1: Write failing traversal, plain-language and skip tests**
+- [x] **Step 1: Write failing traversal, plain-language and skip tests**
 
 Add tests using the existing `review_paths`/`ReviewSession.open` fixtures:
 
@@ -314,7 +314,7 @@ def test_skip_advances_without_mutation_and_wraps_once(review_paths) -> None:
     assert wrapped["wrapped"] is True
 ```
 
-- [ ] **Step 2: Run tests and verify `GuidedReviewService` is missing**
+- [x] **Step 2: Run tests and verify `GuidedReviewService` is missing**
 
 Run:
 
@@ -324,7 +324,7 @@ python -m pytest tests/test_r4_guided_review.py -k "starts_with_identity or skip
 
 Expected: failure because `GuidedReviewService` is not defined.
 
-- [ ] **Step 3: Implement bounded item types and deterministic traversal**
+- [x] **Step 3: Implement bounded item types and deterministic traversal**
 
 Add these interfaces:
 
@@ -373,7 +373,7 @@ purpose applicability, eligible recipe purposes and designation exceptions
 come from the existing authenticated session/evaluation; do not reproduce
 selection validity rules.
 
-- [ ] **Step 4: Project readable source/proposal/evidence summaries**
+- [x] **Step 4: Project readable source/proposal/evidence summaries**
 
 Use explicit projector functions per row kind. They may select and relabel
 existing fields but may not infer missing meaning. At minimum:
@@ -394,7 +394,7 @@ def _structural_summary(row: Mapping[str, object]) -> str:
 The fallback is a typed absence notice, never an invented paraphrase. Keep
 exact source fields in `technical_evidence` under byte/count bounds.
 
-- [ ] **Step 5: Prove the projection cache is revision-keyed, not request-keyed**
+- [x] **Step 5: Prove the projection cache is revision-keyed, not request-keyed**
 
 ```python
 def test_512_guided_reads_reuse_one_state_projection(review_paths) -> None:
@@ -407,7 +407,7 @@ def test_512_guided_reads_reuse_one_state_projection(review_paths) -> None:
     assert service.projection_builds == 1
 ```
 
-- [ ] **Step 6: Run focused tests and commit**
+- [x] **Step 6: Run focused tests and commit**
 
 ```powershell
 python -m pytest tests/test_r4_guided_review.py -q
@@ -424,7 +424,7 @@ git commit -m "feat(r4): project deterministic guided review items"
 - Modify: `scripts/r4_1_guided_review.py`
 - Modify: `tests/test_r4_guided_review.py`
 
-- [ ] **Step 1: Write failing choice-equivalence and cohort-safety tests**
+- [x] **Step 1: Write failing choice-equivalence and cohort-safety tests**
 
 ```python
 def test_every_guided_choice_resolves_to_one_existing_allowed_action(review_paths) -> None:
@@ -451,7 +451,7 @@ def test_routine_designation_cohorts_exclude_every_exception(review_paths) -> No
         assert len(members) <= MAX_GUIDED_TARGET_REFS
 ```
 
-- [ ] **Step 2: Run tests and verify resolver absence**
+- [x] **Step 2: Run tests and verify resolver absence**
 
 ```powershell
 python -m pytest tests/test_r4_guided_review.py -k "resolves_to_one or cohorts_exclude" -q
@@ -459,7 +459,7 @@ python -m pytest tests/test_r4_guided_review.py -k "resolves_to_one or cohorts_e
 
 Expected: failure because `resolve_choice` is absent.
 
-- [ ] **Step 3: Add content-addressed opaque choice refs**
+- [x] **Step 3: Add content-addressed opaque choice refs**
 
 Use the repository's existing stable-ref function, not random identifiers:
 
@@ -478,7 +478,7 @@ cross-item refs. Add `iter_current_items()` and `designation_cohort_items()` as
 bounded testable iterators over the same private projector; they must not create
 a second projection path.
 
-- [ ] **Step 4: Reuse existing action constructors for every phase**
+- [x] **Step 4: Reuse existing action constructors for every phase**
 
 Resolve structural, purpose, recipe and designation choices only through:
 
@@ -496,7 +496,7 @@ option and the group/holdout/denominator constraints make every member
 applicable. If any member fails those checks, omit the cohort and project those
 rows individually; never synthesize a replacement cohort.
 
-- [ ] **Step 5: Add readable preview projection**
+- [x] **Step 5: Add readable preview projection**
 
 ```python
 def preview_choice(self, *, item_ref: str, choice_ref: str) -> Mapping[str, object]:
@@ -516,7 +516,7 @@ def preview_choice(self, *, item_ref: str, choice_ref: str) -> Mapping[str, obje
     })
 ```
 
-- [ ] **Step 6: Run full guided/session tests and commit**
+- [x] **Step 6: Run full guided/session tests and commit**
 
 ```powershell
 python -m pytest tests/test_r4_guided_review.py tests/test_r4_review_session.py -q
@@ -533,7 +533,7 @@ git commit -m "feat(r4): resolve guided choices to exact review actions"
 - Modify: `scripts/serve_r4_1_review.py`
 - Modify: `tests/test_r4_review_server.py`
 
-- [ ] **Step 1: Write failing route and security tests**
+- [x] **Step 1: Write failing route and security tests**
 
 Add these shared helpers above the tests:
 
@@ -595,7 +595,7 @@ def test_guided_next_and_preview_never_expose_action_wire(server_fixture) -> Non
     assert "action" not in json.dumps(preview)
 ```
 
-- [ ] **Step 2: Run focused tests and verify 404**
+- [x] **Step 2: Run focused tests and verify 404**
 
 ```powershell
 python -m pytest tests/test_r4_review_server.py -k "guided_routes or guided_next" -q
@@ -603,7 +603,7 @@ python -m pytest tests/test_r4_review_server.py -k "guided_routes or guided_next
 
 Expected: the new routes return 404.
 
-- [ ] **Step 3: Attach exactly one service per server**
+- [x] **Step 3: Attach exactly one service per server**
 
 ```python
 class ReviewHTTPServer(HTTPServer):
@@ -621,7 +621,7 @@ def create_review_server(...):
     # retain all existing assignments and host validation
 ```
 
-- [ ] **Step 4: Add exact routes**
+- [x] **Step 4: Add exact routes**
 
 Add:
 
@@ -643,7 +643,7 @@ accepts exactly:
 It calls `server.guided.preview_choice`; it never accepts a client-created
 action. Existing `/api/apply` remains the only commit route.
 
-- [ ] **Step 5: Invalidate only the revision projection after apply**
+- [x] **Step 5: Invalidate only the revision projection after apply**
 
 After successful `session.apply`, call:
 
@@ -654,7 +654,7 @@ self.server.guided.observe_revision(self.server.session.state_revision)
 `observe_revision` must only mark the small state projection stale; it must not
 reread source files or rebuild authenticated indexes.
 
-- [ ] **Step 6: Run server regression tests and commit**
+- [x] **Step 6: Run server regression tests and commit**
 
 ```powershell
 python -m pytest tests/test_r4_review_server.py tests/test_r4_guided_review.py -q
@@ -674,7 +674,7 @@ git commit -m "feat(r4): serve bounded guided review API"
 - Modify: `scripts/r4_1_review_ui/styles.css`
 - Modify: `tests/test_r4_review_ui.py`
 
-- [ ] **Step 1: Write failing guided-shell static tests**
+- [x] **Step 1: Write failing guided-shell static tests**
 
 ```python
 def test_review_ui_defaults_to_guided_start_and_preserves_advanced_explorer() -> None:
@@ -697,7 +697,7 @@ def test_guided_ui_has_no_semantic_recommendation_or_preselection() -> None:
         assert forbidden not in source
 ```
 
-- [ ] **Step 2: Run static tests and verify failure**
+- [x] **Step 2: Run static tests and verify failure**
 
 ```powershell
 python -m pytest tests/test_r4_review_ui.py -k "guided_start or recommendation" -q
@@ -705,7 +705,7 @@ python -m pytest tests/test_r4_review_ui.py -k "guided_start or recommendation" 
 
 Expected: failure because the guided shell does not exist.
 
-- [ ] **Step 3: Add the guided shell**
+- [x] **Step 3: Add the guided shell**
 
 Modify `index.html` to include:
 
@@ -720,7 +720,7 @@ Modify `index.html` to include:
 Keep the existing phase navigation inside the Advanced Explorer container. Do
 not duplicate the impact dialog, toast or API client.
 
-- [ ] **Step 4: Add guided-first view state and start screen**
+- [x] **Step 4: Add guided-first view state and start screen**
 
 Use:
 
@@ -748,7 +748,7 @@ show only **Start guided review**/**Resume guided review** as primary plus
 **Open Advanced Explorer** as secondary. Determine Start versus Resume from
 server-owned reviewer/count state, not browser storage.
 
-- [ ] **Step 5: Add responsive guided styling**
+- [x] **Step 5: Add responsive guided styling**
 
 Add `.guided-shell`, `.guided-step`, `.phase-progress`, `.choice-grid`,
 `.choice-card`, `.technical-evidence`, and `.mode-nav` styles. Choice cards must
@@ -756,7 +756,7 @@ have equal border/background/weight; only blocking consequence text may use
 danger color. Preserve 44-pixel controls, `:focus-visible`, dark mode, reduced
 motion and one-column behavior below 900 pixels.
 
-- [ ] **Step 6: Run static/accessibility tests and commit**
+- [x] **Step 6: Run static/accessibility tests and commit**
 
 ```powershell
 python -m pytest tests/test_r4_review_ui.py -q
@@ -776,7 +776,7 @@ git commit -m "feat(r4): add guided review start experience"
 - Modify: `tests/test_r4_review_ui.py`
 - Modify: `tests/test_r4_review_server.py`
 
-- [ ] **Step 1: Write failing interaction-contract tests**
+- [x] **Step 1: Write failing interaction-contract tests**
 
 Static assertions:
 
@@ -836,7 +836,7 @@ def test_guided_confirm_advances_only_after_successful_apply(server_fixture) -> 
     assert server.session.state_revision == before + 1
 ```
 
-- [ ] **Step 2: Run tests and verify missing functions**
+- [x] **Step 2: Run tests and verify missing functions**
 
 ```powershell
 python -m pytest tests/test_r4_review_ui.py tests/test_r4_review_server.py -k "opaque_choices or confirm_advances" -q
@@ -844,7 +844,7 @@ python -m pytest tests/test_r4_review_ui.py tests/test_r4_review_server.py -k "o
 
 Expected: failure because guided interaction functions are absent.
 
-- [ ] **Step 3: Render the server-owned guided item**
+- [x] **Step 3: Render the server-owned guided item**
 
 Implement `renderGuidedItem()` using only `textContent`/created nodes. Render:
 
@@ -863,7 +863,7 @@ Technical evidence (collapsed)
 Do not assign a default choice. Keep the selected choice only in the current
 DOM/view state until preview; it is not a semantic write.
 
-- [ ] **Step 4: Implement bounded skip traversal**
+- [x] **Step 4: Implement bounded skip traversal**
 
 ```javascript
 async function skipGuidedItem() {
@@ -882,7 +882,7 @@ async function skipGuidedItem() {
 
 Skip must issue only GET requests and must not change `state_revision`.
 
-- [ ] **Step 5: Implement readable preview and confirm-and-continue**
+- [x] **Step 5: Implement readable preview and confirm-and-continue**
 
 Post only `state_revision`, `item_ref` and `choice_ref` to guided preview. Reuse
 `/api/apply` with only `state_revision` and `preview_hash`. After apply:
@@ -898,7 +898,7 @@ The dialog primary label is **Confirm and continue**. It shows readable decision
 summary, affected/cleared counts, authoring-block consequence and exact refs in
 collapsed details.
 
-- [ ] **Step 6: Run UI/server tests and commit**
+- [x] **Step 6: Run UI/server tests and commit**
 
 ```powershell
 python -m pytest tests/test_r4_review_ui.py tests/test_r4_review_server.py -q
@@ -918,7 +918,7 @@ git commit -m "feat(r4): guide one accountable decision at a time"
 - Modify: `tests/test_r4_review_ui.py`
 - Modify: `tests/test_r4_review_server.py`
 
-- [ ] **Step 1: Write failing three-state and recovery tests**
+- [x] **Step 1: Write failing three-state and recovery tests**
 
 ```python
 def test_guided_completion_states_are_distinct() -> None:
@@ -934,40 +934,40 @@ def test_guided_completion_states_are_distinct() -> None:
 Add server tests for invalid reviewer refs, stale guided preview, source drift
 on restart and journal warning preservation.
 
-- [ ] **Step 2: Run tests and verify missing completion copy**
+- [x] **Step 2: Run tests and verify missing completion copy**
 
 ```powershell
 python -m pytest tests/test_r4_review_ui.py tests/test_r4_review_server.py -k "completion_states or stale_guided" -q
 ```
 
-- [ ] **Step 3: Add guided identity step**
+- [x] **Step 3: Add guided identity step**
 
 Use the existing `/api/reviewer` route. Show syntax such as `reviewer:son` as an
 example only; do not prefill it. Preserve the user-entered value after a 400
 response. Advance only after bootstrap returns canonical nonempty
 `reviewer_refs`.
 
-- [ ] **Step 4: Add exact completion screens**
+- [x] **Step 4: Add exact completion screens**
 
 Render from `review_complete`, `authoring_ready`, unresolved counts and
 `blocking_rejection_refs`. Only the authoring-ready state uses unqualified
 success styling. Reuse the exact `/api/export` endpoint and receipt.
 
-- [ ] **Step 5: Implement stale-state and uncertainty recovery**
+- [x] **Step 5: Implement stale-state and uncertainty recovery**
 
 On 409, refresh bootstrap, discard the preview and reload the same item if it
 remains unresolved; otherwise load the earliest unresolved item and display a
 plain explanation. When traversal wraps, render **Revisit skipped decisions**;
 do not auto-loop.
 
-- [ ] **Step 6: Preserve Advanced Explorer unchanged in capability**
+- [x] **Step 6: Preserve Advanced Explorer unchanged in capability**
 
 All existing dashboard, filters, pagination, exact evidence, individual action,
 export and shutdown controls must remain reachable under Advanced Explorer.
 Add a regression static test for every existing renderer and an HTTP replay
 using the existing advanced endpoints.
 
-- [ ] **Step 7: Run regressions and commit**
+- [x] **Step 7: Run regressions and commit**
 
 ```powershell
 python -m pytest tests/test_r4_review_ui.py tests/test_r4_review_server.py tests/test_r4_review_session.py -q
@@ -986,7 +986,7 @@ git commit -m "feat(r4): complete guided review recovery and handoff"
 - Modify: `tests/test_r4_review_server.py`
 - Modify: `tests/test_r4_review_session.py`
 
-- [ ] **Step 1: Add complete guided HTTP replay**
+- [x] **Step 1: Add complete guided HTTP replay**
 
 Create `_drive_complete_guided_review(server)` beside the existing advanced
 driver. It must use only:
@@ -1004,7 +1004,7 @@ For test automation only, choose options by exact fixture policy already used
 by `_drive_complete_review`; do not expose that policy through production
 guided projections.
 
-- [ ] **Step 2: Assert exact export equivalence**
+- [x] **Step 2: Assert exact export equivalence**
 
 ```python
 def test_guided_and_advanced_http_reviews_export_identical_validated_bytes(
@@ -1023,7 +1023,7 @@ def test_guided_and_advanced_http_reviews_export_identical_validated_bytes(
     )["selection_state"] == "reviewed"
 ```
 
-- [ ] **Step 3: Add no-I/O and bounded-operation counters**
+- [x] **Step 3: Add no-I/O and bounded-operation counters**
 
 Instrument `_tree_bytes`, `load_selection_context`, `build_review_indexes` and
 guided projection builds. Run at least 512 guided reads/previews and 128
@@ -1035,7 +1035,7 @@ assert service.projection_builds <= applied_revisions + 1
 assert service.maximum_projected_targets <= MAX_GUIDED_TARGET_REFS
 ```
 
-- [ ] **Step 4: Run the exhaustive suite twice**
+- [x] **Step 4: Run the exhaustive suite twice**
 
 ```powershell
 python -m pytest tests/test_r4_guided_review.py tests/test_r4_review_selection.py tests/test_r4_review_session.py tests/test_r4_review_server.py tests/test_r4_review_ui.py -q
@@ -1044,7 +1044,7 @@ python -m pytest tests/test_r4_guided_review.py tests/test_r4_review_selection.p
 
 Expected: both runs reach 100% with byte-identical exports and no source rescan.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add tests/test_r4_guided_review.py tests/test_r4_review_server.py tests/test_r4_review_session.py
@@ -1060,7 +1060,7 @@ git commit -m "test(r4): verify guided review equivalence"
 - Modify: `artifacts/review_inputs/r4_1/README.md`
 - Modify: `docs/superpowers/plans/2026-08-30-r4-1-supervision-authoring-automation-plan.md`
 
-- [ ] **Step 1: Rewrite the operator start section**
+- [x] **Step 1: Rewrite the operator start section**
 
 The first instructions must be:
 
@@ -1082,7 +1082,7 @@ Then:
 Retain disposable smoke paths, restart/resume, exact independent validation,
 and the rejected-export warning.
 
-- [ ] **Step 2: Update the progress tracker honestly**
+- [x] **Step 2: Update the progress tracker honestly**
 
 Record:
 
@@ -1112,7 +1112,12 @@ progress, Advanced Explorer, keyboard focus, 375-pixel width, dark mode,
 restart/resume and authorized shutdown. Do not copy smoke files into
 `artifacts/review_inputs/r4_1`.
 
-- [ ] **Step 4: Run final gates**
+Attempted again on 2026-08-30. The supported in-app browser failed before page
+load with `failed to write kernel assets` / OS error 3. The local server itself
+started and stopped cleanly. Keep this step open for a real-browser reviewer;
+do not substitute an unsupported automation surface or claim visual coverage.
+
+- [x] **Step 4: Run final gates**
 
 ```powershell
 python -m pytest tests/test_r4_guided_review.py tests/test_r4_review_selection.py tests/test_r4_review_session.py tests/test_r4_review_server.py tests/test_r4_review_ui.py tests/test_r4_authoring_pipeline.py tests/test_r4_authoring.py tests/test_r4_purpose_contracts.py -q

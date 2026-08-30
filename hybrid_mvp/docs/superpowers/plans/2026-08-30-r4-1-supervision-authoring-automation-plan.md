@@ -18,7 +18,7 @@
 | 8 | complete | optional bounded local evidence sidecar committed |
 | 9 | complete | purpose-scoped worksheet-local recipes and explicit ancestry committed |
 | 10A | complete | one-pass source/context cache and exact designation/recipe suggestions |
-| 10B | review UI ready; awaiting accountable completed selection | offline accountable reviewer, strict 1,056-target template/validator and deterministic export ready; purpose-scoped expansion remains disabled |
+| 10B | guided review ready; awaiting accountable completed selection | neutral guided workflow and Advanced Explorer share the strict 1,056-target template/validator and deterministic export; purpose-scoped expansion remains disabled |
 | 11-16 | pending | realization, mutation families, performance, publication and handoff |
 
 Task 10 was split after an executable full-universe probe found that purpose
@@ -35,23 +35,28 @@ Launch the bounded offline reviewer from `hybrid_mvp` with:
 python scripts/serve_r4_1_review.py
 ```
 
-The reviewer implements accountable identity entry, structural decisions,
-purpose/cohort assignment, purpose-local recipe review, exceptional versus
-routine designation review, impact preview/confirmation, resumable canonical
-working state, an append-only audit journal and deterministic validated export.
-Python owns all validation, action semantics and export reconstruction;
-HTML/JavaScript is presentation only. The server is loopback-only, token- and
-origin-bound, statically allowlisted, bounded, and absent from runtime imports.
-It adds no activation phase, release gate, validation tier, pytest process,
-network service or normal-cycle scan.
+Guided Review is the default presentation. It explains one source, proposal,
+evidence set, neutral question, choice consequence and exact impact at a time;
+it never recommends, preselects or automatically records a semantic choice.
+Skip mutates nothing. Advanced Explorer remains available for search,
+cross-checking and repair. Both views use the same accountable identity,
+structural decisions, purpose assignments, purpose-local recipes,
+exception/routine designation ownership, resumable canonical working state,
+append-only audit journal and deterministic validated export. Python owns all
+validation, action semantics and export reconstruction; HTML/JavaScript is
+presentation only. The server is loopback-only, token- and origin-bound,
+statically allowlisted, bounded, and absent from runtime imports. It adds no
+activation phase, release gate, validation tier, pytest process, network
+service or normal-cycle scan.
 
 Executable coverage includes action/session unit tests, malformed and stale
 state rejection, API authorization/origin/revision/body/static-path tests,
-source-authentication/index single-pass counters, UI static/security checks and
-a complete two-session HTTP replay whose independently validated exports must
-be byte-identical. The supported in-app browser connection failed before page
-load on 2026-08-30, so the manual real-browser layout/focus/resume smoke remains
-an explicit handoff check; no automated result is claimed for it.
+source-authentication/index single-pass counters, UI static/security checks,
+mixed-mode cohort recovery, and complete Guided Review versus Advanced
+Explorer HTTP replays whose independently validated exports must be
+byte-identical. The supported in-app browser connection failed before page load
+on 2026-08-30, so the manual real-browser layout/focus/resume smoke remains an
+explicit handoff check; no automated result is claimed for it.
 
 Task 10B Steps 4B and 6 remain unchecked until an accountable reviewer exports
 a complete `artifacts/review_inputs/r4_1/SELECTION.json`, its export receipt

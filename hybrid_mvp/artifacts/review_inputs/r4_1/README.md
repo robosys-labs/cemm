@@ -24,6 +24,21 @@ From `hybrid_mvp`, launch the offline loopback reviewer:
 python scripts/serve_r4_1_review.py
 ```
 
+Then use the default **Guided Review**:
+
+1. Press **Start guided review**.
+2. Enter your canonical reviewer ref when asked, for example
+   `reviewer:son`.
+3. Read the displayed source and evidence, then answer the one question.
+4. Use **Skip for now** when uncertain; skipping records nothing.
+5. Review the exact impact, then press **Confirm and continue**.
+6. Export only when the final screen says **authoring ready**.
+
+No option is recommended or preselected. The system explains each choice and
+its consequence, but the accountable reviewer decides. **Advanced Explorer**
+remains available for searching, cross-checking or repairing exact evidence;
+it uses the same Python-owned actions, validation and canonical working state.
+
 The process binds only to `127.0.0.1` on an ephemeral port and opens a URL with
 an unguessable session token. It has no CDN, framework, network-data, runtime,
 activation or release-gate dependency. Keep the terminal open while reviewing.
@@ -55,7 +70,7 @@ python scripts/serve_r4_1_review.py --no-open `
 Open the exact printed URL, including its `#token=...` fragment. Do not reuse a
 URL from an earlier server process.
 
-## Accountable review lifecycle
+## Detailed accountable review lifecycle
 
 Enter canonical `reviewer_refs` before confirming decisions, then complete the
 five phases in order:
