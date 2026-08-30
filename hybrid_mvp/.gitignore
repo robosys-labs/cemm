@@ -10,3 +10,5 @@ dist/
 stores.db
 stores.db-wal
 stores.db-shm
+artifacts/review_inputs/r4_1/SELECTION_WORKING.json
+artifacts/review_inputs/r4_1/REVIEW_ACTIONS.jsonl

@@ -1,12 +1,17 @@
 """Accountable R4.1 review-session behavior."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 
+import scripts.r4_1_review_session as review_session_module
 from scripts.build_r4_1_review_selection import build_selection_template_bytes
-from scripts.build_r4_1_review_worksheets import build_review_worksheet_draft
+from scripts.build_r4_1_review_worksheets import (
+    _json_bytes,
+    build_review_worksheet_draft,
+)
 from scripts.r4_1_review_session import ReviewPaths, ReviewSession
 
 ROOT = Path(__file__).parents[1]
@@ -125,3 +130,151 @@ def test_session_items_are_bounded_server_created_projections(
             offset=0,
             limit=101,
         )
+
+
+def test_working_state_round_trips_and_binds_exact_template(
+    review_paths: ReviewPaths,
+) -> None:
+    session = ReviewSession.open(review_paths)
+    session.set_reviewers(("reviewer:son",))
+
+    resumed = ReviewSession.open(review_paths)
+
+    assert resumed.state["reviewer_refs"] == ["reviewer:son"]
+    assert resumed.state["selection_state"] == "unresolved"
+    assert resumed.state_revision == 0
+
+
+def test_state_projection_cannot_mutate_session(
+    review_paths: ReviewPaths,
+) -> None:
+    session = ReviewSession.open(review_paths)
+    projection = session.state
+    projection["reviewer_refs"].append("reviewer:tamper")
+    projection["structural_selections"][0]["selected_option_ref"] = "tamper"
+
+    assert session.state["reviewer_refs"] == []
+    assert session.state["structural_selections"][0]["selected_option_ref"] is None
+    with pytest.raises(TypeError):
+        projection["selection_state"] = "reviewed"
+
+
+def test_stale_working_state_is_retained_and_rejected(
+    review_paths: ReviewPaths,
+) -> None:
+    session = ReviewSession.open(review_paths)
+    session.set_reviewers(("reviewer:son",))
+    original = review_paths.working_path.read_bytes()
+    value = json.loads(original)
+    value["selection_template_ref"] = (
+        "r4_authoring_selection_template:" + "0" * 24
+    )
+    review_paths.working_path.write_bytes(_json_bytes(value))
+
+    with pytest.raises(ValueError, match="stale working selection"):
+        ReviewSession.open(review_paths)
+    assert review_paths.working_path.exists()
+
+
+def test_existing_working_directory_is_rejected_and_retained(
+    review_paths: ReviewPaths,
+) -> None:
+    review_paths.working_path.mkdir()
+
+    with pytest.raises(ValueError, match="regular non-link file"):
+        ReviewSession.open(review_paths)
+    assert review_paths.working_path.is_dir()
+
+
+def test_working_state_link_is_rejected_and_retained(
+    review_paths: ReviewPaths,
+) -> None:
+    try:
+        review_paths.working_path.symlink_to(review_paths.template_path)
+    except OSError as exc:
+        pytest.skip(f"symbolic links are unavailable: {exc}")
+
+    with pytest.raises(ValueError, match="regular non-link file"):
+        ReviewSession.open(review_paths)
+    assert review_paths.working_path.is_symlink()
+
+
+def test_interrupted_working_replace_preserves_in_memory_state_and_cleans_temp(
+    review_paths: ReviewPaths,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = ReviewSession.open(review_paths)
+
+    def interrupted_replace(source: object, destination: object) -> None:
+        raise OSError("simulated interruption")
+
+    monkeypatch.setattr(review_session_module.os, "replace", interrupted_replace)
+    with pytest.raises(ValueError, match="replace"):
+        session.set_reviewers(("reviewer:son",))
+
+    assert session.state["reviewer_refs"] == []
+    assert session.state_revision == 0
+    assert not review_paths.working_path.exists()
+    assert {path.name for path in review_paths.working_path.parent.iterdir()} == {
+        "SELECTION_TEMPLATE.json"
+    }
+
+
+def test_malformed_journal_is_preserved_and_working_state_remains_authoritative(
+    review_paths: ReviewPaths,
+) -> None:
+    malformed = b"{not-json}\n"
+    review_paths.journal_path.write_bytes(malformed)
+
+    session = ReviewSession.open(review_paths)
+    assert session.audit_warning == "action journal unavailable: ValueError"
+    session.set_reviewers(("reviewer:son",))
+
+    assert session.state["reviewer_refs"] == ["reviewer:son"]
+    assert session.state_revision == 1
+    assert review_paths.working_path.exists()
+    assert review_paths.journal_path.read_bytes() == malformed
+    assert session.audit_warning == "action journal unavailable: ValueError"
+
+
+def test_concurrent_journal_change_is_not_overwritten(
+    review_paths: ReviewPaths,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = ReviewSession.open(review_paths)
+    session.set_reviewers(("reviewer:son",))
+    original = review_paths.journal_path.read_bytes()
+    concurrent = original + original
+    real_atomic_replace = review_session_module._atomic_replace_regular
+
+    def change_before_replace(**kwargs: object) -> None:
+        if kwargs["owner"] == "review UI action journal":
+            review_paths.journal_path.write_bytes(concurrent)
+        real_atomic_replace(**kwargs)
+
+    monkeypatch.setattr(
+        review_session_module,
+        "_atomic_replace_regular",
+        change_before_replace,
+    )
+    session.set_reviewers(("reviewer:son", "reviewer:two"))
+
+    assert session.state["reviewer_refs"] == ["reviewer:son", "reviewer:two"]
+    assert session.audit_warning == "action journal unavailable: ValueError"
+    assert review_paths.journal_path.read_bytes() == concurrent
+
+
+def test_journal_entry_cap_never_blocks_valid_working_state(
+    review_paths: ReviewPaths,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(review_session_module, "MAX_JOURNAL_ENTRIES", 1)
+    session = ReviewSession.open(review_paths)
+    session.set_reviewers(("reviewer:son",))
+    first_entry = review_paths.journal_path.read_bytes()
+
+    session.set_reviewers(("reviewer:son", "reviewer:two"))
+
+    assert session.state["reviewer_refs"] == ["reviewer:son", "reviewer:two"]
+    assert session.audit_warning == "action journal unavailable: ValueError"
+    assert review_paths.journal_path.read_bytes() == first_entry
