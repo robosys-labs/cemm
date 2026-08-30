@@ -10,12 +10,42 @@ import pytest
 
 from scripts.build_r4_1_review_selection import (
     build_selection_template_bytes,
+    evaluate_selection,
+    load_selection_context,
     validate_reviewed_selection_bytes,
     write_selection_template,
 )
 from scripts.build_r4_1_review_worksheets import build_review_worksheet_draft
 
 ROOT = Path(__file__).parents[1]
+
+
+def test_selection_evaluator_supports_partial_state(tmp_path: Path) -> None:
+    draft = tmp_path / "draft"
+    build_review_worksheet_draft(repository_root=ROOT, output_root=draft)
+    template_raw = build_selection_template_bytes(
+        repository_root=ROOT,
+        draft_root=draft,
+    )
+    context = load_selection_context(
+        repository_root=ROOT,
+        draft_root=draft,
+        template_raw=template_raw,
+    )
+
+    partial = evaluate_selection(
+        context=context,
+        selection=json.loads(template_raw),
+        require_complete=False,
+    )
+
+    assert partial.complete is False
+    assert partial.branch is None
+    assert partial.active_case_refs == frozenset()
+    assert partial.active_supervised_case_refs == frozenset()
+    assert partial.unresolved_structural_count == 12
+    assert partial.blocking_errors == ()
+    assert partial.stale_selection_refs == ()
 
 
 def test_review_selection_template_is_exact_bounded_inert_and_deterministic(

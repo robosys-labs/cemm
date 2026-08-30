@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import hashlib
 import os
 from pathlib import Path
 import stat
 import sys
+from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,6 +40,32 @@ from scripts.build_r4_1_review_worksheets import (  # noqa: E402
 SELECTION_SCHEMA = "cemm-r4-authoring-review-selection-v1"
 MAX_SELECTION_ROWS = 4096
 _SCHEMA_PATH = "schemas/r4_authoring_selection.schema.json"
+
+
+@dataclass(frozen=True)
+class SelectionContext:
+    expected_template: Mapping[str, object]
+    decoded: Mapping[str, Mapping[str, object]]
+    structural_rows: Mapping[str, Mapping[str, object]]
+    purpose_rows: Mapping[str, Mapping[str, object]]
+    source_case_rows: Mapping[str, Mapping[str, object]]
+
+
+@dataclass(frozen=True)
+class SelectionEvaluation:
+    complete: bool
+    branch: str | None
+    applicable_purpose_row_refs: frozenset[str]
+    active_case_refs: frozenset[str]
+    active_supervised_case_refs: frozenset[str]
+    case_purposes: Mapping[str, str | None]
+    unresolved_structural_count: int
+    unresolved_purpose_count: int
+    unresolved_recipe_count: int
+    unresolved_designation_count: int
+    blocking_rejection_refs: tuple[str, ...]
+    blocking_errors: tuple[str, ...]
+    stale_selection_refs: tuple[str, ...]
 
 
 def _worksheet_refs(decoded: Mapping[str, Mapping[str, Any]]) -> dict[str, str]:
@@ -258,25 +286,67 @@ def _validate_selection_projection(
     return tuple(rows)
 
 
-def validate_reviewed_selection_bytes(
+def load_selection_context(
     *,
     repository_root: Path,
     draft_root: Path,
-    selection_raw: object,
-) -> Mapping[str, object]:
-    """Validate one completed selection without minting reviewed-source identity."""
+    template_raw: bytes | None = None,
+) -> SelectionContext:
+    """Authenticate one exact draft and its generated selection template."""
 
-    if not isinstance(selection_raw, bytes):
-        raise TypeError("review selection must be exact bytes")
-    expected = _strict_json(
-        build_selection_template_bytes(
-            repository_root=repository_root,
-            draft_root=draft_root,
-        ),
-        owner="expected review selection template",
+    if template_raw is not None and not isinstance(template_raw, bytes):
+        raise TypeError("selection template must be exact bytes")
+    generated = build_selection_template_bytes(
+        repository_root=repository_root,
+        draft_root=draft_root,
     )
-    actual = _strict_json(selection_raw, owner="completed review selection")
-    if type(expected) is not dict or type(actual) is not dict or set(actual) != set(expected):
+    if template_raw is None:
+        template_raw = generated
+    elif template_raw != generated:
+        raise ValueError("selection template differs from authenticated draft")
+    expected = _strict_json(template_raw, owner="review selection template")
+    payloads = _tree_bytes(Path(draft_root), owner="reviewed-selection source")
+    decoded = _validate_file_set_bytes(payloads)
+    retained = _validate_bound_repository_inputs(
+        decoded=decoded,
+        repository_root=Path(repository_root).resolve(strict=True),
+    )
+    _validate_repository_semantics(decoded=decoded, retained=retained)
+    structural_rows = {
+        row["row_ref"]: row
+        for row in decoded["STRUCTURAL_DECISIONS.json"]["rows"]
+    }
+    purpose_rows = {
+        row["row_ref"]: row for row in decoded["PURPOSE_DECISIONS.json"]["rows"]
+    }
+    source_case_rows = {
+        row["case_ref"]: row
+        for row in decoded["SOURCE_UNIVERSE.json"]["rows"]
+        if row.get("row_kind") == "expanded_case"
+    }
+    if len(source_case_rows) != 408:
+        raise ValueError("review selection source case inventory is invalid")
+    return SelectionContext(
+        expected_template=MappingProxyType(expected),
+        decoded=MappingProxyType(decoded),
+        structural_rows=MappingProxyType(structural_rows),
+        purpose_rows=MappingProxyType(purpose_rows),
+        source_case_rows=MappingProxyType(source_case_rows),
+    )
+
+
+def _selection_projections(
+    *,
+    context: SelectionContext,
+    selection: Mapping[str, object],
+) -> tuple[
+    tuple[dict[str, object], ...],
+    tuple[dict[str, object], ...],
+    tuple[dict[str, object], ...],
+    tuple[dict[str, object], ...],
+]:
+    expected = context.expected_template
+    if type(selection) is not dict or set(selection) != set(expected):
         raise ValueError("completed review selection fields do not match")
     immutable_top = set(expected) - {
         "selection_state",
@@ -286,147 +356,226 @@ def validate_reviewed_selection_bytes(
         "proposal_recipe_selections",
         "designation_selections",
     }
-    if any(actual[field] != expected[field] for field in immutable_top):
+    if any(selection[field] != expected[field] for field in immutable_top):
         raise ValueError("completed review selection is not bound to this template")
-    reviewers = actual["reviewer_refs"]
-    if actual["selection_state"] != "reviewed" or type(reviewers) is not list:
-        raise ValueError("completed review selection lacks canonical accountable reviewers")
-    try:
-        exact_reviewers = exact_reviewer_refs(
-            tuple(reviewers),
-            maximum=128,
-        )
-    except (TypeError, ValueError) as exc:
-        raise ValueError(
-            "completed review selection lacks canonical accountable reviewers"
-        ) from exc
-    if list(exact_reviewers) != reviewers:
-        raise ValueError("completed review selection lacks canonical accountable reviewers")
-
-    structural_selections = _validate_selection_projection(
-        actual=actual["structural_selections"],
+    structural = _validate_selection_projection(
+        actual=selection["structural_selections"],
         expected=expected["structural_selections"],
         mutable_fields=frozenset({"selected_option_ref"}),
         owner="structural",
     )
-    purpose_selections = _validate_selection_projection(
-        actual=actual["purpose_selections"],
+    purpose = _validate_selection_projection(
+        actual=selection["purpose_selections"],
         expected=expected["purpose_selections"],
         mutable_fields=frozenset({"selected_option_ref"}),
         owner="purpose",
     )
-    recipe_selections = _validate_selection_projection(
-        actual=actual["proposal_recipe_selections"],
+    recipes = _validate_selection_projection(
+        actual=selection["proposal_recipe_selections"],
         expected=expected["proposal_recipe_selections"],
         mutable_fields=frozenset({"purpose_recipes"}),
         owner="proposal recipe",
     )
-    designation_selections = _validate_selection_projection(
-        actual=actual["designation_selections"],
+    designations = _validate_selection_projection(
+        actual=selection["designation_selections"],
         expected=expected["designation_selections"],
         mutable_fields=frozenset({"decision", "approved_binding_refs"}),
         owner="designation",
     )
+    return structural, purpose, recipes, designations
 
-    payloads = _tree_bytes(Path(draft_root), owner="reviewed-selection source")
-    decoded = {
-        name: _strict_json(raw, owner=f"reviewed-selection {name}")
-        for name, raw in payloads.items()
-        if name.endswith(".json")
-    }
-    structural_rows = {
-        row["row_ref"]: row
-        for row in decoded["STRUCTURAL_DECISIONS.json"]["rows"]
-    }
+
+def _raise_first_complete_error(
+    *,
+    blocking_errors: Sequence[str],
+    stale_selection_refs: Sequence[str],
+    unresolved_structural_count: int,
+    unresolved_purpose_count: int,
+    unresolved_recipe_count: int,
+    unresolved_designation_count: int,
+) -> None:
+    if blocking_errors:
+        raise ValueError(blocking_errors[0])
+    if stale_selection_refs:
+        if any(ref.startswith("review_worksheet_row:") for ref in stale_selection_refs):
+            raise ValueError("inapplicable purpose decision must remain unselected")
+        raise ValueError("inapplicable downstream selection must remain empty")
+    if unresolved_structural_count:
+        raise ValueError("every structural decision requires one selection")
+    if unresolved_purpose_count:
+        raise ValueError("every applicable purpose decision requires one selection")
+    if unresolved_recipe_count:
+        raise ValueError("proposal purpose recipes do not partition active members")
+    if unresolved_designation_count:
+        raise ValueError("active designation selection is unresolved")
+
+
+def evaluate_selection(
+    *,
+    context: SelectionContext,
+    selection: Mapping[str, object],
+    require_complete: bool,
+) -> SelectionEvaluation:
+    """Evaluate exact mutable fields against one authenticated selection context."""
+
+    structural, purpose_rows, recipe_rows, designation_rows = _selection_projections(
+        context=context,
+        selection=selection,
+    )
+    unresolved_structural = sum(
+        row["selected_option_ref"] is None for row in structural
+    )
+    stale_refs: list[str] = []
+    blocking_errors: list[str] = []
+    blocking_rejections: set[str] = set()
+
     selected_structural: dict[str, list[Mapping[str, object]]] = {}
-    for selection in structural_selections:
-        row = structural_rows[selection["row_ref"]]
-        option = _selected_option(selection, row)
+    for selection_row in structural:
+        source_row = context.structural_rows[selection_row["row_ref"]]
+        option = _selected_option(selection_row, source_row)
         if option is None:
-            raise ValueError("every structural decision requires one selection")
-        selected_structural.setdefault(row["row_kind"], []).append(option)
+            continue
+        selected_structural.setdefault(source_row["row_kind"], []).append(option)
+        if option["label"] in {
+            "reject_exact_proposal",
+            "reject_pending_replacement",
+        }:
+            blocking_rejections.add(source_row["subject_ref"])
+
+    if unresolved_structural:
+        stale_refs.extend(
+            row["row_ref"]
+            for row in purpose_rows
+            if row["selected_option_ref"] is not None
+        )
+        stale_refs.extend(
+            row["family_ref"] for row in recipe_rows if row["purpose_recipes"]
+        )
+        stale_refs.extend(
+            row["source_case_ref"]
+            for row in designation_rows
+            if row["decision"] is not None or row["approved_binding_refs"] is not None
+        )
+        if require_complete:
+            _raise_first_complete_error(
+                blocking_errors=blocking_errors,
+                stale_selection_refs=stale_refs,
+                unresolved_structural_count=unresolved_structural,
+                unresolved_purpose_count=0,
+                unresolved_recipe_count=0,
+                unresolved_designation_count=0,
+            )
+        return SelectionEvaluation(
+            complete=False,
+            branch=None,
+            applicable_purpose_row_refs=frozenset(),
+            active_case_refs=frozenset(),
+            active_supervised_case_refs=frozenset(),
+            case_purposes=MappingProxyType({}),
+            unresolved_structural_count=unresolved_structural,
+            unresolved_purpose_count=0,
+            unresolved_recipe_count=0,
+            unresolved_designation_count=0,
+            blocking_rejection_refs=tuple(sorted(blocking_rejections)),
+            blocking_errors=(),
+            stale_selection_refs=tuple(sorted(stale_refs)),
+        )
+
     branch_options = selected_structural.get("legacy_conditional", [])
     if len(branch_options) != 1 or branch_options[0]["label"] not in {
         "retain_typed_proposal_gaps",
         "retire_with_reserved_indices",
     }:
-        raise ValueError("review selection lacks one exact structural branch")
-    branch = branch_options[0]["label"]
+        blocking_errors.append("review selection lacks one exact structural branch")
+        branch = None
+    else:
+        branch = branch_options[0]["label"]
     patch_options = selected_structural.get("generator_patch", [])
-    if len(patch_options) != 1 or patch_options[0]["label"] != branch:
-        raise ValueError("selected generator patch differs from structural branch")
+    if branch is not None and (
+        len(patch_options) != 1 or patch_options[0]["label"] != branch
+    ):
+        blocking_errors.append("selected generator patch differs from structural branch")
     restart_options = selected_structural.get("restart_diagnostic", [])
     if len(restart_options) != 1:
-        raise ValueError("review selection lacks one restart-diagnostic policy")
-    diagnostic_cases_active = restart_options[0]["label"] == "approve_diagnostic_only"
-
+        blocking_errors.append("review selection lacks one restart-diagnostic policy")
+        diagnostic_cases_active = False
+    else:
+        diagnostic_cases_active = (
+            restart_options[0]["label"] == "approve_diagnostic_only"
+        )
     proposal_options = selected_structural.get("composed_expression_proposal", [])
     if len(proposal_options) != 8:
-        raise ValueError("review selection lacks the exact structural proposal set")
+        blocking_errors.append(
+            "review selection lacks the exact structural proposal set"
+        )
     approved_candidate_scenarios = {
         option["payload"]["scenario_ref"]
         for option in proposal_options
         if option["label"] == "approve_exact_proposal"
     }
 
-    source_case_rows = {
-        row["case_ref"]: row
-        for row in decoded["SOURCE_UNIVERSE.json"]["rows"]
-        if row.get("row_kind") == "expanded_case"
-    }
-    if len(source_case_rows) != 408:
-        raise ValueError("review selection source case inventory is invalid")
-
     def case_is_active(case_ref: object) -> bool:
-        if type(case_ref) is not str or case_ref not in source_case_rows:
+        if type(case_ref) is not str or case_ref not in context.source_case_rows:
             raise ValueError("purpose decision references an unknown source case")
-        source = source_case_rows[case_ref]
+        source = context.source_case_rows[case_ref]
         if source["universe"] == "candidate":
             return source["scenario_ref"] in approved_candidate_scenarios
         if source["universe"] != "current":
             raise ValueError("purpose decision references an unknown source universe")
         if source["source_disposition"] == "restart_diagnostic_candidate":
             return diagnostic_cases_active
-        return True
+        if branch == "retire_with_reserved_indices" and source["scenario_ref"] in {
+            "scenario:modality-0040",
+            "scenario:modality-0046",
+        }:
+            return False
+        return branch is not None
 
-    purpose_rows = {
-        row["row_ref"]: row for row in decoded["PURPOSE_DECISIONS.json"]["rows"]
-    }
+    active_cases = frozenset(
+        case_ref for case_ref in context.source_case_rows if case_is_active(case_ref)
+    )
+    applicable_purpose: set[str] = set()
     selected_purpose: dict[str, Mapping[str, object]] = {}
-    active_purpose_rows: dict[str, Mapping[str, object]] = {}
-    for selection in purpose_selections:
-        row = purpose_rows[selection["row_ref"]]
-        applicability = row.get("branch_applicability")
-        applicable = applicability is None or branch in applicability
-        if row["row_kind"] == "membership":
-            applicable = applicable and case_is_active(row["source_case_ref"])
-        elif row["row_kind"] in {"duplicate_group", "challenge_holdout"}:
+    active_purpose_source_rows: dict[str, Mapping[str, object]] = {}
+    unresolved_purpose = 0
+    for selection_row in purpose_rows:
+        source_row = context.purpose_rows[selection_row["row_ref"]]
+        applicability = source_row.get("branch_applicability")
+        applicable = branch is not None and (
+            applicability is None or branch in applicability
+        )
+        if source_row["row_kind"] == "membership":
+            applicable = applicable and case_is_active(source_row["source_case_ref"])
+        elif source_row["row_kind"] in {"duplicate_group", "challenge_holdout"}:
             applicable = applicable and all(
-                case_is_active(case_ref) for case_ref in row["member_case_refs"]
+                case_is_active(case_ref)
+                for case_ref in source_row["member_case_refs"]
             )
-        elif row["row_kind"] != "denominator":
+        elif source_row["row_kind"] != "denominator":
             raise ValueError("review selection has an unknown purpose decision kind")
-        option = _selected_option(selection, row)
-        if applicable and option is None:
-            raise ValueError("every applicable purpose decision requires one selection")
-        if not applicable and option is not None:
-            raise ValueError("inapplicable purpose decision must remain unselected")
-        if option is not None:
-            selected_purpose[row["row_ref"]] = option
-            active_purpose_rows[row["row_ref"]] = row
+        option = _selected_option(selection_row, source_row)
+        if applicable:
+            applicable_purpose.add(source_row["row_ref"])
+            if option is None:
+                unresolved_purpose += 1
+            else:
+                selected_purpose[source_row["row_ref"]] = option
+                active_purpose_source_rows[source_row["row_ref"]] = source_row
+        elif option is not None:
+            stale_refs.append(source_row["row_ref"])
 
     group_purposes: dict[str, str | None] = {}
-    for row_ref, row in active_purpose_rows.items():
-        if row["row_kind"] != "duplicate_group":
+    for row_ref, source_row in active_purpose_source_rows.items():
+        if source_row["row_kind"] != "duplicate_group":
             continue
         payload = selected_purpose[row_ref]["payload"]
         if type(payload) is not dict:
             raise ValueError("duplicate-group selection payload is invalid")
-        group_purposes[row["subject_ref"]] = payload.get("purpose")
+        group_purposes[source_row["subject_ref"]] = payload.get("purpose")
 
     case_purposes: dict[str, str | None] = {}
-    for row_ref, row in active_purpose_rows.items():
-        if row["row_kind"] != "membership":
+    for row_ref, source_row in active_purpose_source_rows.items():
+        if source_row["row_kind"] != "membership":
             continue
         payload = selected_purpose[row_ref]["payload"]
         if type(payload) is not dict:
@@ -436,32 +585,34 @@ def validate_reviewed_selection_bytes(
         if group_ref is not None:
             purpose = group_purposes.get(group_ref)
             if purpose is None:
-                raise ValueError("membership selects a rejected duplicate group")
+                blocking_errors.append(
+                    "membership selects a rejected duplicate group"
+                )
         classification = payload.get("classification")
         if classification == "diagnostic_only":
             if purpose is not None:
-                raise ValueError("diagnostic membership cannot own a purpose")
+                blocking_errors.append("diagnostic membership cannot own a purpose")
         elif purpose not in {"train", "selection", "calibration", "frozen_test"}:
-            raise ValueError("supervised membership lacks one exact purpose")
-        case_purposes[row["source_case_ref"]] = purpose
+            blocking_errors.append("supervised membership lacks one exact purpose")
+        case_purposes[source_row["source_case_ref"]] = purpose
 
-    for row_ref, row in active_purpose_rows.items():
-        if row["row_kind"] != "challenge_holdout":
+    for row_ref, source_row in active_purpose_source_rows.items():
+        if source_row["row_kind"] != "challenge_holdout":
             continue
         payload = selected_purpose[row_ref]["payload"]
         purpose = payload.get("purpose") if type(payload) is dict else None
         if purpose is not None and any(
             case_purposes.get(case_ref) != purpose
-            for case_ref in row["member_case_refs"]
+            for case_ref in source_row["member_case_refs"]
         ):
-            raise ValueError("challenge holdout crosses selected case purposes")
+            blocking_errors.append("challenge holdout crosses selected case purposes")
 
     purpose_counts = {
         purpose: sum(value == purpose for value in case_purposes.values())
         for purpose in ("train", "selection", "calibration", "frozen_test")
     }
-    for row_ref, row in active_purpose_rows.items():
-        if row["row_kind"] != "denominator":
+    for row_ref, source_row in active_purpose_source_rows.items():
+        if source_row["row_kind"] != "denominator":
             continue
         payload = selected_purpose[row_ref]["payload"]
         if type(payload) is not dict or any(
@@ -470,16 +621,23 @@ def validate_reviewed_selection_bytes(
             or purpose_counts[purpose] < minimum
             for purpose, minimum in payload.items()
         ):
-            raise ValueError("selected purpose denominator minimum is not satisfied")
+            blocking_errors.append(
+                "selected purpose denominator minimum is not satisfied"
+            )
 
-    active_supervised_cases = {
+    active_supervised = frozenset(
         case_ref for case_ref, purpose in case_purposes.items() if purpose is not None
-    }
-    for selection in recipe_selections:
-        active_members = set(selection["member_case_refs"]) & active_supervised_cases
-        purpose_recipes = selection["purpose_recipes"]
+    )
+    unresolved_recipes = 0
+    for selection_row in recipe_rows:
+        active_members = set(selection_row["member_case_refs"]) & active_supervised
+        purpose_recipes = selection_row["purpose_recipes"]
         if type(purpose_recipes) is not list or len(purpose_recipes) > 4:
             raise ValueError("proposal purpose recipes violate their bound")
+        if not active_members:
+            if purpose_recipes:
+                stale_refs.append(selection_row["family_ref"])
+            continue
         seen_purposes: set[str] = set()
         assigned_members: set[str] = set()
         for recipe in purpose_recipes:
@@ -510,31 +668,122 @@ def validate_reviewed_selection_bytes(
                 or any(case_purposes.get(case_ref) != purpose for case_ref in members)
             ):
                 raise ValueError("proposal purpose recipe crosses case ownership")
+            if recipe["decision"] == "reject":
+                blocking_rejections.add(selection_row["family_ref"])
             seen_purposes.add(purpose)
             assigned_members.update(member_set)
         if assigned_members != active_members:
-            raise ValueError("proposal purpose recipes do not partition active members")
+            unresolved_recipes += 1
 
-    for selection in designation_selections:
-        active = selection["source_case_ref"] in active_supervised_cases
-        candidates = selection["candidate_binding_refs"]
-        decision = selection["decision"]
-        approved = selection["approved_binding_refs"]
+    unresolved_designations = 0
+    for selection_row in designation_rows:
+        active = selection_row["source_case_ref"] in active_supervised
+        candidates = selection_row["candidate_binding_refs"]
+        decision = selection_row["decision"]
+        approved = selection_row["approved_binding_refs"]
         if not active:
             if decision is not None or approved is not None:
-                raise ValueError("inapplicable designation selection must remain empty")
+                stale_refs.append(selection_row["source_case_ref"])
             continue
         if decision == "approve_candidate_bindings":
             if not candidates or approved != candidates:
-                raise ValueError("designation approval differs from exact candidate set")
+                raise ValueError(
+                    "designation approval differs from exact candidate set"
+                )
         elif decision == "approve_exact_empty":
             if candidates or approved != []:
                 raise ValueError("designation empty approval is not exact")
         elif decision == "reject":
             if approved is not None:
                 raise ValueError("rejected designation cannot approve bindings")
+            blocking_rejections.add(selection_row["source_case_ref"])
+        elif decision is None and approved is None:
+            unresolved_designations += 1
         else:
             raise ValueError("active designation selection is unresolved")
+
+    stale = tuple(sorted(set(stale_refs)))
+    errors = tuple(dict.fromkeys(blocking_errors))
+    complete = not any(
+        (
+            unresolved_structural,
+            unresolved_purpose,
+            unresolved_recipes,
+            unresolved_designations,
+            stale,
+            errors,
+        )
+    )
+    if require_complete and not complete:
+        _raise_first_complete_error(
+            blocking_errors=errors,
+            stale_selection_refs=stale,
+            unresolved_structural_count=unresolved_structural,
+            unresolved_purpose_count=unresolved_purpose,
+            unresolved_recipe_count=unresolved_recipes,
+            unresolved_designation_count=unresolved_designations,
+        )
+    return SelectionEvaluation(
+        complete=complete,
+        branch=branch,
+        applicable_purpose_row_refs=frozenset(applicable_purpose),
+        active_case_refs=active_cases,
+        active_supervised_case_refs=active_supervised,
+        case_purposes=MappingProxyType(dict(sorted(case_purposes.items()))),
+        unresolved_structural_count=unresolved_structural,
+        unresolved_purpose_count=unresolved_purpose,
+        unresolved_recipe_count=unresolved_recipes,
+        unresolved_designation_count=unresolved_designations,
+        blocking_rejection_refs=tuple(sorted(blocking_rejections)),
+        blocking_errors=errors,
+        stale_selection_refs=stale,
+    )
+
+
+def validate_reviewed_selection_bytes(
+    *,
+    repository_root: Path,
+    draft_root: Path,
+    selection_raw: object,
+) -> Mapping[str, object]:
+    """Validate one completed selection without minting reviewed-source identity."""
+
+    if not isinstance(selection_raw, bytes):
+        raise TypeError("review selection must be exact bytes")
+    context = load_selection_context(
+        repository_root=repository_root,
+        draft_root=draft_root,
+    )
+    actual = _strict_json(selection_raw, owner="completed review selection")
+    reviewers = actual.get("reviewer_refs") if type(actual) is dict else None
+    if (
+        type(actual) is not dict
+        or actual.get("selection_state") != "reviewed"
+        or type(reviewers) is not list
+    ):
+        raise ValueError(
+            "completed review selection lacks canonical accountable reviewers"
+        )
+    try:
+        exact_reviewers = exact_reviewer_refs(
+            tuple(reviewers),
+            maximum=128,
+        )
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            "completed review selection lacks canonical accountable reviewers"
+        ) from exc
+    if list(exact_reviewers) != reviewers:
+        raise ValueError(
+            "completed review selection lacks canonical accountable reviewers"
+        )
+    evaluation = evaluate_selection(
+        context=context,
+        selection=actual,
+        require_complete=True,
+    )
+    if not evaluation.complete:
+        raise ValueError("completed review selection remains unresolved")
     if _json_bytes(actual) != selection_raw:
         raise ValueError("completed review selection bytes are not canonical")
     return actual
