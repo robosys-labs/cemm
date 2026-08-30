@@ -277,8 +277,11 @@ persistence or internal errors. The API returns a safe message, affected refs
 and unchanged state revision. It never returns stack traces or local file
 contents to the browser.
 
-An action is all-or-nothing. Persistence failure leaves the prior working file
-and in-memory state active. Export failure leaves no partial final file. If an
+A working-state action is all-or-nothing. Working-state persistence failure
+leaves the prior working file and in-memory state active. The action journal is
+non-authoritative and is appended only after a successful state write; journal
+failure produces a visible audit warning without invalidating or rolling back
+the exact working selection. Export failure leaves no partial final file. If an
 output identity changes during a write, cleanup is refused and the server stops
 the affected operation.
 
