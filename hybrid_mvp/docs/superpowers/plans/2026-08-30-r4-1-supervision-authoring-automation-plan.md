@@ -906,6 +906,8 @@ git commit -m "feat(r4): verify reviewed realizations independently"
 - Create: `src/cemm_authoritative_hybrid/r4_mutation_compiler.py`
 - Modify: `src/cemm_authoritative_hybrid/r4_mutations.py:326-441`
 - Modify: `src/cemm_authoritative_hybrid/r4_environment.py:124-297`
+- Modify: `src/cemm_authoritative_hybrid/r4_pipeline.py:318-385`
+- Modify: `scripts/build_r4_artifacts.py:40-140`
 - Modify: `tests/test_r4_mutations_and_partitions.py`
 - Modify: `tests/test_r4_environment.py`
 - Modify: `tests/test_r4_supervision_compilers.py`
@@ -999,14 +1001,21 @@ Give `MutationGenerator` an exact tuple of `MutationContract` records and a
 per case, and return the compiled mutations in `(family_ref, contract_ref)`
 order. Delete `_MutationSpec`, `_SPECS` and `_apply` after all callers migrate.
 
+Make `R4Pipeline` require this exact reviewed contract tuple. The artifact
+builder must obtain it from one authenticated review-bundle load and run the
+existing cross-source validator before constructing the pipeline. Until Task
+14 publishes that bundle, artifact building is explicitly unavailable; do not
+retain `_SPECS`, synthesize contracts, or use old artifacts as a fallback.
+
 - [ ] **Step 5: Remove expected labels from the execution boundary**
 
 Keep expected labels in the immutable `SemanticMutation` wrapper for
-post-execution comparison, but construct the environment request exclusively
-from `mutated_case`, scope, dimension and changed path. The authentic owner may
-not branch on `expected_earliest_owner`, `expected_status` or
+post-execution comparison, but create a content-addressed
+`MutationExecutionRequest` exclusively from `mutated_case`, scope, dimension
+and changed path. Pass only that request to the authentic owner. The owner may
+not receive or branch on `expected_earliest_owner`, `expected_status` or
 `expected_error_code`. `MutationObservation.create` compares the independent
-result after execution.
+result with the retained wrapper only after execution.
 
 - [ ] **Step 6: Run mutation tests and forbidden-pattern scan**
 
@@ -1020,7 +1029,7 @@ Expected: tests pass and `rg` returns no matches.
 - [ ] **Step 7: Commit**
 
 ```powershell
-git add src/cemm_authoritative_hybrid/r4_mutation_compiler.py src/cemm_authoritative_hybrid/r4_mutations.py src/cemm_authoritative_hybrid/r4_environment.py tests/test_r4_mutations_and_partitions.py tests/test_r4_environment.py tests/test_r4_supervision_compilers.py
+git add src/cemm_authoritative_hybrid/r4_mutation_compiler.py src/cemm_authoritative_hybrid/r4_mutations.py src/cemm_authoritative_hybrid/r4_environment.py src/cemm_authoritative_hybrid/r4_pipeline.py scripts/build_r4_artifacts.py tests/test_r4_mutations_and_partitions.py tests/test_r4_environment.py tests/test_r4_supervision_compilers.py
 git commit -m "feat(r4): compile reviewed mutation truth"
 ```
 
