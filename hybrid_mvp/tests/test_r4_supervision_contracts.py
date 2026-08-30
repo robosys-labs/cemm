@@ -26,6 +26,7 @@ from cemm_authoritative_hybrid.r4_purpose import (
     PurposeContract,
     PurposeMembership,
 )
+from cemm_authoritative_hybrid.r4_review_context import ReviewContextMaterial
 
 from cemm_authoritative_hybrid.r4_supervision import (
     MAX_BLUEPRINT_ACTIONS,
@@ -56,7 +57,25 @@ from cemm_authoritative_hybrid.r4_supervision import (
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMAS = ROOT / "schemas"
 CASE_REF = "expanded_case_v2:0123456789abcdef01234567"
-REVIEW_REF = "source_review:0123456789abcdef01234567"
+REVIEW_POLICY_REF = "review_policy:r4_1"
+REVIEW_POLICY_SHA256 = "1" * 64
+REVIEWER_REFS = ("reviewer:human-1",)
+REVIEWED_BASE_REVISION = "a" * 40
+AUTHORITY_GENERATION = "authority-v1-2026-07-29"
+FORM_ABI_VERSION = 7
+FORM_PACK_SHA256 = "2" * 64
+INPUT_SET_REF = "worksheet_input_set:0123456789abcdef01234567"
+REVIEW_CONTEXT = ReviewContextMaterial.create(
+    review_policy_ref=REVIEW_POLICY_REF,
+    review_policy_sha256=REVIEW_POLICY_SHA256,
+    reviewer_refs=REVIEWER_REFS,
+    reviewed_base_revision=REVIEWED_BASE_REVISION,
+    authority_generation=AUTHORITY_GENERATION,
+    form_abi_version=FORM_ABI_VERSION,
+    form_pack_sha256=FORM_PACK_SHA256,
+    input_set_ref=INPUT_SET_REF,
+)
+REVIEW_REF = REVIEW_CONTEXT.review_context_ref
 
 
 def _blueprint() -> DerivationBlueprint:
@@ -347,10 +366,14 @@ def _manifest() -> R4ReviewManifest:
         )
     )
     return R4ReviewManifest.create(
-        review_policy_ref="review_policy:r4_1",
-        reviewer_refs=("reviewer:human-1",),
-        reviewed_base_revision="a" * 40,
-        authority_generation="authority-v1-2026-07-29",
+        review_policy_ref=REVIEW_POLICY_REF,
+        review_policy_sha256=REVIEW_POLICY_SHA256,
+        reviewer_refs=REVIEWER_REFS,
+        reviewed_base_revision=REVIEWED_BASE_REVISION,
+        authority_generation=AUTHORITY_GENERATION,
+        form_abi_version=FORM_ABI_VERSION,
+        form_pack_sha256=FORM_PACK_SHA256,
+        input_set_ref=INPUT_SET_REF,
         source_bundle_ref="r4_review_bundle_v1:0123456789abcdef01234567",
         scenario_source_sha256="f" * 64,
         sources=rows,
@@ -876,9 +899,13 @@ def test_review_provenance_uses_closed_typed_namespaces() -> None:
     with pytest.raises(ValueError, match="reviewer"):
         R4ReviewManifest.create(
             review_policy_ref=manifest.review_policy_ref,
+            review_policy_sha256=manifest.review_policy_sha256,
             reviewer_refs=("runtime_observation:human-1",),
             reviewed_base_revision=manifest.reviewed_base_revision,
             authority_generation=manifest.authority_generation,
+            form_abi_version=manifest.form_abi_version,
+            form_pack_sha256=manifest.form_pack_sha256,
+            input_set_ref=manifest.input_set_ref,
             source_bundle_ref=manifest.source_bundle_ref,
             scenario_source_sha256=manifest.scenario_source_sha256,
             sources=manifest.sources,
@@ -1540,10 +1567,14 @@ def _write_cross_source_tree(
         for index, path in enumerate(_REVIEW_CHILD_PATHS, 1)
     )
     manifest = R4ReviewManifest.create(
-        review_policy_ref="review_policy:r4_1",
-        reviewer_refs=("reviewer:human-1",),
-        reviewed_base_revision="a" * 40,
+        review_policy_ref=REVIEW_POLICY_REF,
+        review_policy_sha256=REVIEW_POLICY_SHA256,
+        reviewer_refs=REVIEWER_REFS,
+        reviewed_base_revision=REVIEWED_BASE_REVISION,
         authority_generation=_cross_source_authority().generation,
+        form_abi_version=FORM_ABI_VERSION,
+        form_pack_sha256=FORM_PACK_SHA256,
+        input_set_ref=INPUT_SET_REF,
         source_bundle_ref=_bundle_ref(child_bytes, scenario_bytes),
         scenario_source_sha256=hashlib.sha256(scenario_bytes).hexdigest(),
         sources=source_rows,
@@ -1669,12 +1700,9 @@ def test_authenticated_cross_source_validator_rejects_missing_and_duplicate_rows
         tmp_path / "second-proposal",
         proposals=proposals + (second_proposal,),
     )
-    second_proposal_bundle = supervision_module.load_authenticated_r4_review_bundle(
-        second_proposal_root
-    )
-    with pytest.raises(ValueError, match="duplicate rows for one case"):
-        supervision_module.validate_authenticated_r4_source_semantics(
-            second_proposal_bundle, authority=_cross_source_authority()
+    with pytest.raises(ValueError, match="review context"):
+        supervision_module.load_authenticated_r4_review_bundle(
+            second_proposal_root
         )
 
     base = realizations[0]
@@ -2084,11 +2112,15 @@ def _write_review_tree(
     count_override: tuple[str, int] | None = None,
     sha_override: tuple[str, str] | None = None,
     bundle_ref: str | None = None,
+    child_review_ref: str | None = None,
 ) -> tuple[Path, R4ReviewManifest, dict[str, bytes]]:
     root = tmp_path / "candidate"
+    proposal = _derive_target()
+    if child_review_ref is not None:
+        proposal = _recreate_proposal(proposal, review_refs=(child_review_ref,))
     child_bytes = {
         _REVIEW_CHILD_PATHS[0]: _mutation().to_json_bytes(),
-        _REVIEW_CHILD_PATHS[1]: _derive_target().to_json_bytes(),
+        _REVIEW_CHILD_PATHS[1]: proposal.to_json_bytes(),
         _REVIEW_CHILD_PATHS[2]: _purpose_source(),
         _REVIEW_CHILD_PATHS[3]: _realization().to_json_bytes(),
     }
@@ -2117,10 +2149,14 @@ def _write_review_tree(
             )
         )
     manifest = R4ReviewManifest.create(
-        review_policy_ref="review_policy:r4_1",
-        reviewer_refs=("reviewer:human-1",),
-        reviewed_base_revision="a" * 40,
-        authority_generation="authority-v1-2026-07-29",
+        review_policy_ref=REVIEW_POLICY_REF,
+        review_policy_sha256=REVIEW_POLICY_SHA256,
+        reviewer_refs=REVIEWER_REFS,
+        reviewed_base_revision=REVIEWED_BASE_REVISION,
+        authority_generation=AUTHORITY_GENERATION,
+        form_abi_version=FORM_ABI_VERSION,
+        form_pack_sha256=FORM_PACK_SHA256,
+        input_set_ref=INPUT_SET_REF,
         source_bundle_ref=bundle_ref or _bundle_ref(child_bytes, scenario_bytes),
         scenario_source_sha256=hashlib.sha256(scenario_bytes).hexdigest(),
         sources=tuple(sources),
@@ -2177,6 +2213,15 @@ def test_authenticated_review_bundle_has_no_public_mint_api(tmp_path: Path) -> N
     bundle = supervision_module.load_authenticated_r4_review_bundle(root)
     with pytest.raises(TypeError, match="created only by load_authenticated"):
         bundle_type()
+
+
+def test_manifest_rejects_child_review_ref_not_equal_to_context(tmp_path: Path) -> None:
+    root, _, _ = _write_review_tree(
+        tmp_path,
+        child_review_ref="source_review:" + "f" * 24,
+    )
+    with pytest.raises(ValueError, match="review context"):
+        supervision_module.load_authenticated_r4_review_bundle(root)
 
 
 def test_reader_failure_prevents_authenticated_bundle_creation(

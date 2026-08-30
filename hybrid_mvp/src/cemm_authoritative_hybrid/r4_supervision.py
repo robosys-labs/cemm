@@ -47,6 +47,7 @@ from .contributions import ContributionKind
 from .epistemic import exact_epistemic_status_ref
 from .programs import ACTION_ABI_HASH, ACTION_ABI_SCHEMAS, PROGRAM_ABI_VERSION, SWITCH_ACTION_TYPES
 from .r4_contracts import SourceDisposition
+from .r4_review_context import ReviewContextMaterial
 
 R4_REVIEW_MANIFEST_ABI_VERSION = 1
 PROPOSAL_SUPERVISION_ABI_VERSION = 1
@@ -637,10 +638,15 @@ class ReviewSourceFile:
 class R4ReviewManifest:
     abi_version: int
     manifest_ref: str
+    review_context_ref: str
     review_policy_ref: str
+    review_policy_sha256: str
     reviewer_refs: tuple[str, ...]
     reviewed_base_revision: str
     authority_generation: str
+    form_abi_version: int
+    form_pack_sha256: str
+    input_set_ref: str
     source_bundle_ref: str
     scenario_source_sha256: str
     sources: tuple[ReviewSourceFile, ...]
@@ -650,13 +656,53 @@ class R4ReviewManifest:
     runtime_observations_are_source_authority: bool
     bootstrap_outputs_are_source_authority: bool
 
-    _FIELDS = frozenset({"abi_version", "manifest_ref", "review_policy_ref", "reviewer_refs", "reviewed_base_revision", "authority_generation", "source_bundle_ref", "scenario_source_sha256", "sources", "abi_versions", "approval_state", "supersedes_refs", "runtime_observations_are_source_authority", "bootstrap_outputs_are_source_authority"})
+    _FIELDS = frozenset(
+        {
+            "abi_version",
+            "manifest_ref",
+            "review_context_ref",
+            "review_policy_ref",
+            "review_policy_sha256",
+            "reviewer_refs",
+            "reviewed_base_revision",
+            "authority_generation",
+            "form_abi_version",
+            "form_pack_sha256",
+            "input_set_ref",
+            "source_bundle_ref",
+            "scenario_source_sha256",
+            "sources",
+            "abi_versions",
+            "approval_state",
+            "supersedes_refs",
+            "runtime_observations_are_source_authority",
+            "bootstrap_outputs_are_source_authority",
+        }
+    )
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
         raise _factory_only("R4ReviewManifest")
 
     @classmethod
-    def create(cls, *, review_policy_ref: str, reviewer_refs: tuple[str, ...], reviewed_base_revision: str, authority_generation: str, source_bundle_ref: str, scenario_source_sha256: str, sources: tuple[ReviewSourceFile, ...], approval_state: str, supersedes_refs: tuple[str, ...], runtime_observations_are_source_authority: bool, bootstrap_outputs_are_source_authority: bool) -> "R4ReviewManifest":
+    def create(
+        cls,
+        *,
+        review_policy_ref: str,
+        review_policy_sha256: str,
+        reviewer_refs: tuple[str, ...],
+        reviewed_base_revision: str,
+        authority_generation: str,
+        form_abi_version: int,
+        form_pack_sha256: str,
+        input_set_ref: str,
+        source_bundle_ref: str,
+        scenario_source_sha256: str,
+        sources: tuple[ReviewSourceFile, ...],
+        approval_state: str,
+        supersedes_refs: tuple[str, ...],
+        runtime_observations_are_source_authority: bool,
+        bootstrap_outputs_are_source_authority: bool,
+    ) -> "R4ReviewManifest":
         source_rows = exact_value_tuple(sources, "sources", ReviewSourceFile, nonempty=True, maximum=len(_SOURCE_PATHS), identity=lambda row: row.path)
         source_rows = tuple(_canonical_nested(row, ReviewSourceFile, "source") for row in source_rows)
         if tuple(row.path for row in source_rows) != _SOURCE_PATHS:
@@ -671,12 +717,27 @@ class R4ReviewManifest:
             raise ValueError("runtime observations and bootstrap outputs cannot be source authority")
         if approval_state != "approved":
             raise ValueError("review manifest approval_state must be approved")
+        review_context = ReviewContextMaterial.create(
+            review_policy_ref=review_policy_ref,
+            review_policy_sha256=review_policy_sha256,
+            reviewer_refs=reviewers,
+            reviewed_base_revision=reviewed_base_revision,
+            authority_generation=authority_generation,
+            form_abi_version=form_abi_version,
+            form_pack_sha256=form_pack_sha256,
+            input_set_ref=input_set_ref,
+        )
         material = {
             "abi_version": R4_REVIEW_MANIFEST_ABI_VERSION,
-            "review_policy_ref": exact_ref(review_policy_ref, "review_policy_ref", prefix="review_policy:"),
-            "reviewer_refs": list(reviewers),
-            "reviewed_base_revision": exact_revision(reviewed_base_revision, "reviewed_base_revision"),
-            "authority_generation": exact_text(authority_generation, "authority_generation"),
+            "review_context_ref": review_context.review_context_ref,
+            "review_policy_ref": review_context.review_policy_ref,
+            "review_policy_sha256": review_context.review_policy_sha256,
+            "reviewer_refs": list(review_context.reviewer_refs),
+            "reviewed_base_revision": review_context.reviewed_base_revision,
+            "authority_generation": review_context.authority_generation,
+            "form_abi_version": review_context.form_abi_version,
+            "form_pack_sha256": review_context.form_pack_sha256,
+            "input_set_ref": review_context.input_set_ref,
             "source_bundle_ref": exact_content_ref(source_bundle_ref, "source_bundle_ref", prefix="r4_review_bundle_v1:"),
             "scenario_source_sha256": exact_sha256(scenario_source_sha256, "scenario_source_sha256"),
             "sources": [row.as_dict() for row in source_rows],
@@ -689,7 +750,27 @@ class R4ReviewManifest:
         return construct(cls, manifest_ref=stable_ref("r4_review_manifest_v1", material), sources=source_rows, abi_versions=MappingProxyType(dict(_ABI_VERSIONS)), **{key: value if key not in {"reviewer_refs", "supersedes_refs"} else tuple(value) for key, value in material.items() if key not in {"sources", "abi_versions"}})
 
     def as_dict(self) -> dict[str, Any]:
-        return {"abi_version": self.abi_version, "manifest_ref": self.manifest_ref, "review_policy_ref": self.review_policy_ref, "reviewer_refs": list(self.reviewer_refs), "reviewed_base_revision": self.reviewed_base_revision, "authority_generation": self.authority_generation, "source_bundle_ref": self.source_bundle_ref, "scenario_source_sha256": self.scenario_source_sha256, "sources": [row.as_dict() for row in self.sources], "abi_versions": dict(self.abi_versions), "approval_state": self.approval_state, "supersedes_refs": list(self.supersedes_refs), "runtime_observations_are_source_authority": self.runtime_observations_are_source_authority, "bootstrap_outputs_are_source_authority": self.bootstrap_outputs_are_source_authority}
+        return {
+            "abi_version": self.abi_version,
+            "manifest_ref": self.manifest_ref,
+            "review_context_ref": self.review_context_ref,
+            "review_policy_ref": self.review_policy_ref,
+            "review_policy_sha256": self.review_policy_sha256,
+            "reviewer_refs": list(self.reviewer_refs),
+            "reviewed_base_revision": self.reviewed_base_revision,
+            "authority_generation": self.authority_generation,
+            "form_abi_version": self.form_abi_version,
+            "form_pack_sha256": self.form_pack_sha256,
+            "input_set_ref": self.input_set_ref,
+            "source_bundle_ref": self.source_bundle_ref,
+            "scenario_source_sha256": self.scenario_source_sha256,
+            "sources": [row.as_dict() for row in self.sources],
+            "abi_versions": dict(self.abi_versions),
+            "approval_state": self.approval_state,
+            "supersedes_refs": list(self.supersedes_refs),
+            "runtime_observations_are_source_authority": self.runtime_observations_are_source_authority,
+            "bootstrap_outputs_are_source_authority": self.bootstrap_outputs_are_source_authority,
+        }
 
     def to_json_bytes(self) -> bytes:
         return canonical_json_bytes(self.as_dict())
@@ -713,7 +794,39 @@ class R4ReviewManifest:
             raise ValueError("manifest ABI versions are not the exact ABI 1 allocation")
         for name, expected in _ABI_VERSIONS.items():
             exact_abi(row["abi_versions"][name], expected, f"manifest {name}")
-        rebuilt = cls.create(review_policy_ref=row["review_policy_ref"], reviewer_refs=wire_ref_tuple(row["reviewer_refs"], "reviewer_refs", nonempty=True), reviewed_base_revision=row["reviewed_base_revision"], authority_generation=row["authority_generation"], source_bundle_ref=row["source_bundle_ref"], scenario_source_sha256=row["scenario_source_sha256"], sources=wire_value_tuple(row["sources"], "sources", ReviewSourceFile.from_dict, nonempty=True, maximum=len(_SOURCE_PATHS)), approval_state=row["approval_state"], supersedes_refs=wire_ref_tuple(row["supersedes_refs"], "supersedes_refs", nonempty=False), runtime_observations_are_source_authority=row["runtime_observations_are_source_authority"], bootstrap_outputs_are_source_authority=row["bootstrap_outputs_are_source_authority"])
+        rebuilt = cls.create(
+            review_policy_ref=row["review_policy_ref"],
+            review_policy_sha256=row["review_policy_sha256"],
+            reviewer_refs=wire_ref_tuple(
+                row["reviewer_refs"], "reviewer_refs", nonempty=True
+            ),
+            reviewed_base_revision=row["reviewed_base_revision"],
+            authority_generation=row["authority_generation"],
+            form_abi_version=row["form_abi_version"],
+            form_pack_sha256=row["form_pack_sha256"],
+            input_set_ref=row["input_set_ref"],
+            source_bundle_ref=row["source_bundle_ref"],
+            scenario_source_sha256=row["scenario_source_sha256"],
+            sources=wire_value_tuple(
+                row["sources"],
+                "sources",
+                ReviewSourceFile.from_dict,
+                nonempty=True,
+                maximum=len(_SOURCE_PATHS),
+            ),
+            approval_state=row["approval_state"],
+            supersedes_refs=wire_ref_tuple(
+                row["supersedes_refs"], "supersedes_refs", nonempty=False
+            ),
+            runtime_observations_are_source_authority=row[
+                "runtime_observations_are_source_authority"
+            ],
+            bootstrap_outputs_are_source_authority=row[
+                "bootstrap_outputs_are_source_authority"
+            ],
+        )
+        if rebuilt.review_context_ref != row["review_context_ref"]:
+            raise ValueError("manifest review context ref does not reconstruct")
         if rebuilt.manifest_ref != row["manifest_ref"]:
             raise ValueError("manifest ref does not match canonical content")
         if rebuilt.as_dict() != dict(row):
@@ -827,6 +940,12 @@ def load_authenticated_r4_review_bundle(
 
     manifest_bytes = read(R4_REVIEW_MANIFEST_PATH)
     manifest = R4ReviewManifest.from_json_bytes(manifest_bytes)
+    expected_review_refs = (manifest.review_context_ref,)
+    if any(
+        source_record.review_refs != expected_review_refs
+        for source_record in manifest.sources
+    ):
+        raise ValueError("reviewed source file is not bound to the manifest review context")
     sources: list[AuthenticatedR4SourceBytes] = []
     for source_record in manifest.sources:
         raw = read(source_record.path)
@@ -837,6 +956,13 @@ def load_authenticated_r4_review_bundle(
             raise ValueError(f"reviewed source record count mismatch: {source.path}")
         if source.sha256 != source_record.sha256:
             raise ValueError(f"reviewed source SHA-256 mismatch: {source.path}")
+        if any(
+            getattr(record, "review_refs", None) != expected_review_refs
+            for record in source.records
+        ):
+            raise ValueError(
+                f"reviewed source child is not bound to the manifest review context: {source.path}"
+            )
         sources.append(source)
     scenario_raw = read(R4_SCENARIO_SOURCE_PATH)
     scenario = AuthenticatedR4SourceBytes.create(

@@ -6,10 +6,15 @@
   "properties": {
     "abi_version": {"const": 1, "type": "integer"},
     "manifest_ref": {"maxLength": 512, "pattern": "^r4_review_manifest_v1:[0-9a-f]{24}$", "type": "string"},
+    "review_context_ref": {"maxLength": 512, "pattern": "^source_review:[0-9a-f]{24}$", "type": "string"},
     "review_policy_ref": {"maxLength": 512, "pattern": "^review_policy:[^\\s:][^\\s]*$", "type": "string"},
+    "review_policy_sha256": {"$ref": "#/$defs/sha256"},
     "reviewer_refs": {"items": {"maxLength": 512, "pattern": "^reviewer:[^\\s:][^\\s]*$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
     "reviewed_base_revision": {"pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$", "type": "string"},
     "authority_generation": {"maxLength": 512, "minLength": 1, "type": "string"},
+    "form_abi_version": {"const": 7, "type": "integer"},
+    "form_pack_sha256": {"$ref": "#/$defs/sha256"},
+    "input_set_ref": {"maxLength": 512, "pattern": "^worksheet_input_set:[0-9a-f]{24}$", "type": "string"},
     "source_bundle_ref": {"maxLength": 512, "pattern": "^r4_review_bundle_v1:[0-9a-f]{24}$", "type": "string"},
     "scenario_source_sha256": {"$ref": "#/$defs/sha256"},
     "sources": {
@@ -29,7 +34,7 @@
     "runtime_observations_are_source_authority": {"const": false, "type": "boolean"},
     "bootstrap_outputs_are_source_authority": {"const": false, "type": "boolean"}
   },
-  "required": ["abi_version", "manifest_ref", "review_policy_ref", "reviewer_refs", "reviewed_base_revision", "authority_generation", "source_bundle_ref", "scenario_source_sha256", "sources", "abi_versions", "approval_state", "supersedes_refs", "runtime_observations_are_source_authority", "bootstrap_outputs_are_source_authority"],
+  "required": ["abi_version", "manifest_ref", "review_context_ref", "review_policy_ref", "review_policy_sha256", "reviewer_refs", "reviewed_base_revision", "authority_generation", "form_abi_version", "form_pack_sha256", "input_set_ref", "source_bundle_ref", "scenario_source_sha256", "sources", "abi_versions", "approval_state", "supersedes_refs", "runtime_observations_are_source_authority", "bootstrap_outputs_are_source_authority"],
   "title": "CEMM R4 Review Manifest ABI 1",
   "type": "object",
   "$defs": {
