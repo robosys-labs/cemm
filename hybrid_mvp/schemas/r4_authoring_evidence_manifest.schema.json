@@ -1,0 +1,37 @@
+{
+  "$id": "https://robosys-labs.github.io/cemm/schemas/r4_authoring_evidence_manifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "manifest_version": {"const": 1, "type": "integer"},
+    "normalizer_source_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "snapshot_ref": {"pattern": "^evidence_snapshot_v1:[0-9a-f]{24}$", "type": "string"},
+    "sources": {
+      "items": {"$ref": "#/$defs/source"},
+      "maxItems": 64,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "total_bytes": {"maximum": 16777216, "minimum": 0, "type": "integer"}
+  },
+  "required": ["manifest_version", "snapshot_ref", "normalizer_source_sha256", "total_bytes", "sources"],
+  "title": "R4 Authoring Evidence Manifest",
+  "type": "object",
+  "$defs": {
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "byte_length": {"maximum": 16777216, "minimum": 0, "type": "integer"},
+        "license_id": {"maxLength": 512, "minLength": 1, "type": "string"},
+        "license_policy": {"enum": ["suggestion_permitted", "advisory_only"]},
+        "relative_path": {"maxLength": 512, "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$", "type": "string"},
+        "revision": {"maxLength": 512, "minLength": 1, "type": "string"},
+        "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "source_family": {"enum": ["oewn", "wikidata_lexeme", "cldr"]},
+        "source_ref": {"pattern": "^evidence_source_v1:[0-9a-f]{24}$", "type": "string"}
+      },
+      "required": ["source_ref", "source_family", "revision", "sha256", "byte_length", "license_id", "license_policy", "relative_path"],
+      "type": "object"
+    }
+  }
+}
