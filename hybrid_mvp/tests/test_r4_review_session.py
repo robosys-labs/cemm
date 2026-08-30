@@ -55,6 +55,9 @@ def test_session_bootstrap_indexes_exact_current_review_inventory(
     assert bootstrap["designation_risk_counts"]["multi_unit_case"] == 21
     assert bootstrap["designation_risk_counts"]["exact_empty"] == 61
     assert bootstrap["state_revision"] == 0
+    assert bootstrap["review_complete"] is False
+    assert bootstrap["authoring_ready"] is False
+    assert bootstrap["blocking_rejection_refs"] == []
     assert bootstrap["selection_template_ref"].startswith(
         "r4_authoring_selection_template:"
     )
@@ -485,5 +488,278 @@ def test_purpose_cohort_preview_resolves_every_row_local_option(
             ReviewAction.purpose(
                 row_refs=tuple(sorted((refs[0], denominator["row_ref"]))),
                 option_label="direct_train",
+            )
+        )
+
+
+def _apply_preview(session: ReviewSession, action: ReviewAction) -> None:
+    preview = session.preview(action)
+    session.apply(
+        preview_hash=preview.preview_hash,
+        expected_revision=preview.state_revision,
+    )
+
+
+def _complete_purpose_selections(session: ReviewSession) -> None:
+    supervised = [
+        row
+        for row in session.indexes.purpose_rows_by_ref.values()
+        if row["row_kind"] == "membership"
+        and row["source_classification"] != "restart_diagnostic_candidate"
+    ]
+    purposes = ("train", "selection", "calibration", "frozen_test")
+    for index, purpose in enumerate(purposes):
+        refs = tuple(
+            sorted(
+                row["row_ref"]
+                for row_index, row in enumerate(supervised)
+                if row_index % len(purposes) == index
+            )
+        )
+        _apply_preview(
+            session,
+            ReviewAction.purpose(
+                row_refs=refs,
+                option_label=f"direct_{purpose}",
+            ),
+        )
+    for row_kind, option_label in (
+        ("membership", "approve_diagnostic_only"),
+        ("duplicate_group", "reject_group"),
+        ("challenge_holdout", "not_a_holdout"),
+        ("denominator", "minimum_one_each"),
+    ):
+        refs = tuple(
+            sorted(
+                row["row_ref"]
+                for row in session.indexes.purpose_rows_by_ref.values()
+                if row["row_kind"] == row_kind
+                and any(
+                    option["label"] == option_label
+                    and option["selectable"] is True
+                    for option in row["options"]
+                )
+            )
+        )
+        _apply_preview(
+            session,
+            ReviewAction.purpose(
+                row_refs=refs,
+                option_label=option_label,
+            ),
+        )
+
+
+@pytest.fixture
+def purpose_complete_session(started_session: ReviewSession) -> ReviewSession:
+    _select_all_structural_approvals(started_session)
+    _complete_purpose_selections(started_session)
+    return started_session
+
+
+def _family_members(session: ReviewSession, family_ref: str) -> tuple[str, ...]:
+    return tuple(
+        session.indexes.proposal_families_by_ref[family_ref]["member_case_refs"]
+    )
+
+
+def _recipe_for(
+    state: Mapping[str, object],
+    *,
+    family_ref: str,
+    purpose: str,
+) -> Mapping[str, object]:
+    family = next(
+        row
+        for row in state["proposal_recipe_selections"]
+        if row["family_ref"] == family_ref
+    )
+    return next(
+        row for row in family["purpose_recipes"] if row["purpose"] == purpose
+    )
+
+
+def _designation_selection(
+    state: Mapping[str, object],
+    case_ref: str,
+) -> Mapping[str, object]:
+    return next(
+        row
+        for row in state["designation_selections"]
+        if row["source_case_ref"] == case_ref
+    )
+
+
+def test_recipe_action_uses_exact_selected_purpose_partition(
+    purpose_complete_session: ReviewSession,
+) -> None:
+    evaluation = purpose_complete_session.evaluation()
+    family_ref = next(
+        ref
+        for ref in purpose_complete_session.indexes.proposal_families_by_ref
+        if any(
+            evaluation.case_purposes[case_ref] == "train"
+            for case_ref in _family_members(purpose_complete_session, ref)
+        )
+    )
+    preview = purpose_complete_session.preview(
+        ReviewAction.recipe(
+            family_ref=family_ref,
+            purpose="train",
+            decision="approve",
+            reviewed_parameters={"review_basis": "exact_source_family"},
+        )
+    )
+    purpose_complete_session.apply(
+        preview_hash=preview.preview_hash,
+        expected_revision=preview.state_revision,
+    )
+    recipe = _recipe_for(
+        purpose_complete_session.state,
+        family_ref=family_ref,
+        purpose="train",
+    )
+    assert recipe["member_case_refs"] == sorted(
+        case_ref
+        for case_ref in _family_members(purpose_complete_session, family_ref)
+        if purpose_complete_session.evaluation().case_purposes[case_ref]
+        == "train"
+    )
+    replacement = purpose_complete_session.preview(
+        ReviewAction.recipe(
+            family_ref=family_ref,
+            purpose="train",
+            decision="approve",
+            reviewed_parameters={"review_basis": "second_exact_review"},
+        )
+    )
+    purpose_complete_session.apply(
+        preview_hash=replacement.preview_hash,
+        expected_revision=replacement.state_revision,
+    )
+    family = next(
+        row
+        for row in purpose_complete_session.state["proposal_recipe_selections"]
+        if row["family_ref"] == family_ref
+    )
+    assert sum(
+        row["purpose"] == "train" for row in family["purpose_recipes"]
+    ) == 1
+
+
+def test_recipe_rejection_is_reported_as_blocking_status(
+    purpose_complete_session: ReviewSession,
+) -> None:
+    evaluation = purpose_complete_session.evaluation()
+    family_ref = next(iter(purpose_complete_session.indexes.proposal_families_by_ref))
+    purpose = next(
+        evaluation.case_purposes[case_ref]
+        for case_ref in _family_members(purpose_complete_session, family_ref)
+        if evaluation.case_purposes[case_ref] is not None
+    )
+
+    preview = purpose_complete_session.preview(
+        ReviewAction.recipe(
+            family_ref=family_ref,
+            purpose=purpose,
+            decision="reject",
+            reviewed_parameters={"review_basis": "exact_rejection"},
+        )
+    )
+    result = purpose_complete_session.apply(
+        preview_hash=preview.preview_hash,
+        expected_revision=preview.state_revision,
+    )
+
+    assert family_ref in result["blocking_rejection_refs"]
+    assert result["authoring_ready"] is False
+
+
+def test_recipe_action_rejects_absent_partition_and_oversized_parameters(
+    purpose_complete_session: ReviewSession,
+) -> None:
+    evaluation = purpose_complete_session.evaluation()
+    family_ref = next(iter(purpose_complete_session.indexes.proposal_families_by_ref))
+    absent = next(
+        purpose
+        for purpose in ("train", "selection", "calibration", "frozen_test")
+        if all(
+            evaluation.case_purposes[case_ref] != purpose
+            for case_ref in _family_members(purpose_complete_session, family_ref)
+        )
+    )
+    with pytest.raises(ValueError, match="absent purpose partition"):
+        purpose_complete_session.preview(
+            ReviewAction.recipe(
+                family_ref=family_ref,
+                purpose=absent,
+                decision="approve",
+                reviewed_parameters={},
+            )
+        )
+    with pytest.raises(ValueError, match="parameter bound"):
+        ReviewAction.recipe(
+            family_ref=family_ref,
+            purpose="train",
+            decision="approve",
+            reviewed_parameters={f"key_{index}": index for index in range(129)},
+        )
+
+
+def test_routine_designation_cohort_expands_to_exact_case_local_bindings(
+    purpose_complete_session: ReviewSession,
+) -> None:
+    cohort_ref, case_refs = next(
+        iter(purpose_complete_session.indexes.routine_designation_cohorts.items())
+    )
+    preview = purpose_complete_session.preview(
+        ReviewAction.designation_cohort(
+            cohort_ref=cohort_ref,
+            decision="approve_candidate_bindings",
+        )
+    )
+    result = purpose_complete_session.apply(
+        preview_hash=preview.preview_hash,
+        expected_revision=preview.state_revision,
+    )
+    assert set(result["affected_refs"]) == set(case_refs)
+    for case_ref in case_refs:
+        row = _designation_selection(purpose_complete_session.state, case_ref)
+        assert row["approved_binding_refs"] == row["candidate_binding_refs"]
+
+
+def test_exception_designation_rejects_cohort_action(
+    purpose_complete_session: ReviewSession,
+) -> None:
+    case_ref = next(
+        iter(purpose_complete_session.indexes.designation_exception_case_refs)
+    )
+    with pytest.raises(ValueError, match="individual review"):
+        purpose_complete_session.preview(
+            ReviewAction.designation_cases(
+                case_refs=(case_ref,),
+                decision="approve_candidate_bindings",
+                individual=False,
+            )
+        )
+
+
+def test_designation_decision_must_match_exact_candidate_shape(
+    purpose_complete_session: ReviewSession,
+) -> None:
+    nonempty = next(
+        case_ref
+        for case_ref in purpose_complete_session.evaluation().active_supervised_case_refs
+        if _designation_selection(
+            purpose_complete_session.state,
+            case_ref,
+        )["candidate_binding_refs"]
+    )
+    with pytest.raises(ValueError, match="incompatible"):
+        purpose_complete_session.preview(
+            ReviewAction.designation_cases(
+                case_refs=(nonempty,),
+                decision="approve_exact_empty",
+                individual=True,
             )
         )

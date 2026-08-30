@@ -82,6 +82,11 @@ class ReviewAction:
             or self.target_refs != tuple(sorted(set(self.target_refs)))
         ):
             raise ValueError("review action target refs are not canonical")
+        object.__setattr__(
+            self,
+            "selected_value",
+            _freeze_json(copy.deepcopy(self.selected_value)),
+        )
 
     @classmethod
     def structural(
@@ -100,6 +105,69 @@ class ReviewAction:
         option_label: str,
     ) -> "ReviewAction":
         return cls("purpose", row_refs, option_label)
+
+    @classmethod
+    def recipe(
+        cls,
+        *,
+        family_ref: str,
+        purpose: str,
+        decision: str,
+        reviewed_parameters: Mapping[str, object],
+    ) -> "ReviewAction":
+        if purpose not in {"train", "selection", "calibration", "frozen_test"}:
+            raise ValueError("recipe purpose is invalid")
+        if decision not in {"approve", "reject"}:
+            raise ValueError("recipe decision is invalid")
+        if type(reviewed_parameters) is not dict or len(reviewed_parameters) > 128:
+            raise ValueError("recipe reviewed parameter bound is violated")
+        _json_bytes(reviewed_parameters)
+        return cls(
+            "recipe",
+            (family_ref,),
+            {
+                "decision": decision,
+                "purpose": purpose,
+                "reviewed_parameters": copy.deepcopy(reviewed_parameters),
+            },
+        )
+
+    @classmethod
+    def designation_cohort(
+        cls,
+        *,
+        cohort_ref: str,
+        decision: str,
+    ) -> "ReviewAction":
+        if decision not in {
+            "approve_candidate_bindings",
+            "approve_exact_empty",
+            "reject",
+        }:
+            raise ValueError("designation decision is invalid")
+        return cls("designation_cohort", (cohort_ref,), decision)
+
+    @classmethod
+    def designation_cases(
+        cls,
+        *,
+        case_refs: tuple[str, ...],
+        decision: str,
+        individual: bool,
+    ) -> "ReviewAction":
+        if decision not in {
+            "approve_candidate_bindings",
+            "approve_exact_empty",
+            "reject",
+        }:
+            raise ValueError("designation decision is invalid")
+        if type(individual) is not bool:
+            raise TypeError("designation individual flag must be exact")
+        return cls(
+            "designation_cases",
+            case_refs,
+            {"decision": decision, "individual": individual},
+        )
 
 
 @dataclass(frozen=True)
@@ -641,6 +709,21 @@ class ReviewSession:
         )
 
     @staticmethod
+    def _review_status(
+        evaluation: SelectionEvaluation,
+    ) -> dict[str, object]:
+        return {
+            "review_complete": evaluation.complete,
+            "authoring_ready": (
+                evaluation.complete
+                and not evaluation.blocking_rejection_refs
+            ),
+            "blocking_rejection_refs": list(
+                evaluation.blocking_rejection_refs
+            ),
+        }
+
+    @staticmethod
     def _selection_by_ref(
         state: Mapping[str, object],
         *,
@@ -778,6 +861,129 @@ class ReviewSession:
                     cleared.add(family_ref)
         return refs, cleared
 
+    def _apply_recipe_action(
+        self,
+        *,
+        candidate: dict[str, object],
+        action: ReviewAction,
+        before: SelectionEvaluation,
+    ) -> tuple[tuple[str, ...], set[str]]:
+        if len(action.target_refs) != 1:
+            raise ValueError("recipe action requires one exact family")
+        family_ref = action.target_refs[0]
+        if family_ref not in self.indexes.proposal_families_by_ref:
+            raise ValueError("recipe action references an unknown family")
+        value = _thaw_json(action.selected_value)
+        if type(value) is not dict or set(value) != {
+            "decision",
+            "purpose",
+            "reviewed_parameters",
+        }:
+            raise ValueError("recipe action value is invalid")
+        purpose = value["purpose"]
+        family = self.indexes.proposal_families_by_ref[family_ref]
+        members = sorted(
+            case_ref
+            for case_ref in family["member_case_refs"]
+            if before.case_purposes.get(case_ref) == purpose
+        )
+        if not members:
+            raise ValueError("recipe action names an absent purpose partition")
+        selections = self._selection_by_ref(
+            candidate,
+            field="proposal_recipe_selections",
+            ref_field="family_ref",
+        )
+        existing = selections[family_ref]["purpose_recipes"]
+        if type(existing) is not list:
+            raise ValueError("recipe selection is invalid")
+        retained = [row for row in existing if row["purpose"] != purpose]
+        retained.append(
+            {
+                "purpose": purpose,
+                "member_case_refs": members,
+                "decision": value["decision"],
+                "reviewed_parameters": value["reviewed_parameters"],
+            }
+        )
+        retained.sort(key=lambda row: row["purpose"])
+        selections[family_ref]["purpose_recipes"] = retained
+        return (family_ref,), set()
+
+    @staticmethod
+    def _designation_value(
+        selection: Mapping[str, object],
+        decision: str,
+    ) -> tuple[str, list[str] | None]:
+        candidates = selection["candidate_binding_refs"]
+        if type(candidates) is not list:
+            raise ValueError("designation candidate refs are invalid")
+        if decision == "approve_candidate_bindings" and candidates:
+            return decision, list(candidates)
+        if decision == "approve_exact_empty" and not candidates:
+            return decision, []
+        if decision == "reject":
+            return decision, None
+        raise ValueError(
+            "designation decision is incompatible with its exact candidate set"
+        )
+
+    def _apply_designation_action(
+        self,
+        *,
+        candidate: dict[str, object],
+        action: ReviewAction,
+        before: SelectionEvaluation,
+    ) -> tuple[tuple[str, ...], set[str]]:
+        if action.action_kind == "designation_cohort":
+            cohort_ref = action.target_refs[0]
+            try:
+                refs = self.indexes.routine_designation_cohorts[cohort_ref]
+            except KeyError as exc:
+                raise ValueError(
+                    "designation action references an unknown routine cohort"
+                ) from exc
+            decision = action.selected_value
+            individual = False
+        else:
+            refs = action.target_refs
+            value = _thaw_json(action.selected_value)
+            if type(value) is not dict or set(value) != {
+                "decision",
+                "individual",
+            }:
+                raise ValueError("designation action value is invalid")
+            decision = value["decision"]
+            individual = value["individual"]
+        if type(decision) is not str:
+            raise TypeError("designation decision must be an exact string")
+        exceptions = set(refs) & self.indexes.designation_exception_case_refs
+        if exceptions and (individual is not True or len(refs) != 1):
+            raise ValueError(
+                "exception designation case requires individual review"
+            )
+        if not set(refs) <= before.active_supervised_case_refs:
+            raise ValueError("designation action targets an inactive case")
+        selections = self._selection_by_ref(
+            candidate,
+            field="designation_selections",
+            ref_field="source_case_ref",
+        )
+        for case_ref in refs:
+            try:
+                selection = selections[case_ref]
+            except KeyError as exc:
+                raise ValueError(
+                    "designation action references an unknown case"
+                ) from exc
+            selected_decision, approved = self._designation_value(
+                selection,
+                decision,
+            )
+            selection["decision"] = selected_decision
+            selection["approved_binding_refs"] = approved
+        return tuple(refs), set()
+
     @staticmethod
     def _clear_stale_refs(
         candidate: dict[str, object],
@@ -866,6 +1072,21 @@ class ReviewSession:
                 action=action,
                 before=before,
             )
+        elif action.action_kind == "recipe":
+            affected, cleared = self._apply_recipe_action(
+                candidate=candidate,
+                action=action,
+                before=before,
+            )
+        elif action.action_kind in {
+            "designation_cohort",
+            "designation_cases",
+        }:
+            affected, cleared = self._apply_designation_action(
+                candidate=candidate,
+                action=action,
+                before=before,
+            )
         else:
             raise ValueError("review action kind is unavailable")
         intermediate = evaluate_selection(
@@ -888,7 +1109,7 @@ class ReviewSession:
             {
                 "action": {
                     "action_kind": action.action_kind,
-                    "selected_value": action.selected_value,
+                    "selected_value": _thaw_json(action.selected_value),
                     "target_refs": list(action.target_refs),
                 },
                 "affected_refs": list(affected),
@@ -935,40 +1156,40 @@ class ReviewSession:
                 "preview_hash": pending.preview_hash,
                 "action_kind": pending.action.action_kind,
                 "target_refs": list(pending.action.target_refs),
-                "selected_value": pending.action.selected_value,
+                "selected_value": _thaw_json(pending.action.selected_value),
                 "affected_refs": list(pending.affected_refs),
                 "cleared_refs": list(pending.cleared_refs),
             },
         )
-        return MappingProxyType(
-            {
-                "affected_refs": list(pending.affected_refs),
-                "audit_warning": self.audit_warning,
-                "cleared_refs": list(pending.cleared_refs),
-                "state_revision": self.state_revision,
-            }
-        )
+        result = {
+            "affected_refs": list(pending.affected_refs),
+            "audit_warning": self.audit_warning,
+            "cleared_refs": list(pending.cleared_refs),
+            "state_revision": self.state_revision,
+        }
+        result.update(self._review_status(self.evaluation()))
+        return MappingProxyType(result)
 
     def bootstrap(self) -> Mapping[str, object]:
-        return MappingProxyType(
-            {
-                "inventory": {
-                    "structural": len(self.indexes.structural_rows_by_ref),
-                    "purpose": len(self.indexes.purpose_rows_by_ref),
-                    "recipe_family": len(self.indexes.proposal_families_by_ref),
-                    "designation": len(self.indexes.designation_rows_by_case),
-                },
-                "designation_risk_counts": {
-                    "intersecting_case": self.indexes.intersecting_case_count,
-                    "overlap_pair": self.indexes.overlap_pair_count,
-                    "multi_unit_case": self.indexes.multi_unit_case_count,
-                    "exact_empty": self.indexes.exact_empty_count,
-                },
-                "state_revision": self.state_revision,
-                "selection_template_ref": self._state["selection_template_ref"],
-                "draft_input_set_ref": self._state["draft_input_set_ref"],
-            }
-        )
+        result = {
+            "inventory": {
+                "structural": len(self.indexes.structural_rows_by_ref),
+                "purpose": len(self.indexes.purpose_rows_by_ref),
+                "recipe_family": len(self.indexes.proposal_families_by_ref),
+                "designation": len(self.indexes.designation_rows_by_case),
+            },
+            "designation_risk_counts": {
+                "intersecting_case": self.indexes.intersecting_case_count,
+                "overlap_pair": self.indexes.overlap_pair_count,
+                "multi_unit_case": self.indexes.multi_unit_case_count,
+                "exact_empty": self.indexes.exact_empty_count,
+            },
+            "state_revision": self.state_revision,
+            "selection_template_ref": self._state["selection_template_ref"],
+            "draft_input_set_ref": self._state["draft_input_set_ref"],
+        }
+        result.update(self._review_status(self.evaluation()))
+        return MappingProxyType(result)
 
     def _decision_items(self, *, section: str) -> list[dict[str, object]]:
         if section == "structural":
