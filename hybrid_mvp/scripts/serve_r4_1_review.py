@@ -153,6 +153,7 @@ class ReviewRequestHandler(BaseHTTPRequestHandler):
         content_type: str,
         csp: bool,
     ) -> None:
+        self.close_connection = True
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(raw)))
@@ -248,6 +249,7 @@ class ReviewRequestHandler(BaseHTTPRequestHandler):
         if length <= 0:
             raise ValueError("request body must be nonempty")
         if length > MAX_REQUEST_BYTES:
+            self.rfile.read(min(length, MAX_REQUEST_BYTES + 1))
             raise _RequestTooLarge("request body exceeds byte bound")
         raw = self.rfile.read(length)
         if len(raw) != length:

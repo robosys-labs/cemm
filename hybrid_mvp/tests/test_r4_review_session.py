@@ -8,6 +8,7 @@ from typing import Mapping
 
 import pytest
 
+import scripts.build_r4_1_review_selection as selection_module
 import scripts.r4_1_review_session as review_session_module
 from scripts.build_r4_1_review_selection import (
     build_selection_template_bytes,
@@ -911,3 +912,53 @@ def test_export_is_exact_noop_or_refuses_different_existing_bytes(
     complete_session.paths.export_path.write_bytes(b"{}\n")
     with pytest.raises(ValueError, match="different existing export"):
         complete_session.export()
+
+
+def test_session_authenticates_once_and_actions_never_rescan_sources(
+    review_paths: ReviewPaths,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = {"tree": 0, "context": 0, "index": 0}
+    real_tree = selection_module._tree_bytes
+    real_context = review_session_module.load_selection_context
+    real_index = review_session_module.build_review_indexes
+
+    def counted_tree(*args: object, **kwargs: object) -> object:
+        calls["tree"] += 1
+        return real_tree(*args, **kwargs)
+
+    def counted_context(*args: object, **kwargs: object) -> object:
+        calls["context"] += 1
+        return real_context(*args, **kwargs)
+
+    def counted_index(*args: object, **kwargs: object) -> object:
+        calls["index"] += 1
+        return real_index(*args, **kwargs)
+
+    monkeypatch.setattr(selection_module, "_tree_bytes", counted_tree)
+    monkeypatch.setattr(
+        review_session_module,
+        "load_selection_context",
+        counted_context,
+    )
+    monkeypatch.setattr(
+        review_session_module,
+        "build_review_indexes",
+        counted_index,
+    )
+    session = ReviewSession.open(review_paths)
+    session.set_reviewers(("reviewer:test",))
+    row = next(iter(session.indexes.structural_rows_by_ref.values()))
+    action = ReviewAction.structural(
+        row_ref=row["row_ref"],
+        selected_option_ref=row["options"][0]["option_ref"],
+    )
+    for index in range(512):
+        preview = session.preview(action)
+        if index % 4 == 3:
+            session.apply(
+                preview_hash=preview.preview_hash,
+                expected_revision=preview.state_revision,
+            )
+
+    assert calls == {"tree": 1, "context": 1, "index": 1}

@@ -1,6 +1,7 @@
 """Bounded loopback adapter for the accountable R4.1 reviewer."""
 from __future__ import annotations
 
+import ast
 import http.client
 import json
 from pathlib import Path
@@ -9,7 +10,10 @@ from typing import Mapping
 
 import pytest
 
-from scripts.build_r4_1_review_selection import build_selection_template_bytes
+from scripts.build_r4_1_review_selection import (
+    build_selection_template_bytes,
+    validate_reviewed_selection_bytes,
+)
 from scripts.build_r4_1_review_worksheets import (
     _json_bytes,
     build_review_worksheet_draft,
@@ -31,8 +35,12 @@ def request(
     body: Mapping[str, object] | None = None,
     raw_body: bytes | None = None,
     headers: Mapping[str, str] | None = None,
+    timeout: int = 5,
 ) -> tuple[int, Mapping[str, str], bytes]:
-    connection = http.client.HTTPConnection(*server.server_address, timeout=5)
+    connection = http.client.HTTPConnection(
+        *server.server_address,
+        timeout=timeout,
+    )
     raw = raw_body if raw_body is not None else (
         None if body is None else _json_bytes(body)
     )
@@ -303,3 +311,227 @@ def test_shutdown_requires_authorization_and_exact_origin(server_fixture) -> Non
     )
     assert status == 200
     assert json.loads(payload)["result"]["shutdown"] is True
+
+
+def _drive_complete_review(server: object) -> tuple[dict[str, object], bytes]:
+    revision = 0
+
+    def post(
+        path: str,
+        body: Mapping[str, object],
+        *,
+        timeout: int = 5,
+    ) -> Mapping[str, object]:
+        nonlocal revision
+        status, _, raw = request(
+            server,
+            "POST",
+            path,
+            body={"state_revision": revision, **body},
+            headers=_api_headers(server, post=True),
+            timeout=timeout,
+        )
+        envelope = json.loads(raw)
+        assert status == 200, envelope
+        revision = envelope["state_revision"]
+        return envelope["result"]
+
+    def apply_action(action: Mapping[str, object]) -> None:
+        preview = post("/api/preview", {"action": action})
+        post("/api/apply", {"preview_hash": preview["preview_hash"]})
+
+    def items(section: str) -> list[Mapping[str, object]]:
+        result: list[Mapping[str, object]] = []
+        offset = 0
+        while True:
+            status, _, raw = request(
+                server,
+                "GET",
+                f"/api/items?section={section}&filter=all&query=&offset={offset}&limit=100",
+                headers=_api_headers(server),
+            )
+            envelope = json.loads(raw)
+            assert status == 200, envelope
+            page = envelope["result"]
+            result.extend(page["items"])
+            offset += len(page["items"])
+            if offset >= page["total"]:
+                return result
+
+    post("/api/reviewer", {"reviewer_refs": ["reviewer:test"]})
+    structural_labels = {
+        "composed_expression_proposal": "approve_exact_proposal",
+        "conflict_preservation": "preserve_as_alternatives",
+        "legacy_conditional": "retain_typed_proposal_gaps",
+        "restart_diagnostic": "approve_diagnostic_only",
+        "generator_patch": "retain_typed_proposal_gaps",
+    }
+    for item in items("structural"):
+        selected = next(
+            option["option_ref"]
+            for option in item["options"]
+            if option["label"] == structural_labels[item["row_kind"]]
+        )
+        apply_action(
+            {
+                "action_kind": "structural",
+                "target_refs": [item["row_ref"]],
+                "selected_value": selected,
+            }
+        )
+
+    purpose_rows = items("purpose")
+    supervised = [
+        item
+        for item in purpose_rows
+        if item["row_kind"] == "membership"
+        and any(
+            option["label"] == "direct_train"
+            and option["selectable"] is True
+            for option in item["options"]
+        )
+    ]
+    purposes = ("train", "selection", "calibration", "frozen_test")
+    for purpose_index, purpose in enumerate(purposes):
+        refs = sorted(
+            item["row_ref"]
+            for item_index, item in enumerate(supervised)
+            if item_index % len(purposes) == purpose_index
+        )
+        apply_action(
+            {
+                "action_kind": "purpose",
+                "target_refs": refs,
+                "selected_value": f"direct_{purpose}",
+            }
+        )
+    for row_kind, option_label in (
+        ("membership", "approve_diagnostic_only"),
+        ("duplicate_group", "reject_group"),
+        ("challenge_holdout", "not_a_holdout"),
+        ("denominator", "minimum_one_each"),
+    ):
+        refs = sorted(
+            item["row_ref"]
+            for item in purpose_rows
+            if item["row_kind"] == row_kind
+            and any(
+                option["label"] == option_label
+                and option["selectable"] is True
+                for option in item["options"]
+            )
+        )
+        apply_action(
+            {
+                "action_kind": "purpose",
+                "target_refs": refs,
+                "selected_value": option_label,
+            }
+        )
+
+    for item in items("recipe"):
+        for purpose in item["display"]["eligible_purposes"]:
+            apply_action(
+                {
+                    "action_kind": "recipe",
+                    "target_refs": [item["row_ref"]],
+                    "selected_value": {
+                        "purpose": purpose,
+                        "decision": "approve",
+                        "reviewed_parameters": {
+                            "review_basis": "http_exact_family"
+                        },
+                    },
+                }
+            )
+
+    designation_rows = items("designation")
+    cohorts: set[str] = set()
+    for item in designation_rows:
+        if item["display"]["exceptional"]:
+            decision = (
+                "approve_candidate_bindings"
+                if item["display"]["candidate_bindings"]
+                else "approve_exact_empty"
+            )
+            apply_action(
+                {
+                    "action_kind": "designation_cases",
+                    "target_refs": [item["row_ref"]],
+                    "selected_value": {
+                        "decision": decision,
+                        "individual": True,
+                    },
+                }
+            )
+        else:
+            cohorts.add(item["display"]["routine_cohort_ref"])
+    for cohort_ref in sorted(cohorts):
+        apply_action(
+            {
+                "action_kind": "designation_cohort",
+                "target_refs": [cohort_ref],
+                "selected_value": "approve_candidate_bindings",
+            }
+        )
+
+    receipt = dict(post("/api/export", {}, timeout=60))
+    status, _, raw = request(
+        server,
+        "GET",
+        "/api/bootstrap",
+        headers=_api_headers(server),
+    )
+    assert status == 200
+    bootstrap = json.loads(raw)["result"]
+    assert bootstrap["inventory"] == {
+        "structural": 12,
+        "purpose": 600,
+        "recipe_family": 56,
+        "designation": 388,
+    }
+    assert receipt["review_complete"] is True
+    assert receipt["authoring_ready"] is True
+    export_raw = server.session.paths.export_path.read_bytes()
+    assert validate_reviewed_selection_bytes(
+        repository_root=ROOT,
+        draft_root=server.session.paths.draft_root,
+        selection_raw=export_raw,
+    )["selection_state"] == "reviewed"
+    return receipt, export_raw
+
+
+def test_full_http_review_exports_deterministic_validated_bytes(
+    server_fixture,
+) -> None:
+    first = server_fixture()
+    second = server_fixture()
+
+    first_receipt, first_raw = _drive_complete_review(first)
+    second_receipt, second_raw = _drive_complete_review(second)
+
+    assert first_raw == second_raw
+    assert first_receipt["sha256"] == second_receipt["sha256"]
+
+
+def test_runtime_source_never_imports_review_ui_or_server() -> None:
+    forbidden = {
+        "serve_r4_1_review",
+        "r4_1_review_session",
+        "http.server",
+        "webbrowser",
+        "scripts.r4_1_review_ui",
+    }
+    violations: list[tuple[str, str]] = []
+    for path in sorted((ROOT / "src/cemm_authoritative_hybrid").rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for item in ast.walk(tree):
+            names: list[str] = []
+            if isinstance(item, ast.Import):
+                names = [alias.name for alias in item.names]
+            elif isinstance(item, ast.ImportFrom) and item.module is not None:
+                names = [item.module]
+            for name in names:
+                if any(blocked in name for blocked in forbidden):
+                    violations.append((str(path.relative_to(ROOT)), name))
+    assert violations == []

@@ -185,16 +185,24 @@ def _designation_targets(rows: object) -> list[dict[str, object]]:
     return result
 
 
-def build_selection_template_bytes(
+def _load_selection_source(
     *,
     repository_root: Path,
     draft_root: Path,
-) -> bytes:
+) -> tuple[Path, dict[str, Mapping[str, object]]]:
     root = Path(repository_root).resolve(strict=True)
     draft_payloads = _tree_bytes(Path(draft_root), owner="selection-source draft")
     decoded = _validate_file_set_bytes(draft_payloads)
     retained = _validate_bound_repository_inputs(decoded=decoded, repository_root=root)
     _validate_repository_semantics(decoded=decoded, retained=retained)
+    return root, decoded
+
+
+def _selection_template_bytes_from_source(
+    *,
+    root: Path,
+    decoded: Mapping[str, Mapping[str, object]],
+) -> bytes:
     input_set_refs = {payload["input_set_ref"] for payload in decoded.values()}
     if len(input_set_refs) != 1:
         raise ValueError("selection-source worksheets do not share one input set")
@@ -251,6 +259,18 @@ def build_selection_template_bytes(
     return raw
 
 
+def build_selection_template_bytes(
+    *,
+    repository_root: Path,
+    draft_root: Path,
+) -> bytes:
+    root, decoded = _load_selection_source(
+        repository_root=repository_root,
+        draft_root=draft_root,
+    )
+    return _selection_template_bytes_from_source(root=root, decoded=decoded)
+
+
 def _selected_option(
     selection: Mapping[str, object],
     source_row: Mapping[str, object],
@@ -296,22 +316,19 @@ def load_selection_context(
 
     if template_raw is not None and not isinstance(template_raw, bytes):
         raise TypeError("selection template must be exact bytes")
-    generated = build_selection_template_bytes(
+    root, decoded = _load_selection_source(
         repository_root=repository_root,
         draft_root=draft_root,
+    )
+    generated = _selection_template_bytes_from_source(
+        root=root,
+        decoded=decoded,
     )
     if template_raw is None:
         template_raw = generated
     elif template_raw != generated:
         raise ValueError("selection template differs from authenticated draft")
     expected = _strict_json(template_raw, owner="review selection template")
-    payloads = _tree_bytes(Path(draft_root), owner="reviewed-selection source")
-    decoded = _validate_file_set_bytes(payloads)
-    retained = _validate_bound_repository_inputs(
-        decoded=decoded,
-        repository_root=Path(repository_root).resolve(strict=True),
-    )
-    _validate_repository_semantics(decoded=decoded, retained=retained)
     structural_rows = {
         row["row_ref"]: row
         for row in decoded["STRUCTURAL_DECISIONS.json"]["rows"]
