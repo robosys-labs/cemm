@@ -10,10 +10,11 @@ approved canonical scenario patch, and record source-readiness approval without
 checking in the `data/review/r4_1/` package.
 
 **Architecture:** Correct the earliest source owners in dependency order:
-model-free source expansion, proposal truth, realization truth and purpose
-truth. Generate bounded non-authoritative review worksheets only after the
-contracts are exact. Record approval as a governance checkpoint, then return to
-the main replay plan; never compensate in a compiler, solver, runtime or
+model-free source expansion, proposal truth, realization truth, purpose truth
+and the reviewed source compiler's missing canonical graph seam. Generate
+bounded non-authoritative review worksheets only after the contracts and source
+representation are exact. Record approval as a governance checkpoint, then
+return to the main replay plan; never compensate in a solver, runtime or
 artifact builder.
 
 **Tech Stack:** Python 3, frozen dataclasses, canonical JSON/JSONL, JSON Schema
@@ -37,6 +38,11 @@ Draft 2020-12, SHA-256 content refs, pytest, PowerShell and Git.
 - Repair the unpublished Proposal, Realization and Purpose ABI 1 shapes in
   place, preserve Review Manifest and Mutation ABI 1, and reconcile all five
   registry rows exactly once; do not mint ABI 2 or claim activation.
+- Repair the Reviewed Assertion ABI 1 vocabulary once in place before SR5 and
+  before any canonical R4.1 reviewed source package is published or admitted.
+  Existing ABI-1 rows remain byte- and behavior-identical; this avoids an ABI
+  bump that would churn every existing scenario identity and does not approve a
+  proposed meaning.
 - Add no phase, validation tier, owner, pytest process or runtime hot-path scan.
 - Add tests to existing R4 owner selectors and update metadata, selector inputs
   and inventory evidence atomically with each executable test change.
@@ -467,6 +473,60 @@ realization row shape; only diagnostic restart is excluded.
 **Checkpoint SR4:** direct and inherited purpose are unambiguous, components are
 transitive, and validation remains linearly bounded.
 
+## SR4.5: Repair canonical composed-expression source compilation
+
+**Files:**
+
+- Modify: `src/cemm_authoritative_hybrid/r4_contracts.py`
+- Modify: `tests/test_r4_assertion_compiler.py`
+- Modify directly affected existing source-expansion tests only
+- Modify existing R4 expected-contract selector metadata/inputs and living
+  inventory receipts only; do not add a gate, owner, tier or pytest process
+- Modify: `docs/superpowers/specs/2026-08-30-r4-1-source-readiness-correction-design.md`
+- Modify: `docs/superpowers/plans/2026-08-30-r4-1-source-readiness-correction-plan.md`
+
+- [x] **Step 1: Write RED canonical-graph assertion tests.**
+
+  Require a closed `composed_expression` assertion with exact `linked` and
+  `multi_root` shapes. Prove every reviewed Expression Link ABI 1 type lowers
+  to one canonical expression; true multi-root lowers to one link-free
+  expression; both use relation `single`; semantic `SIMULATE` is preserved;
+  and an authentic `op:type`/`role:type` application is representable. Prove
+  existing separate assertions remain relation `all` and conflicts remain
+  alternative expressions with relation `conflict`.
+
+- [x] **Step 2: Implement one bounded source-compiler seam.**
+
+  Add bounded application, link and root declarations with closed
+  grounded/literal/proposition-node filler variants. The compiler constructs
+  node refs from the reviewed assertion and local labels; source rows cannot
+  provide semantic node or expression refs. Reuse Semantic Expression ABI 1
+  canonicalization and release bounds. Build local indexes once; validate
+  authority-linked predicates/fillers, exact five operators, operator/event
+  roles and proposition-taking roles before constructing exactly one
+  `SemanticExpression`.
+
+- [x] **Step 3: Add hostile and performance regressions.**
+
+  Reject unknown or duplicate local labels, duplicate roots, dangling
+  proposition/link operands, unknown links, wrong arity, cycles, orphans,
+  invalid operators/predicates/roles/filler kinds, conflict-as-multi-root,
+  non-exact integer/boolean values and every collection/depth over-bound.
+  Require deterministic content refs, bounded pre-materialization consumption
+  and linear index/edge work. Require canonical regeneration of the current
+  210 scenario rows and the 400-case source universe to remain unchanged.
+
+- [x] **Step 4: Run the existing expected-contract and source-expansion owners,
+  refresh metadata/inventory evidence and commit.**
+
+  ```powershell
+  git commit -m "fix(r4): add canonical composed-expression assertions"
+  ```
+
+**Checkpoint SR4.5:** linked and true multi-root meanings are representable only
+through the reviewed source compiler as one canonical `SemanticExpression`;
+no scenario meaning has been selected or approved.
+
 ## SR5: Produce bounded draft worksheets and obtain human review
 
 **Files:**
@@ -485,14 +545,21 @@ transitive, and validation remains linearly bounded.
   Require source-only inputs, deterministic bytes, bounded files/records/bytes,
   explicit unresolved decisions, no observed/runtime/bootstrap/model/solver
   fields, no output beneath `data/review/r4_1/`, and one exact row for every
-  audited or proposed source decision.
+  audited or proposed source decision. Abort before creating a staging
+  directory if any proposed structural row compiles as relation `all`,
+  `ordered_chain`, multiple non-conflict expressions, an opaque predicate or
+  an unresolved structural substitute.
 
 - [ ] **Step 2: Implement the draft-only builder.**
 
   Read the corrected source universe once. Emit content-addressed worksheets
   with `draft_non_authoritative: true`, exact input identities and no default
-  answers. Refuse to overwrite a reviewed-source path or accept runtime/artifact
-  data as input.
+  answers. Every JSON worksheet uses the exact envelope
+  `schema`, `worksheet_ref`, `draft_non_authoritative`, `input_set_ref`,
+  `inputs`, `current_snapshot`, `row_count`, `rows`; the summary binds those
+  worksheet refs and byte hashes. Refuse to overwrite a reviewed-source path
+  or accept runtime/artifact data as input. Build every input index and every
+  worksheet in one process from one immutable source-universe snapshot.
 
 - [ ] **Step 3: Include all structural decisions.**
 
@@ -504,7 +571,12 @@ transitive, and validation remains linearly bounded.
   denominators; and fixed positive minima. It must also carry the exact proposed
   patch to `scripts/generate_scenarios.py`, the exact resulting scenario rows,
   and generator decisions needed to reproduce all eight families. A prose-only
-  family approval is insufficient.
+  family approval is insufficient. Each proposal must use the SR4.5
+  `composed_expression` assertion and compile to exactly one
+  `SemanticExpression` with relation `single`. Each linked family has exactly
+  one `ExpressionLink` root and at least two operands; each true multi-root
+  family has two through eight roots and no conflict semantics. Relations
+  `all`, `ordered_chain`, `any` and `conflict` satisfy neither topology.
 
 - [ ] **Step 4: Generate twice and compare byte identities.**
 
@@ -520,10 +592,17 @@ transitive, and validation remains linearly bounded.
 
   After A/B equality succeeds, atomically promote the exact verified A bytes
   from `artifacts/review_drafts/r4_1-a` to
-  `artifacts/review_drafts/r4_1` using the repository canonical file-set
-  publisher. Recompute file names, lengths and SHA-256 after promotion and
-  require equality with A. Do not rerun the worksheet generator for the final
-  path and do not silently regenerate on a missing or mismatched file.
+  `artifacts/review_drafts/r4_1` with the private file-set publication helper
+  owned by this builder; there is no reusable repository publisher to call.
+  The helper must: compare A and B without following links; require the exact
+  five-file inventory, byte lengths and SHA-256 values; retain the verified A
+  bytes; write only to an exclusive same-parent staging directory; fsync and
+  reread every staged file; recheck A and B before publication; atomically
+  rename the staged directory to an absent final path; and reread the final
+  inventory for exact equality with A. An existing final path is an exact
+  no-op only when all five names and bytes already match; otherwise fail
+  closed. Do not rerun the worksheet generator for the final path and do not
+  silently regenerate on a missing or mismatched file.
 
 - [ ] **Step 6: Run contract, selector, inventory and static gates; commit the
   generator and reproducible draft aids.**

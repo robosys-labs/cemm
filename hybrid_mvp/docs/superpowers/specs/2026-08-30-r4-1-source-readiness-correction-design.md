@@ -49,6 +49,42 @@ Reinterpreting a conflict set as a multi-root expression would manufacture
 semantic structure. The current source does not provide the true non-conflict
 multi-root coverage needed by R4.1.
 
+The audit subsequently found a second, earlier representation defect: the
+reviewed-assertion compiler can compile only single-root assertions or several
+separate expressions. It never constructs an `ExpressionLink`, and several
+ordinary assertions become `ExpressionRelation.ALL`. Proposal Supervision ABI
+1 intentionally cannot admit that relation. A worksheet cannot repair this by
+writing expression bytes directly because that would bypass the canonical
+reviewed source owner.
+
+Before worksheet generation, Reviewed Assertion ABI 1 therefore receives one
+in-place vocabulary correction before any canonical R4.1 reviewed source
+package is published or admitted: a generic, closed
+`composed_expression` assertion. It declares bounded local applications,
+explicit expression links and exact roots, plus an optional semantic mode. Its
+top-level shape is exactly `linked` or `multi_root`; conflict is never a shape.
+Application fillers form a closed grounded/literal/proposition-node union.
+Local identifiers are graph construction labels only and never semantic refs,
+surface phrases, Program actions or persistent identity.
+
+The existing expected-contract compiler resolves those labels through bounded
+indexes, validates every grounded predicate and filler against the linked
+authority, enforces five-operator and role compatibility, and constructs all
+content-addressed node refs itself. Existing Semantic Expression ABI 1
+canonicalization remains the sole graph validator for reachability, one-parent
+ownership, roots, arity, acyclicity and depth. A linked assertion must contain
+at least one reviewed expression link and exactly one link root. A multi-root
+assertion must contain no links and exactly two through eight application
+roots. Both compile to exactly one `SemanticExpression` and therefore relation
+`single`; separate assertions remain `all`, and conflicts remain alternative
+complete expressions with relation `conflict`.
+
+This is a source-compiler capability repair, not approval of any proposed
+meaning. Existing ABI-1 rows, all 210 scenario rows and their 400-case source
+universe remain byte- and behavior-identical. The human review still chooses the exact eight successor rows,
+link types, meanings, surfaces and modes. No ABI 2, compatibility fallback,
+new gate, runtime scan or source package is introduced.
+
 ## 3. Source-universe hard cut
 
 `expected_gap_kind` is a duplicate and weaker owner. It must be removed from
@@ -274,9 +310,39 @@ eight structural families, identify every proposed row and decision explicitly,
 and remain outside `data/review/r4_1/`. A draft is not authority merely because
 it is canonical, complete or compiler-valid.
 
+The four JSON worksheets share one closed envelope: `schema`,
+`worksheet_ref`, `draft_non_authoritative`, `input_set_ref`, `inputs`,
+`current_snapshot`, `row_count` and `rows`. Each worksheet defines its own
+exact row vocabulary; unknown envelope or row fields fail. `SOURCE_UNIVERSE`
+binds every current and proposed scenario/case identity and disposition;
+`STRUCTURAL_DECISIONS` binds the legacy conditional, restart diagnostic and
+all eight exact composed-expression proposals; `SUPERVISION_DECISIONS` binds
+designation, realization and mutation-truth decisions; and
+`PURPOSE_DECISIONS` binds duplicate groups, direct/group purposes, holdouts,
+denominators and minima. `REVIEW_SUMMARY.md` binds the four worksheet refs,
+input-set ref, file lengths and SHA-256 values. No omitted row, empty decision
+or prose summary supplies a default answer.
+
+Worksheet generation must fail before creating a staging directory unless
+every proposed linked or multi-root row passes through the corrected
+reviewed-assertion compiler as exactly one canonical expression with relation
+`single`. Relation `all`, `ordered_chain`, multiple non-conflict expressions,
+an unresolved structural substitute, an opaque predicate or conflict-as-root
+is a source error, not a worksheet decision.
+
+The builder owns one private bounded publication helper; this is not a new
+gate, process or repository-wide abstraction. It authenticates independently
+generated A/B directories without following links, retains the verified A
+bytes, writes the exact five-file set to an exclusive same-parent staging
+directory, fsyncs and rereads it, re-authenticates A/B, and atomically renames
+the stage only when the final path is absent. A pre-existing final directory is
+accepted only as an exact byte-for-byte no-op. Any other existing, missing,
+extra, linked or changed file fails closed. Final publication never invokes the
+generator again.
+
 ## 9. Resume condition
 
-Main replay Task 4 may resume only after SR1-SR5 of the companion correction
+Main replay Task 4 may resume only after SR1-SR4.5 and SR5 of the companion correction
 plan are implemented, all existing R4 owners and source-only inventories pass,
 and a human approves one exact scenario patch plus all section 8 decisions.
 
