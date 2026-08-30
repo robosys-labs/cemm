@@ -9,7 +9,7 @@ from typing import Mapping
 
 from cemm_authoritative_hybrid.canonical import stable_ref
 
-from scripts.r4_1_review_session import ReviewSession
+from scripts.r4_1_review_session import ReviewAction, ReviewSession
 
 PHASE_ORDER = (
     "identity",
@@ -20,6 +20,9 @@ PHASE_ORDER = (
     "export",
 )
 _PURPOSES = ("train", "selection", "calibration", "frozen_test")
+MAX_GUIDED_EVIDENCE_BLOCKS = 12
+MAX_GUIDED_TARGET_REFS = 512
+MAX_GUIDED_EXAMPLES = 5
 
 
 @dataclass(frozen=True, slots=True)
@@ -439,6 +442,9 @@ class GuidedReviewService:
         self._projection_revision = -1
         self._state_by_ref: Mapping[str, object] = MappingProxyType({})
         self._projection_builds = 0
+        self._choice_actions: dict[
+            str, tuple[str, ReviewAction, ChoiceGuidance]
+        ] = {}
 
     @property
     def projection_builds(self) -> int:
@@ -460,13 +466,32 @@ class GuidedReviewService:
             row["row_ref"]: row["selected_option_ref"]
             for row in state["purpose_selections"]
         }
+        recipes = {
+            row["family_ref"]: {
+                recipe["purpose"]: recipe
+                for recipe in row["purpose_recipes"]
+            }
+            for row in state["proposal_recipe_selections"]
+        }
+        designations = {
+            row["source_case_ref"]: row["decision"]
+            for row in state["designation_selections"]
+        }
+        evaluation = self.session.evaluation()
         self._state_by_ref = MappingProxyType(
             {
                 "reviewer_refs": tuple(state["reviewer_refs"]),
                 "structural": structural,
                 "purpose": purpose,
+                "recipes": recipes,
+                "designations": designations,
+                "case_purposes": dict(evaluation.case_purposes),
+                "active_supervised_case_refs": frozenset(
+                    evaluation.active_supervised_case_refs
+                ),
             }
         )
+        self._choice_actions.clear()
         self._projection_revision = self.session.state_revision
         self._projection_builds += 1
 
@@ -475,6 +500,39 @@ class GuidedReviewService:
             return self._state_by_ref["structural"][target.source_ref] is None
         if target.phase == "purpose":
             return self._state_by_ref["purpose"][target.source_ref] is None
+        if target.phase == "recipe":
+            family = self.session.indexes.proposal_families_by_ref[
+                target.source_ref
+            ]
+            case_purposes = self._state_by_ref["case_purposes"]
+            applicable = any(
+                case_purposes.get(case_ref) == target.purpose
+                for case_ref in family["member_case_refs"]
+            )
+            return (
+                applicable
+                and target.purpose
+                not in self._state_by_ref["recipes"][target.source_ref]
+            )
+        if target.phase == "designation":
+            if target.row_kind == "designation_case":
+                return (
+                    target.source_ref
+                    in self._state_by_ref["active_supervised_case_refs"]
+                    and self._state_by_ref["designations"][target.source_ref]
+                    is None
+                )
+            refs = self.session.indexes.routine_designation_cohorts[
+                target.source_ref
+            ]
+            active = self._state_by_ref["active_supervised_case_refs"]
+            decisions = [
+                self._state_by_ref["designations"][case_ref]
+                for case_ref in refs
+            ]
+            return set(refs) <= active and all(
+                decision is None for decision in decisions
+            )
         return False
 
     def _project_identity(self) -> Mapping[str, object]:
@@ -508,11 +566,41 @@ class GuidedReviewService:
             source = self.session.indexes.structural_rows_by_ref[
                 target.source_ref
             ]
-        else:
+        elif target.phase == "purpose":
             source = self.session.indexes.purpose_rows_by_ref[
                 target.source_ref
             ]
-        guidance = GUIDANCE[target.row_kind]
+        elif target.phase == "recipe":
+            source = self.session.indexes.proposal_families_by_ref[
+                target.source_ref
+            ]
+        elif target.phase == "designation":
+            if target.row_kind == "designation_case":
+                source = self.session.indexes.designation_rows_by_case[
+                    target.source_ref
+                ]
+            else:
+                refs = self.session.indexes.routine_designation_cohorts[
+                    target.source_ref
+                ]
+                source = self.session.indexes.designation_rows_by_case[
+                    refs[0]
+                ]
+        else:
+            raise ValueError("guided target phase is unavailable")
+        guidance_key = target.row_kind
+        if target.phase == "designation":
+            guidance_key = (
+                "designation_nonempty"
+                if source["candidate_bindings"]
+                else "designation_empty"
+            )
+        guidance = GUIDANCE[guidance_key]
+        choices = self._project_choices(
+            target=target,
+            source=source,
+            guidance=guidance,
+        )
         return MappingProxyType(
             {
                 "item_ref": target.item_ref,
@@ -521,15 +609,253 @@ class GuidedReviewService:
                 "instruction": guidance.instruction,
                 "source_summary": _source_summary(source),
                 "proposal_summary": (
-                    source.get("candidate_output")
+                    (
+                        f"{source['target_kind']} family for "
+                        f"{target.purpose}; {len(source['member_case_refs'])} "
+                        "total family members."
+                        if target.phase == "recipe"
+                        else (
+                            f"{len(source['candidate_bindings'])} exact "
+                            "designation binding candidates."
+                            if target.phase == "designation"
+                            else source.get("candidate_output")
+                        )
+                    )
                     or "Inspect the exact projected evidence below."
                 ),
                 "reviewer_question": guidance.question,
+                "choices": choices,
+                "cohort": self._cohort_projection(target),
                 "selected_choice_ref": None,
-                "technical_evidence": _wire(source),
+                "technical_evidence": {
+                    "source": _wire(source),
+                    "purpose": target.purpose,
+                },
                 "wrapped": wrapped,
             }
         )
+
+    def _cohort_projection(
+        self,
+        target: _GuidedTarget,
+    ) -> Mapping[str, object] | None:
+        if target.row_kind != "designation_cohort":
+            return None
+        refs = self.session.indexes.routine_designation_cohorts[
+            target.source_ref
+        ]
+        return MappingProxyType(
+            {
+                "cohort_ref": target.source_ref,
+                "member_count": len(refs),
+                "target_refs": list(refs),
+                "representative_examples": [
+                    self.session.indexes.designation_rows_by_case[case_ref][
+                        "surface"
+                    ]
+                    for case_ref in refs[:MAX_GUIDED_EXAMPLES]
+                ],
+            }
+        )
+
+    @staticmethod
+    def _opaque_choice_ref(
+        *,
+        item_ref: str,
+        option_key: str,
+        target_refs: tuple[str, ...],
+    ) -> str:
+        return stable_ref(
+            "guided_review_choice",
+            {
+                "item_ref": item_ref,
+                "option_key": option_key,
+                "target_refs": list(target_refs),
+            },
+        )
+
+    def _project_choices(
+        self,
+        *,
+        target: _GuidedTarget,
+        source: Mapping[str, object],
+        guidance: RowGuidance,
+    ) -> list[dict[str, object]]:
+        result: list[dict[str, object]] = []
+        if target.phase in {"structural", "purpose"}:
+            options = [
+                (option["label"], option)
+                for option in source["options"]
+                if option["selectable"] is True
+            ]
+        elif target.phase == "recipe":
+            options = [(key, None) for key in guidance.choices]
+        elif target.phase == "designation":
+            options = [(key, None) for key in guidance.choices]
+        else:
+            raise ValueError("guided choice phase is unavailable")
+        for option_key, option in options:
+            choice_guidance = guidance.choices[option_key]
+            if target.phase == "structural":
+                assert option is not None
+                action = ReviewAction.structural(
+                    row_ref=target.source_ref,
+                    selected_option_ref=option["option_ref"],
+                )
+            elif target.phase == "purpose":
+                action = ReviewAction.purpose(
+                    row_refs=(target.source_ref,),
+                    option_label=option_key,
+                )
+            elif target.phase == "recipe":
+                assert target.purpose is not None
+                action = ReviewAction.recipe(
+                    family_ref=target.source_ref,
+                    purpose=target.purpose,
+                    decision=option_key,
+                    reviewed_parameters={
+                        "review_basis": "accountable_ui_exact_family"
+                    },
+                )
+            elif target.phase == "designation":
+                if target.row_kind == "designation_case":
+                    action = ReviewAction.designation_cases(
+                        case_refs=(target.source_ref,),
+                        decision=option_key,
+                        individual=True,
+                    )
+                else:
+                    action = ReviewAction.designation_cohort(
+                        cohort_ref=target.source_ref,
+                        decision=option_key,
+                    )
+            else:
+                raise ValueError("guided choice phase is unavailable")
+            choice_ref = self._opaque_choice_ref(
+                item_ref=target.item_ref,
+                option_key=option_key,
+                target_refs=action.target_refs,
+            )
+            self._choice_actions[choice_ref] = (
+                target.item_ref,
+                action,
+                choice_guidance,
+            )
+            result.append(
+                {
+                    "choice_ref": choice_ref,
+                    "label": choice_guidance.label,
+                    "explanation": choice_guidance.explanation,
+                    "consequence": choice_guidance.consequence,
+                    "blocks_authoring": choice_guidance.blocks_authoring,
+                }
+            )
+        return result
+
+    def resolve_choice(
+        self,
+        *,
+        item_ref: str,
+        choice_ref: str,
+    ) -> ReviewAction:
+        self._refresh_state_projection()
+        if type(item_ref) is not str or item_ref not in self._target_by_ref:
+            raise ValueError("guided item ref is invalid")
+        if type(choice_ref) is not str:
+            raise TypeError("guided choice ref must be an exact string")
+        target = self._target_by_ref[item_ref]
+        if not self._is_unresolved(target):
+            raise ValueError("guided item is no longer unresolved")
+        if choice_ref not in self._choice_actions:
+            self._project_target(target, wrapped=False)
+        try:
+            owner_ref, action, _ = self._choice_actions[choice_ref]
+        except KeyError as exc:
+            raise ValueError("guided choice ref is invalid") from exc
+        if owner_ref != item_ref:
+            raise ValueError("guided choice belongs to a different item")
+        return action
+
+    def preview_choice(
+        self,
+        *,
+        item_ref: str,
+        choice_ref: str,
+    ) -> Mapping[str, object]:
+        action = self.resolve_choice(
+            item_ref=item_ref,
+            choice_ref=choice_ref,
+        )
+        _, _, guidance = self._choice_actions[choice_ref]
+        preview = self.session.preview(action)
+        return MappingProxyType(
+            {
+                "preview_hash": preview.preview_hash,
+                "state_revision": preview.state_revision,
+                "decision_summary": (
+                    f"{guidance.label}. {guidance.explanation}"
+                ),
+                "affected_count": len(preview.affected_refs),
+                "cleared_count": len(preview.cleared_refs),
+                "affected_refs": list(preview.affected_refs),
+                "cleared_refs": list(preview.cleared_refs),
+                "requires_clear_confirmation": (
+                    preview.requires_clear_confirmation
+                ),
+                "resulting_counts": dict(preview.resulting_counts),
+                "blocks_authoring": guidance.blocks_authoring,
+            }
+        )
+
+    def iter_current_items(self) -> tuple[Mapping[str, object], ...]:
+        self._refresh_state_projection()
+        unresolved = [
+            target for target in self._targets if self._is_unresolved(target)
+        ]
+        if not unresolved:
+            return ()
+        phase = unresolved[0].phase
+        return tuple(
+            self._project_target(target, wrapped=False)
+            for target in unresolved
+            if target.phase == phase
+        )
+
+    def designation_cohort_items(self) -> tuple[Mapping[str, object], ...]:
+        result: list[Mapping[str, object]] = []
+        exceptions = self.session.indexes.designation_exception_case_refs
+        for cohort_ref, refs in sorted(
+            self.session.indexes.routine_designation_cohorts.items()
+        ):
+            if len(refs) > MAX_GUIDED_TARGET_REFS:
+                raise ValueError("guided designation cohort exceeds its bound")
+            if exceptions.intersection(refs):
+                raise ValueError("guided designation cohort contains an exception")
+            examples = [
+                self.session.indexes.designation_rows_by_case[case_ref][
+                    "surface"
+                ]
+                for case_ref in refs[:MAX_GUIDED_EXAMPLES]
+            ]
+            result.append(
+                MappingProxyType(
+                    {
+                        "phase": "designation",
+                        "item_ref": _item_ref(
+                            phase="designation",
+                            row_kind="designation_cohort",
+                            source_ref=cohort_ref,
+                        ),
+                        "cohort": {
+                            "cohort_ref": cohort_ref,
+                            "member_count": len(refs),
+                            "target_refs": list(refs),
+                            "representative_examples": examples,
+                        },
+                    }
+                )
+            )
+        return tuple(result)
 
     def _project_export(self, *, wrapped: bool) -> Mapping[str, object]:
         bootstrap = self.session.bootstrap()
