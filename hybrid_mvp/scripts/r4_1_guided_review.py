@@ -2,12 +2,14 @@
 """Neutral presentation projections for accountable R4.1 review."""
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Mapping
+from typing import Mapping
 
-if TYPE_CHECKING:
-    from scripts.r4_1_review_session import ReviewSession
+from cemm_authoritative_hybrid.canonical import stable_ref
+
+from scripts.r4_1_review_session import ReviewSession
 
 PHASE_ORDER = (
     "identity",
@@ -17,6 +19,7 @@ PHASE_ORDER = (
     "designation",
     "export",
 )
+_PURPOSES = ("train", "selection", "calibration", "frozen_test")
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,6 +35,16 @@ class RowGuidance:
     instruction: str
     question: str
     choices: Mapping[str, ChoiceGuidance]
+
+
+@dataclass(frozen=True, slots=True)
+class _GuidedTarget:
+    item_ref: str
+    phase: str
+    row_kind: str
+    source_ref: str
+    purpose: str | None = None
+    cohort_ref: str | None = None
 
 
 def _choice(
@@ -277,3 +290,285 @@ def active_choice_labels(session: ReviewSession) -> dict[str, set[str]]:
     }
     result["designation_empty"] = {"approve_exact_empty", "reject"}
     return result
+
+
+def _item_ref(
+    *,
+    phase: str,
+    row_kind: str,
+    source_ref: str,
+    purpose: str | None = None,
+) -> str:
+    return stable_ref(
+        "guided_review_item",
+        {
+            "phase": phase,
+            "row_kind": row_kind,
+            "source_ref": source_ref,
+            "purpose": purpose,
+        },
+    )
+
+
+def _target(
+    *,
+    phase: str,
+    row_kind: str,
+    source_ref: str,
+    purpose: str | None = None,
+    cohort_ref: str | None = None,
+) -> _GuidedTarget:
+    return _GuidedTarget(
+        item_ref=_item_ref(
+            phase=phase,
+            row_kind=row_kind,
+            source_ref=source_ref,
+            purpose=purpose,
+        ),
+        phase=phase,
+        row_kind=row_kind,
+        source_ref=source_ref,
+        purpose=purpose,
+        cohort_ref=cohort_ref,
+    )
+
+
+def _wire(value: object) -> object:
+    if isinstance(value, Mapping):
+        return {key: _wire(item) for key, item in value.items()}
+    if type(value) in {list, tuple}:
+        return [_wire(item) for item in value]
+    if type(value) is frozenset:
+        return sorted(_wire(item) for item in value)
+    return copy.deepcopy(value)
+
+
+def _source_summary(row: Mapping[str, object]) -> str:
+    surface = row.get("surface")
+    if type(surface) is str and surface.strip():
+        return surface
+    scenario = row.get("resulting_scenario_row")
+    if isinstance(scenario, Mapping):
+        examples = scenario.get("surface_examples")
+        if (
+            type(examples) is list
+            and examples
+            and type(examples[0]) is str
+            and examples[0].strip()
+        ):
+            return examples[0]
+    candidate = row.get("candidate_output")
+    if type(candidate) is str and candidate.strip():
+        return candidate
+    return (
+        "This decision has no reviewed surface summary; "
+        "inspect technical evidence."
+    )
+
+
+class GuidedReviewService:
+    """Project one neutral guided decision over an authenticated session."""
+
+    def __init__(self, session: ReviewSession) -> None:
+        self.session = session
+        targets: list[_GuidedTarget] = []
+        for row_ref, row in sorted(
+            session.indexes.structural_rows_by_ref.items(),
+            key=lambda item: (item[1]["row_kind"], item[0]),
+        ):
+            targets.append(
+                _target(
+                    phase="structural",
+                    row_kind=row["row_kind"],
+                    source_ref=row_ref,
+                )
+            )
+        for row_ref, row in sorted(
+            session.indexes.purpose_rows_by_ref.items(),
+            key=lambda item: (item[1]["row_kind"], item[0]),
+        ):
+            targets.append(
+                _target(
+                    phase="purpose",
+                    row_kind=row["row_kind"],
+                    source_ref=row_ref,
+                )
+            )
+        for family_ref in sorted(session.indexes.proposal_families_by_ref):
+            for purpose in _PURPOSES:
+                targets.append(
+                    _target(
+                        phase="recipe",
+                        row_kind="proposal_recipe_family",
+                        source_ref=family_ref,
+                        purpose=purpose,
+                    )
+                )
+        exception_refs = session.indexes.designation_exception_case_refs
+        for case_ref in sorted(exception_refs):
+            targets.append(
+                _target(
+                    phase="designation",
+                    row_kind="designation_case",
+                    source_ref=case_ref,
+                )
+            )
+        for cohort_ref in sorted(
+            session.indexes.routine_designation_cohorts
+        ):
+            targets.append(
+                _target(
+                    phase="designation",
+                    row_kind="designation_cohort",
+                    source_ref=cohort_ref,
+                    cohort_ref=cohort_ref,
+                )
+            )
+        self._targets = tuple(targets)
+        self._target_by_ref = MappingProxyType(
+            {target.item_ref: target for target in targets}
+        )
+        self._export_ref = _item_ref(
+            phase="export",
+            row_kind="export",
+            source_ref="reviewed-selection",
+        )
+        self._ordered_refs = tuple(target.item_ref for target in targets) + (
+            self._export_ref,
+        )
+        self._projection_revision = -1
+        self._state_by_ref: Mapping[str, object] = MappingProxyType({})
+        self._projection_builds = 0
+
+    @property
+    def projection_builds(self) -> int:
+        return self._projection_builds
+
+    @property
+    def ordered_item_refs(self) -> tuple[str, ...]:
+        return self._ordered_refs
+
+    def _refresh_state_projection(self) -> None:
+        if self._projection_revision == self.session.state_revision:
+            return
+        state = self.session.state
+        structural = {
+            row["row_ref"]: row["selected_option_ref"]
+            for row in state["structural_selections"]
+        }
+        purpose = {
+            row["row_ref"]: row["selected_option_ref"]
+            for row in state["purpose_selections"]
+        }
+        self._state_by_ref = MappingProxyType(
+            {
+                "reviewer_refs": tuple(state["reviewer_refs"]),
+                "structural": structural,
+                "purpose": purpose,
+            }
+        )
+        self._projection_revision = self.session.state_revision
+        self._projection_builds += 1
+
+    def _is_unresolved(self, target: _GuidedTarget) -> bool:
+        if target.phase == "structural":
+            return self._state_by_ref["structural"][target.source_ref] is None
+        if target.phase == "purpose":
+            return self._state_by_ref["purpose"][target.source_ref] is None
+        return False
+
+    def _project_identity(self) -> Mapping[str, object]:
+        return MappingProxyType(
+            {
+                "item_ref": _item_ref(
+                    phase="identity",
+                    row_kind="identity",
+                    source_ref="accountable-reviewers",
+                ),
+                "phase": "identity",
+                "primary_action": "save_reviewer_identity",
+                "instruction": (
+                    "Enter the canonical reviewer identity that will own "
+                    "every confirmed decision."
+                ),
+                "reviewer_question": "Which canonical reviewer refs own this review?",
+                "selected_choice_ref": None,
+                "technical_evidence": {},
+                "wrapped": False,
+            }
+        )
+
+    def _project_target(
+        self,
+        target: _GuidedTarget,
+        *,
+        wrapped: bool,
+    ) -> Mapping[str, object]:
+        if target.phase == "structural":
+            source = self.session.indexes.structural_rows_by_ref[
+                target.source_ref
+            ]
+        else:
+            source = self.session.indexes.purpose_rows_by_ref[
+                target.source_ref
+            ]
+        guidance = GUIDANCE[target.row_kind]
+        return MappingProxyType(
+            {
+                "item_ref": target.item_ref,
+                "phase": target.phase,
+                "row_kind": target.row_kind,
+                "instruction": guidance.instruction,
+                "source_summary": _source_summary(source),
+                "proposal_summary": (
+                    source.get("candidate_output")
+                    or "Inspect the exact projected evidence below."
+                ),
+                "reviewer_question": guidance.question,
+                "selected_choice_ref": None,
+                "technical_evidence": _wire(source),
+                "wrapped": wrapped,
+            }
+        )
+
+    def _project_export(self, *, wrapped: bool) -> Mapping[str, object]:
+        bootstrap = self.session.bootstrap()
+        return MappingProxyType(
+            {
+                "item_ref": self._export_ref,
+                "phase": "export",
+                "primary_action": "validate_and_export",
+                "review_complete": bootstrap["review_complete"],
+                "authoring_ready": bootstrap["authoring_ready"],
+                "blocking_rejection_refs": bootstrap[
+                    "blocking_rejection_refs"
+                ],
+                "wrapped": wrapped,
+            }
+        )
+
+    def next_item(
+        self,
+        *,
+        after_item_ref: str | None,
+    ) -> Mapping[str, object]:
+        self._refresh_state_projection()
+        if not self._state_by_ref["reviewer_refs"]:
+            return self._project_identity()
+        if after_item_ref is None:
+            start = 0
+        else:
+            if after_item_ref not in self._ordered_refs:
+                raise ValueError("guided after-item ref is invalid")
+            start = self._ordered_refs.index(after_item_ref) + 1
+        total = len(self._ordered_refs)
+        for offset in range(total):
+            index = (start + offset) % total
+            ref = self._ordered_refs[index]
+            wrapped = start > 0 and index < start
+            if ref == self._export_ref:
+                continue
+            target = self._target_by_ref[ref]
+            if self._is_unresolved(target):
+                return self._project_target(target, wrapped=wrapped)
+        return self._project_export(wrapped=start >= total)

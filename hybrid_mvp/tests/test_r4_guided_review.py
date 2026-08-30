@@ -10,6 +10,7 @@ from scripts.build_r4_1_review_worksheets import build_review_worksheet_draft
 from scripts.r4_1_guided_review import (
     GUIDANCE,
     PHASE_ORDER,
+    GuidedReviewService,
     active_choice_labels,
 )
 from scripts.r4_1_review_session import ReviewPaths, ReviewSession
@@ -115,3 +116,66 @@ def test_guidance_matches_authenticated_active_options(
     session = ReviewSession.open(review_paths)
 
     assert active_choice_labels(session) == EXPECTED_CHOICES
+
+
+def test_guided_review_starts_with_identity_then_earliest_structural(
+    review_paths: ReviewPaths,
+) -> None:
+    session = ReviewSession.open(review_paths)
+    service = GuidedReviewService(session)
+
+    first = service.next_item(after_item_ref=None)
+    assert first["phase"] == "identity"
+    assert first["primary_action"] == "save_reviewer_identity"
+
+    session.set_reviewers(("reviewer:test",))
+    structural = service.next_item(after_item_ref=None)
+    assert structural["phase"] == "structural"
+    assert structural["source_summary"].strip()
+    assert structural["reviewer_question"].endswith("?")
+    assert structural["selected_choice_ref"] is None
+    assert "row_ref" not in structural
+    assert "technical_evidence" in structural
+
+
+def test_skip_advances_without_mutation_and_wraps_once(
+    review_paths: ReviewPaths,
+) -> None:
+    session = ReviewSession.open(review_paths)
+    session.set_reviewers(("reviewer:test",))
+    service = GuidedReviewService(session)
+    revision = session.state_revision
+
+    first = service.next_item(after_item_ref=None)
+    second = service.next_item(after_item_ref=first["item_ref"])
+
+    assert second["item_ref"] != first["item_ref"]
+    assert session.state_revision == revision
+    wrapped = service.next_item(after_item_ref=service.ordered_item_refs[-1])
+    assert wrapped["wrapped"] is True
+    assert session.state_revision == revision
+
+
+def test_512_guided_reads_reuse_one_state_projection(
+    review_paths: ReviewPaths,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = ReviewSession.open(review_paths)
+    session.set_reviewers(("reviewer:test",))
+    real_getter = ReviewSession.state.fget
+    assert real_getter is not None
+    reads = 0
+
+    def counted_state(current: ReviewSession):
+        nonlocal reads
+        reads += 1
+        return real_getter(current)
+
+    monkeypatch.setattr(ReviewSession, "state", property(counted_state))
+    service = GuidedReviewService(session)
+    item = service.next_item(after_item_ref=None)
+    for _ in range(512):
+        service.next_item(after_item_ref=item["item_ref"])
+
+    assert service.projection_builds == 1
+    assert reads == 1
