@@ -19,6 +19,7 @@ from scripts.build_r4_1_review_worksheets import (
     _json_bytes,
     build_review_worksheet_draft,
 )
+from scripts.r4_1_guided_review import GUIDANCE, MAX_GUIDED_TARGET_REFS
 from scripts.r4_1_review_session import ReviewPaths, ReviewSession
 from scripts.serve_r4_1_review import (
     MAX_REQUEST_BYTES,
@@ -524,7 +525,7 @@ def _drive_complete_review(server: object) -> tuple[dict[str, object], bytes]:
                         "purpose": purpose,
                         "decision": "approve",
                         "reviewed_parameters": {
-                            "review_basis": "http_exact_family"
+                            "review_basis": "accountable_ui_exact_family"
                         },
                     },
                 }
@@ -584,6 +585,140 @@ def _drive_complete_review(server: object) -> tuple[dict[str, object], bytes]:
         selection_raw=export_raw,
     )["selection_state"] == "reviewed"
     return receipt, export_raw
+
+
+def _drive_complete_guided_review(
+    server: object,
+) -> tuple[dict[str, object], bytes]:
+    revision = 0
+
+    def post(
+        path: str,
+        body: Mapping[str, object],
+        *,
+        timeout: int = 5,
+    ) -> Mapping[str, object]:
+        nonlocal revision
+        status, _, raw = request(
+            server,
+            "POST",
+            path,
+            body={"state_revision": revision, **body},
+            headers=_api_headers(server, post=True),
+            timeout=timeout,
+        )
+        envelope = json.loads(raw)
+        assert status == 200, envelope
+        revision = envelope["state_revision"]
+        return envelope["result"]
+
+    status, _, raw = request(
+        server,
+        "GET",
+        "/api/guided/bootstrap",
+        headers=_api_headers(server),
+    )
+    assert status == 200, json.loads(raw)
+    post("/api/reviewer", {"reviewer_refs": ["reviewer:test"]})
+    structural_labels = {
+        "composed_expression_proposal": "approve_exact_proposal",
+        "conflict_preservation": "preserve_as_alternatives",
+        "legacy_conditional": "retain_typed_proposal_gaps",
+        "restart_diagnostic": "approve_diagnostic_only",
+        "generator_patch": "retain_typed_proposal_gaps",
+    }
+    purposes = ("train", "selection", "calibration", "frozen_test")
+    supervised_index = 0
+    after: str | None = None
+    while True:
+        status, envelope = _guided_next(server, after)
+        assert status == 200, envelope
+        item = envelope["result"]
+        phase = item["phase"]
+        if phase == "export":
+            break
+        source = item["technical_evidence"]["source"]
+        row_kind = item["row_kind"]
+        if phase == "structural":
+            option_key = structural_labels[row_kind]
+        elif phase == "purpose":
+            if row_kind == "membership":
+                selectable = {
+                    option["label"]
+                    for option in source["options"]
+                    if option["selectable"] is True
+                }
+                if "direct_train" in selectable:
+                    purpose = purposes[supervised_index % len(purposes)]
+                    supervised_index += 1
+                    option_key = f"direct_{purpose}"
+                else:
+                    option_key = "approve_diagnostic_only"
+            elif row_kind == "duplicate_group":
+                option_key = "reject_group"
+            elif row_kind == "challenge_holdout":
+                option_key = "not_a_holdout"
+            else:
+                assert row_kind == "denominator"
+                option_key = "minimum_one_each"
+        elif phase == "recipe":
+            option_key = "approve"
+        else:
+            assert phase == "designation"
+            option_key = (
+                "approve_candidate_bindings"
+                if source["candidate_bindings"]
+                else "approve_exact_empty"
+            )
+        guidance_key = row_kind
+        if phase == "designation":
+            guidance_key = (
+                "designation_nonempty"
+                if source["candidate_bindings"]
+                else "designation_empty"
+            )
+        choice_label = GUIDANCE[guidance_key].choices[option_key].label
+        choice = next(
+            candidate
+            for candidate in item["choices"]
+            if candidate["label"] == choice_label
+        )
+        status, preview_envelope = _guided_preview(server, item, choice)
+        assert status == 200, preview_envelope
+        revision = preview_envelope["state_revision"]
+        post(
+            "/api/apply",
+            {"preview_hash": preview_envelope["result"]["preview_hash"]},
+        )
+        after = item["item_ref"]
+
+    receipt = dict(post("/api/export", {}, timeout=60))
+    export_raw = server.session.paths.export_path.read_bytes()
+    assert receipt["review_complete"] is True
+    assert receipt["authoring_ready"] is True
+    assert (
+        server.guided.maximum_projected_targets
+        <= MAX_GUIDED_TARGET_REFS
+    )
+    return receipt, export_raw
+
+
+def test_guided_and_advanced_http_reviews_export_identical_validated_bytes(
+    server_fixture,
+) -> None:
+    guided = server_fixture()
+    advanced = server_fixture()
+
+    guided_receipt, guided_raw = _drive_complete_guided_review(guided)
+    advanced_receipt, advanced_raw = _drive_complete_review(advanced)
+
+    assert guided_raw == advanced_raw
+    assert guided_receipt["sha256"] == advanced_receipt["sha256"]
+    assert validate_reviewed_selection_bytes(
+        repository_root=ROOT,
+        draft_root=guided.session.paths.draft_root,
+        selection_raw=guided_raw,
+    )["selection_state"] == "reviewed"
 
 
 def test_full_http_review_exports_deterministic_validated_bytes(

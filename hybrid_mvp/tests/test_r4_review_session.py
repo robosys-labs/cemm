@@ -18,6 +18,10 @@ from scripts.build_r4_1_review_worksheets import (
     _json_bytes,
     build_review_worksheet_draft,
 )
+from scripts.r4_1_guided_review import (
+    MAX_GUIDED_TARGET_REFS,
+    GuidedReviewService,
+)
 from scripts.r4_1_review_session import ReviewAction, ReviewPaths, ReviewSession
 
 ROOT = Path(__file__).parents[1]
@@ -948,12 +952,14 @@ def test_session_authenticates_once_and_actions_never_rescan_sources(
     )
     session = ReviewSession.open(review_paths)
     session.set_reviewers(("reviewer:test",))
+    guided = GuidedReviewService(session)
     row = next(iter(session.indexes.structural_rows_by_ref.values()))
     action = ReviewAction.structural(
         row_ref=row["row_ref"],
         selected_option_ref=row["options"][0]["option_ref"],
     )
     for index in range(512):
+        guided.next_item(after_item_ref=None)
         preview = session.preview(action)
         if index % 4 == 3:
             session.apply(
@@ -962,3 +968,5 @@ def test_session_authenticates_once_and_actions_never_rescan_sources(
             )
 
     assert calls == {"tree": 1, "context": 1, "index": 1}
+    assert guided.projection_builds <= 128 + 1
+    assert guided.maximum_projected_targets <= MAX_GUIDED_TARGET_REFS

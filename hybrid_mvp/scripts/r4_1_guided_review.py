@@ -441,6 +441,7 @@ class GuidedReviewService:
         self._projection_revision = -1
         self._state_by_ref: Mapping[str, object] = MappingProxyType({})
         self._projection_builds = 0
+        self._maximum_projected_targets = 0
         self._choice_actions: dict[
             str, tuple[str, ReviewAction, ChoiceGuidance]
         ] = {}
@@ -448,6 +449,10 @@ class GuidedReviewService:
     @property
     def projection_builds(self) -> int:
         return self._projection_builds
+
+    @property
+    def maximum_projected_targets(self) -> int:
+        return self._maximum_projected_targets
 
     @property
     def ordered_item_refs(self) -> tuple[str, ...]:
@@ -754,6 +759,10 @@ class GuidedReviewService:
                     )
             else:
                 raise ValueError("guided choice phase is unavailable")
+            self._maximum_projected_targets = max(
+                self._maximum_projected_targets,
+                len(action.target_refs),
+            )
             choice_ref = self._opaque_choice_ref(
                 item_ref=target.item_ref,
                 option_key=option_key,
