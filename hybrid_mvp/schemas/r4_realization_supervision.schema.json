@@ -1,95 +1,81 @@
 {
   "$id": "https://robosys-labs.github.io/cemm/schemas/r4_realization_supervision.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "Schema owns explicit signature fields, tag/namespace, structural and bounded parity. The decoder owns content-address reconstruction, slot-reference joins and exact substring/span semantic postconditions.",
+  "$comment": "Schema owns the closed response-subject and alignment unions plus bounded structural parity. The decoder owns content-address reconstruction, canonical ordering, slot joins, reviewed-authority joins and exact span postconditions.",
   "additionalProperties": false,
   "properties": {
     "abi_version": {"const": 1, "type": "integer"},
     "realization_ref": {"maxLength": 512, "pattern": "^realization_supervision_v1:[0-9a-f]{24}$", "type": "string"},
     "source_case_ref": {"$ref": "#/$defs/caseRef"},
     "response_signature_ref": {"maxLength": 512, "pattern": "^response_signature:[0-9a-f]{24}$", "type": "string"},
-    "expression_refs": {"items": {"maxLength": 512, "pattern": "^expression:[0-9a-f]{24}$", "type": "string"}, "maxItems": 64, "minItems": 1, "type": "array", "uniqueItems": true},
-    "bindings": {"items": {"$ref": "#/$defs/binding"}, "maxItems": 64, "type": "array", "uniqueItems": true},
+    "response_subject": {"$ref": "#/$defs/responseSubject"},
+    "bindings": {"items": {"$ref": "#/$defs/binding"}, "maxItems": 64, "type": "array"},
     "discourse_action_ref": {"maxLength": 512, "pattern": "^response_action:[^\\s:][^\\s]*$", "type": "string"},
     "polarity_ref": {"maxLength": 512, "pattern": "^polarity:[^\\s:][^\\s]*$", "type": "string"},
     "modality_ref": {"maxLength": 512, "pattern": "^modality:[^\\s:][^\\s]*$", "type": "string"},
-    "epistemic_status_ref": {"maxLength": 512, "pattern": "^epistemic_status:[^\\s:][^\\s]*$", "type": "string"},
+    "epistemic_status_ref": {"enum": ["epistemic_status:attributed", "epistemic_status:conflict", "epistemic_status:contested", "epistemic_status:contradicted", "epistemic_status:denied", "epistemic_status:observed", "epistemic_status:partial", "epistemic_status:pending", "epistemic_status:simulated", "epistemic_status:supported", "epistemic_status:unknown"]},
     "output_speaker_ref": {"maxLength": 512, "pattern": "^participant:[^\\s:][^\\s]*$", "type": "string"},
     "output_addressee_ref": {"maxLength": 512, "pattern": "^participant:[^\\s:][^\\s]*$", "type": "string"},
-    "authorized_surface": {"maxLength": 16384, "minLength": 1, "type": "string"},
+    "authorized_surface": {"allOf": [{"not": {"pattern": "^\\s*$"}}, {"not": {"enum": ["[no authorized surface]", "[no surface]"]}}], "maxLength": 16384, "minLength": 1, "type": "string"},
     "language": {"maxLength": 64, "pattern": "^[a-z]{2,8}(-[A-Za-z0-9]{1,8})*$", "type": "string"},
-    "semantic_slots": {"items": {"$ref": "#/$defs/slot"}, "maxItems": 64, "minItems": 1, "type": "array", "uniqueItems": true},
-    "reference_forms": {"items": {"$ref": "#/$defs/referenceForm"}, "maxItems": 16, "type": "array", "uniqueItems": true},
-    "literal_alignments": {"items": {"$ref": "#/$defs/alignment"}, "maxItems": 64, "type": "array", "uniqueItems": true},
+    "semantic_slots": {"items": {"$ref": "#/$defs/slot"}, "maxItems": 64, "minItems": 1, "type": "array"},
+    "alignments": {"items": {"$ref": "#/$defs/alignment"}, "maxItems": 64, "type": "array"},
     "review_refs": {"$ref": "#/$defs/reviewRefs"}
   },
-  "required": ["abi_version", "realization_ref", "source_case_ref", "response_signature_ref", "expression_refs", "bindings", "discourse_action_ref", "polarity_ref", "modality_ref", "epistemic_status_ref", "output_speaker_ref", "output_addressee_ref", "authorized_surface", "language", "semantic_slots", "reference_forms", "literal_alignments", "review_refs"],
+  "required": ["abi_version", "realization_ref", "source_case_ref", "response_signature_ref", "response_subject", "bindings", "discourse_action_ref", "polarity_ref", "modality_ref", "epistemic_status_ref", "output_speaker_ref", "output_addressee_ref", "authorized_surface", "language", "semantic_slots", "alignments", "review_refs"],
   "title": "CEMM Realization Supervision ABI 1",
   "type": "object",
   "$defs": {
-    "alignment": {
+    "responseSubject": {"oneOf": [{"$ref": "#/$defs/expressionSetSubject"}, {"$ref": "#/$defs/typedGapSubject"}, {"$ref": "#/$defs/verifierRejectionSubject"}]},
+    "expressionSetSubject": {
       "additionalProperties": false,
       "oneOf": [
-        {"properties": {"copy_source_kind": {"const": "reviewed_literal"}, "copy_source_ref": {"maxLength": 512, "pattern": "^reviewed_literal:[^\\s:][^\\s]*$"}}},
-        {"properties": {"copy_source_kind": {"const": "decision_literal"}, "copy_source_ref": {"maxLength": 512, "pattern": "^decision_literal:[^\\s:][^\\s]*$"}}},
-        {"properties": {"copy_source_kind": {"const": "effect_literal"}, "copy_source_ref": {"maxLength": 512, "pattern": "^effect_literal:[^\\s:][^\\s]*$"}}},
-        {"properties": {"copy_source_kind": {"const": "obligation_literal"}, "copy_source_ref": {"maxLength": 512, "pattern": "^obligation_literal:[^\\s:][^\\s]*$"}}}
+        {"properties": {"expected_expression_relation": {"const": "single"}, "expression_refs": {"maxItems": 1, "minItems": 1}}},
+        {"properties": {"expected_expression_relation": {"const": "conflict"}, "expression_refs": {"maxItems": 16, "minItems": 2}}}
       ],
-      "properties": {
-        "abi_version": {"const": 1, "type": "integer"},
-        "alignment_ref": {"maxLength": 512, "pattern": "^literal_alignment_v1:[0-9a-f]{24}$", "type": "string"},
-        "slot_ref": {"maxLength": 512, "pattern": "^response_slot:[^\\s:][^\\s]*$", "type": "string"},
-        "copy_source_kind": {"enum": ["reviewed_literal", "decision_literal", "effect_literal", "obligation_literal"]},
-        "copy_source_ref": {"type": "string"},
-        "source_literal": {"maxLength": 16384, "minLength": 1, "type": "string"},
-        "source_start": {"maximum": 16384, "minimum": 0, "type": "integer"},
-        "source_end": {"maximum": 16384, "minimum": 0, "type": "integer"},
-        "surface_start": {"maximum": 16384, "minimum": 0, "type": "integer"},
-        "surface_end": {"maximum": 16384, "minimum": 0, "type": "integer"}
-      },
-      "required": ["abi_version", "alignment_ref", "slot_ref", "copy_source_kind", "copy_source_ref", "source_literal", "source_start", "source_end", "surface_start", "surface_end"],
-      "type": "object"
+      "properties": {"abi_version": {"const": 1, "type": "integer"}, "response_subject_ref": {"$ref": "#/$defs/responseSubjectRef"}, "subject_kind": {"const": "expression_set"}, "expected_expression_relation": {"enum": ["single", "conflict"]}, "expression_refs": {"items": {"$ref": "#/$defs/expressionRef"}, "maxItems": 16, "minItems": 1, "type": "array", "uniqueItems": true}},
+      "required": ["abi_version", "response_subject_ref", "subject_kind", "expected_expression_relation", "expression_refs"], "type": "object"
     },
-    "binding": {
+    "typedGapSubject": {
       "additionalProperties": false,
-      "properties": {
-        "abi_version": {"const": 1, "type": "integer"},
-        "binding_ref": {"maxLength": 512, "pattern": "^realization_binding_v1:[0-9a-f]{24}$", "type": "string"},
-        "binding_key_ref": {"maxLength": 512, "pattern": "^binding_key:[^\\s:][^\\s]*$", "type": "string"},
-        "semantic_ref": {"$ref": "#/$defs/ref"}
-      },
-      "required": ["abi_version", "binding_ref", "binding_key_ref", "semantic_ref"],
-      "type": "object"
+      "properties": {"abi_version": {"const": 1, "type": "integer"}, "response_subject_ref": {"$ref": "#/$defs/responseSubjectRef"}, "subject_kind": {"const": "typed_gap"}, "expected_expression_relation": {"const": "none"}, "typed_gap": {"$ref": "#/$defs/abstention"}},
+      "required": ["abi_version", "response_subject_ref", "subject_kind", "expected_expression_relation", "typed_gap"], "type": "object"
     },
+    "verifierRejectionSubject": {
+      "additionalProperties": false,
+      "properties": {"abi_version": {"const": 1, "type": "integer"}, "response_subject_ref": {"$ref": "#/$defs/responseSubjectRef"}, "subject_kind": {"const": "verifier_rejection"}, "expected_expression_relation": {"const": "none"}, "verifier_rejection": {"$ref": "#/$defs/verificationRejection"}},
+      "required": ["abi_version", "response_subject_ref", "subject_kind", "expected_expression_relation", "verifier_rejection"], "type": "object"
+    },
+    "abstention": {
+      "additionalProperties": false,
+      "properties": {"abi_version": {"const": 1, "type": "integer"}, "abstention_ref": {"maxLength": 512, "pattern": "^typed_abstention_v1:[0-9a-f]{24}$", "type": "string"}, "gap_kind_ref": {"maxLength": 512, "pattern": "^gap_kind:[^\\s:][^\\s]*$", "type": "string"}, "critical": {"type": "boolean"}, "earliest_owner": {"enum": ["orient", "propose", "verify", "evaluate", "effect", "realize"]}, "safe_disposition": {"enum": ["frontier", "clarify", "reject"]}},
+      "required": ["abi_version", "abstention_ref", "gap_kind_ref", "critical", "earliest_owner", "safe_disposition"], "type": "object"
+    },
+    "verificationRejection": {
+      "additionalProperties": false,
+      "oneOf": [
+        {"properties": {"input_kind": {"const": "adversarial_blueprint"}, "adversarial_blueprint_ref": {"maxLength": 512, "pattern": "^adversarial_blueprint:[0-9a-f]{24}$", "type": "string"}, "mutation_payload_ref": {"type": "null"}}},
+        {"properties": {"input_kind": {"const": "mutation_payload"}, "adversarial_blueprint_ref": {"type": "null"}, "mutation_payload_ref": {"maxLength": 512, "pattern": "^mutation_payload:[0-9a-f]{24}$", "type": "string"}}}
+      ],
+      "properties": {"abi_version": {"const": 1, "type": "integer"}, "verification_rejection_ref": {"maxLength": 512, "pattern": "^verification_rejection_v1:[0-9a-f]{24}$", "type": "string"}, "input_kind": {"enum": ["adversarial_blueprint", "mutation_payload"]}, "adversarial_blueprint_ref": {"oneOf": [{"type": "null"}, {"maxLength": 512, "pattern": "^adversarial_blueprint:[0-9a-f]{24}$", "type": "string"}]}, "mutation_payload_ref": {"oneOf": [{"type": "null"}, {"maxLength": 512, "pattern": "^mutation_payload:[0-9a-f]{24}$", "type": "string"}]}, "expected_owner": {"const": "verify"}, "verification_error_code": {"maxLength": 512, "pattern": "^verification_error:[^\\s:][^\\s]*$", "type": "string"}, "rejection_disposition": {"const": "reject"}, "critical": {"type": "boolean"}},
+      "required": ["abi_version", "verification_rejection_ref", "input_kind", "adversarial_blueprint_ref", "mutation_payload_ref", "expected_owner", "verification_error_code", "rejection_disposition", "critical"], "type": "object"
+    },
+    "alignment": {"oneOf": [{"$ref": "#/$defs/designationAlignment"}, {"$ref": "#/$defs/referenceAlignment"}, {"$ref": "#/$defs/literalAlignment"}, {"$ref": "#/$defs/morphologyAlignment"}, {"$ref": "#/$defs/omissionAlignment"}]},
+    "designationAlignment": {"additionalProperties": false, "properties": {"abi_version": {"const": 1, "type": "integer"}, "alignment_ref": {"$ref": "#/$defs/alignmentRef"}, "alignment_kind": {"const": "designation"}, "slot_ref": {"$ref": "#/$defs/slotRef"}, "designation_fact_ref": {"maxLength": 512, "pattern": "^designation:[0-9a-f]{24}$", "type": "string"}, "surface_start": {"$ref": "#/$defs/spanIndex"}, "surface_end": {"$ref": "#/$defs/spanIndex"}}, "required": ["abi_version", "alignment_ref", "alignment_kind", "slot_ref", "designation_fact_ref", "surface_start", "surface_end"], "type": "object"},
+    "referenceAlignment": {"additionalProperties": false, "properties": {"abi_version": {"const": 1, "type": "integer"}, "alignment_ref": {"$ref": "#/$defs/alignmentRef"}, "alignment_kind": {"const": "reference"}, "slot_ref": {"$ref": "#/$defs/slotRef"}, "participant_ref": {"maxLength": 512, "pattern": "^participant:[^\\s:][^\\s]*$", "type": "string"}, "reference_authority_ref": {"$ref": "#/$defs/reviewRef"}, "surface_start": {"$ref": "#/$defs/spanIndex"}, "surface_end": {"$ref": "#/$defs/spanIndex"}}, "required": ["abi_version", "alignment_ref", "alignment_kind", "slot_ref", "participant_ref", "reference_authority_ref", "surface_start", "surface_end"], "type": "object"},
+    "literalAlignment": {"additionalProperties": false, "properties": {"abi_version": {"const": 1, "type": "integer"}, "alignment_ref": {"$ref": "#/$defs/alignmentRef"}, "alignment_kind": {"const": "literal"}, "slot_ref": {"$ref": "#/$defs/slotRef"}, "literal_source_ref": {"maxLength": 512, "pattern": "^(reviewed_literal|decision_literal|effect_literal|obligation_literal):[0-9a-f]{24}$", "type": "string"}, "surface_start": {"$ref": "#/$defs/spanIndex"}, "surface_end": {"$ref": "#/$defs/spanIndex"}}, "required": ["abi_version", "alignment_ref", "alignment_kind", "slot_ref", "literal_source_ref", "surface_start", "surface_end"], "type": "object"},
+    "morphologyAlignment": {"additionalProperties": false, "properties": {"abi_version": {"const": 1, "type": "integer"}, "alignment_ref": {"$ref": "#/$defs/alignmentRef"}, "alignment_kind": {"const": "morphology"}, "slot_ref": {"$ref": "#/$defs/slotRef"}, "morphology_authority_ref": {"$ref": "#/$defs/reviewRef"}, "surface_start": {"$ref": "#/$defs/spanIndex"}, "surface_end": {"$ref": "#/$defs/spanIndex"}}, "required": ["abi_version", "alignment_ref", "alignment_kind", "slot_ref", "morphology_authority_ref", "surface_start", "surface_end"], "type": "object"},
+    "omissionAlignment": {"additionalProperties": false, "properties": {"abi_version": {"const": 1, "type": "integer"}, "alignment_ref": {"$ref": "#/$defs/alignmentRef"}, "alignment_kind": {"const": "omission"}, "slot_ref": {"$ref": "#/$defs/slotRef"}, "omission_authority_ref": {"$ref": "#/$defs/reviewRef"}, "surface_start": {"type": "null"}, "surface_end": {"type": "null"}}, "required": ["abi_version", "alignment_ref", "alignment_kind", "slot_ref", "omission_authority_ref", "surface_start", "surface_end"], "type": "object"},
+    "binding": {"additionalProperties": false, "properties": {"abi_version": {"const": 1, "type": "integer"}, "binding_ref": {"maxLength": 512, "pattern": "^realization_binding_v1:[0-9a-f]{24}$", "type": "string"}, "binding_key_ref": {"maxLength": 512, "pattern": "^binding_key:[^\\s:][^\\s]*$", "type": "string"}, "semantic_ref": {"$ref": "#/$defs/ref"}}, "required": ["abi_version", "binding_ref", "binding_key_ref", "semantic_ref"], "type": "object"},
+    "slot": {"additionalProperties": false, "properties": {"abi_version": {"const": 1, "type": "integer"}, "slot_ref": {"$ref": "#/$defs/slotRef"}, "semantic_ref": {"$ref": "#/$defs/ref"}, "required": {"type": "boolean"}, "qualifier_refs": {"items": {"maxLength": 512, "pattern": "^qualifier:[^\\s:][^\\s]*$", "type": "string"}, "maxItems": 128, "type": "array", "uniqueItems": true}}, "required": ["abi_version", "slot_ref", "semantic_ref", "required", "qualifier_refs"], "type": "object"},
+    "alignmentRef": {"maxLength": 512, "pattern": "^realization_alignment_v1:[0-9a-f]{24}$", "type": "string"},
     "caseRef": {"maxLength": 512, "pattern": "^expanded_case_v2:[0-9a-f]{24}$", "type": "string"},
-    "reviewRefs": {"items": {"maxLength": 512, "pattern": "^source_review:[0-9a-f]{24}$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+    "expressionRef": {"maxLength": 512, "pattern": "^expression:[0-9a-f]{24}$", "type": "string"},
     "ref": {"maxLength": 512, "minLength": 3, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$", "type": "string"},
-    "referenceForm": {
-      "additionalProperties": false,
-      "properties": {
-        "abi_version": {"const": 1, "type": "integer"},
-        "participant_ref": {"maxLength": 512, "pattern": "^participant:[^\\s:][^\\s]*$", "type": "string"},
-        "surface_form": {"maxLength": 128, "minLength": 1, "type": "string"}
-      },
-      "required": ["abi_version", "participant_ref", "surface_form"],
-      "type": "object"
-    },
-    "slot": {
-      "additionalProperties": false,
-      "oneOf": [
-        {"properties": {"required": {"const": false}, "required_literal_value": {"type": "null"}}},
-        {"properties": {"required": {"const": true}, "required_literal_value": {"oneOf": [{"type": "null"}, {"maxLength": 16384, "minLength": 1, "type": "string"}]}}}
-      ],
-      "properties": {
-        "abi_version": {"const": 1, "type": "integer"},
-        "slot_ref": {"maxLength": 512, "pattern": "^response_slot:[^\\s:][^\\s]*$", "type": "string"},
-        "semantic_ref": {"$ref": "#/$defs/ref"},
-        "required": {"type": "boolean"},
-        "required_literal_value": {"oneOf": [{"type": "null"}, {"maxLength": 16384, "minLength": 1, "type": "string"}]},
-        "qualifier_refs": {"items": {"maxLength": 512, "pattern": "^qualifier:[^\\s:][^\\s]*$", "type": "string"}, "maxItems": 128, "type": "array", "uniqueItems": true}
-      },
-      "required": ["abi_version", "slot_ref", "semantic_ref", "required", "required_literal_value", "qualifier_refs"],
-      "type": "object"
-    }
+    "responseSubjectRef": {"maxLength": 512, "pattern": "^response_subject_v1:[0-9a-f]{24}$", "type": "string"},
+    "reviewRef": {"maxLength": 512, "pattern": "^source_review:[0-9a-f]{24}$", "type": "string"},
+    "reviewRefs": {"items": {"$ref": "#/$defs/reviewRef"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+    "slotRef": {"maxLength": 512, "pattern": "^response_slot:[^\\s:][^\\s]*$", "type": "string"},
+    "spanIndex": {"maximum": 16384, "minimum": 0, "type": "integer"}
   }
 }

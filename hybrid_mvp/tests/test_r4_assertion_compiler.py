@@ -18,6 +18,7 @@ from cemm_authoritative_hybrid.r4_contracts import (
     ExpectedCycleContractCompiler,
     ExpectedEffectKind,
     ExpectedGapContract,
+    ExpectedResponseContract,
     ReviewedAssertion,
     ReviewedScenario,
 )
@@ -39,7 +40,7 @@ __cemm_test_inventory__ = {'tests/test_r4_assertion_compiler.py::test_unknown_as
                                                                                                'diagnostic_role': 'owner',
                                                                                                'introduced_by_task': 'R4.1-SR1',
                                                                                                'owner_ref': 'expected-contract',
-                                                                                               'source_ast_sha256': 'ff58b764484269ed144a2771e1f3683f5cebc18c8470583c256dc6b554027320'},
+                                                                                               'source_ast_sha256': '4f2809ff94230bc83875c503a398ae7a964e174e5325f39466bf9d7177c89879'},
  'tests/test_r4_assertion_compiler.py::test_sr1_adversarial_and_gap_cannot_mix': {'activation_phase': 'R4',
                                                                                   'assertion_ref': 'assertion:r4-sr1-adversarial-and-gap-cannot-mix',
                                                                                   'diagnostic_role': 'owner',
@@ -63,7 +64,7 @@ __cemm_test_inventory__ = {'tests/test_r4_assertion_compiler.py::test_unknown_as
                                                                                                                'diagnostic_role': 'owner',
                                                                                                                'introduced_by_task': 'R4-Designation-Event-Tranche',
                                                                                                                'owner_ref': 'expected-contract',
-                                                                                                               'source_ast_sha256': 'bd67178ca9b3635a3521e7117169aa17f59548e0a472ca2fe84c86da7e1090f0'},
+                                                                                                               'source_ast_sha256': 'a02a80bcfa01b7ab55354f92dcb3389e87670e608869703274b08ce0e5e112ba'},
  'tests/test_r4_assertion_compiler.py::test_compiler_resets_situated_state_between_cases': {'activation_phase': 'R4',
                                                                                             'assertion_ref': 'assertion:r4-compiler-resets-situated-state-between-cases',
                                                                                             'diagnostic_role': 'owner',
@@ -272,6 +273,57 @@ def test_explicit_cycle_contract_rows_are_complete_and_override_defaults() -> No
     assert contract.expected_response.cycle_status is CycleStatus.PARTIAL
     assert contract.expected_response.epistemic_status_ref == "epistemic_status:contested"
 
+    with pytest.raises(ValueError, match="epistemic_status"):
+        ExpectedResponseContract(
+            "acknowledge",
+            CycleStatus.PARTIAL,
+            "polarity:positive",
+            "modality:actual",
+            "contested",
+        )
+
+    invalid_epistemic = ReviewedScenario.from_dict(
+        {
+            "scenario_ref": "scenario:invalid-epistemic-cycle-contract",
+            "review_status": "reviewed",
+            "competency_category": "designation_definition",
+            "semantic_assertions": [
+                {
+                    "kind": "event",
+                    "event_type": "event:greeting",
+                    "roles": {"role:actor": "participant:user"},
+                },
+                {"kind": "mode", "mode": "OBSERVE"},
+                {
+                    "kind": "decision",
+                    "status": "contested",
+                    "action": "retain_attribution",
+                },
+                {"kind": "no_effect", "reason": "attributed_only"},
+                {
+                    "kind": "response",
+                    "discourse_action": "acknowledge",
+                    "cycle_status": "partial",
+                    "polarity": "polarity:positive",
+                    "modality": "modality:actual",
+                    "epistemic_status": "epistemic:contested",
+                },
+            ],
+            "surface_examples": ["hello"],
+            "metadata": {},
+        }
+    )
+    with pytest.raises(ValueError, match="epistemic_status"):
+        compiler.compile(
+            scenario_ref=invalid_epistemic.scenario_ref,
+            case_ref="case:invalid-epistemic-cycle-contract",
+            surface_ref="surface:invalid-epistemic-cycle-contract",
+            context_ref="context:invalid-epistemic-cycle-contract",
+            assertions=invalid_epistemic.assertions,
+            situation_constraints={},
+            revision_pin=_pin(),
+        )
+
     incomplete = ReviewedScenario.from_dict(
         {
             "scenario_ref": "scenario:incomplete-cycle-contract",
@@ -432,6 +484,8 @@ def test_sr1_adversarial_is_exact_verification_rejection() -> None:
     assert contract.expected_gap.recommended_owner == "exact-verifier"
     assert contract.expected_gap.safe_response_action == "reject_candidate"
     assert contract.expected_gap.error_code == "verification:unknown_operator"
+    assert contract.expected_response.discourse_action == "reject_candidate"
+    assert contract.expected_response.epistemic_status_ref == "epistemic_status:unknown"
     for invalid in (None, 7, True):
         with pytest.raises((TypeError, ValueError), match="expected_error_code"):
             _compile(

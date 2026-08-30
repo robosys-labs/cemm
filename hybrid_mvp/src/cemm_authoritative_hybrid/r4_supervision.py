@@ -43,6 +43,7 @@ from ._r4_source_codec import (
 )
 from .canonical import stable_ref
 from .contributions import ContributionKind
+from .epistemic import exact_epistemic_status_ref
 from .programs import ACTION_ABI_HASH, ACTION_ABI_SCHEMAS, PROGRAM_ABI_VERSION, SWITCH_ACTION_TYPES
 from .r4_contracts import SourceDisposition
 
@@ -61,10 +62,10 @@ MAX_SELECTORS_PER_ACTION = max(
 MAX_SELECTOR_BINDINGS = 1_024
 MAX_SOURCE_ASSIGNMENTS = 64
 MAX_SOURCE_SPANS = 64
+MAX_REALIZATION_VARIANTS_PER_CASE = 4
 MAX_REALIZATION_SLOTS = 64
 MAX_REALIZATION_BINDINGS = 64
-MAX_REFERENCE_FORMS = 16
-MAX_LITERAL_ALIGNMENTS = 64
+MAX_REALIZATION_ALIGNMENTS = 64
 
 R4_REVIEW_MANIFEST_PATH = "data/review/r4_1/REVIEW_MANIFEST.json"
 R4_SCENARIO_SOURCE_PATH = "data/scenarios/use_cases.jsonl"
@@ -175,9 +176,6 @@ _ACTION_FIELD_SHAPES: Mapping[str, tuple[str, tuple[str, ...]]] = {
 _OWNER_PHASES = frozenset({"orient", "propose", "verify", "evaluate", "effect", "realize"})
 _SAFE_DISPOSITIONS = frozenset({"frontier", "clarify", "reject"})
 _MUTATION_DISPOSITIONS = frozenset({"accept", "reject", "frontier"})
-_COPY_SOURCE_KINDS = frozenset(
-    {"reviewed_literal", "decision_literal", "effect_literal", "obligation_literal"}
-)
 _LANGUAGE_RE = re.compile(r"[a-z]{2,8}(?:-[A-Za-z0-9]{1,8})*\Z")
 _WINDOWS_REPARSE_POINT = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x0400)
 
@@ -381,6 +379,8 @@ def _record_count_from_authenticated_bytes(path: str, raw: bytes) -> int:
     lines = raw[:-1].split(b"\n")
     if not lines or len(lines) > MAX_R4_SOURCE_RECORDS or any(not line for line in lines):
         raise ValueError(f"reviewed source {path} violates record count bounds")
+    realization_refs: set[str] = set()
+    realization_variants_by_case: dict[str, int] = {}
     for index, line in enumerate(lines, 1):
         record = line + b"\n"
         if path == "data/review/r4_1/mutation_contracts.jsonl":
@@ -388,7 +388,14 @@ def _record_count_from_authenticated_bytes(path: str, raw: bytes) -> int:
         elif path == "data/review/r4_1/proposal_supervision.jsonl":
             ProposalTarget.from_json_bytes(record)
         elif path == "data/review/r4_1/realization_supervision.jsonl":
-            RealizationRow.from_json_bytes(record)
+            realization = RealizationRow.from_json_bytes(record)
+            if realization.realization_ref in realization_refs:
+                raise ValueError("realization supervision contains a duplicate row identity")
+            realization_refs.add(realization.realization_ref)
+            count = realization_variants_by_case.get(realization.source_case_ref, 0) + 1
+            if count > MAX_REALIZATION_VARIANTS_PER_CASE:
+                raise ValueError("realization supervision exceeds four variants for one case")
+            realization_variants_by_case[realization.source_case_ref] = count
         elif path == R4_SCENARIO_SOURCE_PATH:
             from .r4_contracts import ReviewedScenario
 
@@ -1787,6 +1794,265 @@ class ProposalTarget:
 
 
 @dataclass(frozen=True, init=False)
+class ExpressionSetResponseSubject:
+    abi_version: int
+    response_subject_ref: str
+    subject_kind: str
+    expected_expression_relation: str
+    expression_refs: tuple[str, ...]
+
+    _FIELDS = frozenset(
+        {
+            "abi_version",
+            "response_subject_ref",
+            "subject_kind",
+            "expected_expression_relation",
+            "expression_refs",
+        }
+    )
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("ExpressionSetResponseSubject")
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        expected_expression_relation: str,
+        expression_refs: tuple[str, ...],
+    ) -> "ExpressionSetResponseSubject":
+        relation = exact_text(
+            expected_expression_relation,
+            "expected_expression_relation",
+            maximum=16,
+        )
+        expressions = exact_content_ref_tuple(
+            expression_refs,
+            "expression_refs",
+            nonempty=True,
+            maximum=MAX_DERIVATIONS_PER_CASE,
+            prefix="expression:",
+        )
+        expected = "single" if len(expressions) == 1 else "conflict"
+        if relation != expected:
+            raise ValueError(
+                "expression-set relation must be single for one expression and conflict for alternatives"
+            )
+        material = {
+            "abi_version": REALIZATION_SUPERVISION_ABI_VERSION,
+            "subject_kind": "expression_set",
+            "expected_expression_relation": relation,
+            "expression_refs": list(expressions),
+        }
+        return construct(
+            cls,
+            response_subject_ref=stable_ref("response_subject_v1", material),
+            expression_refs=expressions,
+            **{key: value for key, value in material.items() if key != "expression_refs"},
+        )
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "abi_version": self.abi_version,
+            "response_subject_ref": self.response_subject_ref,
+            "subject_kind": self.subject_kind,
+            "expected_expression_relation": self.expected_expression_relation,
+            "expression_refs": list(self.expression_refs),
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "ExpressionSetResponseSubject":
+        row = exact_fields(value, cls._FIELDS, "ExpressionSetResponseSubject")
+        exact_abi(row["abi_version"], REALIZATION_SUPERVISION_ABI_VERSION, "Realization Supervision")
+        if row["subject_kind"] != "expression_set":
+            raise ValueError("response subject kind is not expression_set")
+        rebuilt = cls.create(
+            expected_expression_relation=row["expected_expression_relation"],
+            expression_refs=wire_content_ref_tuple(
+                row["expression_refs"],
+                "expression_refs",
+                nonempty=True,
+                maximum=MAX_DERIVATIONS_PER_CASE,
+                prefix="expression:",
+            ),
+        )
+        if rebuilt.as_dict() != dict(row):
+            raise ValueError("non-canonical expression-set response subject")
+        return rebuilt
+
+
+@dataclass(frozen=True, init=False)
+class TypedGapResponseSubject:
+    abi_version: int
+    response_subject_ref: str
+    subject_kind: str
+    expected_expression_relation: str
+    typed_gap: TypedAbstention
+
+    _FIELDS = frozenset(
+        {
+            "abi_version",
+            "response_subject_ref",
+            "subject_kind",
+            "expected_expression_relation",
+            "typed_gap",
+        }
+    )
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("TypedGapResponseSubject")
+
+    @classmethod
+    def create(cls, *, typed_gap: TypedAbstention) -> "TypedGapResponseSubject":
+        gap = _canonical_nested(typed_gap, TypedAbstention, "typed gap")
+        material = {
+            "abi_version": REALIZATION_SUPERVISION_ABI_VERSION,
+            "subject_kind": "typed_gap",
+            "expected_expression_relation": "none",
+            "typed_gap": gap.as_dict(),
+        }
+        return construct(
+            cls,
+            response_subject_ref=stable_ref("response_subject_v1", material),
+            typed_gap=gap,
+            **{key: value for key, value in material.items() if key != "typed_gap"},
+        )
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "abi_version": self.abi_version,
+            "response_subject_ref": self.response_subject_ref,
+            "subject_kind": self.subject_kind,
+            "expected_expression_relation": self.expected_expression_relation,
+            "typed_gap": self.typed_gap.as_dict(),
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "TypedGapResponseSubject":
+        row = exact_fields(value, cls._FIELDS, "TypedGapResponseSubject")
+        exact_abi(row["abi_version"], REALIZATION_SUPERVISION_ABI_VERSION, "Realization Supervision")
+        if row["subject_kind"] != "typed_gap" or row["expected_expression_relation"] != "none":
+            raise ValueError("typed-gap response subject must use relation none")
+        if type(row["typed_gap"]) is not dict:
+            raise TypeError("typed_gap must be an exact object")
+        rebuilt = cls.create(typed_gap=TypedAbstention.from_dict(row["typed_gap"]))
+        if rebuilt.as_dict() != dict(row):
+            raise ValueError("non-canonical typed-gap response subject")
+        return rebuilt
+
+
+@dataclass(frozen=True, init=False)
+class VerifierRejectionResponseSubject:
+    abi_version: int
+    response_subject_ref: str
+    subject_kind: str
+    expected_expression_relation: str
+    verifier_rejection: VerificationRejection
+
+    _FIELDS = frozenset(
+        {
+            "abi_version",
+            "response_subject_ref",
+            "subject_kind",
+            "expected_expression_relation",
+            "verifier_rejection",
+        }
+    )
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("VerifierRejectionResponseSubject")
+
+    @classmethod
+    def create(
+        cls, *, verifier_rejection: VerificationRejection
+    ) -> "VerifierRejectionResponseSubject":
+        rejection = _canonical_nested(
+            verifier_rejection, VerificationRejection, "verifier rejection"
+        )
+        material = {
+            "abi_version": REALIZATION_SUPERVISION_ABI_VERSION,
+            "subject_kind": "verifier_rejection",
+            "expected_expression_relation": "none",
+            "verifier_rejection": rejection.as_dict(),
+        }
+        return construct(
+            cls,
+            response_subject_ref=stable_ref("response_subject_v1", material),
+            verifier_rejection=rejection,
+            **{
+                key: value
+                for key, value in material.items()
+                if key != "verifier_rejection"
+            },
+        )
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "abi_version": self.abi_version,
+            "response_subject_ref": self.response_subject_ref,
+            "subject_kind": self.subject_kind,
+            "expected_expression_relation": self.expected_expression_relation,
+            "verifier_rejection": self.verifier_rejection.as_dict(),
+        }
+
+    @classmethod
+    def from_dict(
+        cls, value: Mapping[str, Any]
+    ) -> "VerifierRejectionResponseSubject":
+        row = exact_fields(value, cls._FIELDS, "VerifierRejectionResponseSubject")
+        exact_abi(row["abi_version"], REALIZATION_SUPERVISION_ABI_VERSION, "Realization Supervision")
+        if (
+            row["subject_kind"] != "verifier_rejection"
+            or row["expected_expression_relation"] != "none"
+        ):
+            raise ValueError("verifier-rejection response subject must use relation none")
+        if type(row["verifier_rejection"]) is not dict:
+            raise TypeError("verifier_rejection must be an exact object")
+        rebuilt = cls.create(
+            verifier_rejection=VerificationRejection.from_dict(
+                row["verifier_rejection"]
+            )
+        )
+        if rebuilt.as_dict() != dict(row):
+            raise ValueError("non-canonical verifier-rejection response subject")
+        return rebuilt
+
+
+ResponseSubject = (
+    ExpressionSetResponseSubject
+    | TypedGapResponseSubject
+    | VerifierRejectionResponseSubject
+)
+
+
+def response_subject_from_dict(value: Mapping[str, Any]) -> ResponseSubject:
+    if type(value) is not dict:
+        raise TypeError("response subject must be an exact object")
+    kind = value.get("subject_kind")
+    decoder = {
+        "expression_set": ExpressionSetResponseSubject.from_dict,
+        "typed_gap": TypedGapResponseSubject.from_dict,
+        "verifier_rejection": VerifierRejectionResponseSubject.from_dict,
+    }.get(kind)
+    if decoder is None:
+        raise ValueError("response subject kind is outside the closed union")
+    return decoder(value)
+
+
+def _canonical_response_subject(value: object) -> ResponseSubject:
+    if type(value) not in {
+        ExpressionSetResponseSubject,
+        TypedGapResponseSubject,
+        VerifierRejectionResponseSubject,
+    }:
+        raise TypeError("response_subject must be one exact closed-union value")
+    rebuilt = response_subject_from_dict(value.as_dict())
+    if rebuilt != value:
+        raise ValueError("response subject is not canonical")
+    return rebuilt
+
+
+@dataclass(frozen=True, init=False)
 class RealizationBinding:
     abi_version: int
     binding_ref: str
@@ -1833,64 +2099,139 @@ class RealizationSlot:
     slot_ref: str
     semantic_ref: str
     required: bool
-    required_literal_value: str | None
     qualifier_refs: tuple[str, ...]
 
-    _FIELDS = frozenset({"abi_version", "slot_ref", "semantic_ref", "required", "required_literal_value", "qualifier_refs"})
+    _FIELDS = frozenset({"abi_version", "slot_ref", "semantic_ref", "required", "qualifier_refs"})
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
         raise _factory_only("RealizationSlot")
 
     @classmethod
-    def create(cls, *, slot_ref: str, semantic_ref: str, required: bool, required_literal_value: str | None, qualifier_refs: tuple[str, ...]) -> "RealizationSlot":
-        literal = (
-            None
-            if required_literal_value is None
-            else exact_text(required_literal_value, "required_literal_value", maximum=MAX_R4_TEXT_CHARS)
-        )
+    def create(cls, *, slot_ref: str, semantic_ref: str, required: bool, qualifier_refs: tuple[str, ...]) -> "RealizationSlot":
         exact_required = exact_bool(required, "required")
-        if literal is not None and not exact_required:
-            raise ValueError("required literal value requires a required slot")
-        return construct(cls, abi_version=REALIZATION_SUPERVISION_ABI_VERSION, slot_ref=exact_ref(slot_ref, "slot_ref", prefix="response_slot:"), semantic_ref=exact_ref(semantic_ref, "semantic_ref"), required=exact_required, required_literal_value=literal, qualifier_refs=exact_ref_tuple(qualifier_refs, "qualifier_refs", nonempty=False, maximum=128, prefix="qualifier:"))
+        return construct(cls, abi_version=REALIZATION_SUPERVISION_ABI_VERSION, slot_ref=exact_ref(slot_ref, "slot_ref", prefix="response_slot:"), semantic_ref=exact_ref(semantic_ref, "semantic_ref"), required=exact_required, qualifier_refs=exact_ref_tuple(qualifier_refs, "qualifier_refs", nonempty=False, maximum=128, prefix="qualifier:"))
 
     def as_dict(self) -> dict[str, Any]:
-        return {"abi_version": self.abi_version, "slot_ref": self.slot_ref, "semantic_ref": self.semantic_ref, "required": self.required, "required_literal_value": self.required_literal_value, "qualifier_refs": list(self.qualifier_refs)}
+        return {"abi_version": self.abi_version, "slot_ref": self.slot_ref, "semantic_ref": self.semantic_ref, "required": self.required, "qualifier_refs": list(self.qualifier_refs)}
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "RealizationSlot":
         row = exact_fields(value, cls._FIELDS, "RealizationSlot")
         exact_abi(row["abi_version"], REALIZATION_SUPERVISION_ABI_VERSION, "Realization Supervision")
-        rebuilt = cls.create(slot_ref=row["slot_ref"], semantic_ref=row["semantic_ref"], required=row["required"], required_literal_value=row["required_literal_value"], qualifier_refs=wire_ref_tuple(row["qualifier_refs"], "qualifier_refs", nonempty=False, maximum=128, prefix="qualifier:"))
+        rebuilt = cls.create(slot_ref=row["slot_ref"], semantic_ref=row["semantic_ref"], required=row["required"], qualifier_refs=wire_ref_tuple(row["qualifier_refs"], "qualifier_refs", nonempty=False, maximum=128, prefix="qualifier:"))
         if rebuilt.as_dict() != dict(row):
             raise ValueError("non-canonical RealizationSlot")
         return rebuilt
 
 
-@dataclass(frozen=True, init=False)
-class ReferenceFormChoice:
-    abi_version: int
-    participant_ref: str
-    surface_form: str
+def _surface_span(start: object, end: object) -> tuple[int, int]:
+    if type(start) is not int or type(end) is not int:
+        raise TypeError("realization alignment spans must use exact integers")
+    exact_start = exact_int(start, "surface_start", maximum=MAX_R4_TEXT_CHARS)
+    exact_end = exact_int(end, "surface_end", maximum=MAX_R4_TEXT_CHARS)
+    if exact_start >= exact_end:
+        raise ValueError("realization alignment must own one positive output span")
+    return exact_start, exact_end
 
-    _FIELDS = frozenset({"abi_version", "participant_ref", "surface_form"})
+
+def _alignment_material(
+    *, alignment_kind: str, slot_ref: str, surface_start: object, surface_end: object
+) -> dict[str, Any]:
+    start, end = _surface_span(surface_start, surface_end)
+    return {
+        "abi_version": REALIZATION_SUPERVISION_ABI_VERSION,
+        "alignment_kind": alignment_kind,
+        "slot_ref": exact_ref(slot_ref, "slot_ref", prefix="response_slot:"),
+        "surface_start": start,
+        "surface_end": end,
+    }
+
+
+@dataclass(frozen=True, init=False)
+class DesignationAlignment:
+    abi_version: int
+    alignment_ref: str
+    alignment_kind: str
+    slot_ref: str
+    designation_fact_ref: str
+    surface_start: int
+    surface_end: int
+
+    _FIELDS = frozenset(
+        {
+            "abi_version", "alignment_ref", "alignment_kind", "slot_ref",
+            "designation_fact_ref", "surface_start", "surface_end",
+        }
+    )
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
-        raise _factory_only("ReferenceFormChoice")
+        raise _factory_only("DesignationAlignment")
 
     @classmethod
-    def create(cls, *, participant_ref: str, surface_form: str) -> "ReferenceFormChoice":
-        return construct(cls, abi_version=REALIZATION_SUPERVISION_ABI_VERSION, participant_ref=exact_ref(participant_ref, "participant_ref", prefix="participant:"), surface_form=exact_text(surface_form, "surface_form", maximum=128))
+    def create(cls, *, slot_ref: str, designation_fact_ref: str, surface_start: int, surface_end: int) -> "DesignationAlignment":
+        material = {
+            **_alignment_material(alignment_kind="designation", slot_ref=slot_ref, surface_start=surface_start, surface_end=surface_end),
+            "designation_fact_ref": exact_content_ref(designation_fact_ref, "designation_fact_ref", prefix="designation:"),
+        }
+        return construct(cls, alignment_ref=stable_ref("realization_alignment_v1", material), **material)
 
     def as_dict(self) -> dict[str, Any]:
-        return {"abi_version": self.abi_version, "participant_ref": self.participant_ref, "surface_form": self.surface_form}
+        return {name: getattr(self, name) for name in self._FIELDS}
 
     @classmethod
-    def from_dict(cls, value: Mapping[str, Any]) -> "ReferenceFormChoice":
-        row = exact_fields(value, cls._FIELDS, "ReferenceFormChoice")
+    def from_dict(cls, value: Mapping[str, Any]) -> "DesignationAlignment":
+        row = exact_fields(value, cls._FIELDS, "DesignationAlignment")
         exact_abi(row["abi_version"], REALIZATION_SUPERVISION_ABI_VERSION, "Realization Supervision")
-        rebuilt = cls.create(participant_ref=row["participant_ref"], surface_form=row["surface_form"])
+        if row["alignment_kind"] != "designation":
+            raise ValueError("designation alignment has the wrong tag")
+        rebuilt = cls.create(slot_ref=row["slot_ref"], designation_fact_ref=row["designation_fact_ref"], surface_start=row["surface_start"], surface_end=row["surface_end"])
         if rebuilt.as_dict() != dict(row):
-            raise ValueError("non-canonical ReferenceFormChoice")
+            raise ValueError("non-canonical designation alignment")
+        return rebuilt
+
+
+@dataclass(frozen=True, init=False)
+class ReferenceAlignment:
+    abi_version: int
+    alignment_ref: str
+    alignment_kind: str
+    slot_ref: str
+    participant_ref: str
+    reference_authority_ref: str
+    surface_start: int
+    surface_end: int
+
+    _FIELDS = frozenset(
+        {
+            "abi_version", "alignment_ref", "alignment_kind", "slot_ref",
+            "participant_ref", "reference_authority_ref", "surface_start", "surface_end",
+        }
+    )
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("ReferenceAlignment")
+
+    @classmethod
+    def create(cls, *, slot_ref: str, participant_ref: str, reference_authority_ref: str, surface_start: int, surface_end: int) -> "ReferenceAlignment":
+        material = {
+            **_alignment_material(alignment_kind="reference", slot_ref=slot_ref, surface_start=surface_start, surface_end=surface_end),
+            "participant_ref": exact_ref(participant_ref, "participant_ref", prefix="participant:"),
+            "reference_authority_ref": exact_content_ref(reference_authority_ref, "reference_authority_ref", prefix="source_review:"),
+        }
+        return construct(cls, alignment_ref=stable_ref("realization_alignment_v1", material), **material)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {name: getattr(self, name) for name in self._FIELDS}
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "ReferenceAlignment":
+        row = exact_fields(value, cls._FIELDS, "ReferenceAlignment")
+        exact_abi(row["abi_version"], REALIZATION_SUPERVISION_ABI_VERSION, "Realization Supervision")
+        if row["alignment_kind"] != "reference":
+            raise ValueError("reference alignment has the wrong tag")
+        rebuilt = cls.create(slot_ref=row["slot_ref"], participant_ref=row["participant_ref"], reference_authority_ref=row["reference_authority_ref"], surface_start=row["surface_start"], surface_end=row["surface_end"])
+        if rebuilt.as_dict() != dict(row):
+            raise ValueError("non-canonical reference alignment")
         return rebuilt
 
 
@@ -1898,61 +2239,192 @@ class ReferenceFormChoice:
 class LiteralAlignment:
     abi_version: int
     alignment_ref: str
+    alignment_kind: str
     slot_ref: str
-    copy_source_kind: str
-    copy_source_ref: str
-    source_literal: str
-    source_start: int
-    source_end: int
+    literal_source_ref: str
     surface_start: int
     surface_end: int
 
-    _FIELDS = frozenset({"abi_version", "alignment_ref", "slot_ref", "copy_source_kind", "copy_source_ref", "source_literal", "source_start", "source_end", "surface_start", "surface_end"})
+    _FIELDS = frozenset(
+        {
+            "abi_version", "alignment_ref", "alignment_kind", "slot_ref",
+            "literal_source_ref", "surface_start", "surface_end",
+        }
+    )
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
         raise _factory_only("LiteralAlignment")
 
     @classmethod
-    def create(cls, *, slot_ref: str, copy_source_kind: str, copy_source_ref: str, source_literal: str, source_start: int, source_end: int, surface_start: int, surface_end: int) -> "LiteralAlignment":
-        kind = exact_text(copy_source_kind, "copy_source_kind", maximum=32)
-        if kind == "input_surface":
-            raise ValueError("input surface cannot author realization gold")
-        if kind not in _COPY_SOURCE_KINDS:
-            raise ValueError("unsupported literal copy source kind")
-        literal = exact_text(source_literal, "source_literal", maximum=MAX_R4_TEXT_CHARS)
-        if any(type(value) is not int for value in (source_start, source_end, surface_start, surface_end)):
-            raise TypeError("literal alignment spans must use exact integers")
-        start = exact_int(source_start, "source_start", maximum=MAX_R4_TEXT_CHARS)
-        end = exact_int(source_end, "source_end", maximum=MAX_R4_TEXT_CHARS)
-        out_start = exact_int(surface_start, "surface_start", maximum=MAX_R4_TEXT_CHARS)
-        out_end = exact_int(surface_end, "surface_end", maximum=MAX_R4_TEXT_CHARS)
-        if not start < end <= len(literal) or not out_start < out_end:
-            raise ValueError("literal alignment has an invalid span")
-        copy_prefixes = {
-            "reviewed_literal": "reviewed_literal:",
-            "decision_literal": "decision_literal:",
-            "effect_literal": "effect_literal:",
-            "obligation_literal": "obligation_literal:",
+    def create(cls, *, slot_ref: str, literal_source_ref: str, surface_start: int, surface_end: int) -> "LiteralAlignment":
+        source_ref = exact_text(literal_source_ref, "literal_source_ref")
+        source_prefix = next(
+            (
+                prefix
+                for prefix in (
+                    "reviewed_literal:",
+                    "decision_literal:",
+                    "effect_literal:",
+                    "obligation_literal:",
+                )
+                if source_ref.startswith(prefix)
+            ),
+            None,
+        )
+        if source_prefix is None:
+            raise ValueError("literal alignment requires independent reviewed or boundary-authenticated literal authority")
+        source_ref = exact_content_ref(
+            source_ref,
+            "literal_source_ref",
+            prefix=source_prefix,
+        )
+        material = {
+            **_alignment_material(alignment_kind="literal", slot_ref=slot_ref, surface_start=surface_start, surface_end=surface_end),
+            "literal_source_ref": source_ref,
         }
-        copy_ref = exact_ref(copy_source_ref, "copy_source_ref")
-        if copy_ref.startswith("input_surface:"):
-            raise ValueError("input surface cannot author realization gold")
-        if not copy_ref.startswith(copy_prefixes[kind]):
-            raise ValueError("literal copy source kind and ref namespace disagree")
-        material = {"abi_version": REALIZATION_SUPERVISION_ABI_VERSION, "slot_ref": exact_ref(slot_ref, "slot_ref", prefix="response_slot:"), "copy_source_kind": kind, "copy_source_ref": copy_ref, "source_literal": literal, "source_start": start, "source_end": end, "surface_start": out_start, "surface_end": out_end}
-        return construct(cls, alignment_ref=stable_ref("literal_alignment_v1", material), **material)
+        return construct(cls, alignment_ref=stable_ref("realization_alignment_v1", material), **material)
 
     def as_dict(self) -> dict[str, Any]:
-        return {name: getattr(self, name) for name in ("abi_version", "alignment_ref", "slot_ref", "copy_source_kind", "copy_source_ref", "source_literal", "source_start", "source_end", "surface_start", "surface_end")}
+        return {name: getattr(self, name) for name in self._FIELDS}
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "LiteralAlignment":
         row = exact_fields(value, cls._FIELDS, "LiteralAlignment")
         exact_abi(row["abi_version"], REALIZATION_SUPERVISION_ABI_VERSION, "Realization Supervision")
-        rebuilt = cls.create(**{key: row[key] for key in cls._FIELDS if key not in {"abi_version", "alignment_ref"}})
+        if row["alignment_kind"] != "literal":
+            raise ValueError("literal alignment has the wrong tag")
+        rebuilt = cls.create(slot_ref=row["slot_ref"], literal_source_ref=row["literal_source_ref"], surface_start=row["surface_start"], surface_end=row["surface_end"])
         if rebuilt.as_dict() != dict(row):
             raise ValueError("non-canonical literal alignment")
         return rebuilt
+
+
+@dataclass(frozen=True, init=False)
+class MorphologyAlignment:
+    abi_version: int
+    alignment_ref: str
+    alignment_kind: str
+    slot_ref: str
+    morphology_authority_ref: str
+    surface_start: int
+    surface_end: int
+
+    _FIELDS = frozenset(
+        {
+            "abi_version", "alignment_ref", "alignment_kind", "slot_ref",
+            "morphology_authority_ref", "surface_start", "surface_end",
+        }
+    )
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("MorphologyAlignment")
+
+    @classmethod
+    def create(cls, *, slot_ref: str, morphology_authority_ref: str, surface_start: int, surface_end: int) -> "MorphologyAlignment":
+        material = {
+            **_alignment_material(alignment_kind="morphology", slot_ref=slot_ref, surface_start=surface_start, surface_end=surface_end),
+            "morphology_authority_ref": exact_content_ref(morphology_authority_ref, "morphology_authority_ref", prefix="source_review:"),
+        }
+        return construct(cls, alignment_ref=stable_ref("realization_alignment_v1", material), **material)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {name: getattr(self, name) for name in self._FIELDS}
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "MorphologyAlignment":
+        row = exact_fields(value, cls._FIELDS, "MorphologyAlignment")
+        exact_abi(row["abi_version"], REALIZATION_SUPERVISION_ABI_VERSION, "Realization Supervision")
+        if row["alignment_kind"] != "morphology":
+            raise ValueError("morphology alignment has the wrong tag")
+        rebuilt = cls.create(slot_ref=row["slot_ref"], morphology_authority_ref=row["morphology_authority_ref"], surface_start=row["surface_start"], surface_end=row["surface_end"])
+        if rebuilt.as_dict() != dict(row):
+            raise ValueError("non-canonical morphology alignment")
+        return rebuilt
+
+
+@dataclass(frozen=True, init=False)
+class OmissionAlignment:
+    abi_version: int
+    alignment_ref: str
+    alignment_kind: str
+    slot_ref: str
+    omission_authority_ref: str
+    surface_start: None
+    surface_end: None
+
+    _FIELDS = frozenset(
+        {"abi_version", "alignment_ref", "alignment_kind", "slot_ref", "omission_authority_ref", "surface_start", "surface_end"}
+    )
+
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
+        raise _factory_only("OmissionAlignment")
+
+    @classmethod
+    def create(cls, *, slot_ref: str, omission_authority_ref: str) -> "OmissionAlignment":
+        material = {
+            "abi_version": REALIZATION_SUPERVISION_ABI_VERSION,
+            "alignment_kind": "omission",
+            "slot_ref": exact_ref(slot_ref, "slot_ref", prefix="response_slot:"),
+            "omission_authority_ref": exact_content_ref(omission_authority_ref, "omission_authority_ref", prefix="source_review:"),
+            "surface_start": None,
+            "surface_end": None,
+        }
+        return construct(cls, alignment_ref=stable_ref("realization_alignment_v1", material), **material)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {name: getattr(self, name) for name in self._FIELDS}
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "OmissionAlignment":
+        row = exact_fields(value, cls._FIELDS, "OmissionAlignment")
+        exact_abi(row["abi_version"], REALIZATION_SUPERVISION_ABI_VERSION, "Realization Supervision")
+        if row["alignment_kind"] != "omission":
+            raise ValueError("omission alignment has the wrong tag")
+        if row["surface_start"] is not None or row["surface_end"] is not None:
+            raise ValueError("omission alignment must use canonical null output geometry")
+        rebuilt = cls.create(slot_ref=row["slot_ref"], omission_authority_ref=row["omission_authority_ref"])
+        if rebuilt.as_dict() != dict(row):
+            raise ValueError("non-canonical omission alignment")
+        return rebuilt
+
+
+RealizationAlignment = (
+    DesignationAlignment
+    | ReferenceAlignment
+    | LiteralAlignment
+    | MorphologyAlignment
+    | OmissionAlignment
+)
+
+
+def realization_alignment_from_dict(value: Mapping[str, Any]) -> RealizationAlignment:
+    if type(value) is not dict:
+        raise TypeError("realization alignment must be an exact object")
+    decoder = {
+        "designation": DesignationAlignment.from_dict,
+        "reference": ReferenceAlignment.from_dict,
+        "literal": LiteralAlignment.from_dict,
+        "morphology": MorphologyAlignment.from_dict,
+        "omission": OmissionAlignment.from_dict,
+    }.get(value.get("alignment_kind"))
+    if decoder is None:
+        raise ValueError("realization alignment kind is outside the closed union")
+    return decoder(value)
+
+
+def _canonical_alignment(value: object) -> RealizationAlignment:
+    if type(value) not in {
+        DesignationAlignment,
+        ReferenceAlignment,
+        LiteralAlignment,
+        MorphologyAlignment,
+        OmissionAlignment,
+    }:
+        raise TypeError("alignment must be one exact closed-union value")
+    rebuilt = realization_alignment_from_dict(value.as_dict())
+    if rebuilt != value:
+        raise ValueError("realization alignment is not canonical")
+    return rebuilt
 
 
 @dataclass(frozen=True, init=False)
@@ -1961,7 +2433,7 @@ class RealizationRow:
     realization_ref: str
     source_case_ref: str
     response_signature_ref: str
-    expression_refs: tuple[str, ...]
+    response_subject: ResponseSubject
     bindings: tuple[RealizationBinding, ...]
     discourse_action_ref: str
     polarity_ref: str
@@ -1972,52 +2444,162 @@ class RealizationRow:
     authorized_surface: str
     language: str
     semantic_slots: tuple[RealizationSlot, ...]
-    reference_forms: tuple[ReferenceFormChoice, ...]
-    literal_alignments: tuple[LiteralAlignment, ...]
+    alignments: tuple[RealizationAlignment, ...]
     review_refs: tuple[str, ...]
 
-    _FIELDS = frozenset({"abi_version", "realization_ref", "source_case_ref", "response_signature_ref", "expression_refs", "bindings", "discourse_action_ref", "polarity_ref", "modality_ref", "epistemic_status_ref", "output_speaker_ref", "output_addressee_ref", "authorized_surface", "language", "semantic_slots", "reference_forms", "literal_alignments", "review_refs"})
+    _FIELDS = frozenset({"abi_version", "realization_ref", "source_case_ref", "response_signature_ref", "response_subject", "bindings", "discourse_action_ref", "polarity_ref", "modality_ref", "epistemic_status_ref", "output_speaker_ref", "output_addressee_ref", "authorized_surface", "language", "semantic_slots", "alignments", "review_refs"})
 
     def __init__(self, *_args: object, **_kwargs: object) -> None:
         raise _factory_only("RealizationRow")
 
     @classmethod
-    def create(cls, *, source_case_ref: str, expression_refs: tuple[str, ...], bindings: tuple[RealizationBinding, ...], discourse_action_ref: str, polarity_ref: str, modality_ref: str, epistemic_status_ref: str, output_speaker_ref: str, output_addressee_ref: str, authorized_surface: str, language: str, semantic_slots: tuple[RealizationSlot, ...], reference_forms: tuple[ReferenceFormChoice, ...], literal_alignments: tuple[LiteralAlignment, ...], review_refs: tuple[str, ...]) -> "RealizationRow":
+    def create(cls, *, source_case_ref: str, response_subject: ResponseSubject, bindings: tuple[RealizationBinding, ...], discourse_action_ref: str, polarity_ref: str, modality_ref: str, epistemic_status_ref: str, output_speaker_ref: str, output_addressee_ref: str, authorized_surface: str, language: str, semantic_slots: tuple[RealizationSlot, ...], alignments: tuple[RealizationAlignment, ...], review_refs: tuple[str, ...]) -> "RealizationRow":
         surface = exact_text(authorized_surface, "authorized_surface", maximum=MAX_R4_TEXT_CHARS)
+        if not surface.strip() or surface.strip().casefold() in {
+            "[no authorized surface]",
+            "[no surface]",
+        }:
+            raise ValueError("authorized_surface must be a nonblank reviewed surface, never a UI placeholder")
         language_value = exact_text(language, "language", maximum=64)
         if _LANGUAGE_RE.fullmatch(language_value) is None:
             raise ValueError("language is not canonical")
+        reviews = exact_review_refs(review_refs)
         exact_bindings = exact_value_tuple(bindings, "bindings", RealizationBinding, nonempty=False, maximum=MAX_REALIZATION_BINDINGS, identity=lambda item: item.binding_key_ref)
         exact_bindings = tuple(_canonical_nested(item, RealizationBinding, "binding") for item in exact_bindings)
         slots = exact_value_tuple(semantic_slots, "semantic_slots", RealizationSlot, nonempty=True, maximum=MAX_REALIZATION_SLOTS, identity=lambda item: item.slot_ref)
         slots = tuple(_canonical_nested(item, RealizationSlot, "semantic slot") for item in slots)
-        forms = exact_value_tuple(reference_forms, "reference_forms", ReferenceFormChoice, nonempty=False, maximum=MAX_REFERENCE_FORMS, identity=lambda item: item.participant_ref)
-        forms = tuple(_canonical_nested(item, ReferenceFormChoice, "reference form") for item in forms)
-        alignments = exact_value_tuple(literal_alignments, "literal_alignments", LiteralAlignment, nonempty=False, maximum=MAX_LITERAL_ALIGNMENTS, identity=lambda item: item.alignment_ref)
-        alignments = tuple(_canonical_nested(item, LiteralAlignment, "literal alignment") for item in alignments)
-        slot_refs = {item.slot_ref for item in slots}
-        for alignment in alignments:
-            if alignment.slot_ref not in slot_refs or alignment.surface_end > len(surface) or surface[alignment.surface_start:alignment.surface_end] != alignment.source_literal[alignment.source_start:alignment.source_end]:
-                raise ValueError("literal alignment does not exactly match a declared slot and surface span")
-        aligned_literals = {
-            (
-                item.slot_ref,
-                item.source_literal[item.source_start:item.source_end],
-            )
-            for item in alignments
+        subject = _canonical_response_subject(response_subject)
+        if type(alignments) is not tuple or len(alignments) > MAX_REALIZATION_ALIGNMENTS:
+            raise TypeError("alignments must be one bounded exact tuple")
+        exact_alignments = tuple(_canonical_alignment(item) for item in alignments)
+        alignment_refs = tuple(item.alignment_ref for item in exact_alignments)
+        if len(alignment_refs) != len(set(alignment_refs)):
+            raise ValueError("alignments contain duplicate identities")
+        alignment_order = tuple(
+            (item.slot_ref, item.alignment_kind, item.alignment_ref)
+            for item in exact_alignments
+        )
+        if any(left >= right for left, right in zip(alignment_order, alignment_order[1:])):
+            raise ValueError("alignments must be in canonical slot/tag/ref order")
+        slots_by_ref = {item.slot_ref: item for item in slots}
+        review_ref_set = set(reviews)
+        coverage: dict[str, int] = {slot_ref: 0 for slot_ref in slots_by_ref}
+        for alignment in exact_alignments:
+            slot = slots_by_ref.get(alignment.slot_ref)
+            if slot is None:
+                raise ValueError("realization alignment targets an unknown semantic slot")
+            coverage[alignment.slot_ref] += 1
+            if type(alignment) is not OmissionAlignment and alignment.surface_end > len(surface):
+                raise ValueError("realization alignment output span exceeds the authorized surface")
+            if (
+                type(alignment) is LiteralAlignment
+                and alignment.literal_source_ref.startswith("reviewed_literal:")
+                and alignment.literal_source_ref
+                != stable_ref(
+                    "reviewed_literal",
+                    {
+                        "literal": surface[
+                            alignment.surface_start : alignment.surface_end
+                        ],
+                        "language": language_value,
+                        "review_refs": list(reviews),
+                    },
+                )
+            ):
+                raise ValueError(
+                    "reviewed literal alignment must resolve to the exact reviewed output projection"
+                )
+            if (
+                type(alignment) is ReferenceAlignment
+                and alignment.participant_ref != slot.semantic_ref
+            ):
+                raise ValueError("reference alignment participant must equal its slot semantic ref")
+            authority_ref = getattr(alignment, f"{alignment.alignment_kind}_authority_ref", None)
+            if authority_ref is not None and authority_ref not in review_ref_set:
+                raise ValueError("row-local alignment authority must resolve through review_refs")
+        for slot in slots:
+            count = coverage[slot.slot_ref]
+            if slot.required and count != 1:
+                raise ValueError("every required semantic slot must be covered exactly once")
+            if not slot.required and count > 1:
+                raise ValueError("an optional semantic slot cannot have duplicate coverage")
+        action_ref = exact_ref(
+            discourse_action_ref,
+            "discourse_action_ref",
+            prefix="response_action:",
+        )
+        exact_polarity_ref = exact_ref(
+            polarity_ref, "polarity_ref", prefix="polarity:"
+        )
+        exact_modality_ref = exact_ref(
+            modality_ref, "modality_ref", prefix="modality:"
+        )
+        exact_epistemic_ref = exact_epistemic_status_ref(epistemic_status_ref)
+        speaker_ref = exact_ref(
+            output_speaker_ref,
+            "output_speaker_ref",
+            prefix="participant:",
+        )
+        addressee_ref = exact_ref(
+            output_addressee_ref,
+            "output_addressee_ref",
+            prefix="participant:",
+        )
+        if type(subject) in {
+            TypedGapResponseSubject,
+            VerifierRejectionResponseSubject,
+        }:
+            if exact_bindings:
+                raise ValueError("safe gap and rejection responses cannot retain semantic bindings")
+            if type(subject) is TypedGapResponseSubject:
+                required_action_ref = "response_action:report_gap"
+                required_slot_ref = "response_slot:gap"
+                required_semantic_ref = subject.typed_gap.abstention_ref
+            else:
+                required_action_ref = "response_action:reject_candidate"
+                required_slot_ref = "response_slot:verifier_rejection"
+                required_semantic_ref = (
+                    subject.verifier_rejection.verification_rejection_ref
+                )
+            if (
+                action_ref != required_action_ref
+                or exact_polarity_ref != "polarity:positive"
+                or exact_modality_ref != "modality:actual"
+                or exact_epistemic_ref != "epistemic_status:unknown"
+            ):
+                raise ValueError("safe response subject has a noncanonical response contract")
+            if (
+                len(slots) != 1
+                or slots[0].slot_ref != required_slot_ref
+                or slots[0].semantic_ref != required_semantic_ref
+                or not slots[0].required
+                or slots[0].qualifier_refs
+            ):
+                raise ValueError("safe response subject requires its one exact semantic slot")
+            if (
+                len(exact_alignments) != 1
+                or type(exact_alignments[0]) is not LiteralAlignment
+                or exact_alignments[0].slot_ref != required_slot_ref
+                or exact_alignments[0].surface_start != 0
+                or exact_alignments[0].surface_end != len(surface)
+            ):
+                raise ValueError("safe response subject requires one full-surface reviewed literal alignment")
+        signature = {
+            "response_subject": subject.as_dict(),
+            "bindings": [item.as_dict() for item in exact_bindings],
+            "discourse_action_ref": action_ref,
+            "polarity_ref": exact_polarity_ref,
+            "modality_ref": exact_modality_ref,
+            "epistemic_status_ref": exact_epistemic_ref,
+            "output_speaker_ref": speaker_ref,
+            "output_addressee_ref": addressee_ref,
+            "semantic_slots": [item.as_dict() for item in slots],
         }
-        if any(
-            slot.required_literal_value is not None
-            and (slot.slot_ref, slot.required_literal_value) not in aligned_literals
-            for slot in slots
-        ):
-            raise ValueError("required literal value lacks an exact literal alignment")
-        signature = {"expression_refs": list(exact_content_ref_tuple(expression_refs, "expression_refs", nonempty=True, maximum=64, prefix="expression:")), "bindings": [item.as_dict() for item in exact_bindings], "discourse_action_ref": exact_ref(discourse_action_ref, "discourse_action_ref", prefix="response_action:"), "polarity_ref": exact_ref(polarity_ref, "polarity_ref", prefix="polarity:"), "modality_ref": exact_ref(modality_ref, "modality_ref", prefix="modality:"), "epistemic_status_ref": exact_ref(epistemic_status_ref, "epistemic_status_ref", prefix="epistemic_status:"), "output_speaker_ref": exact_ref(output_speaker_ref, "output_speaker_ref", prefix="participant:"), "output_addressee_ref": exact_ref(output_addressee_ref, "output_addressee_ref", prefix="participant:"), "semantic_slots": [item.as_dict() for item in slots]}
-        material = {"abi_version": REALIZATION_SUPERVISION_ABI_VERSION, "source_case_ref": exact_case_ref(source_case_ref), "response_signature_ref": stable_ref("response_signature", signature), **signature, "authorized_surface": surface, "language": language_value, "reference_forms": [item.as_dict() for item in forms], "literal_alignments": [item.as_dict() for item in alignments], "review_refs": list(exact_review_refs(review_refs))}
-        return construct(cls, realization_ref=stable_ref("realization_supervision_v1", material), expression_refs=tuple(material["expression_refs"]), bindings=exact_bindings, semantic_slots=slots, reference_forms=forms, literal_alignments=alignments, review_refs=tuple(material["review_refs"]), **{key: val for key, val in material.items() if key not in {"expression_refs", "bindings", "semantic_slots", "reference_forms", "literal_alignments", "review_refs"}})
+        material = {"abi_version": REALIZATION_SUPERVISION_ABI_VERSION, "source_case_ref": exact_case_ref(source_case_ref), "response_signature_ref": stable_ref("response_signature", signature), **signature, "authorized_surface": surface, "language": language_value, "alignments": [item.as_dict() for item in exact_alignments], "review_refs": list(reviews)}
+        return construct(cls, realization_ref=stable_ref("realization_supervision_v1", material), response_subject=subject, bindings=exact_bindings, semantic_slots=slots, alignments=exact_alignments, review_refs=tuple(material["review_refs"]), **{key: val for key, val in material.items() if key not in {"response_subject", "bindings", "semantic_slots", "alignments", "review_refs"}})
 
     def as_dict(self) -> dict[str, Any]:
-        return {"abi_version": self.abi_version, "realization_ref": self.realization_ref, "source_case_ref": self.source_case_ref, "response_signature_ref": self.response_signature_ref, "expression_refs": list(self.expression_refs), "bindings": [item.as_dict() for item in self.bindings], "discourse_action_ref": self.discourse_action_ref, "polarity_ref": self.polarity_ref, "modality_ref": self.modality_ref, "epistemic_status_ref": self.epistemic_status_ref, "output_speaker_ref": self.output_speaker_ref, "output_addressee_ref": self.output_addressee_ref, "authorized_surface": self.authorized_surface, "language": self.language, "semantic_slots": [item.as_dict() for item in self.semantic_slots], "reference_forms": [item.as_dict() for item in self.reference_forms], "literal_alignments": [item.as_dict() for item in self.literal_alignments], "review_refs": list(self.review_refs)}
+        return {"abi_version": self.abi_version, "realization_ref": self.realization_ref, "source_case_ref": self.source_case_ref, "response_signature_ref": self.response_signature_ref, "response_subject": self.response_subject.as_dict(), "bindings": [item.as_dict() for item in self.bindings], "discourse_action_ref": self.discourse_action_ref, "polarity_ref": self.polarity_ref, "modality_ref": self.modality_ref, "epistemic_status_ref": self.epistemic_status_ref, "output_speaker_ref": self.output_speaker_ref, "output_addressee_ref": self.output_addressee_ref, "authorized_surface": self.authorized_surface, "language": self.language, "semantic_slots": [item.as_dict() for item in self.semantic_slots], "alignments": [item.as_dict() for item in self.alignments], "review_refs": list(self.review_refs)}
 
     def to_json_bytes(self) -> bytes:
         return canonical_json_bytes(self.as_dict())
@@ -2026,7 +2608,11 @@ class RealizationRow:
     def from_dict(cls, value: Mapping[str, Any]) -> "RealizationRow":
         row = exact_fields(value, cls._FIELDS, "RealizationRow")
         exact_abi(row["abi_version"], REALIZATION_SUPERVISION_ABI_VERSION, "Realization Supervision")
-        rebuilt = cls.create(source_case_ref=row["source_case_ref"], expression_refs=wire_content_ref_tuple(row["expression_refs"], "expression_refs", nonempty=True, maximum=64, prefix="expression:"), bindings=wire_value_tuple(row["bindings"], "bindings", RealizationBinding.from_dict, nonempty=False, maximum=MAX_REALIZATION_BINDINGS), discourse_action_ref=row["discourse_action_ref"], polarity_ref=row["polarity_ref"], modality_ref=row["modality_ref"], epistemic_status_ref=row["epistemic_status_ref"], output_speaker_ref=row["output_speaker_ref"], output_addressee_ref=row["output_addressee_ref"], authorized_surface=row["authorized_surface"], language=row["language"], semantic_slots=wire_value_tuple(row["semantic_slots"], "semantic_slots", RealizationSlot.from_dict, nonempty=True, maximum=MAX_REALIZATION_SLOTS), reference_forms=wire_value_tuple(row["reference_forms"], "reference_forms", ReferenceFormChoice.from_dict, nonempty=False, maximum=MAX_REFERENCE_FORMS), literal_alignments=wire_value_tuple(row["literal_alignments"], "literal_alignments", LiteralAlignment.from_dict, nonempty=False, maximum=MAX_LITERAL_ALIGNMENTS), review_refs=wire_ref_tuple(row["review_refs"], "review_refs", nonempty=True))
+        if type(row["response_subject"]) is not dict:
+            raise TypeError("response_subject must be an exact object")
+        if type(row["alignments"]) is not list or len(row["alignments"]) > MAX_REALIZATION_ALIGNMENTS:
+            raise TypeError("alignments wire value must be one bounded exact array")
+        rebuilt = cls.create(source_case_ref=row["source_case_ref"], response_subject=response_subject_from_dict(row["response_subject"]), bindings=wire_value_tuple(row["bindings"], "bindings", RealizationBinding.from_dict, nonempty=False, maximum=MAX_REALIZATION_BINDINGS), discourse_action_ref=row["discourse_action_ref"], polarity_ref=row["polarity_ref"], modality_ref=row["modality_ref"], epistemic_status_ref=row["epistemic_status_ref"], output_speaker_ref=row["output_speaker_ref"], output_addressee_ref=row["output_addressee_ref"], authorized_surface=row["authorized_surface"], language=row["language"], semantic_slots=wire_value_tuple(row["semantic_slots"], "semantic_slots", RealizationSlot.from_dict, nonempty=True, maximum=MAX_REALIZATION_SLOTS), alignments=tuple(realization_alignment_from_dict(item) for item in row["alignments"]), review_refs=wire_ref_tuple(row["review_refs"], "review_refs", nonempty=True))
         if rebuilt.response_signature_ref != row["response_signature_ref"] or rebuilt.realization_ref != row["realization_ref"] or rebuilt.as_dict() != dict(row):
             raise ValueError("non-canonical RealizationRow")
         return rebuilt
@@ -2106,21 +2692,29 @@ __all__ = [
     "REALIZATION_SUPERVISION_ABI_VERSION",
     "MAX_BLUEPRINT_ACTIONS",
     "MAX_DERIVATIONS_PER_CASE",
+    "MAX_REALIZATION_ALIGNMENTS",
     "MAX_REALIZATION_BINDINGS",
+    "MAX_REALIZATION_SLOTS",
+    "MAX_REALIZATION_VARIANTS_PER_CASE",
     "MAX_SELECTOR_BINDINGS",
     "MAX_SOURCE_ASSIGNMENTS",
     "MAX_SOURCE_SPANS",
     "BlueprintAction",
     "DerivationBlueprint",
+    "DesignationAlignment",
+    "ExpressionSetResponseSubject",
     "GroundedSelectorBinding",
     "LiteralAlignment",
+    "MorphologyAlignment",
     "MutationContract",
+    "OmissionAlignment",
     "ProposalTarget",
     "R4ReviewManifest",
     "RealizationBinding",
+    "RealizationAlignment",
     "RealizationRow",
     "RealizationSlot",
-    "ReferenceFormChoice",
+    "ReferenceAlignment",
     "ReviewSourceFile",
     "SelectorBinding",
     "SourceAssignmentBlueprint",
@@ -2128,9 +2722,14 @@ __all__ = [
     "SourceSpan",
     "StructuralSelectorBinding",
     "TypedAbstention",
+    "TypedGapResponseSubject",
+    "ResponseSubject",
     "VerificationRejection",
+    "VerifierRejectionResponseSubject",
     "SourceDisposition",
     "selector_binding_from_dict",
+    "realization_alignment_from_dict",
+    "response_subject_from_dict",
     "source_disposition_is_supervision_eligible",
     "load_authenticated_r4_review_bundle",
 ]

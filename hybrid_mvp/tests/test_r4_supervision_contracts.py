@@ -23,18 +23,26 @@ from cemm_authoritative_hybrid.r4_purpose import (
 from cemm_authoritative_hybrid.r4_supervision import (
     MAX_BLUEPRINT_ACTIONS,
     MAX_DERIVATIONS_PER_CASE,
+    MAX_REALIZATION_VARIANTS_PER_CASE,
     BlueprintAction,
+    DesignationAlignment,
     DerivationBlueprint,
+    ExpressionSetResponseSubject,
     LiteralAlignment,
+    MorphologyAlignment,
     MutationContract,
+    OmissionAlignment,
     ProposalTarget,
     R4ReviewManifest,
     RealizationRow,
     RealizationBinding,
     RealizationSlot,
-    ReferenceFormChoice,
+    ReferenceAlignment,
     ReviewSourceFile,
     TypedAbstention,
+    TypedGapResponseSubject,
+    VerificationRejection,
+    VerifierRejectionResponseSubject,
 )
 
 
@@ -194,7 +202,10 @@ def _sr2_derive_target(expected_expression_refs, derivations):
 def _realization() -> RealizationRow:
     return RealizationRow.create(
         source_case_ref=CASE_REF,
-        expression_refs=("expression:0123456789abcdef01234567",),
+        response_subject=ExpressionSetResponseSubject.create(
+            expected_expression_relation="single",
+            expression_refs=("expression:0123456789abcdef01234567",),
+        ),
         bindings=(
             RealizationBinding.create(
                 binding_key_ref="binding_key:subject",
@@ -204,7 +215,7 @@ def _realization() -> RealizationRow:
         discourse_action_ref="response_action:answer_state",
         polarity_ref="polarity:positive",
         modality_ref="modality:actual",
-        epistemic_status_ref="epistemic_status:known",
+        epistemic_status_ref="epistemic_status:supported",
         output_speaker_ref="participant:system",
         output_addressee_ref="participant:user",
         authorized_surface="The lamp is on.",
@@ -214,24 +225,13 @@ def _realization() -> RealizationRow:
                 slot_ref="response_slot:subject",
                 semantic_ref="entity:lamp",
                 required=True,
-                required_literal_value="lamp",
                 qualifier_refs=("qualifier:definite",),
             ),
         ),
-        reference_forms=(
-            ReferenceFormChoice.create(
-                participant_ref="participant:system",
-                surface_form="I",
-            ),
-        ),
-        literal_alignments=(
-            LiteralAlignment.create(
+        alignments=(
+            DesignationAlignment.create(
                 slot_ref="response_slot:subject",
-                copy_source_kind="reviewed_literal",
-                copy_source_ref="reviewed_literal:lamp",
-                source_literal="lamp",
-                source_start=0,
-                source_end=4,
+                designation_fact_ref="designation:0123456789abcdef01234567",
                 surface_start=4,
                 surface_end=8,
             ),
@@ -243,7 +243,7 @@ def _realization() -> RealizationRow:
 def _recreate_realization(row: RealizationRow, **changes) -> RealizationRow:
     values = {
         "source_case_ref": row.source_case_ref,
-        "expression_refs": row.expression_refs,
+        "response_subject": row.response_subject,
         "bindings": row.bindings,
         "discourse_action_ref": row.discourse_action_ref,
         "polarity_ref": row.polarity_ref,
@@ -254,8 +254,7 @@ def _recreate_realization(row: RealizationRow, **changes) -> RealizationRow:
         "authorized_surface": row.authorized_surface,
         "language": row.language,
         "semantic_slots": row.semantic_slots,
-        "reference_forms": row.reference_forms,
-        "literal_alignments": row.literal_alignments,
+        "alignments": row.alignments,
         "review_refs": row.review_refs,
     }
     values.update(changes)
@@ -439,18 +438,14 @@ def test_realization_alignment_is_exact_bounded_and_never_input_as_output_gold()
     assert row.authorized_surface[4:8] == "lamp"
 
     invalid = deepcopy(row.as_dict())
-    invalid["literal_alignments"][0]["surface_end"] = 9
-    with pytest.raises(ValueError, match="alignment"):
+    invalid["alignments"][0]["surface_end"] = 9
+    with pytest.raises(ValueError, match="alignment|canonical"):
         RealizationRow.from_dict(invalid)
 
-    with pytest.raises(ValueError, match="input surface"):
+    with pytest.raises(ValueError, match="literal authority"):
         LiteralAlignment.create(
             slot_ref="response_slot:subject",
-            copy_source_kind="input_surface",
-            copy_source_ref="input_surface:case-1",
-            source_literal="lamp",
-            source_start=0,
-            source_end=4,
+            literal_source_ref="input_surface:case-1",
             surface_start=4,
             surface_end=8,
         )
@@ -458,13 +453,174 @@ def test_realization_alignment_is_exact_bounded_and_never_input_as_output_gold()
     with pytest.raises((TypeError, ValueError), match="integer|span"):
         LiteralAlignment.create(
             slot_ref="response_slot:subject",
-            copy_source_kind="reviewed_literal",
-            copy_source_ref="reviewed_literal:lamp",
-            source_literal="lamp",
-            source_start=float("nan"),
-            source_end=4,
-            surface_start=4,
+            literal_source_ref="reviewed_literal:0123456789abcdef01234567",
+            surface_start=float("nan"),
             surface_end=8,
+        )
+
+
+def test_realization_response_subject_is_closed_complete_and_safe_for_r5_boundaries() -> None:
+    row = _realization()
+    conflict = ExpressionSetResponseSubject.create(
+        expected_expression_relation="conflict",
+        expression_refs=(
+            "expression:0123456789abcdef01234567",
+            "expression:1123456789abcdef01234567",
+        ),
+    )
+    conflict_row = _recreate_realization(row, response_subject=conflict)
+    assert conflict_row.response_signature_ref != row.response_signature_ref
+
+    gap = TypedGapResponseSubject.create(
+        typed_gap=TypedAbstention.create(
+            gap_kind_ref="gap_kind:unresolved_designation",
+            critical=True,
+            earliest_owner="orient",
+            safe_disposition="frontier",
+        )
+    )
+    gap_surface = "I need a reviewed designation before I can answer."
+    gap_slot = RealizationSlot.create(
+        slot_ref="response_slot:gap",
+        semantic_ref=gap.typed_gap.abstention_ref,
+        required=True,
+        qualifier_refs=(),
+    )
+    gap_row = _recreate_realization(
+        row,
+        response_subject=gap,
+        bindings=(),
+        discourse_action_ref="response_action:report_gap",
+        authorized_surface=gap_surface,
+        epistemic_status_ref="epistemic_status:unknown",
+        semantic_slots=(gap_slot,),
+        alignments=(
+            LiteralAlignment.create(
+                slot_ref=gap_slot.slot_ref,
+                literal_source_ref=stable_ref(
+                    "reviewed_literal",
+                    {
+                        "literal": gap_surface,
+                        "language": "en",
+                        "review_refs": [REVIEW_REF],
+                    },
+                ),
+                surface_start=0,
+                surface_end=len(gap_surface),
+            ),
+        ),
+    )
+    rejection = VerifierRejectionResponseSubject.create(
+        verifier_rejection=VerificationRejection.create(
+            input_kind="mutation_payload",
+            adversarial_blueprint_ref=None,
+            mutation_payload_ref="mutation_payload:0123456789abcdef01234567",
+            expected_owner="verify",
+            verification_error_code="verification_error:role_kind_mismatch",
+            rejection_disposition="reject",
+            critical=True,
+        )
+    )
+    rejection_surface = "I rejected that candidate because its roles are invalid."
+    rejection_slot = RealizationSlot.create(
+        slot_ref="response_slot:verifier_rejection",
+        semantic_ref=rejection.verifier_rejection.verification_rejection_ref,
+        required=True,
+        qualifier_refs=(),
+    )
+    rejection_row = _recreate_realization(
+        row,
+        response_subject=rejection,
+        bindings=(),
+        discourse_action_ref="response_action:reject_candidate",
+        authorized_surface=rejection_surface,
+        epistemic_status_ref="epistemic_status:unknown",
+        semantic_slots=(rejection_slot,),
+        alignments=(
+            LiteralAlignment.create(
+                slot_ref=rejection_slot.slot_ref,
+                literal_source_ref=stable_ref(
+                    "reviewed_literal",
+                    {
+                        "literal": rejection_surface,
+                        "language": "en",
+                        "review_refs": [REVIEW_REF],
+                    },
+                ),
+                surface_start=0,
+                surface_end=len(rejection_surface),
+            ),
+        ),
+    )
+    assert gap_row.authorized_surface.strip()
+    assert rejection_row.authorized_surface.strip()
+    assert gap_row.authorized_surface != row.authorized_surface
+    assert rejection_row.authorized_surface != row.authorized_surface
+    assert RealizationRow.from_json_bytes(gap_row.to_json_bytes()).response_subject == gap
+    assert (
+        RealizationRow.from_json_bytes(rejection_row.to_json_bytes()).response_subject
+        == rejection
+    )
+    for placeholder in (" ", "[no authorized surface]", "[NO SURFACE]"):
+        with pytest.raises(ValueError, match="nonblank reviewed surface"):
+            _recreate_realization(row, authorized_surface=placeholder)
+
+    mixed = deepcopy(gap_row.as_dict())
+    mixed["response_subject"]["expression_refs"] = [
+        "expression:0123456789abcdef01234567"
+    ]
+    schema = json.loads(
+        (SCHEMAS / "r4_realization_supervision.schema.json").read_text(encoding="utf-8")
+    )
+    assert not Draft202012Validator(schema).is_valid(mixed)
+    with pytest.raises(ValueError, match="fields mismatch"):
+        RealizationRow.from_dict(mixed)
+    with pytest.raises(ValueError, match="epistemic"):
+        _recreate_realization(row, epistemic_status_ref="epistemic_status:invented")
+    with pytest.raises(ValueError, match="noncanonical response contract"):
+        _recreate_realization(gap_row, discourse_action_ref="response_action:answer")
+    with pytest.raises(ValueError, match="exact semantic slot"):
+        _recreate_realization(
+            rejection_row,
+            semantic_slots=(row.semantic_slots[0],),
+            alignments=(row.alignments[0],),
+        )
+    with pytest.raises(ValueError, match="reviewed output projection"):
+        _recreate_realization(
+            gap_row,
+            alignments=(
+                LiteralAlignment.create(
+                    slot_ref=gap_slot.slot_ref,
+                    literal_source_ref="reviewed_literal:ffffffffffffffffffffffff",
+                    surface_start=0,
+                    surface_end=len(gap_surface),
+                ),
+            ),
+        )
+
+
+def test_realization_file_decoder_rejects_duplicate_identity_and_fifth_variant() -> None:
+    rows = tuple(
+        _recreate_realization(
+            _realization(),
+            authorized_surface=f"The lamp is on, variant {index}.",
+        )
+        for index in range(MAX_REALIZATION_VARIANTS_PER_CASE)
+    )
+    path = "data/review/r4_1/realization_supervision.jsonl"
+    assert supervision_module._record_count_from_authenticated_bytes(
+        path, b"".join(row.to_json_bytes() for row in rows)
+    ) == MAX_REALIZATION_VARIANTS_PER_CASE
+    with pytest.raises(ValueError, match="duplicate row identity"):
+        supervision_module._record_count_from_authenticated_bytes(
+            path, rows[0].to_json_bytes() + rows[0].to_json_bytes()
+        )
+    fifth = _recreate_realization(
+        _realization(), authorized_surface="The lamp is on, variant five."
+    )
+    with pytest.raises(ValueError, match="exceeds four variants"):
+        supervision_module._record_count_from_authenticated_bytes(
+            path, b"".join(row.to_json_bytes() for row in (*rows, fifth))
         )
 
 
@@ -688,30 +844,111 @@ def test_parent_factories_reject_forged_nested_supervision_values() -> None:
         _recreate_realization(row, bindings=(forged_binding,))
 
 
-def test_literal_alignment_kind_and_ref_namespace_cannot_be_confused() -> None:
-    for kind, ref in (
-        ("reviewed_literal", "decision_literal:lamp"),
-        ("decision_literal", "effect_literal:lamp"),
-        ("effect_literal", "input_surface:case-1"),
-    ):
-        with pytest.raises(ValueError, match="copy source|input surface"):
-            LiteralAlignment.create(
-                slot_ref="response_slot:subject",
-                copy_source_kind=kind,
-                copy_source_ref=ref,
-                source_literal="lamp",
-                source_start=0,
-                source_end=4,
-                surface_start=4,
-                surface_end=8,
-            )
+def test_realization_alignment_union_has_independent_authority_and_exact_slot_ownership() -> None:
+    row = _realization()
+    slot = RealizationSlot.create(
+        slot_ref="response_slot:addressee",
+        semantic_ref="participant:user",
+        required=True,
+        qualifier_refs=(),
+    )
+    reference = ReferenceAlignment.create(
+        slot_ref=slot.slot_ref,
+        participant_ref="participant:user",
+        reference_authority_ref=REVIEW_REF,
+        surface_start=0,
+        surface_end=3,
+    )
+    reference_row = _recreate_realization(
+        row,
+        authorized_surface="You see the lamp.",
+        semantic_slots=(slot,),
+        alignments=(reference,),
+    )
+    assert reference_row.alignments == (reference,)
+
+    with pytest.raises(ValueError, match="participant"):
+        _recreate_realization(
+            row,
+            authorized_surface="I see the lamp.",
+            semantic_slots=(slot,),
+            alignments=(
+                ReferenceAlignment.create(
+                    slot_ref=slot.slot_ref,
+                    participant_ref="participant:system",
+                    reference_authority_ref=REVIEW_REF,
+                    surface_start=0,
+                    surface_end=1,
+                ),
+            ),
+        )
+    with pytest.raises(ValueError, match="review_refs"):
+        _recreate_realization(
+            row,
+            alignments=(
+                MorphologyAlignment.create(
+                    slot_ref="response_slot:subject",
+                    morphology_authority_ref="source_review:ffffffffffffffffffffffff",
+                    surface_start=4,
+                    surface_end=8,
+                ),
+            ),
+        )
+    omission = OmissionAlignment.create(
+        slot_ref="response_slot:subject",
+        omission_authority_ref=REVIEW_REF,
+    )
+    assert _recreate_realization(row, alignments=(omission,)).alignments == (omission,)
+
+    literal = LiteralAlignment.create(
+        slot_ref="response_slot:subject",
+        literal_source_ref="effect_literal:0123456789abcdef01234567",
+        surface_start=8,
+        surface_end=10,
+    )
+    with pytest.raises(ValueError, match="required semantic slot"):
+        _recreate_realization(row, alignments=(row.alignments[0], literal))
+
+    optional_slot = RealizationSlot.create(
+        slot_ref="response_slot:optional",
+        semantic_ref="entity:lamp",
+        required=False,
+        qualifier_refs=(),
+    )
+    optional_designation = DesignationAlignment.create(
+        slot_ref=optional_slot.slot_ref,
+        designation_fact_ref="designation:1123456789abcdef01234567",
+        surface_start=4,
+        surface_end=8,
+    )
+    optional_literal = LiteralAlignment.create(
+        slot_ref=optional_slot.slot_ref,
+        literal_source_ref="effect_literal:1123456789abcdef01234567",
+        surface_start=8,
+        surface_end=10,
+    )
+    with pytest.raises(ValueError, match="optional semantic slot"):
+        _recreate_realization(
+            row,
+            semantic_slots=(optional_slot,),
+            alignments=(optional_designation, optional_literal),
+        )
+
+    unknown_tag = deepcopy(row.as_dict())
+    unknown_tag["alignments"][0]["alignment_kind"] = "surface_copy"
+    with pytest.raises(ValueError, match="closed union"):
+        RealizationRow.from_dict(unknown_tag)
+    self_authored = deepcopy(row.as_dict())
+    self_authored["alignments"][0]["source_literal"] = "lamp"
+    with pytest.raises(ValueError, match="fields mismatch"):
+        RealizationRow.from_dict(self_authored)
 
 
 def test_realization_signature_is_reconstructed_from_complete_explicit_semantics() -> None:
     row = _realization()
     assert row.response_signature_ref.startswith("response_signature:")
     assert row.bindings[0].binding_key_ref == "binding_key:subject"
-    assert row.semantic_slots[0].required_literal_value == "lamp"
+    assert row.response_subject.subject_kind == "expression_set"
     assert row.semantic_slots[0].qualifier_refs == ("qualifier:definite",)
 
     tampered = row.as_dict()
@@ -721,8 +958,8 @@ def test_realization_signature_is_reconstructed_from_complete_explicit_semantics
 
     with pytest.raises(ValueError, match="duplicate"):
         _recreate_realization(row, bindings=(row.bindings[0], row.bindings[0]))
-    with pytest.raises(ValueError, match="required literal.*alignment"):
-        _recreate_realization(row, literal_alignments=())
+    with pytest.raises(ValueError, match="required semantic slot"):
+        _recreate_realization(row, alignments=())
 
 
 def test_supervision_schemas_are_strict_draft_2020_12_and_match_decoders() -> None:
@@ -771,6 +1008,13 @@ def test_supervision_schemas_are_strict_draft_2020_12_and_match_decoders() -> No
                 schema["$defs"]["sourceAssignmentBlueprint"]["properties"]["assignments"],
             ):
                 assert "uniqueItems" not in array_schema
+        if filename == "r4_realization_supervision.schema.json":
+            for array_schema in (
+                schema["properties"]["bindings"],
+                schema["properties"]["semantic_slots"],
+                schema["properties"]["alignments"],
+            ):
+                assert "uniqueItems" not in array_schema
         validator = Draft202012Validator(schema)
         wire = instance.as_dict()
         assert validator.is_valid(wire)
@@ -806,8 +1050,19 @@ def test_supervision_schemas_are_strict_draft_2020_12_and_match_decoders() -> No
         "application_frame_slot:.*"
     )
     adversarial.append(("r4_proposal_supervision.schema.json", proposal, ProposalTarget))
-    realization = _realization().as_dict()
-    realization["literal_alignments"][0]["copy_source_ref"] = "effect_literal:lamp"
+    literal_row = _recreate_realization(
+        _realization(),
+        alignments=(
+            LiteralAlignment.create(
+                slot_ref="response_slot:subject",
+                literal_source_ref="effect_literal:0123456789abcdef01234567",
+                surface_start=4,
+                surface_end=8,
+            ),
+        ),
+    )
+    realization = literal_row.as_dict()
+    realization["alignments"][0]["literal_source_ref"] = "effect_literal:lamp"
     adversarial.append(("r4_realization_supervision.schema.json", realization, RealizationRow))
     mutation = _mutation().as_dict()
     mutation["source_case_ref"] = "expanded_case_v2:not-content-addressed"
@@ -1917,7 +2172,19 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr2_sel
                                                                                                                         'diagnostic_role': 'owner',
                                                                                                                         'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                         'owner_ref': 'mutation-partition',
-                                                                                                                        'source_ast_sha256': '4c893cbc6bc869a4ef01f11ab0a70fc92f106f1b999cb4128f987b994e12bb6a'},
+                                                                                                                        'source_ast_sha256': '2ec50935944e98446c51eef528a1ef98ae677444812c05cbee1a552188920f2d'},
+ 'tests/test_r4_supervision_contracts.py::test_realization_response_subject_is_closed_complete_and_safe_for_r5_boundaries': {'activation_phase': 'R4',
+                                                                                                                             'assertion_ref': 'assertion:r4-sr3-response-subject-closed-complete-r5-safe',
+                                                                                                                             'diagnostic_role': 'owner',
+                                                                                                                             'introduced_by_task': 'R4.1-Source-Readiness-SR3',
+                                                                                                                             'owner_ref': 'mutation-partition',
+                                                                                                                             'source_ast_sha256': '9203c12f6efbb323b7cb13abd3644dd4f2958d1317032ab888faa5df699c864c'},
+ 'tests/test_r4_supervision_contracts.py::test_realization_file_decoder_rejects_duplicate_identity_and_fifth_variant': {'activation_phase': 'R4',
+                                                                                                                        'assertion_ref': 'assertion:r4-sr3-realization-file-identity-four-variant-bound',
+                                                                                                                        'diagnostic_role': 'owner',
+                                                                                                                        'introduced_by_task': 'R4.1-Source-Readiness-SR3',
+                                                                                                                        'owner_ref': 'mutation-partition',
+                                                                                                                        'source_ast_sha256': 'd6e2d7201a152732c7290a8e46ca63590834a907bea972c6e7186a83c2e6065c'},
  'tests/test_r4_supervision_contracts.py::test_mutation_contract_is_reviewed_truth_not_an_observation_echo': {'activation_phase': 'R4',
                                                                                                               'assertion_ref': 'assertion:r4-mutation-contract-reviewed-truth-not-observation-echo',
                                                                                                               'diagnostic_role': 'owner',
@@ -1954,18 +2221,18 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr2_sel
                                                                                                            'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                            'owner_ref': 'mutation-partition',
                                                                                                            'source_ast_sha256': '9ab1d4689989adbe343a10a9193376f918fa109b72ce3d0c32faea8f7f2f0b77'},
- 'tests/test_r4_supervision_contracts.py::test_literal_alignment_kind_and_ref_namespace_cannot_be_confused': {'activation_phase': 'R4',
-                                                                                                              'assertion_ref': 'assertion:r4-literal-alignment-tag-ref-exact',
-                                                                                                              'diagnostic_role': 'owner',
-                                                                                                              'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
-                                                                                                              'owner_ref': 'mutation-partition',
-                                                                                                              'source_ast_sha256': '9a891331baa2790bbee203940ff58d05f4e910fa917848f8e5749300566e6790'},
+ 'tests/test_r4_supervision_contracts.py::test_realization_alignment_union_has_independent_authority_and_exact_slot_ownership': {'activation_phase': 'R4',
+                                                                                                                                 'assertion_ref': 'assertion:r4-sr3-alignment-union-authority-slot-ownership',
+                                                                                                                                 'diagnostic_role': 'owner',
+                                                                                                                                 'introduced_by_task': 'R4.1-Source-Readiness-SR3',
+                                                                                                                                 'owner_ref': 'mutation-partition',
+                                                                                                                                 'source_ast_sha256': 'd95bfd6630f5ee8aa82410999508e87f619969304ba6ce70788eda67e482fcf5'},
  'tests/test_r4_supervision_contracts.py::test_realization_signature_is_reconstructed_from_complete_explicit_semantics': {'activation_phase': 'R4',
                                                                                                                           'assertion_ref': 'assertion:r4-realization-signature-explicit-reconstructible',
                                                                                                                           'diagnostic_role': 'owner',
                                                                                                                           'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                           'owner_ref': 'mutation-partition',
-                                                                                                                          'source_ast_sha256': 'b40b3531171fd1d8b819a32d1313b8787917f494f92619eae6de4d4e1b85db3e'},
+                                                                                                                          'source_ast_sha256': 'b03e890535cb30537ee365b910a0b74b1f41d3b62a47bebc43da51a2201b2525'},
  'tests/test_r4_supervision_contracts.py::test_review_bundle_reads_exactly_five_reviewed_sources_plus_scenario_once': {'activation_phase': 'R4',
                                                                                                                        'assertion_ref': 'assertion:r4-review-bundle-read-once-exact-membership',
                                                                                                                        'diagnostic_role': 'owner',
@@ -2109,4 +2376,4 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr2_sel
                                                                                                                   'diagnostic_role': 'owner',
                                                                                                                   'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                   'owner_ref': 'mutation-partition',
-                                                                                                                  'source_ast_sha256': 'eac943addf8fb21f383678235ef1cd3da80fe215fb5b1c986f5fd647e90bda8e'}}
+                                                                                                                  'source_ast_sha256': '03a127599985864349256da0089d8dd6398cba5219d69cf1d776895821558b3a'}}

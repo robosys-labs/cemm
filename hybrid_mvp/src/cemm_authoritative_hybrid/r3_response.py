@@ -8,6 +8,7 @@ from typing import Any, Mapping
 from .canonical import stable_ref
 from .cycle import CycleStatus, SemanticMode
 from .decision import DecisionAction, DecisionStatus
+from .epistemic import exact_epistemic_status_ref
 from .expressions import SemanticExpression, VerifiedMeaning
 from .expression_transform import instantiate_bindings, negate_expression
 from .persistence import RevisionPin
@@ -159,7 +160,7 @@ class ResponseMeaning:
             "bindings": _pairs(bindings, "bindings"),
             "polarity_ref": _text(polarity_ref, "polarity_ref"),
             "modality_ref": _text(modality_ref, "modality_ref"),
-            "epistemic_status_ref": _text(epistemic_status_ref, "epistemic_status_ref"),
+            "epistemic_status_ref": exact_epistemic_status_ref(epistemic_status_ref),
             "source_refs": _refs(source_refs, "source_refs"),
             "proof_refs": _refs(proof_refs, "proof_refs"),
             "blocker_refs": _refs(blocker_refs, "blocker_refs"),
@@ -321,10 +322,27 @@ class ResponseBuilder:
         polarity = "polarity:negative" if evaluation.decision.status in {
             DecisionStatus.CONTRADICTED, DecisionStatus.DENIED, DecisionStatus.FAILED
         } else "polarity:positive"
+        epistemic_by_status = {
+            DecisionStatus.SUPPORTED: "epistemic_status:supported",
+            DecisionStatus.CONTRADICTED: "epistemic_status:contradicted",
+            DecisionStatus.CONFLICT: "epistemic_status:conflict",
+            DecisionStatus.UNKNOWN: "epistemic_status:unknown",
+            DecisionStatus.PARTIAL: "epistemic_status:partial",
+            DecisionStatus.BUDGET_EXHAUSTED: "epistemic_status:unknown",
+            DecisionStatus.ADMITTED: "epistemic_status:observed",
+            DecisionStatus.ATTRIBUTED: "epistemic_status:attributed",
+            DecisionStatus.CONTESTED: "epistemic_status:contested",
+            DecisionStatus.DENIED: "epistemic_status:denied",
+            DecisionStatus.RESOURCE_UNAVAILABLE: "epistemic_status:unknown",
+            DecisionStatus.ADAPTER_MISSING: "epistemic_status:unknown",
+            DecisionStatus.SIMULATION: "epistemic_status:simulated",
+            DecisionStatus.PENDING: "epistemic_status:pending",
+            DecisionStatus.FAILED: "epistemic_status:unknown",
+        }
         epistemic = (
-            "epistemic:observed"
+            "epistemic_status:observed"
             if type(effect) is EffectReceipt and effect.status.value == "committed"
-            else f"epistemic_status:{evaluation.decision.status.value}"
+            else epistemic_by_status[evaluation.decision.status]
         )
         response_expression = meaning.expression
         if evaluation.decision.action is DecisionAction.ANSWER:

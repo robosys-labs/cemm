@@ -19,6 +19,7 @@ from typing import Any, Iterable, Mapping
 from .canonical import stable_ref
 from .cycle import CycleStatus, SemanticMode
 from .decision import DecisionAction, DecisionStatus
+from .epistemic import exact_epistemic_status_ref
 from .expressions import (
     ApplicationFiller,
     BoundVariable,
@@ -595,8 +596,9 @@ class ExpectedResponseContract:
     permitted_omissions: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        for name in ("discourse_action", "polarity_ref", "modality_ref", "epistemic_status_ref"):
+        for name in ("discourse_action", "polarity_ref", "modality_ref"):
             exact_text(getattr(self, name), name)
+        exact_epistemic_status_ref(self.epistemic_status_ref)
         if type(self.cycle_status) is not CycleStatus:
             raise TypeError("cycle_status must be closed CycleStatus")
         object.__setattr__(self, "permitted_omissions", exact_refs(self.permitted_omissions, "permitted_omissions"))
@@ -2640,10 +2642,7 @@ class ExpectedCycleContractCompiler:
                     CycleStatus(str(response_row["cycle_status"])),
                     exact_text(response_row["polarity"], "explicit response polarity"),
                     exact_text(response_row["modality"], "explicit response modality"),
-                    exact_text(
-                        response_row["epistemic_status"],
-                        "explicit response epistemic_status",
-                    ),
+                    exact_epistemic_status_ref(response_row["epistemic_status"]),
                     refs("permitted_omissions", response_row),
                 ),
             )
@@ -2651,6 +2650,11 @@ class ExpectedCycleContractCompiler:
             ExpectedOutcomeKind.GAP,
             ExpectedOutcomeKind.VERIFICATION_REJECTION,
         }:
+            response_action = (
+                "reject_candidate"
+                if outcome is ExpectedOutcomeKind.VERIFICATION_REJECTION
+                else "report_gap"
+            )
             return (
                 ExpectedDecisionContract(
                     DecisionStatus.FAILED,
@@ -2659,11 +2663,11 @@ class ExpectedCycleContractCompiler:
                 ),
                 ExpectedEffectContract(ExpectedEffectKind.NO_EFFECT, "unknown"),
                 ExpectedResponseContract(
-                    "report_gap",
+                    response_action,
                     CycleStatus.UNSUPPORTED,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic:unknown",
+                    "epistemic_status:unknown",
                 ),
             )
         if outcome is ExpectedOutcomeKind.RESTART:
@@ -2679,7 +2683,7 @@ class ExpectedCycleContractCompiler:
                     CycleStatus.RESOLVED,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic:observed",
+                    "epistemic_status:observed",
                 ),
             )
         if outcome is ExpectedOutcomeKind.REALIZATION_EQUIVALENCE:
@@ -2715,7 +2719,7 @@ class ExpectedCycleContractCompiler:
                     cycle_status,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic:supported" if cycle_status is CycleStatus.RESOLVED else "epistemic:unknown",
+                    "epistemic_status:supported" if cycle_status is CycleStatus.RESOLVED else "epistemic_status:unknown",
                 ),
             )
         if "conflict" in families:
@@ -2748,7 +2752,7 @@ class ExpectedCycleContractCompiler:
                         CycleStatus.AMBIGUOUS,
                         "polarity:positive",
                         "modality:actual",
-                        "epistemic:unknown",
+                        "epistemic_status:unknown",
                     ),
                 )
             if "rule" in families:
@@ -2902,7 +2906,7 @@ class ExpectedCycleContractCompiler:
                     CycleStatus.RESOLVED,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic:observed",
+                    "epistemic_status:observed",
                 ),
             )
         if mode is SemanticMode.SIMULATE:
@@ -2916,7 +2920,7 @@ class ExpectedCycleContractCompiler:
                     CycleStatus.RESOLVED,
                     "polarity:positive",
                     "modality:simulated",
-                    "epistemic:simulated",
+                    "epistemic_status:simulated",
                 ),
             )
         trusted = any(row in families for row in ("evidence",))
@@ -2936,7 +2940,7 @@ class ExpectedCycleContractCompiler:
                     CycleStatus.RESOLVED,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic:observed",
+                    "epistemic_status:observed",
                 ),
             )
         if attributed:
