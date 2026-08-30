@@ -18,7 +18,7 @@ from jsonschema import Draft202012Validator
 import cemm_authoritative_hybrid.r4_supervision as supervision_module
 
 from cemm_authoritative_hybrid.canonical import stable_ref
-from cemm_authoritative_hybrid.authority import AuthorityLinker
+from cemm_authoritative_hybrid.authority import AuthorityLinker, DesignationFact
 from cemm_authoritative_hybrid.r4_contracts import ReviewedScenario
 from cemm_authoritative_hybrid.r4_expansion import expand_reviewed_source_universe
 from cemm_authoritative_hybrid.r4_purpose import (
@@ -269,7 +269,9 @@ def _realization() -> RealizationRow:
         alignments=(
             DesignationAlignment.create(
                 slot_ref="response_slot:subject",
-                designation_fact_ref="designation:0123456789abcdef01234567",
+                designation_fact_ref=DesignationFact.create(
+                    surface="lamp", target_ref="entity:lamp", language="en"
+                ).designation_fact_ref,
                 surface_start=4,
                 surface_end=8,
             ),
@@ -1642,6 +1644,74 @@ def test_authenticated_cross_source_validator_is_complete_decode_once_and_linear
     with pytest.raises(ValueError, match="retained typed records.*authenticated bytes"):
         supervision_module.validate_authenticated_r4_source_semantics(
             rebound, authority=_cross_source_authority()
+        )
+
+
+def test_realization_rejects_forged_designation_fact(tmp_path: Path) -> None:
+    _, _, proposals, realizations, purpose = _cross_source_rows()
+    base = realizations[0]
+    surface = "lamp Acknowledged."
+    designation_slot = RealizationSlot.create(
+        slot_ref="response_slot:designation",
+        semantic_ref="entity:lamp",
+        required=True,
+        qualifier_refs=(),
+    )
+    literal_start = len("lamp ")
+    literal_alignment = LiteralAlignment.create(
+        slot_ref=base.semantic_slots[0].slot_ref,
+        literal_source_ref=stable_ref(
+            "reviewed_literal",
+            {
+                "literal": surface[literal_start:],
+                "language": base.language,
+                "review_refs": [REVIEW_REF],
+            },
+        ),
+        surface_start=literal_start,
+        surface_end=len(surface),
+    )
+
+    def realization_with(fact_ref: str) -> RealizationRow:
+        return _recreate_realization(
+            base,
+            authorized_surface=surface,
+            semantic_slots=(designation_slot, base.semantic_slots[0]),
+            alignments=(
+                DesignationAlignment.create(
+                    slot_ref=designation_slot.slot_ref,
+                    designation_fact_ref=fact_ref,
+                    surface_start=0,
+                    surface_end=4,
+                ),
+                literal_alignment,
+            ),
+        )
+
+    fact = _cross_source_authority().designations.facts_for_surface("lamp", "en")[0]
+    canonical = realization_with(fact.designation_fact_ref)
+    canonical_root, _ = _write_cross_source_tree(
+        tmp_path / "canonical-designation",
+        proposals=proposals,
+        realizations=(canonical, *realizations[1:]),
+        purpose=purpose,
+    )
+    supervision_module.validate_authenticated_r4_source_semantics(
+        supervision_module.load_authenticated_r4_review_bundle(canonical_root),
+        authority=_cross_source_authority(),
+    )
+
+    forged = realization_with("designation:" + "f" * 24)
+    forged_root, _ = _write_cross_source_tree(
+        tmp_path / "forged-designation",
+        proposals=proposals,
+        realizations=(forged, *realizations[1:]),
+        purpose=purpose,
+    )
+    with pytest.raises(ValueError, match="designation fact"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            supervision_module.load_authenticated_r4_review_bundle(forged_root),
+            authority=_cross_source_authority(),
         )
 
 

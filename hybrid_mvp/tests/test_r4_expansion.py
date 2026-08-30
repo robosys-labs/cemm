@@ -14,7 +14,11 @@ from pathlib import Path
 import pytest
 
 from scripts.expand_r4_cases import _MAX_SCENARIO_BYTES, _read_source
-from cemm_authoritative_hybrid.authority import AtomRecord, DesignationIndex
+from cemm_authoritative_hybrid.authority import (
+    AtomRecord,
+    DesignationFact,
+    DesignationIndex,
+)
 from cemm_authoritative_hybrid.persistence import RevisionPin
 from cemm_authoritative_hybrid.r4_contracts import (
     ExpectedCycleContractCompiler,
@@ -93,8 +97,13 @@ class _Authority:
     event_signatures = {}
     value_dimensions = {"value:on": "dim:power", "value:off": "dim:power"}
     designations = DesignationIndex(
-        by_surface={("mother-in-law", "en"): ("rel:mother_in_law",)},
-        by_target={("rel:mother_in_law", "en"): ("mother-in-law",)},
+        (
+            DesignationFact.create(
+                surface="mother-in-law",
+                target_ref="rel:mother_in_law",
+                language="en",
+            ),
+        )
     )
     capabilities = {}
     permissions = ()

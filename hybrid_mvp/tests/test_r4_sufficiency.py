@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from cemm_authoritative_hybrid.authority import (
     AtomRecord,
+    DesignationFact,
     DesignationIndex,
     EventSignature,
     RoleSpec,
@@ -57,8 +58,11 @@ class _Authority:
     }
     value_dimensions = {"value:y": "dim:x"}
     designations = DesignationIndex(
-        by_surface={("a", "en"): ("entity:a",)},
-        by_target={("entity:a", "en"): ("a",)},
+        (
+            DesignationFact.create(
+                surface="a", target_ref="entity:a", language="en"
+            ),
+        )
     )
     capabilities = {}
     permissions = ()

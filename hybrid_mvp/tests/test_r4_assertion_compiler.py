@@ -5,6 +5,7 @@ import pytest
 
 from cemm_authoritative_hybrid.authority import (
     AtomRecord,
+    DesignationFact,
     DesignationIndex,
     EventSignature,
     RoleSpec,
@@ -186,16 +187,15 @@ class _Authority:
     }
     value_dimensions = {"value:on": "dim:power", "value:off": "dim:power"}
     designations = DesignationIndex(
-        by_surface={
-            ("hello", "en"): ("event:greeting",),
-            ("job", "en"): ("concept:job_role", "concept:task"),
-            ("yoz", "en"): ("event:greeting",),
-        },
-        by_target={
-            ("event:greeting", "en"): ("hello", "yoz"),
-            ("concept:job_role", "en"): ("job",),
-            ("concept:task", "en"): ("job",),
-        },
+        tuple(
+            DesignationFact.create(surface=surface, target_ref=target, language="en")
+            for surface, target in (
+                ("hello", "event:greeting"),
+                ("job", "concept:job_role"),
+                ("job", "concept:task"),
+                ("yoz", "event:greeting"),
+            )
+        )
     )
     capabilities = {}
     permissions = ()

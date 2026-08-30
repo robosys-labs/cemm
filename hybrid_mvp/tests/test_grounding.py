@@ -56,6 +56,22 @@ def test_known_surface_resolves_to_target(grounder, form_resolver, linked_author
     assert result.designations[0].target_ref == "event:greeting"
 
 
+def test_linked_designation_fact_is_case_independent(
+    grounder, form_resolver, linked_authority
+):
+    fact = linked_authority.designations.facts_for_surface("hello", "en")[0]
+    isolated = _ground(grounder, form_resolver, "hello", linked_authority)
+    embedded = _ground(grounder, form_resolver, "hello alice", linked_authority)
+    isolated_candidate = next(
+        row for row in isolated.designations if row.target_ref == fact.target_ref
+    )
+    embedded_candidate = next(
+        row for row in embedded.designations if row.target_ref == fact.target_ref
+    )
+    assert isolated_candidate.designation_fact_ref == fact.designation_fact_ref
+    assert embedded_candidate.designation_fact_ref == fact.designation_fact_ref
+
+
 def test_new_designation_uses_target_affordance_without_pack_regeneration(
     grounder, designation_store, form_pack_hash, form_resolver, linked_authority
 ):

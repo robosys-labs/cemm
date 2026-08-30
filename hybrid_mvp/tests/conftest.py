@@ -137,6 +137,7 @@ def authority_factory(tmp_path):
     def _factory(
         *,
         designation_target=None,
+        duplicate_designation=False,
         duplicate_atom=None,
         corrupt_hash=False,
     ):
@@ -193,6 +194,11 @@ def authority_factory(tmp_path):
                     "target": designation_target,
                     "language": "en",
                 }
+            )
+
+        if duplicate_designation:
+            conversation["designations"].append(
+                {"surface": "hello", "target": "event:greeting", "language": "en"}
             )
 
         if duplicate_atom:
@@ -290,9 +296,18 @@ def designation_store():
             self._by_target.setdefault((target, language), []).append(surface)
 
         def build_index(self) -> DesignationIndex:
+            from cemm_authoritative_hybrid.authority import DesignationFact
+
             return DesignationIndex(
-                {k: tuple(v) for k, v in self._by_surface.items()},
-                {k: tuple(v) for k, v in self._by_target.items()},
+                tuple(
+                    DesignationFact.create(
+                        surface=surface,
+                        target_ref=target,
+                        language=language,
+                    )
+                    for (surface, language), targets in self._by_surface.items()
+                    for target in targets
+                )
             )
 
     return _DesignationStore()
