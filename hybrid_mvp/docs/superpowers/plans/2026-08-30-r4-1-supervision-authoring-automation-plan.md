@@ -18,7 +18,7 @@
 | 8 | complete | optional bounded local evidence sidecar committed |
 | 9 | complete | purpose-scoped worksheet-local recipes and explicit ancestry committed |
 | 10A | complete | one-pass source/context cache and exact designation/recipe suggestions |
-| 10B | awaiting accountable selections | strict 1,056-target template/validator ready; purpose-scoped expansion remains disabled |
+| 10B | review UI ready; awaiting accountable completed selection | offline accountable reviewer, strict 1,056-target template/validator and deterministic export ready; purpose-scoped expansion remains disabled |
 | 11-16 | pending | realization, mutation families, performance, publication and handoff |
 
 Task 10 was split after an executable full-universe probe found that purpose
@@ -26,6 +26,38 @@ recipes cannot be authored from unresolved purpose options and that including
 the final purpose child in its own review-context input would be circular.
 The split adds no runtime ABI or release gate; it makes the already-required
 human decision an explicit bounded input between two draft generations.
+
+### Accountable review UI checkpoint
+
+Launch the bounded offline reviewer from `hybrid_mvp` with:
+
+```powershell
+python scripts/serve_r4_1_review.py
+```
+
+The reviewer implements accountable identity entry, structural decisions,
+purpose/cohort assignment, purpose-local recipe review, exceptional versus
+routine designation review, impact preview/confirmation, resumable canonical
+working state, an append-only audit journal and deterministic validated export.
+Python owns all validation, action semantics and export reconstruction;
+HTML/JavaScript is presentation only. The server is loopback-only, token- and
+origin-bound, statically allowlisted, bounded, and absent from runtime imports.
+It adds no activation phase, release gate, validation tier, pytest process,
+network service or normal-cycle scan.
+
+Executable coverage includes action/session unit tests, malformed and stale
+state rejection, API authorization/origin/revision/body/static-path tests,
+source-authentication/index single-pass counters, UI static/security checks and
+a complete two-session HTTP replay whose independently validated exports must
+be byte-identical. The supported in-app browser connection failed before page
+load on 2026-08-30, so the manual real-browser layout/focus/resume smoke remains
+an explicit handoff check; no automated result is claimed for it.
+
+Task 10B Steps 4B and 6 remain unchecked until an accountable reviewer exports
+a complete `artifacts/review_inputs/r4_1/SELECTION.json`, its export receipt
+reports `authoring_ready: true`, and the ensuing proposal compilation passes. A
+valid export containing rejection decisions records the review but does not
+unblock expansion.
 
 ---
 
