@@ -1039,6 +1039,7 @@ def validate_authenticated_r4_source_semantics(
     from .authority import LinkedAuthority
     from .r4_expansion import expand_reviewed_source_universe
     from .r4_purpose import PurposeContract, PurposeMembership
+    from .r4_realization_compiler import ReviewedRealizationCompiler
 
     if type(bundle) is not AuthenticatedR4ReviewBundle:
         raise TypeError("bundle must be an exact authenticated R4 review bundle")
@@ -1136,6 +1137,7 @@ def validate_authenticated_r4_source_semantics(
         raise TypeError("authority must be exact LinkedAuthority")
     if authority.generation != bundle.authority_generation:
         raise ValueError("authority generation differs from the authenticated review bundle")
+    realization_compiler = ReviewedRealizationCompiler(authority)
     if any(type(row) is not ProposalTarget for row in bundle.proposal_targets):
         raise TypeError("authenticated proposal projection is not exact")
     if any(type(row) is not RealizationRow for row in bundle.realization_rows):
@@ -1256,28 +1258,6 @@ def validate_authenticated_r4_source_semantics(
         operations += 1
         if realization.source_case_ref not in cases_by_ref:
             raise ValueError("realization supervision contains an extra source case")
-        slots_by_ref = {slot.slot_ref: slot for slot in realization.semantic_slots}
-        for alignment in realization.alignments:
-            if type(alignment) is not DesignationAlignment:
-                continue
-            operations += 1
-            fact = authority.designations.resolve_fact(
-                alignment.designation_fact_ref
-            )
-            if fact is None:
-                raise ValueError("realization designation fact is not linked authority")
-            slot = slots_by_ref[alignment.slot_ref]
-            if (
-                realization.language != fact.language
-                or slot.semantic_ref != fact.target_ref
-                or realization.authorized_surface[
-                    alignment.surface_start : alignment.surface_end
-                ]
-                != fact.surface
-            ):
-                raise ValueError(
-                    "realization designation fact disagrees with its exact language, slot, or output slice"
-                )
         rows = realizations_by_case.setdefault(realization.source_case_ref, [])
         rows.append(realization)
         if len(rows) > MAX_REALIZATION_VARIANTS_PER_CASE:
@@ -1415,6 +1395,13 @@ def validate_authenticated_r4_source_semantics(
                 raise ValueError("rejection realization subject disagrees with proposal truth")
             if realization.authorized_surface.strip().casefold() == case.surface.strip().casefold():
                 raise ValueError("safe rejection realization cannot echo the input surface")
+
+        compiled_realization = realization_compiler.compile(
+            case=case,
+            proposal=proposal,
+            row=realization,
+        )
+        operations += compiled_realization.operation_count
 
     if set(proposals_by_case) != {
         case_ref

@@ -27,6 +27,9 @@ from cemm_authoritative_hybrid.r4_purpose import (
     PurposeMembership,
 )
 from cemm_authoritative_hybrid.r4_review_context import ReviewContextMaterial
+from cemm_authoritative_hybrid.r4_realization_compiler import (
+    ReviewedRealizationCompiler,
+)
 
 from cemm_authoritative_hybrid.r4_supervision import (
     MAX_BLUEPRINT_ACTIONS,
@@ -1606,12 +1609,24 @@ def test_authenticated_cross_source_validator_is_complete_decode_once_and_linear
     monkeypatch.setattr(ProposalTarget, "from_json_bytes", forbid_decode)
     monkeypatch.setattr(RealizationRow, "from_json_bytes", forbid_decode)
     monkeypatch.setattr(PurposeContract, "from_json_bytes", forbid_decode)
+    realization_compiles = 0
+    original_compile = ReviewedRealizationCompiler.compile
+
+    def count_realization_compile(self, **kwargs):
+        nonlocal realization_compiles
+        realization_compiles += 1
+        return original_compile(self, **kwargs)
+
+    monkeypatch.setattr(
+        ReviewedRealizationCompiler, "compile", count_realization_compile
+    )
     result = supervision_module.validate_authenticated_r4_source_semantics(
         bundle, authority=_cross_source_authority()
     )
     assert result.source_case_count == len(universe.cases)
     assert result.supervised_case_count == len(universe.cases)
     assert result.diagnostic_case_count == 0
+    assert realization_compiles == len(universe.cases)
     assert result.operation_count <= 40 * len(universe.cases) + 16
 
     forged = object.__new__(supervision_module.AuthenticatedR4ReviewBundle)
