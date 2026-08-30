@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import threading
 from typing import Mapping
+from urllib.parse import quote
 
 import pytest
 
@@ -112,6 +113,90 @@ def _api_headers(server: object, *, post: bool = False) -> dict[str, str]:
             }
         )
     return result
+
+
+def _guided_next(
+    server: object,
+    after: str | None,
+) -> tuple[int, Mapping[str, object]]:
+    encoded = quote("" if after is None else after, safe="")
+    status, _, raw = request(
+        server,
+        "GET",
+        f"/api/guided/next?after={encoded}",
+        headers=_api_headers(server),
+    )
+    return status, json.loads(raw)
+
+
+def _guided_preview(
+    server: object,
+    item: Mapping[str, object],
+    choice: Mapping[str, object],
+) -> tuple[int, Mapping[str, object]]:
+    status, _, raw = request(
+        server,
+        "POST",
+        "/api/guided/preview",
+        body={
+            "state_revision": server.session.state_revision,
+            "item_ref": item["item_ref"],
+            "choice_ref": choice["choice_ref"],
+        },
+        headers=_api_headers(server, post=True),
+    )
+    return status, json.loads(raw)
+
+
+def test_guided_routes_require_existing_authorization_controls(
+    server_fixture,
+) -> None:
+    server = server_fixture()
+    assert request(server, "GET", "/api/guided/next?after=")[0] == 403
+
+    status, envelope = _guided_next(server, None)
+    assert status == 200
+    assert envelope["result"]["phase"] == "identity"
+
+    status, _, _ = request(
+        server,
+        "POST",
+        "/api/guided/preview",
+        body={"state_revision": 0, "item_ref": "x", "choice_ref": "y"},
+        headers={
+            "X-CEMM-Review-Token": server.session_token,
+            "Content-Type": "application/json",
+            "Origin": "https://hostile.example",
+        },
+    )
+    assert status == 403
+
+
+def test_guided_next_and_preview_never_expose_action_wire(
+    server_fixture,
+) -> None:
+    server = server_fixture()
+    status, _, _ = request(
+        server,
+        "POST",
+        "/api/reviewer",
+        body={"state_revision": 0, "reviewer_refs": ["reviewer:test"]},
+        headers=_api_headers(server, post=True),
+    )
+    assert status == 200
+    status, envelope = _guided_next(server, None)
+    assert status == 200
+    item = envelope["result"]
+    assert "action" not in json.dumps(item)
+
+    status, preview_envelope = _guided_preview(
+        server,
+        item,
+        item["choices"][0],
+    )
+    assert status == 200
+    assert "preview_hash" in preview_envelope["result"]
+    assert "action" not in preview_envelope["result"]
 
 
 def test_server_binds_loopback_and_requires_session_token(server_fixture) -> None:

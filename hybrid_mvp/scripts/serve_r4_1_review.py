@@ -26,6 +26,7 @@ from scripts.build_r4_1_review_worksheets import (  # noqa: E402
     _strict_json,
     _trusted_directory,
 )
+from scripts.r4_1_guided_review import GuidedReviewService  # noqa: E402
 from scripts.r4_1_review_session import (  # noqa: E402
     ActionPreview,
     ReviewAction,
@@ -38,6 +39,9 @@ MAX_STATIC_BYTES = 1024 * 1024
 API_ROUTES = frozenset(
     {
         "/api/bootstrap",
+        "/api/guided/bootstrap",
+        "/api/guided/next",
+        "/api/guided/preview",
         "/api/items",
         "/api/preview",
         "/api/apply",
@@ -65,6 +69,7 @@ _CONTENT_TYPES = {
 _POST_ROUTES = frozenset(
     {
         "/api/preview",
+        "/api/guided/preview",
         "/api/apply",
         "/api/reviewer",
         "/api/export",
@@ -87,6 +92,7 @@ class _StaleRevision(ValueError):
 
 class ReviewHTTPServer(HTTPServer):
     session: ReviewSession
+    guided: GuidedReviewService
     session_token: str
     static_root: Path
     origin: str
@@ -296,6 +302,20 @@ class ReviewRequestHandler(BaseHTTPRequestHandler):
         )
         self._send_envelope(status=200, result=result)
 
+    def _serve_guided_next(self, query: str) -> None:
+        pairs = parse_qsl(query, keep_blank_values=True, strict_parsing=True)
+        if len(pairs) != 1 or pairs[0][0] != "after":
+            raise ValueError("guided next query fields are invalid")
+        after = pairs[0][1]
+        if len(after) > 256:
+            raise ValueError("guided after-item ref violates its bound")
+        self._send_envelope(
+            status=200,
+            result=self.server.guided.next_item(
+                after_item_ref=None if after == "" else after
+            ),
+        )
+
     def do_GET(self) -> None:
         request_id = self._request_id()
         try:
@@ -307,7 +327,12 @@ class ReviewRequestHandler(BaseHTTPRequestHandler):
                 self._send_envelope(status=404, error="route not found")
                 return
             self._authorize_api(require_origin=False)
-            if target.path not in {"/api/bootstrap", "/api/items"}:
+            if target.path not in {
+                "/api/bootstrap",
+                "/api/guided/bootstrap",
+                "/api/guided/next",
+                "/api/items",
+            }:
                 self._send_envelope(status=405, error="method not allowed")
                 return
             if target.path == "/api/bootstrap":
@@ -317,6 +342,15 @@ class ReviewRequestHandler(BaseHTTPRequestHandler):
                     status=200,
                     result=self.server.session.bootstrap(),
                 )
+            elif target.path == "/api/guided/bootstrap":
+                if target.query:
+                    raise ValueError("guided bootstrap query is unavailable")
+                self._send_envelope(
+                    status=200,
+                    result=self.server.session.bootstrap(),
+                )
+            elif target.path == "/api/guided/next":
+                self._serve_guided_next(target.query)
             else:
                 self._serve_items(target.query)
         except Exception as exc:
@@ -357,6 +391,18 @@ class ReviewRequestHandler(BaseHTTPRequestHandler):
                     ),
                     "audit_warning": self.server.session.audit_warning,
                 }
+            elif target.path == "/api/guided/preview":
+                value = _exact_fields(
+                    body,
+                    frozenset(
+                        {"state_revision", "item_ref", "choice_ref"}
+                    ),
+                    owner="guided preview request",
+                )
+                result = self.server.guided.preview_choice(
+                    item_ref=value["item_ref"],
+                    choice_ref=value["choice_ref"],
+                )
             elif target.path == "/api/preview":
                 value = _exact_fields(
                     body,
@@ -444,6 +490,7 @@ def create_review_server(
     _trusted_directory(assets, owner="review UI static root")
     server = ReviewHTTPServer((host, port), ReviewRequestHandler)
     server.session = session
+    server.guided = GuidedReviewService(session)
     server.session_token = session_token
     server.static_root = assets
     selected_port = server.server_address[1]
