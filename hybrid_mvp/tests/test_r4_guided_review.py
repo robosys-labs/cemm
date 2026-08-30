@@ -392,3 +392,65 @@ def test_guided_designation_choice_preserves_exception_ownership(
         else:
             assert action.action_kind == "designation_cohort"
         assert session.preview(action).action == action
+
+
+def test_guided_review_recovers_remaining_cases_from_mixed_routine_cohort(
+    review_paths: ReviewPaths,
+) -> None:
+    session = ReviewSession.open(review_paths)
+    session.set_reviewers(("reviewer:test",))
+    _complete_structural_and_purpose(session)
+    _complete_recipes(session)
+    evaluation = session.evaluation()
+    cohort_ref, cohort_refs = next(
+        (ref, refs)
+        for ref, refs in sorted(
+            session.indexes.routine_designation_cohorts.items()
+        )
+        if set(refs) <= evaluation.active_supervised_case_refs
+        and len(refs) > 1
+    )
+    reviewed_ref = cohort_refs[0]
+    row = session.indexes.designation_rows_by_case[reviewed_ref]
+    decision = (
+        "approve_candidate_bindings"
+        if row["candidate_bindings"]
+        else "approve_exact_empty"
+    )
+    _apply(
+        session,
+        ReviewAction.designation_cases(
+            case_refs=(reviewed_ref,),
+            decision=decision,
+            individual=True,
+        ),
+    )
+
+    service = GuidedReviewService(session)
+    items = service.iter_current_items()
+    recovered = {
+        item["technical_evidence"]["source"]["source_case_ref"]: item
+        for item in items
+        if item["row_kind"] == "designation_case"
+        and item["technical_evidence"]["source"]["source_case_ref"]
+        in cohort_refs
+    }
+
+    assert reviewed_ref not in recovered
+    assert set(recovered) == set(cohort_refs[1:])
+    for case_ref, item in recovered.items():
+        assert item["cohort"] is None
+        for choice in item["choices"]:
+            action = service.resolve_choice(
+                item_ref=item["item_ref"],
+                choice_ref=choice["choice_ref"],
+            )
+            assert action.action_kind == "designation_cases"
+            assert action.target_refs == (case_ref,)
+            assert action.selected_value["individual"] is True
+            assert session.preview(action).action == action
+    assert cohort_ref not in {
+        item.get("cohort", {}).get("cohort_ref")
+        for item in items
+        if item.get("cohort") is not None
+    }

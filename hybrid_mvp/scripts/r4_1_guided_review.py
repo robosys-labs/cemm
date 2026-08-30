@@ -407,8 +407,7 @@ class GuidedReviewService:
                         purpose=purpose,
                     )
                 )
-        exception_refs = session.indexes.designation_exception_case_refs
-        for case_ref in sorted(exception_refs):
+        for case_ref in sorted(session.indexes.designation_rows_by_case):
             targets.append(
                 _target(
                     phase="designation",
@@ -516,11 +515,35 @@ class GuidedReviewService:
             )
         if target.phase == "designation":
             if target.row_kind == "designation_case":
-                return (
+                active = self._state_by_ref["active_supervised_case_refs"]
+                if (
+                    target.source_ref not in active
+                    or self._state_by_ref["designations"][target.source_ref]
+                    is not None
+                ):
+                    return False
+                if (
                     target.source_ref
-                    in self._state_by_ref["active_supervised_case_refs"]
-                    and self._state_by_ref["designations"][target.source_ref]
-                    is None
+                    in self.session.indexes.designation_exception_case_refs
+                ):
+                    return True
+                cohort_ref = (
+                    self.session.indexes.designation_cohort_by_case.get(
+                        target.source_ref
+                    )
+                )
+                if cohort_ref is None:
+                    return True
+                refs = self.session.indexes.routine_designation_cohorts[
+                    cohort_ref
+                ]
+                decisions = [
+                    self._state_by_ref["designations"][case_ref]
+                    for case_ref in refs
+                ]
+                return not (
+                    set(refs) <= active
+                    and all(decision is None for decision in decisions)
                 )
             refs = self.session.indexes.routine_designation_cohorts[
                 target.source_ref
