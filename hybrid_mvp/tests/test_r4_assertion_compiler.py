@@ -135,6 +135,8 @@ class _Authority:
             "participant:user": "participant",
             "entity:a": "entity",
             "entity:b": "entity",
+            "adapter:state": "adapter",
+            "permission:set_state": "permission",
         }.items()
     }
     event_signatures = {
@@ -199,7 +201,7 @@ class _Authority:
     )
     capabilities = {}
     permissions = ()
-    adapters = ()
+    adapters = ("adapter:state",)
     operator_roles = {
         "op:designation": ["role:surface", "role:target", "role:label_type"],
         "op:type": ["role:subject", "role:type", "role:instance", "role:class"],
@@ -281,6 +283,56 @@ def test_core_reviewed_assertion_families_compile_without_propose() -> None:
         assert ExpectedCycleContract.from_dict(contract.as_dict()) == contract
         if contract.expected_expressions:
             assert any(expr.applications for expr in contract.expected_expressions)
+
+
+def test_operation_prerequisites_are_authority_linked_and_preserved() -> None:
+    scenario = ReviewedScenario.from_dict(
+        {
+            "scenario_ref": "scenario:operation-prerequisites",
+            "review_status": "reviewed",
+            "competency_category": "transition",
+            "semantic_assertions": [
+                {
+                    "kind": "transition",
+                    "event": "event:set_state",
+                    "subject": "entity:lamp",
+                    "dimension": "dim:power",
+                    "from_value": "value:off",
+                    "to_value": "value:on",
+                }
+            ],
+            "surface_examples": ["turn the lamp on"],
+            "metadata": {},
+        }
+    )
+    compiler = ExpectedCycleContractCompiler(_Authority(), abi_registry_ref="abi:test")
+
+    def compile_with(constraints):
+        return compiler.compile(
+            scenario_ref=scenario.scenario_ref,
+            case_ref="case:operation-prerequisites",
+            surface_ref="surface:operation-prerequisites",
+            context_ref="context:operation-prerequisites",
+            assertions=scenario.assertions,
+            situation_constraints=constraints,
+            revision_pin=_pin(),
+        )
+
+    contract = compile_with(
+        {
+            "adapter_refs": ["adapter:state"],
+            "permission_refs": ["permission:set_state"],
+            "world_facts": [],
+        }
+    )
+    assert contract.situation_constraints["adapter_refs"] == ("adapter:state",)
+    assert contract.situation_constraints["permission_refs"] == (
+        "permission:set_state",
+    )
+    with pytest.raises(ValueError, match="adapter"):
+        compile_with({"adapter_refs": ["adapter:missing"]})
+    with pytest.raises(ValueError, match="permission"):
+        compile_with({"permission_refs": ["permission:missing"]})
 
 
 def test_explicit_cycle_contract_rows_are_complete_and_override_defaults() -> None:

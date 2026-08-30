@@ -148,7 +148,17 @@ def _transition_environment(
                 "source_ref": "source:r4-reviewed-initial-state",
             }
         )
-    return {"environments": [{"world_facts": facts}]}
+    return {
+        "environments": [
+            {
+                "situation_constraints": {
+                    "adapter_refs": ["adapter:state"],
+                    "permission_refs": ["permission:set_state"],
+                    "world_facts": facts,
+                }
+            }
+        ]
+    }
 
 
 def _trusted_evidence_environment(

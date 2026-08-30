@@ -19,6 +19,7 @@ from cemm_authoritative_hybrid.authority import (
     DesignationFact,
     DesignationIndex,
 )
+from cemm_authoritative_hybrid.decision import DecisionAction
 from cemm_authoritative_hybrid.persistence import RevisionPin
 from cemm_authoritative_hybrid.r4_contracts import (
     ExpectedCycleContractCompiler,
@@ -198,7 +199,7 @@ def test_sr1_source_universe_is_model_free_exact_and_disjoint() -> None:
         universe.disposition_counts
     )
     assert universe.case_set_digest == (
-        "262e9f6de46ceeb991e3cb8abda2df143b866c2f5c77bccd00c3856a2916764d"
+        "0b5157a98db2141bda7111060317f2259c8bb1f4a16603f2e5b9da69c69e2f7f"
     )
     digest_material = (
         "\n".join(sorted(row.case_ref for row in universe.cases)) + "\n"
@@ -214,6 +215,44 @@ def test_sr1_source_universe_is_model_free_exact_and_disjoint() -> None:
         == 0
         for row in universe.cases
     )
+
+
+def test_request_effect_cases_own_exact_operation_prerequisites() -> None:
+    root = Path(__file__).parents[1]
+    scenarios = tuple(
+        ReviewedScenario.from_dict(json.loads(line))
+        for line in (root / "data/scenarios/use_cases.jsonl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+        if line
+    )
+    universe = expand_reviewed_source_universe(
+        scenarios,
+        authority=_linked_authority(),
+    )
+    operation_cases = tuple(
+        row
+        for row in universe.cases
+        if row.contract.expected_decision.action is DecisionAction.REQUEST_EFFECT
+    )
+    assert operation_cases
+    assert {
+        row.case_ref
+        for row in universe.cases
+        if row.contract.situation_constraints.get("adapter_refs")
+    } == {row.case_ref for row in operation_cases}
+    assert {
+        row.case_ref
+        for row in universe.cases
+        if row.contract.situation_constraints.get("permission_refs")
+    } == {row.case_ref for row in operation_cases}
+    for row in operation_cases:
+        assert row.contract.situation_constraints["adapter_refs"] == (
+            "adapter:state",
+        )
+        assert row.contract.situation_constraints["permission_refs"] == (
+            "permission:set_state",
+        )
 
 
 def test_sr1_source_disposition_is_closed_and_conflicts_remain_alternatives() -> None:
@@ -383,7 +422,7 @@ def test_sr1_expansion_cli_is_deterministic_and_source_only(tmp_path: Path) -> N
     assert summaries[0]["scenario_count"] == 210
     assert summaries[0]["expanded_count"] == 400
     assert summaries[0]["case_set_digest"] == (
-        "262e9f6de46ceeb991e3cb8abda2df143b866c2f5c77bccd00c3856a2916764d"
+        "0b5157a98db2141bda7111060317f2259c8bb1f4a16603f2e5b9da69c69e2f7f"
     )
     rows = [json.loads(line) for line in left.read_text(encoding="utf-8").splitlines()]
     assert len(rows) == 400

@@ -1245,6 +1245,7 @@ class ExpectedCycleContractCompiler:
             if surface_language is None
             else exact_text(surface_language, "surface_language")
         )
+        constraints = self._validated_situation_constraints(situation_constraints)
 
         expressions: list[SemanticExpression] = []
         normalized: list[Mapping[str, Any]] = []
@@ -1312,7 +1313,7 @@ class ExpectedCycleContractCompiler:
             families,
             expressions,
             normalized,
-            situation_constraints,
+            constraints,
         )
         return ExpectedCycleContract.create(
             scenario_ref=scenario_ref,
@@ -1325,7 +1326,7 @@ class ExpectedCycleContractCompiler:
             expression_relation=relation,
             normalized_assertions=tuple(normalized),
             expected_mode=mode,
-            situation_constraints=situation_constraints,
+            situation_constraints=constraints,
             expected_decision=decision,
             expected_effect=effect,
             expected_response=response,
@@ -1336,6 +1337,25 @@ class ExpectedCycleContractCompiler:
             review_provenance_refs=tuple(dict.fromkeys(review_refs)),
             revision_pin=pin,
         )
+
+    def _validated_situation_constraints(
+        self, situation_constraints: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
+        constraints = _json_mapping(
+            situation_constraints,
+            "situation_constraints",
+        )
+        for field, resolver in (
+            ("adapter_refs", self._authority.require_adapter),
+            ("permission_refs", self._authority.require_permission),
+        ):
+            refs = constraints.get(field, ())
+            if type(refs) is not tuple or len(refs) > _MAX_ASSERTIONS:
+                raise TypeError(f"{field} must be a bounded exact array")
+            resolved = tuple(resolver(ref) for ref in refs)
+            if len(resolved) != len(set(resolved)):
+                raise ValueError(f"{field} contains duplicate authority refs")
+        return constraints
 
     def _compile_assertion(
         self,

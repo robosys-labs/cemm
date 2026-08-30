@@ -9,13 +9,17 @@ import pytest
 
 from cemm_authoritative_hybrid.authority import AtomRecord
 from cemm_authoritative_hybrid.canonical import stable_ref
+from cemm_authoritative_hybrid.decision import DecisionAction
 from cemm_authoritative_hybrid.gaps import GapKind
 from cemm_authoritative_hybrid.persistence import RevisionPin
 from cemm_authoritative_hybrid.r4_contracts import (
     ExpectedCycleContractCompiler,
     ReviewedScenario,
 )
-from cemm_authoritative_hybrid.r4_expansion import CaseExpander
+from cemm_authoritative_hybrid.r4_expansion import (
+    CaseExpander,
+    expand_reviewed_source_universe,
+)
 from cemm_authoritative_hybrid.r4_mutation_compiler import (
     MutationCompilationError,
     ReviewedMutationCompiler,
@@ -146,6 +150,8 @@ class _Authority:
             "entity:a": "entity",
             "rel:likes": "relation_type",
             "entity:b": "entity",
+            "perm:test": "permission",
+            "adapter:test": "adapter",
         }.items()
     }
     event_signatures = {}
@@ -153,7 +159,7 @@ class _Authority:
     designations = None
     capabilities = {}
     permissions = ()
-    adapters = ()
+    adapters = ("adapter:test",)
     operator_roles = {}
     rules = {}
 
@@ -520,6 +526,39 @@ def test_mutations_change_one_declared_dimension_and_use_owner_labels() -> None:
     assert len({row.dimension for row in mutations}) == 6
     observations = MutationExecutor(_MatchingOwner()).execute(mutations)
     assert all(row.matched_expectation for row in observations)
+
+
+def test_operation_prerequisite_mutation_domains_equal_request_effect_cases() -> None:
+    from cemm_authoritative_hybrid.authority import AuthorityLinker
+
+    authority = AuthorityLinker().link_path(ROOT / "data/authority/manifest.json")
+    scenarios = tuple(
+        ReviewedScenario.from_dict(json.loads(line))
+        for line in (ROOT / "data/scenarios/use_cases.jsonl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+        if line
+    )
+    cases = expand_reviewed_source_universe(scenarios, authority=authority).cases
+    operation_refs = {
+        case.case_ref
+        for case in cases
+        if case.contract.expected_decision.action is DecisionAction.REQUEST_EFFECT
+    }
+    permission_mutation_refs = {
+        case.case_ref
+        for case in cases
+        if case.contract.situation_constraints.get("permission_refs")
+        == ("permission:set_state",)
+    }
+    adapter_mutation_refs = {
+        case.case_ref
+        for case in cases
+        if case.contract.situation_constraints.get("adapter_refs")
+        == ("adapter:state",)
+    }
+    assert permission_mutation_refs == operation_refs
+    assert adapter_mutation_refs == operation_refs
 
 
 def test_partition_axis_manifest_is_exact_and_training_allowlist_has_no_test_refs() -> None:
