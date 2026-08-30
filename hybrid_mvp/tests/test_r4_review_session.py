@@ -62,6 +62,9 @@ def test_session_bootstrap_indexes_exact_current_review_inventory(
     assert bootstrap["review_complete"] is False
     assert bootstrap["authoring_ready"] is False
     assert bootstrap["blocking_rejection_refs"] == []
+    assert bootstrap["reviewer_refs"] == []
+    assert bootstrap["audit_warning"] is None
+    assert bootstrap["review_counts"]["unresolved_structural"] == 12
     assert bootstrap["selection_template_ref"].startswith(
         "r4_authoring_selection_template:"
     )
@@ -677,6 +680,64 @@ def test_recipe_rejection_is_reported_as_blocking_status(
 
     assert family_ref in result["blocking_rejection_refs"]
     assert result["authoring_ready"] is False
+
+
+def test_browser_items_expose_only_server_derived_action_scope(
+    purpose_complete_session: ReviewSession,
+) -> None:
+    recipe_page = purpose_complete_session.items(
+        section="recipe",
+        state_filter="all",
+        query="",
+        offset=0,
+        limit=100,
+    )
+    assert all(
+        item["display"]["eligible_purposes"]
+        for item in recipe_page["items"]
+    )
+    multi = next(
+        item
+        for item in recipe_page["items"]
+        if len(item["display"]["eligible_purposes"]) > 1
+    )
+    first_purpose = multi["display"]["eligible_purposes"][0]
+    _apply_preview(
+        purpose_complete_session,
+        ReviewAction.recipe(
+            family_ref=multi["row_ref"],
+            purpose=first_purpose,
+            decision="approve",
+            reviewed_parameters={"review_basis": "partial_family_check"},
+        ),
+    )
+    partial_page = purpose_complete_session.items(
+        section="recipe",
+        state_filter="all",
+        query=multi["row_ref"],
+        offset=0,
+        limit=10,
+    )
+    assert partial_page["items"][0]["state"] == "unresolved"
+
+    designation_page = purpose_complete_session.items(
+        section="designation",
+        state_filter="all",
+        query="",
+        offset=0,
+        limit=100,
+    )
+    for item in designation_page["items"]:
+        if item["display"]["candidate_bindings"]:
+            assert "approve_exact_empty" not in item["options"]
+        else:
+            assert "approve_candidate_bindings" not in item["options"]
+        if item["display"]["exceptional"]:
+            assert item["display"]["routine_cohort_ref"] is None
+        else:
+            assert item["display"]["routine_cohort_ref"].startswith(
+                "review_ui_designation_cohort:"
+            )
 
 
 def test_recipe_action_rejects_absent_partition_and_oversized_parameters(

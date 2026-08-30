@@ -60,6 +60,7 @@ class ReviewIndexes:
     purpose_cohorts: Mapping[str, tuple[str, ...]]
     designation_exception_case_refs: frozenset[str]
     routine_designation_cohorts: Mapping[str, tuple[str, ...]]
+    designation_cohort_by_case: Mapping[str, str]
     overlap_pair_count: int
     intersecting_case_count: int
     multi_unit_case_count: int
@@ -579,6 +580,13 @@ def build_review_indexes(context: SelectionContext) -> ReviewIndexes:
             {
                 ref: tuple(sorted(members))
                 for ref, members in sorted(routine.items())
+            }
+        ),
+        designation_cohort_by_case=MappingProxyType(
+            {
+                case_ref: cohort_ref
+                for cohort_ref, members in sorted(routine.items())
+                for case_ref in sorted(members)
             }
         ),
         overlap_pair_count=overlap_pair_count,
@@ -1296,6 +1304,7 @@ class ReviewSession:
         )
 
     def bootstrap(self) -> Mapping[str, object]:
+        evaluation = self.evaluation()
         result = {
             "inventory": {
                 "structural": len(self.indexes.structural_rows_by_ref),
@@ -1312,8 +1321,11 @@ class ReviewSession:
             "state_revision": self.state_revision,
             "selection_template_ref": self._state["selection_template_ref"],
             "draft_input_set_ref": self._state["draft_input_set_ref"],
+            "reviewer_refs": list(self._state["reviewer_refs"]),
+            "audit_warning": self.audit_warning,
+            "review_counts": dict(self._resulting_counts(evaluation)),
         }
-        result.update(self._review_status(self.evaluation()))
+        result.update(self._review_status(evaluation))
         return MappingProxyType(result)
 
     def _decision_items(self, *, section: str) -> list[dict[str, object]]:
@@ -1358,22 +1370,46 @@ class ReviewSession:
         return result
 
     def _recipe_items(self) -> list[dict[str, object]]:
-        return [
-            {
+        evaluation = self.evaluation()
+        result = []
+        for row in self._state["proposal_recipe_selections"]:
+            eligible = [
+                purpose
+                for purpose in (
+                    "train",
+                    "selection",
+                    "calibration",
+                    "frozen_test",
+                )
+                if any(
+                    evaluation.case_purposes.get(case_ref) == purpose
+                    for case_ref in row["member_case_refs"]
+                )
+            ]
+            selected = row["purpose_recipes"]
+            selected_purposes = {recipe["purpose"] for recipe in selected}
+            state = (
+                "rejected"
+                if any(recipe["decision"] == "reject" for recipe in selected)
+                else "completed"
+                if selected_purposes == set(eligible)
+                else "unresolved"
+            )
+            result.append({
                 "current_value": copy.deepcopy(row["purpose_recipes"]),
                 "display": {
                     "family_definition": copy.deepcopy(row["family_definition"]),
                     "member_case_refs": list(row["member_case_refs"]),
                     "target_kind": row["target_kind"],
+                    "eligible_purposes": eligible,
                 },
                 "options": ["approve", "reject"],
                 "row_kind": "proposal_recipe_family",
                 "row_ref": row["family_ref"],
-                "state": "completed" if row["purpose_recipes"] else "unresolved",
+                "state": state,
                 "subject_ref": row["family_ref"],
-            }
-            for row in self._state["proposal_recipe_selections"]
-        ]
+            })
+        return result
 
     def _designation_items(self) -> list[dict[str, object]]:
         source_by_case = self.indexes.designation_rows_by_case
@@ -1398,13 +1434,16 @@ class ReviewSession:
                         "candidate_set_ref": source["candidate_set_ref"],
                         "exceptional": risk[0],
                         "language": source["language"],
+                        "routine_cohort_ref": (
+                            self.indexes.designation_cohort_by_case.get(case_ref)
+                        ),
                         "surface": source["surface"],
                     },
-                    "options": [
-                        "approve_candidate_bindings",
-                        "approve_exact_empty",
-                        "reject",
-                    ],
+                    "options": (
+                        ["approve_candidate_bindings", "reject"]
+                        if source["candidate_bindings"]
+                        else ["approve_exact_empty", "reject"]
+                    ),
                     "row_kind": "designation_supervision",
                     "row_ref": case_ref,
                     "state": (
