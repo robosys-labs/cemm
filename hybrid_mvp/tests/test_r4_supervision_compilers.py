@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from types import SimpleNamespace
 
 import pytest
@@ -13,6 +14,7 @@ from cemm_authoritative_hybrid.r4_realization_compiler import (
     RealizationCompilationError,
     ReviewedRealizationCompiler,
 )
+import cemm_authoritative_hybrid.r4_mutation_compiler as mutation_compiler_module
 from cemm_authoritative_hybrid.r4_expansion import ExpandedCase
 from cemm_authoritative_hybrid.r4_supervision import (
     BlueprintAction,
@@ -374,6 +376,15 @@ def test_realization_compiler_reconstructs_complete_signature(
         ("authorized_surface", "shade"),
         ("language", "fr"),
     ],
+    ids=(
+        "polarity",
+        "modality",
+        "epistemic",
+        "speaker",
+        "addressee",
+        "designation-surface",
+        "language",
+    ),
 )
 def test_realization_compiler_rejects_semantic_drift(
     derivation_fixture, linked_authority, field, replacement
@@ -444,7 +455,11 @@ def test_realization_compiler_does_not_call_runtime_realization(
     assert result.authorized_surface == "lamp"
 
 
-@pytest.mark.parametrize("target_kind", ["abstain", "verification_rejection"])
+@pytest.mark.parametrize(
+    "target_kind",
+    ["abstain", "verification_rejection"],
+    ids=("gap", "rejection"),
+)
 def test_realization_compiler_requires_independently_reviewed_safe_surface(
     linked_authority, target_kind
 ):
@@ -531,3 +546,11 @@ def test_realization_compiler_requires_independently_reviewed_safe_surface(
         ReviewedRealizationCompiler(linked_authority).compile(
             case=case, proposal=proposal, row=echo
         )
+
+
+def test_mutation_compiler_has_no_generator_environment_or_observation_oracle() -> None:
+    source = inspect.getsource(mutation_compiler_module)
+    assert "MutationGenerator" not in source
+    assert "_SPECS" not in source
+    assert "r4_environment" not in source
+    assert "MutationObservation" not in source

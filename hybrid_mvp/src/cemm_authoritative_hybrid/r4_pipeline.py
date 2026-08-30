@@ -56,6 +56,7 @@ from .r4_sufficiency import (
     StructuralSufficiencyEvaluator,
     StructuralSufficiencyReceipt,
 )
+from .r4_supervision import MutationContract
 
 R4_BUILD_RECEIPT_ABI_VERSION = 4
 _SHA_RE = re.compile(r"sha256:[0-9a-f]{64}")
@@ -326,6 +327,7 @@ class R4Pipeline:
         abi_registry_ref: str,
         episode_owner: EpisodeExecutionOwner,
         mutation_owner: MutationExecutionOwner,
+        mutation_contracts: tuple[MutationContract, ...],
         source_revision: str,
         partition_config: R4PartitionConfig,
         minimums: Mapping[str, int] | None = None,
@@ -345,7 +347,7 @@ class R4Pipeline:
         )
         self._expander = CaseExpander(self._compiler)
         self._episode_builder = AuthenticEpisodeBuilder(episode_owner)
-        self._mutation_generator = MutationGenerator()
+        self._mutation_generator = MutationGenerator(mutation_contracts)
         self._mutation_executor = MutationExecutor(mutation_owner)
         self._sufficiency = StructuralSufficiencyEvaluator(
             minimums=minimums, maximums=maximums

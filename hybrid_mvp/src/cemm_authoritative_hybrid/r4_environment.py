@@ -21,7 +21,7 @@ from .r3_codec import thaw_json
 from .r4_contracts import ExpectedOutcomeKind
 from .r4_episodes import EpisodeExecutionResult
 from .r4_expansion import ExpandedCase
-from .r4_mutations import MutationBoundaryResult, SemanticMutation
+from .r4_mutations import MutationBoundaryResult, MutationExecutionRequest
 from .r3_effects import (
     AdapterRegistry,
     AdapterResult,
@@ -143,7 +143,7 @@ class AuthenticMutationOwner:
 
     @staticmethod
     def _result(
-        mutation: SemanticMutation,
+        request: MutationExecutionRequest,
         *,
         owner: str,
         status: str,
@@ -157,7 +157,7 @@ class AuthenticMutationOwner:
             artifact_ref=stable_ref(
                 "r4_mutation_boundary",
                 {
-                    "mutation_ref": mutation.mutation_ref,
+                    "request_ref": request.request_ref,
                     "owner": owner,
                     "status": status,
                     "code": code,
@@ -166,10 +166,12 @@ class AuthenticMutationOwner:
             ),
         )
 
-    def execute_mutation(self, mutation: SemanticMutation) -> MutationBoundaryResult:
-        if type(mutation) is not SemanticMutation:
-            raise TypeError("mutation must be exact SemanticMutation")
-        payload = thaw_json(mutation.mutated_case)
+    def execute_mutation(
+        self, request: MutationExecutionRequest
+    ) -> MutationBoundaryResult:
+        if type(request) is not MutationExecutionRequest:
+            raise TypeError("request must be exact MutationExecutionRequest")
+        payload = thaw_json(request.mutated_case)
         if not isinstance(payload, dict):
             raise TypeError("mutated case must decode to exact dict")
 
@@ -192,7 +194,7 @@ class AuthenticMutationOwner:
                             and predicate_ref not in self._authority.atoms
                         ):
                             return self._result(
-                                mutation,
+                                request,
                                 owner="expected-contract-compiler",
                                 status="rejected",
                                 code="authority_ref_missing",
@@ -206,7 +208,7 @@ class AuthenticMutationOwner:
                     and world_revision != self._world_revision
                 ):
                     return self._result(
-                        mutation,
+                        request,
                         owner="EFFECT",
                         status="stale_revision",
                         code="stale_revision",
@@ -219,7 +221,7 @@ class AuthenticMutationOwner:
             case = ExpandedCase.from_dict(payload)
         except (TypeError, ValueError) as exc:
             detail = str(exc).lower()
-            if mutation.dimension == "decision_action_mismatch":
+            if request.dimension == "decision_action_mismatch":
                 code = "decision_contract_mismatch"
             elif "role" in detail:
                 code = "invalid_role_ref"
@@ -230,7 +232,7 @@ class AuthenticMutationOwner:
             else:
                 code = "contract_decode_rejected"
             return self._result(
-                mutation,
+                request,
                 owner=(
                     "semantic-expression"
                     if code == "unknown_root_ref"
@@ -245,7 +247,7 @@ class AuthenticMutationOwner:
             for application in expression.applications:
                 if application.predicate_ref not in self._authority.atoms:
                     return self._result(
-                        mutation,
+                        request,
                         owner="expected-contract-compiler",
                         status="rejected",
                         code="authority_ref_missing",
@@ -257,7 +259,7 @@ class AuthenticMutationOwner:
         if isinstance(constraints, Mapping):
             if constraints.get("permission_refs") == []:
                 return self._result(
-                    mutation,
+                    request,
                     owner="EVALUATE",
                     status="denied",
                     code="permission_missing",
@@ -265,15 +267,23 @@ class AuthenticMutationOwner:
                 )
             if constraints.get("adapter_refs") == []:
                 return self._result(
-                    mutation,
+                    request,
                     owner="EVALUATE",
                     status="adapter_missing",
                     code="adapter_missing",
                     evidence=constraints,
                 )
-            if constraints.get("trusted_observation") is False:
+            evidence_policy_refs = constraints.get("evidence_policy_refs", ())
+            if (
+                constraints.get("trusted_observation") is False
+                or (
+                    isinstance(evidence_policy_refs, list)
+                    and "policy:evidence:untrusted_conversation"
+                    in evidence_policy_refs
+                )
+            ):
                 return self._result(
-                    mutation,
+                    request,
                     owner="EVALUATE",
                     status="contested",
                     code="untrusted_observation",
@@ -281,14 +291,14 @@ class AuthenticMutationOwner:
                 )
         if case.contract.revision_pin.world_revision != self._world_revision:
             return self._result(
-                mutation,
+                request,
                 owner="EFFECT",
                 status="stale_revision",
                 code="stale_revision",
                 evidence=case.contract.revision_pin.world_revision,
             )
         return self._result(
-            mutation,
+            request,
             owner="expected-contract-compiler",
             status="rejected",
             code="decision_contract_mismatch",

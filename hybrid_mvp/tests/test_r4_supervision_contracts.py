@@ -743,6 +743,15 @@ def test_mutation_contract_is_reviewed_truth_not_an_observation_echo() -> None:
         ("expected_error_code", ""),
         ("disposition", "frontier"),
     ],
+    ids=(
+        "scope",
+        "selector-kind",
+        "operation",
+        "owner",
+        "status",
+        "error-code",
+        "disposition",
+    ),
 )
 def test_mutation_contract_rejects_non_governed_truth(field, value) -> None:
     row = _mutation().as_dict()

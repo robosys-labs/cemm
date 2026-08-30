@@ -50,6 +50,15 @@ def test_review_context_excludes_output_identities() -> None:
         ("form_pack_sha256", "66" * 32),
         ("input_set_ref", "worksheet_input_set:ffffffffffffffffffffffff"),
     ],
+    ids=(
+        "policy-ref",
+        "policy-hash",
+        "reviewers",
+        "base-revision",
+        "authority-generation",
+        "form-pack-hash",
+        "input-set",
+    ),
 )
 def test_every_review_context_input_changes_identity(field: str, value: object) -> None:
     row = _material().as_dict()
