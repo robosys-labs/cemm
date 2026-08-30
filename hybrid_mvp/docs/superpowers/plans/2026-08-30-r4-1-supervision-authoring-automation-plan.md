@@ -20,6 +20,11 @@ It is a corrective prerequisite for the unsafe portions of Tasks 4-7 in
 - reviewed source publication must wait for Tasks 1-12 here;
 - main proposal, realization and mutation Tasks 5-7 reuse the pure compilers
   created here instead of adding private implementations;
+- Task 4 creates and freezes the pure derivation compiler, but its mandatory
+  cross-source validator integration occurs in Task 10 immediately after the
+  real per-case FormLattice, GroundingResult and ProposalContext cache and
+  reviewed blueprints exist; there is no optional compiler path, gold-derived
+  context or placeholder-blueprint compatibility path;
 - after Task 14 here, resume the main replay at reviewed purpose ownership and
   continue through artifact build, independent admission, R4 green and the R5
   handoff; and
@@ -503,7 +508,6 @@ git commit -m "feat(authority): retain canonical designation facts"
 
 - Create: `src/cemm_authoritative_hybrid/r4_derivation_compiler.py`
 - Create: `tests/test_r4_supervision_compilers.py`
-- Modify: `src/cemm_authoritative_hybrid/r4_supervision.py:973-1041`
 
 - [ ] **Step 1: Write failing exact reconstruction tests**
 
@@ -651,18 +655,21 @@ construction, validate every grounded selector against exact
 FormLattice/Grounding/ProposalContext refs and spans. Build assignment indexes
 once and require every observed unit exactly once.
 
-- [ ] **Step 4: Integrate exact compilation into cross-source validation**
+- [ ] **Step 4: Freeze the integration dependency without adding a fallback**
 
-Pass a repository-owned `ProposalContext` factory into the validator or create
-one pure helper beside the compiler. Build each context once per case, compile
-all semantic derivations, and count operations. Typed gaps and verifier
-rejections bypass derivation compilation and retain their exact dedicated
-checks.
+Do not wire the compiler into cross-source validation while the authenticated
+source still contains placeholder `_sr2_blueprint` records and has no real
+per-case FormLattice, GroundingResult or ProposalContext cache. That wiring is
+mandatory in Task 10 immediately after those exact contexts and reviewed
+blueprints are authored. Until then, do not derive contexts from expected gold,
+add an optional compiler callback, accept placeholder blueprints or weaken the
+existing validator. The pure compiler remains an independently tested,
+explicitly unintegrated foundation rather than a permissive partial path.
 
-- [ ] **Step 5: Run compiler and cross-source tests**
+- [ ] **Step 5: Run compiler tests**
 
 ```powershell
-python -m pytest tests/test_r4_supervision_compilers.py tests/test_r4_supervision_contracts.py -k "derivation or cross_source" -q
+python -m pytest tests/test_r4_supervision_compilers.py -k derivation -q
 ```
 
 Expected: pass; monkeypatched runtime compilation is never reached.
@@ -670,7 +677,7 @@ Expected: pass; monkeypatched runtime compilation is never reached.
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add src/cemm_authoritative_hybrid/r4_derivation_compiler.py src/cemm_authoritative_hybrid/r4_supervision.py tests/test_r4_supervision_compilers.py tests/test_r4_supervision_contracts.py
+git add src/cemm_authoritative_hybrid/r4_derivation_compiler.py tests/test_r4_supervision_compilers.py
 git commit -m "feat(r4): compile reviewed derivations independently"
 ```
 
@@ -1407,8 +1414,10 @@ git commit -m "feat(r4): define purpose scoped authoring recipes"
 
 - Modify: `scripts/build_r4_1_review_worksheets.py:1144-1321`
 - Modify: `scripts/build_r4_1_review_worksheets.py:1775-2000`
+- Modify: `src/cemm_authoritative_hybrid/r4_supervision.py:973-1041`
 - Create: `tests/test_r4_authoring_pipeline.py`
 - Create: `tests/test_r4_review_worksheets.py`
+- Modify: `tests/test_r4_supervision_contracts.py`
 
 - [ ] **Step 1: Write failing full-case candidate inventory tests**
 
@@ -1489,19 +1498,29 @@ bindings in canonical geometry/ref order and preserve overlaps. Enforce eight
 targets per span. Emit an exact-empty set only for a nonsemantic source case
 when the independent full scan returns no facts.
 
-- [ ] **Step 6: Run focused pipeline tests twice**
+- [ ] **Step 6: Wire exact derivation compilation into cross-source validation**
+
+Pass the complete repository-owned per-case `ProposalContext` cache from Step 3
+to the one cross-source validator. Compile every semantic derivation with
+`ReviewedDerivationCompiler` and count its bounded operations. Typed gaps and
+verifier rejections retain their exact dedicated checks and do not masquerade
+as semantic derivations. The compiler path is mandatory for every semantic
+row: no optional callback, missing-context bypass, expected-gold-derived
+context, placeholder-blueprint acceptance or permissive fallback is allowed.
+
+- [ ] **Step 7: Run focused pipeline and cross-source tests twice**
 
 ```powershell
-python -m pytest tests/test_r4_authoring_pipeline.py tests/test_r4_review_worksheets.py -k "proposal or designation or deterministic" -q
+python -m pytest tests/test_r4_authoring_pipeline.py tests/test_r4_review_worksheets.py tests/test_r4_supervision_compilers.py tests/test_r4_supervision_contracts.py -k "proposal or designation or deterministic or derivation or cross_source" -q
 ```
 
 Expected: pass; two builds have byte-identical proposal/designation candidate
 sections and exact supervised case sets.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```powershell
-git add scripts/build_r4_1_review_worksheets.py tests/test_r4_authoring_pipeline.py tests/test_r4_review_worksheets.py
+git add scripts/build_r4_1_review_worksheets.py src/cemm_authoritative_hybrid/r4_supervision.py tests/test_r4_authoring_pipeline.py tests/test_r4_review_worksheets.py tests/test_r4_supervision_contracts.py
 git commit -m "feat(r4): author proposal and designation candidates"
 ```
 
