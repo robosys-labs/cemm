@@ -19,6 +19,7 @@ const view = {
   guidedStarted: false,
   guidedItem: null,
   guidedAfterRef: null,
+  guidedPassStartRef: null,
   section: "dashboard",
   filter: "unresolved",
   query: "",
@@ -308,17 +309,120 @@ function renderGuidedStart() {
   workspace.append(shell);
 }
 
-function renderGuidedHolding() {
+function technicalEvidence(value) {
+  const details = node("details", "technical-evidence");
+  details.append(node("summary", "", "Technical evidence"));
+  const pre = node("pre");
+  pre.textContent = JSON.stringify(value, null, 2);
+  details.append(pre);
+  return details;
+}
+
+function renderGuidedIdentity(item) {
   workspace.replaceChildren();
-  const item = view.guidedItem;
-  guidedProgress.textContent = item ? `Current phase · ${item.phase}` : "Loading guided review";
   const shell = node("section", "guided-shell panel");
-  append(
-    shell,
-    node("p", "eyebrow", item ? item.phase : "Guided review"),
-    node("h2", "", item && item.phase === "identity" ? "Identify the accountable reviewer" : "Guided decision ready"),
-    node("p", "guided-lead", item ? item.instruction || "Continue the guided review." : "Loading the next decision.")
-  );
+  append(shell, node("p", "eyebrow", "Step 1 · Reviewer identity"), node("h2", "", "Identify the accountable reviewer"), node("p", "guided-lead", item.instruction));
+  const form = node("form", "field guided-identity");
+  const label = node("label", "", "Canonical reviewer ref");
+  label.htmlFor = "guided-reviewer-ref";
+  const input = node("input");
+  input.id = "guided-reviewer-ref";
+  input.type = "text";
+  input.placeholder = "reviewer:your-name";
+  input.autocomplete = "off";
+  const help = node("p", "helper", "Use a stable typed identity such as reviewer:son. Nothing is confirmed by entering it.");
+  const save = node("button", "button primary", "Save reviewer and continue");
+  save.type = "submit";
+  append(form, label, input, help, save);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const ref = input.value.trim();
+    runMutation(async () => {
+      await api("/api/reviewer", {method: "POST", body: currentRevisionBody({reviewer_refs: ref ? [ref] : []})});
+      await refresh();
+      await loadGuidedNext(null);
+    });
+  });
+  shell.append(form);
+  workspace.append(shell);
+}
+
+function renderGuidedItem() {
+  const item = view.guidedItem;
+  if (!item) return renderGuidedStart();
+  if (item.phase === "identity") {
+    guidedProgress.textContent = "Reviewer identity · required before decisions";
+    renderGuidedIdentity(item);
+    return;
+  }
+  if (item.phase === "export") {
+    guidedProgress.textContent = "Final step · validate and export";
+    renderExport();
+    return;
+  }
+  workspace.replaceChildren();
+  guidedProgress.textContent = `Current phase · ${item.phase}`;
+  const shell = node("article", "guided-shell guided-step panel");
+  append(shell, node("p", "eyebrow", `${item.phase} review`), node("h2", "", "Review this one decision"), node("p", "guided-lead", item.instruction));
+  const source = node("section", "guided-evidence-block");
+  append(source, node("h3", "", "Source to verify"), node("blockquote", "", item.source_summary));
+  const proposal = node("section", "guided-evidence-block");
+  append(proposal, node("h3", "", "What CEMM proposes"), node("p", "", item.proposal_summary));
+  append(shell, source, proposal);
+  if (item.cohort) {
+    const cohort = node("section", "guided-evidence-block");
+    append(cohort, node("h3", "", `Exact cohort · ${item.cohort.member_count} cases`), node("p", "", `Examples: ${item.cohort.representative_examples.join(", ")}`));
+    shell.append(cohort);
+  }
+  const question = node("section", "guided-question");
+  append(question, node("p", "eyebrow", "Your decision"), node("h3", "", item.reviewer_question));
+  const choices = node("div", "choice-grid");
+  for (const choice of item.choices) {
+    const button = node("button", "choice-card");
+    button.type = "button";
+    append(button, node("strong", "", choice.label), node("span", "", choice.explanation), node("small", choice.blocks_authoring ? "blocking-copy" : "", choice.consequence));
+    button.addEventListener("click", () => previewGuidedChoice(choice.choice_ref));
+    choices.append(button);
+  }
+  question.append(choices);
+  const skip = node("button", "button secondary", "Skip for now");
+  skip.type = "button";
+  skip.addEventListener("click", skipGuidedItem);
+  append(shell, question, skip, technicalEvidence(item.technical_evidence));
+  workspace.append(shell);
+}
+
+async function previewGuidedChoice(choiceRef) {
+  await runMutation(async () => {
+    const envelope = await api("/api/guided/preview", {method: "POST", body: currentRevisionBody({item_ref: view.guidedItem.item_ref, choice_ref: choiceRef})});
+    showPreview({...envelope.result, guided: true});
+  });
+}
+
+async function skipGuidedItem() {
+  if (!view.guidedItem) return;
+  const current = view.guidedItem.item_ref;
+  if (view.guidedPassStartRef === null) view.guidedPassStartRef = current;
+  await runMutation(async () => {
+    const params = new URLSearchParams({after: current});
+    const envelope = await api(`/api/guided/next?${params.toString()}`);
+    if (envelope.result.item_ref === view.guidedPassStartRef) return renderSkippedPassComplete();
+    view.guidedItem = envelope.result;
+    renderCurrentSection();
+  });
+}
+
+function renderSkippedPassComplete() {
+  workspace.replaceChildren();
+  const shell = node("section", "guided-shell panel");
+  append(shell, node("p", "eyebrow", "No decisions were recorded"), node("h2", "", "You have reached every unresolved decision"), node("p", "guided-lead", "Skipped decisions remain unresolved. Revisit them when you have enough evidence; the review cannot complete by skipping them."));
+  const revisit = node("button", "button primary", "Revisit skipped decisions");
+  revisit.type = "button";
+  revisit.addEventListener("click", () => {
+    view.guidedPassStartRef = null;
+    loadGuidedNext(null);
+  });
+  shell.append(revisit);
   workspace.append(shell);
 }
 
@@ -617,6 +721,9 @@ function showPreview(preview) {
     metric("Revision", preview.state_revision)
   );
   impactContent.append(summary);
+  if (preview.decision_summary) {
+    impactContent.append(node("p", "guided-lead", preview.decision_summary));
+  }
   if (preview.requires_clear_confirmation) {
     impactContent.append(node(
       "p",
@@ -641,6 +748,7 @@ function showPreview(preview) {
   counts.append(pre);
   impactContent.append(counts);
   confirmImpact.disabled = false;
+  confirmImpact.textContent = preview.guided ? "Confirm and continue" : "Confirm exact action";
   impactDialog.showModal();
 }
 
@@ -666,9 +774,15 @@ async function applyPending() {
         preview_hash: preview.preview_hash,
       },
     });
+    const guided = preview.guided === true;
     view.pendingPreview = null;
     showToast("Exact review action saved.");
     await refresh();
+    if (guided) {
+      view.guidedStarted = true;
+      view.guidedPassStartRef = null;
+      await loadGuidedNext(null);
+    }
   });
 }
 
@@ -701,7 +815,7 @@ async function renderCurrentSection() {
   try {
     if (view.mode === "guided") {
       if (!view.guidedStarted) renderGuidedStart();
-      else renderGuidedHolding();
+      else renderGuidedItem();
     } else if (view.section === "dashboard") renderDashboard();
     else if (view.section === "export") renderExport();
     else await renderItems();

@@ -244,6 +244,69 @@ button:disabled {
   margin-top: var(--space-5);
 }
 
+.guided-identity {
+  max-width: 520px;
+  margin-top: var(--space-5);
+}
+
+.guided-evidence-block,
+.guided-question {
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.guided-evidence-block h3,
+.guided-question h3 {
+  margin: 0 0 var(--space-2);
+  color: var(--color-foreground);
+}
+
+.guided-evidence-block blockquote {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 650;
+}
+
+.choice-grid {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.choice-card {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  text-align: left;
+}
+
+.choice-card:hover,
+.choice-card:focus-visible {
+  border-color: var(--color-primary);
+}
+
+.choice-card strong {
+  color: var(--color-foreground);
+  font-size: 1rem;
+}
+
+.choice-card span,
+.choice-card small {
+  color: var(--color-text-muted);
+}
+
+.choice-card .blocking-copy {
+  color: var(--color-danger);
+}
+
 .phase-nav button:hover {
   background: var(--color-surface-muted);
   color: var(--color-text);

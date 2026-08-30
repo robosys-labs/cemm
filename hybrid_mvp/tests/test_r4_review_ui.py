@@ -119,6 +119,19 @@ def test_guided_ui_has_no_semantic_recommendation_or_preselection() -> None:
         assert forbidden not in source
 
 
+def test_guided_ui_uses_opaque_choices_and_skip_is_local_navigation() -> None:
+    source = (UI_ROOT / "app.js").read_text(encoding="utf-8")
+
+    assert "function renderGuidedItem" in source
+    assert "function skipGuidedItem" in source
+    assert "function previewGuidedChoice" in source
+    assert "Confirm and continue" in source
+    assert 'api("/api/guided/preview"' in source
+    assert "ReviewAction" not in source
+    assert "localStorage" not in source
+    assert "sessionStorage" not in source
+
+
 @pytest.mark.parametrize(
     "contract",
     (
