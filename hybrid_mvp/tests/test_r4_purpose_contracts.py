@@ -16,7 +16,10 @@ from cemm_authoritative_hybrid.r4_purpose import (
     DuplicateRiskGroup,
     PurposeContract,
     PurposeMembership,
+    recipe_ancestry_duplicate_risk_groups,
+    validate_recipe_ancestry,
 )
+from cemm_authoritative_hybrid.r4_authoring import AuthoringRecipe
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -114,6 +117,48 @@ def _contract() -> PurposeContract:
         review_refs=(REVIEW_REF,),
         solver_output_is_authority=False,
     )
+
+
+def _authoring_recipe(*, purpose: str, case_ref: str, ancestry_refs=()):
+    return AuthoringRecipe.create(
+        recipe_kind="realization",
+        purpose=purpose,
+        normalized_family_key=(purpose, case_ref),
+        member_case_refs=(case_ref,),
+        ancestry_refs=ancestry_refs,
+        reviewed_parameters={"surface_template": "reviewed output"},
+        review_refs=(REVIEW_REF,),
+    )
+
+
+def test_recipe_descendants_cannot_cross_purposes() -> None:
+    train = _authoring_recipe(purpose="train", case_ref=CASE_REFS[0])
+    frozen = _authoring_recipe(
+        purpose="frozen_test",
+        case_ref=CASE_REFS[1],
+        ancestry_refs=(train.recipe_ref,),
+    )
+    with pytest.raises(ValueError, match="ancestry crosses purposes"):
+        validate_recipe_ancestry(
+            (train, frozen),
+            ((train.recipe_ref, frozen.recipe_ref),),
+        )
+
+
+def test_explicit_recipe_ancestry_compiles_to_existing_duplicate_risk_evidence() -> None:
+    parent = _authoring_recipe(purpose="train", case_ref=CASE_REFS[0])
+    child = _authoring_recipe(
+        purpose="train",
+        case_ref=CASE_REFS[1],
+        ancestry_refs=(parent.recipe_ref,),
+    )
+    edges = ((parent.recipe_ref, child.recipe_ref),)
+    assert validate_recipe_ancestry((parent, child), edges) > 0
+    groups = recipe_ancestry_duplicate_risk_groups((parent, child), edges)
+    assert len(groups) == 1
+    assert groups[0].namespace == "normalization_family"
+    assert groups[0].purpose == "train"
+    assert groups[0].member_case_refs == CASE_REFS[:2]
 
 
 def _recreate_contract(contract: PurposeContract, **changes) -> PurposeContract:

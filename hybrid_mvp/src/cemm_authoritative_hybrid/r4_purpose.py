@@ -555,6 +555,133 @@ def _validation_operation_count_for_test(contract: PurposeContract) -> int:
     )
 
 
+def validate_recipe_ancestry(
+    recipes: tuple[object, ...],
+    ancestry_edges: tuple[tuple[str, str], ...],
+) -> int:
+    """Validate explicit authoring ancestry without deriving similarity edges."""
+
+    from .r4_authoring import AuthoringRecipe, validate_authoring_recipes
+
+    operations = validate_authoring_recipes(recipes)
+    if any(type(recipe) is not AuthoringRecipe for recipe in recipes):
+        raise TypeError("recipe ancestry requires exact AuthoringRecipe values")
+    by_ref = {recipe.recipe_ref: recipe for recipe in recipes}
+    if len(by_ref) != len(recipes):
+        raise ValueError("recipe ancestry contains duplicate recipes")
+    if type(ancestry_edges) is not tuple or len(ancestry_edges) > MAX_GROUP_MEMBERS:
+        raise TypeError("ancestry_edges must be a bounded exact tuple")
+    edges: list[tuple[str, str]] = []
+    for edge in ancestry_edges:
+        operations += 1
+        if type(edge) is not tuple or len(edge) != 2:
+            raise TypeError("recipe ancestry edges must be exact pairs")
+        parent_ref = exact_ref(edge[0], "ancestry parent", prefix="authoring_recipe:")
+        child_ref = exact_ref(edge[1], "ancestry child", prefix="authoring_recipe:")
+        parent_recipe = by_ref.get(parent_ref)
+        child_recipe = by_ref.get(child_ref)
+        if parent_recipe is None or child_recipe is None:
+            raise ValueError("recipe ancestry references an unknown recipe")
+        if parent_recipe.purpose != child_recipe.purpose:
+            raise ValueError("recipe ancestry crosses purposes")
+        if parent_recipe.recipe_kind != child_recipe.recipe_kind:
+            raise ValueError("recipe ancestry crosses recipe kinds")
+        edges.append((parent_ref, child_ref))
+    if len(edges) != len(set(edges)):
+        raise ValueError("recipe ancestry edges must be unique")
+    declared = {
+        (parent_ref, recipe.recipe_ref)
+        for recipe in recipes
+        for parent_ref in recipe.ancestry_refs
+    }
+    if set(edges) != declared:
+        raise ValueError("recipe ancestry edges differ from reviewed recipe declarations")
+
+    children: dict[str, list[str]] = {ref: [] for ref in by_ref}
+    indegree = {ref: 0 for ref in by_ref}
+    for parent_ref, child_ref in edges:
+        children[parent_ref].append(child_ref)
+        indegree[child_ref] += 1
+    pending = sorted(ref for ref, degree in indegree.items() if degree == 0)
+    visited = 0
+    while pending:
+        current = pending.pop()
+        visited += 1
+        operations += 1
+        for child_ref in children[current]:
+            indegree[child_ref] -= 1
+            if indegree[child_ref] == 0:
+                pending.append(child_ref)
+    if visited != len(by_ref):
+        raise ValueError("recipe ancestry must be acyclic")
+    return operations
+
+
+def recipe_ancestry_duplicate_risk_groups(
+    recipes: tuple[object, ...],
+    ancestry_edges: tuple[tuple[str, str], ...],
+) -> tuple[DuplicateRiskGroup, ...]:
+    """Lower explicit recipe ancestry to the existing duplicate-risk contract."""
+
+    validate_recipe_ancestry(recipes, ancestry_edges)
+    by_ref = {recipe.recipe_ref: recipe for recipe in recipes}
+    neighbors: dict[str, set[str]] = {ref: set() for ref in by_ref}
+    for parent_ref, child_ref in ancestry_edges:
+        neighbors[parent_ref].add(child_ref)
+        neighbors[child_ref].add(parent_ref)
+    groups: list[DuplicateRiskGroup] = []
+    remaining = {ref for ref, adjacent in neighbors.items() if adjacent}
+    while remaining:
+        seed = min(remaining)
+        component: set[str] = set()
+        pending = [seed]
+        while pending:
+            current = pending.pop()
+            if current in component:
+                continue
+            component.add(current)
+            pending.extend(sorted(neighbors[current] - component, reverse=True))
+        remaining -= component
+        component_recipes = tuple(by_ref[ref] for ref in sorted(component))
+        members = tuple(
+            sorted(
+                {
+                    case_ref
+                    for recipe in component_recipes
+                    for case_ref in recipe.member_case_refs
+                }
+            )
+        )
+        if len(members) < 2:
+            continue
+        purpose = component_recipes[0].purpose
+        material = {
+            "namespace": "normalization_family",
+            "purpose": purpose,
+            "recipe_refs": sorted(component),
+            "member_case_refs": list(members),
+        }
+        groups.append(
+            DuplicateRiskGroup.create(
+                group_ref=stable_ref("duplicate_risk_group", material),
+                namespace="normalization_family",
+                purpose=purpose,
+                member_case_refs=members,
+                reason_ref="duplicate_reason:reviewed-recipe-ancestry",
+                review_refs=tuple(
+                    sorted(
+                        {
+                            review_ref
+                            for recipe in component_recipes
+                            for review_ref in recipe.review_refs
+                        }
+                    )
+                ),
+            )
+        )
+    return tuple(sorted(groups, key=lambda group: group.group_ref))
+
+
 __all__ = [
     "MAX_CHALLENGE_HOLDOUTS",
     "MAX_DENOMINATOR_MINIMA",
@@ -568,4 +695,6 @@ __all__ = [
     "DuplicateRiskGroup",
     "PurposeContract",
     "PurposeMembership",
+    "recipe_ancestry_duplicate_risk_groups",
+    "validate_recipe_ancestry",
 ]
