@@ -1,6 +1,7 @@
 """Accountable R4.1 review-session behavior."""
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Mapping
@@ -8,7 +9,10 @@ from typing import Mapping
 import pytest
 
 import scripts.r4_1_review_session as review_session_module
-from scripts.build_r4_1_review_selection import build_selection_template_bytes
+from scripts.build_r4_1_review_selection import (
+    build_selection_template_bytes,
+    validate_reviewed_selection_bytes,
+)
 from scripts.build_r4_1_review_worksheets import (
     _json_bytes,
     build_review_worksheet_draft,
@@ -763,3 +767,86 @@ def test_designation_decision_must_match_exact_candidate_shape(
                 individual=True,
             )
         )
+
+
+def _complete_recipes_and_designations(session: ReviewSession) -> None:
+    evaluation = session.evaluation()
+    for family_ref, family in session.indexes.proposal_families_by_ref.items():
+        for purpose in ("train", "selection", "calibration", "frozen_test"):
+            if any(
+                evaluation.case_purposes[case_ref] == purpose
+                for case_ref in family["member_case_refs"]
+            ):
+                _apply_preview(
+                    session,
+                    ReviewAction.recipe(
+                        family_ref=family_ref,
+                        purpose=purpose,
+                        decision="approve",
+                        reviewed_parameters={
+                            "review_basis": "exact_source_family"
+                        },
+                    ),
+                )
+    for cohort_ref in session.indexes.routine_designation_cohorts:
+        _apply_preview(
+            session,
+            ReviewAction.designation_cohort(
+                cohort_ref=cohort_ref,
+                decision="approve_candidate_bindings",
+            ),
+        )
+    for case_ref in sorted(session.indexes.designation_exception_case_refs):
+        selection = _designation_selection(session.state, case_ref)
+        decision = (
+            "approve_candidate_bindings"
+            if selection["candidate_binding_refs"]
+            else "approve_exact_empty"
+        )
+        _apply_preview(
+            session,
+            ReviewAction.designation_cases(
+                case_refs=(case_ref,),
+                decision=decision,
+                individual=True,
+            ),
+        )
+
+
+@pytest.fixture
+def complete_session(purpose_complete_session: ReviewSession) -> ReviewSession:
+    _complete_recipes_and_designations(purpose_complete_session)
+    assert purpose_complete_session.evaluation().complete is True
+    return purpose_complete_session
+
+
+def test_incomplete_session_cannot_export(started_session: ReviewSession) -> None:
+    with pytest.raises(ValueError, match="incomplete"):
+        started_session.export()
+
+
+def test_complete_session_exports_canonical_validated_selection(
+    complete_session: ReviewSession,
+) -> None:
+    receipt = complete_session.export()
+    raw = complete_session.paths.export_path.read_bytes()
+    assert receipt["sha256"] == hashlib.sha256(raw).hexdigest()
+    assert receipt["byte_length"] == len(raw)
+    assert receipt["review_complete"] is True
+    assert receipt["authoring_ready"] is True
+    assert validate_reviewed_selection_bytes(
+        repository_root=complete_session.paths.repository_root,
+        draft_root=complete_session.paths.draft_root,
+        selection_raw=raw,
+    )["selection_state"] == "reviewed"
+
+
+def test_export_is_exact_noop_or_refuses_different_existing_bytes(
+    complete_session: ReviewSession,
+) -> None:
+    first = complete_session.export()
+    second = complete_session.export()
+    assert second == first
+    complete_session.paths.export_path.write_bytes(b"{}\n")
+    with pytest.raises(ValueError, match="different existing export"):
+        complete_session.export()

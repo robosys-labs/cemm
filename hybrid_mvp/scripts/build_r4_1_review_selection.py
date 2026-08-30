@@ -789,39 +789,71 @@ def validate_reviewed_selection_bytes(
     return actual
 
 
-def write_selection_template(
+def write_exact_output(
     *,
-    repository_root: Path,
-    draft_root: Path,
     output_path: Path,
+    raw: bytes,
+    owner: str,
+    allow_identical_existing: bool,
 ) -> None:
     output = Path(output_path).absolute()
-    parent_before = _trusted_directory(output.parent, owner="selection output parent")
-    if output.exists() or output.is_symlink():
-        raise ValueError("selection output must not already exist")
-    raw = build_selection_template_bytes(
-        repository_root=repository_root,
-        draft_root=draft_root,
+    if type(raw) is not bytes or not raw or len(raw) > MAX_WORKSHEET_BYTES:
+        raise ValueError(f"{owner} violates byte bounds")
+    if type(owner) is not str or not owner:
+        raise TypeError("exact output owner must be an exact string")
+    if type(allow_identical_existing) is not bool:
+        raise TypeError("exact output existing policy must be exact")
+    parent_before = _trusted_directory(
+        output.parent,
+        owner=f"{owner} parent",
     )
+    try:
+        existing = os.lstat(output)
+    except FileNotFoundError:
+        existing = None
+    except OSError as exc:
+        raise ValueError(f"cannot inspect {owner}") from exc
+    if existing is not None:
+        if not allow_identical_existing:
+            raise ValueError(f"{owner} must not already exist")
+        try:
+            retained = _read_regular(
+                output,
+                maximum=MAX_WORKSHEET_BYTES,
+                owner=owner,
+            )
+        except ValueError as exc:
+            raise ValueError("different existing export is unsafe") from exc
+        if retained != raw:
+            raise ValueError("different existing export already exists")
+        return
     if not _same_identity(
         parent_before,
-        _trusted_directory(output.parent, owner="selection output parent"),
+        _trusted_directory(output.parent, owner=f"{owner} parent"),
     ):
-        raise ValueError("selection output parent identity changed")
-    descriptor = os.open(
-        output,
-        os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0),
-        0o600,
-    )
+        raise ValueError(f"{owner} parent identity changed")
+    try:
+        descriptor = os.open(
+            output,
+            os.O_WRONLY
+            | os.O_CREAT
+            | os.O_EXCL
+            | getattr(os, "O_BINARY", 0),
+            0o600,
+        )
+    except OSError as exc:
+        raise ValueError(f"cannot create {owner} exclusively") from exc
     created_identity = os.fstat(descriptor)
     try:
-        with os.fdopen(descriptor, "wb", closefd=False) as stream:
-            stream.write(raw)
-            stream.flush()
-            os.fsync(stream.fileno())
-    finally:
-        os.close(descriptor)
-    try:
+        try:
+            with os.fdopen(descriptor, "wb", closefd=False) as stream:
+                written = stream.write(raw)
+                if written != len(raw):
+                    raise ValueError(f"{owner} write was incomplete")
+                stream.flush()
+                os.fsync(stream.fileno())
+        finally:
+            os.close(descriptor)
         after = os.lstat(output)
         if (
             not stat.S_ISREG(after.st_mode)
@@ -829,11 +861,16 @@ def write_selection_template(
             or after.st_nlink != 1
             or not _same_identity(
                 parent_before,
-                _trusted_directory(output.parent, owner="selection output parent"),
+                _trusted_directory(output.parent, owner=f"{owner} parent"),
             )
-            or _read_regular(output, maximum=MAX_WORKSHEET_BYTES, owner="written selection template") != raw
+            or _read_regular(
+                output,
+                maximum=MAX_WORKSHEET_BYTES,
+                owner=f"written {owner}",
+            )
+            != raw
         ):
-            raise ValueError("written selection template does not match retained bytes")
+            raise ValueError(f"written {owner} does not match retained bytes")
     except Exception as exc:
         try:
             current = os.lstat(output)
@@ -848,9 +885,27 @@ def write_selection_template(
             output.unlink()
         elif current is not None:
             raise ValueError(
-                "selection output identity changed; refusing cleanup"
+                f"{owner} identity changed; refusing cleanup"
             ) from exc
         raise
+
+
+def write_selection_template(
+    *,
+    repository_root: Path,
+    draft_root: Path,
+    output_path: Path,
+) -> None:
+    raw = build_selection_template_bytes(
+        repository_root=repository_root,
+        draft_root=draft_root,
+    )
+    write_exact_output(
+        output_path=output_path,
+        raw=raw,
+        owner="selection output",
+        allow_identical_existing=False,
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:

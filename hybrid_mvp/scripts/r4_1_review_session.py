@@ -22,6 +22,8 @@ from scripts.build_r4_1_review_selection import (
     SelectionEvaluation,
     evaluate_selection,
     load_selection_context,
+    validate_reviewed_selection_bytes,
+    write_exact_output,
 )
 from scripts.build_r4_1_review_worksheets import (
     MAX_WORKSHEET_BYTES,
@@ -1169,6 +1171,66 @@ class ReviewSession:
         }
         result.update(self._review_status(self.evaluation()))
         return MappingProxyType(result)
+
+    def export(self) -> Mapping[str, object]:
+        evaluation = self.evaluation()
+        if not evaluation.complete:
+            raise ValueError("incomplete review session cannot be exported")
+        if self._working_raw is None:
+            raise ValueError("complete review session lacks working state")
+        retained_working = _read_regular(
+            self.paths.working_path,
+            maximum=MAX_WORKSHEET_BYTES,
+            owner="review UI working selection",
+        )
+        if retained_working != self._working_raw:
+            raise ValueError("working selection changed before export")
+        template_raw = _read_regular(
+            self.paths.template_path,
+            maximum=MAX_WORKSHEET_BYTES,
+            owner="review UI selection template",
+        )
+        current_context = load_selection_context(
+            repository_root=self.paths.repository_root,
+            draft_root=self.paths.draft_root,
+            template_raw=template_raw,
+        )
+        try:
+            current_evaluation = evaluate_selection(
+                context=current_context,
+                selection=self._state,
+                require_complete=True,
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError("stale review session cannot be exported") from exc
+        if not current_evaluation.complete:
+            raise ValueError("incomplete review session cannot be exported")
+        candidate = copy.deepcopy(self._state)
+        candidate["selection_state"] = "reviewed"
+        reviewers = self._reviewers()
+        if not reviewers or list(reviewers) != candidate["reviewer_refs"]:
+            raise ValueError("review export lacks canonical accountable reviewers")
+        raw = _json_bytes(candidate)
+        validate_reviewed_selection_bytes(
+            repository_root=self.paths.repository_root,
+            draft_root=self.paths.draft_root,
+            selection_raw=raw,
+        )
+        write_exact_output(
+            output_path=self.paths.export_path,
+            raw=raw,
+            owner="reviewed selection export",
+            allow_identical_existing=True,
+        )
+        status = self._review_status(current_evaluation)
+        return MappingProxyType(
+            {
+                "path": str(self.paths.export_path.absolute()),
+                "byte_length": len(raw),
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                **status,
+            }
+        )
 
     def bootstrap(self) -> Mapping[str, object]:
         result = {

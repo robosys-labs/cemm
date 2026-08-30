@@ -8,16 +8,83 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 import pytest
 
+import scripts.build_r4_1_review_selection as selection_module
 from scripts.build_r4_1_review_selection import (
     build_selection_template_bytes,
     evaluate_selection,
     load_selection_context,
     validate_reviewed_selection_bytes,
+    write_exact_output,
     write_selection_template,
 )
 from scripts.build_r4_1_review_worksheets import build_review_worksheet_draft
 
 ROOT = Path(__file__).parents[1]
+
+
+def test_exact_output_allows_only_identical_existing_bytes(
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "exact.json"
+    raw = b'{"exact":true}\n'
+
+    write_exact_output(
+        output_path=output,
+        raw=raw,
+        owner="test exact export",
+        allow_identical_existing=True,
+    )
+    write_exact_output(
+        output_path=output,
+        raw=raw,
+        owner="test exact export",
+        allow_identical_existing=True,
+    )
+
+    assert output.read_bytes() == raw
+    with pytest.raises(ValueError, match="different existing"):
+        write_exact_output(
+            output_path=output,
+            raw=b'{"exact":false}\n',
+            owner="test exact export",
+            allow_identical_existing=True,
+        )
+
+
+def test_exact_output_rejects_link_and_cleans_interrupted_write(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = tmp_path / "target.json"
+    target.write_bytes(b'{"target":true}\n')
+    link = tmp_path / "linked.json"
+    try:
+        link.symlink_to(target)
+    except OSError as exc:
+        pytest.skip(f"symbolic links are unavailable: {exc}")
+    with pytest.raises(ValueError, match="different existing"):
+        write_exact_output(
+            output_path=link,
+            raw=target.read_bytes(),
+            owner="test exact export",
+            allow_identical_existing=True,
+        )
+    assert link.is_symlink()
+
+    output = tmp_path / "interrupted.json"
+
+    def interrupt_fsync(descriptor: int) -> None:
+        raise OSError("simulated interruption")
+
+    monkeypatch.setattr(selection_module.os, "fsync", interrupt_fsync)
+    with pytest.raises(OSError, match="simulated interruption"):
+        write_exact_output(
+            output_path=output,
+            raw=b'{"exact":true}\n',
+            owner="test exact export",
+            allow_identical_existing=True,
+        )
+    assert not output.exists()
 
 
 def test_selection_evaluator_supports_partial_state(tmp_path: Path) -> None:
