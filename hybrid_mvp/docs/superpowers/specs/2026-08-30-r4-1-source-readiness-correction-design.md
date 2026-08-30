@@ -323,6 +323,13 @@ denominators and minima. `REVIEW_SUMMARY.md` binds the four worksheet refs,
 input-set ref, file lengths and SHA-256 values. No omitted row, empty decision
 or prose summary supplies a default answer.
 
+Where source structure cannot author a complete Proposal Supervision,
+Realization Supervision or Mutation Contract ABI record, the draft records one
+explicit `selectable: false` authoring requirement. It is neither a candidate
+answer nor an approval option. Human review must replace every such placeholder
+with an exact reviewed ABI value and regenerate the content-addressed worksheets
+before SR6 approval validation; approving the draft hashes alone is invalid.
+
 Worksheet generation must fail before creating a staging directory unless
 every proposed linked or multi-root row passes through the corrected
 reviewed-assertion compiler as exactly one canonical expression with relation

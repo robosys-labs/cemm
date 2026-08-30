@@ -540,7 +540,7 @@ no scenario meaning has been selected or approved.
 - Generate: `artifacts/review_drafts/r4_1/PURPOSE_DECISIONS.json`
 - Generate: `artifacts/review_drafts/r4_1/REVIEW_SUMMARY.md`
 
-- [ ] **Step 1: Write RED worksheet-boundary tests.**
+- [x] **Step 1: Write RED worksheet-boundary tests.**
 
   Require source-only inputs, deterministic bytes, bounded files/records/bytes,
   explicit unresolved decisions, no observed/runtime/bootstrap/model/solver
@@ -550,7 +550,7 @@ no scenario meaning has been selected or approved.
   `ordered_chain`, multiple non-conflict expressions, an opaque predicate or
   an unresolved structural substitute.
 
-- [ ] **Step 2: Implement the draft-only builder.**
+- [x] **Step 2: Implement the draft-only builder.**
 
   Read the corrected source universe once. Emit content-addressed worksheets
   with `draft_non_authoritative: true`, exact input identities and no default
@@ -561,7 +561,7 @@ no scenario meaning has been selected or approved.
   or accept runtime/artifact data as input. Build every input index and every
   worksheet in one process from one immutable source-universe snapshot.
 
-- [ ] **Step 3: Include all structural decisions.**
+- [x] **Step 3: Include all structural decisions.**
 
   The worksheet must enumerate: conflict sets preserved as alternatives; four
   linked families (at least two semantic `SIMULATE`, at least one
@@ -577,8 +577,12 @@ no scenario meaning has been selected or approved.
   one `ExpressionLink` root and at least two operands; each true multi-root
   family has two through eight roots and no conflict semantics. Relations
   `all`, `ordered_chain`, `any` and `conflict` satisfy neither topology.
+  A source-only draft may identify an exact ABI record as a non-selectable
+  authoring requirement when reviewed source cannot supply that record. Such a
+  placeholder is not an option or approval: it must be replaced by an exact
+  reviewed value and the worksheet regenerated before SR6 can accept it.
 
-- [ ] **Step 4: Generate twice and compare byte identities.**
+- [x] **Step 4: Generate twice and compare byte identities.**
 
   ```powershell
   python scripts/build_r4_1_review_worksheets.py --output artifacts/review_drafts/r4_1-a
@@ -588,7 +592,7 @@ no scenario meaning has been selected or approved.
   Expected: exact file-name, byte-length and SHA-256 equality. This proves only
   deterministic drafting, not review.
 
-- [ ] **Step 5: Promote only the verified A bytes.**
+- [x] **Step 5: Promote only the verified A bytes.**
 
   After A/B equality succeeds, atomically promote the exact verified A bytes
   from `artifacts/review_drafts/r4_1-a` to
@@ -604,7 +608,7 @@ no scenario meaning has been selected or approved.
   closed. Do not rerun the worksheet generator for the final path and do not
   silently regenerate on a missing or mismatched file.
 
-- [ ] **Step 6: Run contract, selector, inventory and static gates; commit the
+- [x] **Step 6: Run contract, selector, inventory and static gates; commit the
   generator and reproducible draft aids.**
 
   ```powershell
