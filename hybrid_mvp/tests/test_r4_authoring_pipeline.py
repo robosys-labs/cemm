@@ -16,9 +16,6 @@ from cemm_authoritative_hybrid.r4_authoring import (
 from cemm_authoritative_hybrid.r4_derivation_compiler import (
     ReviewedDerivationCompiler,
 )
-from cemm_authoritative_hybrid.r4_realization_compiler import (
-    ReviewedRealizationCompiler,
-)
 from cemm_authoritative_hybrid.r4_expansion import SourceUniverse
 from cemm_authoritative_hybrid.r4_supervision import (
     ProposalTarget,
@@ -239,12 +236,10 @@ def test_source_authoring_cache_is_deterministic_and_linearly_bounded() -> None:
 
 def test_reviewed_selection_expands_one_verified_proposal_candidate_per_supervised_case() -> None:
     selection, case_purposes = _reviewed_selection_inputs()
-    authority, _, _ = _source_inputs()
     cache = _cache()
     result = build_reviewed_proposal_authoring(
         universe=_combined_universe(),
         source_cache=cache,
-        authority=authority,
         selection=selection,
         case_purposes=case_purposes,
         review_refs=(
@@ -290,13 +285,11 @@ def test_reviewed_selection_expands_one_verified_proposal_candidate_per_supervis
             assert compiled.program.program_ref != compiled.expression.expression_ref
 
 
-def test_reviewed_selection_expands_one_compiling_initial_realization_per_supervised_case() -> None:
+def test_reviewed_selection_does_not_auto_promote_realization_rows() -> None:
     selection, case_purposes = _reviewed_selection_inputs()
-    authority, _, _ = _source_inputs()
     result = build_reviewed_proposal_authoring(
         universe=_combined_universe(),
         source_cache=_cache(),
-        authority=authority,
         selection=selection,
         case_purposes=case_purposes,
         review_refs=(
@@ -316,30 +309,7 @@ def test_reviewed_selection_expands_one_compiling_initial_realization_per_superv
         for case in result.universe.cases
         if source_disposition_is_supervision_eligible(case.source_disposition)
     }
-    by_case = {row.source_case_ref: row for row in result.realizations}
 
-    assert set(by_case) == supervised
-    assert len(result.realizations) == len(supervised)
-    assert all(row.authorized_surface.strip() for row in result.realizations)
-    assert all(
-        row.authorized_surface.strip().casefold()
-        not in {"[no authorized surface]", "[no surface]"}
-        for row in result.realizations
-    )
-    assert {
-        case_ref
-        for recipe in result.recipes
-        if recipe.recipe_kind == "realization"
-        for case_ref in recipe.member_case_refs
-    } == supervised
-
-    compiler = ReviewedRealizationCompiler(authority)
-    for case_ref, row in by_case.items():
-        case = result.cases_by_ref[case_ref]
-        proposal = result.proposal_targets_by_case[case_ref]
-        compiled = compiler.compile(case=case, proposal=proposal, row=row)
-        assert compiled.authorized_surface == row.authorized_surface
-        assert compiled.response_signature_ref == row.response_signature_ref
-        assert compiled.covered_slot_refs
-        if proposal.target_kind != "derive":
-            assert row.authorized_surface.strip().casefold() != case.surface.strip().casefold()
+    assert supervised
+    assert result.realizations == ()
+    assert not any(recipe.recipe_kind == "realization" for recipe in result.recipes)

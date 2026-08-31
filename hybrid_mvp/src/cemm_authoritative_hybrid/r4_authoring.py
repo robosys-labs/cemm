@@ -47,10 +47,6 @@ from .proposal_context import (
     VariableSlot,
 )
 from .r4_derivation_compiler import ReviewedDerivationCompiler
-from .r4_realization_compiler import (
-    ReviewedRealizationCompiler,
-    response_subject_from_proposal,
-)
 from .r3_codec import freeze_json, thaw_json
 from .r4_expansion import ExpandedCase, SourceUniverse
 from .r4_purpose import PURPOSES
@@ -58,20 +54,15 @@ from .r4_supervision import (
     BlueprintAction,
     DerivationBlueprint,
     GroundedSelectorBinding,
-    ExpressionSetResponseSubject,
-    LiteralAlignment,
     MutationContract,
     ProposalTarget,
     RealizationRow,
-    RealizationSlot,
     SourceAssignmentBlueprint,
     SourceAssignmentEntry,
     SourceSpan,
     StructuralSelectorBinding,
-    TypedGapResponseSubject,
     TypedAbstention,
     VerificationRejection,
-    VerifierRejectionResponseSubject,
     source_disposition_is_supervision_eligible,
 )
 
@@ -1820,112 +1811,10 @@ def _designation_selection_rows(selection: Mapping[str, object]) -> tuple[Mappin
     return tuple(rows)
 
 
-def _neutral_realization_surface(proposal: ProposalTarget) -> str:
-    if proposal.target_kind == "derive":
-        return "Acknowledged."
-    if proposal.target_kind == "abstain":
-        return "I need more reviewed evidence before I can answer."
-    if proposal.target_kind == "verification_rejection":
-        return "I rejected that invalid candidate."
-    raise ValueError("unknown proposal target kind")
-
-
-def _realization_family_key(
-    *,
-    case: ExpandedCase,
-    proposal: ProposalTarget,
-    surface: str,
-) -> tuple[object, ...]:
-    subject = response_subject_from_proposal(proposal)
-    response = case.contract.expected_response
-    return (
-        "realization",
-        subject.subject_kind,
-        proposal.expected_expression_relation,
-        case.language,
-        f"response_action:{response.discourse_action}",
-        response.polarity_ref,
-        response.modality_ref,
-        response.epistemic_status_ref,
-        "participant:system",
-        "participant:user",
-        surface,
-    )
-
-
-def _realization_slot_for_subject(subject) -> RealizationSlot:
-    if type(subject) is ExpressionSetResponseSubject:
-        return RealizationSlot.create(
-            slot_ref="response_slot:subject",
-            semantic_ref=subject.response_subject_ref,
-            required=True,
-            qualifier_refs=(),
-        )
-    if type(subject) is TypedGapResponseSubject:
-        return RealizationSlot.create(
-            slot_ref="response_slot:gap",
-            semantic_ref=subject.typed_gap.abstention_ref,
-            required=True,
-            qualifier_refs=(),
-        )
-    if type(subject) is VerifierRejectionResponseSubject:
-        return RealizationSlot.create(
-            slot_ref="response_slot:verifier_rejection",
-            semantic_ref=subject.verifier_rejection.verification_rejection_ref,
-            required=True,
-            qualifier_refs=(),
-        )
-    raise TypeError("unknown response subject")
-
-
-def _realization_row_for_case(
-    *,
-    case: ExpandedCase,
-    proposal: ProposalTarget,
-    review_refs: tuple[str, ...],
-) -> RealizationRow:
-    subject = response_subject_from_proposal(proposal)
-    surface = _neutral_realization_surface(proposal)
-    slot = _realization_slot_for_subject(subject)
-    literal_ref = stable_ref(
-        "reviewed_literal",
-        {
-            "literal": surface,
-            "language": case.language,
-            "review_refs": list(review_refs),
-        },
-    )
-    response = case.contract.expected_response
-    return RealizationRow.create(
-        source_case_ref=case.case_ref,
-        response_subject=subject,
-        bindings=(),
-        discourse_action_ref=f"response_action:{response.discourse_action}",
-        polarity_ref=response.polarity_ref,
-        modality_ref=response.modality_ref,
-        epistemic_status_ref=response.epistemic_status_ref,
-        output_speaker_ref="participant:system",
-        output_addressee_ref="participant:user",
-        authorized_surface=surface,
-        language=case.language,
-        semantic_slots=(slot,),
-        alignments=(
-            LiteralAlignment.create(
-                slot_ref=slot.slot_ref,
-                literal_source_ref=literal_ref,
-                surface_start=0,
-                surface_end=len(surface),
-            ),
-        ),
-        review_refs=review_refs,
-    )
-
-
 def build_reviewed_proposal_authoring(
     *,
     universe: SourceUniverse,
     source_cache: SourceAuthoringCache,
-    authority: LinkedAuthority,
     selection: Mapping[str, object],
     case_purposes: Mapping[str, str | None],
     review_refs: tuple[str, ...],
@@ -1938,8 +1827,6 @@ def build_reviewed_proposal_authoring(
         raise TypeError("universe must be exact SourceUniverse")
     if type(source_cache) is not SourceAuthoringCache:
         raise TypeError("source_cache must be exact SourceAuthoringCache")
-    if type(authority) is not LinkedAuthority:
-        raise TypeError("authority must be exact LinkedAuthority")
     reviews = exact_review_refs(review_refs)
     inputs = exact_ref_tuple(input_refs, "input_refs", nonempty=True)
     generator = exact_ref(generator_source_ref, "generator_source_ref", prefix="generator_source:")
@@ -2006,7 +1893,6 @@ def build_reviewed_proposal_authoring(
         designation_recipe_by_key[(purpose, decision)] = row
 
     compiler = ReviewedDerivationCompiler()
-    realization_compiler = ReviewedRealizationCompiler(authority)
     proposals: list[AuthoringCandidate] = []
     proposal_targets_by_case: dict[str, ProposalTarget] = {}
     operations = dict(source_cache.operation_counts)
@@ -2015,8 +1901,6 @@ def build_reviewed_proposal_authoring(
             "proposal_target_builds": 0,
             "derivation_compilations": 0,
             "designation_candidate_builds": 0,
-            "realization_row_builds": 0,
-            "realization_compilations": 0,
         }
     )
     for case in source_cache.cases:
@@ -2068,61 +1952,6 @@ def build_reviewed_proposal_authoring(
                 proposed_row=proposed_row,
             )
         )
-
-    realization_recipe_by_case: dict[str, AuthoringRecipe] = {}
-    realization_members: dict[tuple[str, tuple[object, ...]], list[str]] = {}
-    for case in source_cache.cases:
-        proposal = proposal_targets_by_case[case.case_ref]
-        purpose = case_purposes.get(case.case_ref)
-        if type(purpose) is not str:
-            raise ValueError("realization case lacks purpose")
-        surface = _neutral_realization_surface(proposal)
-        family_key = _realization_family_key(
-            case=case,
-            proposal=proposal,
-            surface=surface,
-        )
-        realization_members.setdefault((purpose, family_key), []).append(
-            case.case_ref
-        )
-    for (purpose, family_key), members in sorted(realization_members.items()):
-        row = AuthoringRecipe.create(
-            recipe_kind="realization",
-            purpose=purpose,
-            normalized_family_key=family_key,
-            member_case_refs=tuple(sorted(members)),
-            ancestry_refs=(),
-            reviewed_parameters={
-                "surface_template": family_key[-1],
-                "reviewed_literal_alignment": "full_surface",
-            },
-            review_refs=reviews,
-        )
-        recipes.append(row)
-        for case_ref in row.member_case_refs:
-            realization_recipe_by_case[case_ref] = row
-
-    realizations: list[RealizationRow] = []
-    for case in source_cache.cases:
-        proposal = proposal_targets_by_case[case.case_ref]
-        recipe = realization_recipe_by_case[case.case_ref]
-        row = _realization_row_for_case(
-            case=case,
-            proposal=proposal,
-            review_refs=reviews,
-        )
-        compiled = realization_compiler.compile(
-            case=case,
-            proposal=proposal,
-            row=row,
-        )
-        operations["realization_compilations"] += compiled.operation_count
-        operations["realization_row_builds"] += 1
-        if compiled.response_signature_ref != row.response_signature_ref:
-            raise ValueError("reviewed realization signature does not compile")
-        realizations.append(row)
-        if case.case_ref not in recipe.member_case_refs:
-            raise ValueError("realization row lacks a recipe owner")
 
     designations: list[AuthoringCandidate] = []
     for case in source_cache.cases:
@@ -2187,7 +2016,7 @@ def build_reviewed_proposal_authoring(
         proposal_targets_by_case=proposal_targets_by_case,
         proposals=tuple(proposals),
         designations=tuple(designations),
-        realizations=tuple(realizations),
+        realizations=(),
         mutation_contracts=(),
         mutation_families=(),
         recipes=tuple(sorted(recipes, key=lambda row: row.recipe_ref)),
