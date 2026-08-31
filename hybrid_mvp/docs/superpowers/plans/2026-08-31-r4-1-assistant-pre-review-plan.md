@@ -869,10 +869,9 @@ only explicitly reviewed actions through the normal preview/apply/export flow.
 
 Note: `test_r4_pre_review.py`, `test_r4_guided_review.py`,
 `test_r4_review_selection.py`, and the reduced `test_r4_review_server.py`
-suite passed. The aggregate server run was interrupted after isolating
-`test_guided_and_advanced_http_reviews_export_identical_validated_bytes` as a
-long quiet full-export stress path; Task 5 must either complete that path or
-record it as a residual verification risk.
+suite passed. The full-export server stress paths were then completed
+individually and passed, but they are long-running release/admission checks
+rather than fast iteration gates.
 
 Run:
 
@@ -903,13 +902,11 @@ git commit -m "feat(r4): add assistant pre-review CLI"
 Verified: `test_r4_pre_review.py`, `test_r4_guided_review.py`,
 `test_r4_review_selection.py`, `test_r4_supervision_contracts.py`,
 `test_r4_supervision_compilers.py`, reduced `test_r4_review_server.py`, the
-pre-review CLI, and `compileall` passed. The full-export server equivalence
-test
-`test_guided_and_advanced_http_reviews_export_identical_validated_bytes` was
-rerun in isolation and stayed quiet for about five minutes before interruption,
-without producing a failure trace. The full-export stress paths must be rerun
-as long-running verification before merging this work into a release/admission
-checkpoint.
+pre-review CLI, and `compileall` passed. The full-export server stress tests
+`test_guided_and_advanced_http_reviews_export_identical_validated_bytes` and
+`test_full_http_review_exports_deterministic_validated_bytes` were rerun
+individually and passed after long quiet execution windows. Treat these as
+release/admission stress checks, not frequent fast iteration gates.
 
 Run:
 
