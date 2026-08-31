@@ -8,8 +8,10 @@ from scripts.build_r4_1_review_selection import build_selection_template_bytes
 from scripts.build_r4_1_review_worksheets import build_review_worksheet_draft
 from scripts.r4_1_pre_review import (
     RecommendationClass,
+    build_pre_review_cohorts,
     build_pre_review_records,
     preflight_designation_source,
+    write_pre_review_outputs,
 )
 from scripts.r4_1_review_session import ReviewPaths, ReviewSession
 
@@ -154,3 +156,66 @@ def test_pre_review_records_are_deterministic_and_inert(
     assert hashlib.sha256(
         repr(first[0].to_json()).encode("utf-8")
     ).hexdigest()
+
+
+def test_pre_review_cohorts_exclude_human_required_records(
+    tmp_path: Path,
+) -> None:
+    paths = _review_paths(tmp_path)
+    records = build_pre_review_records(ReviewSession.open(paths))
+
+    cohorts = build_pre_review_cohorts(records)
+
+    assert all(
+        cohort["recommendation_class"] == "approve_candidate"
+        for cohort in cohorts
+    )
+    assert all(
+        1 <= len(cohort["member_record_refs"]) <= 512
+        for cohort in cohorts
+    )
+    human_required = {
+        record.record_ref
+        for record in records
+        if record.recommendation_class
+        == RecommendationClass.NEEDS_INDIVIDUAL_REVIEW
+    }
+    assert not any(
+        human_required.intersection(cohort["member_record_refs"])
+        for cohort in cohorts
+    )
+
+
+def test_write_pre_review_outputs_is_deterministic_and_does_not_touch_selection(
+    tmp_path: Path,
+) -> None:
+    paths = _review_paths(tmp_path)
+    output_root = tmp_path / "draft" / "pre_review"
+    session = ReviewSession.open(paths)
+    records = build_pre_review_records(session)
+
+    first = write_pre_review_outputs(
+        records=records,
+        output_root=output_root,
+    )
+    first_bytes = {
+        path.name: path.read_bytes()
+        for path in sorted(output_root.iterdir())
+    }
+    second = write_pre_review_outputs(
+        records=records,
+        output_root=output_root,
+    )
+    second_bytes = {
+        path.name: path.read_bytes()
+        for path in sorted(output_root.iterdir())
+    }
+
+    assert first == second
+    assert first_bytes == second_bytes
+    assert set(first_bytes) == {
+        "PRE_REVIEW_RECOMMENDATIONS.jsonl",
+        "PRE_REVIEW_SUMMARY.md",
+    }
+    assert not paths.working_path.exists()
+    assert not paths.export_path.exists()

@@ -7,9 +7,12 @@ import hashlib
 import json
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 from typing import Mapping
 
 from cemm_authoritative_hybrid.canonical import stable_ref
+from scripts.build_r4_1_review_selection import write_exact_output
+from scripts.build_r4_1_review_worksheets import _json_bytes
 from scripts.r4_1_review_session import (
     ReviewAction,
     ReviewSession,
@@ -18,6 +21,7 @@ from scripts.r4_1_review_session import (
 
 
 MAX_PRE_REVIEW_RECORDS = 2048
+MAX_PRE_REVIEW_COHORT_MEMBERS = 512
 
 
 class RecommendationClass(StrEnum):
@@ -92,6 +96,16 @@ def _wire(value: object) -> object:
     if isinstance(value, StrEnum):
         return value.value
     return copy.deepcopy(value)
+
+
+def _json_digest(value: object) -> str:
+    raw = json.dumps(
+        _wire(value),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
 
 
 def _first_surface_example(row: Mapping[str, object]) -> str | None:
@@ -408,3 +422,136 @@ def build_pre_review_records(
     if len(records) > MAX_PRE_REVIEW_RECORDS:
         raise ValueError("pre-review record count exceeds bound")
     return tuple(records)
+
+
+def _cohort_key(record: PreReviewRecord) -> tuple[str, str, str] | None:
+    if (
+        record.recommendation_class
+        != RecommendationClass.APPROVE_CANDIDATE
+        or record.action is None
+        or not record.cohort_eligible
+    ):
+        return None
+    action = dict(record.action)
+    key_action = {
+        "action_kind": action.get("action_kind"),
+        "selected_value": action.get("selected_value"),
+    }
+    return record.phase, record.row_kind, _json_digest(key_action)
+
+
+def build_pre_review_cohorts(
+    records: tuple[PreReviewRecord, ...],
+) -> tuple[dict[str, object], ...]:
+    grouped: dict[tuple[str, str, str], list[PreReviewRecord]] = {}
+    for record in records:
+        key = _cohort_key(record)
+        if key is not None:
+            grouped.setdefault(key, []).append(record)
+
+    cohorts: list[dict[str, object]] = []
+    for sequence, ((phase, row_kind, action_digest), members) in enumerate(
+        sorted(grouped.items()),
+        start=1,
+    ):
+        refs = tuple(sorted(record.record_ref for record in members))
+        for offset in range(0, len(refs), MAX_PRE_REVIEW_COHORT_MEMBERS):
+            chunk = refs[offset : offset + MAX_PRE_REVIEW_COHORT_MEMBERS]
+            material = {
+                "phase": phase,
+                "row_kind": row_kind,
+                "action_digest": action_digest,
+                "member_record_refs": list(chunk),
+            }
+            cohorts.append(
+                {
+                    "cohort_ref": stable_ref(
+                        "r4_1_pre_review_cohort",
+                        material,
+                    ),
+                    "phase": phase,
+                    "row_kind": row_kind,
+                    "recommendation_class": (
+                        RecommendationClass.APPROVE_CANDIDATE.value
+                    ),
+                    "member_record_refs": list(chunk),
+                    "member_count": len(chunk),
+                    "sequence": sequence,
+                }
+            )
+    return tuple(cohorts)
+
+
+def _summary_bytes(
+    *,
+    records: tuple[PreReviewRecord, ...],
+    cohorts: tuple[dict[str, object], ...],
+) -> bytes:
+    counts: dict[str, int] = {item.value: 0 for item in RecommendationClass}
+    for record in records:
+        counts[record.recommendation_class.value] += 1
+    lines = [
+        "# R4.1 Assistant Pre-Review Summary",
+        "",
+        (
+            "This file is advisory review-draft material only. It is not "
+            "semantic authority and does not approve gold."
+        ),
+        "",
+        "## Counts",
+        "",
+    ]
+    for key in sorted(counts):
+        lines.append(f"- `{key}`: {counts[key]}")
+    lines.extend(
+        [
+            "",
+            "## Cohorts",
+            "",
+            f"- Advisory approval cohorts: {len(cohorts)}",
+            "",
+            "## Files",
+            "",
+            (
+                "- `PRE_REVIEW_RECOMMENDATIONS.jsonl`: one advisory "
+                "record per current review target."
+            ),
+        ]
+    )
+    return ("\n".join(lines) + "\n").encode("utf-8")
+
+
+def write_pre_review_outputs(
+    *,
+    records: tuple[PreReviewRecord, ...],
+    output_root: Path,
+) -> Mapping[str, object]:
+    output_root.mkdir(parents=True, exist_ok=True)
+    cohorts = build_pre_review_cohorts(records)
+    ledger_raw = b"".join(
+        _json_bytes(record.to_json()) + b"\n"
+        for record in records
+    )
+    summary_raw = _summary_bytes(records=records, cohorts=cohorts)
+    ledger_path = output_root / "PRE_REVIEW_RECOMMENDATIONS.jsonl"
+    summary_path = output_root / "PRE_REVIEW_SUMMARY.md"
+    write_exact_output(
+        output_path=ledger_path,
+        raw=ledger_raw,
+        owner="R4.1 assistant pre-review ledger",
+        allow_identical_existing=True,
+    )
+    write_exact_output(
+        output_path=summary_path,
+        raw=summary_raw,
+        owner="R4.1 assistant pre-review summary",
+        allow_identical_existing=True,
+    )
+    return {
+        "record_count": len(records),
+        "cohort_count": len(cohorts),
+        "ledger_path": str(ledger_path),
+        "summary_path": str(summary_path),
+        "ledger_sha256": hashlib.sha256(ledger_raw).hexdigest(),
+        "summary_sha256": hashlib.sha256(summary_raw).hexdigest(),
+    }

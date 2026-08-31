@@ -516,7 +516,7 @@ git commit -m "feat(r4): build advisory pre-review records"
 - Modify: `hybrid_mvp/scripts/r4_1_pre_review.py`
 - Modify: `hybrid_mvp/tests/test_r4_pre_review.py`
 
-- [ ] **Step 1: Add tests for output determinism and conservative cohorts**
+- [x] **Step 1: Add tests for output determinism and conservative cohorts**
 
 Append:
 
@@ -567,7 +567,7 @@ def test_write_pre_review_outputs_is_deterministic_and_does_not_touch_selection(
     assert not paths.export_path.exists()
 ```
 
-- [ ] **Step 2: Run the new tests to verify they fail**
+- [x] **Step 2: Run the new tests to verify they fail**
 
 Run:
 
@@ -577,7 +577,7 @@ python -m pytest hybrid_mvp/tests/test_r4_pre_review.py::test_pre_review_cohorts
 
 Expected: fail with missing `build_pre_review_cohorts` and `write_pre_review_outputs`.
 
-- [ ] **Step 3: Implement output writing**
+- [x] **Step 3: Implement output writing**
 
 Extend `hybrid_mvp/scripts/r4_1_pre_review.py`:
 
@@ -682,7 +682,7 @@ def write_pre_review_outputs(
     }
 ```
 
-- [ ] **Step 4: Run the focused tests**
+- [x] **Step 4: Run the focused tests**
 
 Run:
 
@@ -692,7 +692,7 @@ python -m pytest hybrid_mvp/tests/test_r4_pre_review.py -q
 
 Expected: all pre-review tests pass.
 
-- [ ] **Step 5: Commit Task 3**
+- [x] **Step 5: Commit Task 3**
 
 Run:
 
