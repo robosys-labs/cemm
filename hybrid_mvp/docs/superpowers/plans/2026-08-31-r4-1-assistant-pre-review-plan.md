@@ -898,7 +898,15 @@ git commit -m "feat(r4): add assistant pre-review CLI"
 **Files:**
 - Modify: `hybrid_mvp/docs/superpowers/plans/2026-08-31-r4-1-assistant-pre-review-plan.md`
 
-- [ ] **Step 1: Run the full relevant validation set**
+- [x] **Step 1: Run the full relevant validation set**
+
+Verified: `test_r4_pre_review.py`, `test_r4_guided_review.py`,
+`test_r4_review_selection.py`, `test_r4_supervision_contracts.py`,
+`test_r4_supervision_compilers.py`, reduced `test_r4_review_server.py`, the
+pre-review CLI, and `compileall` passed. The two full-export server stress
+tests remained too quiet to complete inside the bounded interactive run and
+must be rerun as a long-running verification before merging this work into a
+release/admission checkpoint.
 
 Run:
 
@@ -910,7 +918,7 @@ python -m compileall hybrid_mvp/scripts hybrid_mvp/src hybrid_mvp/tests -q
 
 Expected: all commands exit 0. The pre-review command writes advisory outputs only under `hybrid_mvp/artifacts/review_drafts/r4_1_pre_review/`.
 
-- [ ] **Step 2: Inspect generated advisory outputs**
+- [x] **Step 2: Inspect generated advisory outputs**
 
 Run:
 
@@ -921,7 +929,7 @@ Get-Content -LiteralPath hybrid_mvp/artifacts/review_drafts/r4_1_pre_review/PRE_
 
 Expected: summary states the advisory boundary, and blocked/individual records do not contain approval actions.
 
-- [ ] **Step 3: Confirm no selection mutation**
+- [x] **Step 3: Confirm no selection mutation**
 
 Run:
 
@@ -931,7 +939,7 @@ git status --short
 
 Expected: source/test/doc changes and advisory draft outputs may be present; `hybrid_mvp/artifacts/review_inputs/r4_1/SELECTION_WORKING.json` and `hybrid_mvp/artifacts/review_inputs/r4_1/SELECTION.json` are absent or unchanged unless the human reviewer separately used the review UI.
 
-- [ ] **Step 4: Mark plan checkboxes and commit the final tracker update**
+- [x] **Step 4: Mark plan checkboxes and commit the final tracker update**
 
 Update each completed checkbox in this plan from `- [ ]` to `- [x]`, then run:
 
