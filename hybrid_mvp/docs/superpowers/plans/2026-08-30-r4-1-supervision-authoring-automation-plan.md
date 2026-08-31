@@ -1643,7 +1643,7 @@ git commit -m "feat(r4): author proposal and designation candidates"
 - Modify: `tests/test_r4_review_worksheets.py`
 - Regenerate: `artifacts/review_drafts/r4_1/SUPERVISION_DECISIONS.json`
 
-- [ ] **Step 1: Write failing full-realization and family-key tests**
+- [x] **Step 1: Write failing full-realization and family-key tests**
 
 ```python
 def test_every_supervised_case_has_one_compiling_initial_realization(
@@ -1685,7 +1685,7 @@ Add tests for input echo, empty/placeholder surface, missing alignment, more
 than four alternatives, more than 128 realization recipes in one purpose and
 bootstrap episode migration.
 
-- [ ] **Step 2: Run tests and verify the 380-surface blocker**
+- [x] **Step 2: Run tests and verify the 380-surface blocker**
 
 ```powershell
 python -m pytest tests/test_r4_authoring_pipeline.py tests/test_r4_review_worksheets.py -k realization -q
@@ -1694,7 +1694,7 @@ python -m pytest tests/test_r4_authoring_pipeline.py tests/test_r4_review_worksh
 Expected: failure because 380 cases lack surfaces and all bootstrap episodes
 are predecessor-shaped.
 
-- [ ] **Step 3: Add the reviewed recipe vocabulary to the existing worksheet**
+- [x] **Step 3: Add the reviewed recipe vocabulary to the existing worksheet**
 
 The `realization_recipes` section of `SUPERVISION_DECISIONS.json` contains only
 purpose-scoped recipes with these exact fields:
@@ -1732,7 +1732,7 @@ context and exact case refs. The worksheet's `realization_exceptions` array is
 exact-empty when all cases compile; otherwise it contains non-selectable
 candidate envelopes with exact error codes and no ABI row.
 
-- [ ] **Step 4: Produce reviewer worksheets, not automatic gold**
+- [x] **Step 4: Produce reviewer worksheets, not automatic gold**
 
 Generate bounded neutral-surface suggestions grouped by complete semantic key.
 Suggestions remain `selectable: false`. Review every recipe, especially safe
