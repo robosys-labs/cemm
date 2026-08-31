@@ -7,8 +7,20 @@ import json
 from pathlib import Path
 
 from cemm_authoritative_hybrid.authority import AuthorityLinker
+from cemm_authoritative_hybrid.canonical import stable_ref
 from cemm_authoritative_hybrid.config import RuntimeConfig
-from cemm_authoritative_hybrid.r4_authoring import build_source_authoring_cache
+from cemm_authoritative_hybrid.r4_authoring import (
+    build_reviewed_proposal_authoring,
+    build_source_authoring_cache,
+)
+from cemm_authoritative_hybrid.r4_derivation_compiler import (
+    ReviewedDerivationCompiler,
+)
+from cemm_authoritative_hybrid.r4_expansion import SourceUniverse
+from cemm_authoritative_hybrid.r4_supervision import (
+    ProposalTarget,
+    source_disposition_is_supervision_eligible,
+)
 from cemm_authoritative_hybrid.r4_contracts import ReviewedScenario
 from cemm_authoritative_hybrid.r4_expansion import expand_reviewed_source_universe
 
@@ -49,6 +61,43 @@ def _cache():
         authority=authority,
         form_pack=form_pack,
         config=RuntimeConfig.release(),
+    )
+
+
+@lru_cache(maxsize=1)
+def _reviewed_selection_inputs():
+    selection = json.loads(
+        (ROOT / "artifacts/review_inputs/r4_1/SELECTION.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    case_purposes = {}
+    for family in selection["proposal_recipe_selections"]:
+        for recipe in family["purpose_recipes"]:
+            if recipe["decision"] != "approve":
+                continue
+            for case_ref in recipe["member_case_refs"]:
+                assert case_ref not in case_purposes
+                case_purposes[case_ref] = recipe["purpose"]
+    assert len(case_purposes) == 388
+    return selection, case_purposes
+
+
+@lru_cache(maxsize=1)
+def _combined_universe():
+    _, cases, _ = _source_inputs()
+    counts = {}
+    for case in cases:
+        counts[case.source_disposition.value] = (
+            counts.get(case.source_disposition.value, 0) + 1
+        )
+    return SourceUniverse(
+        cases=tuple(cases),
+        scenario_count=len({case.scenario_ref for case in cases}),
+        expanded_count=len(cases),
+        disposition_counts=counts,
+        case_set_digest="reviewed-selection-test",
+        operation_counts={},
     )
 
 
@@ -183,3 +232,54 @@ def test_source_authoring_cache_is_deterministic_and_linearly_bounded() -> None:
         for lattice in left.form_lattices_by_case.values()
     )
     assert left.operation_count <= 4 * len(left.cases) + 8 * unit_count
+
+
+def test_reviewed_selection_expands_one_verified_proposal_candidate_per_supervised_case() -> None:
+    selection, case_purposes = _reviewed_selection_inputs()
+    cache = _cache()
+    result = build_reviewed_proposal_authoring(
+        universe=_combined_universe(),
+        source_cache=cache,
+        selection=selection,
+        case_purposes=case_purposes,
+        review_refs=(
+            stable_ref(
+                "source_review",
+                {
+                    "selection_template_ref": selection["selection_template_ref"],
+                    "reviewer_refs": selection["reviewer_refs"],
+                },
+            ),
+        ),
+        input_refs=(selection["selection_template_ref"],),
+        generator_source_ref="generator_source:r4_1_reviewed_selection",
+    )
+
+    supervised = {
+        case.case_ref
+        for case in result.universe.cases
+        if source_disposition_is_supervision_eligible(case.source_disposition)
+    }
+    assert {row.source_case_ref for row in result.proposals} == supervised
+    assert set(result.proposal_targets_by_case) == supervised
+    assert all(row.selectable for row in result.proposals)
+    assert all(row.proposed_row is not None for row in result.proposals)
+    assert {row.source_case_ref for row in result.designations} == supervised
+    assert all(row.selectable for row in result.designations)
+
+    compiler = ReviewedDerivationCompiler()
+    for case_ref, target in result.proposal_targets_by_case.items():
+        assert type(target) is ProposalTarget
+        if target.target_kind != "derive":
+            assert not target.derivations
+            continue
+        case = result.cases_by_ref[case_ref]
+        context = result.proposal_contexts_by_case[case_ref]
+        for blueprint in target.derivations:
+            compiled = compiler.compile(
+                case=case,
+                context=context,
+                blueprint=blueprint,
+            )
+            assert compiled.expression.expression_ref == blueprint.expected_expression_ref
+            assert compiled.program.program_ref != compiled.expression.expression_ref

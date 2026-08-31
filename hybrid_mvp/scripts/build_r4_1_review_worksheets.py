@@ -120,6 +120,7 @@ _COMPILER_MODULES = (
     "r3_codec.py",
     "r3_persistence.py",
     "r4_contracts.py",
+    "r4_derivation_compiler.py",
     "r4_expansion.py",
     "_r4_source_codec.py",
     "r4_authoring.py",

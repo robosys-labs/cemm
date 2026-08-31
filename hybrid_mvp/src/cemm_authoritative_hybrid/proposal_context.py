@@ -2086,6 +2086,25 @@ class ProposalContextBuilder:
         )
         if not binder_refs:
             return (), ()
+        def local_binder_refs(source_unit_refs: tuple[str, ...]) -> tuple[str, ...]:
+            value_units = tuple(unit_by_ref[ref] for ref in source_unit_refs)
+            value_start = min(unit.source_start for unit in value_units)
+            value_end = max(unit.source_end for unit in value_units)
+            scored = []
+            for ref in binder_refs:
+                unit = unit_by_ref[ref]
+                if unit.source_end <= value_start:
+                    distance = value_start - unit.source_end
+                elif value_end <= unit.source_start:
+                    distance = unit.source_start - value_end
+                else:
+                    distance = 0
+                scored.append((distance, unit.source_start, unit.source_end, ref))
+            if not scored:
+                return ()
+            best_distance = min(distance for distance, *_rest in scored)
+            return tuple(ref for distance, _start, _end, ref in scored if distance == best_distance)
+
         for designation in designations:
             if (
                 designation.target_kind != "state_value"
@@ -2106,7 +2125,7 @@ class ProposalContextBuilder:
                         unit_by_ref[ref]
                         for ref in {
                             *designation.source_unit_refs,
-                            *binder_refs,
+                            *local_binder_refs(designation.source_unit_refs),
                         }
                     ),
                     key=lambda unit: (
@@ -2454,7 +2473,25 @@ class ProposalContextBuilder:
             for unit in form_lattice.units
             if any(category == "binder" for category, _ in unit.features)
         )
-        support_refs = tuple(dict.fromkeys((*query_refs, *binder_refs)))
+        def local_binder_refs(source_unit_refs: tuple[str, ...]) -> tuple[str, ...]:
+            value_units = tuple(unit_by_ref[ref] for ref in source_unit_refs)
+            value_start = min(unit.source_start for unit in value_units)
+            value_end = max(unit.source_end for unit in value_units)
+            scored = []
+            for ref in binder_refs:
+                unit = unit_by_ref[ref]
+                if unit.source_end <= value_start:
+                    distance = value_start - unit.source_end
+                elif value_end <= unit.source_start:
+                    distance = unit.source_start - value_end
+                else:
+                    distance = 0
+                scored.append((distance, unit.source_start, unit.source_end, ref))
+            if not scored:
+                return ()
+            best_distance = min(distance for distance, *_rest in scored)
+            return tuple(ref for distance, _start, _end, ref in scored if distance == best_distance)
+
         contributions: list[ContributionSlot] = []
         frames: list[ApplicationFrameSlot] = []
         for designation in designations:
@@ -2476,6 +2513,14 @@ class ProposalContextBuilder:
             predicate_source_refs = nominal_source_refs.get(
                 designation.slot_ref,
                 designation.source_unit_refs,
+            )
+            support_refs = tuple(
+                dict.fromkeys(
+                    (
+                        *query_refs,
+                        *local_binder_refs(designation.source_unit_refs),
+                    )
+                )
             )
             provenance = tuple(
                 dict.fromkeys(

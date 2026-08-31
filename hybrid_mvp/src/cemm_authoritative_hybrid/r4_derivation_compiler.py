@@ -72,6 +72,40 @@ class ReviewedDerivationCompiler:
             raise DerivationCompilationError(
                 "every observed source unit must be assigned exactly once"
             )
+        for row in assignment_blueprint.assignments:
+            if row.assignment_kind == "residual":
+                if row.contribution_slot_ref.startswith("residual_evidence:"):
+                    residual_matches = any(
+                        residual.residual_ref == row.contribution_slot_ref
+                        and residual.source_unit_ref == row.source_unit_ref
+                        and residual.contribution_kind == row.contribution_kind
+                        and residual.critical == row.critical
+                        for residual in context.residual_evidence
+                    )
+                else:
+                    contribution = context.contribution(row.contribution_slot_ref)
+                    residual_matches = (
+                        contribution is not None
+                        and contribution.kind == row.contribution_kind
+                        and row.source_unit_ref in contribution.source_unit_refs
+                    )
+                if not residual_matches:
+                    raise DerivationCompilationError(
+                        "residual assignment is absent from immutable context"
+                    )
+                continue
+            contribution = context.contribution(row.contribution_slot_ref)
+            if contribution is None:
+                raise DerivationCompilationError(
+                    "source assignment contribution is absent from context"
+                )
+            if (
+                contribution.kind != row.contribution_kind
+                or row.source_unit_ref not in contribution.source_unit_refs
+            ):
+                raise DerivationCompilationError(
+                    "source assignment contribution differs from immutable context"
+                )
 
         selectors = {
             row.selector_handle: row for row in blueprint.selector_bindings
@@ -101,6 +135,16 @@ class ReviewedDerivationCompiler:
                     raise DerivationCompilationError(
                         "blueprint selects an unknown mode slot"
                     )
+                if selector.selector_kind == "reference_slot":
+                    reference = context.reference(selector.value_ref)
+                    if reference is None:
+                        raise DerivationCompilationError(
+                            "blueprint selects an unknown reference slot"
+                        )
+                    if reference.source_unit_refs:
+                        raise DerivationCompilationError(
+                            "source-bearing reference slots require grounded selectors"
+                        )
             else:
                 raise DerivationCompilationError("unknown selector binding type")
 
@@ -115,7 +159,8 @@ class ReviewedDerivationCompiler:
                 action_index=row.action_index,
                 action_type=row.action_type,
                 arguments=tuple(
-                    selectors[handle].value_ref for handle in row.selector_handles
+                    self._program_argument(selectors[handle].value_ref)
+                    for handle in row.selector_handles
                 ),
                 source_unit_refs=tuple(action_sources[row.action_index]),
             )
@@ -188,6 +233,14 @@ class ReviewedDerivationCompiler:
         )
 
     @staticmethod
+    def _program_argument(value_ref: str) -> str:
+        if value_ref == "action_variant:role":
+            return "role"
+        if value_ref == "action_variant:link":
+            return "link"
+        return value_ref
+
+    @staticmethod
     def _validate_grounded_selector(
         *,
         selector: GroundedSelectorBinding,
@@ -206,6 +259,7 @@ class ReviewedDerivationCompiler:
             "designation_slot": "designation",
             "frame_slot": "frame",
             "contribution_slot": "contribution",
+            "mode_slot": "mode_slot",
             "reference_slot": "reference",
             "scope_slot": "scope",
             "expression_link_slot": "expression_link",
@@ -218,36 +272,73 @@ class ReviewedDerivationCompiler:
                 "grounded selector graph component is absent from context"
             )
 
+        spans_by_unit = {
+            unit_ref: (start, end)
+            for unit_ref, start, end in context.source_unit_spans
+        }
+        unit_by_span = {span: unit_ref for unit_ref, span in spans_by_unit.items()}
+        actual_spans = tuple((row.start, row.end) for row in selector.spans)
         if selector.source_selector_kind == "source_unit":
             assignment = assignments_by_unit.get(selector.source_selector_ref)
             if assignment is None:
                 raise DerivationCompilationError(
                     "grounded source unit is not owned by an assignment"
                 )
-            source_unit_refs = (selector.source_selector_ref,)
+            try:
+                span_source_unit_refs = tuple(unit_by_span[span] for span in actual_spans)
+            except KeyError as exc:
+                raise DerivationCompilationError(
+                    "grounded selector span differs from immutable context geometry"
+                ) from exc
+            component_source_unit_refs = getattr(component, "source_unit_refs", ())
+            if component_source_unit_refs and selector.selector_kind != "mode_slot":
+                if selector.source_selector_ref not in component_source_unit_refs:
+                    raise DerivationCompilationError(
+                        "grounded source unit is not part of its immutable component"
+                    )
+                if set(span_source_unit_refs) != set(component_source_unit_refs):
+                    raise DerivationCompilationError(
+                        "grounded component source units differ from immutable context"
+                    )
+            elif selector.source_selector_ref not in span_source_unit_refs:
+                raise DerivationCompilationError(
+                    "grounded source unit is not covered by selector spans"
+                )
+            missing_units = tuple(
+                unit_ref
+                for unit_ref in span_source_unit_refs
+                if unit_ref not in assignments_by_unit
+            )
+            if missing_units:
+                raise DerivationCompilationError(
+                    "grounded component source units are not fully assigned"
+                )
+            source_unit_refs = span_source_unit_refs
         else:
             matches = tuple(
                 row
                 for row in assignments_by_unit.values()
                 if row.contribution_slot_ref == selector.source_selector_ref
             )
-            if len(matches) != 1:
-                raise DerivationCompilationError(
-                    "grounded contribution is not owned by one assignment"
-                )
             contribution = context.contribution(selector.source_selector_ref)
             if contribution is None:
                 raise DerivationCompilationError(
                     "grounded contribution is absent from context"
                 )
+            expected_units = contribution.source_unit_refs
+            if len(matches) != len(expected_units):
+                raise DerivationCompilationError(
+                    "grounded contribution is not owned by its exact assignments"
+                )
+            if {row.source_unit_ref for row in matches} != set(expected_units):
+                raise DerivationCompilationError(
+                    "grounded contribution ownership differs from immutable source units"
+                )
             source_unit_refs = contribution.source_unit_refs
 
-        spans_by_unit = {
-            unit_ref: (start, end)
-            for unit_ref, start, end in context.source_unit_spans
-        }
-        expected_spans = tuple(spans_by_unit[unit_ref] for unit_ref in source_unit_refs)
-        actual_spans = tuple((row.start, row.end) for row in selector.spans)
+        expected_spans = tuple(
+            sorted((spans_by_unit[unit_ref] for unit_ref in source_unit_refs))
+        )
         if actual_spans != expected_spans or any(
             start < 0 or end <= start or end > len(case.surface)
             for start, end in actual_spans

@@ -108,8 +108,9 @@ _ABI_VERSIONS = {
 _STRUCTURAL_SELECTOR_PREFIXES: Mapping[str, tuple[str, ...]] = {
     "context_slot": ("proposal_context:",),
     "mode_slot": ("mode_slot:",),
-    "local_node": ("application:", "expression_link:", "scope:", "binder:", "local_node:"),
+    "local_node": ("application:", "expression_link:", "link:", "scope:", "binder:", "local_node:"),
     "role_ref": ("role:",),
+    "reference_slot": ("reference_slot:",),
     "variant_tag": ("action_variant:",),
 }
 _GROUNDED_SELECTOR_PREFIXES: Mapping[str, tuple[str, ...]] = {
@@ -163,10 +164,10 @@ _ACTION_FIELD_SHAPES: Mapping[str, tuple[str, tuple[str, ...]]] = {
     "literal:role": ("variant_tag", ("action_variant:role",)),
     "literal:link": ("variant_tag", ("action_variant:link",)),
     "parent_application_ref": ("local_node", ("application:",)),
-    "child_node_ref": ("local_node", ("application:", "expression_link:", "scope:", "binder:")),
-    "link_local_ref": ("local_node", ("expression_link:",)),
+    "child_node_ref": ("local_node", ("application:", "expression_link:", "link:", "scope:", "binder:")),
+    "link_local_ref": ("local_node", ("expression_link:", "link:")),
     "expression_link_slot_ref": ("expression_link_slot", ("expression_link_slot:",)),
-    "operand_node_refs[2:24]": ("local_node", ("application:", "expression_link:", "scope:", "binder:")),
+    "operand_node_refs[2:24]": ("local_node", ("application:", "expression_link:", "link:", "scope:", "binder:")),
     "scope_local_ref": ("local_node", ("scope:",)),
     "scope_slot_ref": ("scope_slot", ("scope_slot:",)),
     "operand_node_ref": ("local_node", ("application:", "expression_link:", "scope:", "binder:")),
@@ -1755,9 +1756,7 @@ class SourceAssignmentEntry:
         else:
             if action_index is None or residual is not None:
                 raise ValueError("consumed assignment requires a target action and no residual kind")
-            requires_role = assignment in {"reference", "qualifier"} or (
-                assignment == "role" and contribution not in {"binder", "open_variable"}
-            )
+            requires_role = assignment in {"role", "reference", "qualifier"}
             if requires_role != (role is not None):
                 raise ValueError("consumed assignment target-role ownership is incompatible with its contribution")
         material = {
@@ -1768,7 +1767,11 @@ class SourceAssignmentEntry:
             "contribution_slot_ref": _exact_selector_ref(
                 contribution_slot_ref,
                 "contribution_slot_ref",
-                prefixes=("contribution_slot:",),
+                prefixes=(
+                    ("residual_evidence:", "contribution_slot:")
+                    if assignment == "residual"
+                    else ("contribution_slot:",)
+                ),
             ),
             "contribution_kind": contribution,
             "assignment_kind": assignment,
@@ -2066,7 +2069,34 @@ class DerivationBlueprint:
                 and row.source_selector_kind == "contribution"
                 and row.source_selector_ref == assignment.contribution_slot_ref
             )
-            if len(contribution_bindings) != 1:
+            mode_discourse_via_source_units = (
+                compatibility == ("discourse", "discourse", "select_mode")
+                and len(contribution_bindings) == 0
+                and any(
+                    type(row) is GroundedSelectorBinding
+                    and row.selector_kind == "mode_slot"
+                    and row.source_selector_kind == "source_unit"
+                    for row in target_bindings
+                )
+            )
+            variable_projection_via_source_units = (
+                compatibility in {
+                    ("open_variable", "role", "project_variable"),
+                    ("binder", "role", "project_variable"),
+                }
+                and len(contribution_bindings) == 0
+                and any(
+                    type(row) is GroundedSelectorBinding
+                    and row.selector_kind == "variable_slot"
+                    and row.source_selector_kind == "source_unit"
+                    for row in target_bindings
+                )
+            )
+            if (
+                len(contribution_bindings) != 1
+                and not mode_discourse_via_source_units
+                and not variable_projection_via_source_units
+            ):
                 raise ValueError(
                     "source assignment contribution slot must resolve once through its target action"
                 )
@@ -2074,7 +2104,7 @@ class DerivationBlueprint:
                 if not any(
                     row.selector_kind == "role_ref" and row.value_ref == assignment.target_role_ref
                     for row in target_bindings
-                ):
+                ) and target_action.action_type != "project_variable":
                     raise ValueError("source assignment target role is not bound by its target action")
         expression_ref = exact_content_ref(expected_expression_ref, "expected_expression_ref", prefix="expression:")
         material = {
