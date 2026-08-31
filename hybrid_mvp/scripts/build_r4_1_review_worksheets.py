@@ -1168,6 +1168,31 @@ def _supervision_rows(
         prior = family_definition_owners.get(suggestion.family_ref)
         if prior is None or suggestion.source_case_ref < prior:
             family_definition_owners[suggestion.family_ref] = suggestion.source_case_ref
+    realization_family_definition_owners: dict[str, str] = {}
+    for case in authoring_cache.cases:
+        expected_response = (
+            None
+            if case.contract.expected_response is None
+            else case.contract.expected_response.as_dict()
+        )
+        target_kind = _proposal_target_kind(case.source_disposition.value)
+        surface = _neutral_realization_surface(target_kind)
+        family = _realization_family_definition(
+            target_kind=target_kind,
+            language=case.language,
+            response_contract=expected_response,
+            surface_template=surface,
+        )
+        family_ref = stable_ref(
+            "realization_recipe_family_suggestion",
+            {
+                "target_kind": target_kind,
+                "normalized_family_key": family,
+            },
+        )
+        prior = realization_family_definition_owners.get(family_ref)
+        if prior is None or case.case_ref < prior:
+            realization_family_definition_owners[family_ref] = case.case_ref
     rows: list[dict[str, Any]] = []
     for case in authoring_cache.cases:
         subject_ref = case.case_ref
@@ -1178,19 +1203,43 @@ def _supervision_rows(
             if case.scenario_ref in _CONDITIONAL_SCENARIOS
             else ["retain_typed_proposal_gaps", "retire_with_reserved_indices"]
         )
+        target_kind = _proposal_target_kind(case.source_disposition.value)
         proposal_projection = {
-            "target_kind": {
-                "semantic": "derive",
-                "explicit_gap": "abstain",
-                "verification_rejection": "verification_rejection",
-            }[case.source_disposition.value],
+            "target_kind": target_kind,
             "match_policy": "exact",
             "expected_expression_relation": case.contract.expression_relation.value,
             "expected_expression_refs": [row.expression_ref for row in case.contract.expected_expressions],
         }
+        neutral_surface = _neutral_realization_surface(target_kind)
+        realization_family = _realization_family_definition(
+            target_kind=target_kind,
+            language=case.language,
+            response_contract=expected_response,
+            surface_template=neutral_surface,
+        )
+        realization_family_ref = stable_ref(
+            "realization_recipe_family_suggestion",
+            {
+                "target_kind": target_kind,
+                "normalized_family_key": realization_family,
+            },
+        )
         realization_projection = {
             "response_contract": expected_response,
             "candidate_surface": None if proposal is None else proposal["candidate_output"],
+            "neutral_surface_suggestion": neutral_surface,
+            "recipe_suggestion": _realization_recipe_suggestion(
+                source_case_ref=case.case_ref,
+                target_kind=target_kind,
+                language=case.language,
+                response_contract=expected_response,
+                family_definition=(
+                    realization_family
+                    if realization_family_definition_owners[realization_family_ref]
+                    == case.case_ref
+                    else None
+                ),
+            ),
         }
         designation_candidates = []
         designation_set = authoring_cache.designation_sets_by_case[case.case_ref]
@@ -1848,6 +1897,92 @@ def _branch_applicability(scenario_ref: str) -> list[str]:
     return ["retain_typed_proposal_gaps", "retire_with_reserved_indices"]
 
 
+def _proposal_target_kind(source_disposition: str) -> str:
+    return {
+        "semantic": "derive",
+        "explicit_gap": "abstain",
+        "verification_rejection": "verification_rejection",
+    }[source_disposition]
+
+
+def _neutral_realization_surface(target_kind: str) -> str:
+    if target_kind == "derive":
+        return "Acknowledged."
+    if target_kind == "abstain":
+        return "I need more reviewed evidence before I can answer."
+    if target_kind == "verification_rejection":
+        return "I rejected that invalid candidate."
+    raise ValueError("unknown realization target kind")
+
+
+def _realization_family_definition(
+    *,
+    target_kind: str,
+    language: str,
+    response_contract: Mapping[str, Any] | None,
+    surface_template: str,
+) -> list[Mapping[str, Any]]:
+    return [
+        {
+            "target_kind": target_kind,
+            "language": language,
+            "response_contract": response_contract,
+            "speaker_ref": "participant:system",
+            "addressee_ref": "participant:user",
+            "surface_template": surface_template,
+            "slot_rule": "response_subject_single_required_slot",
+            "alignment_rule": "full_surface_reviewed_literal",
+            "selectable": False,
+        }
+    ]
+
+
+def _realization_recipe_suggestion(
+    *,
+    source_case_ref: str,
+    target_kind: str,
+    language: str,
+    response_contract: Mapping[str, Any] | None,
+    family_definition: list[Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    surface = _neutral_realization_surface(target_kind)
+    normalized_family_key = _realization_family_definition(
+        target_kind=target_kind,
+        language=language,
+        response_contract=response_contract,
+        surface_template=surface,
+    )
+    family_ref = stable_ref(
+        "realization_recipe_family_suggestion",
+        {
+            "target_kind": target_kind,
+            "normalized_family_key": normalized_family_key,
+        },
+    )
+    case_parameters = {
+        "source_case_ref": source_case_ref,
+        "surface_template": surface,
+        "reviewed_literal_alignment": "full_surface",
+    }
+    material = {
+        "source_case_ref": source_case_ref,
+        "target_kind": target_kind,
+        "family_ref": family_ref,
+        "normalized_family_key": normalized_family_key,
+        "case_parameters": case_parameters,
+        "selectable": False,
+    }
+    return {
+        "suggestion_ref": stable_ref("realization_recipe_suggestion", material),
+        "source_case_ref": source_case_ref,
+        "target_kind": target_kind,
+        "family_ref": family_ref,
+        "family_definition": family_definition,
+        "case_parameters": case_parameters,
+        "selectable": False,
+    }
+
+
 def _validate_bundle_joins(decoded: Mapping[str, Mapping[str, Any]]) -> None:
     source = decoded["SOURCE_UNIVERSE.json"]
     if source["current_snapshot"].get("reviewed_scenario_count") != 210 or source[
@@ -2013,6 +2148,9 @@ def _validate_bundle_joins(decoded: Mapping[str, Mapping[str, Any]]) -> None:
     recipe_family_refs: set[str] = set()
     recipe_family_definitions: dict[str, list[object]] = {}
     recipe_suggestions: list[Mapping[str, Any]] = []
+    realization_family_refs: set[str] = set()
+    realization_family_definitions: dict[str, list[object]] = {}
+    realization_suggestions: list[Mapping[str, Any]] = []
     for case_ref, source_case in supervised.items():
         proposal = by_case_and_kind[(case_ref, "proposal_supervision")]
         designation = by_case_and_kind[(case_ref, "designation_supervision")]
@@ -2123,6 +2261,58 @@ def _validate_bundle_joins(decoded: Mapping[str, Mapping[str, Any]]) -> None:
         expected_surface = None if proposal_spec is None else proposal_spec["candidate_output"]
         if candidate_surface != expected_surface:
             raise ValueError("realization candidate surface differs from structural proposal")
+        target_kind = proposal["source_projection"]["target_kind"]
+        neutral_surface = _neutral_realization_surface(target_kind)
+        if realization["source_projection"].get("neutral_surface_suggestion") != neutral_surface:
+            raise ValueError("realization neutral surface suggestion is invalid")
+        realization_recipe = realization["source_projection"].get("recipe_suggestion")
+        if type(realization_recipe) is not dict or set(realization_recipe) != {
+            "suggestion_ref",
+            "source_case_ref",
+            "target_kind",
+            "family_ref",
+            "family_definition",
+            "case_parameters",
+            "selectable",
+        }:
+            raise ValueError("realization recipe suggestion shape is invalid")
+        expected_realization_family = _realization_family_definition(
+            target_kind=target_kind,
+            language=source_case["language"],
+            response_contract=realization["source_projection"]["response_contract"],
+            surface_template=neutral_surface,
+        )
+        if (
+            realization_recipe["source_case_ref"] != case_ref
+            or realization_recipe["target_kind"] != target_kind
+            or realization_recipe["selectable"] is not False
+            or not str(realization_recipe["suggestion_ref"]).startswith(
+                "realization_recipe_suggestion:"
+            )
+            or not str(realization_recipe["family_ref"]).startswith(
+                "realization_recipe_family_suggestion:"
+            )
+            or realization_recipe["case_parameters"]
+            != {
+                "source_case_ref": case_ref,
+                "surface_template": neutral_surface,
+                "reviewed_literal_alignment": "full_surface",
+            }
+            or (
+                realization_recipe["family_definition"] is not None
+                and realization_recipe["family_definition"]
+                != expected_realization_family
+            )
+        ):
+            raise ValueError("realization recipe suggestion is invalid")
+        realization_family_refs.add(realization_recipe["family_ref"])
+        realization_suggestions.append(realization_recipe)
+        if realization_recipe["family_definition"] is not None:
+            if realization_recipe["family_ref"] in realization_family_definitions:
+                raise ValueError("realization recipe family has duplicate definitions")
+            realization_family_definitions[realization_recipe["family_ref"]] = (
+                realization_recipe["family_definition"]
+            )
     if recipe_family_refs != set(recipe_family_definitions):
         raise ValueError("proposal recipe family catalog is incomplete")
     for recipe in recipe_suggestions:
@@ -2149,6 +2339,32 @@ def _validate_bundle_joins(decoded: Mapping[str, Mapping[str, Any]]) -> None:
             suggestion_material,
         ):
             raise ValueError("proposal recipe suggestion identity does not reconstruct")
+    if realization_family_refs != set(realization_family_definitions):
+        raise ValueError("realization recipe family catalog is incomplete")
+    for recipe in realization_suggestions:
+        family_key = realization_family_definitions[recipe["family_ref"]]
+        family_material = {
+            "target_kind": recipe["target_kind"],
+            "normalized_family_key": family_key,
+        }
+        if recipe["family_ref"] != stable_ref(
+            "realization_recipe_family_suggestion",
+            family_material,
+        ):
+            raise ValueError("realization recipe family identity does not reconstruct")
+        suggestion_material = {
+            "source_case_ref": recipe["source_case_ref"],
+            "target_kind": recipe["target_kind"],
+            "family_ref": recipe["family_ref"],
+            "normalized_family_key": family_key,
+            "case_parameters": recipe["case_parameters"],
+            "selectable": False,
+        }
+        if recipe["suggestion_ref"] != stable_ref(
+            "realization_recipe_suggestion",
+            suggestion_material,
+        ):
+            raise ValueError("realization recipe suggestion identity does not reconstruct")
 
     purpose = decoded["PURPOSE_DECISIONS.json"]["rows"]
     memberships = [row for row in purpose if row["row_kind"] == "membership"]

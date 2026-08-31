@@ -3450,6 +3450,35 @@ def test_sr5_worksheet_envelopes_rows_identities_and_source_joins_are_exact(
         for row in supervision["rows"]
         if row["row_kind"] == "realization_supervision"
     ) == 8
+    realization_rows = [
+        row
+        for row in supervision["rows"]
+        if row["row_kind"] == "realization_supervision"
+    ]
+    realization_suggestions = [
+        row["source_projection"]["recipe_suggestion"] for row in realization_rows
+    ]
+    assert len({row["suggestion_ref"] for row in realization_suggestions}) == 388
+    assert len({row["family_ref"] for row in realization_suggestions}) <= 12
+    assert sum(
+        row["family_definition"] is not None for row in realization_suggestions
+    ) == len({row["family_ref"] for row in realization_suggestions})
+    assert all(row["selectable"] is False for row in realization_suggestions)
+    assert all(
+        row["source_projection"]["neutral_surface_suggestion"].strip()
+        for row in realization_rows
+    )
+    hostile_realization = deepcopy(payloads)
+    hostile_row = next(
+        row
+        for row in hostile_realization["SUPERVISION_DECISIONS.json"]["rows"]
+        if row["row_kind"] == "realization_supervision"
+    )
+    hostile_row["source_projection"]["recipe_suggestion"]["family_ref"] = (
+        "realization_recipe_family_suggestion:" + "0" * 24
+    )
+    with pytest.raises(ValueError, match="realization recipe"):
+        worksheets._validate_bundle_joins(hostile_realization)
 
     purpose = payloads["PURPOSE_DECISIONS.json"]
     assert sum(row["row_kind"] == "membership" for row in purpose["rows"]) == 408
