@@ -266,7 +266,7 @@ git commit -m "test(r4): quarantine pre-review evidence mismatches"
 - Modify: `hybrid_mvp/scripts/r4_1_pre_review.py`
 - Modify: `hybrid_mvp/tests/test_r4_pre_review.py`
 
-- [ ] **Step 1: Add tests for deterministic advisory records and no mutation**
+- [x] **Step 1: Add tests for deterministic advisory records and no mutation**
 
 Append:
 
@@ -313,7 +313,7 @@ def test_pre_review_records_are_deterministic_and_inert(tmp_path: Path) -> None:
     assert hashlib.sha256(repr(first[0].to_json()).encode("utf-8")).hexdigest()
 ```
 
-- [ ] **Step 2: Run the new test to verify it fails**
+- [x] **Step 2: Run the new test to verify it fails**
 
 Run:
 
@@ -323,7 +323,7 @@ python -m pytest hybrid_mvp/tests/test_r4_pre_review.py::test_pre_review_records
 
 Expected: fail with missing `build_pre_review_records`.
 
-- [ ] **Step 3: Add record dataclass and item loop**
+- [x] **Step 3: Add record dataclass and item loop**
 
 Extend `hybrid_mvp/scripts/r4_1_pre_review.py`:
 
@@ -491,7 +491,7 @@ def build_pre_review_records(session: ReviewSession) -> tuple[PreReviewRecord, .
     return tuple(records)
 ```
 
-- [ ] **Step 4: Run the focused test**
+- [x] **Step 4: Run the focused test**
 
 Run:
 
@@ -501,7 +501,7 @@ python -m pytest hybrid_mvp/tests/test_r4_pre_review.py::test_pre_review_records
 
 Expected: pass with 1,056 inert records.
 
-- [ ] **Step 5: Commit Task 2**
+- [x] **Step 5: Commit Task 2**
 
 Run:
 
