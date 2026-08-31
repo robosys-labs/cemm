@@ -1590,7 +1590,7 @@ The source-only draft may group complete normalized shapes and expose concrete
 case parameters.  It must not construct purpose-scoped recipes or selectable
 proposal rows before the reviewer-selection input exists.
 
-- [ ] **Step 4B: Validate selections and generate proposal candidates (10B)**
+- [x] **Step 4B: Validate selections and generate proposal candidates (10B)**
 
 Derive the complete family key from source-owned expression topology, mode,
 outcome, gap/rejection shape and relation. Expand the reviewed recipe to an
@@ -1608,7 +1608,7 @@ bindings in canonical geometry/ref order and preserve overlaps. Enforce eight
 targets per span. Emit an exact-empty set only for a nonsemantic source case
 when the independent full scan returns no facts.
 
-- [ ] **Step 6: Wire exact derivation compilation into cross-source validation (10B)**
+- [x] **Step 6: Wire exact derivation compilation into cross-source validation (10B)**
 
 Pass the complete repository-owned per-case `ProposalContext` cache from Step 3
 to the one cross-source validator. Compile every semantic derivation with
@@ -1618,7 +1618,7 @@ as semantic derivations. The compiler path is mandatory for every semantic
 row: no optional callback, missing-context bypass, expected-gold-derived
 context, placeholder-blueprint acceptance or permissive fallback is allowed.
 
-- [ ] **Step 7: Run focused pipeline and cross-source tests twice**
+- [x] **Step 7: Run focused pipeline and cross-source tests twice**
 
 ```powershell
 python -m pytest tests/test_r4_authoring_pipeline.py tests/test_r4_review_worksheets.py tests/test_r4_supervision_compilers.py tests/test_r4_supervision_contracts.py -k "proposal or designation or deterministic or derivation or cross_source" -q
@@ -1627,7 +1627,7 @@ python -m pytest tests/test_r4_authoring_pipeline.py tests/test_r4_review_worksh
 Expected: pass; two builds have byte-identical proposal/designation candidate
 sections and exact supervised case sets.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```powershell
 git add scripts/build_r4_1_review_worksheets.py src/cemm_authoritative_hybrid/r4_supervision.py tests/test_r4_authoring_pipeline.py tests/test_r4_review_worksheets.py tests/test_r4_supervision_contracts.py
