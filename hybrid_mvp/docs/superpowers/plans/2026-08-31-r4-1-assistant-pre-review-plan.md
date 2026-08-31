@@ -24,7 +24,7 @@
 - Create: `hybrid_mvp/tests/test_r4_pre_review.py`
 - Create: `hybrid_mvp/scripts/r4_1_pre_review.py`
 
-- [ ] **Step 1: Write failing preflight tests**
+- [x] **Step 1: Write failing preflight tests**
 
 Add these tests to `hybrid_mvp/tests/test_r4_pre_review.py`:
 
@@ -126,7 +126,7 @@ def test_preflight_accepts_matching_designation_geometry() -> None:
     assert result.issues == ()
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run:
 
@@ -136,7 +136,7 @@ python -m pytest hybrid_mvp/tests/test_r4_pre_review.py -q
 
 Expected: fail with `ModuleNotFoundError` or missing `preflight_designation_source`.
 
-- [ ] **Step 3: Implement minimal preflight types and span checks**
+- [x] **Step 3: Implement minimal preflight types and span checks**
 
 Create `hybrid_mvp/scripts/r4_1_pre_review.py` with:
 
@@ -241,7 +241,7 @@ def preflight_designation_source(row: Mapping[str, object]) -> PreflightResult:
     return PreflightResult(recommendation_class=None, issues=())
 ```
 
-- [ ] **Step 4: Run the focused tests**
+- [x] **Step 4: Run the focused tests**
 
 Run:
 
@@ -251,7 +251,7 @@ python -m pytest hybrid_mvp/tests/test_r4_pre_review.py -q
 
 Expected: pass.
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 Run:
 
