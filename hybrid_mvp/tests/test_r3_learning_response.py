@@ -1,6 +1,8 @@
 """R3 Learning Plan ABI 2 and Response Meaning ABI 2 tests."""
 from __future__ import annotations
 
+import pytest
+
 from cemm_authoritative_hybrid.cycle import CycleStatus, SemanticMode
 from cemm_authoritative_hybrid.expressions import (
     GroundedReference,
@@ -12,24 +14,18 @@ from cemm_authoritative_hybrid.persistence import RevisionPin
 from cemm_authoritative_hybrid.r3_learning import LearningPlan
 from cemm_authoritative_hybrid.r3_response import ResponseMeaning
 
-__cemm_test_inventory__ = {
-    "tests/test_r3_learning_response.py::test_learning_plan_abi2_round_trip_binds_semantic_lineage": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:r3-learning-plan-abi2-round-trip-binds-semantic-lineage",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R3-Complete",
-        "owner_ref": "learning-response",
-        "source_ast_sha256": "610ed4b1fa96bf1905473e689607a768e41ffdf6baaad89af3c05b2ed3ed8212"
-    },
-    "tests/test_r3_learning_response.py::test_response_meaning_round_trip_has_no_surface_text": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:r3-response-meaning-round-trip-has-no-surface-text",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R3-Complete",
-        "owner_ref": "learning-response",
-        "source_ast_sha256": "96dc1d0bf10e208b208e5471b38ceac4d8cb84155b8c616866a90e91c8f525c0"
-    }
-}
+__cemm_test_inventory__ = {'tests/test_r3_learning_response.py::test_learning_plan_abi2_round_trip_binds_semantic_lineage': {'activation_phase': 'R3',
+                                                                                                   'assertion_ref': 'assertion:r3-learning-plan-abi2-round-trip-binds-semantic-lineage',
+                                                                                                   'diagnostic_role': 'owner',
+                                                                                                   'introduced_by_task': 'R3-Complete',
+                                                                                                   'owner_ref': 'learning-response',
+                                                                                                   'source_ast_sha256': '610ed4b1fa96bf1905473e689607a768e41ffdf6baaad89af3c05b2ed3ed8212'},
+ 'tests/test_r3_learning_response.py::test_response_meaning_round_trip_has_no_surface_text': {'activation_phase': 'R3',
+                                                                                              'assertion_ref': 'assertion:r3-response-meaning-round-trip-has-no-surface-text',
+                                                                                              'diagnostic_role': 'owner',
+                                                                                              'introduced_by_task': 'R3-Complete',
+                                                                                              'owner_ref': 'learning-response',
+                                                                                              'source_ast_sha256': '1c9ea0c9bd4a0ebfaa2cafba25f44d5b779f08771b8c6aa051933803e49fba29'}}
 
 
 
@@ -98,3 +94,28 @@ def test_response_meaning_round_trip_has_no_surface_text() -> None:
     )
     assert ResponseMeaning.from_dict(value.as_dict()) == value
     assert "surface" not in value.as_dict()
+
+    with pytest.raises(ValueError, match="epistemic_status"):
+        ResponseMeaning.create(
+            decision_ref=value.decision_ref,
+            verified_meaning_ref=value.verified_meaning_ref,
+            source_expression_ref=value.source_expression_ref,
+            response_expression=value.response_expression,
+            situation_ref=value.situation_ref,
+            effect_outcome_ref=value.effect_outcome_ref,
+            learning_plan_ref=None,
+            obligation_ref=None,
+            mode=value.mode,
+            cycle_status=value.cycle_status,
+            discourse_action=value.discourse_action,
+            bindings=value.bindings,
+            polarity_ref=value.polarity_ref,
+            modality_ref=value.modality_ref,
+            epistemic_status_ref="supported",
+            source_refs=value.source_refs,
+            proof_refs=value.proof_refs,
+            blocker_refs=value.blocker_refs,
+            policy_refs=value.policy_refs,
+            permitted_omissions=value.permitted_omissions,
+            revision_pin=value.revision_pin,
+        )

@@ -37,6 +37,7 @@ class _TestAuthority:
 
     def __init__(self, atoms, rules, designations, operator_roles=None):
         from cemm_authoritative_hybrid.authority import (
+            DesignationFact,
             DesignationIndex,
             AtomRecord,
             RuleRecord,
@@ -62,14 +63,15 @@ class _TestAuthority:
         }
         self.event_signatures = {}
 
-        by_surface = {}
-        by_target = {}
-        for surface, target, lang in designations:
-            by_surface.setdefault((surface, lang), []).append(target)
-            by_target.setdefault((target, lang), []).append(surface)
         self.designations = DesignationIndex(
-            {k: tuple(v) for k, v in by_surface.items()},
-            {k: tuple(v) for k, v in by_target.items()},
+            tuple(
+                DesignationFact.create(
+                    surface=surface,
+                    target_ref=target,
+                    language=language,
+                )
+                for surface, target, language in designations
+            )
         )
 
     def by_kind(self, kind):

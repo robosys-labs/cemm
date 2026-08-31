@@ -19,9 +19,12 @@ from typing import Any, Iterable, Mapping
 from .canonical import stable_ref
 from .cycle import CycleStatus, SemanticMode
 from .decision import DecisionAction, DecisionStatus
+from .epistemic import exact_epistemic_status_ref
 from .expressions import (
     ApplicationFiller,
     BoundVariable,
+    EXPRESSION_LINK_SCHEMAS,
+    ExpressionBounds,
     ExpressionLink,
     GroundedReference,
     LiteralValue,
@@ -61,6 +64,8 @@ __all__ = [
     "ReviewedAssertion",
     "ReviewedScenario",
     "AssertionRegistry",
+    "SourceDisposition",
+    "classify_source_disposition",
     "ExpectedOutcomeKind",
     "ExpressionRelation",
     "ExpectedEffectKind",
@@ -77,6 +82,11 @@ __all__ = [
 _MAX_ASSERTIONS = 64
 _MAX_EXPRESSIONS = 64
 _MAX_SURFACES = 64
+_COMPOSED_BOUNDS = ExpressionBounds()
+_COMPOSED_SHAPES = frozenset({"linked", "multi_root"})
+_KERNEL_OPERATORS = frozenset(
+    {"op:designation", "op:type", "op:relation", "op:state", "op:event"}
+)
 
 
 class AssertionCompilerError(ValueError):
@@ -176,7 +186,6 @@ class ReviewedScenario:
     competency_category: str
     assertions: tuple[ReviewedAssertion, ...]
     surface_examples: tuple[str, ...]
-    expected_gap_kind: str | None
     metadata: Mapping[str, Any]
 
     def __init__(self, *_args: Any, **_kwargs: Any) -> None:
@@ -191,13 +200,21 @@ class ReviewedScenario:
         competency_category: str,
         assertions: tuple[ReviewedAssertion, ...],
         surface_examples: tuple[str, ...],
-        expected_gap_kind: str | None,
         metadata: Mapping[str, Any],
     ) -> "ReviewedScenario":
         if type(assertions) is not tuple or not assertions or len(assertions) > _MAX_ASSERTIONS:
             raise ValueError("scenario requires a bounded nonempty assertion tuple")
         if any(type(row) is not ReviewedAssertion for row in assertions):
             raise TypeError("scenario assertions must be ReviewedAssertion values")
+        kinds = tuple(row.kind for row in assertions)
+        if kinds.count("gap") > 1:
+            raise ValueError("multiple structured gap assertions are forbidden")
+        if "gap" in kinds and any(kind not in {"gap", "mode"} for kind in kinds):
+            raise ValueError(
+                "structured gap cannot be mixed with semantic or adversarial truth"
+            )
+        if any(kind in {"adversarial", "adversarial_program"} for kind in kinds) and len(kinds) != 1:
+            raise ValueError("adversarial truth cannot be mixed with other assertions")
         if type(surface_examples) is not tuple or not surface_examples or len(surface_examples) > _MAX_SURFACES:
             raise ValueError("scenario requires bounded nonempty surface examples")
         surfaces = tuple(
@@ -211,7 +228,6 @@ class ReviewedScenario:
             "competency_category": exact_text(competency_category, "competency_category"),
             "assertions": assertions,
             "surface_examples": surfaces,
-            "expected_gap_kind": optional_text(expected_gap_kind, "expected_gap_kind"),
             "metadata": _json_mapping(metadata, "scenario metadata"),
         }.items():
             object.__setattr__(obj, name, item)
@@ -226,12 +242,13 @@ class ReviewedScenario:
                 {"kind": row.kind, **thaw_json(row.fields)} for row in self.assertions
             ],
             "surface_examples": list(self.surface_examples),
-            "expected_gap_kind": self.expected_gap_kind,
             "metadata": thaw_json(self.metadata),
         }
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "ReviewedScenario":
+        if "expected_gap_kind" in value:
+            raise ValueError("ReviewedScenario unknown field: expected_gap_kind")
         row = exact_fields(
             value,
             frozenset(
@@ -241,7 +258,6 @@ class ReviewedScenario:
                     "competency_category",
                     "semantic_assertions",
                     "surface_examples",
-                    "expected_gap_kind",
                     "metadata",
                 }
             ),
@@ -267,6 +283,21 @@ class ReviewedScenario:
                     review_refs=(review_ref,),
                 )
             )
+        families = tuple(
+            AssertionRegistry.SPECS[assertion.kind].family
+            if assertion.kind in AssertionRegistry.SPECS
+            else assertion.kind
+            for assertion in assertions
+        )
+        gap_count = families.count("gap")
+        if gap_count > 1:
+            raise ValueError("multiple structured gap assertions are forbidden")
+        if gap_count and any(family not in {"gap", "contract"} for family in families):
+            raise ValueError(
+                "structured gap cannot be mixed with semantic or adversarial truth"
+            )
+        if "adversarial" in families and len(families) != 1:
+            raise ValueError("adversarial truth cannot be mixed with other assertions")
         if type(row["surface_examples"]) is not list or type(row["metadata"]) is not dict:
             raise TypeError("scenario wire collections are invalid")
         return cls.create(
@@ -275,7 +306,6 @@ class ReviewedScenario:
             competency_category=row["competency_category"],
             assertions=tuple(assertions),
             surface_examples=tuple(row["surface_examples"]),
-            expected_gap_kind=row["expected_gap_kind"],
             metadata=row["metadata"],
         )
 
@@ -315,6 +345,18 @@ class AssertionRegistry:
     SPECS: Mapping[str, _AssertionSpec] = MappingProxyType(
         {
             "application": _AssertionSpec(frozenset({"operator", "predicate", "roles"}), frozenset(), "application"),
+            "composed_expression": _AssertionSpec(
+                frozenset(
+                    {
+                        "shape",
+                        "applications",
+                        "expression_links",
+                        "root_local_refs",
+                    }
+                ),
+                frozenset({"mode"}),
+                "composed_expression",
+            ),
             "entity": _AssertionSpec(frozenset({"target"}), frozenset({"semantic_kind"}), "entity"),
             "reference": _AssertionSpec(frozenset({"target", "role"}), frozenset({"subject", "relation", "object"}), "entity"),
             "participant_reference": _AssertionSpec(frozenset({"target", "role"}), frozenset({"subject", "relation", "object"}), "entity"),
@@ -427,6 +469,37 @@ class ExpectedOutcomeKind(Enum):
     VERIFICATION_REJECTION = "verification_rejection"
     RESTART = "restart"
     REALIZATION_EQUIVALENCE = "realization_equivalence"
+
+
+class SourceDisposition(Enum):
+    SEMANTIC = "semantic"
+    EXPLICIT_GAP = "explicit_gap"
+    VERIFICATION_REJECTION = "verification_rejection"
+    RESTART_DIAGNOSTIC_CANDIDATE = "restart_diagnostic_candidate"
+
+
+def classify_source_disposition(scenario: ReviewedScenario) -> SourceDisposition:
+    """Classify reviewed truth without competency or runtime overrides."""
+
+    if type(scenario) is not ReviewedScenario:
+        raise TypeError("scenario must be exact ReviewedScenario")
+    families = tuple(
+        AssertionRegistry.validate(assertion).family
+        for assertion in scenario.assertions
+    )
+    if families.count("gap") == 1 and all(
+        family in {"gap", "contract"} for family in families
+    ):
+        return SourceDisposition.EXPLICIT_GAP
+    if families == ("adversarial",):
+        return SourceDisposition.VERIFICATION_REJECTION
+    if families == ("restart",):
+        return SourceDisposition.RESTART_DIAGNOSTIC_CANDIDATE
+    if any(
+        family in {"gap", "adversarial", "restart"} for family in families
+    ):
+        raise ValueError("source disposition families cannot be mixed")
+    return SourceDisposition.SEMANTIC
 
 
 class ExpressionRelation(Enum):
@@ -542,8 +615,9 @@ class ExpectedResponseContract:
     permitted_omissions: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        for name in ("discourse_action", "polarity_ref", "modality_ref", "epistemic_status_ref"):
+        for name in ("discourse_action", "polarity_ref", "modality_ref"):
             exact_text(getattr(self, name), name)
+        exact_epistemic_status_ref(self.epistemic_status_ref)
         if type(self.cycle_status) is not CycleStatus:
             raise TypeError("cycle_status must be closed CycleStatus")
         object.__setattr__(self, "permitted_omissions", exact_refs(self.permitted_omissions, "permitted_omissions"))
@@ -576,6 +650,14 @@ class ExpectedGapContract:
         for name in ("kind", "status", "recommended_owner", "safe_response_action"):
             exact_text(getattr(self, name), name)
         optional_text(self.error_code, "error_code")
+        expected_owner = _GAP_OWNER_BY_KIND.get(self.kind)
+        if expected_owner is None:
+            raise ValueError(f"unsupported expected gap kind: {self.kind}")
+        if self.recommended_owner != expected_owner:
+            raise ValueError(
+                "expected gap recommended owner mismatch: "
+                f"{self.kind} requires {expected_owner}"
+            )
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -590,6 +672,30 @@ class ExpectedGapContract:
     def from_dict(cls, value: Mapping[str, Any]) -> "ExpectedGapContract":
         row = exact_fields(value, frozenset({"kind", "status", "recommended_owner", "safe_response_action", "error_code"}), "ExpectedGapContract")
         return cls(**row)
+
+
+_GAP_OWNER_BY_KIND: Mapping[str, str] = MappingProxyType(
+    {
+        "evidence": "form-context",
+        "designation": "form-context",
+        "reference": "form-context",
+        "authority": "authority-link",
+        "proposal": "recursive-composer",
+        "verification": "exact-verifier",
+        "inference": "decision-query-proof",
+        "state": "epistemic-state",
+        "transition": "capability-effect",
+        "learning": "learning-dialogue",
+        "resource": "capability-effect",
+        "permission": "capability-effect",
+        "adapter": "capability-effect",
+        "operation": "capability-effect",
+        "storage": "persistence-recovery",
+        "realization": "response-contract",
+        "performance": "runtime-activation",
+        "implementation": "runtime-activation",
+    }
+)
 
 
 @dataclass(frozen=True, init=False)
@@ -676,6 +782,16 @@ class ExpectedCycleContract:
             raise ValueError("gap/rejection expected outcomes require expected_gap")
         if outcome not in {ExpectedOutcomeKind.GAP, ExpectedOutcomeKind.VERIFICATION_REJECTION} and gap is not None:
             raise ValueError("semantic/non-gap expected outcome cannot carry expected_gap")
+        if outcome is ExpectedOutcomeKind.VERIFICATION_REJECTION and (
+            gap is None
+            or gap.kind != "verification"
+            or gap.recommended_owner != "exact-verifier"
+            or gap.safe_response_action != "reject_candidate"
+            or gap.error_code is None
+        ):
+            raise ValueError(
+                "verification rejection requires exact verifier/error/safe action"
+            )
         values = {
             "scenario_ref": exact_text(raw.pop("scenario_ref"), "scenario_ref"),
             "case_ref": exact_text(raw.pop("case_ref"), "case_ref"),
@@ -852,10 +968,17 @@ class _AuthorityView:
             str(participant): frozenset(values)
             for participant, values in capabilities.items()
         }
+        raw_operator_roles = getattr(authority, "operator_roles", {})
+        if not isinstance(raw_operator_roles, Mapping):
+            raise TypeError("linked authority operator roles must be a mapping")
+        self.operator_roles = {
+            str(operator): frozenset(str(role) for role in values)
+            for operator, values in raw_operator_roles.items()
+        }
         roles: set[str] = set()
         for signature in self.event_signatures.values():
             roles.update(row.role for row in signature.roles)
-        for values in getattr(authority, "operator_roles", {}).values():
+        for values in self.operator_roles.values():
             roles.update(values)
         self.roles = frozenset(roles)
 
@@ -1030,7 +1153,29 @@ class _AuthorityView:
         for binding in roles:
             spec = specs[binding.role_ref]
             filler = binding.filler
-            if type(filler) is GroundedReference:
+            if isinstance(filler, UnresolvedValue):
+                if not allow_unresolved:
+                    raise ValueError(
+                        f"event role unresolved filler is not allowed: {binding.role_ref}"
+                    )
+            elif isinstance(filler, ApplicationFiller):
+                if not spec.proposition_valued or (
+                    spec.filler_kinds and "application" not in spec.filler_kinds
+                ):
+                    raise ValueError(
+                        f"event role is not proposition-valued: {binding.role_ref}"
+                    )
+            elif isinstance(filler, LiteralValue):
+                if spec.filler_kinds and "literal" not in spec.filler_kinds:
+                    raise ValueError(
+                        f"event role literal filler kind mismatch: {binding.role_ref}"
+                    )
+            elif isinstance(filler, BoundVariable):
+                if spec.filler_kinds and "variable" not in spec.filler_kinds:
+                    raise ValueError(
+                        f"event role variable filler kind mismatch: {binding.role_ref}"
+                    )
+            elif type(filler) is GroundedReference:
                 atom = self.atoms.get(filler.target_ref)
                 if atom is None or (
                     spec.filler_kinds
@@ -1039,6 +1184,19 @@ class _AuthorityView:
                     raise ValueError(
                         f"event role filler kind mismatch: {binding.role_ref}"
                     )
+
+    def validate_operator_roles(
+        self, operator: str, roles: Iterable[RoleBinding]
+    ) -> None:
+        allowed = self.operator_roles.get(operator)
+        if not allowed:
+            return
+        actual = {row.role_ref for row in roles}
+        unknown = actual - allowed
+        if unknown:
+            raise ValueError(
+                f"operator role mismatch: {operator}:unknown={sorted(unknown)}"
+            )
 
 
 class ExpectedCycleContractCompiler:
@@ -1087,6 +1245,7 @@ class ExpectedCycleContractCompiler:
             if surface_language is None
             else exact_text(surface_language, "surface_language")
         )
+        constraints = self._validated_situation_constraints(situation_constraints)
 
         expressions: list[SemanticExpression] = []
         normalized: list[Mapping[str, Any]] = []
@@ -1116,6 +1275,11 @@ class ExpectedCycleContractCompiler:
         gap = gaps[0] if gaps else None
         if gap is None:
             outcome, relation, owner = self._outcome(families, expressions)
+        elif "adversarial" in families:
+            outcome = ExpectedOutcomeKind.VERIFICATION_REJECTION
+            relation = ExpressionRelation.NONE
+            owner = "exact-verifier"
+            expressions = []
         else:
             outcome = ExpectedOutcomeKind.GAP
             relation = ExpressionRelation.NONE
@@ -1132,7 +1296,7 @@ class ExpectedCycleContractCompiler:
                 kind=(
                     "verification"
                     if outcome is ExpectedOutcomeKind.VERIFICATION_REJECTION
-                    else "semantic"
+                    else "proposal"
                 ),
                 status=(
                     "rejected"
@@ -1149,7 +1313,7 @@ class ExpectedCycleContractCompiler:
             families,
             expressions,
             normalized,
-            situation_constraints,
+            constraints,
         )
         return ExpectedCycleContract.create(
             scenario_ref=scenario_ref,
@@ -1162,7 +1326,7 @@ class ExpectedCycleContractCompiler:
             expression_relation=relation,
             normalized_assertions=tuple(normalized),
             expected_mode=mode,
-            situation_constraints=situation_constraints,
+            situation_constraints=constraints,
             expected_decision=decision,
             expected_effect=effect,
             expected_response=response,
@@ -1173,6 +1337,25 @@ class ExpectedCycleContractCompiler:
             review_provenance_refs=tuple(dict.fromkeys(review_refs)),
             revision_pin=pin,
         )
+
+    def _validated_situation_constraints(
+        self, situation_constraints: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
+        constraints = _json_mapping(
+            situation_constraints,
+            "situation_constraints",
+        )
+        for field, resolver in (
+            ("adapter_refs", self._authority.require_adapter),
+            ("permission_refs", self._authority.require_permission),
+        ):
+            refs = constraints.get(field, ())
+            if type(refs) is not tuple or len(refs) > _MAX_ASSERTIONS:
+                raise TypeError(f"{field} must be a bounded exact array")
+            resolved = tuple(resolver(ref) for ref in refs)
+            if len(resolved) != len(set(resolved)):
+                raise ValueError(f"{field} contains duplicate authority refs")
+        return constraints
 
     def _compile_assertion(
         self,
@@ -1296,6 +1479,10 @@ class ExpectedCycleContractCompiler:
             return (
                 self._application(fields, assertion.assertion_ref),
             ), normalized, None, None
+        if family == "composed_expression":
+            return (
+                self._composed_expression(fields, assertion.assertion_ref),
+            ), normalized, self._mode_field(fields), None
         if family == "event":
             return (
                 self._event(fields, assertion.assertion_ref),
@@ -1375,12 +1562,17 @@ class ExpectedCycleContractCompiler:
             )
         if family == "gap":
             kind = exact_text(fields["gap_kind"], "gap_kind")
+            owner = self._gap_owner(kind)
+            observed_kind = fields.get("observed_kind")
+            if observed_kind is not None and observed_kind != kind:
+                raise ValueError("structured gap observed_kind conflicts with gap_kind")
+            supplied_owner = fields.get("recommended_owner", fields.get("owner"))
+            if supplied_owner is not None and supplied_owner != owner:
+                raise ValueError("structured gap recommended owner conflicts with gap_kind")
             return (), normalized, None, ExpectedGapContract(
-                kind=str(fields.get("observed_kind", "proposal")),
+                kind=kind,
                 status=str(fields.get("status", "proposal_abstained")),
-                recommended_owner=str(
-                    fields.get("recommended_owner", fields.get("owner", "training"))
-                ),
+                recommended_owner=owner,
                 safe_response_action=str(
                     fields.get("safe_response_action", "request_proposal_review")
                 ),
@@ -1396,12 +1588,22 @@ class ExpectedCycleContractCompiler:
             return (), normalized, self._mode_field(fields), None
         if family == "adversarial":
             attack = exact_text(fields["attack"], "attack")
+            owner = exact_text(
+                fields.get("expected_owner", "exact-verifier"),
+                "adversarial expected_owner",
+            )
+            if owner != "exact-verifier":
+                raise ValueError("adversarial assertion requires exact-verifier owner")
+            error_code = exact_text(
+                fields.get("expected_error_code", f"verification:{attack}"),
+                "adversarial expected_error_code",
+            )
             return (), normalized, None, ExpectedGapContract(
-                "proposal",
-                "proposal_abstained",
-                str(fields.get("expected_owner", "training")),
-                "request_proposal_review",
-                str(fields.get("expected_error_code", "proposal:critical_residual")),
+                "verification",
+                "verification_rejected",
+                owner,
+                "reject_candidate",
+                error_code,
             )
         if family in {"restart", "realization_equivalence"}:
             return (), normalized, None, None
@@ -1701,13 +1903,7 @@ class ExpectedCycleContractCompiler:
         self, fields: Mapping[str, Any], assertion_ref: str
     ) -> SemanticExpression:
         operator = exact_text(fields["operator"], "operator")
-        if operator not in {
-            "op:designation",
-            "op:type",
-            "op:relation",
-            "op:state",
-            "op:event",
-        }:
+        if operator not in _KERNEL_OPERATORS:
             raise ValueError("application uses non-kernel operator")
         predicate = self._authority.require_ref(fields["predicate"], "predicate")
         roles = self._roles(fields["roles"])
@@ -1719,8 +1915,331 @@ class ExpectedCycleContractCompiler:
         )
         if operator == "op:event":
             self._authority.validate_event_roles(predicate, roles)
+        else:
+            self._authority.validate_operator_roles(operator, roles)
         return SemanticExpression.create(
             applications=(app,), root_refs=(app.application_ref,)
+        )
+
+    @staticmethod
+    def _composed_local_ref(value: object, field: str) -> str:
+        ref = exact_text(value, field, maximum=64)
+        if (
+            not ref[0].islower()
+            or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789_" for character in ref)
+        ):
+            raise ValueError(
+                f"{field} must be a lowercase ASCII source-local identifier"
+            )
+        return ref
+
+    @staticmethod
+    def _composed_rows(
+        value: object, *, field: str, minimum: int, maximum: int
+    ) -> tuple[Mapping[str, Any], ...]:
+        if type(value) not in {list, tuple}:
+            raise TypeError(f"{field} must be an exact bounded array")
+        if not minimum <= len(value) <= maximum:
+            raise ValueError(f"{field} bound violated")
+        rows: list[Mapping[str, Any]] = []
+        for item in value:
+            if not isinstance(item, Mapping):
+                raise TypeError(f"{field} rows must be mappings")
+            rows.append(item)
+        return tuple(rows)
+
+    @staticmethod
+    def _composed_exact_fields(
+        value: Mapping[str, Any], expected: frozenset[str], owner: str
+    ) -> None:
+        if set(value) != expected:
+            raise ValueError(f"{owner} fields must match exactly")
+
+    def _record_composed_work(self, operation: str) -> None:
+        """Private test seam for proving bounded source-compiler index work."""
+
+        del operation
+
+    def _composed_filler(
+        self,
+        value: object,
+        *,
+        role_ref: str,
+        node_refs: Mapping[str, str],
+    ) -> GroundedReference | LiteralValue | ApplicationFiller:
+        if not isinstance(value, Mapping):
+            raise TypeError("composed role filler must be a mapping")
+        kind = value.get("kind")
+        if kind == "grounded":
+            self._composed_exact_fields(
+                value, frozenset({"kind", "target"}), "grounded filler"
+            )
+            return GroundedReference(
+                self._authority.require_ref(value["target"], f"{role_ref} filler")
+            )
+        if kind == "literal":
+            self._composed_exact_fields(
+                value,
+                frozenset({"kind", "value_type", "value"}),
+                "literal filler",
+            )
+            value_type = exact_text(value["value_type"], "literal value_type")
+            return LiteralValue(value_type, value["value"])
+        if kind == "proposition":
+            self._composed_exact_fields(
+                value,
+                frozenset({"kind", "node_local_ref"}),
+                "proposition filler",
+            )
+            local_ref = self._composed_local_ref(
+                value["node_local_ref"], "proposition node_local_ref"
+            )
+            self._record_composed_work("proposition_resolution")
+            node_ref = node_refs.get(local_ref)
+            if node_ref is None:
+                raise ValueError(f"unknown proposition node_local_ref: {local_ref}")
+            return ApplicationFiller(node_ref)
+        raise ValueError(f"unsupported composed filler kind: {kind}")
+
+    def _validate_composed_application(self, app: SemanticApplication) -> None:
+        by_role = {row.role_ref: row.filler for row in app.roles}
+        if app.operator == "op:event":
+            self._authority.validate_event_roles(app.predicate_ref, app.roles)
+            return
+        if app.operator not in self._authority.operator_roles:
+            raise ValueError(
+                f"operator role schema is absent: {app.operator}"
+            )
+        self._authority.validate_operator_roles(app.operator, app.roles)
+        if any(isinstance(value, ApplicationFiller) for value in by_role.values()):
+            raise ValueError(
+                f"proposition filler is not licensed by {app.operator}"
+            )
+        if app.operator == "op:designation":
+            required = frozenset({"role:surface", "role:target"})
+            if set(by_role) != required:
+                raise ValueError("designation application roles must be exact")
+            surface = by_role["role:surface"]
+            if (
+                not isinstance(surface, LiteralValue)
+                or surface.value_type != "string"
+                or not surface.value
+            ):
+                raise ValueError("designation surface must be literal")
+            target = by_role["role:target"]
+            if not isinstance(target, GroundedReference) or target.target_ref != app.predicate_ref:
+                raise ValueError("designation target must ground its predicate")
+            return
+        if app.operator == "op:type":
+            if set(by_role) != frozenset({"role:subject", "role:type"}):
+                raise ValueError("type application roles must be exact")
+            subject = by_role["role:subject"]
+            if not isinstance(subject, GroundedReference) or subject.target_ref != app.predicate_ref:
+                raise ValueError("type subject must ground its predicate")
+            type_value = by_role["role:type"]
+            expected_kind = getattr(
+                self._authority.atoms[app.predicate_ref], "kind", None
+            )
+            if (
+                not isinstance(type_value, LiteralValue)
+                or type_value.value_type != "string"
+                or type_value.value != expected_kind
+            ):
+                raise ValueError("type role must be literal")
+            return
+        if app.operator == "op:relation":
+            self._authority.require_ref(
+                app.predicate_ref,
+                "relation predicate",
+                kinds=("relation_type", "label_type"),
+            )
+            if set(by_role) != frozenset({"role:subject", "role:object"}):
+                raise ValueError("relation application roles must be exact")
+            if not all(
+                isinstance(by_role[role], GroundedReference)
+                for role in ("role:subject", "role:object")
+            ):
+                raise ValueError("relation subject/object must be grounded")
+            return
+        if app.operator == "op:state":
+            if set(by_role) != frozenset(
+                {"role:subject", "role:dimension", "role:value"}
+            ):
+                raise ValueError("state application roles must be exact")
+            subject = by_role["role:subject"]
+            dimension = by_role["role:dimension"]
+            value = by_role["role:value"]
+            if not all(
+                isinstance(item, GroundedReference)
+                for item in (subject, dimension, value)
+            ):
+                raise ValueError("state roles must be grounded")
+            if dimension.target_ref != app.predicate_ref:
+                raise ValueError("state dimension must ground its predicate")
+            self._authority.validate_state(dimension.target_ref, value.target_ref)
+            return
+        raise ValueError(f"application uses non-kernel operator: {app.operator}")
+
+    def _composed_expression(
+        self, fields: Mapping[str, Any], assertion_ref: str
+    ) -> SemanticExpression:
+        shape = exact_text(fields["shape"], "composed expression shape")
+        if shape not in _COMPOSED_SHAPES:
+            raise ValueError(f"unsupported composed expression shape: {shape}")
+        application_rows = self._composed_rows(
+            fields["applications"],
+            field="composed applications",
+            minimum=1,
+            maximum=_COMPOSED_BOUNDS.max_applications,
+        )
+        link_rows = self._composed_rows(
+            fields["expression_links"],
+            field="composed expression links",
+            minimum=0,
+            maximum=_COMPOSED_BOUNDS.max_expression_links,
+        )
+        root_values = fields["root_local_refs"]
+        if type(root_values) not in {list, tuple}:
+            raise TypeError("root_local_refs must be an exact bounded array")
+        if not 1 <= len(root_values) <= _COMPOSED_BOUNDS.max_roots:
+            raise ValueError("composed root bound violated")
+
+        application_defs: list[tuple[str, Mapping[str, Any]]] = []
+        link_defs: list[tuple[str, Mapping[str, Any]]] = []
+        node_refs: dict[str, str] = {}
+        for row in application_rows:
+            self._composed_exact_fields(
+                row,
+                frozenset({"local_ref", "operator", "predicate", "roles"}),
+                "composed application",
+            )
+            local_ref = self._composed_local_ref(
+                row["local_ref"], "application local_ref"
+            )
+            self._record_composed_work("local_ref_duplicate_probe")
+            if local_ref in node_refs:
+                raise ValueError(f"duplicate composed local_ref: {local_ref}")
+            node_refs[local_ref] = stable_ref(
+                "expected_composed_application",
+                {"assertion_ref": assertion_ref, "local_ref": local_ref},
+            )
+            self._record_composed_work("local_ref_insert")
+            application_defs.append((local_ref, row))
+        for row in link_rows:
+            self._composed_exact_fields(
+                row,
+                frozenset({"local_ref", "link_type", "operand_local_refs"}),
+                "composed expression link",
+            )
+            local_ref = self._composed_local_ref(
+                row["local_ref"], "expression link local_ref"
+            )
+            self._record_composed_work("local_ref_duplicate_probe")
+            if local_ref in node_refs:
+                raise ValueError(f"duplicate composed local_ref: {local_ref}")
+            node_refs[local_ref] = stable_ref(
+                "expected_composed_link",
+                {"assertion_ref": assertion_ref, "local_ref": local_ref},
+            )
+            self._record_composed_work("local_ref_insert")
+            link_defs.append((local_ref, row))
+
+        roots = tuple(
+            self._composed_local_ref(value, "root local_ref")
+            for value in root_values
+        )
+        if len(roots) != len(set(roots)):
+            raise ValueError("duplicate composed root local_ref")
+        resolved_root_refs: list[str] = []
+        for ref in roots:
+            self._record_composed_work("root_resolution")
+            resolved = node_refs.get(ref)
+            if resolved is None:
+                raise ValueError(f"unknown composed root local_ref: {ref}")
+            resolved_root_refs.append(resolved)
+        application_local_refs = frozenset(ref for ref, _ in application_defs)
+        link_local_refs = frozenset(ref for ref, _ in link_defs)
+        if shape == "linked":
+            if not link_defs or len(roots) != 1 or roots[0] not in link_local_refs:
+                raise ValueError(
+                    "linked composed expression requires links and one link root"
+                )
+        elif link_defs or not 2 <= len(roots) <= _COMPOSED_BOUNDS.max_roots or any(
+            ref not in application_local_refs for ref in roots
+        ):
+            raise ValueError(
+                "multi_root composed expression requires two through eight application roots and no links"
+            )
+
+        applications: list[SemanticApplication] = []
+        for local_ref, row in application_defs:
+            operator = exact_text(row["operator"], "composed operator")
+            if operator not in _KERNEL_OPERATORS:
+                raise ValueError("composed application uses non-kernel operator")
+            predicate_kinds: tuple[str, ...] = ()
+            if operator == "op:event":
+                predicate_kinds = ("event_type",)
+            elif operator == "op:state":
+                predicate_kinds = ("state_dimension",)
+            elif operator == "op:relation":
+                predicate_kinds = ("relation_type", "label_type")
+            predicate = self._authority.require_ref(
+                row["predicate"], "composed predicate", kinds=predicate_kinds
+            )
+            raw_roles = row["roles"]
+            if not isinstance(raw_roles, Mapping) or not raw_roles:
+                raise ValueError("composed roles must be a nonempty mapping")
+            if len(raw_roles) > _COMPOSED_BOUNDS.max_roles_per_application:
+                raise ValueError("composed role bound violated")
+            roles = tuple(
+                RoleBinding(
+                    self._authority.require_role(role),
+                    self._composed_filler(
+                        filler,
+                        role_ref=str(role),
+                        node_refs=node_refs,
+                    ),
+                )
+                for role, filler in sorted(raw_roles.items())
+            )
+            application = SemanticApplication(
+                node_refs[local_ref], operator, predicate, roles
+            )
+            self._validate_composed_application(application)
+            applications.append(application)
+
+        links: list[ExpressionLink] = []
+        for local_ref, row in link_defs:
+            link_type = exact_text(row["link_type"], "expression link type")
+            if link_type not in EXPRESSION_LINK_SCHEMAS:
+                raise ValueError(f"unsupported expression link: {link_type}")
+            raw_operands = row["operand_local_refs"]
+            if type(raw_operands) not in {list, tuple}:
+                raise TypeError("operand_local_refs must be an exact bounded array")
+            schema = EXPRESSION_LINK_SCHEMAS[link_type]
+            if not schema.minimum_operands <= len(raw_operands) <= min(
+                schema.maximum_operands, _COMPOSED_BOUNDS.max_link_operands
+            ):
+                raise ValueError(f"invalid expression link arity for {link_type}")
+            operands: list[str] = []
+            for value in raw_operands:
+                operand = self._composed_local_ref(value, "operand local_ref")
+                self._record_composed_work("link_operand_resolution")
+                operand_ref = node_refs.get(operand)
+                if operand_ref is None:
+                    raise ValueError(f"unknown expression link operand: {operand}")
+                operands.append(operand_ref)
+            links.append(
+                ExpressionLink(
+                    node_refs[local_ref], link_type, tuple(operands)
+                )
+            )
+
+        return SemanticExpression.create(
+            applications=tuple(applications),
+            root_refs=tuple(resolved_root_refs),
+            expression_links=tuple(links),
+            bounds=_COMPOSED_BOUNDS,
         )
 
     def _event(self, fields: Mapping[str, Any], assertion_ref: str) -> SemanticExpression:
@@ -2433,26 +2952,10 @@ class ExpectedCycleContractCompiler:
 
     @staticmethod
     def _gap_owner(kind: str) -> str:
-        return {
-            "evidence": "form-context",
-            "designation": "form-context",
-            "reference": "form-context",
-            "authority": "authority-link",
-            "proposal": "recursive-composer",
-            "verification": "exact-verifier",
-            "inference": "decision-query-proof",
-            "state": "epistemic-state",
-            "transition": "capability-effect",
-            "learning": "learning-dialogue",
-            "resource": "capability-effect",
-            "permission": "capability-effect",
-            "adapter": "capability-effect",
-            "operation": "capability-effect",
-            "storage": "persistence-recovery",
-            "realization": "response-contract",
-            "performance": "runtime-activation",
-            "implementation": "runtime-activation",
-        }.get(kind, "runtime")
+        owner = _GAP_OWNER_BY_KIND.get(kind)
+        if owner is None:
+            raise ValueError(f"unsupported expected gap kind: {kind}")
+        return owner
 
     def _contracts(
         self,
@@ -2541,10 +3044,7 @@ class ExpectedCycleContractCompiler:
                     CycleStatus(str(response_row["cycle_status"])),
                     exact_text(response_row["polarity"], "explicit response polarity"),
                     exact_text(response_row["modality"], "explicit response modality"),
-                    exact_text(
-                        response_row["epistemic_status"],
-                        "explicit response epistemic_status",
-                    ),
+                    exact_epistemic_status_ref(response_row["epistemic_status"]),
                     refs("permitted_omissions", response_row),
                 ),
             )
@@ -2552,6 +3052,11 @@ class ExpectedCycleContractCompiler:
             ExpectedOutcomeKind.GAP,
             ExpectedOutcomeKind.VERIFICATION_REJECTION,
         }:
+            response_action = (
+                "reject_candidate"
+                if outcome is ExpectedOutcomeKind.VERIFICATION_REJECTION
+                else "report_gap"
+            )
             return (
                 ExpectedDecisionContract(
                     DecisionStatus.FAILED,
@@ -2560,11 +3065,11 @@ class ExpectedCycleContractCompiler:
                 ),
                 ExpectedEffectContract(ExpectedEffectKind.NO_EFFECT, "unknown"),
                 ExpectedResponseContract(
-                    "report_gap",
+                    response_action,
                     CycleStatus.UNSUPPORTED,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic:unknown",
+                    "epistemic_status:unknown",
                 ),
             )
         if outcome is ExpectedOutcomeKind.RESTART:
@@ -2580,7 +3085,7 @@ class ExpectedCycleContractCompiler:
                     CycleStatus.RESOLVED,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic:observed",
+                    "epistemic_status:observed",
                 ),
             )
         if outcome is ExpectedOutcomeKind.REALIZATION_EQUIVALENCE:
@@ -2616,7 +3121,7 @@ class ExpectedCycleContractCompiler:
                     cycle_status,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic:supported" if cycle_status is CycleStatus.RESOLVED else "epistemic:unknown",
+                    "epistemic_status:supported" if cycle_status is CycleStatus.RESOLVED else "epistemic_status:unknown",
                 ),
             )
         if "conflict" in families:
@@ -2649,7 +3154,7 @@ class ExpectedCycleContractCompiler:
                         CycleStatus.AMBIGUOUS,
                         "polarity:positive",
                         "modality:actual",
-                        "epistemic:unknown",
+                        "epistemic_status:unknown",
                     ),
                 )
             if "rule" in families:
@@ -2803,7 +3308,7 @@ class ExpectedCycleContractCompiler:
                     CycleStatus.RESOLVED,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic:observed",
+                    "epistemic_status:observed",
                 ),
             )
         if mode is SemanticMode.SIMULATE:
@@ -2817,7 +3322,7 @@ class ExpectedCycleContractCompiler:
                     CycleStatus.RESOLVED,
                     "polarity:positive",
                     "modality:simulated",
-                    "epistemic:simulated",
+                    "epistemic_status:simulated",
                 ),
             )
         trusted = any(row in families for row in ("evidence",))
@@ -2837,7 +3342,7 @@ class ExpectedCycleContractCompiler:
                     CycleStatus.RESOLVED,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic:observed",
+                    "epistemic_status:observed",
                 ),
             )
         if attributed:

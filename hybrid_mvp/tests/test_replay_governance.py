@@ -67,10 +67,32 @@ R5_CONDITIONAL_DOCUMENTS = (
     "docs/superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md",
 )
 
+R4_1_REPLAY_DESIGN = (
+    "docs/superpowers/specs/2026-08-29-r4-1-data-supervision-replay-design.md"
+)
+R4_1_REPLAY_PLAN = (
+    "docs/superpowers/plans/2026-08-29-r4-1-data-supervision-replay-plan.md"
+)
+R4_1_SOURCE_READINESS_DESIGN = (
+    "docs/superpowers/specs/"
+    "2026-08-30-r4-1-source-readiness-correction-design.md"
+)
+R4_1_SOURCE_READINESS_PLAN = (
+    "docs/superpowers/plans/"
+    "2026-08-30-r4-1-source-readiness-correction-plan.md"
+)
+R4_1_REPLAY_PROGRESS = (
+    "docs/superpowers/progress/2026-08-29-r4-1-data-supervision-replay-progress.md"
+)
+
 GOVERNING_DOCUMENTS = (
     "AGENTS.md",
     R4_1_AMENDMENT,
     "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
+    R4_1_REPLAY_DESIGN,
+    R4_1_REPLAY_PLAN,
+    R4_1_SOURCE_READINESS_DESIGN,
+    R4_1_SOURCE_READINESS_PLAN,
     "README.md",
     "INTEGRATION.md",
     "docs/ARCHITECTURE.md",
@@ -122,6 +144,7 @@ HISTORICAL_EVIDENCE = (
     "docs/superpowers/plans/2026-08-29-hybrid-authority-cleanup-plan.md",
     "docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md",
     "docs/superpowers/progress/2026-08-22-r5-r6-plan-readiness-review.md",
+    R4_1_REPLAY_PROGRESS,
     "docs/superpowers/specs/2026-08-12-r1-legacy-test-retirement-design.md",
     "docs/superpowers/specs/2026-08-29-hybrid-authority-cleanup-design.md",
     "artifacts/",
@@ -154,6 +177,7 @@ HISTORICAL_STATUS_DOCUMENTS = (
     "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
     "docs/superpowers/specs/2026-08-12-r4-repository-owned-admission-design.md",
     "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
+    R4_1_REPLAY_PROGRESS,
 )
 
 
@@ -438,7 +462,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-1",
         "owner_ref": "governance",
-        "source_ast_sha256": "810dda2e63ef27ba21103bcd024a8d6d73b335d0ca869a018c0b87c28dfbcbb8"
+        "source_ast_sha256": "9727d046f737c6ebc56c815adff791b7c9b0dd25df952e2c257ea12b2e49fcd5"
     },
     "tests/test_replay_governance.py::test_authority_cleanup_classifies_every_authority_like_document_once": {
         "activation_phase": "G0",
@@ -454,7 +478,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Authority-Cleanup-Task-1",
         "owner_ref": "governance",
-        "source_ast_sha256": "be6df0f7f7bb1d9df2d1312888e2ed90f4db25a664d7b0033d3de5fe4727c11c"
+        "source_ast_sha256": "a0041e50313daf623ecc51f3696332456e724c966876e01072a1d76ce19b836d"
     },
     "tests/test_replay_governance.py::test_governing_documents_do_not_prescribe_rejected_r4_r5_paths": {
         "activation_phase": "G0",
@@ -480,13 +504,13 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "b0343442a4fa2160c28462a3d2c408dfcc350ca61cc88b6d1c0b157199169c11"
     },
-    "tests/test_replay_governance.py::test_active_hybrid_workflows_cannot_rewrite_governed_source": {
+    "tests/test_replay_governance.py::test_selected_g0_governance_nodes_do_not_read_repository_parent": {
         "activation_phase": "G0",
-        "assertion_ref": "assertion:active-hybrid-workflows-cannot-rewrite-source",
+        "assertion_ref": "assertion:selected-g0-governance-nodes-do-not-read-repository-parent",
         "diagnostic_role": "owner",
-        "introduced_by_task": "Authority-Cleanup-Task-4",
+        "introduced_by_task": "G0-Selector-Regression-Fix",
         "owner_ref": "governance",
-        "source_ast_sha256": "0c03ae5af33f1797613c3120bb16e31a647afb5855dbbb9bf885c03784b1cea3"
+        "source_ast_sha256": "c460a56426145f2dc272618a43f9e1673e436e72a7fa639a6200ae51aa505ca0"
     },
     "tests/test_replay_governance.py::test_governing_r5_documents_require_external_r4_1_prerequisite": {
         "activation_phase": "G0",
@@ -880,12 +904,12 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "6b2315aab7f4ddce2e3d52eeba8adb519d8557346ac45adece0e35e0e54067eb"
     },
-    "tests/test_replay_governance.py::test_corrective_tracker_is_operational_not_status_authority": {
+    "tests/test_replay_governance.py::test_r4_1_replay_tracker_is_operational_not_status_authority": {
         "activation_phase": "R4",
-        "assertion_ref": "assertion:corrective-tracker-is-operational-not-status-authority",
+        "assertion_ref": "assertion:r4-1-replay-tracker-is-operational-not-status-authority",
         "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-1",
-        "source_ast_sha256": "523f5ccfefa21a5e35710d140014c041e0ef2ba768ffe3d111aadf65a3993d97"
+        "introduced_by_task": "R4.1-Data-Supervision-Task-1",
+        "source_ast_sha256": "d6a10b948868188c71281845b31df37ec689c9e955680d57539919e836b94cd6"
     },
     "tests/test_replay_governance.py::test_r4_partition_corrective_documents_are_superseded": {
         "activation_phase": "G0",
@@ -1018,7 +1042,13 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
     assert authority["schema"] == "cemm-hybrid-document-authority-v1"
     assert authority["scope"] == "hybrid_mvp/"
     assert authority["path_base"] == "hybrid_mvp/"
-    assert authority["root_runtime_authority"] == "../AGENTS.md"
+    root_authority_pin = authority["root_runtime_authority"]
+    assert type(root_authority_pin) is dict
+    assert set(root_authority_pin) == {"path", "sha256"}
+    assert root_authority_pin["path"] == "../AGENTS.md"
+    assert root_authority_pin["sha256"] == (
+        "b453d142dc482be4fe56077b24d5fd0bce8a20ef57e0fe71d563d07b76e54768"
+    )
     assert authority["governing_documents"] == list(GOVERNING_DOCUMENTS)
     assert authority["superseded_execution_claims"] == list(
         SUPERSEDED_EXECUTION_CLAIMS
@@ -1050,9 +1080,10 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
     ):
         assert (ROOT / relative.rstrip("/")).exists(), relative
 
-    root_authority = (ROOT / str(authority["root_runtime_authority"])).resolve()
+    root_authority = (ROOT / str(root_authority_pin["path"])).resolve()
     assert root_authority == (ROOT.parent / "AGENTS.md").resolve()
-    assert root_authority.is_file()
+    root_authority_raw = root_authority.read_bytes()
+    assert hashlib.sha256(root_authority_raw).hexdigest() == root_authority_pin["sha256"]
 
     for relative in CURRENT_STATUS_DOCUMENTS:
         text = (ROOT / relative).read_text(encoding="utf-8")
@@ -1110,11 +1141,36 @@ def test_authority_cleanup_classifies_every_authority_like_document_once() -> No
 def test_r4_1_amendment_owns_authentic_r5_prerequisites() -> None:
     authority = _authority()
     assert R4_1_AMENDMENT in authority["governing_documents"]
+    assert R4_1_REPLAY_DESIGN in authority["governing_documents"]
+    assert R4_1_REPLAY_PLAN in authority["governing_documents"]
     text = (ROOT / R4_1_AMENDMENT).read_text(encoding="utf-8")
     for marker in REQUIRED_R5_PREREQUISITE_MARKERS:
         assert marker in text
     assert "governance/replay_status.jsonl" in text
     assert "root adoption" in text.casefold()
+
+    registry = (ROOT / "docs/ABI_REGISTRY.md").read_text(encoding="utf-8")
+    design = (ROOT / R4_1_REPLAY_DESIGN).read_text(encoding="utf-8")
+    target_abis = {
+        "R4 Review Manifest": 1,
+        "Proposal Supervision": 1,
+        "Realization Supervision": 1,
+        "Mutation Contract": 1,
+        "Purpose Contract": 1,
+        "R4 Supervised Case": 1,
+        "Duplicate-Risk Evidence": 1,
+        "Class-local Sufficiency": 1,
+        "R4 Split Manifest": 2,
+        "R4 Class Capability": 2,
+        "R4 Class Authorization": 2,
+        "R4 Build Receipt": 5,
+    }
+    for abi_name, version in target_abis.items():
+        assert f"| {abi_name} | {version} |" in design
+        assert f"| {abi_name} ABI | **{version}** |" in registry
+    assert "Current candidates require the exact ABI 4 evidence set" not in registry
+    assert "Build Receipt ABI 4 and its global semantic-union evidence" in registry
+    assert "the later repository admission receipt authenticates" in registry
 
 
 def test_governing_documents_do_not_prescribe_rejected_r4_r5_paths() -> None:
@@ -1215,22 +1271,607 @@ def test_r5_placeholder_docstrings_do_not_claim_admitted_semantics() -> None:
     )
 
 
-def test_active_hybrid_workflows_cannot_rewrite_governed_source() -> None:
-    workflows = ROOT.parent / ".github/workflows"
-    forbidden = (
-        "contents: write",
-        "git push",
-        ".github/r3_close_apply.py",
-        "base64 --decode",
-        "frombase64string",
+def test_selected_g0_governance_nodes_do_not_read_repository_parent() -> None:
+    config_path = ROOT / "configs/validation_gates.json"
+    source_path = ROOT / "tests/test_replay_governance.py"
+    config = json.loads(
+        config_path.read_bytes().decode("utf-8", errors="strict"),
+        object_pairs_hook=_strict_json_object,
+        parse_constant=_reject_nonfinite_json,
     )
-    offenders: list[tuple[str, str]] = []
-    for path in sorted((*workflows.glob("*.yml"), *workflows.glob("*.yaml"))):
-        text = path.read_text(encoding="utf-8").casefold()
-        for marker in forbidden:
-            if marker in text:
-                offenders.append((path.name, marker))
-    assert not offenders, offenders
+    assert type(config) is dict
+    steps = config["steps"]
+    assert type(steps) is dict
+    governance_step = steps["g0_governance_tests"]
+    assert type(governance_step) is dict
+    exact_nodes = governance_step["exact_nodes"]
+    assert type(exact_nodes) is list
+
+    module_prefix = "tests/test_replay_governance.py::"
+    selected_names = {
+        node_id.removeprefix(module_prefix).split("[", 1)[0]
+        for node_id in exact_nodes
+        if type(node_id) is str and node_id.startswith(module_prefix)
+    }
+    tree = ast.parse(source_path.read_text(encoding="utf-8"), filename=str(source_path))
+    functions = {
+        node.name: node
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    assert selected_names <= set(functions)
+
+    read_methods = frozenset(
+        {
+            "exists",
+            "glob",
+            "is_dir",
+            "is_file",
+            "iterdir",
+            "lstat",
+            "open",
+            "read_bytes",
+            "read_text",
+            "rglob",
+            "stat",
+        }
+    )
+    os_read_methods = frozenset({"listdir", "lstat", "open", "scandir", "stat", "walk"})
+    pure_calls = frozenset(
+        {"bool", "bytes", "frozenset", "len", "list", "repr", "set", "sorted", "str", "tuple"}
+    )
+    authenticated_git_calls = frozenset(
+        {
+            "governance._git_batch_load_checked_blobs",
+            "governance._git_load_commit_graph",
+            "governance._load_git_witnesses",
+        }
+    )
+    root_pin = _authority()["root_runtime_authority"]
+    assert type(root_pin) is dict and set(root_pin) == {"path", "sha256"}
+    assert root_pin["path"] == "../AGENTS.md"
+    assert re.fullmatch(r"[0-9a-f]{64}", str(root_pin["sha256"]))
+    allowed_external_reads = frozenset(
+        {
+            (
+                "test_document_authority_is_scoped_and_classifications_are_exact",
+                "read_bytes",
+                "../AGENTS.md",
+            )
+        }
+    )
+
+    def find_offenders(
+        selected: set[str],
+        available: dict[str, ast.FunctionDef | ast.AsyncFunctionDef],
+    ) -> list[tuple[str, str, int]]:
+        # Abstract values are (kind, material). Only paths derived from ROOT are
+        # governed here: local paths are safe, tainted values fail if consumed
+        # as filesystem paths, and escape/maybe paths also fail at unreviewed
+        # helper boundaries.
+        unknown = ("unknown", None)
+        module_values = {
+            name: value
+            for name, value in globals().items()
+            if type(value) in {str, tuple, list, dict, frozenset}
+        }
+
+        def value_state(value: object) -> tuple[str, object]:
+            return ("value", value)
+
+        def merge(states: list[tuple[str, object]]) -> tuple[str, object]:
+            if not states:
+                return unknown
+            if all(state == states[0] for state in states):
+                return states[0]
+            if any(state[0] == "escape" for state in states):
+                return ("maybe", None)
+            if any(state[0] == "maybe" for state in states):
+                return ("maybe", None)
+            if any(state[0] == "tainted" for state in states):
+                return ("tainted", None)
+            values = [state[1] for state in states if state[0] == "value"]
+            if len(values) == len(states) and all(type(value) is str for value in values):
+                safe = all(
+                    not PurePosixPath(value).is_absolute()
+                    and ".." not in PurePosixPath(value).parts
+                    for value in values
+                )
+                return ("safe-segment", None) if safe else ("maybe", None)
+            return unknown
+
+        def freeze_material(value: object, depth: int = 0) -> object:
+            if depth >= 6:
+                return (type(value).__name__, "bounded")
+            if value is None or type(value) in {bool, int, float, str}:
+                return (type(value).__name__, value)
+            if isinstance(value, (tuple, list, set, frozenset)):
+                rows = tuple(freeze_material(item, depth + 1) for item in tuple(value)[:256])
+                return (type(value).__name__, rows)
+            if isinstance(value, dict):
+                rows = tuple(
+                    sorted(
+                        (
+                            repr(freeze_material(key, depth + 1)),
+                            freeze_material(item, depth + 1),
+                        )
+                        for key, item in tuple(value.items())[:256]
+                    )
+                )
+                return ("dict", rows)
+            return (type(value).__name__, "opaque")
+
+        def state_key_part(state: tuple[str, object]) -> tuple[str, object]:
+            return (state[0], freeze_material(state[1]))
+
+        def join_path(
+            left: tuple[str, object],
+            right: tuple[str, object],
+        ) -> tuple[str, object]:
+            if left[0] not in {"local", "escape", "maybe", "tainted"}:
+                return unknown
+            if left[0] == "tainted":
+                return ("maybe", None)
+            if right[0] == "safe-segment":
+                return left
+            if right[0] != "value" or type(right[1]) is not str:
+                return ("maybe", None)
+            piece = PurePosixPath(right[1])
+            if piece.is_absolute():
+                return ("escape", piece.as_posix())
+            base = [] if left[1] in {None, "."} else list(PurePosixPath(str(left[1])).parts)
+            for part in piece.parts:
+                if part in {"", "."}:
+                    continue
+                if part == "..":
+                    if base and base[-1] != "..":
+                        base.pop()
+                    else:
+                        base.append(part)
+                else:
+                    base.append(part)
+            relative = PurePosixPath(*base).as_posix() if base else "."
+            escaped = relative == ".." or relative.startswith("../")
+            return ("escape" if escaped else "local", relative)
+
+        def concatenate_strings(
+            left: tuple[str, object],
+            right: tuple[str, object],
+        ) -> tuple[str, object]:
+            if (
+                left[0] == "value"
+                and right[0] == "value"
+                and type(left[1]) is str
+                and type(right[1]) is str
+            ):
+                return value_state(left[1] + right[1])
+            if left == value_state("") and right[0] in {
+                "local",
+                "escape",
+                "maybe",
+                "tainted",
+            }:
+                return right
+            if right == value_state("") and left[0] in {
+                "local",
+                "escape",
+                "maybe",
+                "tainted",
+            }:
+                return left
+            if left[0] == "escape" and right[0] == "value" and type(right[1]) is str:
+                return ("escape", None)
+            if left[0] == "local" and right[0] == "value" and type(right[1]) is str:
+                suffix = right[1]
+                if suffix.startswith(("/", "\\")):
+                    return join_path(left, value_state(suffix.lstrip("/\\")))
+                if left[1] not in {None, "."}:
+                    return join_path(("local", "."), value_state(f"{left[1]}{suffix}"))
+            if left[0] in {"local", "escape", "maybe", "tainted"} or right[0] in {
+                "local",
+                "escape",
+                "maybe",
+                "tainted",
+            }:
+                return ("maybe", None)
+            return unknown
+
+        offenders: list[tuple[str, str, int]] = []
+        active_states: set[tuple[str, tuple[tuple[str, tuple[str, object]], ...]]] = set()
+        completed_states: dict[
+            tuple[str, tuple[tuple[str, tuple[str, object]], ...]], tuple[str, object]
+        ] = {}
+        analyzed_states = 0
+        observed_allowed_reads: set[tuple[str, str, str]] = set()
+
+        def analyze_function(
+            function_name: str,
+            parameter_values: dict[str, tuple[str, object]] | None = None,
+        ) -> tuple[str, object]:
+            nonlocal analyzed_states
+            function = available[function_name]
+            env: dict[str, tuple[str, object]] = {
+                argument.arg: unknown
+                for argument in (*function.args.posonlyargs, *function.args.args, *function.args.kwonlyargs)
+            }
+            env.update(parameter_values or {})
+            state_key = (
+                function_name,
+                tuple(sorted((name, state_key_part(value)) for name, value in env.items())),
+            )
+            if state_key in completed_states:
+                return completed_states[state_key]
+            if state_key in active_states:
+                return unknown
+            active_states.add(state_key)
+            analyzed_states += 1
+            assert analyzed_states <= 512
+
+            def evaluate(expression: ast.AST | None) -> tuple[str, object]:
+                if expression is None:
+                    return unknown
+                if isinstance(expression, ast.Name):
+                    if expression.id == "ROOT":
+                        return ("local", ".")
+                    if expression.id in env:
+                        return env[expression.id]
+                    if expression.id in module_values:
+                        return value_state(module_values[expression.id])
+                    return unknown
+                if isinstance(expression, ast.Constant):
+                    return value_state(expression.value)
+                if isinstance(expression, ast.Starred):
+                    return evaluate(expression.value)
+                if isinstance(expression, (ast.Tuple, ast.List, ast.Set)):
+                    rows: list[tuple[str, object]] = []
+                    for item in expression.elts:
+                        row = evaluate(item)
+                        if isinstance(item, ast.Starred) and row[0] == "value" and isinstance(
+                            row[1], (tuple, list, set, frozenset)
+                        ):
+                            rows.extend(value_state(value) for value in row[1])
+                        else:
+                            rows.append(row)
+                    if all(row[0] == "value" for row in rows):
+                        return value_state(tuple(row[1] for row in rows))
+                    return merge(rows)
+                if isinstance(expression, ast.Dict):
+                    keys = [evaluate(item) for item in expression.keys]
+                    values = [evaluate(item) for item in expression.values]
+                    if all(row[0] == "value" for row in (*keys, *values)):
+                        return value_state(
+                            {key[1]: value[1] for key, value in zip(keys, values, strict=True)}
+                        )
+                    return merge([*keys, *values])
+                if isinstance(expression, (ast.GeneratorExp, ast.ListComp, ast.SetComp)):
+                    if len(expression.generators) != 1:
+                        return unknown
+                    generator = expression.generators[0]
+                    if not isinstance(generator.target, ast.Name):
+                        return unknown
+                    iterable = evaluate(generator.iter)
+                    if iterable[0] != "value" or not isinstance(
+                        iterable[1], (tuple, list, set, frozenset)
+                    ):
+                        return unknown
+                    prior = env.get(generator.target.id)
+                    rows: list[tuple[str, object]] = []
+                    for item in tuple(iterable[1])[:256]:
+                        env[generator.target.id] = value_state(item)
+                        rows.append(evaluate(expression.elt))
+                    if prior is None:
+                        env.pop(generator.target.id, None)
+                    else:
+                        env[generator.target.id] = prior
+                    if rows and all(row[0] == "value" for row in rows):
+                        return value_state(tuple(row[1] for row in rows))
+                    return merge(rows)
+                if isinstance(expression, ast.IfExp):
+                    return merge([evaluate(expression.body), evaluate(expression.orelse)])
+                if isinstance(expression, ast.BoolOp):
+                    return merge([evaluate(value) for value in expression.values])
+                if isinstance(expression, ast.Attribute):
+                    base = evaluate(expression.value)
+                    if expression.attr == "parent" and base[0] in {
+                        "local",
+                        "escape",
+                        "maybe",
+                        "tainted",
+                    }:
+                        return join_path(base, value_state(".."))
+                    if expression.attr == "parents" and base[0] in {
+                        "local",
+                        "escape",
+                        "maybe",
+                        "tainted",
+                    }:
+                        return ("parents", base)
+                    return unknown
+                if isinstance(expression, ast.Subscript):
+                    base = evaluate(expression.value)
+                    index = evaluate(expression.slice)
+                    if base[0] == "parents":
+                        return ("escape", "..")
+                    if base[0] in {"escape", "maybe", "tainted"}:
+                        return base
+                    if base[0] == "value" and index[0] == "value":
+                        try:
+                            return value_state(base[1][index[1]])
+                        except (KeyError, IndexError, TypeError):
+                            return unknown
+                    return unknown
+                if isinstance(expression, ast.BinOp) and isinstance(expression.op, ast.Add):
+                    return concatenate_strings(evaluate(expression.left), evaluate(expression.right))
+                if isinstance(expression, ast.BinOp) and isinstance(expression.op, ast.Div):
+                    return join_path(evaluate(expression.left), evaluate(expression.right))
+                if isinstance(expression, ast.JoinedStr):
+                    result = value_state("")
+                    for value in expression.values:
+                        if isinstance(value, ast.FormattedValue):
+                            part = evaluate(value.value)
+                            if part[0] == "value":
+                                part = value_state(str(part[1]))
+                        else:
+                            part = evaluate(value)
+                        result = concatenate_strings(result, part)
+                    return result
+                if isinstance(expression, ast.Call):
+                    if ast.unparse(expression.func) in authenticated_git_calls:
+                        return unknown
+                    if isinstance(expression.func, ast.Name):
+                        if expression.func.id in {"_authority", "_strict_document_authority"}:
+                            return value_state(_authority())
+                        if expression.func.id == "str" and expression.args:
+                            value = evaluate(expression.args[0])
+                            return value_state(str(value[1])) if value[0] == "value" else value
+                        if expression.func.id == "Path" and expression.args:
+                            value = evaluate(expression.args[0])
+                            return join_path(("local", "."), value)
+                        if expression.func.id in {"frozenset", "list", "set", "tuple"} and expression.args:
+                            value = evaluate(expression.args[0])
+                            if value[0] == "value" and isinstance(
+                                value[1], (tuple, list, set, frozenset)
+                            ):
+                                return value_state(tuple(value[1]))
+                            return unknown
+                        if expression.func.id in available:
+                            callee = available[expression.func.id]
+                            arguments = {
+                                parameter.arg: evaluate(argument)
+                                for parameter, argument in zip(callee.args.args, expression.args)
+                            }
+                            return analyze_function(expression.func.id, arguments)
+                    if isinstance(expression.func, ast.Attribute):
+                        receiver = evaluate(expression.func.value)
+                        if expression.func.attr in read_methods:
+                            return unknown
+                        if expression.func.attr == "resolve":
+                            return receiver
+                        if expression.func.attr == "joinpath":
+                            result = receiver
+                            for argument in expression.args:
+                                result = join_path(result, evaluate(argument))
+                            return result
+                        if expression.func.attr in {"rstrip", "strip"}:
+                            if receiver[0] == "safe-segment":
+                                return receiver
+                            if receiver[0] == "value":
+                                chars = evaluate(expression.args[0])[1] if expression.args else None
+                                return value_state(getattr(receiver[1], expression.func.attr)(chars))
+                        if receiver[0] in {"local", "escape", "maybe", "tainted"}:
+                            return receiver
+                    child_states = [evaluate(child) for child in ast.iter_child_nodes(expression)]
+                    if any(
+                        state[0] in {"escape", "maybe", "parents"}
+                        for state in child_states
+                    ):
+                        return ("maybe", None)
+                    if any(state[0] in {"local", "tainted"} for state in child_states):
+                        return ("tainted", None)
+                    return unknown
+                child_states = [evaluate(child) for child in ast.iter_child_nodes(expression)]
+                if any(
+                    state[0] in {"escape", "maybe", "parents"}
+                    for state in child_states
+                ):
+                    return ("maybe", None)
+                if any(state[0] in {"local", "tainted"} for state in child_states):
+                    return ("tainted", None)
+                return unknown
+
+            def bind_call_arguments(
+                callee: ast.FunctionDef | ast.AsyncFunctionDef,
+                call: ast.Call,
+            ) -> dict[str, tuple[str, object]]:
+                positional = (*callee.args.posonlyargs, *callee.args.args)
+                arguments = {
+                    parameter.arg: evaluate(argument)
+                    for parameter, argument in zip(positional, call.args)
+                }
+                for keyword in call.keywords:
+                    if keyword.arg is not None:
+                        arguments[keyword.arg] = evaluate(keyword.value)
+                return arguments
+
+            assignments = [
+                node
+                for node in ast.walk(function)
+                if isinstance(node, (ast.Assign, ast.AnnAssign, ast.NamedExpr))
+            ]
+            loops = [node for node in ast.walk(function) if isinstance(node, ast.For)]
+            for _pass in range(len(assignments) + len(loops) + 2):
+                changed = False
+                candidates: dict[str, list[tuple[str, object]]] = {}
+                for assignment in assignments:
+                    value = assignment.value
+                    state = evaluate(value)
+                    if isinstance(assignment, ast.Assign):
+                        targets = assignment.targets
+                    else:
+                        targets = [assignment.target]
+                    for target in targets:
+                        if isinstance(target, ast.Name):
+                            candidates.setdefault(target.id, []).append(state)
+                for loop in loops:
+                    if not isinstance(loop.target, ast.Name):
+                        continue
+                    iterable = evaluate(loop.iter)
+                    if iterable[0] == "value" and isinstance(iterable[1], (tuple, list, set, frozenset)):
+                        rows = [value_state(value) for value in tuple(iterable[1])[:256]]
+                        state = merge(rows)
+                    else:
+                        state = unknown
+                    candidates.setdefault(loop.target.id, []).append(state)
+                for name, states in candidates.items():
+                    state = merge(states)
+                    if env.get(name) != state:
+                        env[name] = state
+                        changed = True
+                if not changed:
+                    break
+            else:
+                raise AssertionError(f"path analysis did not converge: {function_name}")
+
+            for call in ast.walk(function):
+                if not isinstance(call, ast.Call):
+                    continue
+                callee = ast.unparse(call.func)
+                target = unknown
+                operation = callee
+                if isinstance(call.func, ast.Name) and call.func.id == "open" and call.args:
+                    target = evaluate(call.args[0])
+                    operation = "open"
+                elif isinstance(call.func, ast.Name) and call.func.id == "open":
+                    file_keyword = next(
+                        (keyword for keyword in call.keywords if keyword.arg == "file"), None
+                    )
+                    if file_keyword is not None:
+                        target = evaluate(file_keyword.value)
+                        operation = "open"
+                elif (
+                    isinstance(call.func, ast.Attribute)
+                    and isinstance(call.func.value, ast.Name)
+                    and call.func.value.id == "os"
+                    and call.func.attr in os_read_methods
+                ):
+                    path_argument = call.args[0] if call.args else next(
+                        (
+                            keyword.value
+                            for keyword in call.keywords
+                            if keyword.arg in {"name", "path", "top"}
+                        ),
+                        None,
+                    )
+                    if path_argument is not None:
+                        target = evaluate(path_argument)
+                    operation = f"os.{call.func.attr}"
+                elif (
+                    isinstance(call.func, ast.Attribute)
+                    and call.func.attr in read_methods
+                ):
+                    target = evaluate(call.func.value)
+                    operation = call.func.attr
+                elif isinstance(call.func, ast.Name) and call.func.id in available:
+                    callee_function = available[call.func.id]
+                    arguments = bind_call_arguments(callee_function, call)
+                    analyze_function(call.func.id, arguments)
+                elif callee not in authenticated_git_calls and callee not in pure_calls:
+                    escaped_arguments = [
+                        evaluate(argument)
+                        for argument in [*call.args, *(keyword.value for keyword in call.keywords)]
+                        if evaluate(argument)[0] in {"escape", "maybe"}
+                    ]
+                    if escaped_arguments:
+                        offenders.append((function_name, f"helper:{callee}", call.lineno))
+                if target[0] in {"escape", "maybe", "tainted"}:
+                    exception = (function_name, operation, str(target[1]))
+                    if exception not in allowed_external_reads:
+                        offenders.append((function_name, operation, call.lineno))
+                    else:
+                        observed_allowed_reads.add(exception)
+
+            returns = [
+                evaluate(node.value)
+                for node in ast.walk(function)
+                if isinstance(node, ast.Return) and node.value is not None
+            ]
+            active_states.remove(state_key)
+            result = merge(returns)
+            completed_states[state_key] = result
+            return result
+
+        assert len(available) <= 256
+        assert sum(1 for function in available.values() for _ in ast.walk(function)) <= 100_000
+        for function_name in sorted(selected):
+            analyze_function(function_name)
+        assert observed_allowed_reads == {
+            exception for exception in allowed_external_reads if exception[0] in selected
+        }
+        return sorted(set(offenders))
+
+    regression_sources = {
+        "alias": "def target():\n    path = ROOT.parent / 'x'\n    return path.read_text()\n",
+        "builtin-open": "def target():\n    return open(ROOT / '..' / 'x').read()\n",
+        "config-derived": (
+            "def target(authority):\n"
+            "    path = (ROOT / authority['external_path']).resolve()\n"
+            "    return path.is_file()\n"
+        ),
+        "helper-mediated": (
+            "def helper(path):\n    return path.read_bytes()\n"
+            "def target():\n    return helper(ROOT.parent / 'x')\n"
+        ),
+        "keyword-helper-mediated": (
+            "def helper(path):\n    return path.read_bytes()\n"
+            "def target():\n    return helper(path=ROOT.parent / 'x')\n"
+        ),
+        "mixed-path-container": (
+            "def target():\n"
+            "    paths = {'safe': ROOT / 'x', 'escape': ROOT.parent / 'x'}\n"
+            "    return paths['escape'].read_text()\n"
+        ),
+        "os-read": "def target():\n    return os.stat(ROOT / '..' / 'x')\n",
+        "parents": "def target():\n    return ROOT.parents[0].joinpath('x').read_text()\n",
+        "percent-format": "def target():\n    return open('%s/x' % ROOT.parent).read()\n",
+        "string-concat": (
+            "def target():\n    return open(str(ROOT.parent) + '/x').read()\n"
+        ),
+        "string-interpolation": (
+            "def target():\n    return open(f'{ROOT.parent}/x').read()\n"
+        ),
+    }
+    missed_regressions: list[str] = []
+    for label, regression_source in sorted(regression_sources.items()):
+        regression_tree = ast.parse(regression_source)
+        regression_functions = {
+            node.name: node
+            for node in regression_tree.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+        if not find_offenders({"target"}, regression_functions):
+            missed_regressions.append(label)
+    assert not missed_regressions, missed_regressions
+
+    local_string_sources = {
+        "plain-concat": "def target():\n    return open('local' + '/x').read()\n",
+        "plain-interpolation": "def target():\n    return open(f'local/{1}').read()\n",
+        "root-local-concat": (
+            "def target():\n    return open(str(ROOT / 'local') + '/x').read()\n"
+        ),
+    }
+    false_positives: dict[str, list[tuple[str, str, int]]] = {}
+    for label, local_source in sorted(local_string_sources.items()):
+        local_tree = ast.parse(local_source)
+        local_functions = {
+            node.name: node
+            for node in local_tree.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+        local_offenders = find_offenders({"target"}, local_functions)
+        if local_offenders:
+            false_positives[label] = local_offenders
+    assert not false_positives, false_positives
+    assert not find_offenders(selected_names, functions)
 
 
 def test_r4_partition_corrective_documents_are_superseded() -> None:
@@ -1335,11 +1976,215 @@ def test_r4_partition_defect_binding_matches_invalidated_source_base(
     assert "r4_build_v3:5d5eee0ee8c0e7bb1bcba522" in design
 
 
-def test_corrective_tracker_is_operational_not_status_authority() -> None:
-    text = (ROOT / "docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md").read_text(encoding="utf-8")
-    assert "governance/replay_status.jsonl" in text
-    assert "never replay-status authority" in text
+def test_r4_1_replay_tracker_is_operational_not_status_authority() -> None:
+    authority = _strict_document_authority()
+    assert authority["governing_documents"].index(R4_1_REPLAY_PLAN) == (
+        authority["governing_documents"].index(R4_1_REPLAY_DESIGN) + 1
+    )
+    main_plan_index = authority["governing_documents"].index(R4_1_REPLAY_PLAN)
+    assert authority["governing_documents"][main_plan_index + 1 : main_plan_index + 3] == [
+        R4_1_SOURCE_READINESS_DESIGN,
+        R4_1_SOURCE_READINESS_PLAN,
+    ]
+    classifications = (
+        *authority["governing_documents"],
+        *authority["superseded_execution_claims"],
+        *authority["historical_evidence"],
+    )
+    assert classifications.count(R4_1_REPLAY_PROGRESS) == 1
+    assert R4_1_REPLAY_PROGRESS in authority["historical_evidence"]
+
+    text = (ROOT / R4_1_REPLAY_PROGRESS).read_text(encoding="utf-8")
+
+    def assert_no_positive_tracker_claims(candidate: str) -> None:
+        assert not re.search(
+            r"^\s*this tracker\s+"
+            r"(?:(?:do|does|did|has|have|had|will|can|could|may|might|must|"
+            r"be|been|being|is|am|are|was|were|now|also|hereby)\s+)*"
+            r"(?:admit(?:s|ted|ting)?|authori[sz](?:e(?:s|d)?|ing)|"
+            r"declar(?:e(?:s|d)?|ing)\b[^\r\n]*\b"
+            r"complet(?:e(?:s|d)?|ing))\b",
+            candidate,
+            re.IGNORECASE | re.MULTILINE,
+        )
+
+    def assert_task_states_are_governed(
+        candidate_rows: list[tuple[str, str, str]], vocabulary: list[str]
+    ) -> None:
+        assert all(state in vocabulary for _task, _title, state in candidate_rows)
+
+    assert "operational evidence only" in text.casefold()
+    sole_authority_declaration = (
+        "governance/replay_status.jsonl is the sole phase-status authority"
+    )
+    assert text.count(sole_authority_declaration) == 1
+    other_text = text.replace(sole_authority_declaration, "", 1)
+    assert not re.search(
+        r"(?:phase|replay)[ -]status.{0,80}\bauthorit(?:y|ies)\b"
+        r"|\bauthorit(?:y|ies)\b.{0,80}(?:phase|replay)[ -]status",
+        other_text,
+        re.IGNORECASE | re.DOTALL,
+    )
+    assert "does not copy a mutable phase matrix" in text
+    assert "does not claim replay completion" in text
     assert not re.search(r"run:[0-9a-f]{24}", text)
+    assert not re.search(r"^\|\s*(?:G0|R[1-8])\s*\|", text, re.MULTILINE)
+    assert_no_positive_tracker_claims(text)
+    for claim in (
+        "This tracker admit R4.",
+        "This tracker admits R4.",
+        "This tracker admitted R4.",
+        "This tracker is admitting R4.",
+        "This tracker has admitted R4.",
+        "This tracker will admit R4.",
+        "This tracker can admit R4.",
+        "This tracker now also hereby admits R4.",
+    ):
+        with pytest.raises(AssertionError):
+            assert_no_positive_tracker_claims(text + "\n" + claim + "\n")
+    for claim in (
+        "This tracker authorize R4.",
+        "This tracker authorizes R4.",
+        "This tracker authorized R4.",
+        "This tracker is authorizing R4.",
+        "This tracker has authorised R4.",
+        "This tracker will authorise R4.",
+        "This tracker can authorize R4.",
+        "This tracker now also hereby authorizes R4.",
+    ):
+        with pytest.raises(AssertionError):
+            assert_no_positive_tracker_claims(text + "\n" + claim + "\n")
+    for claim in (
+        "This tracker declare the replay complete.",
+        "This tracker declares the replay completes.",
+        "This tracker declared the replay completed.",
+        "This tracker is declaring the replay completing.",
+        "This tracker has declared the replay complete.",
+        "This tracker will declare the replay completed.",
+        "This tracker can declare the replay complete.",
+        "This tracker now also hereby declares the replay complete.",
+    ):
+        with pytest.raises(AssertionError):
+            assert_no_positive_tracker_claims(text + "\n" + claim + "\n")
+    for disclaimer in (
+        "This tracker does not admit R4.",
+        "This tracker cannot authorize R4.",
+        "This tracker does not declare the replay complete.",
+    ):
+        assert_no_positive_tracker_claims(text + "\n" + disclaimer + "\n")
+
+    task_rows = re.findall(
+        r"^\|\s*T(\d{2})\s*\|\s*([^|]+?)\s*\|\s*([a-z_]+)\s*\|",
+        text,
+        re.MULTILINE,
+    )
+    plan_text = (ROOT / R4_1_REPLAY_PLAN).read_text(encoding="utf-8")
+    correction_plan_text = (ROOT / R4_1_SOURCE_READINESS_PLAN).read_text(
+        encoding="utf-8"
+    )
+    correction_design_text = (ROOT / R4_1_SOURCE_READINESS_DESIGN).read_text(
+        encoding="utf-8"
+    )
+    task_3 = re.search(
+        r"^## Task 3:.*?(?=^## Task 4:)",
+        plan_text,
+        re.MULTILINE | re.DOTALL,
+    )
+    assert task_3 is not None
+    assert R4_1_SOURCE_READINESS_PLAN in task_3.group(0)
+    assert "Task 4 is blocked" in task_3.group(0)
+    assert re.findall(r"^## SR([1-6]):", correction_plan_text, re.MULTILINE) == list(
+        "123456"
+    )
+    assert not re.search(
+        r"^## Task (?:[1-9]|1[0-8]):", correction_plan_text, re.MULTILINE
+    )
+    for marker in (
+        "must not accept a caller-supplied `RevisionPin`",
+        "bounded consumption",
+        "GroundedSelectorBinding",
+        "StructuralSelectorBinding",
+        "SourceAssignmentBlueprint",
+        "verification_rejection",
+        "every supervised case",
+        "cross-source semantic validator",
+        "R5 safe gap and rejection surfaces",
+        "successor-universe-derived",
+    ):
+        assert marker in correction_design_text
+    for marker in (
+        "hostile caller-supplied revision pins",
+        "infinite iterators",
+        "SourceAssignmentBlueprint",
+        "verification_rejection",
+        "cross-source semantic validator",
+        "docs/superpowers/reviews/2026-08-30-r4-1-source-readiness-approval.md",
+        "historical_evidence",
+        "atomically promote the exact verified A bytes",
+        "apply the exact approved scenario patch",
+        "successor-universe-derived",
+    ):
+        assert marker in correction_plan_text
+    for abi_name in (
+        "R4 Review Manifest ABI",
+        "Proposal Supervision ABI",
+        "Realization Supervision ABI",
+        "Mutation Contract ABI",
+        "Purpose Contract ABI",
+    ):
+        assert abi_name in correction_plan_text
+    assert "git add hybrid_mvp/" not in correction_plan_text
+    assert "| RC-SOURCE-READINESS | pending |" in text
+    assert re.search(r"^\| T03 \|[^\r\n]*\| in_progress \|", text, re.MULTILINE)
+    assert re.search(r"^\| T04 \|[^\r\n]*\| pending \|", text, re.MULTILINE)
+    plan_tasks = re.findall(
+        r"^## Task ([1-9]|1[0-8]): ([^\r\n]+)$", plan_text, re.MULTILINE
+    )
+    assert [int(number) for number, _title in plan_tasks] == list(range(1, 19))
+    assert [(number, title) for number, title, _state in task_rows] == [
+        (f"{int(number):02d}", title) for number, title in plan_tasks
+    ]
+    state_vocabulary = re.search(r"^State vocabulary: ([^\r\n]+)$", text, re.MULTILINE)
+    assert state_vocabulary is not None
+    vocabulary = re.findall(r"`([^`]+)`", state_vocabulary.group(1))
+    assert vocabulary == [
+        "in_progress",
+        "pending",
+        "blocked",
+        "stopped",
+        "complete",
+    ]
+    assert_task_states_are_governed(task_rows, vocabulary)
+    invalid_state_text, replacement_count = re.subn(
+        r"(^\|\s*T18\s*\|[^|]+\|\s*)pending(\s*\|)",
+        r"\1invented\2",
+        text,
+        count=1,
+        flags=re.MULTILINE,
+    )
+    assert replacement_count == 1
+    invalid_state_rows = re.findall(
+        r"^\|\s*T(\d{2})\s*\|\s*([^|]+?)\s*\|\s*([a-z_]+)\s*\|",
+        invalid_state_text,
+        re.MULTILINE,
+    )
+    with pytest.raises(AssertionError):
+        assert_task_states_are_governed(invalid_state_rows, vocabulary)
+    for required_register in (
+        "Commit references",
+        "Test receipts",
+        "Review checkpoints",
+        "Artifact references",
+        "Unresolved decisions",
+    ):
+        assert f"## {required_register}" in text
+
+    status = effective_replay_status(
+        read_hash_chain(ROOT / "governance/replay_status.jsonl")
+    )
+    task_states = {task_id: state for task_id, _title, state in task_rows}
+    assert status["R4"] == ("green" if task_states["17"] == "complete" else "red")
+    assert all(status[f"R{index}"] == "red" for index in range(5, 9))
 
 
 _R5_SUCCESSOR_CONTRACT = {

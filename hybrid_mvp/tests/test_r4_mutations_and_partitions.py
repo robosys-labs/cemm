@@ -5,24 +5,36 @@ from collections import Counter
 import json
 from pathlib import Path
 
+import pytest
+
 from cemm_authoritative_hybrid.authority import AtomRecord
 from cemm_authoritative_hybrid.canonical import stable_ref
+from cemm_authoritative_hybrid.decision import DecisionAction
 from cemm_authoritative_hybrid.gaps import GapKind
 from cemm_authoritative_hybrid.persistence import RevisionPin
 from cemm_authoritative_hybrid.r4_contracts import (
     ExpectedCycleContractCompiler,
     ReviewedScenario,
 )
-from cemm_authoritative_hybrid.r4_expansion import CaseExpander
+from cemm_authoritative_hybrid.r4_expansion import (
+    CaseExpander,
+    expand_reviewed_source_universe,
+)
+from cemm_authoritative_hybrid.r4_mutation_compiler import (
+    MutationCompilationError,
+    ReviewedMutationCompiler,
+)
 from cemm_authoritative_hybrid.r4_mutations import (
     MUTATION_OBSERVATION_ABI_VERSION,
     SEMANTIC_MUTATION_ABI_VERSION,
     MutationBoundaryResult,
+    MutationExecutionRequest,
     MutationExecutor,
     MutationGenerator,
     MutationObservation,
     SemanticMutation,
 )
+from cemm_authoritative_hybrid.r4_supervision import MutationContract
 from cemm_authoritative_hybrid.r4_partitions import (
     AXES,
     PartitionAxisManifest,
@@ -38,7 +50,7 @@ __cemm_test_inventory__ = {'tests/test_r4_mutations_and_partitions.py::test_muta
                                                                                                                   'diagnostic_role': 'owner',
                                                                                                                   'introduced_by_task': 'R4-Complete',
                                                                                                                   'owner_ref': 'mutation-partition',
-                                                                                                                  'source_ast_sha256': '360785939d775f46bab66809510bb38ca2f5d0204e5ac7ff39ce23bf6fc2c3f0'},
+                                                                                                                  'source_ast_sha256': 'bdefeb7897c70384c0d7c563deb3e44da1ca02c1e096c66e8e1ac4ac6879071f'},
  'tests/test_r4_mutations_and_partitions.py::test_partition_axis_manifest_is_exact_and_training_allowlist_has_no_test_refs': {'activation_phase': 'R4',
                                                                                                                               'assertion_ref': 'assertion:r4-partition-axis-manifest-is-exact-and-training-allowlist-has-no-test-refs',
                                                                                                                               'diagnostic_role': 'owner',
@@ -138,6 +150,8 @@ class _Authority:
             "entity:a": "entity",
             "rel:likes": "relation_type",
             "entity:b": "entity",
+            "perm:test": "permission",
+            "adapter:test": "adapter",
         }.items()
     }
     event_signatures = {}
@@ -145,7 +159,7 @@ class _Authority:
     designations = None
     capabilities = {}
     permissions = ()
-    adapters = ()
+    adapters = ("adapter:test",)
     operator_roles = {}
     rules = {}
 
@@ -165,7 +179,6 @@ def _case_contract():
                 }
             ],
             "surface_examples": ["a likes b"],
-            "expected_gap_kind": None,
             "metadata": {},
         }
     )
@@ -188,14 +201,278 @@ def _case_contract():
     return expanded[0]
 
 
-class _MatchingOwner:
-    def execute_mutation(self, mutation):
-        return MutationBoundaryResult(
-            earliest_owner=mutation.expected_earliest_owner,
-            status=mutation.expected_status,
-            error_code=mutation.expected_error_code,
-            artifact_ref=f"observed:{mutation.mutation_ref}",
+def _invalid_role_contract(case) -> MutationContract:
+    payload = case.as_dict()
+    before = payload["contract"]["expected_expressions"][0]["applications"][0][
+        "roles"
+    ][0]["role_ref"]
+    return MutationContract.create(
+        mutation_family_ref="mutation_family:invalid_role",
+        source_case_ref=case.case_ref,
+        scope="contract",
+        changed_dimension_ref="mutation_dimension:invalid_role",
+        selector_kind="json_path",
+        changed_path=(
+            "contract",
+            "expected_expressions",
+            0,
+            "applications",
+            0,
+            "roles",
+            0,
+            "role_ref",
+        ),
+        operation="replace",
+        expected_before=before,
+        replacement_after="not-a-role",
+        applicability_ref="mutation_applicability:semantic_expression",
+        expected_earliest_owner="expected-contract-compiler",
+        expected_status="rejected",
+        expected_error_code="invalid_role_ref",
+        disposition="reject",
+        effect_kind="no_effect",
+        expected_effect_ref=None,
+        review_refs=("source_review:0123456789abcdef01234567",),
+    )
+
+
+def _path_value(payload, path):
+    current = payload
+    for component in path:
+        current = current[component]
+    return current
+
+
+def _mutation_contracts(case) -> tuple[MutationContract, ...]:
+    payload = case.as_dict()
+    rows = (
+        (
+            "invalid_role",
+            "contract",
+            (
+                "contract",
+                "expected_expressions",
+                0,
+                "applications",
+                0,
+                "roles",
+                0,
+                "role_ref",
+            ),
+            "not-a-role",
+            "semantic_expression",
+            "expected-contract-compiler",
+            "rejected",
+            "invalid_role_ref",
+            "reject",
+        ),
+        (
+            "missing_predicate",
+            "contract",
+            (
+                "contract",
+                "expected_expressions",
+                0,
+                "applications",
+                0,
+                "predicate_ref",
+            ),
+            "entity:authority-ref-does-not-exist",
+            "semantic_expression",
+            "expected-contract-compiler",
+            "rejected",
+            "authority_ref_missing",
+            "reject",
+        ),
+        (
+            "dangling_root",
+            "contract",
+            ("contract", "expected_expressions", 0, "root_refs", 0),
+            "application:dangling-root",
+            "semantic_expression",
+            "semantic-expression",
+            "rejected",
+            "unknown_root_ref",
+            "reject",
+        ),
+        (
+            "source_untrusted",
+            "environment",
+            ("environment", "situation_constraints", "evidence_policy_refs"),
+            ["policy:evidence:untrusted_conversation"],
+            "all_supervised",
+            "EVALUATE",
+            "contested",
+            "untrusted_observation",
+            "contest",
+        ),
+        (
+            "stale_revision",
+            "persistence",
+            ("contract", "revision_pin", "world_revision"),
+            payload["contract"]["revision_pin"]["world_revision"] + 1,
+            "all_supervised",
+            "EFFECT",
+            "stale_revision",
+            "stale_revision",
+            "stale",
+        ),
+        (
+            "decision_action_mismatch",
+            "contract",
+            ("contract", "expected_decision", "action"),
+            "request_effect",
+            "all_supervised",
+            "expected-contract-compiler",
+            "rejected",
+            "decision_contract_mismatch",
+            "reject",
+        ),
+    )
+    return tuple(
+        MutationContract.create(
+            mutation_family_ref=f"mutation_family:{dimension}",
+            source_case_ref=case.case_ref,
+            scope=scope,
+            changed_dimension_ref=f"mutation_dimension:{dimension}",
+            selector_kind="json_path",
+            changed_path=path,
+            operation="replace",
+            expected_before=_path_value(payload, path),
+            replacement_after=replacement,
+            applicability_ref=f"mutation_applicability:{applicability}",
+            expected_earliest_owner=owner,
+            expected_status=status,
+            expected_error_code=error,
+            disposition=disposition,
+            effect_kind="no_effect",
+            expected_effect_ref=None,
+            review_refs=("source_review:0123456789abcdef01234567",),
         )
+        for (
+            dimension,
+            scope,
+            path,
+            replacement,
+            applicability,
+            owner,
+            status,
+            error,
+            disposition,
+        ) in rows
+    )
+
+
+def test_generator_requires_reviewed_contracts() -> None:
+    with pytest.raises(TypeError, match="reviewed mutation contracts"):
+        MutationGenerator().generate(_case_contract())
+
+
+def test_mutation_compiler_reconstructs_exact_changed_path() -> None:
+    case = _case_contract()
+    contract = _invalid_role_contract(case)
+    mutation = ReviewedMutationCompiler().compile(case=case, contract=contract)
+
+    assert mutation.expected_earliest_owner == contract.expected_earliest_owner
+    assert mutation.expected_status == contract.expected_status
+    assert mutation.expected_error_code == contract.expected_error_code
+    assert mutation.before == contract.expected_before
+    assert mutation.after == contract.replacement_after
+
+
+def test_mutation_compiler_rejects_wrong_case_before_and_applicability() -> None:
+    case = _case_contract()
+    base = _invalid_role_contract(case)
+
+    def recreate(**changes):
+        values = base.as_dict()
+        values.pop("abi_version")
+        values.pop("mutation_contract_ref")
+        values["changed_path"] = tuple(values["changed_path"])
+        values["review_refs"] = tuple(values["review_refs"])
+        values.update(changes)
+        return MutationContract.create(**values)
+
+    wrong_case = recreate(
+        source_case_ref="expanded_case_v2:ffffffffffffffffffffffff"
+    )
+    with pytest.raises(MutationCompilationError, match="another case"):
+        ReviewedMutationCompiler().compile(case=case, contract=wrong_case)
+
+    wrong_before = recreate(expected_before="role:wrong")
+    with pytest.raises(MutationCompilationError, match="before-value"):
+        ReviewedMutationCompiler().compile(case=case, contract=wrong_before)
+
+    inapplicable = recreate(
+        applicability_ref="mutation_applicability:permission_required"
+    )
+    with pytest.raises(MutationCompilationError, match="inapplicable"):
+        ReviewedMutationCompiler().compile(case=case, contract=inapplicable)
+
+
+class _MatchingOwner:
+    _EXPECTED = {
+        "invalid_role": (
+            "expected-contract-compiler",
+            "rejected",
+            "invalid_role_ref",
+        ),
+        "missing_predicate": (
+            "expected-contract-compiler",
+            "rejected",
+            "authority_ref_missing",
+        ),
+        "dangling_root": ("semantic-expression", "rejected", "unknown_root_ref"),
+        "source_untrusted": ("EVALUATE", "contested", "untrusted_observation"),
+        "stale_revision": ("EFFECT", "stale_revision", "stale_revision"),
+        "decision_action_mismatch": (
+            "expected-contract-compiler",
+            "rejected",
+            "decision_contract_mismatch",
+        ),
+    }
+
+    def execute_mutation(self, request):
+        assert type(request) is MutationExecutionRequest
+        owner, status, error = self._EXPECTED[request.dimension]
+        return MutationBoundaryResult(
+            earliest_owner=owner,
+            status=status,
+            error_code=error,
+            artifact_ref=f"observed:{request.request_ref}",
+        )
+
+
+class _SpyingOwner:
+    def __init__(self):
+        self.received = []
+
+    def execute_mutation(self, request):
+        self.received.append(request)
+        return MutationBoundaryResult(
+            earliest_owner="expected-contract-compiler",
+            status="rejected",
+            error_code="invalid_role_ref",
+            artifact_ref=f"observed:{request.request_ref}",
+        )
+
+
+def test_executor_never_sends_expected_labels_to_owner() -> None:
+    case = _case_contract()
+    mutation = ReviewedMutationCompiler().compile(
+        case=case,
+        contract=_invalid_role_contract(case),
+    )
+    owner = _SpyingOwner()
+    observations = MutationExecutor(owner).execute((mutation,))
+
+    assert observations[0].matched_expectation
+    payload = owner.received[0].as_dict()
+    assert "expected_earliest_owner" not in payload
+    assert "expected_status" not in payload
+    assert "expected_error_code" not in payload
+    assert "expected_status" not in payload["mutated_case"]
+    assert "expected_error_code" not in payload["mutated_case"]
 
 
 def _jsonl(path: Path) -> tuple[dict, ...]:
@@ -216,9 +493,15 @@ def _mutation_evidence() -> tuple[tuple[SemanticMutation, ...], tuple[MutationOb
 def _gap_evidence_counts() -> tuple[Counter[str], Counter[str], set[str]]:
     scenarios = _jsonl(ROOT / "data/scenarios/use_cases.jsonl")
     scenario_kind = {
-        row["scenario_ref"]: row["expected_gap_kind"]
+        row["scenario_ref"]: gaps[0]["gap_kind"]
         for row in scenarios
-        if row.get("expected_gap_kind") is not None
+        if (
+            gaps := [
+                assertion
+                for assertion in row["semantic_assertions"]
+                if assertion["kind"] == "gap"
+            ]
+        )
     }
     cases = _jsonl(ROOT / "artifacts/r4/expanded_cases.jsonl")
     case_kind = {
@@ -238,11 +521,44 @@ def _gap_evidence_counts() -> tuple[Counter[str], Counter[str], set[str]]:
 
 def test_mutations_change_one_declared_dimension_and_use_owner_labels() -> None:
     case = _case_contract()
-    mutations = MutationGenerator().generate(case)
-    assert len(mutations) == 8
-    assert len({row.dimension for row in mutations}) == 8
+    mutations = MutationGenerator(_mutation_contracts(case)).generate(case)
+    assert len(mutations) == 6
+    assert len({row.dimension for row in mutations}) == 6
     observations = MutationExecutor(_MatchingOwner()).execute(mutations)
     assert all(row.matched_expectation for row in observations)
+
+
+def test_operation_prerequisite_mutation_domains_equal_request_effect_cases() -> None:
+    from cemm_authoritative_hybrid.authority import AuthorityLinker
+
+    authority = AuthorityLinker().link_path(ROOT / "data/authority/manifest.json")
+    scenarios = tuple(
+        ReviewedScenario.from_dict(json.loads(line))
+        for line in (ROOT / "data/scenarios/use_cases.jsonl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+        if line
+    )
+    cases = expand_reviewed_source_universe(scenarios, authority=authority).cases
+    operation_refs = {
+        case.case_ref
+        for case in cases
+        if case.contract.expected_decision.action is DecisionAction.REQUEST_EFFECT
+    }
+    permission_mutation_refs = {
+        case.case_ref
+        for case in cases
+        if case.contract.situation_constraints.get("permission_refs")
+        == ("permission:set_state",)
+    }
+    adapter_mutation_refs = {
+        case.case_ref
+        for case in cases
+        if case.contract.situation_constraints.get("adapter_refs")
+        == ("adapter:state",)
+    }
+    assert permission_mutation_refs == operation_refs
+    assert adapter_mutation_refs == operation_refs
 
 
 def test_partition_axis_manifest_is_exact_and_training_allowlist_has_no_test_refs() -> None:

@@ -28,6 +28,7 @@ __all__ = [
     "AuthorityLinkError",
     "AuthorityStore",
     "AuthorityBundle",
+    "DesignationFact",
     "DesignationIndex",
     "LinkedAuthority",
     "AuthorityLinker",
@@ -146,6 +147,42 @@ class AuthorityBundle:
 # ---------------------------------------------------------------------------
 
 
+@dataclass(frozen=True)
+class DesignationFact:
+    """One explicit authority-owned surface-to-semantic designation."""
+
+    designation_fact_ref: str
+    surface: str
+    target_ref: str
+    language: str
+
+    @classmethod
+    def create(
+        cls, *, surface: str, target_ref: str, language: str
+    ) -> "DesignationFact":
+        if type(surface) is not str or not surface or len(surface) > 512:
+            raise ValueError("designation surface must be one bounded exact string")
+        if (
+            type(target_ref) is not str
+            or ":" not in target_ref
+            or len(target_ref) > 512
+        ):
+            raise ValueError("designation target must be one bounded typed ref")
+        if type(language) is not str or not language or len(language) > 64:
+            raise ValueError("designation language must be one bounded exact string")
+        material = {
+            "surface": surface,
+            "target_ref": target_ref,
+            "language": language,
+        }
+        return cls(
+            designation_fact_ref=stable_ref("designation", material),
+            surface=surface,
+            target_ref=target_ref,
+            language=language,
+        )
+
+
 class DesignationIndex:
     """Bounded index for surface→target and target→surface designations.
 
@@ -153,24 +190,66 @@ class DesignationIndex:
     refs are never automatically lexicalized into surfaces.
     """
 
-    __slots__ = ("_by_surface", "_by_folded_surface", "_by_target")
+    __slots__ = (
+        "_facts_by_surface",
+        "_facts_by_folded_surface",
+        "_facts_by_target",
+        "_facts_by_ref",
+    )
 
-    def __init__(
-        self,
-        by_surface: Mapping[tuple[str, str], tuple[str, ...]],
-        by_target: Mapping[tuple[str, str], tuple[str, ...]],
-    ) -> None:
-        self._by_surface = dict(by_surface)
-        self._by_target = dict(by_target)
-        folded: dict[tuple[str, str], list[str]] = {}
-        for (surface, language), targets in self._by_surface.items():
-            bucket = folded.setdefault((surface.casefold(), language), [])
-            for target in targets:
-                if target not in bucket:
-                    bucket.append(target)
-        self._by_folded_surface = {
-            key: tuple(targets) for key, targets in folded.items()
+    def __init__(self, facts: tuple[DesignationFact, ...]) -> None:
+        if type(facts) is not tuple or any(
+            type(fact) is not DesignationFact for fact in facts
+        ):
+            raise TypeError("designation index requires exact designation facts")
+        facts_by_ref: dict[str, DesignationFact] = {}
+        by_surface: dict[tuple[str, str], list[DesignationFact]] = {}
+        by_target: dict[tuple[str, str], list[DesignationFact]] = {}
+        folded: dict[tuple[str, str], list[DesignationFact]] = {}
+        for fact in facts:
+            if fact.designation_fact_ref in facts_by_ref:
+                raise ValueError(
+                    f"duplicate designation fact: {fact.designation_fact_ref}"
+                )
+            facts_by_ref[fact.designation_fact_ref] = fact
+            by_surface.setdefault((fact.surface, fact.language), []).append(fact)
+            by_target.setdefault((fact.target_ref, fact.language), []).append(fact)
+            folded.setdefault((fact.surface.casefold(), fact.language), []).append(fact)
+        self._facts_by_ref = facts_by_ref
+        self._facts_by_surface = {
+            key: tuple(
+                sorted(rows, key=lambda row: (row.target_ref, row.designation_fact_ref))
+            )
+            for key, rows in by_surface.items()
         }
+        self._facts_by_target = {
+            key: tuple(
+                sorted(rows, key=lambda row: (row.surface, row.designation_fact_ref))
+            )
+            for key, rows in by_target.items()
+        }
+        self._facts_by_folded_surface = {
+            key: tuple(
+                sorted(rows, key=lambda row: (row.target_ref, row.designation_fact_ref))
+            )
+            for key, rows in folded.items()
+        }
+
+    def facts_for_surface(
+        self, surface: str, language: str
+    ) -> tuple[DesignationFact, ...]:
+        exact = self._facts_by_surface.get((surface, language), ())
+        if exact:
+            return exact
+        return self._facts_by_folded_surface.get((surface.casefold(), language), ())
+
+    def facts_for_target(
+        self, target_ref: str, language: str
+    ) -> tuple[DesignationFact, ...]:
+        return self._facts_by_target.get((target_ref, language), ())
+
+    def resolve_fact(self, designation_fact_ref: str) -> DesignationFact | None:
+        return self._facts_by_ref.get(designation_fact_ref)
 
     def for_surface(self, surface: str, language: str) -> tuple[str, ...]:
         """Return target refs designated by ``surface`` in ``language``.
@@ -179,14 +258,15 @@ class DesignationIndex:
         used only when the exact surface is absent; collisions remain explicit
         alternatives rather than being resolved by spelling heuristics.
         """
-        exact = self._by_surface.get((surface, language), ())
-        if exact:
-            return exact
-        return self._by_folded_surface.get((surface.casefold(), language), ())
+        return tuple(
+            fact.target_ref for fact in self.facts_for_surface(surface, language)
+        )
 
     def for_target(self, target: str, language: str) -> tuple[str, ...]:
         """Return surfaces that designate ``target`` in ``language``."""
-        return self._by_target.get((target, language), ())
+        return tuple(
+            fact.surface for fact in self.facts_for_target(target, language)
+        )
 
     def canonical_surface_for_target(
         self,
@@ -200,13 +280,13 @@ class DesignationIndex:
         admitted only when it identifies one canonical reviewed surface for
         the target; ambiguous folded spellings fail closed.
         """
-        exact_targets = self._by_surface.get((surface, language), ())
-        if target in exact_targets:
+        exact_facts = self._facts_by_surface.get((surface, language), ())
+        if any(fact.target_ref == target for fact in exact_facts):
             return surface
         matches = tuple(
-            candidate
-            for candidate in self._by_target.get((target, language), ())
-            if candidate.casefold() == surface.casefold()
+            fact.surface
+            for fact in self._facts_by_target.get((target, language), ())
+            if fact.surface.casefold() == surface.casefold()
         )
         return matches[0] if len(matches) == 1 else None
 
@@ -459,10 +539,26 @@ class AuthorityLinker:
             all_transitions.extend(owner_data.get("transitions", []))
 
         # -- Validate designations (targets must exist) --------------------
+        designation_facts: list[DesignationFact] = []
+        designation_fact_refs: set[str] = set()
         for desig in all_designations:
             target = desig["target"]
             if target not in all_atoms:
                 raise AuthorityLinkError(f"missing target: {target}")
+            try:
+                fact = DesignationFact.create(
+                    surface=desig["surface"],
+                    target_ref=target,
+                    language=desig["language"],
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise AuthorityLinkError("designation record is structurally invalid") from exc
+            if fact.designation_fact_ref in designation_fact_refs:
+                raise AuthorityLinkError(
+                    f"duplicate designation fact: {fact.designation_fact_ref}"
+                )
+            designation_fact_refs.add(fact.designation_fact_ref)
+            designation_facts.append(fact)
 
         # -- Validate operator role schemas --------------------------------
         for op in FIXED_OPERATORS:
@@ -569,18 +665,7 @@ class AuthorityLinker:
         atoms_dict = {ref: record for ref, (record, _owner) in all_atoms.items()}
 
         # Designation index (bounded, explicit only)
-        by_surface: dict[tuple[str, str], list[str]] = {}
-        by_target: dict[tuple[str, str], list[str]] = {}
-        for desig in all_designations:
-            surface = desig["surface"]
-            target = desig["target"]
-            language = desig["language"]
-            by_surface.setdefault((surface, language), []).append(target)
-            by_target.setdefault((target, language), []).append(surface)
-        designations = DesignationIndex(
-            {k: tuple(v) for k, v in by_surface.items()},
-            {k: tuple(v) for k, v in by_target.items()},
-        )
+        designations = DesignationIndex(tuple(designation_facts))
 
         # Kind index
         kind_index: dict[str, set[str]] = {}

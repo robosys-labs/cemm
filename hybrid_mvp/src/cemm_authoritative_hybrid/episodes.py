@@ -120,8 +120,6 @@ class ScenarioCase:
         semantic_assertions: a tuple of structured assertion dicts. Each
             assertion has a ``kind`` key and category-specific fields.
         surface_examples: a tuple of illustrative surface form strings.
-        expected_gap_kind: the expected :class:`GapKind` value, or None if the
-            scenario is expected to resolve.
         metadata: optional metadata dict (e.g. language, polarity).
     """
 
@@ -130,7 +128,6 @@ class ScenarioCase:
     competency_category: str
     semantic_assertions: tuple[dict[str, Any], ...]
     surface_examples: tuple[str, ...]
-    expected_gap_kind: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -142,6 +139,17 @@ class ScenarioCase:
             object.__setattr__(
                 self, "surface_examples", tuple(self.surface_examples)
             )
+        kinds = tuple(
+            row.get("kind")
+            for row in self.semantic_assertions
+            if type(row) is dict
+        )
+        if kinds.count("gap") > 1:
+            raise ValueError("multiple structured gap assertions are forbidden")
+        if "gap" in kinds and any(kind not in {"gap", "mode"} for kind in kinds):
+            raise ValueError(
+                "structured gap cannot be mixed with semantic or adversarial truth"
+            )
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -150,19 +158,32 @@ class ScenarioCase:
             "competency_category": self.competency_category,
             "semantic_assertions": [dict(a) for a in self.semantic_assertions],
             "surface_examples": list(self.surface_examples),
-            "expected_gap_kind": self.expected_gap_kind,
             "metadata": dict(self.metadata),
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ScenarioCase":
+        expected = {
+            "scenario_ref",
+            "review_status",
+            "competency_category",
+            "semantic_assertions",
+            "surface_examples",
+            "metadata",
+        }
+        actual = set(data)
+        if actual != expected:
+            raise ValueError(
+                "ScenarioCase fields mismatch: "
+                f"missing={sorted(expected - actual)}, unknown field={sorted(actual - expected)}"
+            )
+        assertions = tuple(data.get("semantic_assertions", ()))
         return cls(
             scenario_ref=data["scenario_ref"],
             review_status=data["review_status"],
             competency_category=data["competency_category"],
-            semantic_assertions=tuple(data.get("semantic_assertions", ())),
+            semantic_assertions=assertions,
             surface_examples=tuple(data.get("surface_examples", ())),
-            expected_gap_kind=data.get("expected_gap_kind"),
             metadata=dict(data.get("metadata", {})),
         )
 

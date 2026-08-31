@@ -1,0 +1,61 @@
+{
+  "$id": "https://robosys-labs.github.io/cemm/schemas/r4_mutation_contract.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Schema owns structural, tag/namespace and bounded parity. The decoder owns content-address reconstruction semantic postconditions.",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "oneOf": [
+        {"properties": {"effect_kind": {"const": "effect"}, "expected_effect_ref": {"$ref": "#/$defs/ref"}}},
+        {"properties": {"effect_kind": {"const": "no_effect"}, "expected_effect_ref": {"type": "null"}}}
+      ]
+    },
+    {
+      "oneOf": [
+        {"properties": {"expected_status": {"const": "rejected"}, "disposition": {"const": "reject"}}},
+        {"properties": {"expected_status": {"const": "denied"}, "disposition": {"const": "deny"}}},
+        {"properties": {"expected_status": {"const": "adapter_missing"}, "disposition": {"const": "deny"}}},
+        {"properties": {"expected_status": {"const": "contested"}, "disposition": {"const": "contest"}}},
+        {"properties": {"expected_status": {"const": "stale_revision"}, "disposition": {"const": "stale"}}}
+      ]
+    }
+  ],
+  "properties": {
+    "abi_version": {"const": 1, "type": "integer"},
+    "mutation_contract_ref": {"maxLength": 512, "pattern": "^mutation_contract_v1:[0-9a-f]{24}$", "type": "string"},
+    "mutation_family_ref": {"maxLength": 512, "pattern": "^mutation_family:[^\\s:][^\\s]*$", "type": "string"},
+    "source_case_ref": {"maxLength": 512, "pattern": "^expanded_case_v2:[0-9a-f]{24}$", "type": "string"},
+    "scope": {"enum": ["contract", "environment", "persistence"]},
+    "changed_dimension_ref": {"$ref": "#/$defs/ref"},
+    "selector_kind": {"const": "json_path"},
+    "changed_path": {
+      "items": {
+        "oneOf": [
+          {"maxLength": 128, "minLength": 1, "type": "string"},
+          {"maximum": 4096, "minimum": 0, "type": "integer"}
+        ]
+      },
+      "maxItems": 16,
+      "minItems": 1,
+      "type": "array"
+    },
+    "operation": {"const": "replace"},
+    "expected_before": {},
+    "replacement_after": {},
+    "applicability_ref": {"maxLength": 512, "pattern": "^mutation_applicability:[^\\s:][^\\s]*$", "type": "string"},
+    "expected_earliest_owner": {"enum": ["expected-contract-compiler", "semantic-expression", "EVALUATE", "EFFECT"]},
+    "expected_status": {"enum": ["rejected", "denied", "adapter_missing", "contested", "stale_revision"]},
+    "expected_error_code": {"enum": ["invalid_role_ref", "authority_ref_missing", "unknown_root_ref", "permission_missing", "adapter_missing", "untrusted_observation", "stale_revision", "decision_contract_mismatch"]},
+    "disposition": {"enum": ["reject", "deny", "contest", "stale"]},
+    "effect_kind": {"enum": ["effect", "no_effect"]},
+    "expected_effect_ref": {"oneOf": [{"$ref": "#/$defs/ref"}, {"type": "null"}]},
+    "review_refs": {"$ref": "#/$defs/reviewRefs"}
+  },
+  "required": ["abi_version", "mutation_contract_ref", "mutation_family_ref", "source_case_ref", "scope", "changed_dimension_ref", "selector_kind", "changed_path", "operation", "expected_before", "replacement_after", "applicability_ref", "expected_earliest_owner", "expected_status", "expected_error_code", "disposition", "effect_kind", "expected_effect_ref", "review_refs"],
+  "title": "CEMM Mutation Contract ABI 1",
+  "type": "object",
+  "$defs": {
+    "reviewRefs": {"items": {"maxLength": 512, "pattern": "^source_review:[0-9a-f]{24}$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+    "ref": {"maxLength": 512, "minLength": 3, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*:[^\\s:][^\\s]*$", "type": "string"}
+  }
+}

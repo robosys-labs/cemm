@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>CEMM R4.1 Accountable Review</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Skip to review workspace</a>
+  <header id="status-header" aria-live="polite"></header>
+  <nav class="mode-nav" aria-label="Review mode">
+    <button type="button" data-mode="guided">Guided review</button>
+    <button type="button" data-mode="advanced">Advanced Explorer</button>
+  </nav>
+  <div id="guided-progress" aria-live="polite"></div>
+  <nav id="advanced-nav" class="phase-nav" aria-label="Review phases">
+    <button type="button" data-section="dashboard">Dashboard</button>
+    <button type="button" data-section="structural">Structural</button>
+    <button type="button" data-section="purpose">Purpose</button>
+    <button type="button" data-section="recipe">Recipes</button>
+    <button type="button" data-section="designation">Designations</button>
+    <button type="button" data-section="export">Export</button>
+  </nav>
+  <main id="workspace" tabindex="-1"></main>
+  <dialog id="impact-dialog" aria-labelledby="impact-title">
+    <div class="dialog-heading">
+      <p class="eyebrow">Impact preview</p>
+      <h2 id="impact-title">Confirm exact review action</h2>
+    </div>
+    <div id="impact-content"></div>
+    <form method="dialog" class="dialog-actions">
+      <button type="submit" value="cancel" class="button secondary">Cancel</button>
+      <button type="submit" id="confirm-impact" value="confirm" class="button primary">Confirm exact action</button>
+    </form>
+  </dialog>
+  <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

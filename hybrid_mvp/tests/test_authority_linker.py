@@ -14,6 +14,8 @@ import pytest
 from cemm_authoritative_hybrid.authority import (
     AuthorityLinker,
     AuthorityLinkError,
+    DesignationFact,
+    DesignationIndex,
     LinkedAuthority,
 )
 
@@ -105,6 +107,32 @@ def test_designation_index_empty_for_unknown_surface(linked_authority):
 
 def test_designation_index_empty_for_unknown_target(linked_authority):
     assert linked_authority.designations.for_target("entity:nonexistent", "en") == ()
+
+
+def test_designation_index_retains_canonical_authority_facts(linked_authority):
+    fact = linked_authority.designations.facts_for_surface("hello", "en")[0]
+    assert fact.surface == "hello"
+    assert fact.target_ref == "event:greeting"
+    assert linked_authority.designations.resolve_fact(fact.designation_fact_ref) == fact
+
+
+def test_designation_index_preserves_polysemy_in_stable_fact_order():
+    facts = tuple(
+        DesignationFact.create(surface="lead", target_ref=target, language="en")
+        for target in ("concept:person", "event:greeting")
+    )
+    index = DesignationIndex(tuple(reversed(facts)))
+    resolved = index.facts_for_surface("lead", "en")
+    assert tuple((row.target_ref, row.designation_fact_ref) for row in resolved) == tuple(
+        sorted((row.target_ref, row.designation_fact_ref) for row in facts)
+    )
+
+
+def test_authority_linker_rejects_duplicate_designation_fact(authority_factory):
+    with pytest.raises(AuthorityLinkError, match="duplicate designation fact"):
+        AuthorityLinker().link(
+            authority_factory(duplicate_designation=True).manifest
+        )
 
 
 # ---------------------------------------------------------------------------

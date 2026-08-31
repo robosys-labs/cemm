@@ -23,6 +23,10 @@ sys.path.insert(0, str(ROOT / "src"))
 from cemm_authoritative_hybrid.r4_episodes import PublicRuntimeEpisodeOwner
 from cemm_authoritative_hybrid.r4_partition_config import R4PartitionConfig
 from cemm_authoritative_hybrid.r4_pipeline import R4Pipeline
+from cemm_authoritative_hybrid.r4_supervision import (
+    load_authenticated_r4_review_bundle,
+    validate_authenticated_r4_source_semantics,
+)
 
 
 def _load_factory(path: Path):
@@ -57,6 +61,12 @@ def main() -> int:
         default=ROOT / "data" / "scenarios" / "use_cases.jsonl",
     )
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--review-root",
+        type=Path,
+        default=ROOT,
+        help="repository root containing the authenticated R4.1 review bundle",
+    )
     parser.add_argument(
         "--sufficiency-config",
         type=Path,
@@ -110,12 +120,20 @@ def main() -> int:
             environment["runtime_factory"],
             restart_executor=environment.get("restart_executor"),
         )
+        review_bundle = load_authenticated_r4_review_bundle(
+            args.review_root.resolve()
+        )
+        validate_authenticated_r4_source_semantics(
+            review_bundle,
+            authority=environment["authority"],
+        )
         pipeline = R4Pipeline(
             authority=environment["authority"],
             revision_pin=environment["revision_pin"],
             abi_registry_ref=environment["abi_registry_ref"],
             episode_owner=episode_owner,
             mutation_owner=environment["mutation_owner"],
+            mutation_contracts=review_bundle.mutation_contracts,
             source_revision=environment["source_revision"],
             partition_config=partition_config,
             minimums=structural_config.get("minimums"),

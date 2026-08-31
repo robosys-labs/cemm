@@ -93,7 +93,7 @@ def _verification_rejection(description: str) -> list[dict]:
             description=description,
             observed_kind="verification",
             status="verification_rejected",
-            recommended_owner="runtime",
+            recommended_owner="exact-verifier",
             safe_response_action="reject_candidate",
             error_code=None,
         )
@@ -148,7 +148,17 @@ def _transition_environment(
                 "source_ref": "source:r4-reviewed-initial-state",
             }
         )
-    return {"environments": [{"world_facts": facts}]}
+    return {
+        "environments": [
+            {
+                "situation_constraints": {
+                    "adapter_refs": ["adapter:state"],
+                    "permission_refs": ["permission:set_state"],
+                    "world_facts": facts,
+                }
+            }
+        ]
+    }
 
 
 def _trusted_evidence_environment(
@@ -193,7 +203,6 @@ def _case(
     category: str,
     assertions: list[dict],
     surfaces: list[str],
-    gap_kind: str | None = None,
     metadata: dict | None = None,
 ) -> dict:
     return {
@@ -202,7 +211,6 @@ def _case(
         "competency_category": category,
         "semantic_assertions": assertions,
         "surface_examples": surfaces,
-        "expected_gap_kind": gap_kind,
         "metadata": metadata or {},
     }
 
@@ -211,11 +219,11 @@ def generate_all() -> list[dict]:
     cases: list[dict] = []
     counter = 0
 
-    def _next(category: str, assertions, surfaces, gap_kind=None, metadata=None):
+    def _next(category: str, assertions, surfaces, metadata=None):
         nonlocal counter
         counter += 1
         cases.append(
-            _case(counter, category, assertions, surfaces, gap_kind, metadata)
+            _case(counter, category, assertions, surfaces, metadata)
         )
 
     # ------------------------------------------------------------------
@@ -699,8 +707,7 @@ def generate_all() -> list[dict]:
     cat = "gap_kinds"
     for gk in GAP_KINDS:
         _next(cat, [_assertion("gap", gap_kind=gk, description=f"scenario producing {gk} gap")],
-              [f"this produces a {gk} gap", f"{gk} gap example"],
-              gap_kind=gk)
+              [f"this produces a {gk} gap", f"{gk} gap example"])
 
     # ------------------------------------------------------------------
     # 16. multilingual aliases (12 cases)
@@ -797,11 +804,10 @@ def generate_all() -> list[dict]:
           ["is the lamp on?", "on is the lamp?"])
     _next(cat, [_assertion("gap", gap_kind="proposal",
                            description="unknown surface remains a typed proposal abstention")],
-          ["what is zorbulate?", "zorbulate what is?"], gap_kind="proposal")
+          ["what is zorbulate?", "zorbulate what is?"])
     _next(cat, [_assertion("gap", gap_kind="proposal",
                            description="underspecified state request remains a typed proposal abstention")],
-          ["can I set state without permission?", "set state without permission?"],
-          gap_kind="proposal")
+          ["can I set state without permission?", "set state without permission?"])
     _next(cat, [_assertion("learning_directive", event="event:learn_alias",
                            surface="yoz", target="event:greeting")],
           ["learn that yoz means hello", "Learn that yoz means hello"])

@@ -616,25 +616,16 @@ class Grounder:
                 surface = source.strip()
                 if not surface:
                     continue
-                targets = self._lookup_designation(surface)
-                if not targets:
+                facts = self._lookup_designation(surface)
+                if not facts:
                     continue
                 unit_refs = tuple(row.unit_ref for row in span)
-                for target in targets[:max_designations]:
-                    fact_ref = stable_ref(
-                        "designation",
-                        {
-                            "surface": surface,
-                            "target": target,
-                            "language": self._language,
-                            "unit_refs": list(unit_refs),
-                        },
-                    )
+                for fact in facts[:max_designations]:
                     designations.append(
                         DesignationCandidate(
                             unit_refs=unit_refs,
-                            target_ref=target,
-                            designation_fact_ref=fact_ref,
+                            target_ref=fact.target_ref,
+                            designation_fact_ref=fact.designation_fact_ref,
                             score=1.0,
                             provenance_refs=(),
                         )
@@ -675,8 +666,8 @@ class Grounder:
             return unit.normalized_forms[0]
         return unit.source_text.strip().casefold()
 
-    def _lookup_designation(self, surface: str) -> tuple[str, ...]:
-        """Look up designation targets for a surface.
+    def _lookup_designation(self, surface: str) -> tuple[Any, ...]:
+        """Look up canonical designation facts for a surface.
 
         Checks the mutable designation store first (for reviewed learning),
         then the authority's DesignationIndex.
@@ -684,10 +675,12 @@ class Grounder:
         # Check the mutable designation store (reviewed learning).
         if self._designation_store is not None:
             index = self._designation_store.build_index()
-            targets = index.for_surface(surface, self._language)
-            if targets:
-                return targets
+            facts = index.facts_for_surface(surface, self._language)
+            if facts:
+                return facts
         # Check the authority's static designation index.
         if self._authority is not None:
-            return self._authority.designations.for_surface(surface, self._language)
+            return self._authority.designations.facts_for_surface(
+                surface, self._language
+            )
         return ()

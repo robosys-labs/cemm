@@ -6,9 +6,12 @@ scenario contract is never re-used across surfaces or environmental contexts.
 """
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any, Iterable, Mapping
 
+from .authority import LinkedAuthority
 from .canonical import stable_ref
 from .persistence import RevisionPin
 from .r3_codec import (
@@ -24,12 +27,77 @@ from .r4_contracts import (
     ExpectedCycleContract,
     ExpectedCycleContractCompiler,
     ReviewedScenario,
+    SourceDisposition,
+    classify_source_disposition,
 )
 
 CASE_EXPANSION_ABI_VERSION = 2
 _MAX_ENVIRONMENTS = 64
+_MAX_SCENARIOS = 512
+_MAX_EXPANDED_CASES = 4096
 
-__all__ = ["ExpandedCase", "CaseExpander", "CASE_EXPANSION_ABI_VERSION"]
+__all__ = [
+    "ExpandedCase",
+    "CaseExpander",
+    "SourceDisposition",
+    "SourceUniverse",
+    "expand_reviewed_source_universe",
+    "CASE_EXPANSION_ABI_VERSION",
+]
+
+
+def _bounded_items(
+    iterable: Iterable[Any],
+    maximum: int,
+    name: str,
+    *,
+    operation_counts: dict[str, int] | None = None,
+    operation_name: str | None = None,
+) -> tuple[Any, ...]:
+    iterator = iter(iterable)
+    rows: list[Any] = []
+    for _ in range(maximum + 1):
+        try:
+            row = next(iterator)
+        except StopIteration:
+            if operation_counts is not None and operation_name is not None:
+                operation_counts[operation_name] += 1
+            return tuple(rows)
+        if operation_counts is not None and operation_name is not None:
+            operation_counts[operation_name] += 1
+        if len(rows) == maximum:
+            raise ValueError(f"{name} exceeds bound")
+        rows.append(row)
+    raise AssertionError("bounded iterator loop did not terminate")
+
+
+@dataclass(frozen=True)
+class SourceUniverse:
+    cases: tuple["ExpandedCase", ...]
+    scenario_count: int
+    expanded_count: int
+    disposition_counts: Mapping[str, int]
+    case_set_digest: str
+    operation_counts: Mapping[str, int]
+
+    def __post_init__(self) -> None:
+        if type(self.cases) is not tuple:
+            raise TypeError("source universe cases must be an exact tuple")
+        object.__setattr__(
+            self, "disposition_counts", MappingProxyType(dict(self.disposition_counts))
+        )
+        object.__setattr__(
+            self, "operation_counts", MappingProxyType(dict(self.operation_counts))
+        )
+
+    @property
+    def source_set_ref(self) -> str:
+        """Canonical content identity for the exact expanded case membership."""
+
+        return stable_ref(
+            "r4_source_set_v1",
+            sorted(case.case_ref for case in self.cases),
+        )
 
 
 def _mapping(value: object, name: str) -> Mapping[str, Any]:
@@ -172,6 +240,14 @@ class ExpandedCase:
     def contract_ref(self) -> str:
         return self.contract.contract_ref
 
+    @property
+    def source_disposition(self) -> SourceDisposition:
+        return {
+            "gap": SourceDisposition.EXPLICIT_GAP,
+            "verification_rejection": SourceDisposition.VERIFICATION_REJECTION,
+            "restart": SourceDisposition.RESTART_DIAGNOSTIC_CANDIDATE,
+        }.get(self.contract.outcome_kind.value, SourceDisposition.SEMANTIC)
+
     def as_dict(self) -> dict[str, Any]:
         return {
             "abi_version": self.abi_version,
@@ -268,9 +344,9 @@ class CaseExpander:
             raise TypeError("scenario must be exact ReviewedScenario")
         if type(revision_pin) is not RevisionPin:
             raise TypeError("revision_pin must be exact RevisionPin")
-        envs = tuple(environments) or ({},)
-        if len(envs) > self._maximum:
-            raise ValueError("reviewed environment expansion exceeds bound")
+        envs = _bounded_items(environments, self._maximum, "reviewed environment")
+        if not envs:
+            envs = ({},)
         if any(not isinstance(row, Mapping) for row in envs):
             raise TypeError("environments must contain mappings")
         language_default = str(thaw_json(scenario.metadata).get("language", "en"))
@@ -363,3 +439,118 @@ class CaseExpander:
                     )
                 )
         return tuple(rows)
+
+
+def expand_reviewed_source_universe(
+    scenarios: Iterable[ReviewedScenario],
+    *,
+    authority: LinkedAuthority,
+    reviewed_environments: Mapping[str, Iterable[Mapping[str, Any]]] | None = None,
+    max_scenarios: int = _MAX_SCENARIOS,
+    max_environments_per_surface: int = 16,
+    max_expanded_cases: int = _MAX_EXPANDED_CASES,
+) -> SourceUniverse:
+    """Reconstruct the reviewed source universe without runtime/model state."""
+
+    if type(authority) is not LinkedAuthority:
+        raise TypeError("authority must be exact authenticated LinkedAuthority")
+    scenario_limit = exact_int(
+        max_scenarios, "max_scenarios", minimum=1, maximum=_MAX_SCENARIOS
+    )
+    environment_limit = exact_int(
+        max_environments_per_surface,
+        "max_environments_per_surface",
+        minimum=1,
+        maximum=_MAX_ENVIRONMENTS,
+    )
+    case_limit = exact_int(
+        max_expanded_cases,
+        "max_expanded_cases",
+        minimum=1,
+        maximum=_MAX_EXPANDED_CASES,
+    )
+    if reviewed_environments is not None and type(reviewed_environments) is not dict:
+        raise TypeError("reviewed_environments must be an exact dict")
+    if reviewed_environments is not None and len(reviewed_environments) > scenario_limit:
+        raise ValueError("reviewed environment map exceeds scenario bound")
+    operation_counts = {
+        "scenario_next_calls": 0,
+        "environment_next_calls": 0,
+        "disposition_classifications": 0,
+        "aggregate_bound_checks": 0,
+        "case_emissions": 0,
+    }
+    source_rows = _bounded_items(
+        scenarios,
+        scenario_limit,
+        "reviewed scenario",
+        operation_counts=operation_counts,
+        operation_name="scenario_next_calls",
+    )
+    if any(type(row) is not ReviewedScenario for row in source_rows):
+        raise TypeError("source scenarios must contain exact ReviewedScenario values")
+    scenario_refs = tuple(row.scenario_ref for row in source_rows)
+    if len(scenario_refs) != len(set(scenario_refs)):
+        raise ValueError("source scenario refs must be unique")
+    if reviewed_environments is not None:
+        unknown = set(reviewed_environments) - set(scenario_refs)
+        if unknown:
+            raise ValueError(f"reviewed environments contain unknown scenarios: {sorted(unknown)}")
+
+    pin = RevisionPin(authority.generation, 0, 0, 0, 0, None)
+    expander = CaseExpander(
+        ExpectedCycleContractCompiler(authority, abi_registry_ref="abi_registry:active"),
+        max_environments_per_surface=environment_limit,
+    )
+    cases: list[ExpandedCase] = []
+    disposition_counts = {row.value: 0 for row in SourceDisposition}
+    for scenario in source_rows:
+        disposition = classify_source_disposition(scenario)
+        operation_counts["disposition_classifications"] += 1
+        metadata = scenario.metadata
+        raw_environments: Iterable[Mapping[str, Any]]
+        if reviewed_environments is not None and scenario.scenario_ref in reviewed_environments:
+            raw_environments = reviewed_environments[scenario.scenario_ref]
+        else:
+            raw_environments = metadata.get("environments", ({},))
+        envs = _bounded_items(
+            raw_environments,
+            environment_limit,
+            "reviewed environment",
+            operation_counts=operation_counts,
+            operation_name="environment_next_calls",
+        )
+        if not envs:
+            envs = ({},)
+        if any(not isinstance(row, Mapping) for row in envs):
+            raise TypeError("environments must contain mappings")
+        environment_refs = tuple(
+            stable_ref("reviewed_environment_value", dict(row)) for row in envs
+        )
+        if len(environment_refs) != len(set(environment_refs)):
+            raise ValueError("duplicate reviewed environments are forbidden")
+        reserved = len(scenario.surface_examples) * len(envs)
+        operation_counts["aggregate_bound_checks"] += 1
+        if reserved > case_limit - len(cases):
+            raise ValueError("aggregate expanded case stream exceeds bound")
+        expanded = expander.expand(scenario, revision_pin=pin, environments=envs)
+        if len(expanded) != reserved:
+            raise ValueError("case expansion cardinality differs from reservation")
+        for case in expanded:
+            if case.source_disposition is not disposition:
+                raise ValueError("expanded contract disposition differs from source assertion")
+            cases.append(case)
+            disposition_counts[disposition.value] += 1
+            operation_counts["case_emissions"] += 1
+    case_refs = sorted(row.case_ref for row in cases)
+    if len(case_refs) != len(set(case_refs)):
+        raise ValueError("expanded case refs must be unique")
+    digest_bytes = ("\n".join(case_refs) + "\n").encode("utf-8")
+    return SourceUniverse(
+        cases=tuple(cases),
+        scenario_count=len(source_rows),
+        expanded_count=len(cases),
+        disposition_counts=disposition_counts,
+        case_set_digest=hashlib.sha256(digest_bytes).hexdigest(),
+        operation_counts=operation_counts,
+    )

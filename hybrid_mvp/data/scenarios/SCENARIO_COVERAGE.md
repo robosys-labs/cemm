@@ -91,7 +91,6 @@ Each scenario is a JSON object on one line of the JSONL file:
     }
   ],
   "surface_examples": ["hello", "hi", "hey"],
-  "expected_gap_kind": null,
   "metadata": {}
 }
 ```
@@ -103,8 +102,8 @@ Each scenario is a JSON object on one line of the JSONL file:
   key and category-specific fields.
 - `surface_examples`: illustrative surface form strings (not the semantic
   contract).
-- `expected_gap_kind`: the expected `GapKind` value, or `null` if the scenario
-  is expected to resolve.
+- A structured `semantic_assertions` row whose `kind` is `gap` is the sole
+  exact owner of `gap_kind`; no parallel scenario-level gap field exists.
 - `metadata`: optional metadata (language, polarity, etc.).
 
 For designation-backed utterances such as greetings, the semantic assertion is

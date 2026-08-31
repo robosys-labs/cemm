@@ -12,8 +12,7 @@ import copy
 from dataclasses import dataclass
 from typing import Any, Literal, TYPE_CHECKING
 
-from .canonical import stable_ref
-from .response import ResponseMeaning
+from .r3_response import ResponseMeaning
 
 if TYPE_CHECKING:
     from .cycle import Orientation
@@ -94,17 +93,17 @@ _POSITIVE_MARKERS: tuple[str, ...] = (
     "supported", "online", "true",
 )
 _MODALITY_MARKERS: dict[str, tuple[str, ...]] = {
-    "possible": ("might", "may", "could", "possibly", "perhaps"),
-    "necessary": ("must", "necessarily", "always", "required"),
-    "conditional": ("if", "when", "unless", "conditional", "depending"),
-    "actual": (),
+    "modality:possible": ("might", "may", "could", "possibly", "perhaps"),
+    "modality:necessary": ("must", "necessarily", "always", "required"),
+    "modality:conditional": ("if", "when", "unless", "conditional", "depending"),
+    "modality:actual": (),
 }
 _EPISTEMIC_MARKERS: dict[str, tuple[str, ...]] = {
-    "unknown": ("unknown", "unsure", "don't know", "do not know", "unclear", "not sure", "ambiguous"),
-    "contradicted": ("contradicted", "conflict", "inconsistent", "false"),
-    "contingent": ("contingent", "depends", "conditional", "partial"),
-    "denied": ("denied", "not permitted", "not allowed", "refused", "permission denied"),
-    "supported": ("supported", "verified", "confirmed", "proven", "true"),
+    "epistemic_status:unknown": ("unknown", "unsure", "don't know", "do not know", "unclear", "not sure", "ambiguous"),
+    "epistemic_status:contradicted": ("contradicted", "conflict", "inconsistent", "false"),
+    "epistemic_status:partial": ("contingent", "depends", "conditional", "partial"),
+    "epistemic_status:denied": ("denied", "not permitted", "not allowed", "refused", "permission denied"),
+    "epistemic_status:supported": ("supported", "verified", "confirmed", "proven", "true"),
 }
 _DISCOURSE_MARKERS: dict[str, tuple[str, ...]] = {
     "answer": ("is", "are", "am", "called", "named", "means"),
@@ -136,6 +135,22 @@ _SAFE_SURFACES: dict[str, str] = {
 }
 
 
+def _exact_response_meaning(value: object) -> ResponseMeaning:
+    if type(value) is not ResponseMeaning:
+        raise TypeError("response_meaning must be exact canonical ResponseMeaning")
+    try:
+        material = ResponseMeaning.as_dict(value)
+        rebuilt = ResponseMeaning.from_dict(material)
+    except (AttributeError, IndexError, KeyError, TypeError, ValueError) as exc:
+        raise ValueError("response_meaning must be canonical ResponseMeaning") from exc
+    if (
+        rebuilt != value
+        or rebuilt.response_meaning_ref != value.response_meaning_ref
+    ):
+        raise ValueError("response_meaning must be canonical ResponseMeaning")
+    return value
+
+
 class RealizationVerifier:
     """Run the bounded pre-R5 marker-based diagnostic.
 
@@ -157,6 +172,13 @@ class RealizationVerifier:
         self, response_meaning: ResponseMeaning, surface: str
     ) -> EquivalenceReceipt:
         """Return the bounded marker-based diagnostic receipt for ``surface``."""
+        response_meaning = _exact_response_meaning(response_meaning)
+        return self._verify_canonical(response_meaning, surface)
+
+    def _verify_canonical(
+        self, response_meaning: ResponseMeaning, surface: str
+    ) -> EquivalenceReceipt:
+        """Verify a ResponseMeaning already authenticated by this module."""
         if not surface or not surface.strip():
             # Non-empty output required for authorized response actions.
             if response_meaning.discourse_action in (
@@ -218,15 +240,15 @@ class RealizationVerifier:
         lower = surface.lower()
         for marker in _NEGATIVE_MARKERS:
             if marker in lower.split() or marker in lower:
-                return "negative"
-        return "positive"
+                return "polarity:negative"
+        return "polarity:positive"
 
     def _check_polarity(
         self, response_meaning: ResponseMeaning, surface: str
     ) -> bool:
         """Check if surface polarity matches the response contract."""
         detected = self._detect_polarity(surface)
-        return detected == response_meaning.polarity
+        return detected == response_meaning.polarity_ref
 
     @staticmethod
     def _detect_modality(surface: str) -> str:
@@ -236,14 +258,14 @@ class RealizationVerifier:
             for marker in markers:
                 if marker in lower:
                     return modality
-        return "actual"
+        return "modality:actual"
 
     def _check_modality(
         self, response_meaning: ResponseMeaning, surface: str
     ) -> bool:
         """Check if surface modality matches the response contract."""
         detected = self._detect_modality(surface)
-        return detected == response_meaning.modality
+        return detected == response_meaning.modality_ref
 
     @staticmethod
     def _detect_epistemic(surface: str) -> str:
@@ -253,25 +275,25 @@ class RealizationVerifier:
         """
         lower = surface.lower()
         priority_order = (
-            "denied",
-            "contradicted",
-            "contingent",
-            "unknown",
-            "supported",
+            "epistemic_status:denied",
+            "epistemic_status:contradicted",
+            "epistemic_status:partial",
+            "epistemic_status:unknown",
+            "epistemic_status:supported",
         )
         for status in priority_order:
             markers = _EPISTEMIC_MARKERS.get(status, ())
             for marker in markers:
                 if marker in lower:
                     return status
-        return "supported"
+        return "epistemic_status:supported"
 
     def _check_epistemic(
         self, response_meaning: ResponseMeaning, surface: str
     ) -> bool:
         """Check if surface epistemic status matches the response contract."""
         detected = self._detect_epistemic(surface)
-        return detected == response_meaning.epistemic_status
+        return detected == response_meaning.epistemic_status_ref
 
     @staticmethod
     def _detect_discourse(surface: str) -> str:
@@ -332,6 +354,7 @@ class SafeRealizer:
         Raises :class:`UnsafeFallbackError` if the meaning is not a failure
         action.
         """
+        response_meaning = _exact_response_meaning(response_meaning)
         status = response_meaning.discourse_action
         if status not in _SAFE_FAILURE_STATUSES:
             raise UnsafeFallbackError(
@@ -339,13 +362,13 @@ class SafeRealizer:
             )
 
         surface = _SAFE_SURFACES.get(status, "Realization failed.")
-        eq_receipt = self._verifier.verify(response_meaning, surface)
+        eq_receipt = self._verifier._verify_canonical(response_meaning, surface)
 
         return RealizationReceipt(
             status="safe",
             surface=surface,
             model_identity=None,
-            semantic_content_ref=response_meaning.proposition_ref,
+            semantic_content_ref=response_meaning.response_expression.expression_ref,
             decoder_invocations=0,
             equivalence_receipt=eq_receipt,
         )
@@ -433,6 +456,7 @@ class NeuralConstrainedRealizer:
         with ``surface=None``. For reviewed failure meanings, the
         :class:`SafeRealizer` is invoked as a fallback.
         """
+        response_meaning = _exact_response_meaning(response_meaning)
         # For reviewed failure meanings, try neural first, then safe fallback.
         is_failure = response_meaning.discourse_action in _SAFE_FAILURE_STATUSES
 
@@ -451,20 +475,20 @@ class NeuralConstrainedRealizer:
                 status="realization_failed",
                 surface=None,
                 model_identity=self.model_identity,
-                semantic_content_ref=response_meaning.proposition_ref,
+                semantic_content_ref=response_meaning.response_expression.expression_ref,
                 decoder_invocations=decoder_invocations,
                 equivalence_receipt=None,
             )
 
         # Try each candidate through the verifier.
         for surface in candidates:
-            eq_receipt = self._verifier.verify(response_meaning, surface)
+            eq_receipt = self._verifier._verify_canonical(response_meaning, surface)
             if eq_receipt.equivalent:
                 return RealizationReceipt(
                     status="realized",
                     surface=surface,
                     model_identity=self.model_identity,
-                    semantic_content_ref=response_meaning.proposition_ref,
+                    semantic_content_ref=response_meaning.response_expression.expression_ref,
                     decoder_invocations=decoder_invocations,
                     equivalence_receipt=eq_receipt,
                 )
@@ -477,7 +501,7 @@ class NeuralConstrainedRealizer:
             status="realization_failed",
             surface=None,
             model_identity=self.model_identity,
-            semantic_content_ref=response_meaning.proposition_ref,
+            semantic_content_ref=response_meaning.response_expression.expression_ref,
             decoder_invocations=decoder_invocations,
             equivalence_receipt=None,
         )
@@ -556,8 +580,8 @@ class NeuralConstrainedRealizer:
 
         templates = self._templates_for(
             response_meaning.discourse_action,
-            response_meaning.polarity,
-            response_meaning.epistemic_status,
+            response_meaning.polarity_ref,
+            response_meaning.epistemic_status_ref,
         )
         if not templates:
             return ""
@@ -576,7 +600,7 @@ class NeuralConstrainedRealizer:
             return "My name is CEMM."
         else:
             # For non-failure actions, use wrong polarity.
-            if response_meaning.polarity == "positive":
+            if response_meaning.polarity_ref == "polarity:positive":
                 return "No, that is not supported."
             else:
                 return "My name is CEMM."
@@ -592,7 +616,7 @@ class NeuralConstrainedRealizer:
 
         # Mode index (0-3).
         mode_map = {"OBSERVE": 0, "QUERY": 1, "REQUEST": 2, "SIMULATE": 3}
-        features[0] = mode_map.get(response_meaning.mode, 0)
+        features[0] = mode_map.get(response_meaning.mode.value, 0)
 
         # Discourse action index.
         action_map = {
@@ -603,21 +627,22 @@ class NeuralConstrainedRealizer:
         features[1] = action_map.get(response_meaning.discourse_action, 0)
 
         # Polarity.
-        features[2] = 1.0 if response_meaning.polarity == "positive" else 0.0
+        features[2] = 1.0 if response_meaning.polarity_ref == "polarity:positive" else 0.0
 
         # Modality.
-        modality_map = {"actual": 0, "possible": 1, "necessary": 2, "conditional": 3}
-        features[3] = modality_map.get(response_meaning.modality, 0)
+        modality_map = {"modality:actual": 0, "modality:possible": 1, "modality:necessary": 2, "modality:conditional": 3}
+        features[3] = modality_map.get(response_meaning.modality_ref, 0)
 
         # Epistemic status.
         epistemic_map = {
-            "supported": 0, "unknown": 1, "contradicted": 2,
-            "contingent": 3, "denied": 4,
+            "epistemic_status:supported": 0, "epistemic_status:unknown": 1,
+            "epistemic_status:contradicted": 2,
+            "epistemic_status:partial": 3, "epistemic_status:denied": 4,
         }
-        features[4] = epistemic_map.get(response_meaning.epistemic_status, 0)
+        features[4] = epistemic_map.get(response_meaning.epistemic_status_ref, 0)
 
         # Number of requested bindings.
-        features[5] = len(response_meaning.requested_bindings)
+        features[5] = len(response_meaning.bindings)
 
         # Number of source refs.
         features[6] = len(response_meaning.source_refs)
@@ -638,8 +663,8 @@ class NeuralConstrainedRealizer:
         ResponseMeaning features.
         """
         if action == "answer":
-            if polarity == "positive":
-                if epistemic == "supported":
+            if polarity == "polarity:positive":
+                if epistemic == "epistemic_status:supported":
                     return [
                         "My name is CEMM.",
                         "I am called CEMM.",
