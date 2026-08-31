@@ -903,10 +903,13 @@ git commit -m "feat(r4): add assistant pre-review CLI"
 Verified: `test_r4_pre_review.py`, `test_r4_guided_review.py`,
 `test_r4_review_selection.py`, `test_r4_supervision_contracts.py`,
 `test_r4_supervision_compilers.py`, reduced `test_r4_review_server.py`, the
-pre-review CLI, and `compileall` passed. The two full-export server stress
-tests remained too quiet to complete inside the bounded interactive run and
-must be rerun as a long-running verification before merging this work into a
-release/admission checkpoint.
+pre-review CLI, and `compileall` passed. The full-export server equivalence
+test
+`test_guided_and_advanced_http_reviews_export_identical_validated_bytes` was
+rerun in isolation and stayed quiet for about five minutes before interruption,
+without producing a failure trace. The full-export stress paths must be rerun
+as long-running verification before merging this work into a release/admission
+checkpoint.
 
 Run:
 
