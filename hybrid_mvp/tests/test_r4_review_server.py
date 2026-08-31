@@ -574,6 +574,7 @@ def _drive_complete_review(server: object) -> tuple[dict[str, object], bytes]:
         "structural": 12,
         "purpose": 600,
         "recipe_family": 56,
+        "realization_recipe_family": 12,
         "designation": 388,
     }
     assert receipt["review_complete"] is True

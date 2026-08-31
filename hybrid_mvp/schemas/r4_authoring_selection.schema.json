@@ -29,9 +29,10 @@
     "structural_selections": {"items": {"$ref": "#/$defs/decisionSelection"}, "maxItems": 64, "minItems": 1, "type": "array"},
     "purpose_selections": {"items": {"$ref": "#/$defs/decisionSelection"}, "maxItems": 4096, "minItems": 1, "type": "array"},
     "proposal_recipe_selections": {"items": {"$ref": "#/$defs/recipeSelection"}, "maxItems": 512, "minItems": 1, "type": "array"},
+    "realization_recipe_selections": {"items": {"$ref": "#/$defs/recipeSelection"}, "maxItems": 128, "minItems": 1, "type": "array"},
     "designation_selections": {"items": {"$ref": "#/$defs/designationSelection"}, "maxItems": 512, "minItems": 1, "type": "array"}
   },
-  "required": ["schema", "selection_template_ref", "selection_state", "draft_input_set_ref", "draft_worksheet_refs", "selection_schema_path", "selection_schema_sha256", "reviewer_refs", "structural_selections", "purpose_selections", "proposal_recipe_selections", "designation_selections"],
+  "required": ["schema", "selection_template_ref", "selection_state", "draft_input_set_ref", "draft_worksheet_refs", "selection_schema_path", "selection_schema_sha256", "reviewer_refs", "structural_selections", "purpose_selections", "proposal_recipe_selections", "realization_recipe_selections", "designation_selections"],
   "title": "CEMM R4 Authoring Review Selection",
   "type": "object",
   "$defs": {
@@ -61,7 +62,12 @@
       "required": ["source_case_ref", "candidate_set_ref", "candidate_binding_refs", "decision", "approved_binding_refs"],
       "type": "object"
     },
-    "familyRef": {"pattern": "^proposal_recipe_family_suggestion:[0-9a-f]{24}$", "type": "string"},
+    "familyRef": {
+      "anyOf": [
+        {"pattern": "^proposal_recipe_family_suggestion:[0-9a-f]{24}$", "type": "string"},
+        {"pattern": "^realization_recipe_family_suggestion:[0-9a-f]{24}$", "type": "string"}
+      ]
+    },
     "optionRef": {"pattern": "^review_worksheet_option:[0-9a-f]{24}$", "type": "string"},
     "recipeSelection": {
       "additionalProperties": false,

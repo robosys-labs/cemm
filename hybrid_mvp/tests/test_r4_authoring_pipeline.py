@@ -67,7 +67,7 @@ def _cache():
 @lru_cache(maxsize=1)
 def _reviewed_selection_inputs():
     selection = json.loads(
-        (ROOT / "artifacts/review_inputs/r4_1/SELECTION.json").read_text(
+        (ROOT / "artifacts/review_inputs/r4_1/SELECTION_WORKING.json").read_text(
             encoding="utf-8"
         )
     )

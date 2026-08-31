@@ -57,6 +57,7 @@ def test_session_bootstrap_indexes_exact_current_review_inventory(
         "structural": 12,
         "purpose": 600,
         "recipe_family": 56,
+        "realization_recipe_family": 12,
         "designation": 388,
     }
     assert bootstrap["designation_risk_counts"]["intersecting_case"] == 12
@@ -575,15 +576,27 @@ def _family_members(session: ReviewSession, family_ref: str) -> tuple[str, ...]:
     )
 
 
+def _realization_family_members(
+    session: ReviewSession,
+    family_ref: str,
+) -> tuple[str, ...]:
+    return tuple(
+        session.indexes.realization_families_by_ref[family_ref][
+            "member_case_refs"
+        ]
+    )
+
+
 def _recipe_for(
     state: Mapping[str, object],
     *,
     family_ref: str,
     purpose: str,
+    field: str = "proposal_recipe_selections",
 ) -> Mapping[str, object]:
     family = next(
         row
-        for row in state["proposal_recipe_selections"]
+        for row in state[field]
         if row["family_ref"] == family_ref
     )
     return next(
@@ -657,6 +670,52 @@ def test_recipe_action_uses_exact_selected_purpose_partition(
     assert sum(
         row["purpose"] == "train" for row in family["purpose_recipes"]
     ) == 1
+
+
+def test_realization_recipe_action_uses_exact_selected_purpose_partition(
+    purpose_complete_session: ReviewSession,
+) -> None:
+    evaluation = purpose_complete_session.evaluation()
+    family_ref = next(
+        ref
+        for ref in purpose_complete_session.indexes.realization_families_by_ref
+        if any(
+            evaluation.case_purposes[case_ref] == "train"
+            for case_ref in _realization_family_members(
+                purpose_complete_session,
+                ref,
+            )
+        )
+    )
+    preview = purpose_complete_session.preview(
+        ReviewAction.recipe(
+            family_ref=family_ref,
+            purpose="train",
+            decision="approve",
+            reviewed_parameters={
+                "review_basis": "accountable_exact_realization_family"
+            },
+        )
+    )
+    purpose_complete_session.apply(
+        preview_hash=preview.preview_hash,
+        expected_revision=preview.state_revision,
+    )
+    recipe = _recipe_for(
+        purpose_complete_session.state,
+        family_ref=family_ref,
+        purpose="train",
+        field="realization_recipe_selections",
+    )
+    assert recipe["member_case_refs"] == sorted(
+        case_ref
+        for case_ref in _realization_family_members(
+            purpose_complete_session,
+            family_ref,
+        )
+        if purpose_complete_session.evaluation().case_purposes[case_ref]
+        == "train"
+    )
 
 
 def test_recipe_rejection_is_reported_as_blocking_status(
@@ -862,6 +921,25 @@ def _complete_recipes_and_designations(session: ReviewSession) -> None:
                 decision="approve_candidate_bindings",
             ),
         )
+    for family_ref, family in session.indexes.realization_families_by_ref.items():
+        for purpose in ("train", "selection", "calibration", "frozen_test"):
+            if any(
+                evaluation.case_purposes[case_ref] == purpose
+                for case_ref in family["member_case_refs"]
+            ):
+                _apply_preview(
+                    session,
+                    ReviewAction.recipe(
+                        family_ref=family_ref,
+                        purpose=purpose,
+                        decision="approve",
+                        reviewed_parameters={
+                            "review_basis": (
+                                "accountable_exact_realization_family"
+                            )
+                        },
+                    ),
+                )
     for case_ref in sorted(session.indexes.designation_exception_case_refs):
         selection = _designation_selection(session.state, case_ref)
         decision = (

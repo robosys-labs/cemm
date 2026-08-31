@@ -56,6 +56,7 @@ class ReviewIndexes:
     purpose_rows_by_ref: Mapping[str, Mapping[str, object]]
     source_cases_by_ref: Mapping[str, Mapping[str, object]]
     proposal_families_by_ref: Mapping[str, Mapping[str, object]]
+    realization_families_by_ref: Mapping[str, Mapping[str, object]]
     designation_rows_by_case: Mapping[str, Mapping[str, object]]
     purpose_cohorts: Mapping[str, tuple[str, ...]]
     designation_exception_case_refs: frozenset[str]
@@ -532,6 +533,10 @@ def build_review_indexes(context: SelectionContext) -> ReviewIndexes:
         row["family_ref"]: row
         for row in context.expected_template["proposal_recipe_selections"]
     }
+    realization_families = {
+        row["family_ref"]: row
+        for row in context.expected_template["realization_recipe_selections"]
+    }
     purpose_groups: dict[str, list[str]] = {}
     for row in context.purpose_rows.values():
         option_labels = tuple(option["label"] for option in row["options"])
@@ -568,6 +573,7 @@ def build_review_indexes(context: SelectionContext) -> ReviewIndexes:
         purpose_rows_by_ref=_mapping_proxy(context.purpose_rows),
         source_cases_by_ref=_mapping_proxy(context.source_case_rows),
         proposal_families_by_ref=_mapping_proxy(proposal_families),
+        realization_families_by_ref=_mapping_proxy(realization_families),
         designation_rows_by_case=_mapping_proxy(designation_rows),
         purpose_cohorts=MappingProxyType(
             {
@@ -920,12 +926,24 @@ class ReviewSession:
 
         cleared: set[str] = set()
         if changed_case_refs:
-            recipes = self._selection_by_ref(
+            proposal_recipes = self._selection_by_ref(
                 candidate,
                 field="proposal_recipe_selections",
                 ref_field="family_ref",
             )
-            for family_ref, recipe in recipes.items():
+            for family_ref, recipe in proposal_recipes.items():
+                if (
+                    recipe["purpose_recipes"]
+                    and changed_case_refs.intersection(recipe["member_case_refs"])
+                ):
+                    recipe["purpose_recipes"] = []
+                    cleared.add(family_ref)
+            realization_recipes = self._selection_by_ref(
+                candidate,
+                field="realization_recipe_selections",
+                ref_field="family_ref",
+            )
+            for family_ref, recipe in realization_recipes.items():
                 if (
                     recipe["purpose_recipes"]
                     and changed_case_refs.intersection(recipe["member_case_refs"])
@@ -944,7 +962,14 @@ class ReviewSession:
         if len(action.target_refs) != 1:
             raise ValueError("recipe action requires one exact family")
         family_ref = action.target_refs[0]
-        if family_ref not in self.indexes.proposal_families_by_ref:
+        field: str
+        if family_ref in self.indexes.proposal_families_by_ref:
+            family = self.indexes.proposal_families_by_ref[family_ref]
+            field = "proposal_recipe_selections"
+        elif family_ref in self.indexes.realization_families_by_ref:
+            family = self.indexes.realization_families_by_ref[family_ref]
+            field = "realization_recipe_selections"
+        else:
             raise ValueError("recipe action references an unknown family")
         value = _thaw_json(action.selected_value)
         if type(value) is not dict or set(value) != {
@@ -954,7 +979,6 @@ class ReviewSession:
         }:
             raise ValueError("recipe action value is invalid")
         purpose = value["purpose"]
-        family = self.indexes.proposal_families_by_ref[family_ref]
         members = sorted(
             case_ref
             for case_ref in family["member_case_refs"]
@@ -964,7 +988,7 @@ class ReviewSession:
             raise ValueError("recipe action names an absent purpose partition")
         selections = self._selection_by_ref(
             candidate,
-            field="proposal_recipe_selections",
+            field=field,
             ref_field="family_ref",
         )
         existing = selections[family_ref]["purpose_recipes"]
@@ -1072,6 +1096,10 @@ class ReviewSession:
             if row["family_ref"] in stale and row["purpose_recipes"]:
                 row["purpose_recipes"] = []
                 cleared.add(row["family_ref"])
+        for row in candidate["realization_recipe_selections"]:
+            if row["family_ref"] in stale and row["purpose_recipes"]:
+                row["purpose_recipes"] = []
+                cleared.add(row["family_ref"])
         for row in candidate["designation_selections"]:
             if row["source_case_ref"] in stale and (
                 row["decision"] is not None
@@ -1121,6 +1149,9 @@ class ReviewSession:
                 ),
                 "unresolved_purpose": evaluation.unresolved_purpose_count,
                 "unresolved_recipe": evaluation.unresolved_recipe_count,
+                "unresolved_realization_recipe": (
+                    evaluation.unresolved_realization_recipe_count
+                ),
                 "unresolved_structural": (
                     evaluation.unresolved_structural_count
                 ),
@@ -1310,6 +1341,9 @@ class ReviewSession:
                 "structural": len(self.indexes.structural_rows_by_ref),
                 "purpose": len(self.indexes.purpose_rows_by_ref),
                 "recipe_family": len(self.indexes.proposal_families_by_ref),
+                "realization_recipe_family": len(
+                    self.indexes.realization_families_by_ref
+                ),
                 "designation": len(self.indexes.designation_rows_by_case),
             },
             "designation_risk_counts": {
@@ -1372,43 +1406,48 @@ class ReviewSession:
     def _recipe_items(self) -> list[dict[str, object]]:
         evaluation = self.evaluation()
         result = []
-        for row in self._state["proposal_recipe_selections"]:
-            eligible = [
-                purpose
-                for purpose in (
-                    "train",
-                    "selection",
-                    "calibration",
-                    "frozen_test",
+        recipe_sections = (
+            ("proposal_recipe_family", "proposal_recipe_selections"),
+            ("realization_recipe_family", "realization_recipe_selections"),
+        )
+        for row_kind, state_field in recipe_sections:
+            for row in self._state[state_field]:
+                eligible = [
+                    purpose
+                    for purpose in (
+                        "train",
+                        "selection",
+                        "calibration",
+                        "frozen_test",
+                    )
+                    if any(
+                        evaluation.case_purposes.get(case_ref) == purpose
+                        for case_ref in row["member_case_refs"]
+                    )
+                ]
+                selected = row["purpose_recipes"]
+                selected_purposes = {recipe["purpose"] for recipe in selected}
+                state = (
+                    "rejected"
+                    if any(recipe["decision"] == "reject" for recipe in selected)
+                    else "completed"
+                    if selected_purposes == set(eligible)
+                    else "unresolved"
                 )
-                if any(
-                    evaluation.case_purposes.get(case_ref) == purpose
-                    for case_ref in row["member_case_refs"]
-                )
-            ]
-            selected = row["purpose_recipes"]
-            selected_purposes = {recipe["purpose"] for recipe in selected}
-            state = (
-                "rejected"
-                if any(recipe["decision"] == "reject" for recipe in selected)
-                else "completed"
-                if selected_purposes == set(eligible)
-                else "unresolved"
-            )
-            result.append({
-                "current_value": copy.deepcopy(row["purpose_recipes"]),
-                "display": {
-                    "family_definition": copy.deepcopy(row["family_definition"]),
-                    "member_case_refs": list(row["member_case_refs"]),
-                    "target_kind": row["target_kind"],
-                    "eligible_purposes": eligible,
-                },
-                "options": ["approve", "reject"],
-                "row_kind": "proposal_recipe_family",
-                "row_ref": row["family_ref"],
-                "state": state,
-                "subject_ref": row["family_ref"],
-            })
+                result.append({
+                    "current_value": copy.deepcopy(row["purpose_recipes"]),
+                    "display": {
+                        "family_definition": copy.deepcopy(row["family_definition"]),
+                        "member_case_refs": list(row["member_case_refs"]),
+                        "target_kind": row["target_kind"],
+                        "eligible_purposes": eligible,
+                    },
+                    "options": ["approve", "reject"],
+                    "row_kind": row_kind,
+                    "row_ref": row["family_ref"],
+                    "state": state,
+                    "subject_ref": row["family_ref"],
+                })
         return result
 
     def _designation_items(self) -> list[dict[str, object]]:

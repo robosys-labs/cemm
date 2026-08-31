@@ -9,12 +9,20 @@ non-authoritative worksheet draft. Keep the template unchanged. The supported
 review path creates its own unresolved working state and exports
 `SELECTION.json` only after exact validation.
 
-The template contains 1,056 bounded review targets:
+The active template contains 1,068 bounded review targets:
 
 - 12 structural decisions;
 - 600 purpose, duplicate-group, challenge-holdout and denominator decisions;
-- 56 normalized proposal-family decisions; and
+- 56 normalized proposal-family decisions;
+- 12 normalized realization-family decisions; and
 - 388 exact designation candidate-set decisions.
+
+The previous completed proposal/designation export and its template are
+preserved under `superseded_pre_realization_selection/`. They predate
+first-class realization recipe selection and must not be used as the current
+`SELECTION.json`. The active local `SELECTION_WORKING.json` preserves those
+prior proposal/designation choices as unresolved working state and leaves all
+realization-family decisions empty for explicit review.
 
 ## Launch and resume
 
@@ -85,11 +93,13 @@ five phases in order:
    so related cases cannot leak across purposes. Cohort actions require an
    impact preview and explicit confirmation; the UI never silently selects a
    purpose.
-3. **Recipes:** for each proposal family, partition its complete
-   `member_case_refs` into
-   `purpose_recipes` consistent with the selected purpose decisions. A family
-   used in more than one purpose requires independent purpose-scoped recipe
-   entries; it may not share recipe identity or ancestry across purposes.
+3. **Recipes:** for each proposal and realization family, partition its
+   complete `member_case_refs` into `purpose_recipes` consistent with the
+   selected purpose decisions. A family used in more than one purpose requires
+   independent purpose-scoped recipe entries; it may not share recipe identity
+   or ancestry across purposes. Realization-family approval records only a
+   reviewed response recipe decision; it does not itself publish
+   `RealizationRow` gold.
 4. **Designations:** review every designation set against its exact source
    geometry and authority fact refs. Routine sets may be confirmed only through
    their exact displayed cohort. Empty, overlapping, multi-unit or polysemous
@@ -124,10 +134,12 @@ python scripts/build_r4_1_review_selection.py --root . `
 The validator requires exact worksheet joins, canonical reviewer refs, one
 available option for every applicable row, branch-aware purpose ownership,
 structural-proposal and diagnostic applicability, holdout and denominator
-consistency, purpose-local proposal-family partitions, and exact designation
-decisions. Until it passes, the working copy remains inert. Exact
-proposal/derivation expansion is the next implementation step after
-accountable selections exist.
+consistency, purpose-local proposal-family partitions, purpose-local
+realization-family partitions, and exact designation decisions. Until it
+passes, the working copy remains inert. Exact proposal/derivation expansion is
+available for the existing reviewed proposal/designation decisions; realization
+row expansion remains blocked until the realization recipe decisions are
+explicitly reviewed and exported.
 
 ## Optional assistant pre-review
 

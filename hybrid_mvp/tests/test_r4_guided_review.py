@@ -63,6 +63,7 @@ EXPECTED_CHOICES = {
     },
     "denominator": {"minimum_one_each"},
     "proposal_recipe_family": {"approve", "reject"},
+    "realization_recipe_family": {"approve", "reject"},
     "designation_nonempty": {"approve_candidate_bindings", "reject"},
     "designation_empty": {"approve_exact_empty", "reject"},
 }
@@ -347,7 +348,11 @@ def test_guided_recipe_choice_uses_exact_purpose_local_action(
 
 def _complete_recipes(session: ReviewSession) -> None:
     evaluation = session.evaluation()
-    for family_ref, family in session.indexes.proposal_families_by_ref.items():
+    families = {
+        **session.indexes.proposal_families_by_ref,
+        **session.indexes.realization_families_by_ref,
+    }
+    for family_ref, family in families.items():
         purposes = sorted(
             {
                 evaluation.case_purposes[case_ref]

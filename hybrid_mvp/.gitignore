@@ -12,3 +12,5 @@ stores.db-wal
 stores.db-shm
 artifacts/review_inputs/r4_1/SELECTION_WORKING.json
 artifacts/review_inputs/r4_1/REVIEW_ACTIONS.jsonl
+artifacts/review_inputs/r4_1/superseded_pre_realization_selection/SELECTION_WORKING.json
+artifacts/review_inputs/r4_1/superseded_pre_realization_selection/REVIEW_ACTIONS.jsonl

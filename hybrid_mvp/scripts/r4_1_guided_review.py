@@ -238,6 +238,21 @@ GUIDANCE: Mapping[str, RowGuidance] = MappingProxyType(
                 blocks=True,
             ),
         ),
+        "realization_recipe_family": _row(
+            "Inspect this normalized realization family separately for the displayed purpose.",
+            "Does this exact purpose-local response recipe preserve the reviewed meaning and realization alignment?",
+            approve=_choice(
+                "Approve this purpose-local realization recipe",
+                "Accept the exact displayed response contract, surface template and alignment rule for this purpose only.",
+                "The family becomes eligible for purpose-local realization expansion after reviewed compilation.",
+            ),
+            reject=_choice(
+                "Reject and repair this realization recipe",
+                "Record that this response recipe is not acceptable for the displayed purpose.",
+                "This family and purpose remain blocked until repaired.",
+                blocks=True,
+            ),
+        ),
         "designation_nonempty": _row(
             "Compare every displayed surface span with its exact authority-backed target.",
             "Does this exact candidate set contain every and only the valid designation bindings?",
@@ -287,6 +302,7 @@ def active_choice_labels(session: ReviewSession) -> dict[str, set[str]]:
                 if option["selectable"] is True
             )
     result["proposal_recipe_family"] = {"approve", "reject"}
+    result["realization_recipe_family"] = {"approve", "reject"}
     result["designation_nonempty"] = {
         "approve_candidate_bindings",
         "reject",
@@ -407,6 +423,16 @@ class GuidedReviewService:
                         purpose=purpose,
                     )
                 )
+        for family_ref in sorted(session.indexes.realization_families_by_ref):
+            for purpose in _PURPOSES:
+                targets.append(
+                    _target(
+                        phase="recipe",
+                        row_kind="realization_recipe_family",
+                        source_ref=family_ref,
+                        purpose=purpose,
+                    )
+                )
         for case_ref in sorted(session.indexes.designation_rows_by_case):
             targets.append(
                 _target(
@@ -477,6 +503,15 @@ class GuidedReviewService:
             }
             for row in state["proposal_recipe_selections"]
         }
+        recipes.update(
+            {
+                row["family_ref"]: {
+                    recipe["purpose"]: recipe
+                    for recipe in row["purpose_recipes"]
+                }
+                for row in state["realization_recipe_selections"]
+            }
+        )
         designations = {
             row["source_case_ref"]: row["decision"]
             for row in state["designation_selections"]
@@ -505,9 +540,14 @@ class GuidedReviewService:
         if target.phase == "purpose":
             return self._state_by_ref["purpose"][target.source_ref] is None
         if target.phase == "recipe":
-            family = self.session.indexes.proposal_families_by_ref[
-                target.source_ref
-            ]
+            family = (
+                self.session.indexes.proposal_families_by_ref.get(
+                    target.source_ref
+                )
+                or self.session.indexes.realization_families_by_ref[
+                    target.source_ref
+                ]
+            )
             case_purposes = self._state_by_ref["case_purposes"]
             applicable = any(
                 case_purposes.get(case_ref) == target.purpose
@@ -599,9 +639,14 @@ class GuidedReviewService:
                 target.source_ref
             ]
         elif target.phase == "recipe":
-            source = self.session.indexes.proposal_families_by_ref[
-                target.source_ref
-            ]
+            source = (
+                self.session.indexes.proposal_families_by_ref.get(
+                    target.source_ref
+                )
+                or self.session.indexes.realization_families_by_ref[
+                    target.source_ref
+                ]
+            )
         elif target.phase == "designation":
             if target.row_kind == "designation_case":
                 source = self.session.indexes.designation_rows_by_case[

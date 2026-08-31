@@ -137,6 +137,7 @@ def test_review_selection_template_is_exact_bounded_inert_and_deterministic(
     assert len(selection["structural_selections"]) == 12
     assert len(selection["purpose_selections"]) == 600
     assert len(selection["proposal_recipe_selections"]) == 56
+    assert len(selection["realization_recipe_selections"]) == 12
     assert len(selection["designation_selections"]) == 388
     assert all(
         row["selected_option_ref"] is None
@@ -146,6 +147,10 @@ def test_review_selection_template_is_exact_bounded_inert_and_deterministic(
     assert all(
         row["purpose_recipes"] == []
         for row in selection["proposal_recipe_selections"]
+    )
+    assert all(
+        row["purpose_recipes"] == []
+        for row in selection["realization_recipe_selections"]
     )
     assert all(
         row["decision"] is None and row["approved_binding_refs"] is None
@@ -217,6 +222,46 @@ def test_review_selection_template_is_exact_bounded_inert_and_deterministic(
                 ),
                 "decision": "approve",
                 "reviewed_parameters": {"fixture_review": True},
+            }
+            for purpose_name in purposes
+            if any(
+                case_purposes[case_ref] == purpose_name
+                for case_ref in family["member_case_refs"]
+            )
+        ]
+
+    missing_realization_review = deepcopy(reviewed)
+    missing_realization_review_raw = (
+        json.dumps(
+            missing_realization_review,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+        + "\n"
+    ).encode("utf-8")
+    Draft202012Validator(schema).validate(missing_realization_review)
+    with pytest.raises(ValueError, match="realization purpose recipes"):
+        validate_reviewed_selection_bytes(
+            repository_root=ROOT,
+            draft_root=draft,
+            selection_raw=missing_realization_review_raw,
+        )
+
+    for family in reviewed["realization_recipe_selections"]:
+        family["purpose_recipes"] = [
+            {
+                "purpose": purpose_name,
+                "member_case_refs": sorted(
+                    case_ref
+                    for case_ref in family["member_case_refs"]
+                    if case_purposes[case_ref] == purpose_name
+                ),
+                "decision": "approve",
+                "reviewed_parameters": {
+                    "review_basis": "accountable_exact_realization_family"
+                },
             }
             for purpose_name in purposes
             if any(
@@ -322,6 +367,17 @@ def test_review_selection_template_is_exact_bounded_inert_and_deterministic(
         ) or rejected_case_ref in source.get("member_case_refs", []):
             target["selected_option_ref"] = None
     for family in rejected_proposal["proposal_recipe_selections"]:
+        retained = []
+        for recipe in family["purpose_recipes"]:
+            recipe["member_case_refs"] = [
+                case_ref
+                for case_ref in recipe["member_case_refs"]
+                if case_ref != rejected_case_ref
+            ]
+            if recipe["member_case_refs"]:
+                retained.append(recipe)
+        family["purpose_recipes"] = retained
+    for family in rejected_proposal["realization_recipe_selections"]:
         retained = []
         for recipe in family["purpose_recipes"]:
             recipe["member_case_refs"] = [

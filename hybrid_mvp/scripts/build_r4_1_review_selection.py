@@ -62,6 +62,7 @@ class SelectionEvaluation:
     unresolved_structural_count: int
     unresolved_purpose_count: int
     unresolved_recipe_count: int
+    unresolved_realization_recipe_count: int
     unresolved_designation_count: int
     blocking_rejection_refs: tuple[str, ...]
     blocking_errors: tuple[str, ...]
@@ -155,6 +156,56 @@ def _proposal_recipe_targets(rows: object) -> list[dict[str, object]]:
     return result
 
 
+def _realization_recipe_targets(rows: object) -> list[dict[str, object]]:
+    if type(rows) is not list or len(rows) > MAX_SELECTION_ROWS:
+        raise ValueError("realization rows violate their selection bound")
+    families: dict[str, dict[str, object]] = {}
+    for row in rows:
+        if type(row) is not dict or row.get("row_kind") != "realization_supervision":
+            continue
+        source_case_ref = row.get("source_case_ref")
+        projection = row.get("source_projection")
+        if type(source_case_ref) is not str or type(projection) is not dict:
+            raise ValueError("realization selection source join is invalid")
+        suggestion = projection.get("recipe_suggestion")
+        if type(suggestion) is not dict:
+            raise ValueError("realization selection lacks its recipe suggestion")
+        family_ref = suggestion.get("family_ref")
+        if type(family_ref) is not str:
+            raise ValueError("realization selection family ref is invalid")
+        family = families.setdefault(
+            family_ref,
+            {
+                "family_ref": family_ref,
+                "target_kind": suggestion.get("target_kind"),
+                "family_definition": None,
+                "member_case_refs": [],
+                "purpose_recipes": [],
+            },
+        )
+        if family["target_kind"] != suggestion.get("target_kind"):
+            raise ValueError("realization selection family crosses target kinds")
+        definition = suggestion.get("family_definition")
+        if definition is not None:
+            if family["family_definition"] is not None:
+                raise ValueError(
+                    "realization selection family definition is duplicated"
+                )
+            family["family_definition"] = definition
+        members = family["member_case_refs"]
+        if type(members) is not list:
+            raise AssertionError("realization selection member accumulator is invalid")
+        members.append(source_case_ref)
+    result = []
+    for family_ref in sorted(families):
+        family = families[family_ref]
+        if family["family_definition"] is None:
+            raise ValueError("realization selection family definition is absent")
+        family["member_case_refs"] = sorted(family["member_case_refs"])
+        result.append(family)
+    return result
+
+
 def _designation_targets(rows: object) -> list[dict[str, object]]:
     if type(rows) is not list or len(rows) > MAX_SELECTION_ROWS:
         raise ValueError("designation rows violate their selection bound")
@@ -231,6 +282,9 @@ def _selection_template_bytes_from_source(
         "proposal_recipe_selections": _proposal_recipe_targets(
             decoded["SUPERVISION_DECISIONS.json"]["rows"]
         ),
+        "realization_recipe_selections": _realization_recipe_targets(
+            decoded["SUPERVISION_DECISIONS.json"]["rows"]
+        ),
         "designation_selections": _designation_targets(
             decoded["SUPERVISION_DECISIONS.json"]["rows"]
         ),
@@ -241,6 +295,7 @@ def _selection_template_bytes_from_source(
             "structural_selections",
             "purpose_selections",
             "proposal_recipe_selections",
+            "realization_recipe_selections",
             "designation_selections",
         )
     )
@@ -361,6 +416,7 @@ def _selection_projections(
     tuple[dict[str, object], ...],
     tuple[dict[str, object], ...],
     tuple[dict[str, object], ...],
+    tuple[dict[str, object], ...],
 ]:
     expected = context.expected_template
     if type(selection) is not dict or set(selection) != set(expected):
@@ -371,6 +427,7 @@ def _selection_projections(
         "structural_selections",
         "purpose_selections",
         "proposal_recipe_selections",
+        "realization_recipe_selections",
         "designation_selections",
     }
     if any(selection[field] != expected[field] for field in immutable_top):
@@ -393,13 +450,19 @@ def _selection_projections(
         mutable_fields=frozenset({"purpose_recipes"}),
         owner="proposal recipe",
     )
+    realization_recipes = _validate_selection_projection(
+        actual=selection["realization_recipe_selections"],
+        expected=expected["realization_recipe_selections"],
+        mutable_fields=frozenset({"purpose_recipes"}),
+        owner="realization recipe",
+    )
     designations = _validate_selection_projection(
         actual=selection["designation_selections"],
         expected=expected["designation_selections"],
         mutable_fields=frozenset({"decision", "approved_binding_refs"}),
         owner="designation",
     )
-    return structural, purpose, recipes, designations
+    return structural, purpose, recipes, realization_recipes, designations
 
 
 def _raise_first_complete_error(
@@ -409,6 +472,7 @@ def _raise_first_complete_error(
     unresolved_structural_count: int,
     unresolved_purpose_count: int,
     unresolved_recipe_count: int,
+    unresolved_realization_recipe_count: int,
     unresolved_designation_count: int,
 ) -> None:
     if blocking_errors:
@@ -423,8 +487,73 @@ def _raise_first_complete_error(
         raise ValueError("every applicable purpose decision requires one selection")
     if unresolved_recipe_count:
         raise ValueError("proposal purpose recipes do not partition active members")
+    if unresolved_realization_recipe_count:
+        raise ValueError(
+            "realization purpose recipes do not partition active members"
+        )
     if unresolved_designation_count:
         raise ValueError("active designation selection is unresolved")
+
+
+def _evaluate_recipe_partitions(
+    *,
+    recipe_rows: tuple[dict[str, object], ...],
+    active_supervised: frozenset[str],
+    case_purposes: Mapping[str, str | None],
+    stale_refs: list[str],
+    blocking_rejections: set[str],
+    owner: str,
+) -> int:
+    unresolved = 0
+    for selection_row in recipe_rows:
+        active_members = set(selection_row["member_case_refs"]) & active_supervised
+        purpose_recipes = selection_row["purpose_recipes"]
+        if type(purpose_recipes) is not list or len(purpose_recipes) > 4:
+            raise ValueError(f"{owner} purpose recipes violate their bound")
+        if not active_members:
+            if purpose_recipes:
+                stale_refs.append(selection_row["family_ref"])
+            continue
+        seen_purposes: set[str] = set()
+        assigned_members: set[str] = set()
+        for recipe in purpose_recipes:
+            if type(recipe) is not dict or set(recipe) != {
+                "purpose",
+                "member_case_refs",
+                "decision",
+                "reviewed_parameters",
+            }:
+                raise ValueError(f"{owner} purpose recipe fields are invalid")
+            purpose = recipe["purpose"]
+            members = recipe["member_case_refs"]
+            if (
+                purpose not in {"train", "selection", "calibration", "frozen_test"}
+                or purpose in seen_purposes
+                or type(members) is not list
+                or not members
+                or members != sorted(set(members))
+                or recipe["decision"] not in {"approve", "reject"}
+                or type(recipe["reviewed_parameters"]) is not dict
+                or len(recipe["reviewed_parameters"]) > 128
+            ):
+                raise ValueError(f"{owner} purpose recipe is not canonical")
+            member_set = set(members)
+            inactive_members = member_set - active_members
+            if inactive_members:
+                stale_refs.append(selection_row["family_ref"])
+                continue
+            if (
+                member_set & assigned_members
+                or any(case_purposes.get(case_ref) != purpose for case_ref in members)
+            ):
+                raise ValueError(f"{owner} purpose recipe crosses case ownership")
+            if recipe["decision"] == "reject":
+                blocking_rejections.add(selection_row["family_ref"])
+            seen_purposes.add(purpose)
+            assigned_members.update(member_set)
+        if assigned_members != active_members:
+            unresolved += 1
+    return unresolved
 
 
 def evaluate_selection(
@@ -435,10 +564,13 @@ def evaluate_selection(
 ) -> SelectionEvaluation:
     """Evaluate exact mutable fields against one authenticated selection context."""
 
-    structural, purpose_rows, recipe_rows, designation_rows = _selection_projections(
-        context=context,
-        selection=selection,
-    )
+    (
+        structural,
+        purpose_rows,
+        recipe_rows,
+        realization_recipe_rows,
+        designation_rows,
+    ) = _selection_projections(context=context, selection=selection)
     unresolved_structural = sum(
         row["selected_option_ref"] is None for row in structural
     )
@@ -469,6 +601,11 @@ def evaluate_selection(
             row["family_ref"] for row in recipe_rows if row["purpose_recipes"]
         )
         stale_refs.extend(
+            row["family_ref"]
+            for row in realization_recipe_rows
+            if row["purpose_recipes"]
+        )
+        stale_refs.extend(
             row["source_case_ref"]
             for row in designation_rows
             if row["decision"] is not None or row["approved_binding_refs"] is not None
@@ -480,6 +617,7 @@ def evaluate_selection(
                 unresolved_structural_count=unresolved_structural,
                 unresolved_purpose_count=0,
                 unresolved_recipe_count=0,
+                unresolved_realization_recipe_count=0,
                 unresolved_designation_count=0,
             )
         return SelectionEvaluation(
@@ -492,6 +630,7 @@ def evaluate_selection(
             unresolved_structural_count=unresolved_structural,
             unresolved_purpose_count=0,
             unresolved_recipe_count=0,
+            unresolved_realization_recipe_count=0,
             unresolved_designation_count=0,
             blocking_rejection_refs=tuple(sorted(blocking_rejections)),
             blocking_errors=(),
@@ -645,52 +784,22 @@ def evaluate_selection(
     active_supervised = frozenset(
         case_ref for case_ref, purpose in case_purposes.items() if purpose is not None
     )
-    unresolved_recipes = 0
-    for selection_row in recipe_rows:
-        active_members = set(selection_row["member_case_refs"]) & active_supervised
-        purpose_recipes = selection_row["purpose_recipes"]
-        if type(purpose_recipes) is not list or len(purpose_recipes) > 4:
-            raise ValueError("proposal purpose recipes violate their bound")
-        if not active_members:
-            if purpose_recipes:
-                stale_refs.append(selection_row["family_ref"])
-            continue
-        seen_purposes: set[str] = set()
-        assigned_members: set[str] = set()
-        for recipe in purpose_recipes:
-            if type(recipe) is not dict or set(recipe) != {
-                "purpose",
-                "member_case_refs",
-                "decision",
-                "reviewed_parameters",
-            }:
-                raise ValueError("proposal purpose recipe fields are invalid")
-            purpose = recipe["purpose"]
-            members = recipe["member_case_refs"]
-            if (
-                purpose not in {"train", "selection", "calibration", "frozen_test"}
-                or purpose in seen_purposes
-                or type(members) is not list
-                or not members
-                or members != sorted(set(members))
-                or recipe["decision"] not in {"approve", "reject"}
-                or type(recipe["reviewed_parameters"]) is not dict
-                or len(recipe["reviewed_parameters"]) > 128
-            ):
-                raise ValueError("proposal purpose recipe is not canonical")
-            member_set = set(members)
-            if (
-                not member_set <= active_members
-                or member_set & assigned_members
-                or any(case_purposes.get(case_ref) != purpose for case_ref in members)
-            ):
-                raise ValueError("proposal purpose recipe crosses case ownership")
-            if recipe["decision"] == "reject":
-                blocking_rejections.add(selection_row["family_ref"])
-            seen_purposes.add(purpose)
-            assigned_members.update(member_set)
-        if assigned_members != active_members:
-            unresolved_recipes += 1
+    unresolved_recipes = _evaluate_recipe_partitions(
+        recipe_rows=recipe_rows,
+        active_supervised=active_supervised,
+        case_purposes=case_purposes,
+        stale_refs=stale_refs,
+        blocking_rejections=blocking_rejections,
+        owner="proposal",
+    )
+    unresolved_realization_recipes = _evaluate_recipe_partitions(
+        recipe_rows=realization_recipe_rows,
+        active_supervised=active_supervised,
+        case_purposes=case_purposes,
+        stale_refs=stale_refs,
+        blocking_rejections=blocking_rejections,
+        owner="realization",
+    )
 
     unresolved_designations = 0
     for selection_row in designation_rows:
@@ -726,6 +835,7 @@ def evaluate_selection(
             unresolved_structural,
             unresolved_purpose,
             unresolved_recipes,
+            unresolved_realization_recipes,
             unresolved_designations,
             stale,
             errors,
@@ -738,6 +848,7 @@ def evaluate_selection(
             unresolved_structural_count=unresolved_structural,
             unresolved_purpose_count=unresolved_purpose,
             unresolved_recipe_count=unresolved_recipes,
+            unresolved_realization_recipe_count=unresolved_realization_recipes,
             unresolved_designation_count=unresolved_designations,
         )
     return SelectionEvaluation(
@@ -750,6 +861,7 @@ def evaluate_selection(
         unresolved_structural_count=unresolved_structural,
         unresolved_purpose_count=unresolved_purpose,
         unresolved_recipe_count=unresolved_recipes,
+        unresolved_realization_recipe_count=unresolved_realization_recipes,
         unresolved_designation_count=unresolved_designations,
         blocking_rejection_refs=tuple(sorted(blocking_rejections)),
         blocking_errors=errors,

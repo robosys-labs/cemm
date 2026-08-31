@@ -19,7 +19,8 @@
 | 9 | complete | purpose-scoped worksheet-local recipes and explicit ancestry committed |
 | 10A | complete | one-pass source/context cache and exact designation/recipe suggestions |
 | 10B | guided review ready; awaiting accountable completed selection | neutral guided workflow and Advanced Explorer share the strict 1,056-target template/validator and deterministic export; purpose-scoped expansion remains disabled |
-| 11-16 | pending | realization, mutation families, performance, publication and handoff |
+| 11 | review-selection ready; realization review pending | realization recipe suggestions are first-class selectable families in the existing Recipe phase, but no `RealizationRow` gold is emitted until an accountable export approves them |
+| 12-16 | pending | mutation families, performance, publication and handoff |
 
 Task 10 was split after an executable full-universe probe found that purpose
 recipes cannot be authored from unresolved purpose options and that including
@@ -63,6 +64,17 @@ a complete `artifacts/review_inputs/r4_1/SELECTION.json`, its export receipt
 reports `authoring_ready: true`, and the ensuing proposal compilation passes. A
 valid export containing rejection decisions records the review but does not
 unblock expansion.
+
+Task 11 now has an explicit review-selection/session path for realization
+families. The active template has 1,068 bounded targets: the previous 1,056
+targets plus 12 realization recipe families. The active
+`artifacts/review_inputs/r4_1/SELECTION_WORKING.json` preserves the prior
+proposal/designation choices as unresolved working state and leaves every
+realization family empty for explicit review. The earlier completed
+proposal/designation export is archived under
+`artifacts/review_inputs/r4_1/superseded_pre_realization_selection/` and is not
+current `SELECTION.json`. This checkpoint adds no gate, tier, runtime import,
+normal-cycle scan or automatic realization gold.
 
 ---
 
@@ -1753,6 +1765,12 @@ Expand each member case to one concrete `RealizationRow`. Resolve template
 slots only from source-owned subjects/bindings and reviewed literal sources.
 Then run `ReviewedRealizationCompiler` and require exact response-signature
 equality before emitting `selectable: true`.
+
+Prerequisite now implemented: explicit realization recipe selections can be
+recorded through the same bounded reviewer selection/session/UI path as
+proposal recipes, with separate unresolved/blocking accounting. This
+prerequisite deliberately does not fill `realization_recipe_selections` or
+create `RealizationRow` values.
 
 - [ ] **Step 6: Run realization and preservation tests**
 
