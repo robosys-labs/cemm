@@ -126,6 +126,7 @@ def main() -> int:
         validate_authenticated_r4_source_semantics(
             review_bundle,
             authority=environment["authority"],
+            proposal_contexts_by_case=environment.get("proposal_contexts_by_case"),
         )
         pipeline = R4Pipeline(
             authority=environment["authority"],

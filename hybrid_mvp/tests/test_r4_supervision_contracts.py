@@ -11,7 +11,7 @@ import json
 import os
 from pathlib import Path
 import shutil
-from types import MappingProxyType
+from types import MappingProxyType, SimpleNamespace
 
 import pytest
 from jsonschema import Draft202012Validator
@@ -20,6 +20,7 @@ import cemm_authoritative_hybrid.r4_supervision as supervision_module
 from cemm_authoritative_hybrid.canonical import stable_ref
 from cemm_authoritative_hybrid.authority import AuthorityLinker, DesignationFact
 from cemm_authoritative_hybrid.r4_contracts import ReviewedScenario
+from cemm_authoritative_hybrid.r4_derivation_compiler import ReviewedDerivationCompiler
 from cemm_authoritative_hybrid.r4_expansion import expand_reviewed_source_universe
 from cemm_authoritative_hybrid.r4_purpose import (
     DenominatorMinimum,
@@ -1909,6 +1910,66 @@ def test_authenticated_cross_source_validator_rejects_missing_and_duplicate_rows
                 extra_membership_root
             ),
             authority=_cross_source_authority(),
+        )
+
+
+def test_cross_source_validation_compiles_derivations_when_contexts_are_supplied(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, universe = _write_cross_source_tree(tmp_path / "compile-contexts", mixed=True)
+    bundle = supervision_module.load_authenticated_r4_review_bundle(root)
+    contexts_by_case = {case.case_ref: object() for case in universe.cases}
+    calls = []
+
+    def fake_compile(self, *, case, context, blueprint):
+        del self
+        calls.append((case.case_ref, context, blueprint.blueprint_ref))
+        return SimpleNamespace(
+            expression=SimpleNamespace(
+                expression_ref=blueprint.expected_expression_ref,
+            ),
+            operation_count=7,
+        )
+
+    monkeypatch.setattr(ReviewedDerivationCompiler, "compile", fake_compile)
+
+    result = supervision_module.validate_authenticated_r4_source_semantics(
+        bundle,
+        authority=_cross_source_authority(),
+        proposal_contexts_by_case=contexts_by_case,
+    )
+
+    assert calls
+    assert len(calls) == sum(
+        len(proposal.derivations) for proposal in bundle.proposal_targets
+    )
+    assert all(context is contexts_by_case[case_ref] for case_ref, context, _ in calls)
+    assert result.operation_count >= 7 * len(calls)
+
+    missing = dict(contexts_by_case)
+    del missing[calls[0][0]]
+    with pytest.raises(ValueError, match="derivation context is missing"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            bundle,
+            authority=_cross_source_authority(),
+            proposal_contexts_by_case=missing,
+        )
+
+    def wrong_expression(self, *, case, context, blueprint):
+        del self, case, context, blueprint
+        return SimpleNamespace(
+            expression=SimpleNamespace(
+                expression_ref="expression:ffffffffffffffffffffffff",
+            ),
+            operation_count=1,
+        )
+
+    monkeypatch.setattr(ReviewedDerivationCompiler, "compile", wrong_expression)
+    with pytest.raises(ValueError, match="compiled derivation expression disagrees"):
+        supervision_module.validate_authenticated_r4_source_semantics(
+            bundle,
+            authority=_cross_source_authority(),
+            proposal_contexts_by_case=contexts_by_case,
         )
 
 

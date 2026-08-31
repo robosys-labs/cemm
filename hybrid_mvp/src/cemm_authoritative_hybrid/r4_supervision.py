@@ -1030,6 +1030,7 @@ def validate_authenticated_r4_source_semantics(
     bundle: AuthenticatedR4ReviewBundle,
     *,
     authority: object,
+    proposal_contexts_by_case: Mapping[str, object] | None = None,
 ) -> CrossSourceValidationResult:
     """Validate the already-decoded R4.1 source snapshot with linear joins.
 
@@ -1038,6 +1039,10 @@ def validate_authenticated_r4_source_semantics(
     """
 
     from .authority import LinkedAuthority
+    from .r4_derivation_compiler import (
+        DerivationCompilationError,
+        ReviewedDerivationCompiler,
+    )
     from .r4_expansion import expand_reviewed_source_universe
     from .r4_purpose import PurposeContract, PurposeMembership
     from .r4_realization_compiler import ReviewedRealizationCompiler
@@ -1139,6 +1144,15 @@ def validate_authenticated_r4_source_semantics(
     if authority.generation != bundle.authority_generation:
         raise ValueError("authority generation differs from the authenticated review bundle")
     realization_compiler = ReviewedRealizationCompiler(authority)
+    if proposal_contexts_by_case is not None and not isinstance(
+        proposal_contexts_by_case, Mapping
+    ):
+        raise TypeError("proposal derivation contexts must be a mapping by source case")
+    derivation_compiler = (
+        ReviewedDerivationCompiler()
+        if proposal_contexts_by_case is not None
+        else None
+    )
     if any(type(row) is not ProposalTarget for row in bundle.proposal_targets):
         raise TypeError("authenticated proposal projection is not exact")
     if any(type(row) is not RealizationRow for row in bundle.realization_rows):
@@ -1160,6 +1174,10 @@ def validate_authenticated_r4_source_semantics(
         if case.case_ref in cases_by_ref:
             raise ValueError("source universe contains a duplicate case identity")
         cases_by_ref[case.case_ref] = case
+    if proposal_contexts_by_case is not None:
+        extra_contexts = set(proposal_contexts_by_case) - set(cases_by_ref)
+        if extra_contexts:
+            raise ValueError("derivation context contains an extra source case")
     source_set_ref = universe.source_set_ref
     purpose_contract = bundle.purpose_contract
     if purpose_contract.source_set_ref != source_set_ref:
@@ -1343,6 +1361,29 @@ def validate_authenticated_r4_source_semantics(
                 or proposal.expected_expression_relation != expected_relation
             ):
                 raise ValueError("proposal expression target disagrees with reviewed source truth")
+            if derivation_compiler is not None:
+                context = proposal_contexts_by_case.get(case_ref)
+                if context is None:
+                    raise ValueError("derivation context is missing for a semantic source case")
+                for derivation in proposal.derivations:
+                    try:
+                        compiled_derivation = derivation_compiler.compile(
+                            case=case,
+                            context=context,
+                            blueprint=derivation,
+                        )
+                    except DerivationCompilationError as exc:
+                        raise ValueError(
+                            "proposal derivation does not compile against its immutable context"
+                        ) from exc
+                    operations += compiled_derivation.operation_count
+                    if (
+                        compiled_derivation.expression.expression_ref
+                        != derivation.expected_expression_ref
+                    ):
+                        raise ValueError(
+                            "compiled derivation expression disagrees with reviewed blueprint"
+                        )
             subject = realization.response_subject
             if (
                 type(subject) is not ExpressionSetResponseSubject
