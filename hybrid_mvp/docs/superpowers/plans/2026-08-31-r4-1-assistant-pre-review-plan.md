@@ -4,7 +4,7 @@
 
 **Goal:** Build an offline advisory pre-review ledger for R4.1 that quarantines evidence problems, recommends only bounded non-authoritative actions, and preserves careful individual curation.
 
-**Architecture:** Add one script-side module that reuses `ReviewSession`, `GuidedReviewService`, `_json_bytes`, and existing R4.1 indexes. The module produces inert draft artifacts under `hybrid_mvp/artifacts/review_drafts/r4_1/` and never mutates `SELECTION_WORKING.json` or `SELECTION.json`.
+**Architecture:** Add one script-side module that reuses `ReviewSession`, `GuidedReviewService`, `_json_bytes`, and existing R4.1 indexes. The module produces inert draft artifacts beside the authenticated draft under `hybrid_mvp/artifacts/review_drafts/r4_1_pre_review/` and never mutates `SELECTION_WORKING.json` or `SELECTION.json`.
 
 **Tech Stack:** Python standard library, existing CEMM canonical JSON helpers, existing R4.1 review-session/guided-review scripts, pytest.
 
@@ -708,7 +708,7 @@ git commit -m "feat(r4): write advisory pre-review outputs"
 - Modify: `hybrid_mvp/tests/test_r4_pre_review.py`
 - Modify: `hybrid_mvp/artifacts/review_inputs/r4_1/README.md`
 
-- [ ] **Step 1: Add CLI and runtime-isolation tests**
+- [x] **Step 1: Add CLI and runtime-isolation tests**
 
 Append:
 
@@ -770,7 +770,7 @@ def test_runtime_source_never_imports_pre_review_sidecar() -> None:
     assert violations == []
 ```
 
-- [ ] **Step 2: Run the new tests to verify they fail**
+- [x] **Step 2: Run the new tests to verify they fail**
 
 Run:
 
@@ -780,7 +780,7 @@ python -m pytest hybrid_mvp/tests/test_r4_pre_review.py::test_pre_review_cli_wri
 
 Expected: fail because the CLI is not implemented.
 
-- [ ] **Step 3: Implement CLI entry point**
+- [x] **Step 3: Implement CLI entry point**
 
 Add to `hybrid_mvp/scripts/r4_1_pre_review.py`:
 
@@ -801,7 +801,7 @@ def _default_review_paths(root: Path, draft: Path | None) -> tuple[ReviewPaths, 
             journal_path=inputs / "REVIEW_ACTIONS.jsonl",
             export_path=inputs / "SELECTION.json",
         ),
-        draft_root,
+        draft_root.parent / f"{draft_root.name}_pre_review",
     )
 
 
@@ -817,7 +817,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     root = args.root.resolve()
-    paths, default_draft = _default_review_paths(root, args.draft)
+    paths, default_output = _default_review_paths(root, args.draft)
     if args.template is not None:
         paths = ReviewPaths(
             repository_root=root,
@@ -827,7 +827,7 @@ def main(argv: list[str] | None = None) -> int:
             journal_path=args.journal or paths.journal_path,
             export_path=args.export or paths.export_path,
         )
-    output_root = args.output or default_draft
+    output_root = args.output or default_output
     session = ReviewSession.open(paths)
     receipt = write_pre_review_outputs(
         records=build_pre_review_records(session),
@@ -841,7 +841,7 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Document the optional advisory command**
+- [x] **Step 4: Document the optional advisory command**
 
 Append to `hybrid_mvp/artifacts/review_inputs/r4_1/README.md`:
 
@@ -854,7 +854,7 @@ The advisory pre-review command may be run before or beside guided review:
 python scripts/r4_1_pre_review.py
 ```
 
-It writes inert draft material to `artifacts/review_drafts/r4_1/`:
+It writes inert draft material to `artifacts/review_drafts/r4_1_pre_review/`:
 
 - `PRE_REVIEW_RECOMMENDATIONS.jsonl`
 - `PRE_REVIEW_SUMMARY.md`
@@ -865,7 +865,14 @@ spot evidence blockers, identify careful individual-curation cases and approve
 only explicitly reviewed actions through the normal preview/apply/export flow.
 ````
 
-- [ ] **Step 5: Run focused and existing R4.1 gates**
+- [x] **Step 5: Run focused and existing R4.1 gates**
+
+Note: `test_r4_pre_review.py`, `test_r4_guided_review.py`,
+`test_r4_review_selection.py`, and the reduced `test_r4_review_server.py`
+suite passed. The aggregate server run was interrupted after isolating
+`test_guided_and_advanced_http_reviews_export_identical_validated_bytes` as a
+long quiet full-export stress path; Task 5 must either complete that path or
+record it as a residual verification risk.
 
 Run:
 
@@ -877,7 +884,7 @@ python scripts/r4_1_pre_review.py
 
 Expected: tests pass; CLI prints a JSON receipt containing `record_count`.
 
-- [ ] **Step 6: Commit Task 4**
+- [x] **Step 6: Commit Task 4**
 
 Run:
 
@@ -901,15 +908,15 @@ python scripts/r4_1_pre_review.py
 python -m compileall hybrid_mvp/scripts hybrid_mvp/src hybrid_mvp/tests -q
 ```
 
-Expected: all commands exit 0. The pre-review command writes advisory outputs only under `hybrid_mvp/artifacts/review_drafts/r4_1/`.
+Expected: all commands exit 0. The pre-review command writes advisory outputs only under `hybrid_mvp/artifacts/review_drafts/r4_1_pre_review/`.
 
 - [ ] **Step 2: Inspect generated advisory outputs**
 
 Run:
 
 ```powershell
-Get-Content -LiteralPath hybrid_mvp/artifacts/review_drafts/r4_1/PRE_REVIEW_SUMMARY.md -TotalCount 80
-Get-Content -LiteralPath hybrid_mvp/artifacts/review_drafts/r4_1/PRE_REVIEW_RECOMMENDATIONS.jsonl -TotalCount 3
+Get-Content -LiteralPath hybrid_mvp/artifacts/review_drafts/r4_1_pre_review/PRE_REVIEW_SUMMARY.md -TotalCount 80
+Get-Content -LiteralPath hybrid_mvp/artifacts/review_drafts/r4_1_pre_review/PRE_REVIEW_RECOMMENDATIONS.jsonl -TotalCount 3
 ```
 
 Expected: summary states the advisory boundary, and blocked/individual records do not contain approval actions.

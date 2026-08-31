@@ -86,8 +86,9 @@ The pre-review path will not:
 
 ## 5. Chosen Approach
 
-Add a local script-driven sidecar that builds advisory outputs under
-`hybrid_mvp/artifacts/review_drafts/r4_1/`:
+Add a local script-driven sidecar that builds advisory outputs beside the
+authenticated source draft under
+`hybrid_mvp/artifacts/review_drafts/r4_1_pre_review/`:
 
 - `PRE_REVIEW_RECOMMENDATIONS.jsonl`;
 - `PRE_REVIEW_SUMMARY.md`; and

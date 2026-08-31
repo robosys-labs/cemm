@@ -2,19 +2,28 @@
 """Build inert advisory pre-review records for R4.1 accountable review."""
 from __future__ import annotations
 
+import argparse
 import copy
 import hashlib
 import json
+import sys
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 from typing import Mapping
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
 
 from cemm_authoritative_hybrid.canonical import stable_ref
 from scripts.build_r4_1_review_selection import write_exact_output
 from scripts.build_r4_1_review_worksheets import _json_bytes
 from scripts.r4_1_review_session import (
     ReviewAction,
+    ReviewPaths,
     ReviewSession,
     _designation_risk,
 )
@@ -529,7 +538,7 @@ def write_pre_review_outputs(
     output_root.mkdir(parents=True, exist_ok=True)
     cohorts = build_pre_review_cohorts(records)
     ledger_raw = b"".join(
-        _json_bytes(record.to_json()) + b"\n"
+        _json_bytes(record.to_json()).rstrip(b"\n") + b"\n"
         for record in records
     )
     summary_raw = _summary_bytes(records=records, cohorts=cohorts)
@@ -555,3 +564,52 @@ def write_pre_review_outputs(
         "ledger_sha256": hashlib.sha256(ledger_raw).hexdigest(),
         "summary_sha256": hashlib.sha256(summary_raw).hexdigest(),
     }
+
+
+def _default_review_paths(root: Path) -> ReviewPaths:
+    inputs = root / "artifacts" / "review_inputs" / "r4_1"
+    return ReviewPaths(
+        repository_root=root,
+        draft_root=root / "artifacts" / "review_drafts" / "r4_1",
+        template_path=inputs / "SELECTION_TEMPLATE.json",
+        working_path=inputs / "SELECTION_WORKING.json",
+        journal_path=inputs / "REVIEW_ACTIONS.jsonl",
+        export_path=inputs / "SELECTION.json",
+    )
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument("--draft", type=Path)
+    parser.add_argument("--template", type=Path)
+    parser.add_argument("--working", type=Path)
+    parser.add_argument("--journal", type=Path)
+    parser.add_argument("--export", type=Path)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args(argv)
+
+    root = args.root.resolve()
+    defaults = _default_review_paths(root)
+    paths = ReviewPaths(
+        repository_root=root,
+        draft_root=args.draft or defaults.draft_root,
+        template_path=args.template or defaults.template_path,
+        working_path=args.working or defaults.working_path,
+        journal_path=args.journal or defaults.journal_path,
+        export_path=args.export or defaults.export_path,
+    )
+    output_root = args.output or (
+        paths.draft_root.parent / f"{paths.draft_root.name}_pre_review"
+    )
+    session = ReviewSession.open(paths)
+    receipt = write_pre_review_outputs(
+        records=build_pre_review_records(session),
+        output_root=output_root,
+    )
+    sys.stdout.write(json.dumps(receipt, sort_keys=True) + "\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,8 +1,11 @@
 """Advisory R4.1 assistant pre-review ledger."""
 from __future__ import annotations
 
+import ast
 import hashlib
 from pathlib import Path
+import subprocess
+import sys
 
 from scripts.build_r4_1_review_selection import build_selection_template_bytes
 from scripts.build_r4_1_review_worksheets import build_review_worksheet_draft
@@ -158,6 +161,96 @@ def test_pre_review_records_are_deterministic_and_inert(
     ).hexdigest()
 
 
+def test_pre_review_cli_writes_default_draft_outputs(
+    tmp_path: Path,
+) -> None:
+    paths = _review_paths(tmp_path)
+    output = tmp_path / "pre_review"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/r4_1_pre_review.py",
+            "--root",
+            str(ROOT),
+            "--draft",
+            str(paths.draft_root),
+            "--template",
+            str(paths.template_path),
+            "--working",
+            str(paths.working_path),
+            "--journal",
+            str(paths.journal_path),
+            "--export",
+            str(paths.export_path),
+            "--output",
+            str(output),
+        ],
+        cwd=ROOT,
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "record_count" in completed.stdout
+    assert (output / "PRE_REVIEW_RECOMMENDATIONS.jsonl").exists()
+    assert (output / "PRE_REVIEW_SUMMARY.md").exists()
+    assert not paths.working_path.exists()
+    assert not paths.export_path.exists()
+
+
+def test_pre_review_cli_default_output_does_not_pollute_draft_root(
+    tmp_path: Path,
+) -> None:
+    paths = _review_paths(tmp_path)
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/r4_1_pre_review.py",
+            "--root",
+            str(ROOT),
+            "--draft",
+            str(paths.draft_root),
+            "--template",
+            str(paths.template_path),
+            "--working",
+            str(paths.working_path),
+            "--journal",
+            str(paths.journal_path),
+            "--export",
+            str(paths.export_path),
+        ],
+        cwd=ROOT,
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    output_root = paths.draft_root.parent / "draft_pre_review"
+
+    assert "record_count" in completed.stdout
+    assert (output_root / "PRE_REVIEW_RECOMMENDATIONS.jsonl").exists()
+    assert (output_root / "PRE_REVIEW_SUMMARY.md").exists()
+    assert not (paths.draft_root / "PRE_REVIEW_RECOMMENDATIONS.jsonl").exists()
+    assert not (paths.draft_root / "PRE_REVIEW_SUMMARY.md").exists()
+    assert build_pre_review_records(ReviewSession.open(paths))
+
+
+def test_runtime_source_never_imports_pre_review_sidecar() -> None:
+    forbidden = {"r4_1_pre_review", "PRE_REVIEW_RECOMMENDATIONS"}
+    violations: list[tuple[str, str]] = []
+    for path in sorted((ROOT / "src/cemm_authoritative_hybrid").rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for item in ast.walk(tree):
+            names: list[str] = []
+            if isinstance(item, ast.Import):
+                names = [alias.name for alias in item.names]
+            elif isinstance(item, ast.ImportFrom) and item.module is not None:
+                names = [item.module]
+            for name in names:
+                if any(blocked in name for blocked in forbidden):
+                    violations.append((str(path.relative_to(ROOT)), name))
+    assert violations == []
+
+
 def test_pre_review_cohorts_exclude_human_required_records(
     tmp_path: Path,
 ) -> None:
@@ -217,5 +310,10 @@ def test_write_pre_review_outputs_is_deterministic_and_does_not_touch_selection(
         "PRE_REVIEW_RECOMMENDATIONS.jsonl",
         "PRE_REVIEW_SUMMARY.md",
     }
+    ledger_lines = first_bytes[
+        "PRE_REVIEW_RECOMMENDATIONS.jsonl"
+    ].splitlines()
+    assert len(ledger_lines) == len(records)
+    assert all(line.strip() for line in ledger_lines)
     assert not paths.working_path.exists()
     assert not paths.export_path.exists()

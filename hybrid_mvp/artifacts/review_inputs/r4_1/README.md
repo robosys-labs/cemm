@@ -128,3 +128,21 @@ consistency, purpose-local proposal-family partitions, and exact designation
 decisions. Until it passes, the working copy remains inert. Exact
 proposal/derivation expansion is the next implementation step after
 accountable selections exist.
+
+## Optional assistant pre-review
+
+The advisory pre-review command may be run before or beside guided review:
+
+```powershell
+python scripts/r4_1_pre_review.py
+```
+
+It writes inert draft material to `artifacts/review_drafts/r4_1_pre_review/`:
+
+- `PRE_REVIEW_RECOMMENDATIONS.jsonl`
+- `PRE_REVIEW_SUMMARY.md`
+
+These files are not semantic authority, not a review manifest, not activation
+input and not reviewed gold. They are meant to help the accountable reviewer
+spot evidence blockers, identify careful individual-curation cases and approve
+only explicitly reviewed actions through the normal preview/apply/export flow.
