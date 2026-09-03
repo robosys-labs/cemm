@@ -1,3 +1,5 @@
+"""Proposal Context ABI 2 exact tagged-union owner tests."""
+
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError, fields as dataclass_fields, replace
@@ -205,15 +207,276 @@ def _contains_float(value: Any) -> bool:
     return False
 
 
-def test_proposal_context_abi1_is_content_addressed_and_round_trips_exactly() -> None:
+def _context_with_unresolved_designation(
+    **frame_changes: Any,
+) -> tuple[ProposalContext, Any]:
+    original = _context()
+    literal = ContributionSlot.create(
+        contribution_ref="contribution:unknown-literal",
+        kind="literal",
+        source_unit_refs=("unit:alice",),
+        target_ref=None,
+        target_kind=None,
+        input_ports=(),
+        output_ports=("role:surface",),
+        constraints=(("source", "unresolved_designation"),),
+        provenance_refs=("form:unknown",),
+        literal_value="zorp",
+    )
+    binder = ContributionSlot.create(
+        contribution_ref="contribution:definition-binder",
+        kind="binder",
+        source_unit_refs=("unit:loves",),
+        target_ref=None,
+        target_kind=None,
+        input_ports=("role:surface", "role:target"),
+        output_ports=("role:proposition",),
+        constraints=(("binder", "definition_query"),),
+        provenance_refs=("construction:definition-query",),
+        literal_value=None,
+    )
+    unresolved_values = {
+        "label_type_ref": "label_type:word",
+        "literal_contribution_slot_ref": literal.slot_ref,
+        "target_variable_slot_ref": original.variable_slots[0].slot_ref,
+        "query_binder_slot_ref": binder.slot_ref,
+        "source_unit_refs": ("unit:alice",),
+        "construction_ref": "construction:definition-query",
+        "provenance_refs": (
+            literal.slot_ref,
+            binder.slot_ref,
+            "construction:definition-query",
+        ),
+        **frame_changes,
+    }
+    unresolved = context_module.UnresolvedDesignationFrame.create(
+        **unresolved_values
+    )
+    fields = _creation_fields(original)
+    fields["contribution_slots"] = (
+        *original.contribution_slots,
+        literal,
+        binder,
+    )
+    fields["application_frames"] = (*original.application_frames, unresolved)
+    return ProposalContext.create(**fields), unresolved
+
+
+def test_proposal_context_abi2_is_content_addressed_and_round_trips_exactly() -> None:
     context = _context()
 
-    assert PROPOSAL_CONTEXT_ABI_VERSION == 1
+    assert PROPOSAL_CONTEXT_ABI_VERSION == 2
     assert context.context_ref.startswith("proposal_context:")
     assert ProposalContext.from_dict(context.as_dict()) == context
     assert not _contains_float(context.as_dict())
     assert "resolved_applications" not in context.as_dict()
     assert "semantic_expression" not in context.as_dict()
+
+
+def test_application_frame_union_uses_one_exact_explicit_wire_discriminator() -> None:
+    context, unresolved = _context_with_unresolved_designation()
+    grounded_wire, unresolved_wire = context.as_dict()["application_frames"]
+
+    assert grounded_wire == {
+        "frame_type": "grounded",
+        **context.application_frames[0].as_dict(),
+    }
+    assert unresolved_wire == {
+        "frame_type": "unresolved_designation",
+        **unresolved.as_dict(),
+    }
+    assert "frame_type" not in context.application_frames[0].as_dict()
+    assert "frame_type" not in unresolved.as_dict()
+    assert ProposalContext.from_dict(context.as_dict()) == context
+
+
+def test_unresolved_designation_frame_is_frozen_content_addressed_and_indexed() -> None:
+    context, unresolved = _context_with_unresolved_designation()
+
+    assert type(unresolved) is context_module.UnresolvedDesignationFrame
+    assert tuple(item.name for item in dataclass_fields(unresolved) if item.init) == (
+        "slot_ref",
+        "label_type_ref",
+        "literal_contribution_slot_ref",
+        "target_variable_slot_ref",
+        "query_binder_slot_ref",
+        "source_unit_refs",
+        "construction_ref",
+        "provenance_refs",
+    )
+    assert unresolved.slot_ref.startswith("unresolved_designation_frame:")
+    assert context.unresolved_designation_frames == (unresolved,)
+    assert context.unresolved_designation_frame(unresolved.slot_ref) is unresolved
+    assert context.frame(unresolved.slot_ref) is unresolved
+    assert context.frame_for_designation(_slots()["designation"].slot_ref) == (
+        context.application_frames[0],
+    )
+    assert context_module.UnresolvedDesignationFrame.from_dict(
+        unresolved.as_dict()
+    ) == unresolved
+    with pytest.raises(FrozenInstanceError):
+        unresolved.label_type_ref = "label_type:other"
+
+
+@pytest.mark.parametrize(
+    ("field", "changed"),
+    (
+        ("label_type_ref", "label_type:phrase"),
+        ("literal_contribution_slot_ref", "contribution_slot:other"),
+        ("target_variable_slot_ref", "variable_slot:other"),
+        ("query_binder_slot_ref", "contribution_slot:binder-other"),
+        ("source_unit_refs", ("unit:loves",)),
+        ("construction_ref", "construction:other"),
+        ("provenance_refs", ("provenance:other",)),
+    ),
+)
+def test_unresolved_designation_frame_identity_covers_every_content_field(
+    field: str, changed: Any
+) -> None:
+    _context_value, original = _context_with_unresolved_designation()
+    values = {
+        item.name: getattr(original, item.name)
+        for item in dataclass_fields(original)
+        if item.init and item.name != "slot_ref"
+    }
+
+    changed_frame = context_module.UnresolvedDesignationFrame.create(
+        **(values | {field: changed})
+    )
+
+    assert changed_frame.slot_ref != original.slot_ref
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    (
+        (
+            lambda payload: payload["application_frames"][0].pop("frame_type"),
+            "frame_type",
+        ),
+        (
+            lambda payload: payload["application_frames"][0].update(
+                {"frame_type": "unknown"}
+            ),
+            "frame_type",
+        ),
+        (
+            lambda payload: payload["application_frames"][0].update(
+                {"label_type_ref": "label_type:word"}
+            ),
+            "fields",
+        ),
+        (
+            lambda payload: payload["application_frames"][1].update(
+                {"predicate_target_ref": "concept:fake"}
+            ),
+            "fields",
+        ),
+        (
+            lambda payload: payload["application_frames"][1].update(
+                {"extra": "field"}
+            ),
+            "fields",
+        ),
+    ),
+    ids=(
+        "missing-discriminator",
+        "unknown-discriminator",
+        "grounded-mixed-with-unresolved-field",
+        "unresolved-mixed-with-grounded-field",
+        "extra-unresolved-field",
+    ),
+)
+def test_application_frame_union_rejects_noncanonical_wire_variants(
+    mutation: Any, message: str
+) -> None:
+    context, _unresolved = _context_with_unresolved_designation()
+    payload = context.as_dict()
+    mutation(payload)
+
+    with pytest.raises((TypeError, ValueError), match=message):
+        ProposalContext.from_dict(payload)
+
+
+def test_proposal_context_hard_rejects_abi1_and_discriminator_free_bytes() -> None:
+    context = _context()
+    payload = context.as_dict()
+    payload["abi_version"] = 1
+
+    with pytest.raises(ValueError, match="ABI"):
+        ProposalContext.from_dict(payload)
+
+    payload = context.as_dict()
+    payload["application_frames"] = [context.application_frames[0].as_dict()]
+    with pytest.raises(ValueError, match="frame_type"):
+        ProposalContext.from_dict(payload)
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement", "message"),
+    (
+        (
+            "literal_contribution_slot_ref",
+            lambda context: context.contribution_slots[0].slot_ref,
+            "requires literal contribution",
+        ),
+        (
+            "target_variable_slot_ref",
+            lambda _context: "variable_slot:missing",
+            "unknown variable slot",
+        ),
+        (
+            "query_binder_slot_ref",
+            lambda context: context.contribution_slots[1].slot_ref,
+            "requires binder contribution",
+        ),
+        (
+            "source_unit_refs",
+            lambda _context: ("unit:loves",),
+            "equal literal geometry",
+        ),
+    ),
+)
+def test_unresolved_designation_frame_references_exact_typed_context_slots(
+    field: str, replacement: Any, message: str
+) -> None:
+    context, unresolved = _context_with_unresolved_designation()
+    values = {
+        item.name: getattr(unresolved, item.name)
+        for item in dataclass_fields(unresolved)
+        if item.init and item.name != "slot_ref"
+    }
+    invalid = context_module.UnresolvedDesignationFrame.create(
+        **(values | {field: replacement(context)})
+    )
+    creation = _creation_fields(context)
+    creation["application_frames"] = (context.application_frames[0], invalid)
+
+    with pytest.raises(ValueError, match=message):
+        ProposalContext.create(**creation)
+
+
+def test_context_rejects_duplicate_unresolved_construction_span_hypotheses() -> None:
+    context, unresolved = _context_with_unresolved_designation()
+    values = {
+        item.name: getattr(unresolved, item.name)
+        for item in dataclass_fields(unresolved)
+        if item.init and item.name != "slot_ref"
+    }
+    duplicate_hypothesis = context_module.UnresolvedDesignationFrame.create(
+        **(
+            values
+            | {"provenance_refs": (*unresolved.provenance_refs, "provenance:alternate")}
+        )
+    )
+    creation = _creation_fields(context)
+    creation["application_frames"] = (
+        *context.application_frames,
+        duplicate_hypothesis,
+    )
+
+    with pytest.raises(ValueError, match="duplicate unresolved designation"):
+        ProposalContext.create(**creation)
 
 
 def test_proposal_context_identity_includes_required_grounding_ref() -> None:

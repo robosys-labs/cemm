@@ -1,4 +1,4 @@
-"""Proposal Context ABI 1: bounded, current-cycle semantic proposal slots.
+"""Proposal Context ABI 2: bounded, current-cycle semantic proposal slots.
 
 ORIENT constructs one immutable context and passes that exact value through
 PROPOSE and VERIFY.  The context contains only grounded pointers and reviewed
@@ -29,7 +29,7 @@ from .grounding import (
 )
 from .persistence import RevisionPin
 
-PROPOSAL_CONTEXT_ABI_VERSION = 1
+PROPOSAL_CONTEXT_ABI_VERSION = 2
 
 _VALID_MODES = frozenset({"OBSERVE", "QUERY", "REQUEST", "SIMULATE"})
 _VALID_CONTRIBUTION_KINDS = frozenset(get_args(ContributionKind))
@@ -132,7 +132,7 @@ def _strict_mapping(
     if not isinstance(data, Mapping):
         raise TypeError(f"{label} payload must be a mapping")
     if len(data) != len(expected):
-        raise ValueError(f"{label} payload has wrong field count")
+        raise ValueError(f"{label} fields mismatch: wrong field count")
     actual = frozenset(data)
     if actual != expected:
         raise ValueError(
@@ -475,6 +475,110 @@ class ApplicationFrameSlot(_ContentAddressedSlot):
 
 
 @dataclass(frozen=True)
+class UnresolvedDesignationFrame(_ContentAddressedSlot):
+    slot_ref: str
+    label_type_ref: str
+    literal_contribution_slot_ref: str
+    target_variable_slot_ref: str
+    query_binder_slot_ref: str
+    source_unit_refs: tuple[str, ...]
+    construction_ref: str
+    provenance_refs: tuple[str, ...]
+
+    _NAMESPACE = "unresolved_designation_frame"
+    _TUPLE_FIELDS = frozenset({"source_unit_refs", "provenance_refs"})
+
+    def __post_init__(self) -> None:
+        for name in (
+            "slot_ref",
+            "label_type_ref",
+            "literal_contribution_slot_ref",
+            "target_variable_slot_ref",
+            "query_binder_slot_ref",
+            "construction_ref",
+        ):
+            _require_exact_string(getattr(self, name), name)
+        source_unit_refs = _require_strings(
+            self.source_unit_refs, "source_unit_refs", nonempty=True
+        )
+        provenance_refs = _require_strings(
+            self.provenance_refs, "provenance_refs", nonempty=True
+        )
+        config = RuntimeConfig.release()
+        if len(source_unit_refs) > config.max_input_tokens:
+            raise ValueError("unresolved designation source unit bound violated")
+        if len(provenance_refs) > config.max_orientation_alternatives:
+            raise ValueError("unresolved designation provenance bound violated")
+        self._verify_ref()
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        label_type_ref: str,
+        literal_contribution_slot_ref: str,
+        target_variable_slot_ref: str,
+        query_binder_slot_ref: str,
+        source_unit_refs: tuple[str, ...],
+        construction_ref: str,
+        provenance_refs: tuple[str, ...],
+    ) -> "UnresolvedDesignationFrame":
+        if cls is not UnresolvedDesignationFrame:
+            raise TypeError(
+                "UnresolvedDesignationFrame factories require exact owner type"
+            )
+        values = {
+            "label_type_ref": label_type_ref,
+            "literal_contribution_slot_ref": literal_contribution_slot_ref,
+            "target_variable_slot_ref": target_variable_slot_ref,
+            "query_binder_slot_ref": query_binder_slot_ref,
+            "source_unit_refs": source_unit_refs,
+            "construction_ref": construction_ref,
+            "provenance_refs": provenance_refs,
+        }
+        material = {
+            "abi_version": PROPOSAL_CONTEXT_ABI_VERSION,
+            **{key: _wire(value) for key, value in values.items()},
+        }
+        return cls(stable_ref(cls._NAMESPACE, material), **values)
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "UnresolvedDesignationFrame":
+        if cls is not UnresolvedDesignationFrame:
+            raise TypeError(
+                "UnresolvedDesignationFrame factories require exact owner type"
+            )
+        return super().from_dict(data)
+
+
+ApplicationFrame = ApplicationFrameSlot | UnresolvedDesignationFrame
+
+
+def _application_frame_as_dict(frame: ApplicationFrame) -> dict[str, Any]:
+    if type(frame) is ApplicationFrameSlot:
+        return {"frame_type": "grounded", **frame.as_dict()}
+    if type(frame) is UnresolvedDesignationFrame:
+        return {"frame_type": "unresolved_designation", **frame.as_dict()}
+    raise TypeError("application frame has invalid owner type")
+
+
+def _application_frame_from_dict(data: Mapping[str, Any]) -> ApplicationFrame:
+    if type(data) is not dict:
+        raise TypeError("application frame row must be an exact dict")
+    if "frame_type" not in data:
+        raise ValueError("application frame is missing frame_type")
+    frame_type = data["frame_type"]
+    if type(frame_type) is not str:
+        raise TypeError("application frame_type must be an exact str")
+    payload = {key: value for key, value in data.items() if key != "frame_type"}
+    if frame_type == "grounded":
+        return ApplicationFrameSlot.from_dict(payload)
+    if frame_type == "unresolved_designation":
+        return UnresolvedDesignationFrame.from_dict(payload)
+    raise ValueError(f"unknown application frame_type: {frame_type}")
+
+
+@dataclass(frozen=True)
 class ReferenceSlot(_ContentAddressedSlot):
     slot_ref: str
     target_ref: str
@@ -799,7 +903,7 @@ class ProposalContext:
     designation_slots: tuple[DesignationSlot, ...]
     contribution_slots: tuple[ContributionSlot, ...]
     mode_slots: tuple[ModeSlot, ...]
-    application_frames: tuple[ApplicationFrameSlot, ...]
+    application_frames: tuple[ApplicationFrame, ...]
     reference_slots: tuple[ReferenceSlot, ...]
     scope_slots: tuple[ScopeSlot, ...]
     expression_link_slots: tuple[ExpressionLinkSlot, ...]
@@ -827,6 +931,9 @@ class ProposalContext:
         init=False, repr=False, compare=False, hash=False
     )
     _frames_by_designation: Mapping[str, tuple[int, ...]] = field(
+        init=False, repr=False, compare=False, hash=False
+    )
+    _unresolved_frame_by_ref: Mapping[str, int] = field(
         init=False, repr=False, compare=False, hash=False
     )
     _reference_by_ref: Mapping[str, int] = field(
@@ -881,7 +988,7 @@ class ProposalContext:
         designation_slots: tuple[DesignationSlot, ...],
         contribution_slots: tuple[ContributionSlot, ...],
         mode_slots: tuple[ModeSlot, ...],
-        application_frames: tuple[ApplicationFrameSlot, ...],
+        application_frames: tuple[ApplicationFrame, ...],
         reference_slots: tuple[ReferenceSlot, ...],
         scope_slots: tuple[ScopeSlot, ...],
         expression_link_slots: tuple[ExpressionLinkSlot, ...],
@@ -959,11 +1066,24 @@ class ProposalContext:
         object.__setattr__(self, "_frame_by_ref", index(self.application_frames))
         grouped: dict[str, list[int]] = {}
         for position, row in enumerate(self.application_frames):
+            if type(row) is not ApplicationFrameSlot:
+                continue
             grouped.setdefault(row.designation_slot_ref, []).append(position)
         object.__setattr__(
             self,
             "_frames_by_designation",
             MappingProxyType({key: tuple(value) for key, value in grouped.items()}),
+        )
+        object.__setattr__(
+            self,
+            "_unresolved_frame_by_ref",
+            MappingProxyType(
+                {
+                    row.slot_ref: position
+                    for position, row in enumerate(self.application_frames)
+                    if type(row) is UnresolvedDesignationFrame
+                }
+            ),
         )
         object.__setattr__(self, "_reference_by_ref", index(self.reference_slots))
         object.__setattr__(self, "_scope_by_ref", index(self.scope_slots))
@@ -1058,7 +1178,7 @@ class ProposalContext:
     def mode_slot(self, slot_ref: str) -> ModeSlot | None:
         return self._indexed_row(self.mode_slots, self._mode_by_ref, slot_ref)
 
-    def frame(self, slot_ref: str) -> ApplicationFrameSlot | None:
+    def frame(self, slot_ref: str) -> ApplicationFrame | None:
         return self._indexed_row(self.application_frames, self._frame_by_ref, slot_ref)
 
     def frame_for_designation(self, slot_ref: str) -> tuple[ApplicationFrameSlot, ...]:
@@ -1073,10 +1193,34 @@ class ProposalContext:
             ):
                 raise ValueError("ProposalContext derived index is incoherent")
             row = self.application_frames[position]
+            if type(row) is not ApplicationFrameSlot:
+                raise ValueError("ProposalContext derived index is incoherent")
             if row.designation_slot_ref != slot_ref:
                 raise ValueError("ProposalContext derived index is incoherent")
             rows.append(row)
         return tuple(rows)
+
+    @property
+    def unresolved_designation_frames(
+        self,
+    ) -> tuple[UnresolvedDesignationFrame, ...]:
+        return tuple(
+            row
+            for row in self.application_frames
+            if type(row) is UnresolvedDesignationFrame
+        )
+
+    def unresolved_designation_frame(
+        self, slot_ref: str
+    ) -> UnresolvedDesignationFrame | None:
+        row = self._indexed_row(
+            self.application_frames,
+            self._unresolved_frame_by_ref,
+            slot_ref,
+        )
+        if row is not None and type(row) is not UnresolvedDesignationFrame:
+            raise ValueError("ProposalContext derived index is incoherent")
+        return row
 
     def reference(self, slot_ref: str) -> ReferenceSlot | None:
         return self._indexed_row(self.reference_slots, self._reference_by_ref, slot_ref)
@@ -1173,7 +1317,9 @@ class ProposalContext:
             "designation_slots": [row.as_dict() for row in self.designation_slots],
             "contribution_slots": [row.as_dict() for row in self.contribution_slots],
             "mode_slots": [row.as_dict() for row in self.mode_slots],
-            "application_frames": [row.as_dict() for row in self.application_frames],
+            "application_frames": [
+                _application_frame_as_dict(row) for row in self.application_frames
+            ],
             "reference_slots": [row.as_dict() for row in self.reference_slots],
             "scope_slots": [row.as_dict() for row in self.scope_slots],
             "expression_link_slots": [
@@ -1235,11 +1381,6 @@ class ProposalContext:
             ("designation_slots", DesignationSlot, config.max_orientation_alternatives),
             ("contribution_slots", ContributionSlot, contribution_limit),
             ("mode_slots", ModeSlot, config.max_orientation_alternatives),
-            (
-                "application_frames",
-                ApplicationFrameSlot,
-                config.max_orientation_alternatives,
-            ),
             ("reference_slots", ReferenceSlot, config.max_orientation_alternatives),
             ("scope_slots", ScopeSlot, config.max_orientation_alternatives),
             (
@@ -1259,6 +1400,13 @@ class ProposalContext:
                 raise ValueError(f"{name} exceeds release bound")
             if any(type(item) is not dict for item in value):
                 raise TypeError(f"{name} rows must be exact dicts")
+        raw_application_frames = data["application_frames"]
+        if type(raw_application_frames) is not list:
+            raise TypeError("application_frames must be an exact list")
+        if len(raw_application_frames) > config.max_orientation_alternatives:
+            raise ValueError("application_frames exceeds release bound")
+        if any(type(item) is not dict for item in raw_application_frames):
+            raise TypeError("application_frames rows must be exact dicts")
 
         def bounded_strings(name: str, limit: int) -> tuple[str, ...]:
             value = data[name]
@@ -1289,6 +1437,9 @@ class ProposalContext:
             name: tuple(owner.from_dict(item) for item in data[name])
             for name, owner, _limit in row_specs
         }
+        application_frames = tuple(
+            _application_frame_from_dict(item) for item in raw_application_frames
+        )
         rebuilt = cls.create(
             orientation_ref=data["orientation_ref"],
             evidence_packet_ref=data["evidence_packet_ref"],
@@ -1297,7 +1448,7 @@ class ProposalContext:
             designation_slots=decoded_rows["designation_slots"],
             contribution_slots=decoded_rows["contribution_slots"],
             mode_slots=decoded_rows["mode_slots"],
-            application_frames=decoded_rows["application_frames"],
+            application_frames=application_frames,
             reference_slots=decoded_rows["reference_slots"],
             scope_slots=decoded_rows["scope_slots"],
             expression_link_slots=decoded_rows["expression_link_slots"],
@@ -4175,7 +4326,9 @@ def _context_material(context: Any) -> dict[str, Any]:
         "designation_slots": [row.as_dict() for row in context.designation_slots],
         "contribution_slots": [row.as_dict() for row in context.contribution_slots],
         "mode_slots": [row.as_dict() for row in context.mode_slots],
-        "application_frames": [row.as_dict() for row in context.application_frames],
+        "application_frames": [
+            _application_frame_as_dict(row) for row in context.application_frames
+        ],
         "reference_slots": [row.as_dict() for row in context.reference_slots],
         "scope_slots": [row.as_dict() for row in context.scope_slots],
         "expression_link_slots": [
@@ -4253,7 +4406,7 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             "application frame",
             context.application_frames,
             config.max_orientation_alternatives,
-            ApplicationFrameSlot,
+            (ApplicationFrameSlot, UnresolvedDesignationFrame),
         ),
         (
             "reference",
@@ -4295,11 +4448,12 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             raise TypeError(f"{label} slots must be a tuple")
         if len(rows) > maximum:
             raise ValueError(f"{label} slot bound violated")
+        owners = owner if type(owner) is tuple else (owner,)
         for row in rows:
-            if type(row) is not owner:
+            if type(row) not in owners:
                 raise TypeError(f"{label} slots contain invalid records")
             try:
-                owner.__post_init__(row)
+                type(row).__post_init__(row)
             except (AttributeError, TypeError, ValueError) as exc:
                 raise ValueError(f"{label} slots contain noncanonical records") from exc
         refs = tuple(
@@ -4368,6 +4522,48 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             "proposal context source partition must cover every source unit"
         )
 
+    contribution_by_ref = {row.slot_ref: row for row in context.contribution_slots}
+    variable_by_ref = {row.slot_ref: row for row in context.variable_slots}
+    unresolved_hypotheses: set[tuple[str, int, int]] = set()
+    for frame in context.application_frames:
+        if type(frame) is not UnresolvedDesignationFrame:
+            continue
+        literal = contribution_by_ref.get(frame.literal_contribution_slot_ref)
+        if literal is None:
+            raise ValueError(
+                "unresolved designation references unknown literal contribution"
+            )
+        if literal.kind != "literal":
+            raise ValueError(
+                "unresolved designation literal ref requires literal contribution"
+            )
+        if literal.source_unit_refs != frame.source_unit_refs:
+            raise ValueError(
+                "unresolved designation source units must equal literal geometry"
+            )
+        if frame.target_variable_slot_ref not in variable_by_ref:
+            raise ValueError("unresolved designation references unknown variable slot")
+        binder = contribution_by_ref.get(frame.query_binder_slot_ref)
+        if binder is None:
+            raise ValueError(
+                "unresolved designation references unknown binder contribution"
+            )
+        if binder.kind != "binder":
+            raise ValueError(
+                "unresolved designation binder ref requires binder contribution"
+            )
+        selected_spans = tuple(span_by_ref[ref] for ref in frame.source_unit_refs)
+        hypothesis = (
+            frame.construction_ref,
+            min(item[0] for item in selected_spans),
+            max(item[1] for item in selected_spans),
+        )
+        if hypothesis in unresolved_hypotheses:
+            raise ValueError(
+                "duplicate unresolved designation construction/span hypothesis"
+            )
+        unresolved_hypotheses.add(hypothesis)
+
     designation_by_ref = {row.slot_ref: row for row in context.designation_slots}
     frame_by_ref = {row.slot_ref: row for row in context.application_frames}
     predicates_by_target: dict[str, list[ContributionSlot]] = {}
@@ -4378,6 +4574,8 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             )
     frame_target_counts: dict[str, int] = {}
     for frame in context.application_frames:
+        if type(frame) is UnresolvedDesignationFrame:
+            continue
         designation = designation_by_ref.get(frame.designation_slot_ref)
         if designation is None:
             raise ValueError("application frame contains unknown designation slot")
@@ -4594,7 +4792,7 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
         frame = frame_by_ref.get(transition.application_frame_ref)
         if frame is None:
             raise ValueError("transition contains unknown application frame")
-        if frame.operator_ref != "op:state":
+        if type(frame) is not ApplicationFrameSlot or frame.operator_ref != "op:state":
             raise ValueError("transition requires an op:state application frame")
 
 
@@ -4604,6 +4802,8 @@ __all__ = [
     "ContributionSlot",
     "ModeSlot",
     "ApplicationFrameSlot",
+    "UnresolvedDesignationFrame",
+    "ApplicationFrame",
     "ReferenceSlot",
     "ScopeSlot",
     "ExpressionLinkSlot",
