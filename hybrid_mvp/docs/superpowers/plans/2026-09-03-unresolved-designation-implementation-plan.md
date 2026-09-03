@@ -195,6 +195,9 @@ git commit -m "feat(r2): add unresolved designation frame ABI"
 - Modify: `tests/test_exact_verifier.py`
 - Modify: `tests/test_r2_verifier_reconstruction.py`
 - Modify: `tests/test_r3_learning_transaction.py`
+- Modify: `src/cemm_authoritative_hybrid/r4_contracts.py` (mechanical designation constructors and exact role validator only)
+- Modify: `tests/test_r3_learning_response.py`, `tests/test_realization_verifier.py`, `tests/test_safe_realizer.py` (direct expression fixtures only)
+- Modify: `tests/test_r4_assertion_compiler.py` (canonical designation regression only)
 
 - [ ] **Step 1: Bump only Semantic Expression ABI**
 
@@ -236,6 +239,13 @@ SemanticApplication.create(
 ```
 
 Do not add a compatibility constructor or fallback decoder.
+
+Code inspection found the same legacy encoding in the assertion compiler and
+direct learning/realization fixtures listed above. Migrate those constructors
+and the corresponding exact role validator in the same hard cut; otherwise
+ABI 2 would retain a path that produces the retired meaning. Preserve valid
+name queries with a bound surface and grounded target. This dependency repair
+does not authorize R4 corpus/gold regeneration or admission.
 
 - [ ] **Step 5: Run the canonical-expression owner tests**
 
