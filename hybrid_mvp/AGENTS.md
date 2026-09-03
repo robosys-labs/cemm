@@ -187,43 +187,25 @@ fallback paths, compatibility adapters or unverified surfaces.
 
 ## 8. Current anti-recursion closure contract
 
-The only executable next step is the fixed R4 closure slice governed by
-`docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md`.
+**Closure stopped.** The fixed R4 closure slice governed by
+`docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md`
+is STOPPED/BLOCKED at the unresolved-designation ProposalContext/application-
+frame representation boundary. The only permissible next work is a reviewed
+unresolved-designation representation/ABI design. No implementation may begin
+until that design is approved.
+
 Bulk R4.1 authoring, purpose allocation, realization-recipe review, corpus
-expansion, source-package publication and all R5 work are frozen until that
-slice records a reviewed pass.
+expansion, source-package publication and all R5 work remain frozen. The old
+closure implementation plan is historical evidence and carries no execution
+authority.
 
 Review workflows are suspended. Existing working selections and action logs
 are diagnostic evidence only; they must not be exported, admitted or treated
 as semantic gold. The review UI, guided review, assistant pre-review and
 reviewer-identity plans cannot authorize current work.
 
-Before semantic Task 1, one bounded test-authority preflight must align the
-active suite with this closure boundary. That governance/test cleanup is one
-prerequisite commit and does not count against the maximum three semantic
-owner fixes or three semantic implementation commits. Existing broad scenario
-generator and authentic-cycle tests remain active and must not be weakened or
-deleted. The five stale scenario rows remain predecessor evidence and may be
-corrected only after the fixed diagnostic closure passes, under the separately
-reviewed mechanical correction plan.
-
-Closure work is bounded by all of the following:
-
-- the exact fixed cases in the governing closure design;
-- maximum three owner-level implementation fixes;
-- maximum three implementation commits before a pass/fail decision;
-- one active blocker at a time;
-- no new ABI, phase, gate, runtime owner, review UI or source package;
-- no bulk regeneration, model training or epoch tuning; and
-- no change that only adds planning, presentation or tracking machinery.
-
-Each implementation change must move a named closure case through its earliest
-failing existing owner. Practical usability is mandatory: supported queries
-must answer, unknown knowledge must remain distinct from unknown meaning,
-denials and conflicts must explain themselves, and no normal response may be
-generic `Acknowledged.` or a placeholder.
-
-If the fixed slice passes, a separately reviewed mechanical R4.1 correction
-plan may resume the existing ABIs and gates. If three owner-level fixes do not
-make it pass, work stops at the first unresolved architecture owner. R5 remains
-unavailable in either case until fresh R4.1 admission.
+The intentional unknown-designation RED and its diagnostic context test remain
+evidence of the blocker. They do not authorize a fake designation identity,
+default-to-concept target, internal-ref lexicalization or surface-phrase
+dispatch. R5 remains unavailable until a future approved design is implemented,
+the fixed closure is rerun successfully and fresh R4.1 admission exists.

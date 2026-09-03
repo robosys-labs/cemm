@@ -52,9 +52,12 @@ pipeline, not a release or replay receipt.
 Proceed under the [August 29 R4.1 data/supervision amendment](docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md),
 the [semantic-algebra amendment](docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md),
 the [R4 closure-slice design](docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md),
-and the [document authority map](docs/DOCUMENT_AUTHORITY.json). The closure
-slice is the only executable next step; bulk review, authoring, regeneration
-and training remain stopped until it proves practical end-to-end usability.
+and the [document authority map](docs/DOCUMENT_AUTHORITY.json). **Closure
+stopped:** the slice is STOPPED/BLOCKED at the unresolved-designation
+representation boundary. The only permissible next work is a reviewed
+unresolved-designation representation/ABI design. No implementation may begin
+until that design is approved. Bulk review, authoring, regeneration and
+training remain stopped.
 
 R5 training, selection, calibration, frozen evaluation and realization
 activation are unavailable until a fresh R4.1 admission proves meaningful

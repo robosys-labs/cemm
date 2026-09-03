@@ -1,22 +1,24 @@
 # R4 Closure Slice and Anti-Recursion Design
 
 **Date:** 2026-09-03
-**Status:** approved governing design; execution requires the linked plan
-**Scope:** the only executable next step for `hybrid_mvp/` R4.1
+**Status:** STOPPED / BLOCKED at the unresolved-designation representation boundary
+**Scope:** recorded closure stop and freeze boundary for `hybrid_mvp/` R4.1
 
 This design is subordinate only to `AGENTS.md` and the August 29 R4.1
 data/supervision amendment. It constrains the older R4.1 replay and
 source-readiness plans until the closure result is recorded. Current replay
 status remains owned only by `governance/replay_status.jsonl`.
 
-Executable steps are owned only by the
+The executed steps and stop result are owned by the
 [R4 closure-slice implementation plan](../plans/2026-09-03-r4-closure-slice-implementation-plan.md).
 
 ## 1. Decision
 
 Bulk R4.1 source authoring, purpose allocation, realization-recipe review,
-corpus expansion, package publication and R5 work are frozen. The fixed closure
-slice is the only executable next step.
+corpus expansion, package publication and R5 work are frozen. **Closure
+stopped:** the fixed slice has ended at the blocker recorded below. The only
+permissible next work is a reviewed unresolved-designation representation/ABI
+design. No implementation may begin until that design is approved.
 
 The slice is a bounded falsification test of the existing semantic and
 supervision architecture. It must prove that difficult, practically useful
@@ -25,6 +27,72 @@ content-addressed bulk review is regenerated.
 
 R5 remains unavailable. The slice creates no admission, phase promotion,
 reviewed source package, train capability or root-adoption claim.
+
+### Recorded closure outcome (2026-09-03)
+
+The slice is **stopped, not passed and not admitted**. The first fixed case that
+cannot cross an existing semantic owner is exactly `What is zorbulate?`. Its
+earliest runtime result is PROPOSE abstention
+`proposal:critical_residual`.
+
+The exact ProposalContext for that surface contains:
+
+- no designation slots;
+- no application frames;
+- no literal contribution carrying `zorbulate` on `role:surface`;
+- one `open_variable` contribution for `What`, one `binder` contribution for
+  `is`, and one question `discourse` contribution;
+- no variable slots, because there is no application frame to own the queried
+  role; and
+- one critical `anchor` residual for source unit `unit:4`, span `[8, 17)`, the
+  exact surface `zorbulate`.
+
+This is an architectural representation blocker at the
+ProposalContext/application-frame-to-composer boundary:
+
+1. `ApplicationFrameSlot` requires nonempty `designation_slot_ref` and
+   `predicate_target_ref` values.
+2. ProposalContext validation requires every frame to reference an existing
+   designation, requires its predicate target/kind to agree with that
+   designation except for the already reviewed state-value and definition
+   specializations, requires exact operator/structural-role lowering and a
+   compatible predicate contribution, and requires an `op:designation` frame's
+   surface literal to be authenticated by its known designation fact.
+3. The recursive composer instantiates frames only after selecting their exact
+   designation, and a complete candidate must use exactly the selected
+   designations. The proposer rejects the critical residual before composer
+   search begins.
+4. Semantic Switch Program ABI 2 exposes `select_designation` and
+   `instantiate_operator(application_frame_slot_ref)` but no legal action or
+   frame shape for an unresolved designation target. A completed Program must
+   also have nonempty roots and cover every source unit exactly once.
+
+The required semantic evidence is still
+`binder(definition/predication) + literal(unknown span) + open_variable(query)`,
+with the literal owning `role:surface` and the open variable owning the queried
+semantic target. The active contracts cannot represent that graph without
+inventing semantic authority. A reviewed unresolved-designation
+representation/ABI design is required. No implementation may begin until that
+design is approved. This stop record adds no ABI, phase, gate, runtime owner or
+artifact.
+
+Forbidden shortcuts remain forbidden: a fake designation identity, an implicit
+`concept:zorbulate` or other default-to-`concept` target, semantic dispatch from
+internal-ref spelling, and a raw-surface/phrase branch for this question.
+
+The bounded execution result is:
+
+- `What is CEMM?` passed the selected semantic path;
+- the direct invalid Program ABI 2 mutation passed by receiving the expected
+  typed VERIFY rejection;
+- `What is zorbulate?` remains intentionally RED at PROPOSE with
+  `proposal:critical_residual`; and
+- the other nine surface cases were not executed after this mandated stop.
+
+Bulk R4.1 source correction, review, artifact/corpus generation and training
+remain frozen. All R5 work and any Hybrid-to-root adoption remain frozen and
+require their separately governed decisions after this blocker is resolved and
+R4.1 is freshly admitted.
 
 ## 2. Evidence and root cause
 
@@ -173,6 +241,11 @@ New competency requests discovered during the slice are deferred. They do not
 expand the fixed case set unless an existing case cannot express an invariant
 already required by `AGENTS.md`.
 
+The stop branch is now the recorded outcome. It does not consume an owner-level
+semantic fix or semantic implementation commit: no production owner changed.
+The next permissible task is review of an unresolved-designation
+representation/ABI design, not implementation and not bulk R4.1 continuation.
+
 ## 8. Suspended workflows and preserved evidence
 
 The accountable review UI, guided review, reviewer-identity repair, assistant
@@ -182,16 +255,18 @@ Review workflows are suspended; active working selections must not be exported
 or treated as reviewed gold.
 
 The older R4.1 replay and source-readiness plans remain governing constraints
-for work after a passing closure result, but they authorize no current bulk
-execution while this design is active.
+for work after a future reviewed resolution and passing closure result, but
+they authorize no current bulk execution while this stop is active.
 
 ## 9. Definition of completion
 
-This design tranche is complete when:
+The governance/design tranche is complete, and the closure execution is
+stopped at the blocker above. Completion of this stop record means only that:
 
-1. document authority, `AGENTS.md`, routing docs and operational tracker agree;
-2. stale review execution documents are classified as superseded and carry a
-   prominent successor banner;
-3. active review inputs are clearly suspended and preserved;
-4. one implementation plan covers only the fixed closure slice; and
-5. the user reviews that written plan before code execution.
+1. the exact first divergent artifact and active contract constraints are
+   recorded;
+2. the focused vertical and ProposalContext tests preserve the intentional RED;
+3. governance, metadata, inventory, compilation and diff checks pass;
+4. active review inputs remain suspended and preserved; and
+5. the next task is reviewed unresolved-designation representation design,
+   without implementation or phase/admission promotion.

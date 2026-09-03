@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from pathlib import Path
 from typing import Any
 
 import pytest
 
 from cemm_authoritative_hybrid.affordances import AffordanceProfile
 from cemm_authoritative_hybrid.authority import AtomRecord, EventSignature, RoleSpec
+from cemm_authoritative_hybrid.bootstrap import load_runtime
 from cemm_authoritative_hybrid.config import RuntimeConfig
 from cemm_authoritative_hybrid.contributions import SemanticContribution
 from cemm_authoritative_hybrid.cycle import Orientation, SemanticMode
@@ -25,6 +27,9 @@ from cemm_authoritative_hybrid.grounding import (
 )
 from cemm_authoritative_hybrid.persistence import RevisionPin
 from cemm_authoritative_hybrid.proposal_context import ProposalContextBuilder
+
+
+ROOT = Path(__file__).parents[1]
 
 
 class IndexedAuthority:
@@ -637,6 +642,77 @@ def test_builder_emits_reference_and_query_variable_contributions() -> None:
     assert context.residual_for_source("unit:what") is None
 
 
+def test_unknown_designation_query_preserves_structural_evidence_and_critical_unknown_span(
+    tmp_path: Path,
+) -> None:
+    source = "What is zorbulate?"
+    runtime = load_runtime(
+        ROOT,
+        profile="development",
+        store_path=tmp_path / "stores.db",
+    )
+    try:
+        _, context = runtime.orient(
+            "session:closure-unknown-designation-context",
+            source,
+        )
+    finally:
+        runtime.stores.close()
+
+    literal_start = source.index("zorbulate")
+    literal_span = (literal_start, literal_start + len("zorbulate"))
+    literal_unit_refs = tuple(
+        unit_ref
+        for unit_ref, source_start, source_end in context.source_unit_spans
+        if (source_start, source_end) == literal_span
+    )
+    assert len(literal_unit_refs) == 1
+    literal_unit_ref = literal_unit_refs[0]
+    assert not any(
+        literal_unit_ref in slot.source_unit_refs
+        for slot in context.designation_slots
+    )
+    assert not any(
+        literal_unit_ref in frame.source_unit_refs
+        for frame in context.application_frames
+    )
+    assert not any(
+        slot.kind == "literal"
+        and (
+            literal_unit_ref in slot.source_unit_refs
+            or slot.literal_value == "zorbulate"
+        )
+        for slot in context.contribution_slots
+    )
+    assert not any(
+        literal_unit_ref in slot.source_unit_refs
+        for slot in context.variable_slots
+    )
+
+    residuals = tuple(
+        residual
+        for residual in context.residual_evidence
+        if residual.source_unit_ref == literal_unit_ref
+    )
+    assert len(residuals) == 1
+    residual = residuals[0]
+    assert residual.contribution_kind == "anchor"
+    assert residual.critical is True
+    assert context.source_span((residual.source_unit_ref,)) == literal_span
+
+    expected_structural_evidence = (
+        ("open_variable", (0, len("What"))),
+        ("binder", (source.index("is"), source.index("is") + len("is"))),
+        ("discourse", (source.index("?"), source.index("?") + 1)),
+    )
+    for kind, span in expected_structural_evidence:
+        assert any(
+            contribution.kind == kind
+            and context.source_span(contribution.source_unit_refs) == span
+            for contribution in context.contribution_slots
+        )
+
+
 def test_builder_emits_closed_class_contributions_for_structural_evidence() -> None:
     source = "is not and"
     current_evidence = EvidencePacket.create(
@@ -1109,5 +1185,13 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "R1-Task-9",
         "owner_ref": "runtime-path",
         "source_ast_sha256": "3428d191d2a758680d7bed2239455aa05e79c046f400d2ad887dd5381ac372d7"
+    },
+    "tests/test_proposal_context_builder.py::test_unknown_designation_query_preserves_structural_evidence_and_critical_unknown_span": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-closure-unknown-designation-current-context-blocker",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Closure-Slice-Task-2",
+        "owner_ref": "proposal-context",
+        "source_ast_sha256": "de1bb49c9261ca5066bc637abdf69ea99834c4edd0d2d89f02d29c1bd9c36283"
     },
 }

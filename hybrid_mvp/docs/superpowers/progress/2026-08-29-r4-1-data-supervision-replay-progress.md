@@ -11,9 +11,41 @@ evidence, and the append-only ledger before any release decision.
 
 **Stop-the-line note (2026-09-03):** T03 is stopped at its existing evidence
 boundary. The [R4 closure slice](../specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
-is now the only executable next step. Guided review, assistant pre-review,
-selection export and bulk authoring are superseded routes; their local state is
-evidence only. T04-T18 remain pending and cannot begin through this tracker.
+has now recorded a STOPPED/BLOCKED result at the unresolved-designation
+ProposalContext/application-frame representation boundary. Guided review,
+assistant pre-review, selection export and bulk authoring are superseded
+routes; their local state is evidence only. T04-T18 cannot begin through this
+tracker. The only next task is a new reviewed unresolved-designation
+representation design with an explicit ABI decision; it is design work, not
+implementation, source publication, artifact generation, training, R5 work or
+root adoption.
+
+### R4 closure-slice execution record
+
+- Task 0 completed in prerequisite commit `c3e6739`.
+- Task 1 completed by freezing the twelve-row matrix and executing the first
+  three acceptance rows.
+- Task 2 stopped at exact case `What is zorbulate?`: PROPOSE returns
+  `proposal:critical_residual`.
+- Task 3 was not executed because the Task 2 boundary did not legally cross.
+- Task 4 stop-record verification completed; the unknown-designation tests
+  remain intentionally RED and are not recorded as passing.
+
+The ProposalContext contains no designation slots, application frames, literal
+surface contribution or variable slots; it retains open-variable, binder and
+question-discourse contributions plus a critical anchor residual for
+`zorbulate`. The active frame validator requires a known designation and exact
+predicate/lowering proof, the composer reaches a frame only from a selected
+designation, and Program ABI 2 has no unresolved-designation frame/action
+shape. A fake identity, implicit/default `concept`, ref-name spelling dispatch
+or phrase branch is forbidden. Known definition and direct invalid-Program
+rejection passed; the other nine surface cases were not executed after the
+mandated stop.
+
+This is diagnostic coordination evidence only. It creates no artifact, gate,
+ABI, phase, admission or root-runtime adoption. Bulk R4.1 source correction,
+review, artifact/corpus work and training remain frozen, as do all R5 and root
+adoption work.
 
 ## Task register
 
@@ -26,8 +58,8 @@ been added after the work exists.
 |---|---|---|---|---|---|---|---|
 | T01 | Govern the executable replay and create the progress owner | complete | CR-T01, CR-T01-ALIGN, CR-T01-HARDEN, CR-T01-CLAIMS, and CR-T01-TENSE | TR-T01-TENSE, TR-R4-SELECTOR, TR-INVENTORY-G0, TR-INVENTORY-R4, and TR-STATIC | RC-T01 satisfied | AR-T01 satisfied | none |
 | T02 | Add strict reviewed-source schemas and immutable decoders | complete | CR-T02, CR-T02-HARDEN, and CR-T02-BOUND | TR-T02, TR-T02-GOVERNANCE, TR-INVENTORY-G0-T02, TR-INVENTORY-R4-T02, and TR-T02-STATIC | RC-T02 satisfied | AR-T02 satisfied | none |
-| T03 | Authenticate the review manifest and source bundle | stopped | CR-T03 through CR-SOURCE-READINESS-SR5.11 remain historical implementation evidence | Existing T03 and source-readiness receipts remain historical evidence | RC-T03 satisfied; RC-SOURCE-READINESS pending | Existing source-readiness artifacts remain non-authoritative evidence | Stop bulk review and authoring. Execute only the fixed R4 closure slice; do not publish a reviewed package or begin SR6 from this tracker. |
-| T04 | Check in the independently reviewed source package | pending | pending | pending | RC-SOURCE-READINESS and RC-SOURCE required | pending | two committed SR6 changes (approved canonical scenario patch, then approval evidence), successor-universe-derived identities/counts, diagnostic-only restart classification and exact reviewed package bytes |
+| T03 | Authenticate the review manifest and source bundle | stopped | CR-T03 through CR-SOURCE-READINESS-SR5.11 remain historical implementation evidence | Existing T03 and source-readiness receipts remain historical evidence | RC-T03 satisfied; RC-SOURCE-READINESS pending | Existing source-readiness artifacts remain non-authoritative evidence | Closure slice stopped at unresolved-designation representation. Do not publish a reviewed package or begin SR6; obtain the new reviewed representation/ABI design first. |
+| T04 | Check in the independently reviewed source package | pending | pending | pending | RC-SOURCE-READINESS and RC-SOURCE required | pending | blocked before execution by the exact next task above: obtain a reviewed unresolved-designation representation design and explicit ABI decision; do not implement or publish source through this tracker |
 | T05 | Compile proposal derivations and typed abstentions independently | pending | pending | pending | RC-SOURCE required | pending | reviewed blueprint reuse boundary |
 | T06 | Compile ResponseMeaning-to-surface supervision independently | pending | pending | pending | RC-SOURCE required | pending | authorized surface variants and literal-copy spans |
 | T07 | Make mutation truth independent of mutation execution | pending | pending | pending | RC-SOURCE required | pending | reviewed mutation family coverage |

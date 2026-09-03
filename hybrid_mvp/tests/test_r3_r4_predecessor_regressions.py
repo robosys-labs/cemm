@@ -1,11 +1,22 @@
 """R3 predecessor regressions exposed by authentic R4 surface replay."""
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 from cemm_authoritative_hybrid.bootstrap import load_runtime
-from cemm_authoritative_hybrid.cycle import PhaseDisposition, SemanticPhase
+from cemm_authoritative_hybrid.cycle import (
+    PhaseDisposition,
+    SemanticMode,
+    SemanticPhase,
+)
+from cemm_authoritative_hybrid.expressions import LiteralValue
+from cemm_authoritative_hybrid.proposal import (
+    ProposalResult,
+    RankedProgramCandidate,
+)
 from cemm_authoritative_hybrid.r3_effects import NoEffectReceipt
+from cemm_authoritative_hybrid.verifier import VerificationError
 
 ROOT = Path(__file__).parents[1]
 
@@ -31,11 +42,158 @@ __cemm_test_inventory__ = {'tests/test_r3_r4_predecessor_regressions.py::test_de
                                                                                                                                   'assertion_ref': 'assertion:r3-public-greeting-six-phase-no-effect',
                                                                                                                                   'diagnostic_role': 'phase',
                                                                                                                                   'introduced_by_task': 'R4-Predecessor-Repair',
-                                                                                                                                  'source_ast_sha256': '5572e796cf5c6aa065133a02dc56af299bf9819eb34540d7eecff6918580f05a'}}
+                                                                                                                                  'source_ast_sha256': '5572e796cf5c6aa065133a02dc56af299bf9819eb34540d7eecff6918580f05a'},
+ 'tests/test_r3_r4_predecessor_regressions.py::test_closure_known_definition_traverses_selected_semantic_path': {'activation_phase': 'R4',
+                                                                                                                 'assertion_ref': 'assertion:r4-closure-known-definition-selected-semantic-path',
+                                                                                                                 'diagnostic_role': 'phase',
+                                                                                                                 'introduced_by_task': 'R4-Closure-Slice-Task-1',
+                                                                                                                 'source_ast_sha256': '178efd0f372d35af17bfd06a112661e4d7b49d746b18fdc794c1d42d16ba108e'},
+ 'tests/test_r3_r4_predecessor_regressions.py::test_closure_unknown_designation_preserves_literal_and_unknown_action': {'activation_phase': 'R4',
+                                                                                                                        'assertion_ref': 'assertion:r4-closure-unknown-designation-preserves-literal',
+                                                                                                                        'diagnostic_role': 'phase',
+                                                                                                                        'introduced_by_task': 'R4-Closure-Slice-Task-1',
+                                                                                                                        'source_ast_sha256': 'b43d3a7b140580839c84a9fc827ba3845dd0efd83c420eea34aa79d71e86e807'},
+ 'tests/test_r3_r4_predecessor_regressions.py::test_closure_invalid_program_receives_typed_verification_rejection': {'activation_phase': 'R4',
+                                                                                                                     'assertion_ref': 'assertion:r4-closure-invalid-program-verification-rejected',
+                                                                                                                     'diagnostic_role': 'owner',
+                                                                                                                     'introduced_by_task': 'R4-Closure-Slice-Task-1',
+                                                                                                                     'owner_ref': 'exact-program-verifier',
+                                                                                                                     'source_ast_sha256': 'ebf806b4788c94f803d1bae97b7793986afb594d2dbeeb90646b60758deff445'}}
+
+
+@dataclass(frozen=True)
+class _ClosureCase:
+    case_ref: str
+    surface: str | None
+    context_setup: str
+    expected_mode: SemanticMode | None
+    expected_action: str
+
+
+_CLOSURE_CASES = (
+    _ClosureCase("known_definition", "What is CEMM?", "fresh", SemanticMode.QUERY, "answer"),
+    _ClosureCase("unknown_designation", "What is zorbulate?", "fresh", SemanticMode.QUERY, "unknown"),
+    _ClosureCase("capability_query", "Can you learn aliases?", "fresh", SemanticMode.QUERY, "answer"),
+    _ClosureCase("history_query", "You said what?", "record_system_goodbye", SemanticMode.QUERY, "answer"),
+    _ClosureCase("fragment_resolved", "That you learn.", "open_meaning_question", SemanticMode.OBSERVE, "answer"),
+    _ClosureCase("fragment_unresolved", "That you learn.", "fresh", SemanticMode.OBSERVE, "clarify"),
+    _ClosureCase("negated_relation", "Alice does not like the book.", "fresh", SemanticMode.OBSERVE, "acknowledge_observation"),
+    _ClosureCase("state_conflict", "The server is online and offline.", "fresh", SemanticMode.OBSERVE, "clarify"),
+    _ClosureCase("linked_simulation", "If the server is online, then the lamp is on.", "fresh", SemanticMode.SIMULATE, "answer_simulation"),
+    _ClosureCase("multiple_roots", "The server is offline. You said goodbye.", "fresh", SemanticMode.OBSERVE, "acknowledge_observation"),
+    _ClosureCase("permission_denial", "Set the state without permission.", "remove_set_state_permission", SemanticMode.REQUEST, "deny"),
+    _ClosureCase("invalid_program", None, "mutate_valid_program", None, "verification_rejected"),
+)
 
 
 def _runtime(tmp_path: Path):
     return load_runtime(ROOT, profile="development", store_path=tmp_path / "stores.db")
+
+
+def _assert_selected_semantic_path(result) -> None:
+    assert result.proposal.status == "candidates", result.proposal.abstention_code
+    assert result.verification.status == "selected"
+    assert result.verification.selected_candidate_ref
+    meaning = result.verification.selected_meaning
+    assert meaning is not None
+    assert meaning.verified_meaning_ref
+    assert meaning.expression.expression_ref
+    assert result.evaluation is not None
+    assert result.effect_receipt is not None
+    assert result.response_meaning is not None
+    assert result.response_meaning.response_expression.expression_ref
+
+
+def test_closure_known_definition_traverses_selected_semantic_path(tmp_path: Path) -> None:
+    case = _CLOSURE_CASES[0]
+    assert case.context_setup == "fresh"
+    assert case.surface is not None
+    runtime = _runtime(tmp_path)
+    try:
+        result = runtime.process("session:closure-known-definition", case.surface)
+    finally:
+        runtime.stores.close()
+    _assert_selected_semantic_path(result)
+    assert result.orientation.mode is case.expected_mode
+    assert result.response_meaning.discourse_action == case.expected_action
+
+
+def test_closure_unknown_designation_preserves_literal_and_unknown_action(tmp_path: Path) -> None:
+    case = _CLOSURE_CASES[1]
+    assert case.context_setup == "fresh"
+    assert case.surface is not None
+    runtime = _runtime(tmp_path)
+    try:
+        result = runtime.process("session:closure-unknown-designation", case.surface)
+    finally:
+        runtime.stores.close()
+    _assert_selected_semantic_path(result)
+    assert result.orientation.mode is case.expected_mode
+    response = result.response_meaning
+    meaning = result.verification.selected_meaning
+    assert response is not None
+    assert meaning is not None
+    surface_literals = tuple(
+        binding.filler
+        for application in response.response_expression.applications
+        for binding in application.roles
+        if binding.role_ref == "role:surface"
+        and type(binding.filler) is LiteralValue
+        and binding.filler == LiteralValue("string", "zorbulate")
+    )
+    assert surface_literals == (LiteralValue("string", "zorbulate"),)
+    assert response.verified_meaning_ref == meaning.verified_meaning_ref
+    assert response.source_expression_ref == meaning.expression.expression_ref
+    assert result.evaluation is not None
+    assert response.decision_ref == result.evaluation.decision.decision_ref
+    assert result.evaluation.decision.source_refs
+    assert set(result.evaluation.decision.source_refs) <= set(response.source_refs)
+    assert response.discourse_action == case.expected_action
+    assert response.discourse_action != "acknowledge"
+
+
+def test_closure_invalid_program_receives_typed_verification_rejection(
+    exact_verifier,
+    valid_program,
+    proposal_context,
+    mutate,
+) -> None:
+    case = _CLOSURE_CASES[-1]
+    assert case.surface is None
+    assert case.context_setup == "mutate_valid_program"
+    mutated_program = mutate(valid_program, "unknown_ref")
+    candidate = RankedProgramCandidate.create(
+        rank=0,
+        score_q=900_000,
+        program=mutated_program,
+        provenance_refs=("derivation:closure-invalid-program",),
+    )
+    proposal = ProposalResult.create(
+        orientation_ref=proposal_context.orientation_ref,
+        proposal_context_ref=proposal_context.context_ref,
+        candidates=(candidate,),
+        status="candidates",
+        abstention_code=None,
+        explored_states=1,
+        truncated=False,
+        model_identity=proposal_context.revision_pin.model_identity,
+        revision_pin=proposal_context.revision_pin,
+    )
+
+    batch = exact_verifier.verify_candidates(proposal, proposal_context)
+
+    assert batch.status == "rejected"
+    assert batch.selected_candidate_ref is None
+    assert batch.selected_meaning is None
+    assert len(batch.candidate_receipts) == 1
+    receipt = batch.candidate_receipts[0]
+    assert not receipt.accepted
+    assert receipt.verification_errors
+    assert all(type(error) is VerificationError for error in receipt.verification_errors)
+    assert "unknown_designation_slot" in {
+        error.code for error in receipt.verification_errors
+    }
+    assert f"verification_{batch.status}" == case.expected_action
 
 
 def test_designation_reference_slots_bind_exact_reference_contributions(tmp_path: Path) -> None:

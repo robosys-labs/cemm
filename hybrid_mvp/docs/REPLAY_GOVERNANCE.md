@@ -20,12 +20,15 @@ fresh R4.1 prerequisites for R5. The 2026-08-02 semantic-algebra amendment
 continues to distinguish `SemanticSwitchProgram` derivation from canonical
 `SemanticExpression` meaning. Neither amendment reactivates a superseded plan.
 
-The [R4 closure slice](superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
-is the only executable next step. All bulk R4.1 review, authoring, export,
-regeneration and training workflows are suspended until its fixed cases pass.
-This stop-the-line routing prevents downstream corpus work from concealing a
-source, composition, verification, cognition or realization defect and adds no
-new phase, gate, ABI or runtime owner.
+**Closure stopped.** The
+[R4 closure design](superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
+records a STOPPED/BLOCKED result at the unresolved-designation representation
+boundary. The only permissible next work is a reviewed unresolved-designation
+representation/ABI design. No implementation may begin until that design is
+approved. All bulk R4.1 review, authoring, export, regeneration and training
+workflows remain suspended. The former implementation plan is historical
+evidence and owns no current execution authority. This routing adds no new
+phase, gate, ABI or runtime owner.
 
 Current replay status and exact admission identities are derived only from
 [`governance/replay_status.jsonl`](../governance/replay_status.jsonl). This page

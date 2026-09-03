@@ -114,7 +114,6 @@ GOVERNING_DOCUMENTS = (
     "AGENTS.md",
     R4_1_AMENDMENT,
     R4_CLOSURE_SLICE_DESIGN,
-    R4_CLOSURE_SLICE_PLAN,
     SEMANTIC_ALGEBRA_AMENDMENT,
     R4_1_REPLAY_DESIGN,
     R4_1_REPLAY_PLAN,
@@ -170,6 +169,7 @@ HISTORICAL_EVIDENCE = (
     "docs/superpowers/plans/2026-08-12-r1-legacy-test-retirement-plan.md",
     "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md",
     "docs/superpowers/plans/2026-08-29-hybrid-authority-cleanup-plan.md",
+    R4_CLOSURE_SLICE_PLAN,
     "docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md",
     "docs/superpowers/progress/2026-08-22-r5-r6-plan-readiness-review.md",
     R4_1_REPLAY_PROGRESS,
@@ -508,13 +508,13 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "a0041e50313daf623ecc51f3696332456e724c966876e01072a1d76ce19b836d"
     },
-    "tests/test_replay_governance.py::test_r4_closure_slice_is_the_only_executable_next_step": {
+    "tests/test_replay_governance.py::test_r4_closure_stop_routes_only_to_reviewed_representation_design": {
         "activation_phase": "G0",
-        "assertion_ref": "assertion:r4-closure-slice-is-only-executable-next-step",
+        "assertion_ref": "assertion:r4-closure-stop-routes-only-to-reviewed-representation-design",
         "diagnostic_role": "owner",
-        "introduced_by_task": "R4-Closure-Slice-Governance",
+        "introduced_by_task": "R4-Closure-Slice-Stop-Review",
         "owner_ref": "governance",
-        "source_ast_sha256": "9fd4f5a65f5d3f3e2c1c6f3ce1eb0475c87ce6a7048519ef0a95f420dd877b9a"
+        "source_ast_sha256": "795a1b0661f9c344e05abc8434c2fc7930c8276bee72b188ae3c0b1db9955348"
     },
     "tests/test_replay_governance.py::test_governing_documents_do_not_prescribe_rejected_r4_r5_paths": {
         "activation_phase": "G0",
@@ -1209,64 +1209,64 @@ def test_r4_1_amendment_owns_authentic_r5_prerequisites() -> None:
     assert "the later repository admission receipt authenticates" in registry
 
 
-def test_r4_closure_slice_is_the_only_executable_next_step() -> None:
+def test_r4_closure_stop_routes_only_to_reviewed_representation_design() -> None:
     authority = _authority()
     governing = tuple(authority["governing_documents"])
+    historical = set(authority["historical_evidence"])
     superseded = set(authority["superseded_execution_claims"])
 
     assert governing.index(R4_CLOSURE_SLICE_DESIGN) == (
         governing.index(R4_1_AMENDMENT) + 1
     )
-    assert governing.index(R4_CLOSURE_SLICE_PLAN) == (
-        governing.index(R4_CLOSURE_SLICE_DESIGN) + 1
-    )
+    assert R4_CLOSURE_SLICE_PLAN not in governing
+    assert R4_CLOSURE_SLICE_PLAN in historical
     assert set(SUPERSEDED_R4_REVIEW_WORKFLOW_DOCUMENTS) <= superseded
 
     closure = (ROOT / R4_CLOSURE_SLICE_DESIGN).read_text(encoding="utf-8")
+    normalized_closure = re.sub(r"\s+", " ", closure.casefold())
     for marker in (
-        "fixed closure cases",
-        "maximum three owner-level implementation fixes",
-        "no new ABI",
-        "no new phase",
-        "no new gate",
-        "practical usability",
-        "generic `Acknowledged.`",
-        "R5 remains unavailable",
+        "STOPPED",
+        "reviewed unresolved-designation representation/ABI design",
+        "No implementation may begin until that design is approved",
     ):
-        assert marker.casefold() in closure.casefold()
+        assert marker.casefold() in normalized_closure
+    assert "only executable next step" not in normalized_closure
 
     plan = (ROOT / R4_CLOSURE_SLICE_PLAN).read_text(encoding="utf-8")
+    normalized_plan = re.sub(r"\s+", " ", plan.casefold())
     for marker in (
-        "current observed baseline",
-        "one active blocker at a time",
-        "maximum three owner-level fixes",
-        "no source package",
-        "no R5 activation",
-        "stop outcome",
+        "historical evidence",
+        "STOPPED",
+        R4_CLOSURE_SLICE_DESIGN,
+        R4_1_REPLAY_PROGRESS,
     ):
-        assert marker.casefold() in plan.casefold()
+        assert marker.casefold() in normalized_plan
+    assert "For agentic workers" not in plan
+    assert not re.search(r"^\s*- \[ \]", plan, re.MULTILINE)
+    assert not re.search(r"\bgit\s+(?:add|commit)\b", plan, re.IGNORECASE)
+    assert "only executable next step" not in normalized_plan
 
     current_routes = {
-        "AGENTS.md": ("closure slice", "review workflows are suspended"),
-        "README.md": ("closure slice", "R5 remains unavailable"),
-        "docs/IMPLEMENTATION_PLAN.md": (
-            "closure slice",
-            "bulk R4.1 authoring is frozen",
-        ),
-        "docs/REPLAY_GOVERNANCE.md": (
-            "closure slice",
-            "only executable next step",
-        ),
-        "artifacts/review_inputs/r4_1/README.md": (
-            "review suspended",
-            "must not be exported",
-        ),
-        R4_1_REPLAY_PROGRESS: ("closure slice", "stopped"),
+        "AGENTS.md",
+        "README.md",
+        "INTEGRATION.md",
+        "docs/IMPLEMENTATION_PLAN.md",
+        "docs/REPLAY_GOVERNANCE.md",
+        "docs/ARCHITECTURE.md",
     }
-    for relative, markers in current_routes.items():
-        text = (ROOT / relative).read_text(encoding="utf-8").casefold()
-        for marker in markers:
+    for relative in current_routes:
+        text = re.sub(
+            r"\s+",
+            " ",
+            (ROOT / relative).read_text(encoding="utf-8").casefold(),
+        )
+        for marker in (
+            "closure stopped",
+            "reviewed unresolved-designation representation/abi design",
+            "no implementation may begin until that design is approved",
+        ):
             assert marker.casefold() in text, (relative, marker)
+        assert "only executable next step" not in text, relative
 
 
 def test_governing_documents_do_not_prescribe_rejected_r4_r5_paths() -> None:
