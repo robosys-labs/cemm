@@ -397,7 +397,7 @@ def test_only_five_persistent_operators_accepted():
     #              derived_role_targets, designation_fact_ref)
     operators: list[tuple[str, str, str, str, tuple[tuple[str, str], ...], str]] = [
         ("op:designation", "label:test", "label_type", "role:label_type",
-         (), "designation:label"),
+         (("role:label_type", "label:test"),), "designation:label"),
         ("op:type", "concept:test", "concept", "role:class",
          (), "designation:concept"),
         ("op:relation", "relation:test", "relation_type", "role:relation",
@@ -409,6 +409,12 @@ def test_only_five_persistent_operators_accepted():
     ]
 
     for op_ref, target, kind, struct_role, derived_roles, desig_fact in operators:
+        is_designation = op_ref == "op:designation"
+        filler_role = "role:target" if is_designation else "role:subject"
+        required_roles = (
+            ("role:surface", "role:target")
+            if is_designation else (filler_role,)
+        )
         desig = DesignationSlot.create(
             source_unit_refs=("unit:predicate",),
             target_ref=target,
@@ -423,9 +429,10 @@ def test_only_five_persistent_operators_accepted():
             source_unit_refs=("unit:predicate",),
             target_ref=target,
             target_kind=kind,
-            input_ports=("role:subject",),
+            input_ports=required_roles,
             output_ports=(struct_role,),
             constraints=(),
+            provenance_refs=(desig.slot_ref,) if is_designation else (),
         )
         subject = ContributionSlot.create(
             contribution_ref="contribution:subject",
@@ -434,9 +441,20 @@ def test_only_five_persistent_operators_accepted():
             target_ref="entity:one",
             target_kind="entity",
             input_ports=(),
-            output_ports=("role:subject",),
+            output_ports=(filler_role,),
             constraints=(),
         )
+        literal = ContributionSlot.create(
+            contribution_ref="contribution:surface",
+            kind="literal",
+            source_unit_refs=("unit:surface",),
+            target_ref=None,
+            target_kind=None,
+            input_ports=(),
+            output_ports=("role:surface",),
+            constraints=(("literal", "one"), ("literal_kind", "string")),
+            literal_value="one",
+        ) if is_designation else None
         mode = ModeSlot.create(
             mode="OBSERVE",
             source_unit_refs=(),
@@ -449,7 +467,7 @@ def test_only_five_persistent_operators_accepted():
             predicate_kind=kind,
             operator_ref=op_ref,
             structural_role_ref=struct_role,
-            required_roles=("role:subject",),
+            required_roles=required_roles,
             optional_roles=(),
             proposition_roles=(),
             source_unit_refs=("unit:predicate",),
@@ -463,7 +481,7 @@ def test_only_five_persistent_operators_accepted():
             form_lattice_ref="lattice:test",
             grounding_ref="grounding:test",
             designation_slots=(desig,),
-            contribution_slots=(predicate, subject),
+            contribution_slots=(predicate, subject) + ((literal,) if literal else ()),
             mode_slots=(mode,),
             application_frames=(frame,),
             reference_slots=(),
@@ -473,11 +491,12 @@ def test_only_five_persistent_operators_accepted():
             transition_slots=(),
             residual_evidence=(),
             context_refs=("turn:test",),
-            source_unit_refs=("unit:predicate", "unit:subject"),
+            source_unit_refs=("unit:predicate", "unit:subject")
+            + (("unit:surface",) if is_designation else ()),
             source_unit_spans=(
                 ("unit:predicate", 0, 4),
                 ("unit:subject", 4, 8),
-            ),
+            ) + ((("unit:surface", 8, 11),) if is_designation else ()),
             revision_pin=_pin(),
         )
 
@@ -508,13 +527,19 @@ def test_only_five_persistent_operators_accepted():
                 action_type="bind_role",
                 arguments=(
                     "application:main",
-                    "role:subject",
-                    context.contribution_slots[1].slot_ref,
+                    filler_role,
+                    subject.slot_ref,
                 ),
                 source_unit_refs=("unit:subject",),
             ),
-            ProgramAction.create(
+            *((ProgramAction.create(
                 action_index=5,
+                action_type="bind_role",
+                arguments=("application:main", "role:surface", literal.slot_ref),
+                source_unit_refs=("unit:surface",),
+            ),) if literal else ()),
+            ProgramAction.create(
+                action_index=6 if is_designation else 5,
                 action_type="complete_program",
                 arguments=(),
             ),
@@ -531,14 +556,22 @@ def test_only_five_persistent_operators_accepted():
             ),
             SourceAssignment.create(
                 source_unit_ref="unit:subject",
-                contribution_slot_ref=context.contribution_slots[1].slot_ref,
+                contribution_slot_ref=subject.slot_ref,
                 assignment_kind="role",
                 target_action_ref=actions[4].action_ref,
-                target_role_ref="role:subject",
+                target_role_ref=filler_role,
                 residual_kind=None,
                 critical=False,
             ),
-        )
+        ) + ((SourceAssignment.create(
+            source_unit_ref="unit:surface",
+            contribution_slot_ref=literal.slot_ref,
+            assignment_kind="role",
+            target_action_ref=actions[5].action_ref,
+            target_role_ref="role:surface",
+            residual_kind=None,
+            critical=False,
+        ),) if literal else ())
         program = SemanticSwitchProgram.create(
             orientation_ref=context.orientation_ref,
             proposal_context_ref=context.context_ref,
@@ -555,6 +588,13 @@ def test_only_five_persistent_operators_accepted():
             f"operator {op_ref} was rejected: "
             f"{[e.code for e in batch.candidate_receipts[0].verification_errors]}"
         )
+        assert tuple(row.source_unit_ref for row in assignments) == context.source_unit_refs
+        if is_designation:
+            application = batch.selected_meaning.expression.applications[0]
+            assert application.predicate_ref == "label:test"
+            assert {row.role_ref for row in application.roles} == {
+                "role:label_type", "role:surface", "role:target"
+            }
 
 
 # ---------------------------------------------------------------------------
