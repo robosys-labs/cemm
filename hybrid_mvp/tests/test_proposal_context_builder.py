@@ -692,6 +692,32 @@ def test_unknown_designation_query_builds_one_exact_unresolved_designation_frame
     target = context.variable(frame.target_variable_slot_ref)
     assert target is not None
 
+    what_span = (0, len("What"))
+    question_span = (source.index("?"), source.index("?") + len("?"))
+    what_unit_refs = tuple(
+        unit_ref
+        for unit_ref, source_start, source_end in context.source_unit_spans
+        if (source_start, source_end) == what_span
+    )
+    question_unit_refs = tuple(
+        unit_ref
+        for unit_ref, source_start, source_end in context.source_unit_spans
+        if (source_start, source_end) == question_span
+    )
+    assert len(what_unit_refs) == len(question_unit_refs) == 1
+    assert any(
+        contribution.kind == "open_variable"
+        and contribution.source_unit_refs == what_unit_refs
+        for contribution in context.contribution_slots
+    )
+    assert any(
+        contribution.kind == "discourse"
+        and contribution.source_unit_refs == question_unit_refs
+        for contribution in context.contribution_slots
+    )
+    assert context.residual_for_source(what_unit_refs[0]) is None
+    assert context.residual_for_source(question_unit_refs[0]) is None
+
     query_binder = context.contribution(frame.query_binder_slot_ref)
     assert query_binder is not None
     assert query_binder.kind == "binder"
@@ -733,6 +759,24 @@ def test_plain_unknown_assertion_does_not_receive_unresolved_designation_frame(
         == (source.index("is"), source.index("is") + len("is"))
         for contribution in context.contribution_slots
     )
+    zorbulate_span = (
+        source.index("zorbulate"),
+        source.index("zorbulate") + len("zorbulate"),
+    )
+    zorbulate_unit_refs = tuple(
+        unit_ref
+        for unit_ref, source_start, source_end in context.source_unit_spans
+        if (source_start, source_end) == zorbulate_span
+    )
+    assert len(zorbulate_unit_refs) == 1
+    residuals = tuple(
+        residual
+        for residual in context.residual_evidence
+        if residual.source_unit_ref == zorbulate_unit_refs[0]
+    )
+    assert len(residuals) == 1
+    assert residuals[0].contribution_kind == "anchor"
+    assert residuals[0].critical is True
     assert getattr(context, "unresolved_designation_frames", ()) == ()
 
 
@@ -760,6 +804,24 @@ def test_unknown_event_argument_does_not_receive_unresolved_designation_frame(
         == (source.index("said"), source.index("said") + len("said"))
         for frame in context.application_frames
     )
+    zorbulate_span = (
+        source.index("zorbulate"),
+        source.index("zorbulate") + len("zorbulate"),
+    )
+    zorbulate_unit_refs = tuple(
+        unit_ref
+        for unit_ref, source_start, source_end in context.source_unit_spans
+        if (source_start, source_end) == zorbulate_span
+    )
+    assert len(zorbulate_unit_refs) == 1
+    residuals = tuple(
+        residual
+        for residual in context.residual_evidence
+        if residual.source_unit_ref == zorbulate_unit_refs[0]
+    )
+    assert len(residuals) == 1
+    assert residuals[0].contribution_kind == "anchor"
+    assert residuals[0].critical is True
     assert getattr(context, "unresolved_designation_frames", ()) == ()
 
 

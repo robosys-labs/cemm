@@ -83,10 +83,12 @@ def test_known_designation_query_uses_the_canonical_lexical_label_application(
     expression = result.verification.selected_meaning.expression
     designation = _designation_application(expression)
     assert designation.predicate_ref == "label:lexical"
+    assert designation.qualifiers == ()
     roles = _roles(designation)
+    assert set(roles) == {"role:label_type", "role:surface", "role:target"}
     assert roles["role:label_type"] == GroundedReference("label:lexical")
     assert roles["role:surface"] == LiteralValue("string", "CEMM")
-    assert isinstance(roles["role:target"], GroundedReference)
+    assert roles["role:target"] == GroundedReference("participant:system")
     assert SemanticExpression.from_dict(expression.as_dict()) == expression
 
 
@@ -110,14 +112,19 @@ def test_unresolved_designation_query_uses_the_same_label_application_with_bound
     expression = result.verification.selected_meaning.expression
     designation = _designation_application(expression)
     assert designation.predicate_ref == "label:lexical"
+    assert designation.qualifiers == ()
     roles = _roles(designation)
+    assert set(roles) == {"role:label_type", "role:surface", "role:target"}
     assert roles["role:label_type"] == GroundedReference("label:lexical")
     assert roles["role:surface"] == LiteralValue("string", "zorbulate")
     assert isinstance(roles["role:target"], BoundVariable)
-    assert any(
-        binder.variable_ref == roles["role:target"].variable_ref
+    matching_binders = tuple(
+        binder
         for binder in expression.binders
+        if binder.variable_ref == roles["role:target"].variable_ref
     )
+    assert len(matching_binders) == 1
+    assert matching_binders[0].body_ref == designation.application_ref
     assert all(
         application.predicate_ref != "concept:zorbulate"
         for application in expression.applications

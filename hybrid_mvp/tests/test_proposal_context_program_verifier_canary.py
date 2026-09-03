@@ -352,7 +352,7 @@ def _proposal(
 
 
 def test_unresolved_designation_derivation_uses_program_abi_2_without_new_actions(
-    tmp_path,
+    tmp_path: Path,
 ) -> None:
     runtime = load_runtime(
         ROOT,
