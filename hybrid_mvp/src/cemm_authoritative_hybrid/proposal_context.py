@@ -479,7 +479,6 @@ class UnresolvedDesignationFrame(_ContentAddressedSlot):
     slot_ref: str
     label_type_ref: str
     literal_contribution_slot_ref: str
-    target_variable_slot_ref: str
     query_binder_slot_ref: str
     source_unit_refs: tuple[str, ...]
     construction_ref: str
@@ -493,7 +492,6 @@ class UnresolvedDesignationFrame(_ContentAddressedSlot):
             "slot_ref",
             "label_type_ref",
             "literal_contribution_slot_ref",
-            "target_variable_slot_ref",
             "query_binder_slot_ref",
             "construction_ref",
         ):
@@ -517,7 +515,6 @@ class UnresolvedDesignationFrame(_ContentAddressedSlot):
         *,
         label_type_ref: str,
         literal_contribution_slot_ref: str,
-        target_variable_slot_ref: str,
         query_binder_slot_ref: str,
         source_unit_refs: tuple[str, ...],
         construction_ref: str,
@@ -530,7 +527,6 @@ class UnresolvedDesignationFrame(_ContentAddressedSlot):
         values = {
             "label_type_ref": label_type_ref,
             "literal_contribution_slot_ref": literal_contribution_slot_ref,
-            "target_variable_slot_ref": target_variable_slot_ref,
             "query_binder_slot_ref": query_binder_slot_ref,
             "source_unit_refs": source_unit_refs,
             "construction_ref": construction_ref,
@@ -948,6 +944,9 @@ class ProposalContext:
     _variable_by_ref: Mapping[str, int] = field(
         init=False, repr=False, compare=False, hash=False
     )
+    _variables_by_frame_role: Mapping[tuple[str, str], tuple[int, ...]] = field(
+        init=False, repr=False, compare=False, hash=False
+    )
     _transition_by_ref: Mapping[str, int] = field(
         init=False, repr=False, compare=False, hash=False
     )
@@ -1089,6 +1088,17 @@ class ProposalContext:
         object.__setattr__(self, "_scope_by_ref", index(self.scope_slots))
         object.__setattr__(self, "_link_by_ref", index(self.expression_link_slots))
         object.__setattr__(self, "_variable_by_ref", index(self.variable_slots))
+        variables_by_frame_role: dict[tuple[str, str], list[int]] = {}
+        for position, variable in enumerate(self.variable_slots):
+            key = (variable.application_frame_ref, variable.role_ref)
+            variables_by_frame_role.setdefault(key, []).append(position)
+        object.__setattr__(
+            self,
+            "_variables_by_frame_role",
+            MappingProxyType(
+                {key: tuple(value) for key, value in variables_by_frame_role.items()}
+            ),
+        )
         object.__setattr__(self, "_transition_by_ref", index(self.transition_slots))
         object.__setattr__(
             self,
@@ -1235,6 +1245,23 @@ class ProposalContext:
 
     def variable(self, slot_ref: str) -> VariableSlot | None:
         return self._indexed_row(self.variable_slots, self._variable_by_ref, slot_ref)
+
+    def variables_for_frame_role(
+        self, frame_ref: str, role_ref: str
+    ) -> tuple[VariableSlot, ...]:
+        rows: list[VariableSlot] = []
+        for position in self._variables_by_frame_role.get((frame_ref, role_ref), ()):
+            if (
+                type(position) is not int
+                or position < 0
+                or position >= len(self.variable_slots)
+            ):
+                raise ValueError("ProposalContext derived index is incoherent")
+            row = self.variable_slots[position]
+            if row.application_frame_ref != frame_ref or row.role_ref != role_ref:
+                raise ValueError("ProposalContext derived index is incoherent")
+            rows.append(row)
+        return tuple(rows)
 
     def transition(self, slot_ref: str) -> TransitionSlot | None:
         return self._indexed_row(
@@ -4523,7 +4550,17 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
         )
 
     contribution_by_ref = {row.slot_ref: row for row in context.contribution_slots}
-    variable_by_ref = {row.slot_ref: row for row in context.variable_slots}
+    variables_by_frame: dict[str, list[VariableSlot]] = {}
+    for variable in context.variable_slots:
+        variables_by_frame.setdefault(variable.application_frame_ref, []).append(
+            variable
+        )
+    open_variable_sources = {
+        source_ref
+        for contribution in context.contribution_slots
+        if contribution.kind == "open_variable"
+        for source_ref in contribution.source_unit_refs
+    }
     unresolved_hypotheses: set[tuple[str, int, int]] = set()
     for frame in context.application_frames:
         if type(frame) is not UnresolvedDesignationFrame:
@@ -4541,8 +4578,6 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             raise ValueError(
                 "unresolved designation source units must equal literal geometry"
             )
-        if frame.target_variable_slot_ref not in variable_by_ref:
-            raise ValueError("unresolved designation references unknown variable slot")
         binder = contribution_by_ref.get(frame.query_binder_slot_ref)
         if binder is None:
             raise ValueError(
@@ -4563,6 +4598,21 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
                 "duplicate unresolved designation construction/span hypothesis"
             )
         unresolved_hypotheses.add(hypothesis)
+        owned_variables = variables_by_frame.get(frame.slot_ref, ())
+        if len(owned_variables) != 1 or owned_variables[0].role_ref != "role:target":
+            raise ValueError(
+                "unresolved designation requires exactly one owned role:target variable"
+            )
+        variable = owned_variables[0]
+        if variable.construction_ref != frame.construction_ref:
+            raise ValueError("unresolved designation variable construction mismatch")
+        if (
+            not variable.source_unit_refs
+            or not set(variable.source_unit_refs) <= open_variable_sources
+        ):
+            raise ValueError(
+                "unresolved designation variable requires open_variable source evidence"
+            )
 
     designation_by_ref = {row.slot_ref: row for row in context.designation_slots}
     frame_by_ref = {row.slot_ref: row for row in context.application_frames}

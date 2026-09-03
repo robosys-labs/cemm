@@ -689,8 +689,10 @@ def test_unknown_designation_query_builds_one_exact_unresolved_designation_frame
     assert literal.literal_value == "zorbulate"
     assert literal.source_unit_refs == (literal_unit_ref,)
 
-    target = context.variable(frame.target_variable_slot_ref)
-    assert target is not None
+    targets = context.variables_for_frame_role(frame.slot_ref, "role:target")
+    assert len(targets) == 1
+    target = targets[0]
+    assert target.application_frame_ref == frame.slot_ref
 
     what_span = (0, len("What"))
     question_span = (source.index("?"), source.index("?") + len("?"))
