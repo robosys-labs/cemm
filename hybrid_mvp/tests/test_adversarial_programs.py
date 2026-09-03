@@ -397,6 +397,181 @@ def test_only_five_persistent_operators_accepted():
     #              derived_role_targets, designation_fact_ref)
     operators: list[tuple[str, str, str, str, tuple[tuple[str, str], ...], str]] = [
         ("op:designation", "label:test", "label_type", "role:label_type",
+         (), "designation:label"),
+        ("op:type", "concept:test", "concept", "role:class",
+         (), "designation:concept"),
+        ("op:relation", "relation:test", "relation_type", "role:relation",
+         (), "designation:relation"),
+        ("op:state", "state:test", "state_dimension", "role:dimension",
+         (("role:dimension", "state:test"),), "designation:state"),
+        ("op:event", "event:test", "event_type", "role:event",
+         (), "designation:event"),
+    ]
+
+    for op_ref, target, kind, struct_role, derived_roles, desig_fact in operators:
+        desig = DesignationSlot.create(
+            source_unit_refs=("unit:predicate",),
+            target_ref=target,
+            target_kind=kind,
+            score_q=900_000,
+            designation_fact_ref=desig_fact,
+            provenance_refs=("authority:test",),
+        )
+        predicate = ContributionSlot.create(
+            contribution_ref="contribution:predicate",
+            kind="predicate",
+            source_unit_refs=("unit:predicate",),
+            target_ref=target,
+            target_kind=kind,
+            input_ports=("role:subject",),
+            output_ports=(struct_role,),
+            constraints=(),
+        )
+        subject = ContributionSlot.create(
+            contribution_ref="contribution:subject",
+            kind="anchor",
+            source_unit_refs=("unit:subject",),
+            target_ref="entity:one",
+            target_kind="entity",
+            input_ports=(),
+            output_ports=("role:subject",),
+            constraints=(),
+        )
+        mode = ModeSlot.create(
+            mode="OBSERVE",
+            source_unit_refs=(),
+            construction_ref=None,
+            requested_effect="admission",
+        )
+        frame = ApplicationFrameSlot.create(
+            designation_slot_ref=desig.slot_ref,
+            predicate_target_ref=target,
+            predicate_kind=kind,
+            operator_ref=op_ref,
+            structural_role_ref=struct_role,
+            required_roles=("role:subject",),
+            optional_roles=(),
+            proposition_roles=(),
+            source_unit_refs=("unit:predicate",),
+            derived_role_targets=derived_roles,
+            affordance_frame_ref=f"frame:{kind}",
+            provenance_refs=(desig.slot_ref, "authority:test", f"frame:{kind}"),
+        )
+        context = ProposalContext.create(
+            orientation_ref="orientation:test",
+            evidence_packet_ref="evidence:test",
+            form_lattice_ref="lattice:test",
+            grounding_ref="grounding:test",
+            designation_slots=(desig,),
+            contribution_slots=(predicate, subject),
+            mode_slots=(mode,),
+            application_frames=(frame,),
+            reference_slots=(),
+            scope_slots=(),
+            expression_link_slots=(),
+            variable_slots=(),
+            transition_slots=(),
+            residual_evidence=(),
+            context_refs=("turn:test",),
+            source_unit_refs=("unit:predicate", "unit:subject"),
+            source_unit_spans=(
+                ("unit:predicate", 0, 4),
+                ("unit:subject", 4, 8),
+            ),
+            revision_pin=_pin(),
+        )
+
+        actions = (
+            ProgramAction.create(
+                action_index=0,
+                action_type="select_context",
+                arguments=(context.context_ref,),
+            ),
+            ProgramAction.create(
+                action_index=1,
+                action_type="select_mode",
+                arguments=(context.mode_slots[0].slot_ref,),
+            ),
+            ProgramAction.create(
+                action_index=2,
+                action_type="select_designation",
+                arguments=(context.designation_slots[0].slot_ref,),
+            ),
+            ProgramAction.create(
+                action_index=3,
+                action_type="instantiate_operator",
+                arguments=("application:main", context.application_frames[0].slot_ref),
+                source_unit_refs=("unit:predicate",),
+            ),
+            ProgramAction.create(
+                action_index=4,
+                action_type="bind_role",
+                arguments=(
+                    "application:main",
+                    "role:subject",
+                    context.contribution_slots[1].slot_ref,
+                ),
+                source_unit_refs=("unit:subject",),
+            ),
+            ProgramAction.create(
+                action_index=5,
+                action_type="complete_program",
+                arguments=(),
+            ),
+        )
+        assignments = (
+            SourceAssignment.create(
+                source_unit_ref="unit:predicate",
+                contribution_slot_ref=context.contribution_slots[0].slot_ref,
+                assignment_kind="predicate",
+                target_action_ref=actions[3].action_ref,
+                target_role_ref=None,
+                residual_kind=None,
+                critical=False,
+            ),
+            SourceAssignment.create(
+                source_unit_ref="unit:subject",
+                contribution_slot_ref=context.contribution_slots[1].slot_ref,
+                assignment_kind="role",
+                target_action_ref=actions[4].action_ref,
+                target_role_ref="role:subject",
+                residual_kind=None,
+                critical=False,
+            ),
+        )
+        program = SemanticSwitchProgram.create(
+            orientation_ref=context.orientation_ref,
+            proposal_context_ref=context.context_ref,
+            actions=actions,
+            root_refs=("application:main",),
+            mode_slot_ref=context.mode_slots[0].slot_ref,
+            goal_refs=("goal:understand",),
+            source_unit_refs=context.source_unit_refs,
+            source_assignments=assignments,
+            revision_pin=context.revision_pin,
+        )
+        batch = _verifier().verify_candidates(_proposal(context, program), context)
+        assert batch.status == "selected", (
+            f"operator {op_ref} was rejected: "
+            f"{[e.code for e in batch.candidate_receipts[0].verification_errors]}"
+        )
+
+
+
+def test_canonical_designation_successor_accepts_all_five_persistent_operators():
+    """A valid program using each of the five persistent operators is accepted.
+
+    The R1 compiler admits exactly one application per program, so each
+    operator is verified in its own self-contained context and program.
+    """
+    assert PERSISTENT_OPERATORS == frozenset(
+        {"op:designation", "op:type", "op:relation", "op:state", "op:event"}
+    )
+
+    # Each entry: (operator_ref, target_ref, target_kind, structural_role,
+    #              derived_role_targets, designation_fact_ref)
+    operators: list[tuple[str, str, str, str, tuple[tuple[str, str], ...], str]] = [
+        ("op:designation", "label:test", "label_type", "role:label_type",
          (("role:label_type", "label:test"),), "designation:label"),
         ("op:type", "concept:test", "concept", "role:class",
          (), "designation:concept"),
@@ -823,3 +998,16 @@ def test_verify_returns_verification_result():
     assert isinstance(batch.status, str)
     assert isinstance(batch.candidate_receipts, tuple)
     assert isinstance(batch.batch_ref, str)
+
+
+__cemm_test_inventory__ = {
+    "tests/test_adversarial_programs.py::test_canonical_designation_successor_accepts_all_five_persistent_operators": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:adversarial-programs-only-five-persistent-operators-accepted",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-3",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "a5474d420133a3577fe451cf71c1a477eb5899f74ad0281488c327632a5b7d19",
+        "supersedes_node_id": "tests/test_adversarial_programs.py::test_only_five_persistent_operators_accepted",
+    },
+}
