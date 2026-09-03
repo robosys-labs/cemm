@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
+from cemm_authoritative_hybrid.bootstrap import load_runtime
 from cemm_authoritative_hybrid.canonical import stable_ref
 from cemm_authoritative_hybrid.config import RuntimeConfig
 from cemm_authoritative_hybrid.contributions import SemanticContribution
@@ -29,6 +32,9 @@ from cemm_authoritative_hybrid.proposal_context import (
     ProposalContextBuilder,
 )
 from cemm_authoritative_hybrid.verifier import ExactProgramVerifier
+
+
+ROOT = Path(__file__).parents[1]
 
 
 def _pin(authority: object) -> RevisionPin:
@@ -342,6 +348,48 @@ def _proposal(
         truncated=False,
         model_identity=context.revision_pin.model_identity or "",
         revision_pin=context.revision_pin,
+    )
+
+
+def test_unresolved_designation_derivation_uses_program_abi_2_without_new_actions(
+    tmp_path,
+) -> None:
+    runtime = load_runtime(
+        ROOT,
+        profile="development",
+        store_path=tmp_path / "stores.db",
+    )
+    try:
+        _, context = runtime.orient(
+            "session:unresolved-designation-program",
+            "What is zorbulate?",
+        )
+        proposal = runtime.proposal_model.propose(context)
+    finally:
+        runtime.stores.close()
+
+    assert proposal.status == "candidates"
+    assert len(proposal.candidates) == 1
+    program = proposal.candidates[0].program
+    assert program.as_dict()["abi_version"] == 2
+    construction_actions = {
+        action.action_type
+        for action in program.actions
+        if action.action_type
+        not in {
+            "select_context",
+            "select_mode",
+            "select_designation",
+            "complete_program",
+        }
+    }
+    assert construction_actions <= {
+        "instantiate_operator",
+        "bind_role",
+        "project_variable",
+    }
+    assert {"instantiate_operator", "bind_role", "project_variable"} <= (
+        construction_actions
     )
 
 

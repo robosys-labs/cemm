@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from cemm_authoritative_hybrid import proposal_context as proposal_context_module
 from cemm_authoritative_hybrid.affordances import AffordanceProfile
 from cemm_authoritative_hybrid.authority import AtomRecord, EventSignature, RoleSpec
 from cemm_authoritative_hybrid.bootstrap import load_runtime
@@ -642,7 +643,7 @@ def test_builder_emits_reference_and_query_variable_contributions() -> None:
     assert context.residual_for_source("unit:what") is None
 
 
-def test_unknown_designation_query_preserves_structural_evidence_and_critical_unknown_span(
+def test_unknown_designation_query_builds_one_exact_unresolved_designation_frame(
     tmp_path: Path,
 ) -> None:
     source = "What is zorbulate?"
@@ -668,49 +669,80 @@ def test_unknown_designation_query_preserves_structural_evidence_and_critical_un
     )
     assert len(literal_unit_refs) == 1
     literal_unit_ref = literal_unit_refs[0]
-    assert not any(
-        literal_unit_ref in slot.source_unit_refs
-        for slot in context.designation_slots
+    frame_type = getattr(
+        proposal_context_module, "UnresolvedDesignationFrame", None
     )
-    assert not any(
-        literal_unit_ref in frame.source_unit_refs
-        for frame in context.application_frames
+    assert frame_type is not None, (
+        "Proposal Context must own UnresolvedDesignationFrame"
     )
-    assert not any(
-        slot.kind == "literal"
-        and (
-            literal_unit_ref in slot.source_unit_refs
-            or slot.literal_value == "zorbulate"
-        )
-        for slot in context.contribution_slots
-    )
-    assert not any(
-        literal_unit_ref in slot.source_unit_refs
-        for slot in context.variable_slots
-    )
+    frames = getattr(context, "unresolved_designation_frames", ())
+    assert len(frames) == 1
+    frame = frames[0]
+    assert type(frame) is frame_type
+    assert frame.label_type_ref == "label:lexical"
+    assert frame.source_unit_refs == (literal_unit_ref,)
+    assert context.source_span(frame.source_unit_refs) == literal_span
 
-    residuals = tuple(
-        residual
+    literal = context.contribution(frame.literal_contribution_ref)
+    assert literal is not None
+    assert literal.kind == "literal"
+    assert literal.literal_value == "zorbulate"
+    assert literal.source_unit_refs == (literal_unit_ref,)
+
+    target = context.variable(frame.target_variable_ref)
+    assert target is not None
+
+    query_binder = context.contribution(frame.query_binder_ref)
+    assert query_binder is not None
+    assert query_binder.kind == "binder"
+    assert context.source_span(query_binder.source_unit_refs) == (
+        source.index("is"),
+        source.index("is") + len("is"),
+    )
+    assert not any(
+        residual.critical and residual.source_unit_ref == literal_unit_ref
         for residual in context.residual_evidence
-        if residual.source_unit_ref == literal_unit_ref
     )
-    assert len(residuals) == 1
-    residual = residuals[0]
-    assert residual.contribution_kind == "anchor"
-    assert residual.critical is True
-    assert context.source_span((residual.source_unit_ref,)) == literal_span
 
-    expected_structural_evidence = (
-        ("open_variable", (0, len("What"))),
-        ("binder", (source.index("is"), source.index("is") + len("is"))),
-        ("discourse", (source.index("?"), source.index("?") + 1)),
+
+def test_plain_unknown_assertion_does_not_receive_unresolved_designation_frame(
+    tmp_path: Path,
+) -> None:
+    source = "zorbulate."
+    runtime = load_runtime(
+        ROOT,
+        profile="development",
+        store_path=tmp_path / "stores.db",
     )
-    for kind, span in expected_structural_evidence:
-        assert any(
-            contribution.kind == kind
-            and context.source_span(contribution.source_unit_refs) == span
-            for contribution in context.contribution_slots
+    try:
+        _, context = runtime.orient(
+            f"session:non-query-unknown:{source}",
+            source,
         )
+    finally:
+        runtime.stores.close()
+
+    assert getattr(context, "unresolved_designation_frames", ()) == ()
+
+
+def test_unknown_event_argument_does_not_receive_unresolved_designation_frame(
+    tmp_path: Path,
+) -> None:
+    source = "Alice likes zorbulate."
+    runtime = load_runtime(
+        ROOT,
+        profile="development",
+        store_path=tmp_path / "stores.db",
+    )
+    try:
+        _, context = runtime.orient(
+            "session:unknown-event-argument",
+            source,
+        )
+    finally:
+        runtime.stores.close()
+
+    assert getattr(context, "unresolved_designation_frames", ()) == ()
 
 
 def test_builder_emits_closed_class_contributions_for_structural_evidence() -> None:

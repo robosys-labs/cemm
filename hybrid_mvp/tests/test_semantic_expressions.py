@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError, fields, replace
+from pathlib import Path
 
 import pytest
 
+from cemm_authoritative_hybrid.bootstrap import load_runtime
 from cemm_authoritative_hybrid.expressions import (
     ApplicationFiller,
     BoundVariable,
@@ -21,6 +23,9 @@ from cemm_authoritative_hybrid.expressions import (
     VerifiedMeaning,
 )
 from cemm_authoritative_hybrid.persistence import RevisionPin
+
+
+ROOT = Path(__file__).parents[1]
 
 
 def _application(
@@ -42,6 +47,90 @@ def _application(
 
 def _pin() -> RevisionPin:
     return RevisionPin("authority:g1", 2, 3, 4, 5, "model:m1")
+
+
+def _designation_application(expression: SemanticExpression) -> SemanticApplication:
+    applications = tuple(
+        application
+        for application in expression.applications
+        if application.operator == "op:designation"
+    )
+    assert len(applications) == 1
+    return applications[0]
+
+
+def _roles(application: SemanticApplication) -> dict[str, object]:
+    return {binding.role_ref: binding.filler for binding in application.roles}
+
+
+def test_known_designation_query_uses_the_canonical_lexical_label_application(
+    tmp_path: Path,
+) -> None:
+    runtime = load_runtime(
+        ROOT,
+        profile="development",
+        store_path=tmp_path / "stores.db",
+    )
+    try:
+        result = runtime.process(
+            "session:known-designation-expression",
+            "What is CEMM?",
+        )
+    finally:
+        runtime.stores.close()
+
+    assert result.verification.selected_meaning is not None
+    expression = result.verification.selected_meaning.expression
+    designation = _designation_application(expression)
+    assert designation.predicate_ref == "label:lexical"
+    roles = _roles(designation)
+    assert roles["role:label_type"] == GroundedReference("label:lexical")
+    assert roles["role:surface"] == LiteralValue("string", "CEMM")
+    assert isinstance(roles["role:target"], GroundedReference)
+    assert SemanticExpression.from_dict(expression.as_dict()) == expression
+
+
+def test_unresolved_designation_query_uses_the_same_label_application_with_bound_target(
+    tmp_path: Path,
+) -> None:
+    runtime = load_runtime(
+        ROOT,
+        profile="development",
+        store_path=tmp_path / "stores.db",
+    )
+    try:
+        result = runtime.process(
+            "session:unresolved-designation-expression",
+            "What is zorbulate?",
+        )
+    finally:
+        runtime.stores.close()
+
+    assert result.verification.selected_meaning is not None
+    expression = result.verification.selected_meaning.expression
+    designation = _designation_application(expression)
+    assert designation.predicate_ref == "label:lexical"
+    roles = _roles(designation)
+    assert roles["role:label_type"] == GroundedReference("label:lexical")
+    assert roles["role:surface"] == LiteralValue("string", "zorbulate")
+    assert isinstance(roles["role:target"], BoundVariable)
+    assert any(
+        binder.variable_ref == roles["role:target"].variable_ref
+        for binder in expression.binders
+    )
+    assert all(
+        application.predicate_ref != "concept:zorbulate"
+        for application in expression.applications
+    )
+    assert all(
+        not (
+            isinstance(binding.filler, GroundedReference)
+            and binding.filler.target_ref == "concept:zorbulate"
+        )
+        for application in expression.applications
+        for binding in application.roles
+    )
+    assert SemanticExpression.from_dict(expression.as_dict()) == expression
 
 
 def test_expression_is_immutable_and_excludes_evidence_geometry() -> None:
