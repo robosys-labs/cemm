@@ -1,5 +1,10 @@
 # R4.1 Guided Accountable Review Design
 
+> **Superseded execution record.** Review workflows are suspended by the
+> [R4 closure-slice design](2026-09-03-r4-closure-slice-anti-recursion-design.md).
+> This file cannot authorize current work or export review gold. Replay status
+> is derived only from `governance/replay_status.jsonl`.
+
 **Status:** approved design for implementation planning  
 **Scope:** offline R4.1 reviewer presentation and bounded review-session API  
 **Authority:** presentation assistance only; the accountable reviewer owns every semantic decision

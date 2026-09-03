@@ -1,5 +1,11 @@
 # R4.1 reviewer-selection handoff
 
+> **Review suspended.** The current working selection and audit journal are
+> retained only as non-authoritative evidence. They must not be exported,
+> promoted, or used to resume recipe/corpus authoring until the governing
+> [R4 closure slice](../../../docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
+> passes and a successor plan explicitly reopens review.
+
 This directory is operational review material only. It is not semantic
 authority, a reviewed source package, a review manifest, or an activation
 gate.

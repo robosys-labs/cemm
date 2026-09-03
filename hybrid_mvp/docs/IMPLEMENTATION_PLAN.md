@@ -24,6 +24,20 @@
 > activation are unavailable until a fresh R4.1 admission proves meaningful
 > purpose-class semantic coverage and independent derivation/realization gold.
 
+## Current governing route
+
+The [R4 closure slice](superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
+is the only executable next step. Bulk R4.1 authoring is frozen, including
+recipe review, selection export, corpus expansion, regeneration and training.
+The slice must first demonstrate practical usability across the fixed cases and
+the complete Program → Expression → VerifiedMeaning → Decision → Effect →
+ResponseMeaning → authorized-surface path. This section supersedes the
+execution order in the historical phase outline below; it does not add a phase,
+gate, ABI, runtime owner or admission claim.
+
+Its only executable procedure is the
+[bounded closure-slice implementation plan](superpowers/plans/2026-09-03-r4-closure-slice-implementation-plan.md).
+
 ## Phase 1 — Evaluation expansion
 
 - expand to the 210-case semantic matrix;

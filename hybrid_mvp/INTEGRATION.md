@@ -51,7 +51,10 @@ pipeline, not a release or replay receipt.
 
 Proceed under the [August 29 R4.1 data/supervision amendment](docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md),
 the [semantic-algebra amendment](docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md),
-and the [document authority map](docs/DOCUMENT_AUTHORITY.json).
+the [R4 closure-slice design](docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md),
+and the [document authority map](docs/DOCUMENT_AUTHORITY.json). The closure
+slice is the only executable next step; bulk review, authoring, regeneration
+and training remain stopped until it proves practical end-to-end usability.
 
 R5 training, selection, calibration, frozen evaluation and realization
 activation are unavailable until a fresh R4.1 admission proves meaningful

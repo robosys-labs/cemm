@@ -43,6 +43,12 @@ does not copy or promote phase status. Use
 precedence and the [August 29 R4.1 amendment](docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md)
 for the current data and supervision repair boundary.
 
+The [R4 closure slice](docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
+is the only executable next step. It must prove a fixed, practical end-to-end
+semantic slice before any bulk corpus authoring, review workflow, regeneration,
+training, or new implementation plan resumes. R5 remains unavailable until
+that slice passes and authentic R4.1 admission subsequently exists.
+
 R5 training, selection, calibration, frozen evaluation and realization
 activation are unavailable until a fresh R4.1 admission proves meaningful
 purpose-class semantic coverage and independent derivation/realization gold.

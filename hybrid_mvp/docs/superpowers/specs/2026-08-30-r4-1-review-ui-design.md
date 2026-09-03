@@ -1,5 +1,10 @@
 # R4.1 Accountable Review UI Design
 
+> **Superseded execution record.** Review workflows are suspended by the
+> [R4 closure-slice design](2026-09-03-r4-closure-slice-anti-recursion-design.md).
+> This file cannot authorize current work or export review gold. Replay status
+> is derived only from `governance/replay_status.jsonl`.
+
 **Status:** approved design; implementation not started
 **Date:** 2026-08-30
 **Scope:** Task 10B reviewer-selection handoff only

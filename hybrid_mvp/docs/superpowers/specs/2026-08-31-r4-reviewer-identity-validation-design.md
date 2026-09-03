@@ -1,5 +1,10 @@
 # R4.1 Reviewer Identity Validation Repair
 
+> **Superseded execution record.** Review workflows are suspended by the
+> [R4 closure-slice design](2026-09-03-r4-closure-slice-anti-recursion-design.md).
+> This file cannot authorize current review implementation. Replay status is
+> derived only from `governance/replay_status.jsonl`.
+
 **Date:** 2026-08-31  
 **Status:** approved design  
 **Scope:** accountable-review presentation and loopback API only

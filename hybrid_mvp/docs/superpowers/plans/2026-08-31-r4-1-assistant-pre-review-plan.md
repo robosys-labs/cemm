@@ -1,5 +1,10 @@
 # R4.1 Assistant Pre-Review Implementation Plan
 
+> **Superseded execution record.** Review and pre-review are suspended by the
+> [R4 closure-slice design](../specs/2026-09-03-r4-closure-slice-anti-recursion-design.md).
+> This plan cannot authorize current work or semantic recommendations. Replay
+> status is derived only from `governance/replay_status.jsonl`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build an offline advisory pre-review ledger for R4.1 that quarantines evidence problems, recommends only bounded non-authoritative actions, and preserves careful individual curation.

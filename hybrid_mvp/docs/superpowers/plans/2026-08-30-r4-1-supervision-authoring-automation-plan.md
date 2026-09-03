@@ -1,5 +1,10 @@
 # R4.1 Supervision Authoring Automation Implementation Plan
 
+> **Superseded execution record.** Bulk authoring is frozen by the
+> [R4 closure-slice design](../specs/2026-09-03-r4-closure-slice-anti-recursion-design.md).
+> This plan cannot authorize current work or source publication. Replay status
+> is derived only from `governance/replay_status.jsonl`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the bounded offline authoring path that produces independently reconstructed proposal, designation, realization and adversarial-mutation supervision for the approved R4.1 successor source universe without making Programs, runtime output, Python constants, external data or an LLM semantic authority.

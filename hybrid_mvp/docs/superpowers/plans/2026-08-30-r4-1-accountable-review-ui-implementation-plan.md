@@ -1,5 +1,10 @@
 # R4.1 Accountable Review UI Implementation Plan
 
+> **Superseded execution record.** Review workflows are suspended by the
+> [R4 closure-slice design](../specs/2026-09-03-r4-closure-slice-anti-recursion-design.md).
+> This plan cannot authorize current work or export review gold. Replay status
+> is derived only from `governance/replay_status.jsonl`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a secure local HTML/JavaScript interface that lets an accountable reviewer complete and export the exact R4.1 selection input without editing raw JSON or creating a parallel semantic authority path.

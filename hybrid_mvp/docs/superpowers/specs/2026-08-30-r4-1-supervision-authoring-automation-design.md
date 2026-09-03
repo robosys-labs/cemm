@@ -1,5 +1,10 @@
 # R4.1 Supervision Authoring Automation Design
 
+> **Superseded execution record.** Bulk authoring is frozen by the
+> [R4 closure-slice design](2026-09-03-r4-closure-slice-anti-recursion-design.md).
+> This file cannot authorize current work or source publication. Replay status
+> is derived only from `governance/replay_status.jsonl`.
+
 **Status:** approved design; implementation and reviewed-data publication pending
 
 **Scope:** complete the offline authoring path that converts the approved R4.1

@@ -7,6 +7,8 @@
   "governing_documents": [
     "AGENTS.md",
     "docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md",
+    "docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md",
+    "docs/superpowers/plans/2026-09-03-r4-closure-slice-implementation-plan.md",
     "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
     "docs/superpowers/specs/2026-08-29-r4-1-data-supervision-replay-design.md",
     "docs/superpowers/plans/2026-08-29-r4-1-data-supervision-replay-plan.md",
@@ -72,7 +74,17 @@
     "docs/superpowers/specs/2026-08-12-r4-repository-owned-admission-design.md",
     "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
     "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
-    "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md"
+    "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md",
+    "docs/superpowers/specs/2026-08-30-r4-1-review-ui-design.md",
+    "docs/superpowers/plans/2026-08-30-r4-1-accountable-review-ui-implementation-plan.md",
+    "docs/superpowers/specs/2026-08-30-r4-1-guided-accountable-review-design.md",
+    "docs/superpowers/plans/2026-08-30-r4-1-guided-accountable-review-implementation-plan.md",
+    "docs/superpowers/specs/2026-08-30-r4-1-supervision-authoring-automation-design.md",
+    "docs/superpowers/plans/2026-08-30-r4-1-supervision-authoring-automation-plan.md",
+    "docs/superpowers/specs/2026-08-31-r4-1-assistant-pre-review-design.md",
+    "docs/superpowers/plans/2026-08-31-r4-1-assistant-pre-review-plan.md",
+    "docs/superpowers/specs/2026-08-31-r4-reviewer-identity-validation-design.md",
+    "docs/superpowers/plans/2026-08-31-r4-reviewer-identity-validation-plan.md"
   ],
   "test_inventory": {
     "path": "governance/test_inventory.json",

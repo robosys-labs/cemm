@@ -1,5 +1,10 @@
 # R4.1 Assistant Pre-Review Design
 
+> **Superseded execution record.** Review and pre-review are suspended by the
+> [R4 closure-slice design](2026-09-03-r4-closure-slice-anti-recursion-design.md).
+> This file cannot authorize current work or semantic recommendations. Replay
+> status is derived only from `governance/replay_status.jsonl`.
+
 **Status:** approved design; implementation planning pending
 
 **Scope:** add an offline, non-authoritative assistant pre-review path for the

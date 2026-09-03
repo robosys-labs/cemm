@@ -102,6 +102,12 @@ A learned cross-encoder-style scorer ranks candidate programs. The model owns ra
 
 R3 consumes only selected `VerifiedMeaning.expression` plus an independently verified `SituationContext`. It emits one canonical Decision, exactly one Effect/No-Effect receipt, and one `ResponseMeaning`, then stops at the R5 surface-realization contract. Program identity is derivation lineage only.
 
+Current R4 work is constrained by the
+[bounded closure-slice design](superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md).
+Bulk authoring and review are frozen until the fixed cases prove the complete
+semantic path and practical response behavior. The slice reuses existing
+owners and validators; it is not a seventh phase, another gate, or a new ABI.
+
 R4.1 separates duplicate-risk grouping from semantic stratification. Reviewed
 lineage groups prevent source, paraphrase, normalization, mutation and
 environment duplicates from crossing a protected boundary. Operators, roles,

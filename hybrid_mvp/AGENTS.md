@@ -184,3 +184,37 @@ Partial implementation must remain explicitly disabled rather than hidden
 behind permissive fallback behaviour. No active release test may use skip or
 xfail markers; final release gates contain zero skips, xfails, xpasses,
 fallback paths, compatibility adapters or unverified surfaces.
+
+## 8. Current anti-recursion closure contract
+
+The only executable next step is the fixed R4 closure slice governed by
+`docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md`.
+Bulk R4.1 authoring, purpose allocation, realization-recipe review, corpus
+expansion, source-package publication and all R5 work are frozen until that
+slice records a reviewed pass.
+
+Review workflows are suspended. Existing working selections and action logs
+are diagnostic evidence only; they must not be exported, admitted or treated
+as semantic gold. The review UI, guided review, assistant pre-review and
+reviewer-identity plans cannot authorize current work.
+
+Closure work is bounded by all of the following:
+
+- the exact fixed cases in the governing closure design;
+- maximum three owner-level implementation fixes;
+- maximum three implementation commits before a pass/fail decision;
+- one active blocker at a time;
+- no new ABI, phase, gate, runtime owner, review UI or source package;
+- no bulk regeneration, model training or epoch tuning; and
+- no change that only adds planning, presentation or tracking machinery.
+
+Each implementation change must move a named closure case through its earliest
+failing existing owner. Practical usability is mandatory: supported queries
+must answer, unknown knowledge must remain distinct from unknown meaning,
+denials and conflicts must explain themselves, and no normal response may be
+generic `Acknowledged.` or a placeholder.
+
+If the fixed slice passes, a separately reviewed mechanical R4.1 correction
+plan may resume the existing ABIs and gates. If three owner-level fixes do not
+make it pass, work stops at the first unresolved architecture owner. R5 remains
+unavailable in either case until fresh R4.1 admission.

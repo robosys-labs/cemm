@@ -33,6 +33,31 @@ R4_1_AMENDMENT = (
     "docs/superpowers/specs/"
     "2026-08-29-r4-1-data-supervision-corrective-amendment.md"
 )
+R4_CLOSURE_SLICE_DESIGN = (
+    "docs/superpowers/specs/"
+    "2026-09-03-r4-closure-slice-anti-recursion-design.md"
+)
+R4_CLOSURE_SLICE_PLAN = (
+    "docs/superpowers/plans/"
+    "2026-09-03-r4-closure-slice-implementation-plan.md"
+)
+SEMANTIC_ALGEBRA_AMENDMENT = (
+    "docs/superpowers/specs/"
+    "2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md"
+)
+
+SUPERSEDED_R4_REVIEW_WORKFLOW_DOCUMENTS = (
+    "docs/superpowers/specs/2026-08-30-r4-1-review-ui-design.md",
+    "docs/superpowers/plans/2026-08-30-r4-1-accountable-review-ui-implementation-plan.md",
+    "docs/superpowers/specs/2026-08-30-r4-1-guided-accountable-review-design.md",
+    "docs/superpowers/plans/2026-08-30-r4-1-guided-accountable-review-implementation-plan.md",
+    "docs/superpowers/specs/2026-08-30-r4-1-supervision-authoring-automation-design.md",
+    "docs/superpowers/plans/2026-08-30-r4-1-supervision-authoring-automation-plan.md",
+    "docs/superpowers/specs/2026-08-31-r4-1-assistant-pre-review-design.md",
+    "docs/superpowers/plans/2026-08-31-r4-1-assistant-pre-review-plan.md",
+    "docs/superpowers/specs/2026-08-31-r4-reviewer-identity-validation-design.md",
+    "docs/superpowers/plans/2026-08-31-r4-reviewer-identity-validation-plan.md",
+)
 
 AUTHORITY_LIKE_ROOT_FILES = frozenset({
     "AGENTS.md",
@@ -88,7 +113,9 @@ R4_1_REPLAY_PROGRESS = (
 GOVERNING_DOCUMENTS = (
     "AGENTS.md",
     R4_1_AMENDMENT,
-    "docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md",
+    R4_CLOSURE_SLICE_DESIGN,
+    R4_CLOSURE_SLICE_PLAN,
+    SEMANTIC_ALGEBRA_AMENDMENT,
     R4_1_REPLAY_DESIGN,
     R4_1_REPLAY_PLAN,
     R4_1_SOURCE_READINESS_DESIGN,
@@ -123,6 +150,7 @@ SUPERSEDED_EXECUTION_CLAIMS = (
     "docs/superpowers/plans/2026-08-12-r4-repository-owned-admission-plan.md",
     "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md",
     "docs/superpowers/plans/2026-08-14-r4-partition-corrective-replay-plan.md",
+    *SUPERSEDED_R4_REVIEW_WORKFLOW_DOCUMENTS,
 )
 
 HISTORICAL_EVIDENCE = (
@@ -479,6 +507,14 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Authority-Cleanup-Task-1",
         "owner_ref": "governance",
         "source_ast_sha256": "a0041e50313daf623ecc51f3696332456e724c966876e01072a1d76ce19b836d"
+    },
+    "tests/test_replay_governance.py::test_r4_closure_slice_is_the_only_executable_next_step": {
+        "activation_phase": "G0",
+        "assertion_ref": "assertion:r4-closure-slice-is-only-executable-next-step",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Closure-Slice-Governance",
+        "owner_ref": "governance",
+        "source_ast_sha256": "9fd4f5a65f5d3f3e2c1c6f3ce1eb0475c87ce6a7048519ef0a95f420dd877b9a"
     },
     "tests/test_replay_governance.py::test_governing_documents_do_not_prescribe_rejected_r4_r5_paths": {
         "activation_phase": "G0",
@@ -909,7 +945,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r4-1-replay-tracker-is-operational-not-status-authority",
         "diagnostic_role": "phase",
         "introduced_by_task": "R4.1-Data-Supervision-Task-1",
-        "source_ast_sha256": "d6a10b948868188c71281845b31df37ec689c9e955680d57539919e836b94cd6"
+        "source_ast_sha256": "35da88faef8bde8f77fbcac68f857ef35f3a2d32cb34646472718e7c977f6e51"
     },
     "tests/test_replay_governance.py::test_r4_partition_corrective_documents_are_superseded": {
         "activation_phase": "G0",
@@ -1057,7 +1093,7 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
     assert authority["generated_artifacts_are_authority"] is False
     assert authority["root_adoption_requires_separate_review"] is True
 
-    amendment = (ROOT / GOVERNING_DOCUMENTS[2]).read_text(encoding="utf-8")
+    amendment = (ROOT / SEMANTIC_ALGEBRA_AMENDMENT).read_text(encoding="utf-8")
     assert "SemanticSwitchProgram" in amendment
     assert "SemanticExpression" in amendment
     assert "VerifiedMeaning" in amendment
@@ -1171,6 +1207,66 @@ def test_r4_1_amendment_owns_authentic_r5_prerequisites() -> None:
     assert "Current candidates require the exact ABI 4 evidence set" not in registry
     assert "Build Receipt ABI 4 and its global semantic-union evidence" in registry
     assert "the later repository admission receipt authenticates" in registry
+
+
+def test_r4_closure_slice_is_the_only_executable_next_step() -> None:
+    authority = _authority()
+    governing = tuple(authority["governing_documents"])
+    superseded = set(authority["superseded_execution_claims"])
+
+    assert governing.index(R4_CLOSURE_SLICE_DESIGN) == (
+        governing.index(R4_1_AMENDMENT) + 1
+    )
+    assert governing.index(R4_CLOSURE_SLICE_PLAN) == (
+        governing.index(R4_CLOSURE_SLICE_DESIGN) + 1
+    )
+    assert set(SUPERSEDED_R4_REVIEW_WORKFLOW_DOCUMENTS) <= superseded
+
+    closure = (ROOT / R4_CLOSURE_SLICE_DESIGN).read_text(encoding="utf-8")
+    for marker in (
+        "fixed closure cases",
+        "maximum three owner-level implementation fixes",
+        "no new ABI",
+        "no new phase",
+        "no new gate",
+        "practical usability",
+        "generic `Acknowledged.`",
+        "R5 remains unavailable",
+    ):
+        assert marker.casefold() in closure.casefold()
+
+    plan = (ROOT / R4_CLOSURE_SLICE_PLAN).read_text(encoding="utf-8")
+    for marker in (
+        "current observed baseline",
+        "one active blocker at a time",
+        "maximum three owner-level fixes",
+        "no source package",
+        "no R5 activation",
+        "stop outcome",
+    ):
+        assert marker.casefold() in plan.casefold()
+
+    current_routes = {
+        "AGENTS.md": ("closure slice", "review workflows are suspended"),
+        "README.md": ("closure slice", "R5 remains unavailable"),
+        "docs/IMPLEMENTATION_PLAN.md": (
+            "closure slice",
+            "bulk R4.1 authoring is frozen",
+        ),
+        "docs/REPLAY_GOVERNANCE.md": (
+            "closure slice",
+            "only executable next step",
+        ),
+        "artifacts/review_inputs/r4_1/README.md": (
+            "review suspended",
+            "must not be exported",
+        ),
+        R4_1_REPLAY_PROGRESS: ("closure slice", "stopped"),
+    }
+    for relative, markers in current_routes.items():
+        text = (ROOT / relative).read_text(encoding="utf-8").casefold()
+        for marker in markers:
+            assert marker.casefold() in text, (relative, marker)
 
 
 def test_governing_documents_do_not_prescribe_rejected_r4_r5_paths() -> None:
@@ -2135,7 +2231,7 @@ def test_r4_1_replay_tracker_is_operational_not_status_authority() -> None:
         assert abi_name in correction_plan_text
     assert "git add hybrid_mvp/" not in correction_plan_text
     assert "| RC-SOURCE-READINESS | pending |" in text
-    assert re.search(r"^\| T03 \|[^\r\n]*\| in_progress \|", text, re.MULTILINE)
+    assert re.search(r"^\| T03 \|[^\r\n]*\| stopped \|", text, re.MULTILINE)
     assert re.search(r"^\| T04 \|[^\r\n]*\| pending \|", text, re.MULTILINE)
     plan_tasks = re.findall(
         r"^## Task ([1-9]|1[0-8]): ([^\r\n]+)$", plan_text, re.MULTILINE
