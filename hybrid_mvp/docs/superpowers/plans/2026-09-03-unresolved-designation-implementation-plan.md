@@ -16,6 +16,12 @@ the ABI/lazy-import owners passed 71 tests. The
 historical stop record remains at the end of this document; no activation,
 merge or admission is implied.
 
+**Task 4 preflight constraint:** do not begin builder emission under the
+assumption that an unresolved designation-query construction already exists.
+The read-only probe recorded below disproves that premise. Task 3 remains
+independent and authorized; a reviewed form-evidence amendment is required
+before Task 4 can safely consume an unknown query span.
+
 ---
 
 ## Governing boundaries
@@ -664,3 +670,41 @@ No field may be silently omitted from hashing; no placeholder ref, fake
 designation, permissive variable fallback, or relaxed compiler ownership check
 is permitted. Proposal Context ABI 2 remains an unadmitted worktree change and
 the builder does not emit the new frame. Main and remote branches are unchanged.
+
+## Task 4 preflight: missing interrogative distinction
+
+**Status:** evidence-backed design prerequisite; no form-pack or builder change
+authorized by this record.
+
+The current `FormResolver` and `data/languages/en/forms.json` were probed with
+`What is zorbulate?`, `Where is zorbulate?`, and `Who is zorbulate?`. All three
+produce the same non-surface evidence:
+
+```text
+query unit:       ((query, query),)
+copula unit:      ((binder, copula),)
+unknown unit:     ()
+punctuation unit: ((discourse, question),)
+construction:    query
+```
+
+`FormResolver._build_hypotheses` emits only the generic query construction for
+these inputs. The pack's `label_designation_query` role-order schema requires
+already grounded `participant` and `label_type` inputs; it does not license an
+unknown span in these inputs. `_reviewed_application_role_bindings` matches
+those schemas against existing designation kinds, not unresolved evidence.
+
+Consequently, query orientation plus a copula and unknown anchor cannot prove
+that the requested relation is a designation. Using those features alone would
+misread a location question as a designation lookup. Checking the raw word in
+the builder would instead violate the no-surface-dispatch contract.
+
+The smallest recommended amendment is to preserve the necessary interrogative
+distinction in reviewed closed-class form evidence and license one bounded
+feature-based construction over the existing query, binder and unresolved
+span. Add contrastive tests before builder emission. This requires a reviewed
+form-source/pack change, which the current no-form-pack-regeneration boundary
+does not authorize. It does not require a new kernel operator, semantic atom,
+query engine, online research path or validation tier. Any approved form change
+must preserve the existing realization contract and deterministic artifact
+checks. Until then, retain the critical residual rather than guessing meaning.
