@@ -1,7 +1,7 @@
 # Unresolved Designation and Research Handoff Design
 
 **Date:** 2026-09-03
-**Status:** design, implementation plan and acyclic ownership amendment approved; Task 2 repair in progress
+**Status:** design, implementation plan and acyclic ownership amendment approved; Tasks 1–2 reviewed; Task 3 in progress
 **Scope:** `hybrid_mvp/` representation closure and its bounded handoff to a
 future self-research capability
 
@@ -11,7 +11,8 @@ authority, or adopt Hybrid behavior at the repository root. Implementation
 was authorized by the approved implementation plan. Independent Task 2 quality
 review exposed a content-addressed frame/variable ownership cycle. The user
 approved the narrow one-way ownership amendment now incorporated in section 4.
-Task 2 must pass renewed review before downstream implementation advances.
+Task 2 passed renewed spec and quality review at `aeaad1f`; downstream
+implementation may now advance within the approved slice.
 The historical stop record and current repair boundary are in
 `../plans/2026-09-03-unresolved-designation-implementation-plan.md`.
 

@@ -196,7 +196,8 @@ now owns that repair together with the approved
 `docs/superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md`.
 The approved acyclic ownership amendment retains `VariableSlot -> frame`
 ownership and forbids a reciprocal hashed variable pointer on the frame.
-Task 2 repair and renewed review precede further implementation. This does not
+Task 2 repair passed renewed spec and quality review at `aeaad1f`; Task 3 is
+the next implementation boundary. This does not
 admit the ABI change or reopen bulk R4.1/R5 work.
 
 Bulk R4.1 authoring, purpose allocation, realization-recipe review, corpus

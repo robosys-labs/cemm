@@ -9,9 +9,10 @@
 **Tech Stack:** Python 3.12, frozen dataclasses, canonical content-addressed JSON, pytest, the existing recursive composer/compiler/verifier, `DesignationIndex`, and the existing R2/R3/R4 validation selectors.
 
 **Execution status (2026-09-03):** plan and one-way variable-ownership amendment
-approved; Task 1 completed; Task 2 repair in progress. The user approved removing
+ approved; Tasks 1 and 2 completed; Task 3 in progress. The user approved removing
 the frame's hashed variable back-pointer while retaining existing variable-to-
-frame ownership. Task 2 must pass renewed review before Task 3 begins. The
+frame ownership. Task 2 passed renewed spec and quality review at `aeaad1f`;
+the ABI/lazy-import owners passed 71 tests. The
 historical stop record remains at the end of this document; no activation,
 merge or admission is implied.
 
@@ -90,7 +91,7 @@ assert app.predicate_ref == "label:lexical"
 assert role(app, "role:label_type") == GroundedReference("label:lexical")
 ```
 
-The known expression must bind `role:target` to a grounded semantic ref. The unresolved expression must bind it to `BoundVariable`. Add a canary that the same derivation serializes with `PROGRAM_ABI_VERSION == 2` and uses only `instantiate_operator`, `bind_role`, and `project_variable`.
+The known designation **fact** must bind `role:target` to a grounded semantic ref. The unresolved query must bind it to `BoundVariable`. Do not use the pre-evaluation meaning of `What is CEMM?` as the grounded-fact fixture: that existing path is a nominal-definition query, not an asserted designation fact. Preserve its definition behavior. Task 7 separately tests an open designation query against known indexed facts. Add a canary that the unresolved derivation serializes with `PROGRAM_ABI_VERSION == 2` and uses only existing `instantiate_operator`, `bind_role`, and `project_variable` actions besides structural scaffolding.
 
 - [ ] **Step 4: Run the new tests and observe only the expected failures**
 
@@ -184,6 +185,7 @@ git commit -m "feat(r2): add unresolved designation frame ABI"
 - Modify: `src/cemm_authoritative_hybrid/verifier_reconstruction.py`
 - Modify: `src/cemm_authoritative_hybrid/verifier.py`
 - Modify: `tests/test_semantic_expression_compiler.py`
+- Modify: `tests/test_semantic_expressions.py` (correct the grounded-fact fixture as specified in Task 1)
 - Modify: `tests/test_exact_verifier.py`
 - Modify: `tests/test_r2_verifier_reconstruction.py`
 - Modify: `tests/test_r3_learning_transaction.py`
@@ -628,7 +630,8 @@ The next authorized decision after completion is either (a) design the newly exp
 ## Task 2 stop record: acyclic variable ownership required
 
 **Historical status:** BLOCKED / not accepted at commit `2538c29`; the user has
-since approved the amendment below. Repair and renewed review remain required.
+since approved the amendment below. Repair at `aeaad1f` passed renewed spec and
+quality review; this stop record is retained as historical evidence.
 This was a plan-level representation defect,
 not a new R4 closure case and not an authority-kind validation failure.
 
