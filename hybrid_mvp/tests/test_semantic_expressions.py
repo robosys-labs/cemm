@@ -776,4 +776,53 @@ __cemm_test_inventory__ = {'tests/test_semantic_expressions.py::test_alpha_renam
                                                                                                      'diagnostic_role': 'owner',
                                                                                                      'introduced_by_task': 'R1-Task-7',
                                                                                                      'owner_ref': 'program-verifier',
-                                                                                                     'source_ast_sha256': 'dfa1abd855c55a6c2762615edd95d378a5106bff5f63ea17bb2b0e98e1398e92'}}
+                                                                                                     'source_ast_sha256': 'dfa1abd855c55a6c2762615edd95d378a5106bff5f63ea17bb2b0e98e1398e92'},
+    "tests/test_semantic_expressions.py::test_known_designation_fact_uses_the_canonical_lexical_label_application": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-known-designation-fact-uses-the-canonical-lexical-label-application",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-1",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "ac44d543e9da03f25ad76e97d4411dd9c4723443e606682db258cbddeb52054f"
+    },
+    "tests/test_semantic_expressions.py::test_name_query_uses_the_reviewed_name_label_application": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-name-query-uses-the-reviewed-name-label-application",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-1",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "2529191f9d2fc1b7e7221af0cc918ab13a793c1c82d93f765d42ac15e5d7a726"
+    },
+    "tests/test_semantic_expressions.py::test_prospective_designation_fact_preserves_literal_and_target": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-prospective-designation-fact-preserves-literal-and-target",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-1",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "f2242b65c1f2b3d54fb524018cefd4ab29739d6c40f5caf678f7a8d9759430da"
+    },
+    "tests/test_semantic_expressions.py::test_unresolved_designation_query_uses_the_same_label_application_with_bound_target": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-query-uses-the-same-label-application-with-bound-target",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-1",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "63e1e1638bcb60fa4e44af4474bf3f4e9714ebc37a2146eae1fa13f7f184e19e"
+    },
+    "tests/test_semantic_expressions.py::test_semantic_expression_abi2_rejects_abi1_wire_values": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-semantic-expression-abi2-rejects-abi1-wire-values",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-1",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "b549d6a95735216e0ed44c0bb144222351ef8e7d1b5a4f24aecebb5d83229634"
+    },
+    "tests/test_semantic_expressions.py::test_semantic_expression_rejects_legacy_designation_target_as_predicate": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-semantic-expression-rejects-legacy-designation-target-as-predicate",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-1",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "22f0330b88937be30f711e17c043fdcdeecdd71a00bc158497895be4985b06b8"
+    }
+}

@@ -434,4 +434,20 @@ __cemm_test_inventory__ = {
         "owner_ref": "program-verifier",
         "source_ast_sha256": "0501bea7f4987eb195a8984c4dd8a7c5562392c970e4936ab7dd4a1e1f907efe"
     },
+    "tests/test_semantic_expression_compiler.py::test_canonical_designation_frame_compiles_exact_label_roles": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-canonical-designation-frame-compiles-exact-label-roles",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-1",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "d1eb5fdb4960ad9f3036fb123c2207f98cf2b74c8a0fc56fd8502af942548d70"
+    },
+    "tests/test_semantic_expression_compiler.py::test_legacy_designation_target_as_predicate_frame_fails_compilation": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-legacy-designation-target-as-predicate-frame-fails-compilation",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-1",
+        "owner_ref": "expression-compiler",
+        "source_ast_sha256": "8e2825e2105908517402c0d579f08e1ef302ba5c0b8a92538f4e982492dfa834"
+    }
 }

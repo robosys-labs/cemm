@@ -48,9 +48,12 @@ for the current data and supervision repair boundary.
 records a STOPPED/BLOCKED result at the unresolved-designation representation
 boundary. The approved
 [unresolved-designation design](docs/superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md)
-owns the repair and its future evidence-only self-research handoff. The only
-permissible next work is a reviewed implementation plan; no implementation may
-begin until that plan is approved. Bulk corpus authoring, review, regeneration
+owns the repair and its future evidence-only self-research handoff. The approved
+[implementation plan](docs/superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md)
+now governs the isolated repair. Tasks 1–3 are reviewed; the vertical path
+remains incomplete. Its Task 4 preflight records missing interrogative
+form evidence, so unresolved builder emission requires a reviewed form-evidence amendment.
+Bulk corpus authoring, review, regeneration
 and training remain frozen, and R5 remains unavailable until a future
 successful closure rerun and authentic R4.1 admission.
 

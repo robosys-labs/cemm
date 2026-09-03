@@ -25,9 +25,11 @@ continues to distinguish `SemanticSwitchProgram` derivation from canonical
 records a STOPPED/BLOCKED result at the unresolved-designation representation
 boundary. The approved
 [unresolved-designation design](superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md)
-owns the correction and constrains its later research handoff. The only
-permissible next work is a reviewed implementation plan; no implementation may
-begin until that plan is approved. All bulk R4.1 review, authoring, export,
+owns the correction and constrains its later research handoff. The approved
+[implementation plan](superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md)
+governs the isolated repair. Tasks 1–3 are reviewed; the vertical path remains
+incomplete. Task 4 requires a reviewed form-evidence amendment
+before unresolved builder emission. All bulk R4.1 review, authoring, export,
 regeneration and training workflows remain suspended. The former implementation
 plan is historical evidence and owns no current execution authority. This
 routing adds no new phase, gate, ABI or runtime owner.

@@ -45,6 +45,10 @@ UNRESOLVED_DESIGNATION_DESIGN = (
     "docs/superpowers/specs/"
     "2026-09-03-unresolved-designation-and-research-handoff-design.md"
 )
+UNRESOLVED_DESIGNATION_PLAN = (
+    "docs/superpowers/plans/"
+    "2026-09-03-unresolved-designation-implementation-plan.md"
+)
 SEMANTIC_ALGEBRA_AMENDMENT = (
     "docs/superpowers/specs/"
     "2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md"
@@ -119,6 +123,7 @@ GOVERNING_DOCUMENTS = (
     R4_1_AMENDMENT,
     R4_CLOSURE_SLICE_DESIGN,
     UNRESOLVED_DESIGNATION_DESIGN,
+    UNRESOLVED_DESIGNATION_PLAN,
     SEMANTIC_ALGEBRA_AMENDMENT,
     R4_1_REPLAY_DESIGN,
     R4_1_REPLAY_PLAN,
@@ -519,7 +524,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R4-Closure-Slice-Stop-Review",
         "owner_ref": "governance",
-        "source_ast_sha256": "9b0460a1c0d106c90f1219b47bffc92dd8aa22cdde16fdaa302a8bde23160d7d"
+        "source_ast_sha256": "a2c95d331e546aeffdd9f2b66b6b942143fb2dfba2d9fd02325cdf07fb8253f9"
     },
     "tests/test_replay_governance.py::test_governing_documents_do_not_prescribe_rejected_r4_r5_paths": {
         "activation_phase": "G0",
@@ -1226,6 +1231,9 @@ def test_r4_closure_stop_routes_only_to_reviewed_representation_design() -> None
     assert governing.index(UNRESOLVED_DESIGNATION_DESIGN) == (
         governing.index(R4_CLOSURE_SLICE_DESIGN) + 1
     )
+    assert governing.index(UNRESOLVED_DESIGNATION_PLAN) == (
+        governing.index(UNRESOLVED_DESIGNATION_DESIGN) + 1
+    )
     assert R4_CLOSURE_SLICE_PLAN not in governing
     assert R4_CLOSURE_SLICE_PLAN in historical
     assert set(SUPERSEDED_R4_REVIEW_WORKFLOW_DOCUMENTS) <= superseded
@@ -1257,7 +1265,7 @@ def test_r4_closure_stop_routes_only_to_reviewed_representation_design() -> None
     repair = (ROOT / UNRESOLVED_DESIGNATION_DESIGN).read_text(encoding="utf-8")
     normalized_repair = re.sub(r"\s+", " ", repair.casefold())
     for marker in (
-        "approved design; implementation plan not yet approved",
+        "implementation plan and acyclic ownership amendment approved",
         "no automatic authority or world write",
         "research capability is explicitly not required to make that test pass",
         "vocabulary bump is not authorized by this design",
@@ -1283,8 +1291,9 @@ def test_r4_closure_stop_routes_only_to_reviewed_representation_design() -> None
         for marker in (
             "closure stopped",
             UNRESOLVED_DESIGNATION_DESIGN.rsplit("/", 1)[-1],
-            "reviewed implementation plan",
-            "no implementation may begin until that plan is approved",
+            UNRESOLVED_DESIGNATION_PLAN.rsplit("/", 1)[-1],
+            "task 4",
+            "form-evidence amendment",
         ):
             assert marker.casefold() in text, (relative, marker)
         assert "only executable next step" not in text, relative

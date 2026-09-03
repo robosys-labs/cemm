@@ -109,9 +109,9 @@ is not implemented or activated until its owning replay admission succeeds:
 
 ```text
 Semantic Contribution ABI: 1
-Proposal Context ABI: 1
+Proposal Context ABI: 2 (unadmitted repair target)
 Semantic Switch Program ABI: 2
-Semantic Expression ABI: 1
+Semantic Expression ABI: 2 (unadmitted repair target)
 Compilation Proof ABI: 1
 Source Coverage ABI: 2
 Proposal Result ABI: 2
@@ -196,8 +196,10 @@ now owns that repair together with the approved
 `docs/superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md`.
 The approved acyclic ownership amendment retains `VariableSlot -> frame`
 ownership and forbids a reciprocal hashed variable pointer on the frame.
-Task 2 repair passed renewed spec and quality review at `aeaad1f`; Task 3 is
-the next implementation boundary. This does not
+Task 2 repair passed renewed spec and quality review at `aeaad1f`; Task 3 passed
+both reviews at `40151e8`. Task 4 preflight found no interrogative
+distinction between designation and location questions; a reviewed form-evidence
+amendment is required before unresolved builder emission. This does not
 admit the ABI change or reopen bulk R4.1/R5 work.
 
 Bulk R4.1 authoring, purpose allocation, realization-recipe review, corpus

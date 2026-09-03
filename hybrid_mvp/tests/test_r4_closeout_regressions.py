@@ -56,7 +56,7 @@ __cemm_test_inventory__ = {'tests/test_r4_closeout_regressions.py::test_every_re
                                                                                                         'diagnostic_role': 'owner',
                                                                                                         'introduced_by_task': 'R4-Authentic-Designation-Tranche',
                                                                                                         'owner_ref': 'expected-contract',
-                                                                                                        'source_ast_sha256': '5c3bd3eeceb770d31465b913495276d876c5c1df4ff69e84f4679d69b88d1394'},
+                                                                                                        'source_ast_sha256': '82da2f7334233a16bd2869a8c020ab3b94b700ea2fa41c76d171645a153a9965'},
  'tests/test_r4_closeout_regressions.py::test_reviewed_greeting_and_farewell_surfaces_match_authentic_r3_cycles': {'activation_phase': 'R4',
                                                                                                                    'assertion_ref': 'assertion:r4-designation-events-match-authentic-r3-cycles',
                                                                                                                    'diagnostic_role': 'owner',

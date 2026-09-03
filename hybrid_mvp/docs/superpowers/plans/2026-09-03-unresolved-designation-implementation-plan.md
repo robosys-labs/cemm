@@ -9,12 +9,20 @@
 **Tech Stack:** Python 3.12, frozen dataclasses, canonical content-addressed JSON, pytest, the existing recursive composer/compiler/verifier, `DesignationIndex`, and the existing R2/R3/R4 validation selectors.
 
 **Execution status (2026-09-03):** plan and one-way variable-ownership amendment
- approved; Tasks 1 and 2 completed; Task 3 in progress. The user approved removing
+approved; Tasks 1–3 completed and independently reviewed; vertical implementation
+is incomplete and paused before Task 4. The user approved removing
 the frame's hashed variable back-pointer while retaining existing variable-to-
 frame ownership. Task 2 passed renewed spec and quality review at `aeaad1f`;
 the ABI/lazy-import owners passed 71 tests. The
 historical stop record remains at the end of this document; no activation,
 merge or admission is implied.
+
+Task 3's canonical encoding commit is `e8e99e9`; its frozen five-operator
+predecessor is preserved by the explicit successor at `40151e8`. Both spec and
+quality reviews passed. No Program ABI, runtime bound, corpus, authority data,
+language-pack or validation-tier change was made. Source test-inventory alignment
+is complete; clean-worktree governance and existing phase-selector checks remain
+to be recorded without admitting the incomplete vertical slice.
 
 **Task 4 preflight constraint:** do not begin builder emission under the
 assumption that an unresolved designation-query construction already exists.
@@ -62,7 +70,7 @@ op:designation(
 - Modify: `tests/test_proposal_context_program_verifier_canary.py`
 - Test: `tests/test_r3_r4_predecessor_regressions.py`
 
-- [ ] **Step 1: Reproduce the intentional RED from a clean tree**
+- [x] **Step 1: Reproduce the intentional RED from a clean tree**
 
 Run from `C:\dev\cemm\hybrid_mvp`:
 
@@ -72,7 +80,7 @@ python -m pytest tests/test_r3_r4_predecessor_regressions.py::test_closure_known
 
 Expected: known and invalid-program cases pass; unknown designation fails first at Stage 5 because `zorbulate` remains a critical residual. If the earliest divergence differs, stop and record it before changing code.
 
-- [ ] **Step 2: Add owner tests for the intended Proposal Context shape**
+- [x] **Step 2: Add owner tests for the intended Proposal Context shape**
 
 Replace the old diagnostic assertion that `zorbulate` has no frame/literal/variable with assertions that the builder emits exactly one `UnresolvedDesignationFrame` containing:
 
@@ -87,7 +95,7 @@ assert not critical_residuals_for_zorbulate
 
 Also add negative cases proving that a plain unknown assertion and an unknown event argument do not receive this query-only frame.
 
-- [ ] **Step 3: Add semantic hard-cut tests before implementation**
+- [x] **Step 3: Add semantic hard-cut tests before implementation**
 
 Add tests requiring both known and unresolved designation expressions to use:
 
@@ -99,7 +107,7 @@ assert role(app, "role:label_type") == GroundedReference("label:lexical")
 
 The known designation **fact** must bind `role:target` to a grounded semantic ref. The unresolved query must bind it to `BoundVariable`. Do not use the pre-evaluation meaning of `What is CEMM?` as the grounded-fact fixture: that existing path is a nominal-definition query, not an asserted designation fact. Preserve its definition behavior. Task 7 separately tests an open designation query against known indexed facts. Add a canary that the unresolved derivation serializes with `PROGRAM_ABI_VERSION == 2` and uses only existing `instantiate_operator`, `bind_role`, and `project_variable` actions besides structural scaffolding.
 
-- [ ] **Step 4: Run the new tests and observe only the expected failures**
+- [x] **Step 4: Run the new tests and observe only the expected failures**
 
 ```powershell
 python -m pytest tests/test_proposal_context_builder.py tests/test_semantic_expressions.py tests/test_proposal_context_program_verifier_canary.py -q -p no:cacheprovider
@@ -107,7 +115,7 @@ python -m pytest tests/test_proposal_context_builder.py tests/test_semantic_expr
 
 Expected: new ABI/frame/encoding assertions fail; unrelated tests remain green.
 
-- [ ] **Step 5: Commit the executable contract**
+- [x] **Step 5: Commit the executable contract**
 
 ```powershell
 git add tests/test_proposal_context_builder.py tests/test_semantic_expressions.py tests/test_proposal_context_program_verifier_canary.py
@@ -119,11 +127,11 @@ git commit -m "test(r4): freeze unresolved designation semantics"
 **Files:**
 
 - Modify: `src/cemm_authoritative_hybrid/proposal_context.py`
-- Modify: `src/cemm_authoritative_hybrid/__init__.py`
+- Inspect: `src/cemm_authoritative_hybrid/__init__.py` (left unchanged to preserve the lazy public API)
 - Modify: `tests/test_proposal_context_abi1.py`
-- Modify: `tests/conftest.py`
+- Inspect: `tests/conftest.py` (no fixture change required)
 
-- [ ] **Step 1: Add the exact unresolved frame type**
+- [x] **Step 1: Add the exact unresolved frame type**
 
 In `proposal_context.py`, set `PROPOSAL_CONTEXT_ABI_VERSION = 2` and add a frozen content-addressed dataclass with no nullable grounded-frame fields:
 
@@ -143,7 +151,7 @@ ApplicationFrame = ApplicationFrameSlot | UnresolvedDesignationFrame
 
 Validate exact nonempty typed refs, tuple types, uniqueness, bounds, and content identity in `create`, `as_dict`, and `from_dict`. Include an explicit wire discriminator such as `frame_type: "grounded" | "unresolved_designation"`; do not infer the variant from missing keys.
 
-- [ ] **Step 2: Make Proposal Context serialization and indexes union-aware**
+- [x] **Step 2: Make Proposal Context serialization and indexes union-aware**
 
 Change `ProposalContext.application_frames` to `tuple[ApplicationFrame, ...]`. Decode by the exact discriminator and reject unknown, missing, hybrid, or extra-field variants. Keep `frame_for_designation()` grounded-only and add:
 
@@ -153,11 +161,11 @@ def unresolved_designation_frame(self, slot_ref: str) -> UnresolvedDesignationFr
 
 Build separate indexes for grounded designation slots and unresolved frame refs. Do not create a fake `designation_slot_ref` for unresolved frames.
 
-- [ ] **Step 3: Add cross-object invariants**
+- [x] **Step 3: Add cross-object invariants**
 
 Require an unresolved frame to reference exactly one existing literal contribution and query binder. Require exactly one VariableSlot to point to that frame, with `role:target`, matching construction, and nonempty sources backed by `open_variable` contributions. Derive a bounded `variables_for_frame_role(frame_ref, role_ref)` tuple index; do not add a serialized variable pointer to the frame. Require frame source units to equal the literal's exact geometry and reject duplicate construction/span hypotheses. Authenticate reviewed `label_type` authority at the builder and verifier, not through an authority scan inside Proposal Context. Preserve all existing bounds. Replace the borrowed-variable fixture with an unresolved-only context built frame-first, variable-second; reject missing, unrelated-frame, wrong-role, duplicate and mismatched-construction variables.
 
-- [ ] **Step 4: Hard-reject Proposal Context ABI 1 bytes**
+- [x] **Step 4: Hard-reject Proposal Context ABI 1 bytes**
 
 Update the ABI tests to prove:
 
@@ -166,7 +174,7 @@ Update the ABI tests to prove:
 - context identity changes when any unresolved frame field changes; and
 - the filename is historical lineage, not an active ABI assertion.
 
-- [ ] **Step 5: Run Proposal Context owner tests**
+- [x] **Step 5: Run Proposal Context owner tests**
 
 ```powershell
 python -m pytest tests/test_proposal_context_abi1.py tests/test_proposal_context_builder.py -q -p no:cacheprovider
@@ -174,7 +182,7 @@ python -m pytest tests/test_proposal_context_abi1.py tests/test_proposal_context
 
 Expected: ABI/round-trip tests pass; builder's unresolved-emission test may still fail until Task 4.
 
-- [ ] **Step 6: Commit the ABI owner**
+- [x] **Step 6: Commit the ABI owner**
 
 ```powershell
 git add src/cemm_authoritative_hybrid/proposal_context.py src/cemm_authoritative_hybrid/__init__.py tests/test_proposal_context_abi1.py tests/conftest.py
@@ -190,6 +198,7 @@ git commit -m "feat(r2): add unresolved designation frame ABI"
 - Modify: `src/cemm_authoritative_hybrid/recursive_compiler.py`
 - Modify: `src/cemm_authoritative_hybrid/verifier_reconstruction.py`
 - Modify: `src/cemm_authoritative_hybrid/verifier.py`
+- Modify: `src/cemm_authoritative_hybrid/recursive_composer/_core.py` (grounded designation source-ownership recognition only)
 - Modify: `tests/test_semantic_expression_compiler.py`
 - Modify: `tests/test_semantic_expressions.py` (correct the grounded-fact fixture as specified in Task 1)
 - Modify: `tests/test_exact_verifier.py`
@@ -198,12 +207,13 @@ git commit -m "feat(r2): add unresolved designation frame ABI"
 - Modify: `src/cemm_authoritative_hybrid/r4_contracts.py` (mechanical designation constructors and exact role validator only)
 - Modify: `tests/test_r3_learning_response.py`, `tests/test_realization_verifier.py`, `tests/test_safe_realizer.py` (direct expression fixtures only)
 - Modify: `tests/test_r4_assertion_compiler.py` (canonical designation regression only)
+- Modify as mechanically required: direct test fixtures/assertions that require the retired designation encoding, including `tests/test_r4_closeout_regressions.py`; report each changed file without changing its behavioral expectation. Frozen predecessor bodies must remain unchanged: add an explicit canonical successor using existing `supersedes_node_id` metadata instead. This applies to `tests/test_adversarial_programs.py::test_only_five_persistent_operators_accepted`.
 
-- [ ] **Step 1: Bump only Semantic Expression ABI**
+- [x] **Step 1: Bump only Semantic Expression ABI**
 
 Set `SEMANTIC_EXPRESSION_ABI_VERSION = 2`. Keep the wire fields unchanged, but reject ABI 1 during exact deserialization because canonical `op:designation` content has changed. Do not bump Verified Meaning ABI or Program ABI: their containers already bind the embedded expression/program identity.
 
-- [ ] **Step 2: Normalize grounded designation contributions at their owner**
+- [x] **Step 2: Normalize grounded designation contributions at their owner**
 
 In `_designation_application_contributions`, make the reviewed label type the application predicate and a grounded `role:label_type` filler. Preserve the designated semantic ref only as `role:target`:
 
@@ -218,11 +228,21 @@ derived_role_targets = (
 
 Use authority kind/frame metadata to choose `label:lexical` versus `label:name`; never branch on the source word or ref spelling.
 
-- [ ] **Step 3: Tighten compiler and both independent verifier paths**
+- [x] **Step 3: Tighten compiler and both independent verifier paths**
 
 Compile `op:designation` only when the frame predicate is a reviewed label type and the roles contain exactly compatible `role:label_type`, `role:surface`, and `role:target` fillers. Update independent reconstruction to derive the same graph from context/program actions. Reject the legacy target-as-predicate encoding rather than translating it.
 
-- [ ] **Step 4: Update active learning fixtures and expectations**
+Preserve the existing trust boundary: ORIENT constructs the immutable,
+generation-pinned Proposal Context from linked authority and checks the actual
+reviewed atom kind. The compiler and verifier consume that trusted catalog;
+they validate canonical frame structure and independently reconstruct the
+candidate's exact contribution/designation provenance. They do not independently
+link authority or authenticate a caller-invented replacement for ORIENT's
+context. Do not add a second authority injection/scan merely to duplicate the
+builder's check. Verifier diagnostics must describe the contextual proof they
+actually validate, not claim a separate authority lookup.
+
+- [x] **Step 4: Update active learning fixtures and expectations**
 
 Change manually constructed designation expressions in `test_r3_learning_transaction.py` and affected owner fixtures to:
 
@@ -247,7 +267,12 @@ ABI 2 would retain a path that produces the retired meaning. Preserve valid
 name queries with a bound surface and grounded target. This dependency repair
 does not authorize R4 corpus/gold regeneration or admission.
 
-- [ ] **Step 5: Run the canonical-expression owner tests**
+The composer's grounded designation source-ownership recognizer also compares
+the old predicate/target shape. Update that structural comparison so the
+predicate does not consume the surface unit before its literal can bind.
+Preserve exact-once source accounting; unresolved composition remains Task 5.
+
+- [x] **Step 5: Run the canonical-expression owner tests**
 
 ```powershell
 python -m pytest tests/test_semantic_expressions.py tests/test_semantic_expression_compiler.py tests/test_exact_verifier.py tests/test_r2_verifier_reconstruction.py tests/test_r3_learning_transaction.py -q -p no:cacheprovider
@@ -255,7 +280,7 @@ python -m pytest tests/test_semantic_expressions.py tests/test_semantic_expressi
 
 Expected: corrected known designation paths pass; no Program ABI change is required.
 
-- [ ] **Step 6: Commit the semantic hard cut**
+- [x] **Step 6: Commit the semantic hard cut**
 
 ```powershell
 git add src/cemm_authoritative_hybrid/expressions.py src/cemm_authoritative_hybrid/proposal_context.py src/cemm_authoritative_hybrid/recursive_compiler.py src/cemm_authoritative_hybrid/verifier_reconstruction.py src/cemm_authoritative_hybrid/verifier.py tests/test_semantic_expression_compiler.py tests/test_exact_verifier.py tests/test_r2_verifier_reconstruction.py tests/test_r3_learning_transaction.py
@@ -434,6 +459,22 @@ Inject `active_language` from the activated form pack when `bootstrap.py` constr
 
 Every `_FactView` must bind generation, designation fact ref, label type, exact surface, target ref, and reviewed placement.
 
+`DesignationFact` currently stores only its identity, surface, target and
+language. Those index records establish lexical designations; they cannot be
+reclassified as `label:name` because the query asks for that family or the
+target happens to be a person. Restrict seed-index projection to the reviewed
+lexical family. Existing explicit world designation facts retain their own
+label family. Supporting additional seed-index families would require a
+separate reviewed authority/data change, not a runtime heuristic.
+
+Preserve each indexed fact's actual surface: `facts_for_surface` may return
+case-folded alternatives, but a projector must not rewrite their literal to
+match the query and thereby fabricate exact evidence. Test exact-literal
+matching explicitly. Bound rows with `max_designations_per_span`, propagate
+overflow separately from the bounded rows, and ensure retrieval/proof budgeting
+does not silently discard ambiguity alternatives in favor of unrelated facts.
+One indexed lookup must suffice to determine both rows and overflow.
+
 - [ ] **Step 2: Preserve no-result and multiple-result semantics**
 
 - Zero matching facts contributes no fact and yields `UNKNOWN`.
@@ -554,7 +595,7 @@ git commit -m "docs(r4): record designation closure outcome"
 - Modify: `docs/superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md`
 - Modify: `docs/DOCUMENT_AUTHORITY.json`
 - Modify as mechanically required: `configs/validation_gates.json`
-- Modify as mechanically required: test metadata blocks in changed R3/R4 tests
+- Modify as mechanically required: literal test metadata blocks in all changed/new owner tests, including non-`test_r[34]_` filenames
 - Do not modify: R4 corpus/scenario/training artifacts
 
 - [ ] **Step 1: Update active ABI truth**
@@ -575,6 +616,13 @@ python scripts/check_test_inventory.py --phase R4 --source-only
 ```
 
 Expected: only changed test-function hashes are refreshed; each source-only inventory check passes. Add new owner nodes to existing R2/R3/R4 selectors only when their literal metadata role requires it. Do not add a selector tier or pytest process.
+
+The R3/R4 refresher only visits `test_r[34]_*.py`; it does not register new
+tests, repair renamed metadata keys, or refresh the other owner modules.
+Supply literal parameter IDs and exact per-node metadata for those modules
+using the existing canonical AST digest algorithm. Preserve the immutable
+`governance/test_inventory.json` and its pin. Do not mutate a frozen predecessor
+body, suppress a failing owner, or change activation roles to avoid execution.
 
 - [ ] **Step 4: Run focused owner suites in one pytest process**
 
@@ -718,3 +766,58 @@ does not authorize. It does not require a new kernel operator, semantic atom,
 query engine, online research path or validation tier. Any approved form change
 must preserve the existing realization contract and deterministic artifact
 checks. Until then, retain the critical residual rather than guessing meaning.
+
+## Reviewed implementation evidence through Task 3
+
+- Task 2 acyclic representation: 71 ABI/lazy-import tests passed; both reviews
+  accepted `aeaad1f`.
+- Task 3 required five-suite run: 72 passed; the unresolved-query expression
+  test remains an intentional failure belonging to Tasks 4–8.
+- Independent combined owner run (context/ABI, builder, expressions, compiler,
+  verifier/reconstruction, learning/realization fixtures, recursive composition,
+  assertion compiler and three-case closure): 249 passed, four unresolved-path
+  failures. Nothing was skipped or marked xfail in this run. The failures are
+  the missing frame, missing selected expression, missing candidate and the
+  existing critical-residual closure stop.
+- The canonical five-operator successor passed independently. The frozen
+  predecessor's AST remains
+  `b10ed666c4d4a111bbd83f91fa37977ab2210e98ec5b7ce1e977516b1cfe1769`;
+  active selection must follow its explicit successor, not rewrite history.
+- Broad R4 closeout checks exposed four failures also reproduced on a clean
+  archive of `aeaad1f`: 150 scenario mismatches beginning with
+  `transition_simulation-0110`, adversarial/gap aggregate mismatches, and the
+  sensor provenance expectation `training` versus `recursive-composer`.
+  These were not repaired or relabeled as passes.
+- A raw, unfiltered R1/R2 sweep also ran historical pre-R3 runtime fixtures;
+  their `MissingOwner(r3_owner)` failure and the old R2 fake index's missing
+  `facts_for_surface` method were reproduced on the same baseline. Raw source
+  discovery is not the authenticated active-test selector and is not admission
+  evidence. Inventory bookkeeping failures are handled separately in Task 10.
+- Grounded `CEMM`, `What is your name?`, `yoz means hello`, and
+  `What is CEMM?` preserve selected graphs and response meanings. R3 explicitly
+  has no admitted surface realization before R5; no verified-surface claim is
+  made by these smokes.
+- Both independent Task 3 reviews accepted `40151e8`. Source compilation,
+  document JSON parsing and whitespace checks passed. Full vertical closure,
+  phase admission and R5 remain unavailable.
+
+## Partial Task 10 alignment evidence
+
+- R2/R3/R4 source-only inventory checks pass with 1124/1436/1766 active nodes;
+  517 R3/R4 metadata records verify. Frozen inventory bytes and pins are unchanged.
+- The baseline/current node-set audit accounts for every addition, rename and
+  explicit successor. G0 is unchanged; R1 has one rename; R2/R3 add 44 and remove
+  two old nodes; R4 adds 53 and removes three old nodes. No assertion is suppressed.
+  The reviewed R5 partition remains 43 rows: 17 successor, 25 deferred, one retired.
+- Existing selector changes are exact-node maintenance only: one R1 ABI-test
+  rename; four R2 verifier, eight R2 expression-compiler, 31 R2 form-context and
+  eight R4 contract-review nodes. No new tier, step, process or limit is introduced.
+- Independent inventory/governance run: 143 passed; the one remaining check
+  rejected dirty governed inputs as designed. A clean-worktree rerun is required.
+  Source compilation, document JSON parsing and whitespace checks pass.
+- Pre-existing selector discrepancies remain explicit and untouched: the R3
+  obsolete admission-stop node, five inactive R4 mutation-partition SR5 nodes,
+  and two missing R4 closure phase successors. Source-inventory success is not
+  phase admission. No phase-green claim is made.
+- Tasks 4–9 and full Task 10 completion remain pending. The next decision is the
+  narrow reviewed form-evidence amendment described in the Task 4 preflight.

@@ -31,8 +31,12 @@
 records a STOPPED/BLOCKED result at the unresolved-designation representation
 boundary. The approved
 [unresolved-designation design](superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md)
-owns the repair. The only permissible next work is a reviewed implementation
-plan; no implementation may begin until that plan is approved. The former
+owns the repair together with the approved
+[implementation plan](superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md).
+Tasks 1–3 are reviewed; the vertical path remains incomplete. Task 4
+is blocked on a reviewed form-evidence amendment, as its preflight demonstrates
+that generic query evidence cannot distinguish designation from location.
+The former
 closure implementation plan is historical evidence only. Bulk R4.1 review,
 source authoring, selection export, corpus expansion, regeneration and training
 remain frozen. This routing adds no phase, gate, ABI, runtime owner or admission

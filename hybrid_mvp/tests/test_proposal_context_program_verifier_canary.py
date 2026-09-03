@@ -557,4 +557,13 @@ __cemm_test_inventory__ = {'tests/test_proposal_context_program_verifier_canary.
                                                                                                                        'diagnostic_role': 'owner',
                                                                                                                        'introduced_by_task': 'R1-Task-7',
                                                                                                                        'owner_ref': 'program-verifier',
-                                                                                                                       'source_ast_sha256': 'fbb6b67289cc5dd26a1e1707b9c4c6fe0006b703367c0573f59270e9233008d1'}}
+                                                                                                                       'source_ast_sha256': 'fbb6b67289cc5dd26a1e1707b9c4c6fe0006b703367c0573f59270e9233008d1'},
+    "tests/test_proposal_context_program_verifier_canary.py::test_unresolved_designation_derivation_uses_program_abi_2_without_new_actions": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-derivation-uses-program-abi-2-without-new-actions",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-3",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "7d3ef621f778f0b5c7b9121a9331d03fd67054a15ba7dc476e111f3d935909a5"
+    }
+}

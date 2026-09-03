@@ -1,7 +1,7 @@
 # Unresolved Designation and Research Handoff Design
 
 **Date:** 2026-09-03
-**Status:** design, implementation plan and acyclic ownership amendment approved; Tasks 1–2 reviewed; Task 3 in progress
+**Status:** design, implementation plan and acyclic ownership amendment approved; Tasks 1–3 reviewed; vertical implementation incomplete before Task 4
 **Scope:** `hybrid_mvp/` representation closure and its bounded handoff to a
 future self-research capability
 
@@ -12,7 +12,11 @@ was authorized by the approved implementation plan. Independent Task 2 quality
 review exposed a content-addressed frame/variable ownership cycle. The user
 approved the narrow one-way ownership amendment now incorporated in section 4.
 Task 2 passed renewed spec and quality review at `aeaad1f`; downstream
-implementation may now advance within the approved slice.
+implementation advanced through Task 3, which passed spec and quality review
+at `40151e8`. Task 4 preflight then proved that the existing generic query
+features cannot distinguish designation from location questions. A reviewed
+form-evidence amendment is required before unresolved builder emission; do not
+introduce a source-word branch or reinterpret every copular query as designation.
 The historical stop record and current repair boundary are in
 `../plans/2026-09-03-unresolved-designation-implementation-plan.md`.
 

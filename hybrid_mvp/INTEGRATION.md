@@ -56,8 +56,11 @@ and the [document authority map](docs/DOCUMENT_AUTHORITY.json). **Closure
 stopped:** the slice is STOPPED/BLOCKED at the unresolved-designation
 representation boundary. The approved
 `docs/superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md`
-owns the repair. The only permissible next work is its reviewed implementation
-plan; no implementation may begin until that plan is approved. Bulk review,
+owns the repair together with the approved
+[implementation plan](docs/superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md).
+Tasks 1–3 are reviewed; the vertical path remains incomplete.
+Task 4 cannot emit an unresolved query frame until a reviewed form-evidence amendment
+supplies the missing interrogative form distinction. Bulk review,
 authoring, regeneration and training remain stopped.
 
 R5 training, selection, calibration, frozen evaluation and realization

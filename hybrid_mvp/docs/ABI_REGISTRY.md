@@ -15,9 +15,9 @@ checkpoint, calibration, evaluation, activation and release artifact.
 | Orientation ABI | 1 | `src/cemm_authoritative_hybrid/cycle.py` | Transient / episode-serializable | `OrientationProjector` / `Orientation.from_dict` | Complete-content `orientation_ref` covers every serialized semantic and lineage field with `RevisionPin` as sole revision owner; transient `cache_key` is omitted and cannot affect identity. |
 | Evidence ABI | 1 | `src/cemm_authoritative_hybrid/forms.py` | Transient / episode-serializable | `FormResolver` | Exact reversible source geometry; one immutable evidence packet; no downstream retokenization authority. |
 | Semantic Contribution ABI | 1 | `src/cemm_authoritative_hybrid/contributions.py` | Transient | `ContributionExpander` | Every source unit yields bounded typed contributions or one typed unresolved contribution. |
-| Proposal Context ABI | 1 | `src/cemm_authoritative_hybrid/proposal_context.py` | Transient / episode-serializable | `ProposalContextBuilder` | Contains only current grounded designation/contribution/mode/application/reference/scope/link/variable/transition/residual slots, exact source spans and revision pin; builds bounded lookup indexes once. |
+| Proposal Context ABI | **2** | `src/cemm_authoritative_hybrid/proposal_context.py` | Transient / episode-serializable | `ProposalContextBuilder` | Unadmitted repair target: closed grounded/unresolved-designation frame union, acyclic variable-to-frame ownership, exact spans and revision pin; bounded derived indexes built once. Unresolved builder emission remains blocked on reviewed form evidence. |
 | Semantic Switch Program ABI | **2** | `src/cemm_authoritative_hybrid/programs.py` | Episode-serializable | `SemanticExpressionCompiler` and `ExactProgramVerifier` | Exactly one class owner; frozen per-action slot schemas; complete ordered full-content program hash including ABI, context ref, indexed actions, pointers, roots, assignments and revisions; no resolved expression and no sorted action identity. |
-| Semantic Expression ABI | **1** | `src/cemm_authoritative_hybrid/expressions.py` | Episode/world/reference serializable as permitted | `SemanticExpressionCompiler` | Canonical recursive five-operator expression forest/root set with applications, scope operators, expression links, binders and typed unresolved fillers. |
+| Semantic Expression ABI | **2** | `src/cemm_authoritative_hybrid/expressions.py` | Episode/world/reference serializable as permitted | `SemanticExpressionCompiler` | Unadmitted repair target: canonical recursive five-operator forest. Designation predicate is its grounded label family with exact label_type/surface/target roles; ABI 1 and legacy target-as-predicate content fail closed. |
 | Compilation Proof ABI | **1** | `src/cemm_authoritative_hybrid/expressions.py` | Episode-serializable | `ExactProgramVerifier` | Binds program/context/expression/revision and proves every action, source assignment and declared root translated exactly once; proof rows are retained, not only hashed. |
 | Source Coverage ABI | 2 | `src/cemm_authoritative_hybrid/coverage.py` | Episode-serializable | `CoverageVerifier` | Reconstructs context-owned criticality and validates exact source/contribution/action/role assignments, no missing/extra/duplicate units and typed residuals; coverage never manufactures expression structure. |
 | Proposal Result ABI | 2 | `src/cemm_authoritative_hybrid/proposal.py` | Episode-serializable | candidate-batch validator | Content-addressed ranked envelopes preserve contiguous rank, fixed-point score, provenance, model/revision identity and exact context ref; truncation fails closed and abstention is explicit. |
@@ -157,7 +157,10 @@ program, expression and verified meaning may not change.
 
 ## 5. Invalidation rule
 
-Program ABI v2 and Semantic Expression ABI v1 require regeneration of:
+The current hard-cut targets are Proposal Context ABI v2, unchanged Program
+ABI v2, and Semantic Expression ABI v2. Dependent artifacts require fresh
+reviewed regeneration/admission; this does not authorize bulk rebuilding while
+the R4 closure is stopped. Invalidated descendants include:
 
 ```text
 reviewed expected contracts

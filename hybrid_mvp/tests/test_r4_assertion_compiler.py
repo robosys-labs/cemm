@@ -82,7 +82,7 @@ __cemm_test_inventory__ = {'tests/test_r4_assertion_compiler.py::test_unknown_as
                                                                                                          'diagnostic_role': 'owner',
                                                                                                          'introduced_by_task': 'R4.1-SR4.5',
                                                                                                          'owner_ref': 'expected-contract',
-                                                                                                         'source_ast_sha256': 'bb6810ca70840b81a57a0d1fa41403e55f35d2cf7ac3751153d014e7c15cbc38'},
+                                                                                                         'source_ast_sha256': '067df44389e65adb8a08968c9532bf6cf8880190becfde82404dcf45a9732128'},
  'tests/test_r4_assertion_compiler.py::test_sr4_5_true_multi_root_and_type_role_remain_one_meaning': {'activation_phase': 'R4',
                                                                                                       'assertion_ref': 'assertion:r4-sr4-5-true-multi-root-and-type-role-remain-one-meaning',
                                                                                                       'diagnostic_role': 'owner',
@@ -117,7 +117,72 @@ __cemm_test_inventory__ = {'tests/test_r4_assertion_compiler.py::test_unknown_as
                                                                                                           'assertion_ref': 'assertion:r4-closure-test-authority-operation-prerequisites-are-authority-linked-and-preserved',
                                                                                                           'diagnostic_role': 'admission_only',
                                                                                                           'introduced_by_task': 'R4-Closure-Test-Authority',
-                                                                                                          'source_ast_sha256': '57514cb034a849ebe2f6cfe064e996ec48739ad8d8ae58029a62e70ebb7df81c'}}
+                                                                                                          'source_ast_sha256': '57514cb034a849ebe2f6cfe064e996ec48739ad8d8ae58029a62e70ebb7df81c'},
+    "tests/test_r4_assertion_compiler.py::test_designation_assertion_compiles_canonical_lexical_label_roles": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-unresolved-designation-designation-assertion-compiles-canonical-lexical-label-roles",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Unresolved-Designation-Task-1",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "2b9c7f9a2365bfba49c953b2f205916855e498b31badc8ca592da0aecd46bca8"
+    },
+    "tests/test_r4_assertion_compiler.py::test_lexical_designation_assertion_requires_reviewed_label_authority[missing-designates]": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-unresolved-designation-lexical-designation-assertion-requires-reviewed-label-authority-missing-designates",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Unresolved-Designation-Task-1",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "fc2db25aecedd34c99667d3349efeef29161f43c1c7aea048a898f8bf0328ced"
+    },
+    "tests/test_r4_assertion_compiler.py::test_lexical_designation_assertion_requires_reviewed_label_authority[missing-lookup]": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-unresolved-designation-lexical-designation-assertion-requires-reviewed-label-authority-missing-lookup",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Unresolved-Designation-Task-1",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "fc2db25aecedd34c99667d3349efeef29161f43c1c7aea048a898f8bf0328ced"
+    },
+    "tests/test_r4_assertion_compiler.py::test_lexical_designation_assertion_requires_reviewed_label_authority[wrong-kind-designates]": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-unresolved-designation-lexical-designation-assertion-requires-reviewed-label-authority-wrong-kind-designates",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Unresolved-Designation-Task-1",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "fc2db25aecedd34c99667d3349efeef29161f43c1c7aea048a898f8bf0328ced"
+    },
+    "tests/test_r4_assertion_compiler.py::test_lexical_designation_assertion_requires_reviewed_label_authority[wrong-kind-lookup]": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-unresolved-designation-lexical-designation-assertion-requires-reviewed-label-authority-wrong-kind-lookup",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Unresolved-Designation-Task-1",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "fc2db25aecedd34c99667d3349efeef29161f43c1c7aea048a898f8bf0328ced"
+    },
+    "tests/test_r4_assertion_compiler.py::test_lexical_designation_assertion_requires_reviewed_label_authority[unreviewed-designates]": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-unresolved-designation-lexical-designation-assertion-requires-reviewed-label-authority-unreviewed-designates",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Unresolved-Designation-Task-1",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "fc2db25aecedd34c99667d3349efeef29161f43c1c7aea048a898f8bf0328ced"
+    },
+    "tests/test_r4_assertion_compiler.py::test_lexical_designation_assertion_requires_reviewed_label_authority[unreviewed-lookup]": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-unresolved-designation-lexical-designation-assertion-requires-reviewed-label-authority-unreviewed-lookup",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Unresolved-Designation-Task-1",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "fc2db25aecedd34c99667d3349efeef29161f43c1c7aea048a898f8bf0328ced"
+    },
+    "tests/test_r4_assertion_compiler.py::test_name_query_assertion_preserves_variable_surface_and_grounded_target": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-unresolved-designation-name-query-assertion-preserves-variable-surface-and-grounded-target",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R4-Unresolved-Designation-Task-1",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "a49c7b65806ee844191812cc9c22c921d723ea2b38e21fdf575c65589247612e"
+    }
+}
 
 
 
@@ -311,8 +376,22 @@ def test_designation_assertion_compiles_canonical_lexical_label_roles() -> None:
     }
 
 
-@pytest.mark.parametrize("kind", ("designates", "lookup"))
-@pytest.mark.parametrize("mutation", ("missing", "wrong-kind", "unreviewed"))
+@pytest.mark.parametrize(
+    ("kind", "mutation"),
+    (
+        ("designates", "missing"),
+        ("lookup", "missing"),
+        ("designates", "wrong-kind"),
+        ("lookup", "wrong-kind"),
+        ("designates", "unreviewed"),
+        ("lookup", "unreviewed"),
+    ),
+    ids=(
+        "missing-designates", "missing-lookup",
+        "wrong-kind-designates", "wrong-kind-lookup",
+        "unreviewed-designates", "unreviewed-lookup",
+    ),
+)
 def test_lexical_designation_assertion_requires_reviewed_label_authority(
     monkeypatch: pytest.MonkeyPatch,
     kind: str,

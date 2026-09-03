@@ -264,3 +264,15 @@ def test_verifier_legal_index_is_immutable(verifier, proposal_context):
     """The LegalActionIndex is constructed from the proposal context."""
     index = LegalActionIndex(proposal_context)
     assert isinstance(index, LegalActionIndex)
+
+
+__cemm_test_inventory__ = {
+    "tests/test_exact_verifier.py::test_exact_verifier_rejects_legacy_designation_target_as_predicate": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-exact-verifier-rejects-legacy-designation-target-as-predicate",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-3",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "317373aa7fe5adb8bfe623271692a37563b78131bcd485cc6189b50051e8f7b7"
+    }
+}

@@ -1300,12 +1300,28 @@ __cemm_test_inventory__ = {
         "owner_ref": "runtime-path",
         "source_ast_sha256": "3428d191d2a758680d7bed2239455aa05e79c046f400d2ad887dd5381ac372d7"
     },
-    "tests/test_proposal_context_builder.py::test_unknown_designation_query_preserves_structural_evidence_and_critical_unknown_span": {
+    "tests/test_proposal_context_builder.py::test_unknown_designation_query_builds_one_exact_unresolved_designation_frame": {
         "activation_phase": "R4",
         "assertion_ref": "assertion:r4-closure-unknown-designation-current-context-blocker",
         "diagnostic_role": "owner",
         "introduced_by_task": "R4-Closure-Slice-Task-2",
         "owner_ref": "proposal-context",
-        "source_ast_sha256": "de1bb49c9261ca5066bc637abdf69ea99834c4edd0d2d89f02d29c1bd9c36283"
+        "source_ast_sha256": "fe5fb6fdbfce9e2047946171c24daadedec6d3cc260f375e04cb241de84f17ca"
     },
+    "tests/test_proposal_context_builder.py::test_plain_unknown_assertion_does_not_receive_unresolved_designation_frame": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-plain-unknown-assertion-does-not-receive-unresolved-designation-frame",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "694d08def78f1ba2febed34dded261369fdc5af88eeb462611b9ff19a5c1cd4a"
+    },
+    "tests/test_proposal_context_builder.py::test_unknown_event_argument_does_not_receive_unresolved_designation_frame": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unknown-event-argument-does-not-receive-unresolved-designation-frame",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "e483c6a094a31192d9e40ae7f3524a8f9b11f702ae52463971beba59a4d14a4c"
+    }
 }

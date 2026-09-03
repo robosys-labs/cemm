@@ -381,6 +381,7 @@ def test_unresolved_designation_frame_is_frozen_content_addressed_and_indexed() 
         ("construction_ref", "construction:other"),
         ("provenance_refs", ("provenance:other",)),
     ),
+    ids=("label-type", "literal-contribution", "query-binder", "source-units", "construction", "provenance"),
 )
 def test_unresolved_designation_frame_identity_covers_every_content_field(
     field: str, changed: Any
@@ -483,6 +484,7 @@ def test_proposal_context_hard_rejects_abi1_and_discriminator_free_bytes() -> No
             "equal literal geometry",
         ),
     ),
+    ids=("literal-contribution", "query-binder", "source-units"),
 )
 def test_unresolved_designation_frame_references_exact_typed_context_slots(
     field: str, replacement: Any, message: str
@@ -542,6 +544,7 @@ def test_unresolved_frame_hard_rejects_removed_reciprocal_variable_field() -> No
 @pytest.mark.parametrize(
     "mutation",
     ("missing", "borrowed", "wrong-role", "duplicate", "construction", "empty-source", "unbacked-source"),
+    ids=("missing", "borrowed", "wrong-role", "duplicate", "construction", "empty-source", "unbacked-source"),
 )
 def test_unresolved_frame_requires_one_owned_evidence_backed_target_variable(
     mutation: str,
@@ -586,7 +589,10 @@ def test_unresolved_frame_requires_one_owned_evidence_backed_target_variable(
         ProposalContext.create(**creation)
 
 
-@pytest.mark.parametrize("changed_field", ("required_kinds", "source_unit_refs"))
+@pytest.mark.parametrize(
+    "changed_field", ("required_kinds", "source_unit_refs"),
+    ids=("required-kinds", "source-unit-refs"),
+)
 def test_variable_identity_changes_do_not_change_owned_frame_identity(
     changed_field: str,
 ) -> None:
@@ -1509,12 +1515,12 @@ __cemm_test_inventory__ = {'tests/test_proposal_context_abi1.py::test_content_ad
                                                                                                        'introduced_by_task': 'R1-Task-7',
                                                                                                        'owner_ref': 'program-verifier',
                                                                                                        'source_ast_sha256': '623f0e834502836b90d30665b9ab744389a72c93e5b7ffa72898f5b7c5fe7b92'},
- 'tests/test_proposal_context_abi1.py::test_proposal_context_abi1_is_content_addressed_and_round_trips_exactly': {'activation_phase': 'R1',
+ 'tests/test_proposal_context_abi1.py::test_proposal_context_abi2_is_content_addressed_and_round_trips_exactly': {'activation_phase': 'R1',
                                                                                                                   'assertion_ref': 'assertion:r1-proposal-context-abi1-test-proposal-context-abi1-is-content-addressed-and-round-trips-exactly',
                                                                                                                   'diagnostic_role': 'owner',
                                                                                                                   'introduced_by_task': 'R1-Task-7',
                                                                                                                   'owner_ref': 'program-verifier',
-                                                                                                                  'source_ast_sha256': 'f1e2e37899963c3c00531f9ba5af724818c54fd46a0250eded61815c28c0d7d3'},
+                                                                                                                  'source_ast_sha256': '4c0cfa0c4b35ad1cf2f1866b0c182033e1490818b06c460bc34a3ad1147d12ef'},
  'tests/test_proposal_context_abi1.py::test_proposal_context_create_and_decode_hash_validate_and_index_once': {'activation_phase': 'R1',
                                                                                                                'assertion_ref': 'assertion:r1-proposal-context-single-validation-pass',
                                                                                                                'diagnostic_role': 'owner',
@@ -1574,4 +1580,237 @@ __cemm_test_inventory__ = {'tests/test_proposal_context_abi1.py::test_content_ad
                                                                                                          'diagnostic_role': 'owner',
                                                                                                          'introduced_by_task': 'R1-Task-7',
                                                                                                          'owner_ref': 'program-verifier',
-                                                                                                         'source_ast_sha256': '06c5604a5ee8ef3d5ab022f15ba1701746a246c4ec6ab327f84a3f9cbf1347bd'}}
+                                                                                                         'source_ast_sha256': '06c5604a5ee8ef3d5ab022f15ba1701746a246c4ec6ab327f84a3f9cbf1347bd'},
+    "tests/test_proposal_context_abi1.py::test_application_frame_union_uses_one_exact_explicit_wire_discriminator": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-application-frame-union-uses-one-exact-explicit-wire-discriminator",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "5c023f2150d689903b5ea777c2c41e35a64838977a4a86c637d71c773d39633b"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_designation_frame_is_frozen_content_addressed_and_indexed": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-frame-is-frozen-content-addressed-and-indexed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "e75e3c16786f99abf871433fa3523c42fa5fa4f084ee44098dc05a032c39243d"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_designation_frame_identity_covers_every_content_field[label-type]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-frame-identity-covers-every-content-field-label-type",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "9cadb2e501189e4ffeec616706f3a6097659f06ae483a47ae1bae6b11e70020e"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_designation_frame_identity_covers_every_content_field[literal-contribution]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-frame-identity-covers-every-content-field-literal-contribution",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "9cadb2e501189e4ffeec616706f3a6097659f06ae483a47ae1bae6b11e70020e"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_designation_frame_identity_covers_every_content_field[query-binder]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-frame-identity-covers-every-content-field-query-binder",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "9cadb2e501189e4ffeec616706f3a6097659f06ae483a47ae1bae6b11e70020e"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_designation_frame_identity_covers_every_content_field[source-units]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-frame-identity-covers-every-content-field-source-units",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "9cadb2e501189e4ffeec616706f3a6097659f06ae483a47ae1bae6b11e70020e"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_designation_frame_identity_covers_every_content_field[construction]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-frame-identity-covers-every-content-field-construction",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "9cadb2e501189e4ffeec616706f3a6097659f06ae483a47ae1bae6b11e70020e"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_designation_frame_identity_covers_every_content_field[provenance]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-frame-identity-covers-every-content-field-provenance",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "9cadb2e501189e4ffeec616706f3a6097659f06ae483a47ae1bae6b11e70020e"
+    },
+    "tests/test_proposal_context_abi1.py::test_application_frame_union_rejects_noncanonical_wire_variants[missing-discriminator]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-application-frame-union-rejects-noncanonical-wire-variants-missing-discriminator",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "3f19166a97fe15b3e84d8b5831e07cc5d8bbfc336ad2e89729f7185fe9e5b347"
+    },
+    "tests/test_proposal_context_abi1.py::test_application_frame_union_rejects_noncanonical_wire_variants[unknown-discriminator]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-application-frame-union-rejects-noncanonical-wire-variants-unknown-discriminator",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "3f19166a97fe15b3e84d8b5831e07cc5d8bbfc336ad2e89729f7185fe9e5b347"
+    },
+    "tests/test_proposal_context_abi1.py::test_application_frame_union_rejects_noncanonical_wire_variants[unresolved-mixed-with-designation-field]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-application-frame-union-rejects-noncanonical-wire-variants-unresolved-mixed-with-designation-field",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "3f19166a97fe15b3e84d8b5831e07cc5d8bbfc336ad2e89729f7185fe9e5b347"
+    },
+    "tests/test_proposal_context_abi1.py::test_application_frame_union_rejects_noncanonical_wire_variants[unresolved-mixed-with-grounded-field]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-application-frame-union-rejects-noncanonical-wire-variants-unresolved-mixed-with-grounded-field",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "3f19166a97fe15b3e84d8b5831e07cc5d8bbfc336ad2e89729f7185fe9e5b347"
+    },
+    "tests/test_proposal_context_abi1.py::test_application_frame_union_rejects_noncanonical_wire_variants[extra-unresolved-field]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-application-frame-union-rejects-noncanonical-wire-variants-extra-unresolved-field",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "3f19166a97fe15b3e84d8b5831e07cc5d8bbfc336ad2e89729f7185fe9e5b347"
+    },
+    "tests/test_proposal_context_abi1.py::test_proposal_context_hard_rejects_abi1_and_discriminator_free_bytes": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-proposal-context-hard-rejects-abi1-and-discriminator-free-bytes",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "9253b2525425f06738670ab2ae1488096e023cbb910466de6e8f848dcb147830"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_designation_frame_references_exact_typed_context_slots[literal-contribution]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-frame-references-exact-typed-context-slots-literal-contribution",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "ce3c5d714d073d3f0ede22478c55999b96c1d061fb5237cd32fc3059316529b1"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_designation_frame_references_exact_typed_context_slots[query-binder]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-frame-references-exact-typed-context-slots-query-binder",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "ce3c5d714d073d3f0ede22478c55999b96c1d061fb5237cd32fc3059316529b1"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_designation_frame_references_exact_typed_context_slots[source-units]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-frame-references-exact-typed-context-slots-source-units",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "ce3c5d714d073d3f0ede22478c55999b96c1d061fb5237cd32fc3059316529b1"
+    },
+    "tests/test_proposal_context_abi1.py::test_context_rejects_duplicate_unresolved_construction_span_hypotheses": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-context-rejects-duplicate-unresolved-construction-span-hypotheses",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "ba86dfaf795a75b72c947cd091b073faa14c02e477aae179e5ddc1f7d08c7b4c"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_frame_hard_rejects_removed_reciprocal_variable_field": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-frame-hard-rejects-removed-reciprocal-variable-field",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "18331a236af178c0af819ea13ac2b06f8f55a15fb5acbad92a56c7d1ff8d6865"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_frame_requires_one_owned_evidence_backed_target_variable[missing]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-frame-requires-one-owned-evidence-backed-target-variable-missing",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "84a524743024812ce8de51860ef694c7510f11f81d533df822382728834e1bc2"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_frame_requires_one_owned_evidence_backed_target_variable[borrowed]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-frame-requires-one-owned-evidence-backed-target-variable-borrowed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "84a524743024812ce8de51860ef694c7510f11f81d533df822382728834e1bc2"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_frame_requires_one_owned_evidence_backed_target_variable[wrong-role]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-frame-requires-one-owned-evidence-backed-target-variable-wrong-role",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "84a524743024812ce8de51860ef694c7510f11f81d533df822382728834e1bc2"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_frame_requires_one_owned_evidence_backed_target_variable[duplicate]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-frame-requires-one-owned-evidence-backed-target-variable-duplicate",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "84a524743024812ce8de51860ef694c7510f11f81d533df822382728834e1bc2"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_frame_requires_one_owned_evidence_backed_target_variable[construction]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-frame-requires-one-owned-evidence-backed-target-variable-construction",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "84a524743024812ce8de51860ef694c7510f11f81d533df822382728834e1bc2"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_frame_requires_one_owned_evidence_backed_target_variable[empty-source]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-frame-requires-one-owned-evidence-backed-target-variable-empty-source",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "84a524743024812ce8de51860ef694c7510f11f81d533df822382728834e1bc2"
+    },
+    "tests/test_proposal_context_abi1.py::test_unresolved_frame_requires_one_owned_evidence_backed_target_variable[unbacked-source]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-frame-requires-one-owned-evidence-backed-target-variable-unbacked-source",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "84a524743024812ce8de51860ef694c7510f11f81d533df822382728834e1bc2"
+    },
+    "tests/test_proposal_context_abi1.py::test_variable_identity_changes_do_not_change_owned_frame_identity[required-kinds]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-variable-identity-changes-do-not-change-owned-frame-identity-required-kinds",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "91515ffa2ecff1ffc972ceceb00de9e133ba9d436142e840620d467ef25fc03d"
+    },
+    "tests/test_proposal_context_abi1.py::test_variable_identity_changes_do_not_change_owned_frame_identity[source-unit-refs]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-variable-identity-changes-do-not-change-owned-frame-identity-source-unit-refs",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "91515ffa2ecff1ffc972ceceb00de9e133ba9d436142e840620d467ef25fc03d"
+    },
+    "tests/test_proposal_context_abi1.py::test_variables_for_frame_role_preserves_grounded_lookup_and_is_derived": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-variables-for-frame-role-preserves-grounded-lookup-and-is-derived",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "87b9bf980dfc6a1e7ad4ada17333f030364f72b69ffc1ca34e440ed336490143"
+    }
+}

@@ -108,8 +108,11 @@ records a STOPPED/BLOCKED result at the unresolved-designation ProposalContext/
 application-frame boundary. The approved
 [unresolved-designation design](superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md)
 owns the representation correction and a later evidence-only research handoff.
-The only permissible next work is its reviewed implementation plan; no
-implementation may begin until that plan is approved. Bulk authoring, review,
+The approved
+[implementation plan](superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md)
+governs the isolated repair. Tasks 1–3 are reviewed; the vertical path remains
+incomplete. Its Task 4 preflight requires a reviewed form-evidence
+amendment before unresolved query-frame emission. Bulk authoring, review,
 artifact generation and training remain frozen. The stop is not a seventh
 phase, another gate or a new ABI.
 

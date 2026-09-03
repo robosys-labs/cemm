@@ -1006,7 +1006,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:adversarial-programs-only-five-persistent-operators-accepted",
         "diagnostic_role": "owner",
         "introduced_by_task": "R2-Unresolved-Designation-Task-3",
-        "owner_ref": "program-verifier",
+        "owner_ref": "exact-verifier",
         "source_ast_sha256": "a5474d420133a3577fe451cf71c1a477eb5899f74ad0281488c327632a5b7d19",
         "supersedes_node_id": "tests/test_adversarial_programs.py::test_only_five_persistent_operators_accepted",
     },

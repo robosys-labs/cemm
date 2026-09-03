@@ -67,6 +67,14 @@ __cemm_test_inventory__ = {
         "owner_ref": "exact-verifier",
         "source_ast_sha256": "c62a7c627e9d2f44546ab3a71f0d2a37b3b4466cda69b6a113ba99b3c3c90f6e"
     },
+    "tests/test_r2_verifier_reconstruction.py::test_reconstruction_rejects_legacy_designation_target_as_predicate": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-reconstruction-rejects-legacy-designation-target-as-predicate",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "R2-Unresolved-Designation-Task-3",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "59181bb8299262c935da6bcc5a724631985f62df19a4cb3825c6b4bd0ac7c796"
+    }
 }
 
 
