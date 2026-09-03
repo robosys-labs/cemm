@@ -8,6 +8,13 @@
 
 **Tech Stack:** Python 3.12, frozen dataclasses, canonical content-addressed JSON, pytest, the existing recursive composer/compiler/verifier, `DesignationIndex`, and the existing R2/R3/R4 validation selectors.
 
+**Execution status (2026-09-03):** plan approved; Task 1 completed; Task 2 is
+not accepted and execution is paused before Task 3. Independent quality review
+identified a content-addressed frame/variable ownership cycle in the approved
+representation. See the stop record at the end of this document. No downstream
+implementation, activation, merge, or admission is authorized until the narrow
+acyclic ownership amendment is reviewed.
+
 ---
 
 ## Governing boundaries
@@ -618,3 +625,38 @@ The implementation is complete only when all of these are simultaneously true:
 - the next fixed closure result is recorded without expanding this plan's scope.
 
 The next authorized decision after completion is either (a) design the newly exposed closure owner, or (b) if all fixed closure cases pass, prepare the separately reviewed mechanical R4.1 data correction and fresh admission. R5 remains blocked on authentic R4.1 admission, and self-research remains a distinct downstream design.
+
+## Task 2 stop record: acyclic variable ownership required
+
+**Status:** BLOCKED / not accepted. This is a plan-level representation defect,
+not a new R4 closure case and not an authority-kind validation failure.
+
+**Isolated branch:** `codex/unresolved-designation-r4`.
+**Last implementation commit:** `cb6190247ce7377189bd861d0ab917e4b43d510d`.
+Task 1 test commits are `ad3c5e0`, `a25c9ac`, and `d2bc519`.
+
+The approved `UnresolvedDesignationFrame` hashes
+`target_variable_slot_ref`. The existing `VariableSlot` hashes
+`application_frame_ref`. Correct reciprocal linkage therefore requires a
+cryptographic fixed point: repointing either record changes its hash and
+invalidates the other. The ABI fixture currently avoids that cycle by borrowing
+an unrelated grounded frame's `role:object` variable. Its successful round-trip
+does not prove a usable unresolved designation frame.
+
+The compiler and independent verifier reconstruction both resolve a variable's
+application through `VariableSlot.application_frame_ref`; weakening that check
+would conceal, not repair, the ownership defect.
+
+**Narrow recommended amendment, not yet adopted:** preserve the existing
+`VariableSlot -> application frame` ownership edge. Remove the unresolved
+frame's hashed forward variable pointer and derive its target variable through
+a bounded frame/role index. Require exactly one `role:target` variable with the
+same construction and appropriate query evidence. Construct the frame first,
+then its variable, then the context. Replace the borrowed-variable fixture with
+an independently constructible unresolved-only context and reject unrelated
+frame, wrong-role, and mismatched-construction variables.
+
+No field may be silently omitted from hashing; no placeholder ref, fake
+designation, permissive variable fallback, or relaxed compiler ownership check
+is permitted. Proposal Context ABI 2 remains an unadmitted worktree change and
+the builder does not emit the new frame. Main and remote branches are unchanged.

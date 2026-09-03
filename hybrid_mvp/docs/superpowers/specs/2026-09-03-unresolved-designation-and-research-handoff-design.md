@@ -1,14 +1,19 @@
 # Unresolved Designation and Research Handoff Design
 
 **Date:** 2026-09-03
-**Status:** approved design; implementation plan not yet approved
+**Status:** design and implementation plan approved; execution paused at Task 2
 **Scope:** `hybrid_mvp/` representation closure and its bounded handoff to a
 future self-research capability
 
 This design resolves the representation blocker recorded by the R4 closure
 slice. It does not admit R4.1, activate R5, authorize network access, publish
 authority, or adopt Hybrid behavior at the repository root. Implementation
-remains prohibited until a separate reviewed implementation plan is approved.
+was authorized by the approved implementation plan. Independent Task 2 quality
+review then exposed a content-addressed frame/variable ownership cycle in
+section 4's forward target-variable pointer. The implementation is not accepted
+and must not advance until a narrow acyclic ownership amendment is reviewed.
+The exact stop record is in
+`../plans/2026-09-03-unresolved-designation-implementation-plan.md`.
 
 ## 1. Decision
 
