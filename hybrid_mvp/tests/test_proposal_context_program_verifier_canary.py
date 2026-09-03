@@ -372,6 +372,9 @@ def test_unresolved_designation_derivation_uses_program_abi_2_without_new_action
     assert len(proposal.candidates) == 1
     program = proposal.candidates[0].program
     assert program.as_dict()["abi_version"] == 2
+    assert "select_designation" not in {
+        action.action_type for action in program.actions
+    }
     construction_actions = {
         action.action_type
         for action in program.actions
@@ -379,7 +382,6 @@ def test_unresolved_designation_derivation_uses_program_abi_2_without_new_action
         not in {
             "select_context",
             "select_mode",
-            "select_designation",
             "complete_program",
         }
     }

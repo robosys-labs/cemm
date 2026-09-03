@@ -683,16 +683,16 @@ def test_unknown_designation_query_builds_one_exact_unresolved_designation_frame
     assert frame.source_unit_refs == (literal_unit_ref,)
     assert context.source_span(frame.source_unit_refs) == literal_span
 
-    literal = context.contribution(frame.literal_contribution_ref)
+    literal = context.contribution(frame.literal_contribution_slot_ref)
     assert literal is not None
     assert literal.kind == "literal"
     assert literal.literal_value == "zorbulate"
     assert literal.source_unit_refs == (literal_unit_ref,)
 
-    target = context.variable(frame.target_variable_ref)
+    target = context.variable(frame.target_variable_slot_ref)
     assert target is not None
 
-    query_binder = context.contribution(frame.query_binder_ref)
+    query_binder = context.contribution(frame.query_binder_slot_ref)
     assert query_binder is not None
     assert query_binder.kind == "binder"
     assert context.source_span(query_binder.source_unit_refs) == (
@@ -708,7 +708,7 @@ def test_unknown_designation_query_builds_one_exact_unresolved_designation_frame
 def test_plain_unknown_assertion_does_not_receive_unresolved_designation_frame(
     tmp_path: Path,
 ) -> None:
-    source = "zorbulate."
+    source = "CEMM is zorbulate."
     runtime = load_runtime(
         ROOT,
         profile="development",
@@ -722,13 +722,24 @@ def test_plain_unknown_assertion_does_not_receive_unresolved_designation_frame(
     finally:
         runtime.stores.close()
 
+    assert any(
+        slot.target_ref == "participant:system"
+        and context.source_span(slot.source_unit_refs) == (0, len("CEMM"))
+        for slot in context.reference_slots
+    )
+    assert any(
+        contribution.kind == "binder"
+        and context.source_span(contribution.source_unit_refs)
+        == (source.index("is"), source.index("is") + len("is"))
+        for contribution in context.contribution_slots
+    )
     assert getattr(context, "unresolved_designation_frames", ()) == ()
 
 
 def test_unknown_event_argument_does_not_receive_unresolved_designation_frame(
     tmp_path: Path,
 ) -> None:
-    source = "Alice likes zorbulate."
+    source = "Alice said zorbulate."
     runtime = load_runtime(
         ROOT,
         profile="development",
@@ -742,6 +753,13 @@ def test_unknown_event_argument_does_not_receive_unresolved_designation_frame(
     finally:
         runtime.stores.close()
 
+    assert any(
+        frame.operator_ref == "op:event"
+        and frame.predicate_target_ref == "event:say"
+        and context.source_span(frame.source_unit_refs)
+        == (source.index("said"), source.index("said") + len("said"))
+        for frame in context.application_frames
+    )
     assert getattr(context, "unresolved_designation_frames", ()) == ()
 
 
