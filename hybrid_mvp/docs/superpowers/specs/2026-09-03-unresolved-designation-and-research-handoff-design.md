@@ -1,7 +1,7 @@
 # Unresolved Designation and Research Handoff Design
 
 **Date:** 2026-09-03
-**Status:** design and implementation plan approved; execution paused at Task 2
+**Status:** design, implementation plan and acyclic ownership amendment approved; Task 2 repair in progress
 **Scope:** `hybrid_mvp/` representation closure and its bounded handoff to a
 future self-research capability
 
@@ -9,10 +9,10 @@ This design resolves the representation blocker recorded by the R4 closure
 slice. It does not admit R4.1, activate R5, authorize network access, publish
 authority, or adopt Hybrid behavior at the repository root. Implementation
 was authorized by the approved implementation plan. Independent Task 2 quality
-review then exposed a content-addressed frame/variable ownership cycle in
-section 4's forward target-variable pointer. The implementation is not accepted
-and must not advance until a narrow acyclic ownership amendment is reviewed.
-The exact stop record is in
+review exposed a content-addressed frame/variable ownership cycle. The user
+approved the narrow one-way ownership amendment now incorporated in section 4.
+Task 2 must pass renewed review before downstream implementation advances.
+The historical stop record and current repair boundary are in
 `../plans/2026-09-03-unresolved-designation-implementation-plan.md`.
 
 ## 1. Decision
@@ -118,12 +118,22 @@ ApplicationFrameSlot
 UnresolvedDesignationFrame
   label_type_ref
   literal_contribution_slot_ref
-  target_variable_slot_ref
   query_binder_slot_ref
   source_unit_refs
   construction_ref
   provenance_refs
 ```
+
+Variable ownership is acyclic: the existing `VariableSlot.application_frame_ref`
+points to the frame; the frame contains no target-variable pointer. Construct
+the frame first, its variable second, and the context last. A derived bounded
+`variables_for_frame_role(frame_ref, role_ref)` index resolves the target without
+adding a serialized identity or changing the existing variable ownership law.
+Each unresolved frame must own exactly one variable, with `role:target`, the
+same construction, and source units backed by interrogative `open_variable`
+contributions. Unrelated-frame, wrong-role, duplicate and mismatched-construction
+variables are invalid. All record fields remain hashed. Placeholder refs,
+reciprocal hash dependencies and relaxed compiler ownership are forbidden.
 
 Exactly one `UnresolvedDesignationFrame` may be emitted for one authenticated
 designation-query construction and one exact unknown span. It is legal only

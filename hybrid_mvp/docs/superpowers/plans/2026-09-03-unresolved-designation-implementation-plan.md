@@ -8,12 +8,12 @@
 
 **Tech Stack:** Python 3.12, frozen dataclasses, canonical content-addressed JSON, pytest, the existing recursive composer/compiler/verifier, `DesignationIndex`, and the existing R2/R3/R4 validation selectors.
 
-**Execution status (2026-09-03):** plan approved; Task 1 completed; Task 2 is
-not accepted and execution is paused before Task 3. Independent quality review
-identified a content-addressed frame/variable ownership cycle in the approved
-representation. See the stop record at the end of this document. No downstream
-implementation, activation, merge, or admission is authorized until the narrow
-acyclic ownership amendment is reviewed.
+**Execution status (2026-09-03):** plan and one-way variable-ownership amendment
+approved; Task 1 completed; Task 2 repair in progress. The user approved removing
+the frame's hashed variable back-pointer while retaining existing variable-to-
+frame ownership. Task 2 must pass renewed review before Task 3 begins. The
+historical stop record remains at the end of this document; no activation,
+merge or admission is implied.
 
 ---
 
@@ -72,7 +72,7 @@ Replace the old diagnostic assertion that `zorbulate` has no frame/literal/varia
 ```python
 assert frame.label_type_ref == "label:lexical"
 assert frame.literal_contribution_slot_ref == zorbulate_literal.slot_ref
-assert frame.target_variable_slot_ref == target_variable.slot_ref
+assert context.variables_for_frame_role(frame.slot_ref, "role:target") == (target_variable,)
 assert frame.query_binder_slot_ref == interrogative_binder.slot_ref
 assert frame.source_unit_refs == (zorbulate_source_unit.unit_ref,)
 assert not critical_residuals_for_zorbulate
@@ -126,7 +126,6 @@ class UnresolvedDesignationFrame(_ContentAddressedSlot):
     slot_ref: str
     label_type_ref: str
     literal_contribution_slot_ref: str
-    target_variable_slot_ref: str
     query_binder_slot_ref: str
     source_unit_refs: tuple[str, ...]
     construction_ref: str
@@ -149,7 +148,7 @@ Build separate indexes for grounded designation slots and unresolved frame refs.
 
 - [ ] **Step 3: Add cross-object invariants**
 
-Require an unresolved frame to reference exactly one existing literal contribution, target variable, and query binder; require its source units to equal the literal's exact geometry; require `label_type_ref` to resolve to reviewed `label_type` authority; and reject more than one unresolved frame for the same construction/span hypothesis. Preserve all existing frame-count, source-assignment, proposition-depth, and context-size limits.
+Require an unresolved frame to reference exactly one existing literal contribution and query binder. Require exactly one VariableSlot to point to that frame, with `role:target`, matching construction, and nonempty sources backed by `open_variable` contributions. Derive a bounded `variables_for_frame_role(frame_ref, role_ref)` tuple index; do not add a serialized variable pointer to the frame. Require frame source units to equal the literal's exact geometry and reject duplicate construction/span hypotheses. Authenticate reviewed `label_type` authority at the builder and verifier, not through an authority scan inside Proposal Context. Preserve all existing bounds. Replace the borrowed-variable fixture with an unresolved-only context built frame-first, variable-second; reject missing, unrelated-frame, wrong-role, duplicate and mismatched-construction variables.
 
 - [ ] **Step 4: Hard-reject Proposal Context ABI 1 bytes**
 
@@ -262,7 +261,7 @@ Add a bounded builder helper that requires all of:
 - no admitted designation for that span/hypothesis; and
 - an existing configured limit for frames, variables, and contribution candidates.
 
-Create a literal contribution for the exact span, a target `VariableSlot`, and one `UnresolvedDesignationFrame`. The target variable's accepted kinds must be the bounded reviewed designation-target kind set, not only `entity`, `participant`, and `concept`.
+Create a literal contribution for the exact span, then one `UnresolvedDesignationFrame`, then its target `VariableSlot` pointing to the frame. The target variable's accepted kinds must be the bounded reviewed designation-target kind set, not only `entity`, `participant`, and `concept`.
 
 - [ ] **Step 2: Preserve exact ownership and residual accounting**
 
@@ -628,7 +627,9 @@ The next authorized decision after completion is either (a) design the newly exp
 
 ## Task 2 stop record: acyclic variable ownership required
 
-**Status:** BLOCKED / not accepted. This is a plan-level representation defect,
+**Historical status:** BLOCKED / not accepted at commit `2538c29`; the user has
+since approved the amendment below. Repair and renewed review remain required.
+This was a plan-level representation defect,
 not a new R4 closure case and not an authority-kind validation failure.
 
 **Isolated branch:** `codex/unresolved-designation-r4`.
@@ -647,7 +648,7 @@ The compiler and independent verifier reconstruction both resolve a variable's
 application through `VariableSlot.application_frame_ref`; weakening that check
 would conceal, not repair, the ownership defect.
 
-**Narrow recommended amendment, not yet adopted:** preserve the existing
+**User-approved amendment, incorporated above:** preserve the existing
 `VariableSlot -> application frame` ownership edge. Remove the unresolved
 frame's hashed forward variable pointer and derive its target variable through
 a bounded frame/role index. Require exactly one `role:target` variable with the
