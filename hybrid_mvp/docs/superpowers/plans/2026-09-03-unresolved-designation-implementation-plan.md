@@ -21,8 +21,9 @@ Task 3's canonical encoding commit is `e8e99e9`; its frozen five-operator
 predecessor is preserved by the explicit successor at `40151e8`. Both spec and
 quality reviews passed. No Program ABI, runtime bound, corpus, authority data,
 language-pack or validation-tier change was made. Source test-inventory alignment
-is complete; clean-worktree governance and existing phase-selector checks remain
-to be recorded without admitting the incomplete vertical slice.
+and clean-worktree governance checks are complete. Existing R2 phase checks pass;
+R3/R4 stop on selector/inventory disagreement, recorded below. None of these
+checks admits the incomplete vertical slice.
 
 **Task 4 preflight constraint:** do not begin builder emission under the
 assumption that an unresolved designation-query construction already exists.
@@ -812,12 +813,21 @@ checks. Until then, retain the critical residual rather than guessing meaning.
 - Existing selector changes are exact-node maintenance only: one R1 ABI-test
   rename; four R2 verifier, eight R2 expression-compiler, 31 R2 form-context and
   eight R4 contract-review nodes. No new tier, step, process or limit is introduced.
-- Independent inventory/governance run: 143 passed; the one remaining check
-  rejected dirty governed inputs as designed. A clean-worktree rerun is required.
-  Source compilation, document JSON parsing and whitespace checks pass.
+- Independent inventory/governance run before commit: 143 passed; the remaining
+  check rejected dirty governed inputs as designed. After alignment commit
+  `fdcdfe6`, the clean-worktree rerun passed all 144 tests. A separate focused
+  ABI/lazy-import/compiler/assertion-owner run passed 101 tests. Source
+  compilation, document JSON parsing and whitespace checks pass.
 - Pre-existing selector discrepancies remain explicit and untouched: the R3
   obsolete admission-stop node, five inactive R4 mutation-partition SR5 nodes,
   and two missing R4 closure phase successors. Source-inventory success is not
-  phase admission. No phase-green claim is made.
+  phase admission.
+- Existing phase selectors at `fdcdfe6`: R2 governance, compile and phase tests
+  passed (`run:7b6a67fbe1e8cef010a61e57`). R3 stopped before compile/tests:
+  `configured phase selector does not equal inventory phase group`. R4 likewise
+  stopped before compile/tests: `configured owner set does not equal the literal
+  active inventory owner set`. No admission receipt was written. A phase-tier R2
+  pass does not imply that every owner suite or the unresolved path passes; the
+  four intentional unresolved-path failures remain recorded above.
 - Tasks 4–9 and full Task 10 completion remain pending. The next decision is the
   narrow reviewed form-evidence amendment described in the Task 4 preflight.
