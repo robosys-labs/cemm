@@ -1929,6 +1929,16 @@ class ProposalContextBuilder:
         canonical_lookup = getattr(index, "canonical_surface_for_target", None)
         if not callable(canonical_lookup):
             return ()
+        label_type = self._authority.atoms.get("label:lexical")
+        if (
+            not isinstance(label_type, AtomRecord)
+            or label_type.kind != "label_type"
+            or not label_type.reviewed
+        ):
+            raise ValueError(
+                "designation application requires reviewed label:lexical authority"
+            )
+        label_type_ref = label_type.ref
         source_text = form_lattice.source_text
         source_start = len(source_text) - len(source_text.lstrip())
         source_end = len(source_text.rstrip())
@@ -1984,14 +1994,15 @@ class ProposalContextBuilder:
                         "designation_application_predicate",
                         {
                             "designation_slot_ref": designation.slot_ref,
+                            "label_type_ref": label_type_ref,
                             "target_ref": designation.target_ref,
                             "target_kind": designation.target_kind,
                         },
                     ),
                     kind="predicate",
                     source_unit_refs=application_source_refs,
-                    target_ref=designation.target_ref,
-                    target_kind=designation.target_kind,
+                    target_ref=label_type_ref,
+                    target_kind="label_type",
                     input_ports=("role:surface",),
                     output_ports=("role:label_type",),
                     constraints=(
@@ -2087,6 +2098,16 @@ class ProposalContextBuilder:
             surface = form_lattice.source_text[start:end].strip()
             if not surface:
                 continue
+            label_type = self._authority.atoms.get("label:lexical")
+            if (
+                not isinstance(label_type, AtomRecord)
+                or label_type.kind != "label_type"
+                or not label_type.reviewed
+            ):
+                raise ValueError(
+                    "prospective designation requires reviewed label:lexical authority"
+                )
+            label_type_ref = label_type.ref
             support_refs = tuple(dict.fromkeys((*preceding_markers,)))
             application_source_refs = tuple(
                 dict.fromkeys(
@@ -2120,13 +2141,14 @@ class ProposalContextBuilder:
                             "prospective_designation_predicate",
                             {
                                 "teaching_ref": teaching_ref,
+                                "label_type_ref": label_type_ref,
                                 "target_ref": designation.target_ref,
                             },
                         ),
                         kind="predicate",
                         source_unit_refs=application_source_refs,
-                        target_ref=designation.target_ref,
-                        target_kind=designation.target_kind,
+                        target_ref=label_type_ref,
+                        target_kind="label_type",
                         input_ports=("role:surface",),
                         output_ports=("role:label_type",),
                         constraints=(
@@ -2166,15 +2188,18 @@ class ProposalContextBuilder:
             frames.append(
                 ApplicationFrameSlot.create(
                     designation_slot_ref=designation.slot_ref,
-                    predicate_target_ref=designation.target_ref,
-                    predicate_kind=designation.target_kind,
+                    predicate_target_ref=label_type_ref,
+                    predicate_kind="label_type",
                     operator_ref="op:designation",
                     structural_role_ref="role:label_type",
                     required_roles=("role:surface",),
                     optional_roles=(),
                     proposition_roles=(),
                     source_unit_refs=application_source_refs,
-                    derived_role_targets=(("role:target", designation.target_ref),),
+                    derived_role_targets=(
+                        ("role:label_type", label_type_ref),
+                        ("role:target", designation.target_ref),
+                    ),
                     affordance_frame_ref=None,
                     provenance_refs=provenance,
                 )
@@ -2199,8 +2224,7 @@ class ProposalContextBuilder:
                     row
                     for row in contributions
                     if row.kind == "predicate"
-                    and row.target_ref == designation.target_ref
-                    and row.target_kind == designation.target_kind
+                    and row.target_kind == "label_type"
                     and row.input_ports == ("role:surface",)
                     and row.output_ports == ("role:label_type",)
                     and (
@@ -2215,8 +2239,8 @@ class ProposalContextBuilder:
                 continue
             frame = ApplicationFrameSlot.create(
                 designation_slot_ref=designation.slot_ref,
-                predicate_target_ref=designation.target_ref,
-                predicate_kind=designation.target_kind,
+                predicate_target_ref=predicate.target_ref,
+                predicate_kind="label_type",
                 operator_ref="op:designation",
                 structural_role_ref="role:label_type",
                 required_roles=("role:surface",),
@@ -2224,6 +2248,7 @@ class ProposalContextBuilder:
                 proposition_roles=(),
                 source_unit_refs=predicate.source_unit_refs,
                 derived_role_targets=(
+                    ("role:label_type", predicate.target_ref),
                     ("role:target", designation.target_ref),
                 ),
                 affordance_frame_ref=None,
@@ -3337,9 +3362,10 @@ class ProposalContextBuilder:
                         for role in profile.role_candidates
                         if role in legal_fillers and role not in required_roles
                     )
-                derived = ()
-                if designation.target_kind == "state_dimension":
-                    derived = (("role:dimension", target),)
+                derived = _derived_roles_for_kind(
+                    designation.target_kind,
+                    target,
+                )
                 frame = ApplicationFrameSlot.create(
                     designation_slot_ref=designation.slot_ref,
                     predicate_target_ref=target,
@@ -3792,6 +3818,8 @@ def _structural_role_for_kind(target_kind: str) -> str | None:
 def _derived_roles_for_kind(
     target_kind: str, target_ref: str
 ) -> tuple[tuple[str, str], ...]:
+    if target_kind == "label_type":
+        return (("role:label_type", target_ref),)
     if target_kind == "state_dimension":
         return (("role:dimension", target_ref),)
     return ()
@@ -3804,13 +3832,17 @@ def _is_designation_application_frame(
     """Recognize the one structural lowering owned by a designation fact."""
     return (
         frame.operator_ref == "op:designation"
+        and frame.predicate_kind == "label_type"
         and frame.structural_role_ref == "role:label_type"
         and frame.required_roles == ("role:surface",)
         and frame.optional_roles == ()
         and frame.proposition_roles == ()
         and set(designation.source_unit_refs) <= set(frame.source_unit_refs)
         and frame.derived_role_targets
-        == (("role:target", designation.target_ref),)
+        == (
+            ("role:label_type", frame.predicate_target_ref),
+            ("role:target", designation.target_ref),
+        )
         and frame.affordance_frame_ref is None
         and designation.designation_fact_ref in frame.provenance_refs
     )
@@ -4642,16 +4674,19 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             designation,
             context.designation_slots,
         )
+        designation_frame = _is_designation_application_frame(frame, designation)
         if (
             frame.predicate_target_ref != designation.target_ref
             or frame.predicate_kind != designation.target_kind
-        ) and not (state_value_frame or definition_frame):
+        ) and not (state_value_frame or definition_frame or designation_frame):
             raise ValueError("application frame predicate disagrees with designation")
-        designation_frame = _is_designation_application_frame(frame, designation)
         if designation_frame:
             expected_operator = "op:designation"
             expected_structural_role = "role:label_type"
-            expected_derived_roles = (("role:target", frame.predicate_target_ref),)
+            expected_derived_roles = (
+                ("role:label_type", frame.predicate_target_ref),
+                ("role:target", designation.target_ref),
+            )
         elif state_value_frame:
             expected_operator = "op:state"
             expected_structural_role = "role:dimension"
@@ -4679,6 +4714,26 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             )
         if expected_operator is None or frame.operator_ref != expected_operator:
             raise ValueError("application frame violates exact operator lowering")
+        if frame.operator_ref == "op:designation":
+            if frame.predicate_kind != "label_type":
+                raise ValueError(
+                    "designation application predicate must have label_type structure"
+                )
+            available_roles = {
+                *frame.required_roles,
+                *frame.optional_roles,
+                *(role_ref for role_ref, _ in frame.derived_role_targets),
+            }
+            if available_roles != {
+                "role:label_type",
+                "role:surface",
+                "role:target",
+            } or dict(frame.derived_role_targets).get(
+                "role:label_type"
+            ) != frame.predicate_target_ref:
+                raise ValueError(
+                    "designation application frame lacks exact canonical roles"
+                )
         if frame.structural_role_ref != expected_structural_role:
             raise ValueError("application frame has an invalid structural role")
         if frame.structural_role_ref in {

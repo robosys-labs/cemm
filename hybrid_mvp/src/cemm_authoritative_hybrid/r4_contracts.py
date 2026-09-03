@@ -1612,13 +1612,19 @@ class ExpectedCycleContractCompiler:
         )
 
     def _designation(self, surface: str, target: str) -> SemanticExpression:
+        label_type = self._authority.require_ref(
+            "label:lexical", "designation label predicate", kinds=("label_type",)
+        )
         app = SemanticApplication(
             stable_ref(
                 "expected_application", {"surface": surface, "target": target}
             ),
             "op:designation",
-            target,
+            label_type,
             (
+                RoleBinding(
+                    "role:label_type", GroundedReference(label_type)
+                ),
                 RoleBinding("role:surface", LiteralValue("string", surface)),
                 RoleBinding("role:target", GroundedReference(target)),
             ),
@@ -1769,6 +1775,9 @@ class ExpectedCycleContractCompiler:
                     "op:designation",
                     predicate,
                     (
+                        RoleBinding(
+                            "role:label_type", GroundedReference(predicate)
+                        ),
                         RoleBinding("role:target", GroundedReference(target)),
                         RoleBinding("role:surface", BoundVariable(variable)),
                     ),
@@ -2016,9 +2025,24 @@ class ExpectedCycleContractCompiler:
                 f"proposition filler is not licensed by {app.operator}"
             )
         if app.operator == "op:designation":
-            required = frozenset({"role:surface", "role:target"})
+            required = frozenset(
+                {"role:label_type", "role:surface", "role:target"}
+            )
             if set(by_role) != required:
                 raise ValueError("designation application roles must be exact")
+            label_type = by_role["role:label_type"]
+            if (
+                not isinstance(label_type, GroundedReference)
+                or label_type.target_ref != app.predicate_ref
+            ):
+                raise ValueError(
+                    "designation predicate must ground its label_type role"
+                )
+            self._authority.require_ref(
+                app.predicate_ref,
+                "designation label predicate",
+                kinds=("label_type",),
+            )
             surface = by_role["role:surface"]
             if (
                 not isinstance(surface, LiteralValue)
@@ -2027,8 +2051,8 @@ class ExpectedCycleContractCompiler:
             ):
                 raise ValueError("designation surface must be literal")
             target = by_role["role:target"]
-            if not isinstance(target, GroundedReference) or target.target_ref != app.predicate_ref:
-                raise ValueError("designation target must ground its predicate")
+            if not isinstance(target, GroundedReference):
+                raise ValueError("designation target must be grounded")
             return
         if app.operator == "op:type":
             if set(by_role) != frozenset({"role:subject", "role:type"}):
@@ -2652,12 +2676,18 @@ class ExpectedCycleContractCompiler:
             return self._type_expression(adapter, "adapter")
         if kind == "lookup":
             target = self._authority.require_ref(fields["target"], "lookup target")
+            label_type = self._authority.require_ref(
+                "label:lexical", "lookup label predicate", kinds=("label_type",)
+            )
             variable = "?surface_" + assertion_ref.rsplit(":", 1)[-1][:16]
             app = SemanticApplication(
                 stable_ref("expected_application", {"assertion_ref": assertion_ref}),
                 "op:designation",
-                target,
+                label_type,
                 (
+                    RoleBinding(
+                        "role:label_type", GroundedReference(label_type)
+                    ),
                     RoleBinding("role:surface", BoundVariable(variable)),
                     RoleBinding("role:target", GroundedReference(target)),
                 ),

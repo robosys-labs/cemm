@@ -142,6 +142,64 @@ def _is_reviewed_definition_frame(
     )
 
 
+def _is_reviewed_designation_frame(
+    context: ProposalContext,
+    frame: Any,
+    designation: Any,
+) -> bool:
+    """Check the ORIENT-authenticated frame proof without relinking authority."""
+    if frame.operator_ref != "op:designation":
+        return False
+    derived = dict(frame.derived_role_targets)
+    licensed_roles = {
+        *frame.required_roles,
+        *frame.optional_roles,
+        *derived,
+    }
+    if not (
+        frame.predicate_kind == "label_type"
+        and frame.structural_role_ref == "role:label_type"
+        and frame.proposition_roles == ()
+        and licensed_roles
+        == {"role:label_type", "role:surface", "role:target"}
+        and derived.get("role:label_type") == frame.predicate_target_ref
+        and designation.slot_ref in frame.provenance_refs
+        and set(designation.source_unit_refs) <= set(frame.source_unit_refs)
+    ):
+        return False
+    fact_lowering = "role:target" in derived
+    if fact_lowering and (
+        derived["role:target"] != designation.target_ref
+        or designation.designation_fact_ref not in frame.provenance_refs
+    ):
+        return False
+    if not fact_lowering and (
+        frame.predicate_target_ref != designation.target_ref
+        or designation.target_kind != "label_type"
+    ):
+        return False
+    frame_input_roles = set(frame.required_roles) | set(frame.optional_roles)
+    return any(
+        row.kind == "predicate"
+        and row.target_ref == frame.predicate_target_ref
+        and row.target_kind == "label_type"
+        and row.source_unit_refs == frame.source_unit_refs
+        and row.output_ports == ("role:label_type",)
+        and set(row.input_ports) == frame_input_roles
+        and designation.slot_ref in row.provenance_refs
+        and (
+            not fact_lowering
+            or (
+                ("designation_fact_ref", designation.designation_fact_ref)
+                in row.constraints
+                and ("operator_ref", "op:designation") in row.constraints
+                and designation.designation_fact_ref in row.provenance_refs
+            )
+        )
+        for row in context.contribution_slots
+    )
+
+
 def _optional(value: object, field: str) -> str | None:
     return None if value is None else _required(value, field)
 
@@ -1301,9 +1359,18 @@ def _replay_program(
             if frame.designation_slot_ref not in selected_designations:
                 report("unselected_application_designation", action=action)
             designation = context.designation(frame.designation_slot_ref)
+            designation_frame = False
             if designation is None:
                 report("unknown_application_designation", action=action)
-            elif (
+            else:
+                designation_frame = _is_reviewed_designation_frame(
+                    context,
+                    frame,
+                    designation,
+                )
+                if frame.operator_ref == "op:designation" and not designation_frame:
+                    report("invalid_designation_frame", action=action)
+            if designation is not None and (
                 designation.target_ref != frame.predicate_target_ref
                 or designation.target_kind != frame.predicate_kind
             ) and not _is_reviewed_state_value_frame(
@@ -1314,7 +1381,7 @@ def _replay_program(
                 context,
                 frame,
                 designation,
-            ):
+            ) and not designation_frame:
                 report("application_frame_designation_mismatch", action=action)
             if frame.operator_ref not in PERSISTENT_OPERATORS:
                 report("invalid_operator", action=action)
@@ -1608,6 +1675,12 @@ def _reconstruct_expected_r1_expression(
     local_ref, frame_ref = instantiations[0].arguments
     frame = context.frame(frame_ref)
     if frame is None or frame.proposition_roles or program.root_refs != (local_ref,):
+        return None
+    designation = context.designation(frame.designation_slot_ref)
+    if frame.operator_ref == "op:designation" and (
+        designation is None
+        or not _is_reviewed_designation_frame(context, frame, designation)
+    ):
         return None
 
     bindings: dict[str, RoleBinding] = {

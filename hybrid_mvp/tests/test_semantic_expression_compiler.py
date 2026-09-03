@@ -7,6 +7,8 @@ from types import SimpleNamespace
 from cemm_authoritative_hybrid.expressions import (
     CompilationFailure,
     CompilationSuccess,
+    GroundedReference,
+    LiteralValue,
     SemanticExpressionCompiler,
 )
 from cemm_authoritative_hybrid.persistence import RevisionPin
@@ -190,6 +192,110 @@ def _program(
     )
 
 
+def _designation_program(*, legacy_target_predicate: bool = False):
+    designation = SimpleNamespace(
+        slot_ref="designation_slot:cemm",
+        target_ref="participant:system",
+        target_kind="participant",
+        designation_fact_ref="designation:cemm",
+        provenance_refs=("authority:g1",),
+    )
+    literal = SimpleNamespace(
+        slot_ref="contribution_slot:cemm-surface",
+        kind="literal",
+        target_ref=None,
+        literal_value="CEMM",
+        output_ports=("role:surface",),
+        constraints=(("literal", "CEMM"), ("literal_kind", "string")),
+        provenance_refs=("designation:cemm",),
+    )
+    predicate_ref = (
+        designation.target_ref if legacy_target_predicate else "label:lexical"
+    )
+    frame = SimpleNamespace(
+        slot_ref="application_frame_slot:cemm-designation",
+        designation_slot_ref=designation.slot_ref,
+        operator_ref="op:designation",
+        predicate_target_ref=predicate_ref,
+        predicate_kind="participant" if legacy_target_predicate else "label_type",
+        structural_role_ref="role:label_type",
+        required_roles=("role:surface",),
+        optional_roles=(),
+        proposition_roles=(),
+        derived_role_targets=(
+            (("role:target", designation.target_ref),)
+            if legacy_target_predicate
+            else (
+                ("role:label_type", "label:lexical"),
+                ("role:target", designation.target_ref),
+            )
+        ),
+    )
+    mode = SimpleNamespace(slot_ref="mode_slot:observe")
+    context = SimpleNamespace(
+        context_ref="proposal_context:designation",
+        orientation_ref="orientation:designation",
+        revision_pin=_pin(),
+        designation=lambda ref: designation if ref == designation.slot_ref else None,
+        contribution=lambda ref: literal if ref == literal.slot_ref else None,
+        frame=lambda ref: frame if ref == frame.slot_ref else None,
+        mode_slot=lambda ref: mode if ref == mode.slot_ref else None,
+        reference=lambda ref: None,
+        scope=lambda ref: None,
+        expression_link=lambda ref: None,
+        variable=lambda ref: None,
+        transition=lambda ref: None,
+    )
+    actions = (
+        ProgramAction.create(
+            action_index=0,
+            action_type="select_context",
+            arguments=(context.context_ref,),
+        ),
+        ProgramAction.create(
+            action_index=1,
+            action_type="select_mode",
+            arguments=(mode.slot_ref,),
+        ),
+        ProgramAction.create(
+            action_index=2,
+            action_type="select_designation",
+            arguments=(designation.slot_ref,),
+        ),
+        ProgramAction.create(
+            action_index=3,
+            action_type="instantiate_operator",
+            arguments=("application:designation", frame.slot_ref),
+        ),
+        ProgramAction.create(
+            action_index=4,
+            action_type="bind_role",
+            arguments=(
+                "application:designation",
+                "role:surface",
+                literal.slot_ref,
+            ),
+        ),
+        ProgramAction.create(
+            action_index=5,
+            action_type="complete_program",
+            arguments=(),
+        ),
+    )
+    program = SemanticSwitchProgram.create(
+        orientation_ref=context.orientation_ref,
+        proposal_context_ref=context.context_ref,
+        actions=actions,
+        root_refs=("application:designation",),
+        mode_slot_ref=mode.slot_ref,
+        goal_refs=("goal:understand",),
+        source_unit_refs=(),
+        source_assignments=(),
+        revision_pin=context.revision_pin,
+    )
+    return context, program
+
+
 def test_two_derivations_compile_to_one_canonical_expression() -> None:
     context, first = _program()
     _, second = _program(reverse_designations=True)
@@ -263,6 +369,30 @@ def test_context_identity_mismatch_fails_before_compilation() -> None:
 
     assert isinstance(result, CompilationFailure)
     assert result.code == "proposal_context_mismatch"
+
+
+def test_canonical_designation_frame_compiles_exact_label_roles() -> None:
+    context, program = _designation_program()
+
+    result = SemanticExpressionCompiler().compile(program, context)
+
+    assert isinstance(result, CompilationSuccess)
+    application = result.expression.applications[0]
+    assert application.predicate_ref == "label:lexical"
+    assert {binding.role_ref: binding.filler for binding in application.roles} == {
+        "role:label_type": GroundedReference("label:lexical"),
+        "role:surface": LiteralValue("string", "CEMM"),
+        "role:target": GroundedReference("participant:system"),
+    }
+
+
+def test_legacy_designation_target_as_predicate_frame_fails_compilation() -> None:
+    context, program = _designation_program(legacy_target_predicate=True)
+
+    result = SemanticExpressionCompiler().compile(program, context)
+
+    assert isinstance(result, CompilationFailure)
+    assert result.code == "invalid_designation_frame"
 
 __cemm_test_inventory__ = {
     "tests/test_semantic_expression_compiler.py::test_compilation_proof_accounts_exactly_for_actions_assignments_and_roots": {

@@ -66,6 +66,23 @@ def _find_frame(program: Any, app_ref: str, context: Any) -> Any | None:
     return None
 
 
+def _designation_frame_is_exact(frame: Any) -> bool:
+    if frame.operator_ref != "op:designation":
+        return True
+    derived_roles = dict(frame.derived_role_targets)
+    licensed_roles = set(frame.required_roles)
+    licensed_roles.update(frame.optional_roles)
+    licensed_roles.update(derived_roles)
+    return (
+        frame.predicate_kind == "label_type"
+        and frame.structural_role_ref == "role:label_type"
+        and not frame.proposition_roles
+        and licensed_roles
+        == {"role:label_type", "role:surface", "role:target"}
+        and derived_roles.get("role:label_type") == frame.predicate_target_ref
+    )
+
+
 def _node_children(program: Any) -> dict[str, tuple[str, ...]]:
     grouped: dict[str, list[str]] = {}
     for action in program.actions:
@@ -157,6 +174,8 @@ def reconstruct_expected_expression(
         app_ref, frame_slot_ref = a.arguments
         frame = context.frame(frame_slot_ref)
         if frame is None or frame.operator_ref not in PERSISTENT_OPERATORS:
+            return None
+        if not _designation_frame_is_exact(frame):
             return None
         st.grounding.add(frame.predicate_target_ref)
         st.grounding.update(t for _, t in frame.derived_role_targets)

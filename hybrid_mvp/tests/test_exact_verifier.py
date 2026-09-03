@@ -17,6 +17,7 @@ from cemm_authoritative_hybrid.proposal import (
 from cemm_authoritative_hybrid.verifier import (
     LegalActionIndex,
     VerificationError,
+    _replay_program,
 )
 
 
@@ -94,6 +95,18 @@ def test_valid_program_has_coverage_receipt(verifier, proposal, proposal_context
     receipt = batch.candidate_receipts[0]
     assert receipt.coverage_receipt is not None
     assert receipt.coverage_receipt.executable
+
+
+def test_exact_verifier_rejects_legacy_designation_target_as_predicate(
+    proposal_context, valid_program
+) -> None:
+    frame = proposal_context.application_frames[0]
+    object.__setattr__(frame, "operator_ref", "op:designation")
+    object.__setattr__(frame, "structural_role_ref", "role:label_type")
+
+    errors = _replay_program(valid_program, proposal_context)
+
+    assert any(error.code == "invalid_designation_frame" for error in errors)
 
 
 def test_verification_hash_is_stable(verifier, proposal, proposal_context):

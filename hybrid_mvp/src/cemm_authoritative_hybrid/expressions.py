@@ -1,4 +1,4 @@
-"""Semantic Expression ABI 1: canonical derivation-independent meaning.
+"""Semantic Expression ABI 2: canonical derivation-independent meaning.
 
 Programs describe how meaning was constructed.  This module owns the bounded,
 immutable semantic forest produced by exact compilation.  Local node and
@@ -19,7 +19,7 @@ from .contributions import ContributionKind
 from .persistence import RevisionPin
 from .programs import PERSISTENT_OPERATORS
 
-SEMANTIC_EXPRESSION_ABI_VERSION = 1
+SEMANTIC_EXPRESSION_ABI_VERSION = 2
 _MAX_REF_CHARS = 256
 _MAX_LITERAL_CHARS = 4096
 _MAX_EXPECTED_KINDS = 16
@@ -256,6 +256,34 @@ class SemanticApplication:
             raise ValueError("duplicate application role")
         if len(qualifier_refs) != len(set(qualifier_refs)):
             raise ValueError("duplicate application qualifier")
+        if self.operator == "op:designation":
+            bindings = {binding.role_ref: binding.filler for binding in self.roles}
+            if self.qualifiers or set(bindings) != {
+                "role:label_type",
+                "role:surface",
+                "role:target",
+            }:
+                raise ValueError(
+                    "canonical designation requires exact label_type/surface/target roles"
+                )
+            label_type = bindings["role:label_type"]
+            if (
+                not isinstance(label_type, GroundedReference)
+                or label_type.target_ref != self.predicate_ref
+            ):
+                raise ValueError(
+                    "canonical designation predicate must equal its grounded label_type"
+                )
+            surface = bindings["role:surface"]
+            if isinstance(surface, LiteralValue) and surface.value_type != "string":
+                raise ValueError("canonical designation surface literal must be string")
+            if not isinstance(surface, (LiteralValue, BoundVariable, UnresolvedValue)):
+                raise ValueError("canonical designation surface filler is invalid")
+            if not isinstance(
+                bindings["role:target"],
+                (GroundedReference, BoundVariable, UnresolvedValue),
+            ):
+                raise ValueError("canonical designation target filler is invalid")
 
 
 @dataclass(frozen=True)

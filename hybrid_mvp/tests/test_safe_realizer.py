@@ -14,6 +14,7 @@ import pytest
 from cemm_authoritative_hybrid.cycle import CycleStatus, SemanticMode
 from cemm_authoritative_hybrid.expressions import (
     GroundedReference,
+    LiteralValue,
     RoleBinding,
     SemanticApplication,
     SemanticExpression,
@@ -47,8 +48,12 @@ def _make_response_meaning(
     application = SemanticApplication(
         "application:safe-realizer-test",
         "op:designation",
-        "entity:cemm",
-        (RoleBinding("role:target", GroundedReference("entity:cemm")),),
+        "label:lexical",
+        (
+            RoleBinding("role:label_type", GroundedReference("label:lexical")),
+            RoleBinding("role:surface", LiteralValue("string", "CEMM")),
+            RoleBinding("role:target", GroundedReference("entity:cemm")),
+        ),
     )
     expression = SemanticExpression.create(
         applications=(application,), root_refs=(application.application_ref,)

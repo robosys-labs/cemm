@@ -243,3 +243,15 @@ def test_reconstruction_returns_none_for_empty_program():
     program = _make_program(context, _base_actions(context), ("application:0",))
     reconstructed = reconstruct_expected_expression(program, context)
     assert reconstructed is not None
+
+
+def test_reconstruction_rejects_legacy_designation_target_as_predicate() -> None:
+    context = _context()
+    frame = context.frame("application_frame_slot:love")
+    frame.operator_ref = "op:designation"
+    frame.predicate_kind = "relation_type"
+    frame.structural_role_ref = "role:label_type"
+    actions = _base_actions(context)
+    program = _make_program(context, actions, ("application:0",))
+
+    assert reconstruct_expected_expression(program, context) is None

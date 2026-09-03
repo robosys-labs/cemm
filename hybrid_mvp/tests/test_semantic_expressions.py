@@ -7,6 +7,7 @@ import pytest
 
 from cemm_authoritative_hybrid.bootstrap import load_runtime
 from cemm_authoritative_hybrid.expressions import (
+    SEMANTIC_EXPRESSION_ABI_VERSION,
     ApplicationFiller,
     BoundVariable,
     ExpressionBounds,
@@ -63,7 +64,7 @@ def _roles(application: SemanticApplication) -> dict[str, object]:
     return {binding.role_ref: binding.filler for binding in application.roles}
 
 
-def test_known_designation_query_uses_the_canonical_lexical_label_application(
+def test_known_designation_fact_uses_the_canonical_lexical_label_application(
     tmp_path: Path,
 ) -> None:
     runtime = load_runtime(
@@ -73,8 +74,8 @@ def test_known_designation_query_uses_the_canonical_lexical_label_application(
     )
     try:
         result = runtime.process(
-            "session:known-designation-expression",
-            "What is CEMM?",
+            "session:known-designation-fact-expression",
+            "CEMM",
         )
     finally:
         runtime.stores.close()
@@ -90,6 +91,64 @@ def test_known_designation_query_uses_the_canonical_lexical_label_application(
     assert roles["role:surface"] == LiteralValue("string", "CEMM")
     assert roles["role:target"] == GroundedReference("participant:system")
     assert SemanticExpression.from_dict(expression.as_dict()) == expression
+    assert result.response_meaning is not None
+    assert result.response_meaning.source_expression_ref == expression.expression_ref
+
+
+def test_name_query_uses_the_reviewed_name_label_application(
+    tmp_path: Path,
+) -> None:
+    runtime = load_runtime(
+        ROOT,
+        profile="development",
+        store_path=tmp_path / "stores.db",
+    )
+    try:
+        result = runtime.process(
+            "session:name-query-expression",
+            "What is your name?",
+        )
+    finally:
+        runtime.stores.close()
+
+    assert result.verification.selected_meaning is not None
+    expression = result.verification.selected_meaning.expression
+    designation = _designation_application(expression)
+    assert designation.predicate_ref == "label:name"
+    assert designation.qualifiers == ()
+    roles = _roles(designation)
+    assert set(roles) == {"role:label_type", "role:surface", "role:target"}
+    assert roles["role:label_type"] == GroundedReference("label:name")
+    assert isinstance(roles["role:surface"], BoundVariable)
+    assert roles["role:target"] == GroundedReference("participant:system")
+    assert result.response_meaning is not None
+    assert result.response_meaning.source_expression_ref == expression.expression_ref
+
+
+def test_prospective_designation_fact_preserves_literal_and_target(
+    tmp_path: Path,
+) -> None:
+    runtime = load_runtime(
+        ROOT,
+        profile="development",
+        store_path=tmp_path / "stores.db",
+    )
+    try:
+        result = runtime.process("session:teaching-expression", "yoz means hello")
+    finally:
+        runtime.stores.close()
+
+    assert result.verification.selected_meaning is not None
+    expression = result.verification.selected_meaning.expression
+    designation = _designation_application(expression)
+    assert designation.predicate_ref == "label:lexical"
+    assert _roles(designation) == {
+        "role:label_type": GroundedReference("label:lexical"),
+        "role:surface": LiteralValue("string", "yoz"),
+        "role:target": GroundedReference("event:greeting"),
+    }
+    assert result.response_meaning is not None
+    assert result.response_meaning.source_expression_ref == expression.expression_ref
 
 
 def test_unresolved_designation_query_uses_the_same_label_application_with_bound_target(
@@ -427,6 +486,40 @@ def test_expression_deserialization_rejects_nested_or_container_ref_tampering() 
     with pytest.raises(ValueError, match="unknown root|non-canonical expression encoding"):
         SemanticExpression.from_dict(payload)
 
+
+def test_semantic_expression_abi2_rejects_abi1_wire_values() -> None:
+    expression = SemanticExpression.create(
+        applications=(_application("a"),), root_refs=("a",)
+    )
+    payload = expression.as_dict()
+
+    assert SEMANTIC_EXPRESSION_ABI_VERSION == 2
+    assert payload["abi_version"] == 2
+    payload["abi_version"] = 1
+    with pytest.raises(ValueError, match="Semantic Expression ABI"):
+        SemanticExpression.from_dict(payload)
+
+
+def test_semantic_expression_rejects_legacy_designation_target_as_predicate() -> None:
+    with pytest.raises(ValueError, match="canonical designation"):
+        SemanticExpression.create(
+            applications=(
+                SemanticApplication(
+                    "legacy-designation",
+                    "op:designation",
+                    "participant:system",
+                    (
+                        RoleBinding(
+                            "role:surface", LiteralValue("string", "CEMM")
+                        ),
+                        RoleBinding(
+                            "role:target", GroundedReference("participant:system")
+                        ),
+                    ),
+                ),
+            ),
+            root_refs=("legacy-designation",),
+        )
 
 def test_verified_meaning_binds_lineage_without_changing_expression_identity() -> None:
     expression = SemanticExpression.create(

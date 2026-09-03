@@ -13,6 +13,8 @@ from cemm_authoritative_hybrid.expressions import (
     RoleBinding,
     SemanticApplication,
     SemanticExpression,
+    UnresolvedFiller,
+    UnresolvedValue,
     VerifiedMeaning,
 )
 from cemm_authoritative_hybrid.r3_cognition import R3EvaluationOwner
@@ -49,19 +51,42 @@ __cemm_test_inventory__ = {
 
 def _meaning(pin, *, include_target: bool = True) -> VerifiedMeaning:
     roles = [
+        RoleBinding(
+            "role:label_type", GroundedReference("label:lexical")
+        ),
         RoleBinding("role:surface", LiteralValue("string", "cheerful")),
     ]
     if include_target:
         roles.append(RoleBinding("role:target", GroundedReference("event:greeting")))
+    else:
+        roles.append(
+            RoleBinding(
+                "role:target", UnresolvedValue("unresolved:learning-target")
+            )
+        )
     application = SemanticApplication(
         application_ref="application:learn-designation",
         operator="op:designation",
-        predicate_ref="event:greeting",
+        predicate_ref="label:lexical",
         roles=tuple(roles),
     )
     expression = SemanticExpression.create(
         applications=(application,),
         root_refs=(application.application_ref,),
+        unresolved_fillers=(
+            ()
+            if include_target
+            else (
+                UnresolvedFiller(
+                    "unresolved:learning-target",
+                    application.application_ref,
+                    "role:target",
+                    "reference",
+                    ("event_type",),
+                    True,
+                ),
+            )
+        ),
     )
     return VerifiedMeaning.create(
         program_ref="program:learning-derivation",

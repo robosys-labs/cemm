@@ -299,12 +299,15 @@ def _predicate_source_refs(frame: Any) -> tuple[str, ...]:
     """
     if (
         frame.operator_ref == "op:designation"
+        and frame.predicate_kind == "label_type"
         and frame.structural_role_ref == "role:label_type"
         and frame.required_roles == ("role:surface",)
         and frame.optional_roles == ()
         and frame.proposition_roles == ()
-        and frame.derived_role_targets
-        == (("role:target", frame.predicate_target_ref),)
+        and tuple(role for role, _ in frame.derived_role_targets)
+        == ("role:label_type", "role:target")
+        and dict(frame.derived_role_targets)["role:label_type"]
+        == frame.predicate_target_ref
         and frame.affordance_frame_ref is None
     ):
         return ()
@@ -332,5 +335,3 @@ def _variable_owner(
     if len(matches) != 1:
         return None
     return matches[0], variable.role_ref
-
-

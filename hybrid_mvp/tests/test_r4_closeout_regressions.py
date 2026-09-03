@@ -733,7 +733,7 @@ def test_reviewed_designation_aliases_match_authentic_r3_cycles(
         assert (
             expected_application.predicate_ref
             == observed_application.predicate_ref
-            == target
+            == "label:lexical"
         )
         expected_roles = {
             binding.role_ref: binding.filler
@@ -744,6 +744,7 @@ def test_reviewed_designation_aliases_match_authentic_r3_cycles(
             for binding in observed_application.roles
         }
         assert expected_roles == observed_roles == {
+            "role:label_type": GroundedReference("label:lexical"),
             "role:surface": LiteralValue("string", canonical_surface),
             "role:target": GroundedReference(target),
         }

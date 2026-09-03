@@ -12,6 +12,11 @@ from cemm_authoritative_hybrid.authority import (
 )
 from cemm_authoritative_hybrid.cycle import CycleStatus, SemanticMode
 from cemm_authoritative_hybrid.decision import DecisionAction, DecisionStatus
+from cemm_authoritative_hybrid.expressions import (
+    BoundVariable,
+    GroundedReference,
+    LiteralValue,
+)
 from cemm_authoritative_hybrid.persistence import RevisionPin
 from cemm_authoritative_hybrid.r4_contracts import (
     AssertionCompilerError,
@@ -142,6 +147,8 @@ class _Authority:
             "entity:b": "entity",
             "adapter:state": "adapter",
             "permission:set_state": "permission",
+            "label:lexical": "label_type",
+            "label:name": "label_type",
         }.items()
     }
     event_signatures = {
@@ -288,6 +295,56 @@ def test_core_reviewed_assertion_families_compile_without_propose() -> None:
         assert ExpectedCycleContract.from_dict(contract.as_dict()) == contract
         if contract.expected_expressions:
             assert any(expr.applications for expr in contract.expected_expressions)
+
+
+def test_designation_assertion_compiles_canonical_lexical_label_roles() -> None:
+    contract = _compile(
+        "designates", {"surface": "hello", "target": "event:greeting"}
+    )
+
+    application = contract.expected_expressions[0].applications[0]
+    assert application.predicate_ref == "label:lexical"
+    assert {binding.role_ref: binding.filler for binding in application.roles} == {
+        "role:label_type": GroundedReference("label:lexical"),
+        "role:surface": LiteralValue("string", "hello"),
+        "role:target": GroundedReference("event:greeting"),
+    }
+
+
+@pytest.mark.parametrize("kind", ("designates", "lookup"))
+@pytest.mark.parametrize("mutation", ("missing", "wrong-kind", "unreviewed"))
+def test_lexical_designation_assertion_requires_reviewed_label_authority(
+    monkeypatch: pytest.MonkeyPatch,
+    kind: str,
+    mutation: str,
+) -> None:
+    atoms = dict(_Authority.atoms)
+    if mutation == "missing":
+        del atoms["label:lexical"]
+    else:
+        atoms["label:lexical"] = AtomRecord(
+            ref="label:lexical",
+            kind="concept" if mutation == "wrong-kind" else "label_type",
+            reviewed=mutation != "unreviewed",
+        )
+    monkeypatch.setattr(_Authority, "atoms", atoms)
+
+    with pytest.raises(ValueError, match="label:lexical"):
+        _compile(kind, {"surface": "hello", "target": "event:greeting"})
+
+
+def test_name_query_assertion_preserves_variable_surface_and_grounded_target() -> None:
+    contract = _compile(
+        "query", {"role": "label:name", "target": "participant:system"}
+    )
+
+    expression = contract.expected_expressions[0]
+    application = expression.applications[0]
+    roles = {binding.role_ref: binding.filler for binding in application.roles}
+    assert application.predicate_ref == "label:name"
+    assert roles["role:label_type"] == GroundedReference("label:name")
+    assert isinstance(roles["role:surface"], BoundVariable)
+    assert roles["role:target"] == GroundedReference("participant:system")
 
 
 def test_operation_prerequisites_are_authority_linked_and_preserved() -> None:
@@ -743,8 +800,9 @@ def test_sr4_5_linked_composed_expression_is_one_canonical_meaning() -> None:
     designation["applications"][1] = _composed_application(
         "greeting",
         "op:designation",
-        "event:greeting",
+        "label:lexical",
         {
+            "role:label_type": _grounded("label:lexical"),
             "role:surface": _literal("hello"),
             "role:target": _grounded("event:greeting"),
         },
@@ -1032,8 +1090,9 @@ def _assert_composed_expression_rejects_noncanonical_graph(
         fields["applications"][1] = _composed_application(
             "designation",
             "op:designation",
-            "event:greeting",
+            "label:lexical",
             {
+                "role:label_type": _grounded("label:lexical"),
                 "role:surface": (
                     _literal(7, "integer")
                     if mutation == "designation_non_string"

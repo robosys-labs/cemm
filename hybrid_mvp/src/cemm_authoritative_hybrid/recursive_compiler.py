@@ -62,6 +62,25 @@ def _find_frame(program: Any, app_ref: str, context: Any) -> Any | None:
     return None
 
 
+def _canonical_designation_frame(frame: Any) -> bool:
+    if frame.operator_ref != "op:designation":
+        return True
+    derived = dict(frame.derived_role_targets)
+    available_roles = {
+        *frame.required_roles,
+        *frame.optional_roles,
+        *derived,
+    }
+    return (
+        frame.predicate_kind == "label_type"
+        and frame.structural_role_ref == "role:label_type"
+        and frame.proposition_roles == ()
+        and available_roles
+        == {"role:label_type", "role:surface", "role:target"}
+        and derived.get("role:label_type") == frame.predicate_target_ref
+    )
+
+
 def _node_kind(ref: str) -> str:
     if ref.startswith("scope:"):
         return "scope"
@@ -162,6 +181,12 @@ def _collect_applications(program: Any, context: Any, st: _State) -> Compilation
             return _fail("unknown_application_frame", "frame pointer is not in context", a.action_ref)
         if frame.operator_ref not in PERSISTENT_OPERATORS:
             return _fail("invalid_operator", "frame does not lower to a kernel operator", a.action_ref)
+        if not _canonical_designation_frame(frame):
+            return _fail(
+                "invalid_designation_frame",
+                "designation frame lacks canonical label_type structure and exact roles",
+                a.action_ref,
+            )
         st.grounding.add(frame.predicate_target_ref)
         st.grounding.update(t for _, t in frame.derived_role_targets)
         st.role_bindings[app_ref] = {
