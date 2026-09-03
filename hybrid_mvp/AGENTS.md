@@ -190,9 +190,10 @@ fallback paths, compatibility adapters or unverified surfaces.
 **Closure stopped.** The fixed R4 closure slice governed by
 `docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md`
 is STOPPED/BLOCKED at the unresolved-designation ProposalContext/application-
-frame representation boundary. The only permissible next work is a reviewed
-unresolved-designation representation/ABI design. No implementation may begin
-until that design is approved.
+frame representation boundary. The approved
+`docs/superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md`
+now owns that repair. The only permissible next work is its reviewed
+implementation plan; no implementation may begin until that plan is approved.
 
 Bulk R4.1 authoring, purpose allocation, realization-recipe review, corpus
 expansion, source-package publication and all R5 work remain frozen. The old
@@ -209,3 +210,7 @@ evidence of the blocker. They do not authorize a fake designation identity,
 default-to-concept target, internal-ref lexicalization or surface-phrase
 dispatch. R5 remains unavailable until a future approved design is implemented,
 the fixed closure is rerun successfully and fresh R4.1 admission exists.
+
+External lexical or encyclopedic research is a later, permissioned consumer of
+the exact unknown QueryResult. It cannot participate in R4 grounding/proposal,
+make the closure pass, auto-admit meaning or publish authority.

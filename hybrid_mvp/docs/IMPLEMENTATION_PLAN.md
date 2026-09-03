@@ -29,12 +29,14 @@
 **Closure stopped.** The
 [R4 closure design](superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
 records a STOPPED/BLOCKED result at the unresolved-designation representation
-boundary. The only permissible next work is a reviewed unresolved-designation
-representation/ABI design. No implementation may begin until that design is
-approved. The former closure implementation plan is historical evidence only.
-Bulk R4.1 review, source authoring, selection export, corpus expansion,
-regeneration and training remain frozen. This routing adds no phase, gate, ABI,
-runtime owner or admission claim.
+boundary. The approved
+[unresolved-designation design](superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md)
+owns the repair. The only permissible next work is a reviewed implementation
+plan; no implementation may begin until that plan is approved. The former
+closure implementation plan is historical evidence only. Bulk R4.1 review,
+source authoring, selection export, corpus expansion, regeneration and training
+remain frozen. This routing adds no phase, gate, ABI, runtime owner or admission
+claim.
 
 ## Phase 1 — Evaluation expansion
 

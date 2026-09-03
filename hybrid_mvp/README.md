@@ -46,11 +46,13 @@ for the current data and supervision repair boundary.
 **Closure stopped.** The
 [R4 closure design](docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
 records a STOPPED/BLOCKED result at the unresolved-designation representation
-boundary. The only permissible next work is a reviewed unresolved-designation
-representation/ABI design. No implementation may begin until that design is
-approved. Bulk corpus authoring, review, regeneration and training remain
-frozen, and R5 remains unavailable until a future successful closure rerun and
-authentic R4.1 admission.
+boundary. The approved
+[unresolved-designation design](docs/superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md)
+owns the repair and its future evidence-only self-research handoff. The only
+permissible next work is a reviewed implementation plan; no implementation may
+begin until that plan is approved. Bulk corpus authoring, review, regeneration
+and training remain frozen, and R5 remains unavailable until a future
+successful closure rerun and authentic R4.1 admission.
 
 R5 training, selection, calibration, frozen evaluation and realization
 activation are unavailable until a fresh R4.1 admission proves meaningful
