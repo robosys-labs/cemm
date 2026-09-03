@@ -21,22 +21,31 @@ from cemm_authoritative_hybrid.authority import (
 
 ROOT = Path(__file__).parents[1]
 
-__cemm_test_inventory__ = {
-    "tests/test_authority_linker.py::test_transition_index_selects_exact_event_dimension_and_value": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-transition-index-selects-exact-value",
-        "diagnostic_role": "admission_only",
-        "introduced_by_task": "R4-Final-Admission-Closeout",
-        "source_ast_sha256": "0503f7c4eb687c5201ee94bc431bf5b5c08757c52684c408ed48e8a1b7c5341e",
-    },
-    "tests/test_authority_linker.py::test_transition_index_does_not_collapse_distinct_target_values": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-transition-index-preserves-distinct-values",
-        "diagnostic_role": "admission_only",
-        "introduced_by_task": "R4-Final-Admission-Closeout",
-        "source_ast_sha256": "d9cfbd87f956f4153cb70a3482599a0efc96ebfc53a82dc21de18176c55055a0",
-    },
-}
+__cemm_test_inventory__ = {'tests/test_authority_linker.py::test_transition_index_selects_exact_event_dimension_and_value': {'activation_phase': 'R4',
+                                                                                                   'assertion_ref': 'assertion:r4-transition-index-selects-exact-value',
+                                                                                                   'diagnostic_role': 'admission_only',
+                                                                                                   'introduced_by_task': 'R4-Final-Admission-Closeout',
+                                                                                                   'source_ast_sha256': '0503f7c4eb687c5201ee94bc431bf5b5c08757c52684c408ed48e8a1b7c5341e'},
+ 'tests/test_authority_linker.py::test_transition_index_does_not_collapse_distinct_target_values': {'activation_phase': 'R4',
+                                                                                                    'assertion_ref': 'assertion:r4-transition-index-preserves-distinct-values',
+                                                                                                    'diagnostic_role': 'admission_only',
+                                                                                                    'introduced_by_task': 'R4-Final-Admission-Closeout',
+                                                                                                    'source_ast_sha256': 'd9cfbd87f956f4153cb70a3482599a0efc96ebfc53a82dc21de18176c55055a0'},
+ 'tests/test_authority_linker.py::test_designation_index_retains_canonical_authority_facts': {'activation_phase': 'R4',
+                                                                                              'assertion_ref': 'assertion:r4-closure-test-authority-designation-index-retains-canonical-authority-facts',
+                                                                                              'diagnostic_role': 'admission_only',
+                                                                                              'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                              'source_ast_sha256': '8b05a383710efa8525d540d9a28cb690c82d0f42dd57180143ac994eedece4a8'},
+ 'tests/test_authority_linker.py::test_designation_index_preserves_polysemy_in_stable_fact_order': {'activation_phase': 'R4',
+                                                                                                    'assertion_ref': 'assertion:r4-closure-test-authority-designation-index-preserves-polysemy-in-stable-fact-order',
+                                                                                                    'diagnostic_role': 'admission_only',
+                                                                                                    'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                    'source_ast_sha256': '34d3bab94a330d777c1184278fb611d1edb103d4019d7056a4c0c5d972ee3b0a'},
+ 'tests/test_authority_linker.py::test_authority_linker_rejects_duplicate_designation_fact': {'activation_phase': 'R4',
+                                                                                              'assertion_ref': 'assertion:r4-closure-test-authority-authority-linker-rejects-duplicate-designation-fact',
+                                                                                              'diagnostic_role': 'admission_only',
+                                                                                              'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                              'source_ast_sha256': 'f10bb71e9586b2e412984576397fdfb3372bc7b4d0d5834288ccc09b56717495'}}
 
 
 # ---------------------------------------------------------------------------

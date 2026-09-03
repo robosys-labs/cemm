@@ -6,6 +6,53 @@ import pytest
 
 from cemm_authoritative_hybrid.r4_review_context import ReviewContextMaterial
 
+__cemm_test_inventory__ = {'tests/test_r4_review_context.py::test_review_context_excludes_output_identities': {'activation_phase': 'R4',
+                                                                                     'assertion_ref': 'assertion:r4-closure-test-authority-review-context-excludes-output-identities',
+                                                                                     'diagnostic_role': 'admission_only',
+                                                                                     'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                     'source_ast_sha256': '526d9fc79c925dd4b7c1ec028dafdd5c88f1be9a45776dfc9504acdbd408d3b5'},
+ 'tests/test_r4_review_context.py::test_every_review_context_input_changes_identity[policy-ref]': {'activation_phase': 'R4',
+                                                                                                   'assertion_ref': 'assertion:r4-closure-test-authority-every-review-context-input-changes-identity-policy-ref',
+                                                                                                   'diagnostic_role': 'admission_only',
+                                                                                                   'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                   'source_ast_sha256': 'd59e507f774f529e59f4d47df09b44be28763d42f604dd089a6256e0ffbe68bb'},
+ 'tests/test_r4_review_context.py::test_every_review_context_input_changes_identity[policy-hash]': {'activation_phase': 'R4',
+                                                                                                    'assertion_ref': 'assertion:r4-closure-test-authority-every-review-context-input-changes-identity-policy-hash',
+                                                                                                    'diagnostic_role': 'admission_only',
+                                                                                                    'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                    'source_ast_sha256': 'd59e507f774f529e59f4d47df09b44be28763d42f604dd089a6256e0ffbe68bb'},
+ 'tests/test_r4_review_context.py::test_every_review_context_input_changes_identity[reviewers]': {'activation_phase': 'R4',
+                                                                                                  'assertion_ref': 'assertion:r4-closure-test-authority-every-review-context-input-changes-identity-reviewers',
+                                                                                                  'diagnostic_role': 'admission_only',
+                                                                                                  'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                  'source_ast_sha256': 'd59e507f774f529e59f4d47df09b44be28763d42f604dd089a6256e0ffbe68bb'},
+ 'tests/test_r4_review_context.py::test_every_review_context_input_changes_identity[base-revision]': {'activation_phase': 'R4',
+                                                                                                      'assertion_ref': 'assertion:r4-closure-test-authority-every-review-context-input-changes-identity-base-revision',
+                                                                                                      'diagnostic_role': 'admission_only',
+                                                                                                      'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                      'source_ast_sha256': 'd59e507f774f529e59f4d47df09b44be28763d42f604dd089a6256e0ffbe68bb'},
+ 'tests/test_r4_review_context.py::test_every_review_context_input_changes_identity[authority-generation]': {'activation_phase': 'R4',
+                                                                                                             'assertion_ref': 'assertion:r4-closure-test-authority-every-review-context-input-changes-identity-authority-generation',
+                                                                                                             'diagnostic_role': 'admission_only',
+                                                                                                             'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                             'source_ast_sha256': 'd59e507f774f529e59f4d47df09b44be28763d42f604dd089a6256e0ffbe68bb'},
+ 'tests/test_r4_review_context.py::test_every_review_context_input_changes_identity[form-pack-hash]': {'activation_phase': 'R4',
+                                                                                                       'assertion_ref': 'assertion:r4-closure-test-authority-every-review-context-input-changes-identity-form-pack-hash',
+                                                                                                       'diagnostic_role': 'admission_only',
+                                                                                                       'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                       'source_ast_sha256': 'd59e507f774f529e59f4d47df09b44be28763d42f604dd089a6256e0ffbe68bb'},
+ 'tests/test_r4_review_context.py::test_every_review_context_input_changes_identity[input-set]': {'activation_phase': 'R4',
+                                                                                                  'assertion_ref': 'assertion:r4-closure-test-authority-every-review-context-input-changes-identity-input-set',
+                                                                                                  'diagnostic_role': 'admission_only',
+                                                                                                  'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                  'source_ast_sha256': 'd59e507f774f529e59f4d47df09b44be28763d42f604dd089a6256e0ffbe68bb'},
+ 'tests/test_r4_review_context.py::test_review_context_rejects_output_identity_fields': {'activation_phase': 'R4',
+                                                                                         'assertion_ref': 'assertion:r4-closure-test-authority-review-context-rejects-output-identity-fields',
+                                                                                         'diagnostic_role': 'admission_only',
+                                                                                         'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                         'source_ast_sha256': 'b722665d190ddecb96fed996bc375877b598a4c9943dd4847e3e1d6938fa83c7'}}
+
+
 
 def _material() -> ReviewContextMaterial:
     return ReviewContextMaterial.create(

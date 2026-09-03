@@ -71,6 +71,21 @@ The two contextual-fragment rows deliberately share one surface and differ in
 situation context. The result must therefore depend on verified context rather
 than phrase identity.
 
+### Test-authority preflight
+
+Before semantic Task 1 begins, one bounded governance/test cleanup must remove
+stale active review-workflow tests, preserve their durable runtime-boundary
+assertions in the structural test owner, and inventory-govern every remaining
+later R4 case. This prerequisite cleanup is one commit and does not count
+against the maximum three semantic owner fixes or three semantic implementation
+commits.
+
+The broad scenario-generator and authentic-cycle tests remain active and must
+not be weakened or deleted. The five stale scenario rows are predecessor
+evidence, not cleanup targets; they may be corrected only after the fixed
+diagnostic closure passes and a separately reviewed mechanical R4.1 correction
+plan authorizes that work.
+
 ## 4. Required vertical path
 
 Every surface case must traverse existing owners in order:

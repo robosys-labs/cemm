@@ -11,6 +11,33 @@ from cemm_authoritative_hybrid.r4_authoring import (
     validate_authoring_recipes,
 )
 
+__cemm_test_inventory__ = {'tests/test_r4_authoring.py::test_candidate_envelope_is_inert_complete_and_content_addressed': {'activation_phase': 'R4',
+                                                                                                 'assertion_ref': 'assertion:r4-closure-test-authority-candidate-envelope-is-inert-complete-and-content-addressed',
+                                                                                                 'diagnostic_role': 'admission_only',
+                                                                                                 'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                 'source_ast_sha256': 'f890eabc5698d2c9cb8744d333b5ce6bdc2f15c772b5efdb4c3d705e46268274'},
+ 'tests/test_r4_authoring.py::test_recipe_records_are_frozen_closed_and_normalized': {'activation_phase': 'R4',
+                                                                                      'assertion_ref': 'assertion:r4-closure-test-authority-recipe-records-are-frozen-closed-and-normalized',
+                                                                                      'diagnostic_role': 'admission_only',
+                                                                                      'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                      'source_ast_sha256': '417eb78d70582dd02f40a458194ad56bfb2db810c46a0f9edb530190316202c6'},
+ 'tests/test_r4_authoring.py::test_recipe_inventory_rejects_family_collisions_and_cross_purpose_membership': {'activation_phase': 'R4',
+                                                                                                              'assertion_ref': 'assertion:r4-closure-test-authority-recipe-inventory-rejects-family-collisions-and-cross-purpose-membership',
+                                                                                                              'diagnostic_role': 'admission_only',
+                                                                                                              'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                              'source_ast_sha256': 'e0b6cd7250abc24f0335bf46c80e9c38b3b9834ef7bc843f7d15159686b6d646'},
+ 'tests/test_r4_authoring.py::test_recipe_family_and_instance_bounds_are_per_kind_and_purpose': {'activation_phase': 'R4',
+                                                                                                 'assertion_ref': 'assertion:r4-closure-test-authority-recipe-family-and-instance-bounds-are-per-kind-and-purpose',
+                                                                                                 'diagnostic_role': 'admission_only',
+                                                                                                 'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                 'source_ast_sha256': 'ac832ec31f151ceb775b2061f547a87225e8816f59039ba34ea7ac270a0c148e'},
+ 'tests/test_r4_authoring.py::test_selectable_candidate_requires_verified_concrete_row': {'activation_phase': 'R4',
+                                                                                          'assertion_ref': 'assertion:r4-closure-test-authority-selectable-candidate-requires-verified-concrete-row',
+                                                                                          'diagnostic_role': 'admission_only',
+                                                                                          'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                          'source_ast_sha256': '65b18022193633e8fc024c563981ea6a425e9c92bb817032059a8959e45cdf80'}}
+
+
 CASE_A = "expanded_case_v2:0123456789abcdef01234567"
 CASE_B = "expanded_case_v2:1123456789abcdef01234567"
 REVIEW = "source_review:0123456789abcdef01234567"

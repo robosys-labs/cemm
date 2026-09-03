@@ -1101,4 +1101,14 @@ __cemm_test_inventory__ = {'tests/test_r4_purpose_contracts.py::test_sr4_denomin
                                                                                                          'diagnostic_role': 'owner',
                                                                                                          'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                          'owner_ref': 'mutation-partition',
-                                                                                                         'source_ast_sha256': '3f46ff05483a245631753b61429e98e9e5fb0ace6369c285e1d85a9549abcd9c'}}
+                                                                                                         'source_ast_sha256': '3f46ff05483a245631753b61429e98e9e5fb0ace6369c285e1d85a9549abcd9c'},
+ 'tests/test_r4_purpose_contracts.py::test_recipe_descendants_cannot_cross_purposes': {'activation_phase': 'R4',
+                                                                                       'assertion_ref': 'assertion:r4-closure-test-authority-recipe-descendants-cannot-cross-purposes',
+                                                                                       'diagnostic_role': 'admission_only',
+                                                                                       'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                       'source_ast_sha256': '3a1cffa7b4deae85e7af2d83ff58fc71618bee7c61c21cb0f21a58051c960821'},
+ 'tests/test_r4_purpose_contracts.py::test_explicit_recipe_ancestry_compiles_to_existing_duplicate_risk_evidence': {'activation_phase': 'R4',
+                                                                                                                    'assertion_ref': 'assertion:r4-closure-test-authority-explicit-recipe-ancestry-compiles-to-existing-duplicate-risk-evidence',
+                                                                                                                    'diagnostic_role': 'admission_only',
+                                                                                                                    'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                                    'source_ast_sha256': '6280d27279f0d682111895b68576ae3a967702d2988954511ae5dc5421574c59'}}

@@ -139,7 +139,32 @@ __cemm_test_inventory__ = {'tests/test_r4_mutations_and_partitions.py::test_muta
                                                                                       'introduced_by_task': 'R4-Partition-Corrective-Task-7',
                                                                                       'owner_ref': 'mutation-partition',
                                                                                       'source_ast_sha256': 'd5c2f1c2e7d9238e12298d1cbabb5faba09825c18f379fc4e0c5b9e0cecd06b4',
-                                                                                      'supersedes_node_id': 'tests/test_hard_negatives.py::test_hard_negatives_have_valid_abi_version'}}
+                                                                                      'supersedes_node_id': 'tests/test_hard_negatives.py::test_hard_negatives_have_valid_abi_version'},
+ 'tests/test_r4_mutations_and_partitions.py::test_generator_requires_reviewed_contracts': {'activation_phase': 'R4',
+                                                                                           'assertion_ref': 'assertion:r4-closure-test-authority-generator-requires-reviewed-contracts',
+                                                                                           'diagnostic_role': 'admission_only',
+                                                                                           'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                           'source_ast_sha256': '4a5df13f203d39f8159579464bb405b60fae566ba00fdd0686896536a2c38b52'},
+ 'tests/test_r4_mutations_and_partitions.py::test_mutation_compiler_reconstructs_exact_changed_path': {'activation_phase': 'R4',
+                                                                                                       'assertion_ref': 'assertion:r4-closure-test-authority-mutation-compiler-reconstructs-exact-changed-path',
+                                                                                                       'diagnostic_role': 'admission_only',
+                                                                                                       'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                       'source_ast_sha256': 'bee07e840a7a822837a46cd8ca0709b30c7a2e27d66a7d3fa993159face63ac8'},
+ 'tests/test_r4_mutations_and_partitions.py::test_mutation_compiler_rejects_wrong_case_before_and_applicability': {'activation_phase': 'R4',
+                                                                                                                   'assertion_ref': 'assertion:r4-closure-test-authority-mutation-compiler-rejects-wrong-case-before-and-applicability',
+                                                                                                                   'diagnostic_role': 'admission_only',
+                                                                                                                   'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                                   'source_ast_sha256': '592b7ad7918a53d13c2530f3c9e482f01502edac4c8e5333f499c899d439583e'},
+ 'tests/test_r4_mutations_and_partitions.py::test_executor_never_sends_expected_labels_to_owner': {'activation_phase': 'R4',
+                                                                                                   'assertion_ref': 'assertion:r4-closure-test-authority-executor-never-sends-expected-labels-to-owner',
+                                                                                                   'diagnostic_role': 'admission_only',
+                                                                                                   'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                   'source_ast_sha256': '93a66ec104169a07c3e66c03931eef0eff1a266e0a9bd8ff01bac3801eba73d5'},
+ 'tests/test_r4_mutations_and_partitions.py::test_operation_prerequisite_mutation_domains_equal_request_effect_cases': {'activation_phase': 'R4',
+                                                                                                                        'assertion_ref': 'assertion:r4-closure-test-authority-operation-prerequisite-mutation-domains-equal-request-effect-cases',
+                                                                                                                        'diagnostic_role': 'admission_only',
+                                                                                                                        'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                                        'source_ast_sha256': '6bd651f066d0b629efe05d25d7dc28ce7376923e8f41f222da40901d19a5b696'}}
 
 
 class _Authority:

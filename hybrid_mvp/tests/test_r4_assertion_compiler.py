@@ -107,7 +107,12 @@ __cemm_test_inventory__ = {'tests/test_r4_assertion_compiler.py::test_unknown_as
                                                                                                           'diagnostic_role': 'owner',
                                                                                                           'introduced_by_task': 'R4.1-SR4.5',
                                                                                                           'owner_ref': 'expected-contract',
-                                                                                                          'source_ast_sha256': '1151e2392282653134c4f213f629efdca65e9f9048def634ca07fd8306a7d6b1'}}
+                                                                                                          'source_ast_sha256': '1151e2392282653134c4f213f629efdca65e9f9048def634ca07fd8306a7d6b1'},
+ 'tests/test_r4_assertion_compiler.py::test_operation_prerequisites_are_authority_linked_and_preserved': {'activation_phase': 'R4',
+                                                                                                          'assertion_ref': 'assertion:r4-closure-test-authority-operation-prerequisites-are-authority-linked-and-preserved',
+                                                                                                          'diagnostic_role': 'admission_only',
+                                                                                                          'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                          'source_ast_sha256': '57514cb034a849ebe2f6cfe064e996ec48739ad8d8ae58029a62e70ebb7df81c'}}
 
 
 

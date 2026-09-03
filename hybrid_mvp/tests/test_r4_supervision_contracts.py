@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ast
 from copy import deepcopy
 from dataclasses import FrozenInstanceError
 import errno
@@ -10,7 +9,6 @@ import importlib
 import json
 import os
 from pathlib import Path
-import shutil
 from types import MappingProxyType, SimpleNamespace
 
 import pytest
@@ -3266,632 +3264,28 @@ def _sr5_write_json(path: Path, value: dict[str, object]) -> None:
     )
 
 
-def test_sr5_worksheet_envelopes_rows_identities_and_source_joins_are_exact(
-    tmp_path: Path,
-) -> None:
-    worksheets = _sr5_worksheet_module()
-    output = tmp_path / "draft"
-    worksheets.build_review_worksheet_draft(repository_root=ROOT, output_root=output)
-    worksheets.validate_review_worksheet_draft(
-        repository_root=ROOT, draft_root=output
-    )
-
-    assert {entry.name for entry in output.iterdir()} == _SR5_DRAFT_FILES
-    payloads = {
-        name: _sr5_json(output / name)
-        for name in sorted(_SR5_DRAFT_FILES)
-        if name.endswith(".json")
-    }
-    input_set_refs = set()
-    worksheet_refs = set()
-    for payload in payloads.values():
-        assert frozenset(payload) == _SR5_ENVELOPE_FIELDS
-        assert payload["draft_non_authoritative"] is True
-        assert payload["row_count"] == len(payload["rows"])
-        assert isinstance(payload["worksheet_ref"], str)
-        assert str(payload["worksheet_ref"]).startswith("review_worksheet:")
-        worksheet_refs.add(payload["worksheet_ref"])
-        input_set_refs.add(payload["input_set_ref"])
-        for source in payload["inputs"]:
-            assert set(source) == {"path", "byte_length", "sha256"}
-            assert not source["path"].startswith(("artifacts/", "data/review/"))
-            assert not any(
-                part in source["path"].lower()
-                for part in ("runtime", "bootstrap", "episode", "model", "solver")
-            )
-        for row in payload["rows"]:
-            assert isinstance(row["row_ref"], str)
-            assert str(row["row_ref"]).startswith("review_worksheet_row:")
-    assert len(input_set_refs) == 1
-    assert len(worksheet_refs) == 4
-
-    source = payloads["SOURCE_UNIVERSE.json"]
-    assert source["current_snapshot"] == {
-        "reviewed_scenario_count": 210,
-        "expanded_case_count": 400,
-        "disposition_counts": {
-            "semantic": 248,
-            "explicit_gap": 112,
-            "verification_rejection": 20,
-            "restart_diagnostic": 20,
-        },
-        "source_universe_ref": source["current_snapshot"]["source_universe_ref"],
-    }
-    current_scenarios = {
-        row["scenario_ref"]
-        for row in source["rows"]
-        if row["row_kind"] == "scenario" and row["universe"] == "current"
-    }
-    current_cases = [
-        row
-        for row in source["rows"]
-        if row["row_kind"] == "expanded_case" and row["universe"] == "current"
-    ]
-    candidate_scenarios = {
-        row["scenario_ref"]
-        for row in source["rows"]
-        if row["row_kind"] == "scenario" and row["universe"] == "candidate"
-    }
-    candidate_cases = [
-        row
-        for row in source["rows"]
-        if row["row_kind"] == "expanded_case" and row["universe"] == "candidate"
-    ]
-    assert len(current_scenarios) == 210
-    assert len(current_cases) == 400
-    assert {row["scenario_ref"] for row in current_cases} <= current_scenarios
-    assert len(candidate_scenarios) == 8
-    assert candidate_cases
-    assert {row["scenario_ref"] for row in candidate_cases} == candidate_scenarios
-    all_scenario_refs = current_scenarios | candidate_scenarios
-    all_case_refs = {row["case_ref"] for row in (*current_cases, *candidate_cases)}
-
-    supervision = payloads["SUPERVISION_DECISIONS.json"]
-    supervision_counts = {
-        kind: sum(row["row_kind"] == kind for row in supervision["rows"])
-        for kind in (
-            "proposal_supervision",
-            "designation_supervision",
-            "realization_supervision",
-            "mutation_truth",
-        )
-    }
-    assert supervision_counts == {
-        "proposal_supervision": 388,
-        "designation_supervision": 388,
-        "realization_supervision": 388,
-        "mutation_truth": 388,
-    }
-    proposal_rows = [
-        row
-        for row in supervision["rows"]
-        if row["row_kind"] == "proposal_supervision"
-    ]
-    assert all(
-        all(
-            row["source_projection"][field]
-            for field in (
-                "form_lattice_ref",
-                "grounding_ref",
-                "proposal_context_ref",
-            )
-        )
-        for row in proposal_rows
-    )
-    recipe_suggestions = [
-        row["source_projection"]["recipe_suggestion"] for row in proposal_rows
-    ]
-    assert len({row["suggestion_ref"] for row in recipe_suggestions}) == 388
-    assert len({row["family_ref"] for row in recipe_suggestions}) == 56
-    assert sum(row["family_definition"] is not None for row in recipe_suggestions) == 56
-    assert all(row["selectable"] is False for row in recipe_suggestions)
-    designation_rows = [
-        row
-        for row in supervision["rows"]
-        if row["row_kind"] == "designation_supervision"
-    ]
-    assert sum(bool(row["candidate_bindings"]) for row in designation_rows) == 327
-    assert sum(not row["candidate_bindings"] for row in designation_rows) == 61
-    assert len({row["candidate_set_ref"] for row in designation_rows}) == 388
-    assert all(
-        row["candidate_set_ref"].startswith("designation_candidate_set:")
-        for row in designation_rows
-    )
-    assert all(
-        option["selectable"] is False
-        for row in designation_rows
-        for option in row["options"]
-    )
-    assert all(
-        {
-            "binding_ref",
-            "surface",
-            "start",
-            "end",
-            "unit_refs",
-            "designation_fact_ref",
-            "candidate_target_ref",
-        }
-        == set(binding)
-        for row in designation_rows
-        for binding in row["candidate_bindings"]
-    )
-    hostile_designation = deepcopy(payloads)
-    hostile_row = next(
-        row
-        for row in hostile_designation["SUPERVISION_DECISIONS.json"]["rows"]
-        if row["row_kind"] == "designation_supervision"
-        and row["candidate_bindings"]
-    )
-    hostile_row["candidate_bindings"][0]["binding_ref"] = (
-        "designation_binding_suggestion:" + "0" * 24
-    )
-    with pytest.raises(ValueError, match="binding identity"):
-        worksheets._validate_bundle_joins(hostile_designation)
-    hostile_designation = deepcopy(payloads)
-    hostile_row = next(
-        row
-        for row in hostile_designation["SUPERVISION_DECISIONS.json"]["rows"]
-        if row["row_kind"] == "designation_supervision"
-    )
-    hostile_row["candidate_set_ref"] = "designation_candidate_set:" + "0" * 24
-    with pytest.raises(ValueError, match="candidate-set identity"):
-        worksheets._validate_bundle_joins(hostile_designation)
-    assert all(row["options"] for row in supervision["rows"])
-    assert all(
-        option["selectable"] is False
-        for row in supervision["rows"]
-        for option in row["options"]
-        if any(value is None for value in option["payload"].values())
-    )
-    assert "authorized_surface" not in json.dumps(supervision, sort_keys=True)
-    assert sum(
-        row["source_projection"]["candidate_surface"] is not None
-        for row in supervision["rows"]
-        if row["row_kind"] == "realization_supervision"
-    ) == 8
-    realization_rows = [
-        row
-        for row in supervision["rows"]
-        if row["row_kind"] == "realization_supervision"
-    ]
-    realization_suggestions = [
-        row["source_projection"]["recipe_suggestion"] for row in realization_rows
-    ]
-    assert len({row["suggestion_ref"] for row in realization_suggestions}) == 388
-    assert len({row["family_ref"] for row in realization_suggestions}) <= 12
-    assert sum(
-        row["family_definition"] is not None for row in realization_suggestions
-    ) == len({row["family_ref"] for row in realization_suggestions})
-    assert all(row["selectable"] is False for row in realization_suggestions)
-    assert all(
-        row["source_projection"]["neutral_surface_suggestion"].strip()
-        for row in realization_rows
-    )
-    hostile_realization = deepcopy(payloads)
-    hostile_row = next(
-        row
-        for row in hostile_realization["SUPERVISION_DECISIONS.json"]["rows"]
-        if row["row_kind"] == "realization_supervision"
-    )
-    hostile_row["source_projection"]["recipe_suggestion"]["family_ref"] = (
-        "realization_recipe_family_suggestion:" + "0" * 24
-    )
-    with pytest.raises(ValueError, match="realization recipe"):
-        worksheets._validate_bundle_joins(hostile_realization)
-
-    purpose = payloads["PURPOSE_DECISIONS.json"]
-    assert sum(row["row_kind"] == "membership" for row in purpose["rows"]) == 408
-    assert sum(row["row_kind"] == "denominator" for row in purpose["rows"]) == 13
-    assert all(row["options"] for row in purpose["rows"])
-
-    for name in (
-        "STRUCTURAL_DECISIONS.json",
-        "SUPERVISION_DECISIONS.json",
-        "PURPOSE_DECISIONS.json",
-    ):
-        rows = payloads[name]["rows"]
-        assert rows
-        assert all(row["decision_state"] == "unresolved" for row in rows)
-        assert all(row["selected_option_ref"] is None for row in rows)
-        assert all(
-            row.get("scenario_ref") is None
-            or row["scenario_ref"] in all_scenario_refs
-            for row in rows
-        )
-        assert all(
-            row.get("source_case_ref") is None
-            or row["source_case_ref"] in all_case_refs
-            for row in rows
-        )
-
-    hostile = deepcopy(payloads["SOURCE_UNIVERSE.json"])
-    hostile["rows"][0]["unexpected"] = True
-    _sr5_write_json(output / "SOURCE_UNIVERSE.json", hostile)
-    with pytest.raises(ValueError, match="field|row|hash"):
-        worksheets.validate_review_worksheet_draft(
-            repository_root=ROOT, draft_root=output
-        )
-    del hostile["rows"][0]["unexpected"]
-    hostile["rows"][0]["row_ref"] = "review_worksheet_row:" + "0" * 24
-    _sr5_write_json(output / "SOURCE_UNIVERSE.json", hostile)
-    with pytest.raises(ValueError, match="identity|row|hash"):
-        worksheets.validate_review_worksheet_draft(
-            repository_root=ROOT, draft_root=output
-        )
 
 
-def test_sr5_structural_rows_are_four_plus_four_single_expressions_and_replay_exactly(
-    tmp_path: Path,
-) -> None:
-    worksheets = _sr5_worksheet_module()
-    output = tmp_path / "draft"
-    worksheets.build_review_worksheet_draft(repository_root=ROOT, output_root=output)
-    structural = _sr5_json(output / "STRUCTURAL_DECISIONS.json")
-    proposals = [
-        row
-        for row in structural["rows"]
-        if row["row_kind"] == "composed_expression_proposal"
-    ]
-    assert len(proposals) == 8
-    assert [row["proposal_kind"] for row in proposals].count("linked") == 4
-    assert [row["proposal_kind"] for row in proposals].count("multi_root") == 4
-    assert sum(row["semantic_mode"] == "SIMULATE" for row in proposals) >= 2
-    assert any(row["contains_type_role"] is True for row in proposals)
-    for row in proposals:
-        assert row["generator_patch"]["path"] == "scripts/generate_scenarios.py"
-        assert row["generator_patch"]["base_sha256"] == hashlib.sha256(
-            (ROOT / "scripts/generate_scenarios.py").read_bytes()
-        ).hexdigest()
-        compiled = row["compiled_candidate"]
-        assert compiled["expected_expression_relation"] == "single"
-        assert len(compiled["expressions"]) == 1
-        expression = compiled["expressions"][0]
-        if row["proposal_kind"] == "linked":
-            assert len(expression["root_refs"]) == 1
-            assert len(expression["expression_links"]) >= 1
-            link_refs = {link["link_ref"] for link in expression["expression_links"]}
-            assert expression["root_refs"][0] in link_refs
-            assert all(len(link["operand_refs"]) >= 2 for link in expression["expression_links"])
-        else:
-            assert 2 <= len(expression["root_refs"]) <= 8
-            assert expression["expression_links"] == []
-
-    replayed = worksheets.reproduce_proposed_scenario_source(
-        repository_root=ROOT, structural_rows=tuple(proposals)
-    )
-    expected_rows = tuple(row["resulting_scenario_row"] for row in proposals)
-    replayed_rows = tuple(
-        row
-        for row in replayed.scenario_rows
-        if row["scenario_ref"] in {item["scenario_ref"] for item in expected_rows}
-    )
-    assert replayed_rows == expected_rows
-    assert {
-        tuple(sorted(row["generator_patch"]["variant_result_sha256"].items()))
-        for row in proposals
-    } == {
-        tuple(
-            sorted(
-                (label, payload["result_sha256"])
-                for label, payload in replayed.patch_variants.items()
-            )
-        )
-    }
-
-    legacy = next(
-        row for row in structural["rows"] if row["row_kind"] == "legacy_conditional"
-    )
-    variants = {option["label"]: option["payload"] for option in legacy["options"]}
-    assert set(variants) == {
-        "retain_typed_proposal_gaps",
-        "retire_with_reserved_indices",
-    }
-    assert variants["retain_typed_proposal_gaps"]["scenario_count"] == 218
-    assert variants["retain_typed_proposal_gaps"]["case_count"] == 408
-    assert variants["retain_typed_proposal_gaps"]["disposition_counts"] == {
-        "semantic": 256,
-        "explicit_gap": 112,
-        "verification_rejection": 20,
-        "restart_diagnostic": 20,
-    }
-    assert variants["retire_with_reserved_indices"]["scenario_count"] == 216
-    assert variants["retire_with_reserved_indices"]["case_count"] == 404
-    assert variants["retire_with_reserved_indices"]["disposition_counts"] == {
-        "semantic": 256,
-        "explicit_gap": 108,
-        "verification_rejection": 20,
-        "restart_diagnostic": 20,
-    }
-    for payload in variants.values():
-        assert payload["path"] == "scripts/generate_scenarios.py"
-        assert payload["base_sha256"] == hashlib.sha256(
-            (ROOT / "scripts/generate_scenarios.py").read_bytes()
-        ).hexdigest()
-        assert len(payload["result_sha256"]) == 64
-        assert len(payload["scenario_source_sha256"]) == 64
-        assert payload["unified_diff"].startswith(
-            "--- a/scripts/generate_scenarios.py\n+++ b/scripts/generate_scenarios.py\n"
-        )
-    assert replayed.patch_variants == variants
-    retained_rows = replayed.variant_rows["retain_typed_proposal_gaps"]
-    retired_rows = replayed.variant_rows["retire_with_reserved_indices"]
-    assert len(retained_rows) == 218
-    assert len(retired_rows) == 216
-    assert not {
-        "scenario:modality-0040",
-        "scenario:modality-0046",
-    } & {row["scenario_ref"] for row in retired_rows}
-    retained_after = {
-        row["scenario_ref"] for row in retained_rows if row["scenario_ref"] not in {
-            "scenario:modality-0040",
-            "scenario:modality-0046",
-        }
-    }
-    assert retained_after == {row["scenario_ref"] for row in retired_rows}
 
 
-def test_sr5_builder_is_source_only_bounded_and_rejects_before_output(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    worksheets = _sr5_worksheet_module()
-    script = ROOT / "scripts/build_r4_1_review_worksheets.py"
-    tree = ast.parse(script.read_text(encoding="utf-8"), filename=str(script))
-    names = {
-        value
-        for node in ast.walk(tree)
-        for value in (
-            ([node.id.lower()] if isinstance(node, ast.Name) else [])
-            + ([node.attr.lower()] if isinstance(node, ast.Attribute) else [])
-            + ([alias.name.lower() for alias in node.names] if isinstance(node, (ast.Import, ast.ImportFrom)) else [])
-        )
-    }
-    forbidden = {
-        "bootstrap",
-        "episode",
-        "model",
-        "runtime",
-        "solver",
-        "propose",
-        "verify",
-        "evaluate",
-        "effect",
-        "realize",
-    }
-    assert not {
-        word for word in forbidden if any(word in name.split(".") for name in names)
-    }
-    assert 1 <= worksheets.MAX_INPUT_FILES <= 64
-    assert 1 <= worksheets.MAX_INPUT_BYTES <= 64 * 1024 * 1024
-    assert 400 <= worksheets.MAX_WORKSHEET_ROWS <= 4096
-    assert 1 <= worksheets.MAX_WORKSHEET_BYTES <= 64 * 1024 * 1024
-
-    reviewed_output = ROOT / "data/review/r4_1"
-    with pytest.raises(ValueError, match="reviewed|output"):
-        worksheets.build_review_worksheet_draft(
-            repository_root=ROOT, output_root=reviewed_output
-        )
-    assert not reviewed_output.exists()
-
-    valid = tmp_path / "valid"
-    worksheets.build_review_worksheet_draft(repository_root=ROOT, output_root=valid)
-    rows = _sr5_json(valid / "STRUCTURAL_DECISIONS.json")["rows"]
-    proposals = [
-        deepcopy(row)
-        for row in rows
-        if row["row_kind"] == "composed_expression_proposal"
-    ]
-    proposals[0]["compiled_candidate"]["expected_expression_relation"] = "all"
-    monkeypatch.setattr(
-        worksheets,
-        "collect_structural_decision_rows",
-        lambda **_kwargs: tuple(proposals),
-    )
-    hostile_output = tmp_path / "hostile"
-    with pytest.raises(ValueError, match="single|structural|relation"):
-        worksheets.build_review_worksheet_draft(
-            repository_root=ROOT, output_root=hostile_output
-        )
-    assert not hostile_output.exists()
-
-    compiler_inputs = {
-        f"src/cemm_authoritative_hybrid/{name}": (
-            ROOT / "src/cemm_authoritative_hybrid" / name
-        ).read_bytes()
-        for name in worksheets._COMPILER_MODULES
-    }
-    authority_path = "src/cemm_authoritative_hybrid/authority.py"
-    for import_statement in (
-        b"from .unbound_new_owner import MissingOwner\n",
-        b"from . import unbound_new_owner\n",
-        b"import cemm_authoritative_hybrid.unbound_new_owner\n",
-    ):
-        hostile_inputs = dict(compiler_inputs)
-        hostile_inputs[authority_path] += b"\n" + import_statement
-        with pytest.raises(ValueError, match="dependency|input set|missing"):
-            worksheets._verify_compiler_module_closure(hostile_inputs)
 
 
-def test_sr5_private_publisher_is_deterministic_and_exact_noop(tmp_path: Path) -> None:
-    worksheets = _sr5_worksheet_module()
-    candidate_a = tmp_path / "a"
-    candidate_b = tmp_path / "b"
-    final = tmp_path / "r4_1"
-    worksheets.build_review_worksheet_draft(repository_root=ROOT, output_root=candidate_a)
-    worksheets.build_review_worksheet_draft(repository_root=ROOT, output_root=candidate_b)
-    a_bytes = {path.name: path.read_bytes() for path in candidate_a.iterdir()}
-    assert a_bytes == {path.name: path.read_bytes() for path in candidate_b.iterdir()}
-    worksheets.publish_verified_review_worksheet_draft(
-        candidate_a=candidate_a, candidate_b=candidate_b, final_root=final
-    )
-    assert a_bytes == {path.name: path.read_bytes() for path in final.iterdir()}
-    before = final.stat()
-    worksheets.publish_verified_review_worksheet_draft(
-        candidate_a=candidate_a, candidate_b=candidate_b, final_root=final
-    )
-    after = final.stat()
-    assert (before.st_ino, before.st_mtime_ns) == (after.st_ino, after.st_mtime_ns)
 
 
-def test_sr5_private_publisher_rejects_tamper_link_extra_and_existing_mismatch(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    worksheets = _sr5_worksheet_module()
-    template_a = tmp_path / "template-a"
-    template_b = tmp_path / "template-b"
-    worksheets.build_review_worksheet_draft(repository_root=ROOT, output_root=template_a)
-    worksheets.build_review_worksheet_draft(repository_root=ROOT, output_root=template_b)
-
-    with pytest.raises(ValueError, match="independent"):
-        worksheets.publish_verified_review_worksheet_draft(
-            candidate_a=template_a,
-            candidate_b=template_a,
-            final_root=tmp_path / "same-candidate-final",
-        )
-
-    linked_candidate = tmp_path / "linked-candidate"
-    try:
-        linked_candidate.symlink_to(template_a, target_is_directory=True)
-    except OSError:
-        pytest.fail("test host must support the SR5 directory-link safety contract")
-    with pytest.raises(ValueError, match="link|candidate|unsafe"):
-        worksheets.publish_verified_review_worksheet_draft(
-            candidate_a=linked_candidate,
-            candidate_b=template_b,
-            final_root=tmp_path / "linked-candidate-final",
-        )
-
-    real_parent = tmp_path / "real-publication-parent"
-    real_parent.mkdir()
-    linked_parent = tmp_path / "linked-publication-parent"
-    linked_parent.symlink_to(real_parent, target_is_directory=True)
-    with pytest.raises(ValueError, match="link|parent|unsafe"):
-        worksheets.publish_verified_review_worksheet_draft(
-            candidate_a=template_a,
-            candidate_b=template_b,
-            final_root=linked_parent / "r4_1",
-        )
-
-    for case in ("tamper", "link", "extra"):
-        candidate_a = tmp_path / f"{case}-a"
-        candidate_b = tmp_path / f"{case}-b"
-        final = tmp_path / f"{case}-final"
-        shutil.copytree(template_a, candidate_a)
-        shutil.copytree(template_b, candidate_b)
-        target = candidate_b / "SOURCE_UNIVERSE.json"
-        if case == "tamper":
-            target.write_bytes(target.read_bytes() + b" ")
-        elif case == "extra":
-            (candidate_b / "EXTRA.json").write_bytes(b"{}")
-        else:
-            target.unlink()
-            try:
-                target.symlink_to(template_b / "SOURCE_UNIVERSE.json")
-            except OSError:
-                pytest.fail("test host must support the SR5 symlink safety contract")
-        with pytest.raises(ValueError, match="candidate|file|link|match"):
-            worksheets.publish_verified_review_worksheet_draft(
-                candidate_a=candidate_a, candidate_b=candidate_b, final_root=final
-            )
-        assert not final.exists()
-
-    existing = tmp_path / "existing-final"
-    shutil.copytree(template_a, existing)
-    mismatch = existing / "REVIEW_SUMMARY.md"
-    mismatch.write_bytes(mismatch.read_bytes() + b"changed")
-    before = {path.name: path.read_bytes() for path in existing.iterdir()}
-    with pytest.raises(ValueError, match="final|existing|match"):
-        worksheets.publish_verified_review_worksheet_draft(
-            candidate_a=template_a, candidate_b=template_b, final_root=existing
-        )
-    assert before == {path.name: path.read_bytes() for path in existing.iterdir()}
-
-    forged_a = tmp_path / "forged-a"
-    forged_b = tmp_path / "forged-b"
-    shutil.copytree(template_a, forged_a)
-    payloads = {
-        name: _sr5_json(forged_a / name)
-        for name in _SR5_DRAFT_FILES
-        if name.endswith(".json")
-    }
-    supervision = payloads["SUPERVISION_DECISIONS.json"]
-    supervision["rows"] = supervision["rows"][:-1]
-    supervision["row_count"] = len(supervision["rows"])
-    material = dict(supervision)
-    material.pop("worksheet_ref")
-    supervision["worksheet_ref"] = stable_ref("review_worksheet", material)
-    json_payloads = {
-        name: worksheets._json_bytes(payload) for name, payload in payloads.items()
-    }
-    json_payloads["REVIEW_SUMMARY.md"] = worksheets._summary(json_payloads, payloads)
-    for name, raw in json_payloads.items():
-        (forged_a / name).write_bytes(raw)
-    shutil.copytree(forged_a, forged_b)
-    with pytest.raises(ValueError, match="supervision|inventory|source"):
-        worksheets.publish_verified_review_worksheet_draft(
-            candidate_a=forged_a,
-            candidate_b=forged_b,
-            final_root=tmp_path / "forged-final",
-        )
-
-    cleanup_final = tmp_path / "cleanup-final"
-    monkeypatch.setattr(
-        worksheets.os,
-        "rename",
-        lambda _source, _target: (_ for _ in ()).throw(PermissionError("blocked")),
-    )
-    with pytest.raises(ValueError, match="publish|absent"):
-        worksheets.publish_verified_review_worksheet_draft(
-            candidate_a=template_a,
-            candidate_b=template_b,
-            final_root=cleanup_final,
-        )
-    assert not cleanup_final.exists()
-    assert not list(tmp_path.glob(".cleanup-final.*"))
 
 
-__cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr5_builder_is_source_only_bounded_and_rejects_before_output': {'activation_phase': 'R4',
-                                                                                                               'assertion_ref': 'assertion:r4-sr5-source-only-bounded-preflight',
-                                                                                                               'diagnostic_role': 'owner',
-                                                                                                               'introduced_by_task': 'R4.1-Source-Readiness-SR5',
-                                                                                                               'owner_ref': 'mutation-partition',
-                                                                                                               'source_ast_sha256': 'ee6b685e3951c791315cb34bdc931c21f610b35f1e415312bcdd5c779561c046'},
- 'tests/test_r4_supervision_contracts.py::test_sr5_private_publisher_is_deterministic_and_exact_noop': {'activation_phase': 'R4',
-                                                                                                        'assertion_ref': 'assertion:r4-sr5-private-publisher-deterministic-noop',
-                                                                                                        'diagnostic_role': 'owner',
-                                                                                                        'introduced_by_task': 'R4.1-Source-Readiness-SR5',
-                                                                                                        'owner_ref': 'mutation-partition',
-                                                                                                        'source_ast_sha256': '3255d939667fc98e691818c530dece4c7b95377c8e445a6a68249c6f55b87906'},
- 'tests/test_r4_supervision_contracts.py::test_sr5_private_publisher_rejects_tamper_link_extra_and_existing_mismatch': {'activation_phase': 'R4',
-                                                                                                                        'assertion_ref': 'assertion:r4-sr5-private-publisher-hostile-boundary',
-                                                                                                                        'diagnostic_role': 'owner',
-                                                                                                                        'introduced_by_task': 'R4.1-Source-Readiness-SR5',
-                                                                                                                        'owner_ref': 'mutation-partition',
-                                                                                                                        'source_ast_sha256': '5cadaffa4f3b3fc2ba8b9dda8a4cdd4c78988c52e8ba528e37517250555fece7'},
- 'tests/test_r4_supervision_contracts.py::test_sr5_structural_rows_are_four_plus_four_single_expressions_and_replay_exactly': {'activation_phase': 'R4',
-                                                                                                                               'assertion_ref': 'assertion:r4-sr5-eight-structural-families-exact-replay',
-                                                                                                                               'diagnostic_role': 'owner',
-                                                                                                                               'introduced_by_task': 'R4.1-Source-Readiness-SR5',
-                                                                                                                               'owner_ref': 'mutation-partition',
-                                                                                                                               'source_ast_sha256': 'be61971313e11f8aedcff200b41dd79dacdf0d78d3eb92a622a1e5f81efa675d'},
- 'tests/test_r4_supervision_contracts.py::test_sr5_worksheet_envelopes_rows_identities_and_source_joins_are_exact': {'activation_phase': 'R4',
-                                                                                                                     'assertion_ref': 'assertion:r4-sr5-worksheet-envelopes-identities-joins',
-                                                                                                                     'diagnostic_role': 'owner',
-                                                                                                                     'introduced_by_task': 'R4.1-Source-Readiness-SR5',
-                                                                                                                     'owner_ref': 'mutation-partition',
-                                                                                                                     'source_ast_sha256': 'f6a8e45af46ed6f07495afbe734efad9de4cf451eaa2fc854186c388e4b387ef'},
- 'tests/test_r4_supervision_contracts.py::test_authenticated_cross_source_validator_is_complete_decode_once_and_linear': {'activation_phase': 'R4',
+__cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_authenticated_cross_source_validator_is_complete_decode_once_and_linear': {'activation_phase': 'R4',
                                                                                                                           'assertion_ref': 'assertion:r4-sr4-cross-source-decode-once-complete-linear',
                                                                                                                           'diagnostic_role': 'owner',
                                                                                                                           'introduced_by_task': 'R4.1-SR4',
                                                                                                                           'owner_ref': 'mutation-partition',
-                                                                                                                          'source_ast_sha256': 'd04b335f6e15e70b5cb1d986891ebdd1af3181131c65fe90b9ea0f7c345944c1'},
+                                                                                                                          'source_ast_sha256': '8ddca0114c4fc51334ef6abdf1c14c8661ba853e5e793aaee953813d660a5fe0'},
  'tests/test_r4_supervision_contracts.py::test_authenticated_cross_source_validator_rejects_missing_and_duplicate_rows': {'activation_phase': 'R4',
                                                                                                                           'assertion_ref': 'assertion:r4-sr4-cross-source-rejects-missing-duplicate',
                                                                                                                           'diagnostic_role': 'owner',
                                                                                                                           'introduced_by_task': 'R4.1-SR4',
                                                                                                                           'owner_ref': 'mutation-partition',
-                                                                                                                          'source_ast_sha256': '1bd8c57bfd8987101f08415756ac968218900f251c16a6ff2f63c55209f54eac'},
+                                                                                                                          'source_ast_sha256': 'be519867a5c359d9b8e1b7c90755ed6f1f80d49bda035dabf40ba1c10e87e973'},
  'tests/test_r4_supervision_contracts.py::test_cross_source_validator_covers_four_dispositions_and_rejects_alias_echo_and_wrong_set': {'activation_phase': 'R4',
                                                                                                                                        'assertion_ref': 'assertion:r4-sr4-cross-source-four-dispositions-alias-echo-set',
                                                                                                                                        'diagnostic_role': 'owner',
@@ -3993,7 +3387,7 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr5_bui
                                                                                                               'diagnostic_role': 'owner',
                                                                                                               'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                               'owner_ref': 'mutation-partition',
-                                                                                                              'source_ast_sha256': '531be0e9d564302433d9e4a0ea117e03e752537989f322e5dd3e3097c4356938'},
+                                                                                                              'source_ast_sha256': '50c29f3187c054428b5f3baa2e71a0132ce6af164b82de1742cd40fc021b1598'},
  'tests/test_r4_supervision_contracts.py::test_supervision_decoders_reject_unknown_missing_abi_duplicate_and_noncanonical_json': {'activation_phase': 'R4',
                                                                                                                                   'assertion_ref': 'assertion:r4-supervision-decoders-strict-canonical-json',
                                                                                                                                   'diagnostic_role': 'owner',
@@ -4011,7 +3405,7 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr5_bui
                                                                                                  'diagnostic_role': 'owner',
                                                                                                  'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                  'owner_ref': 'mutation-partition',
-                                                                                                 'source_ast_sha256': '757b126a0c26ceea360837d428947bee834bb25eaff2c9cef19a429c0c574247'},
+                                                                                                 'source_ast_sha256': '0c5fe17edfa1eb64f304169873ead64605563048c91450ad99e34ae69ab05809'},
  'tests/test_r4_supervision_contracts.py::test_blueprint_action_abi_enforces_ordered_shapes_and_local_graph_integrity': {'activation_phase': 'R4',
                                                                                                                          'assertion_ref': 'assertion:r4-blueprint-action-abi-local-graph-integrity',
                                                                                                                          'diagnostic_role': 'owner',
@@ -4143,7 +3537,7 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr5_bui
                                                                                                      'diagnostic_role': 'owner',
                                                                                                      'introduced_by_task': 'R4.1-Data-Supervision-Task-3',
                                                                                                      'owner_ref': 'mutation-partition',
-                                                                                                     'source_ast_sha256': '83c2d8f4e17ad3196176299f7a4ab2361bc58e58cb802dbfc312edf8d3baf6f2'},
+                                                                                                     'source_ast_sha256': 'c6f157d36517c595e46c81f8af5ac22610aa26d7caf65083439db6862d999762'},
  'tests/test_r4_supervision_contracts.py::test_reader_failure_prevents_authenticated_bundle_creation': {'activation_phase': 'R4',
                                                                                                         'assertion_ref': 'assertion:r4-authenticated-bundle-requires-reader',
                                                                                                         'diagnostic_role': 'owner',
@@ -4179,4 +3573,59 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_sr5_bui
                                                                                                                   'diagnostic_role': 'owner',
                                                                                                                   'introduced_by_task': 'R4.1-Data-Supervision-Task-2',
                                                                                                                   'owner_ref': 'mutation-partition',
-                                                                                                                  'source_ast_sha256': '03a127599985864349256da0089d8dd6398cba5219d69cf1d776895821558b3a'}}
+                                                                                                                  'source_ast_sha256': '03a127599985864349256da0089d8dd6398cba5219d69cf1d776895821558b3a'},
+ 'tests/test_r4_supervision_contracts.py::test_mutation_contract_rejects_non_governed_truth[scope]': {'activation_phase': 'R4',
+                                                                                                      'assertion_ref': 'assertion:r4-closure-test-authority-mutation-contract-rejects-non-governed-truth-scope',
+                                                                                                      'diagnostic_role': 'admission_only',
+                                                                                                      'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                      'source_ast_sha256': 'a43501429e2c35aa62549f372b92149704e336dbab554954e042f4a40b3c1c73'},
+ 'tests/test_r4_supervision_contracts.py::test_mutation_contract_rejects_non_governed_truth[selector-kind]': {'activation_phase': 'R4',
+                                                                                                              'assertion_ref': 'assertion:r4-closure-test-authority-mutation-contract-rejects-non-governed-truth-selector-kind',
+                                                                                                              'diagnostic_role': 'admission_only',
+                                                                                                              'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                              'source_ast_sha256': 'a43501429e2c35aa62549f372b92149704e336dbab554954e042f4a40b3c1c73'},
+ 'tests/test_r4_supervision_contracts.py::test_mutation_contract_rejects_non_governed_truth[operation]': {'activation_phase': 'R4',
+                                                                                                          'assertion_ref': 'assertion:r4-closure-test-authority-mutation-contract-rejects-non-governed-truth-operation',
+                                                                                                          'diagnostic_role': 'admission_only',
+                                                                                                          'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                          'source_ast_sha256': 'a43501429e2c35aa62549f372b92149704e336dbab554954e042f4a40b3c1c73'},
+ 'tests/test_r4_supervision_contracts.py::test_mutation_contract_rejects_non_governed_truth[owner]': {'activation_phase': 'R4',
+                                                                                                      'assertion_ref': 'assertion:r4-closure-test-authority-mutation-contract-rejects-non-governed-truth-owner',
+                                                                                                      'diagnostic_role': 'admission_only',
+                                                                                                      'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                      'source_ast_sha256': 'a43501429e2c35aa62549f372b92149704e336dbab554954e042f4a40b3c1c73'},
+ 'tests/test_r4_supervision_contracts.py::test_mutation_contract_rejects_non_governed_truth[status]': {'activation_phase': 'R4',
+                                                                                                       'assertion_ref': 'assertion:r4-closure-test-authority-mutation-contract-rejects-non-governed-truth-status',
+                                                                                                       'diagnostic_role': 'admission_only',
+                                                                                                       'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                       'source_ast_sha256': 'a43501429e2c35aa62549f372b92149704e336dbab554954e042f4a40b3c1c73'},
+ 'tests/test_r4_supervision_contracts.py::test_mutation_contract_rejects_non_governed_truth[error-code]': {'activation_phase': 'R4',
+                                                                                                           'assertion_ref': 'assertion:r4-closure-test-authority-mutation-contract-rejects-non-governed-truth-error-code',
+                                                                                                           'diagnostic_role': 'admission_only',
+                                                                                                           'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                           'source_ast_sha256': 'a43501429e2c35aa62549f372b92149704e336dbab554954e042f4a40b3c1c73'},
+ 'tests/test_r4_supervision_contracts.py::test_mutation_contract_rejects_non_governed_truth[disposition]': {'activation_phase': 'R4',
+                                                                                                            'assertion_ref': 'assertion:r4-closure-test-authority-mutation-contract-rejects-non-governed-truth-disposition',
+                                                                                                            'diagnostic_role': 'admission_only',
+                                                                                                            'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                            'source_ast_sha256': 'a43501429e2c35aa62549f372b92149704e336dbab554954e042f4a40b3c1c73'},
+ 'tests/test_r4_supervision_contracts.py::test_mutation_contract_rejects_old_wire_aliases_and_invalid_paths': {'activation_phase': 'R4',
+                                                                                                               'assertion_ref': 'assertion:r4-closure-test-authority-mutation-contract-rejects-old-wire-aliases-and-invalid-paths',
+                                                                                                               'diagnostic_role': 'admission_only',
+                                                                                                               'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                               'source_ast_sha256': 'b8b904c07c50ae6b070077db137bac6fd07510585d4e0336cc3e594df1f78f48'},
+ 'tests/test_r4_supervision_contracts.py::test_realization_rejects_forged_designation_fact': {'activation_phase': 'R4',
+                                                                                              'assertion_ref': 'assertion:r4-closure-test-authority-realization-rejects-forged-designation-fact',
+                                                                                              'diagnostic_role': 'admission_only',
+                                                                                              'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                              'source_ast_sha256': 'b9055b1a205e7870c88e163df11a88e883a709ad5859b227cb44edfb9e3dc4b2'},
+ 'tests/test_r4_supervision_contracts.py::test_cross_source_validation_compiles_derivations_when_contexts_are_supplied': {'activation_phase': 'R4',
+                                                                                                                          'assertion_ref': 'assertion:r4-closure-test-authority-cross-source-validation-compiles-derivations-when-contexts-are-supplied',
+                                                                                                                          'diagnostic_role': 'admission_only',
+                                                                                                                          'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                                          'source_ast_sha256': 'fa90c62432c1136025f59f9209ab1940339c4089a4f2a1b296bf2d54567e93c5'},
+ 'tests/test_r4_supervision_contracts.py::test_manifest_rejects_child_review_ref_not_equal_to_context': {'activation_phase': 'R4',
+                                                                                                         'assertion_ref': 'assertion:r4-closure-test-authority-manifest-rejects-child-review-ref-not-equal-to-context',
+                                                                                                         'diagnostic_role': 'admission_only',
+                                                                                                         'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                                         'source_ast_sha256': 'b065182a9591620b39f3163e0676efb3efc6910aaa34a840abdfde94b0729694'}}

@@ -198,6 +198,15 @@ are diagnostic evidence only; they must not be exported, admitted or treated
 as semantic gold. The review UI, guided review, assistant pre-review and
 reviewer-identity plans cannot authorize current work.
 
+Before semantic Task 1, one bounded test-authority preflight must align the
+active suite with this closure boundary. That governance/test cleanup is one
+prerequisite commit and does not count against the maximum three semantic
+owner fixes or three semantic implementation commits. Existing broad scenario
+generator and authentic-cycle tests remain active and must not be weakened or
+deleted. The five stale scenario rows remain predecessor evidence and may be
+corrected only after the fixed diagnostic closure passes, under the separately
+reviewed mechanical correction plan.
+
 Closure work is bounded by all of the following:
 
 - the exact fixed cases in the governing closure design;

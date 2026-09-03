@@ -65,6 +65,38 @@ This table is diagnostic evidence, not an expected-gold shortcut. Acceptance
 tests below encode required meaning and practical behavior, never these failing
 statuses.
 
+### Task 0: Align active test authority with the closure boundary
+
+**Files:**
+
+- Modify: `AGENTS.md`
+- Modify: `docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md`
+- Modify: this plan
+- Modify: `tests/test_r4_structure.py`
+- Modify: `tests/test_r4_supervision_contracts.py`
+- Delete: the seven stale active R4 review-workflow test modules named by the
+  approved test-authority cleanup
+- Preserve: all production scripts/assets and all durable later R4 tests
+
+- [ ] Record RED with
+  `python scripts/check_test_inventory.py --phase R4 --source-only`.
+- [ ] Retire only the stale review-workflow test modules and the five stale SR5
+  supervision functions; consolidate their durable runtime anti-import
+  assertions into `tests/test_r4_structure.py`.
+- [ ] Add exact literal R4 metadata to every remaining later case without
+  changing frozen governance, inventory JSON, validation gates, production
+  runtime/data or scenario generation.
+- [ ] Verify the focused structural assertion, durable retained test modules,
+  metadata verifier, source-only inventory, inventory/structure pytest gate and
+  `git diff --check`.
+
+This is one governance/test cleanup commit and does not count against the three
+semantic owner fixes or three semantic implementation commits below. Existing
+broad scenario-generator and authentic-cycle tests remain active and must not
+be weakened or deleted. The five stale scenario rows remain predecessor
+evidence to correct only after the fixed diagnostic closure passes, under a
+separately reviewed mechanical correction plan.
+
 ### Task 1: Freeze the fixed vertical matrix in the existing test owner
 
 **Files:**

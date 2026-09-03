@@ -490,7 +490,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "G0-Task-1",
         "owner_ref": "governance",
-        "source_ast_sha256": "9727d046f737c6ebc56c815adff791b7c9b0dd25df952e2c257ea12b2e49fcd5"
+        "source_ast_sha256": "8bab51c25b4438abb52386b60838f7837bac1b5331808bbe67c85ae8f9951a28"
     },
     "tests/test_replay_governance.py::test_authority_cleanup_classifies_every_authority_like_document_once": {
         "activation_phase": "G0",

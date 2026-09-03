@@ -1,6 +1,7 @@
 """R4 anti-leakage and retired-review absence checks."""
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 
 __cemm_test_inventory__ = {'tests/test_r4_structure.py::test_episode_builder_executes_public_runtime_for_every_expanded_case': {'activation_phase': 'R4',
@@ -17,7 +18,7 @@ __cemm_test_inventory__ = {'tests/test_r4_structure.py::test_episode_builder_exe
                                                                           'assertion_ref': 'assertion:r4-external-review-subsystem-is-absent',
                                                                           'diagnostic_role': 'phase',
                                                                           'introduced_by_task': 'R4-Complete',
-                                                                          'source_ast_sha256': '454a4d90681f014b867ac0408b752bc9ccb2bf1205bd07e94f4a66f558f06ee7'}}
+                                                                          'source_ast_sha256': 'de4721c167bb4e55ad228400af42fe0394d85d678bbd0b974864d153d2c1fd95'}}
 
 
 ROOT = Path(__file__).parents[1]
@@ -60,3 +61,27 @@ def test_external_review_subsystem_is_absent() -> None:
         ROOT / "scripts" / "validation_gate.py",
     )
     assert not any(token in path.read_text(encoding="utf-8") for token in tokens for path in owners)
+
+    forbidden_import_parts = {
+        "r4_1_pre_review",
+        "PRE_REVIEW_RECOMMENDATIONS",
+        "serve_r4_1_review",
+        "r4_1_review_session",
+        "r4_1_guided_review",
+        "r4_1_review_ui",
+        "http.server",
+        "webbrowser",
+    }
+    violations: list[tuple[str, str]] = []
+    for path in sorted(SRC.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for item in ast.walk(tree):
+            imported: list[str] = []
+            if isinstance(item, ast.Import):
+                imported = [alias.name for alias in item.names]
+            elif isinstance(item, ast.ImportFrom):
+                imported = [item.module or "", *(alias.name for alias in item.names)]
+            for name in imported:
+                if any(part in name for part in forbidden_import_parts):
+                    violations.append((path.relative_to(ROOT).as_posix(), name))
+    assert violations == []

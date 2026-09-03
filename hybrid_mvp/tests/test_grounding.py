@@ -26,6 +26,13 @@ from cemm_authoritative_hybrid.config import RuntimeConfig
 from cemm_authoritative_hybrid.persistence import RevisionPin
 from cemm_authoritative_hybrid.proposal import BootstrapProposer
 
+__cemm_test_inventory__ = {'tests/test_grounding.py::test_linked_designation_fact_is_case_independent': {'activation_phase': 'R4',
+                                                                               'assertion_ref': 'assertion:r4-closure-test-authority-linked-designation-fact-is-case-independent',
+                                                                               'diagnostic_role': 'admission_only',
+                                                                               'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                               'source_ast_sha256': '3c17935eeda43fd09b353839c2fea31fca80523398bc3c2a31040ae98b695c50'}}
+
+
 
 ROOT = Path(__file__).parents[1]
 FORMS_PATH = ROOT / "data" / "languages" / "en" / "forms.json"

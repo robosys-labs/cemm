@@ -37,7 +37,7 @@ __cemm_test_inventory__ = {'tests/test_r4_expansion.py::test_sr1_source_universe
                                                                                            'diagnostic_role': 'owner',
                                                                                            'introduced_by_task': 'R4.1-SR1',
                                                                                            'owner_ref': 'surface-expansion',
-                                                                                           'source_ast_sha256': 'f0e011c8540eee513ee1a25ee6715426b36b8a2af47e2dd6c4504fcc50bc233a'},
+                                                                                           'source_ast_sha256': 'd8c2f0de3380d30550ef2cc248c71dc6413bdc97e8ef65a5abf500cefd147583'},
  'tests/test_r4_expansion.py::test_sr1_source_disposition_is_closed_and_conflicts_remain_alternatives': {'activation_phase': 'R4',
                                                                                                          'assertion_ref': 'assertion:r4-sr1-source-disposition-closed-conflicts-alternatives',
                                                                                                          'diagnostic_role': 'owner',
@@ -67,7 +67,7 @@ __cemm_test_inventory__ = {'tests/test_r4_expansion.py::test_sr1_source_universe
                                                                                          'diagnostic_role': 'owner',
                                                                                          'introduced_by_task': 'R4.1-SR1',
                                                                                          'owner_ref': 'surface-expansion',
-                                                                                         'source_ast_sha256': '15404ab60e3665eb6a02435195fef3b10ed8ec2b3b61633ce5670d2862bd466d'},
+                                                                                         'source_ast_sha256': '24ff926124f47efb3d06582010d844ea8b09c876ff5e8de69dd1e9407efee649'},
  'tests/test_r4_expansion.py::test_expander_uses_every_reviewed_surface_and_environment': {'activation_phase': 'R4',
                                                                                            'assertion_ref': 'assertion:r4-expander-uses-every-reviewed-surface-and-environment',
                                                                                            'diagnostic_role': 'owner',
@@ -79,7 +79,12 @@ __cemm_test_inventory__ = {'tests/test_r4_expansion.py::test_sr1_source_universe
                                                                                                'diagnostic_role': 'owner',
                                                                                                'introduced_by_task': 'R4-Final-Admission-Closeout',
                                                                                                'owner_ref': 'surface-expansion',
-                                                                                               'source_ast_sha256': 'af4157ebce344c48c8967f8d5d6a8d9f6a1dbb18bdec960cac160850c7fccec0'}}
+                                                                                               'source_ast_sha256': 'af4157ebce344c48c8967f8d5d6a8d9f6a1dbb18bdec960cac160850c7fccec0'},
+ 'tests/test_r4_expansion.py::test_request_effect_cases_own_exact_operation_prerequisites': {'activation_phase': 'R4',
+                                                                                             'assertion_ref': 'assertion:r4-closure-test-authority-request-effect-cases-own-exact-operation-prerequisites',
+                                                                                             'diagnostic_role': 'admission_only',
+                                                                                             'introduced_by_task': 'R4-Closure-Test-Authority',
+                                                                                             'source_ast_sha256': '1586be1f22832bc843539a3fd3213cb4e259d0aa5dce8525659602f96ec2e387'}}
 
 
 

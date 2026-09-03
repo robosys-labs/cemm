@@ -1609,11 +1609,11 @@ def test_r5_successor_uses_normal_lineage_to_current_executable_leaf(
 
 def test_r5_real_overlay_is_exact_and_g0_through_r4_are_unchanged() -> None:
     expected_refs = {
-        "G0": "active_test_nodes:8113493d949eb028b4e3a06c",
-        "R1": "active_test_nodes:e90f95bd4a3362820e7d1ef7",
-        "R2": "active_test_nodes:ecf063b2b45449c19af830b4",
-        "R3": "active_test_nodes:ab2cb926e939f15a84c38f3c",
-        "R4": "active_test_nodes:fa588e1474608aa7c4ed8b4b",
+        "G0": "active_test_nodes:415bc0a7ba48529d084da1f7",
+        "R1": "active_test_nodes:85b790dec251c98c18aaa830",
+        "R2": "active_test_nodes:44e8d1a6a1705275c9ffbd8f",
+        "R3": "active_test_nodes:03bc7659970f0b90c6c83764",
+        "R4": "active_test_nodes:c4f13da332856e03f050dece",
     }
     inventory_path = ROOT / "governance" / "test_inventory.json"
 
@@ -2220,7 +2220,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "owner_ref": "legacy-hard-cut",
         "introduced_by_task": "R5-Task-3",
-        "source_ast_sha256": "602d3873bd36a305f12ec7da61308823bea7b35dff9947f7edf8bf4bede4fd69",
+        "source_ast_sha256": "103842c1cbed07cb71e9fae8a89126370ab0430cdb519478a3898f133e4949c7",
     },
     "tests/test_test_inventory.py::test_r5_real_disposition_partition_rejects_missing_or_extra_rows": {
         "assertion_ref": "assertion:r5-test-inventory-real-partition-is-exact",
