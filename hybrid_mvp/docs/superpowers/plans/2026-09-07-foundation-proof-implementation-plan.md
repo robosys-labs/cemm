@@ -175,9 +175,9 @@ useful definitions, complete unknown handling, or a passing full regression.
 - [x] Run the whole diagnostic matrix and record all missing owners together.
   Do not stop discovery at the first failing surface and regenerate bulk gold.
 
-### Executed diagnostic matrix (September 7, not capability completion)
+### Executed pre-safety diagnostic matrix (`7e298b7`, September 7)
 
-The 25 added cases produce 10 passes and 15 failures; with the 28 containment
+At the reviewed test checkpoint, the 25 added cases produce 10 passes and 15 failures; with the 28 containment
 cases, the independently repeated module result is 38 passes and 15 failures.
 Expected graphs and observed device deltas are independently specified, not
 copied from parser output or requested effects. Direct post-VERIFY owner cases
@@ -189,7 +189,7 @@ passing assertion was changed to manufacture this result. Independent matrix
 spec and quality reviews passed. Selectors and the canonical living inventory
 receipt have been regenerated from the authenticated source metadata.
 
-| Boundary | Independent expectation | Evidence so far |
+| Boundary | Independent expectation | Pre-safety evidence at `7e298b7` |
 |---|---|---|
 | Ordinary facts | Ordered relation evidence supports only the specified proposition and proof. | Forward, reversed and negative controls pass; conflict drops the opposing proof and fails the decisive-status constructor. |
 | Type-role alignment | Compiler and public surface produce one independently specified membership graph. | Explicit instance/class compilation agrees; public `Alice is a mother.` returns no complete candidate (3 states, not truncated). Static composed-type validation still imposes a registry-kind literal. |
@@ -224,6 +224,26 @@ containment tests:
   purpose and sequence must not gain full relationship-proof claims from their
   current conjunction-like evaluation.
 
+Next-owner tracing, without source edits or capability claims:
+
+- Ordinary membership already has the right concept frame and explicit entity
+  designation. `_compatible_reference_roles` intersects with generic reference
+  ports that omit `role:instance`. A read-only in-memory probe admitting that
+  port advances search from 3 to 4 states and binds Alice correctly, but still
+  leaves the copula/determiner source units unconsumed. Repair reference-kind
+  compatibility and generic predication source ownership together; raising the
+  beam cannot create the absent legal transition.
+- `bootstrap.py` gives Grounder an index provider returning only immutable
+  `authority.designations`, ignoring persisted aliases. A correct replacement
+  must preserve admitted designation evidence and generation/revision pinning,
+  not index every teaching claim or reconnect the predecessor learning runtime.
+- `FocusStore(stores)` initializes an empty in-memory list; its recent-entry
+  reads never reload persisted focus. The separate R3 snapshot returns refs,
+  not canonical focus records, and memory/SQLite ordering differs. Use bounded,
+  session-scoped authenticated retrieval with consistent recency, preserving
+  realization-backed focus provenance; do not claim fragment completion from
+  rehydrating a ref alone.
+
 After the full matrix runs, repair admission/scope safety before expanding
 question or learning capabilities. Preserve the positive simple-state and denied-
 effect controls. Retained predecessor `query.py`/`learning.py` docstrings now
@@ -232,7 +252,7 @@ not be reconnected to bypass these missing active owners.
 
 ## Task 4 — Complete open queries and scoped uncertainty through existing owners
 
-- [ ] First repair bounded safety owners exposed by the matrix: preserve signed
+- [x] First repair bounded safety owners exposed by the matrix: preserve signed
   admission and reject unsupported enclosing scopes; select only an eligible
   requested root before both learning and operation paths; retain unresolved or
   proposition-valued query constraints as typed blockers; preserve both sides
@@ -255,6 +275,45 @@ not be reconnected to bypass these missing active owners.
   embedded effects or unconditional admission of scoped content.
 - [ ] Verify known definitions use actual reviewed descriptive content. Missing
   definitions remain missing even when the target identity is recognized.
+
+Bounded safety implementation evidence (independent spec and quality passed):
+the ten initial safety failures now pass, as do 38 additional signed/context,
+unsupported-root, query-constraint and receipt-retry controls. The independently
+run foundation module gives 86 passes and five remaining capability failures.
+Those five are ordinary membership, persisted speech focus, fresh-fragment
+clarification, alias/query continuity and persisted alias reuse; none has been
+skipped or reclassified as success. The four post-VERIFY R3 canaries still pass
+with zero world delta and the same status/action classes as the prior checkpoint.
+The independently authenticated 324-node owner run gives 306 passes and 18
+failures: those five capability gaps plus the 13 retained predecessor/source-data
+failures. Existing R1/R2/R3 structural scans and authority linking pass; fresh
+SQLite activation, reopen and integrity also pass as diagnostics, not admission.
+The static inventory rejected implicit parameter IDs in the new tests; these
+were corrected to literal IDs without changing the 38 contrasts or old test
+ASTs. R3/R4 source inventories now authenticate, and configured selectors and
+the canonical living receipt are regenerated through the existing mechanism.
+Repeated regeneration is byte-identical. All 38 added safety controls pass;
+their read-only predecessor replay gave 32 failures and six preservation passes.
+
+The repair uses existing cognition/effect owners and strict codecs; it introduces
+no new gate, ABI, runtime service, authority defaults or larger search bounds.
+Unsupported compound admission is retained as an exact attributed occurrence,
+not flattened into world deltas. Query containment is not complete typed-fact or
+multi-answer support. Scope-safe evaluator production is also not a claim that
+EFFECT independently authenticates an arbitrarily reconstructed evaluation:
+its existing source-application/root/capability binding needs a bounded owner
+review before extending operation or learning authority. Preserve that distinct
+follow-up rather than copying the full evaluator into another validator.
+The pre-existing OBSERVE conflict branch also drops occurrence/admission payloads
+while retaining occurrence proof refs; payload retention needs an explicit
+provenance repair. This increment preserves unsupported non-conflicting
+occurrences and query conflict proof, not that separate conflict-storage path.
+
+Next implementation order remains in this plan: ordinary membership's reference
+roles and predication source ownership; bounded authenticated restart retrieval;
+then reviewed query/content-slot/learning contract alignment before attempting
+the complete conversation. These are capability repairs, not reasons to resume
+bulk supervision, training, or root adoption prematurely.
 
 ## Task 5 — Prove a complete reference conversation
 

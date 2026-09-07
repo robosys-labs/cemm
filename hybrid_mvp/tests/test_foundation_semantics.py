@@ -66,6 +66,310 @@ from cemm_authoritative_hybrid.verifier import ExactProgramVerifier
 ROOT = Path(__file__).parents[1]
 
 __cemm_test_inventory__ = {
+    "tests/test_foundation_semantics.py::test_foundation_safety_unsupported_admission_retains_exact_occurrence[negative-compound]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-unsupported-admission-retains-exact-occurrence-negative-compound",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "c6469632d8fb277baffcc034451455713f9abae887bd487f8abacbae2e1119a7"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_unsupported_admission_retains_exact_occurrence[reported-nested]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-unsupported-admission-retains-exact-occurrence-reported-nested",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "c6469632d8fb277baffcc034451455713f9abae887bd487f8abacbae2e1119a7"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_unsupported_admission_retains_exact_occurrence[modal]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-unsupported-admission-retains-exact-occurrence-modal",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "c6469632d8fb277baffcc034451455713f9abae887bd487f8abacbae2e1119a7"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_unsupported_admission_retains_exact_occurrence[relation]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-unsupported-admission-retains-exact-occurrence-relation",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "c6469632d8fb277baffcc034451455713f9abae887bd487f8abacbae2e1119a7"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_unsupported_admission_retains_exact_occurrence[unresolved-state]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-unsupported-admission-retains-exact-occurrence-unresolved-state",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "c6469632d8fb277baffcc034451455713f9abae887bd487f8abacbae2e1119a7"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_unsupported_admission_retains_exact_occurrence[bound-state]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-unsupported-admission-retains-exact-occurrence-bound-state",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "c6469632d8fb277baffcc034451455713f9abae887bd487f8abacbae2e1119a7"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_unsupported_admission_retains_exact_occurrence[literal-state]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-unsupported-admission-retains-exact-occurrence-literal-state",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "c6469632d8fb277baffcc034451455713f9abae887bd487f8abacbae2e1119a7"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_unsupported_admission_retains_exact_occurrence[proposition-state]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-unsupported-admission-retains-exact-occurrence-proposition-state",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "c6469632d8fb277baffcc034451455713f9abae887bd487f8abacbae2e1119a7"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_conflicts_require_applicable_signed_same_context_claims[actual-conflict]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-conflicts-require-applicable-signed-same-context-claims-actual-conflict",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "de34ea1181e15838f5cb2e0207f71697fff23b2a1c095efdd6d1bd9450e91432"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_conflicts_require_applicable_signed_same_context_claims[two-denials]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-conflicts-require-applicable-signed-same-context-claims-two-denials",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "de34ea1181e15838f5cb2e0207f71697fff23b2a1c095efdd6d1bd9450e91432"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_conflicts_require_applicable_signed_same_context_claims[different-contexts]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-conflicts-require-applicable-signed-same-context-claims-different-contexts",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "de34ea1181e15838f5cb2e0207f71697fff23b2a1c095efdd6d1bd9450e91432"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_learning_requires_eligible_directive_root[positive]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-learning-requires-eligible-directive-root-positive",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "59ad7761db700f5ba62d0f3795adc4c0237fb52109d8d07d8cdca3be38b56efd"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_learning_requires_eligible_directive_root[negative]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-learning-requires-eligible-directive-root-negative",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "59ad7761db700f5ba62d0f3795adc4c0237fb52109d8d07d8cdca3be38b56efd"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_learning_requires_eligible_directive_root[reported]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-learning-requires-eligible-directive-root-reported",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "59ad7761db700f5ba62d0f3795adc4c0237fb52109d8d07d8cdca3be38b56efd"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_learning_requires_eligible_directive_root[conditional]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-learning-requires-eligible-directive-root-conditional",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "59ad7761db700f5ba62d0f3795adc4c0237fb52109d8d07d8cdca3be38b56efd"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_learning_requires_eligible_directive_root[speech]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-learning-requires-eligible-directive-root-speech",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "59ad7761db700f5ba62d0f3795adc4c0237fb52109d8d07d8cdca3be38b56efd"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_transition_selects_only_eligible_root[positive-request]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-transition-selects-only-eligible-root-positive-request",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "650ba856e90b8605ef9fa062623b812ccf8248b0b71a2ff70769f1e2f1b24fd4"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_transition_selects_only_eligible_root[positive-simulate]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-transition-selects-only-eligible-root-positive-simulate",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "650ba856e90b8605ef9fa062623b812ccf8248b0b71a2ff70769f1e2f1b24fd4"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_transition_selects_only_eligible_root[negative-request]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-transition-selects-only-eligible-root-negative-request",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "650ba856e90b8605ef9fa062623b812ccf8248b0b71a2ff70769f1e2f1b24fd4"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_transition_selects_only_eligible_root[negative-simulate]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-transition-selects-only-eligible-root-negative-simulate",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "650ba856e90b8605ef9fa062623b812ccf8248b0b71a2ff70769f1e2f1b24fd4"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_transition_selects_only_eligible_root[reported-request]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-transition-selects-only-eligible-root-reported-request",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "650ba856e90b8605ef9fa062623b812ccf8248b0b71a2ff70769f1e2f1b24fd4"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_transition_selects_only_eligible_root[reported-simulate]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-transition-selects-only-eligible-root-reported-simulate",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "650ba856e90b8605ef9fa062623b812ccf8248b0b71a2ff70769f1e2f1b24fd4"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_transition_selects_only_eligible_root[conditional-request]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-transition-selects-only-eligible-root-conditional-request",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "650ba856e90b8605ef9fa062623b812ccf8248b0b71a2ff70769f1e2f1b24fd4"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_transition_selects_only_eligible_root[conditional-simulate]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-transition-selects-only-eligible-root-conditional-simulate",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "650ba856e90b8605ef9fa062623b812ccf8248b0b71a2ff70769f1e2f1b24fd4"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_transition_selects_only_eligible_root[speech-request]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-transition-selects-only-eligible-root-speech-request",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "650ba856e90b8605ef9fa062623b812ccf8248b0b71a2ff70769f1e2f1b24fd4"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_transition_selects_only_eligible_root[speech-simulate]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-transition-selects-only-eligible-root-speech-simulate",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "650ba856e90b8605ef9fa062623b812ccf8248b0b71a2ff70769f1e2f1b24fd4"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_transition_selects_only_eligible_root[multiple-roots-request]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-transition-selects-only-eligible-root-multiple-roots-request",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "650ba856e90b8605ef9fa062623b812ccf8248b0b71a2ff70769f1e2f1b24fd4"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_transition_selects_only_eligible_root[multiple-roots-simulate]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-transition-selects-only-eligible-root-multiple-roots-simulate",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "650ba856e90b8605ef9fa062623b812ccf8248b0b71a2ff70769f1e2f1b24fd4"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_query_constraints_are_not_flat_fact_patterns[unresolved-role]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-query-constraints-are-not-flat-fact-patterns-unresolved-role",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "9e545a174b8990c280a0bbc38475e90ce15d90f038a29f5ef8c7066062410870"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_query_constraints_are_not_flat_fact_patterns[unresolved-qualifier]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-query-constraints-are-not-flat-fact-patterns-unresolved-qualifier",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "9e545a174b8990c280a0bbc38475e90ce15d90f038a29f5ef8c7066062410870"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_query_constraints_are_not_flat_fact_patterns[proposition-role]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-query-constraints-are-not-flat-fact-patterns-proposition-role",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "9e545a174b8990c280a0bbc38475e90ce15d90f038a29f5ef8c7066062410870"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_query_constraints_are_not_flat_fact_patterns[proposition-qualifier]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-query-constraints-are-not-flat-fact-patterns-proposition-qualifier",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "9e545a174b8990c280a0bbc38475e90ce15d90f038a29f5ef8c7066062410870"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_compound_conflict_keeps_both_actual_sources[link-conjunction]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-compound-conflict-keeps-both-actual-sources-link-conjunction",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "c8828a6384f778020c9382004f6e30be4b076d0bfd78907cca5325e2dee1b2be"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_compound_conflict_keeps_both_actual_sources[link-condition]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-compound-conflict-keeps-both-actual-sources-link-condition",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "c8828a6384f778020c9382004f6e30be4b076d0bfd78907cca5325e2dee1b2be"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_no_effect_terminal_retry_is_identity_preserving": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-no-effect-terminal-retry-is-identity-preserving",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "capability-effect",
+        "source_ast_sha256": "9c853b5ef5d526d99ec3dbbdeb63031ce4766fac6b90ef4895737d40642a6817"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_disjoint_joint_query_bindings_are_not_opposing_proof": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-disjoint-joint-query-bindings-are-not-opposing-proof",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "e41ffd872f6f03743ec960edfc86f5b966b7d694ac1a7da72533d6a83291a492"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_opposing_query_evidence_keeps_substitutions_distinct[same-binding]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-opposing-query-evidence-keeps-substitutions-distinct-same-binding",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "a9ebf21f9df81d62bbb55f8c0211ae1db5d7094f6642dce1e1d5439b91c9b444"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_safety_opposing_query_evidence_keeps_substitutions_distinct[different-bindings]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-safety-opposing-query-evidence-keeps-substitutions-distinct-different-bindings",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Safety",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "a9ebf21f9df81d62bbb55f8c0211ae1db5d7094f6642dce1e1d5439b91c9b444"
+    },
     "tests/test_foundation_semantics.py::test_foundation_matrix_ordered_relation_proof[forward]": {
         "activation_phase": "R3",
         "assertion_ref": "assertion:foundation-matrix-ordered-relation-proof-forward",
@@ -1421,6 +1725,8 @@ def test_foundation_matrix_reviewed_alias_survives_restart_and_unseen_reversal(t
         ),), expected_revision=0)
     finally:
         runtime.stores.close()
+
+
     runtime = load_runtime(ROOT, profile="development", store_path=path)
     try:
         assert dict(runtime.authority.atoms) == atoms_before
@@ -1437,3 +1743,280 @@ def test_foundation_matrix_reviewed_alias_survives_restart_and_unseen_reversal(t
         assert runtime.stores.world.revision == 1, "unseen reuse is attributed, not new authority"
     finally:
         runtime.stores.close()
+
+
+def _safety_observation(stores, *, trusted=True):
+    return _matrix_situation(
+        stores, SemanticMode.OBSERVE, trusted_observation=trusted,
+        evidence_kinds=("operation",) if trusted else ("text",),
+        adapter_receipt_refs=("operation_receipt:safety",) if trusted else (),
+        epistemic_scope_ref="epistemic_scope:observed",
+    )
+
+
+@pytest.mark.parametrize(
+    "case",
+    ("negative-compound", "reported-nested", "modal", "relation", "unresolved-state", "bound-state", "literal-state", "proposition-state"),
+    ids=("negative-compound", "reported-nested", "modal", "relation", "unresolved-state", "bound-state", "literal-state", "proposition-state"),
+)
+def test_foundation_safety_unsupported_admission_retains_exact_occurrence(case, linked_authority):
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        first = _matrix_state()
+        second = _matrix_state("value:off", "application:off")
+        if case in {"negative-compound", "reported-nested"}:
+            if case == "reported-nested":
+                scope = ScopeOperator("scope:reported", "scope:attribution", "scope_value:attribution:reported", second.application_ref)
+                link = ExpressionLink("link:and", "link:conjunction", (first.application_ref, scope.scope_ref))
+                root = link.link_ref
+            else:
+                link = ExpressionLink("link:and", "link:conjunction", (first.application_ref, second.application_ref))
+                scope = ScopeOperator("scope:not", "scope:polarity", "polarity:negative", link.link_ref)
+                root = scope.scope_ref
+            expression = SemanticExpression.create(applications=(first, second), scope_operators=(scope,), expression_links=(link,), root_refs=(root,))
+        elif case == "modal":
+            scope = ScopeOperator("scope:modal", "scope:modality", "modality:possible", first.application_ref)
+            expression = SemanticExpression.create(applications=(first,), scope_operators=(scope,), root_refs=(scope.scope_ref,))
+        elif case == "relation":
+            expression = _matrix_expression(_matrix_relation())
+        else:
+            filler = {"unresolved-state": UnresolvedValue("unresolved:value"), "bound-state": BoundVariable("?value"), "literal-state": LiteralValue("string", "value:on"), "proposition-state": ApplicationFiller(second.application_ref)}[case]
+            app = SemanticApplication(first.application_ref, first.operator, first.predicate_ref, (*first.roles[:2], RoleBinding("role:value", filler)))
+            if case == "unresolved-state":
+                expression = SemanticExpression.create(applications=(app,), root_refs=(app.application_ref,), unresolved_fillers=(UnresolvedFiller("unresolved:value", app.application_ref, "role:value", "reference", ("value",), True),))
+            elif case == "bound-state":
+                binder = VariableBinder("binder:value", "?value", app.application_ref)
+                expression = SemanticExpression.create(applications=(app,), binders=(binder,), root_refs=(binder.binder_ref,))
+            else:
+                expression = SemanticExpression.create(applications=(app, second) if case == "proposition-state" else (app,), root_refs=(app.application_ref,))
+        before = stores.revisions(), stores.r3_world_facts()
+        situation = _safety_observation(stores)
+        result = ObserveDecisionOwner().evaluate_full(expression, project_expression(expression), situation)
+        assert result.state_deltas == ()
+        assert result.contribution.action is DecisionAction.RETAIN_ATTRIBUTION
+        assert result.contribution.status is not DecisionStatus.CONFLICT
+        assert result.contribution.blocker_refs
+        assert len(result.claim_occurrences) == 1
+        occurrence = result.claim_occurrences[0]
+        assert occurrence.expression_ref == expression.expression_ref and occurrence.root_ref == expression.root_refs[0]
+        assert occurrence.source_ref == "source:foundation" and occurrence.evidence_refs == situation.source_refs
+        assert all(row.proposed_fact_refs == () for row in result.admission_decisions)
+        assert (stores.revisions(), stores.r3_world_facts()) == before
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize(
+    "case", ("actual-conflict", "two-denials", "different-contexts"),
+    ids=("actual-conflict", "two-denials", "different-contexts"),
+)
+def test_foundation_safety_conflicts_require_applicable_signed_same_context_claims(case, linked_authority):
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        first, second = _matrix_state(), _matrix_state("value:off", "application:off")
+        scopes = ()
+        if case == "two-denials":
+            scopes = tuple(ScopeOperator(f"scope:not-{index}", "scope:polarity", "polarity:negative", app.application_ref) for index, app in enumerate((first, second)))
+            operands = tuple(scope.scope_ref for scope in scopes)
+        elif case == "different-contexts":
+            # A literal and a reference with identical spelling are not the same context.
+            first = SemanticApplication(first.application_ref, first.operator, first.predicate_ref, first.roles, (RoleBinding("role:time", GroundedReference("time:earlier")),))
+            second = SemanticApplication(second.application_ref, second.operator, second.predicate_ref, second.roles, (RoleBinding("role:time", LiteralValue("string", "time:earlier")),))
+            operands = (first.application_ref, second.application_ref)
+        else:
+            operands = (first.application_ref, second.application_ref)
+        link = ExpressionLink("link:and", "link:conjunction", operands)
+        expression = SemanticExpression.create(applications=(first, second), scope_operators=scopes, expression_links=(link,), root_refs=(link.link_ref,))
+        result = ObserveDecisionOwner().evaluate_full(expression, project_expression(expression), _safety_observation(stores, trusted=False))
+        assert result.state_deltas == ()
+        assert (result.contribution.status is DecisionStatus.CONFLICT) is (case == "actual-conflict")
+        if case != "actual-conflict":
+            assert result.contribution.action is DecisionAction.RETAIN_ATTRIBUTION
+            assert result.claim_occurrences[0].expression_ref == expression.expression_ref
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize(
+    "wrapper", ("positive", "negative", "reported", "conditional", "speech"),
+    ids=("positive", "negative", "reported", "conditional", "speech"),
+)
+def test_foundation_safety_learning_requires_eligible_directive_root(wrapper, linked_authority):
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        app = SemanticApplication("application:alias", "op:designation", "label:lexical", (RoleBinding("role:label_type", GroundedReference("label:lexical")), RoleBinding("role:surface", LiteralValue("string", "velnora")), RoleBinding("role:target", GroundedReference("rel:likes"))))
+        expression = _matrix_expression(app, wrapper)
+        situation = _matrix_situation(stores, SemanticMode.REQUEST, epistemic_scope_ref="epistemic_scope:requested")
+        meaning = _matrix_meaning(expression, situation.revision_pin)
+        before = stores.revisions(), stores.r3_world_facts()
+        result = R3EvaluationOwner(linked_authority, stores, RuntimeConfig.release()).evaluate(meaning, situation)
+        assert result.effect_intents == ()
+        if wrapper == "positive":
+            assert len(result.learning_drafts) == 1
+            assert result.learning_drafts[0].surface_literal == "velnora"
+            assert result.learning_drafts[0].target_ref == "rel:likes"
+        else:
+            assert result.learning_drafts == ()
+            assert result.decision.action is not DecisionAction.CREATE_LEARNING_OBLIGATION
+            assert result.decision.blocker_refs
+        assert (stores.revisions(), stores.r3_world_facts()) == before
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize(
+    ("mode", "wrapper"),
+    (
+        (SemanticMode.REQUEST, "positive"), (SemanticMode.SIMULATE, "positive"),
+        (SemanticMode.REQUEST, "negative"), (SemanticMode.SIMULATE, "negative"),
+        (SemanticMode.REQUEST, "reported"), (SemanticMode.SIMULATE, "reported"),
+        (SemanticMode.REQUEST, "conditional"), (SemanticMode.SIMULATE, "conditional"),
+        (SemanticMode.REQUEST, "speech"), (SemanticMode.SIMULATE, "speech"),
+        (SemanticMode.REQUEST, "multiple-roots"), (SemanticMode.SIMULATE, "multiple-roots"),
+    ),
+    ids=(
+        "positive-request", "positive-simulate", "negative-request", "negative-simulate",
+        "reported-request", "reported-simulate", "conditional-request", "conditional-simulate",
+        "speech-request", "speech-simulate", "multiple-roots-request", "multiple-roots-simulate",
+    ),
+)
+def test_foundation_safety_transition_selects_only_eligible_root(mode, wrapper, linked_authority):
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        seeded = _matrix_operation_situation(stores)
+        situation = _matrix_situation(stores, mode, actor_ref=seeded.actor_ref, capability_refs=seeded.capability_refs, permission_refs=seeded.permission_refs, adapter_refs=seeded.adapter_refs, epistemic_scope_ref="epistemic_scope:requested" if mode is SemanticMode.REQUEST else "epistemic_scope:simulated")
+        app = _matrix_event()
+        if wrapper == "multiple-roots":
+            other = SemanticApplication("application:other", app.operator, app.predicate_ref, app.roles)
+            expression = SemanticExpression.create(applications=(app, other), root_refs=(app.application_ref, other.application_ref))
+        else:
+            expression = _matrix_expression(app, wrapper)
+        meaning = _matrix_meaning(expression, situation.revision_pin)
+        result = R3EvaluationOwner(linked_authority, stores, RuntimeConfig.release()).evaluate(meaning, situation)
+        if wrapper == "positive":
+            assert result.decision.action is (DecisionAction.REQUEST_EFFECT if mode is SemanticMode.REQUEST else DecisionAction.PREVIEW_TRANSITION)
+        else:
+            assert result.effect_intents == () and result.learning_drafts == ()
+            assert result.transition_evaluations == ()
+            assert result.decision.blocker_refs
+        assert stores.world.revision == 1
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize(
+    ("position", "kind"),
+    (("role", "unresolved"), ("qualifier", "unresolved"), ("role", "proposition"), ("qualifier", "proposition")),
+    ids=("unresolved-role", "unresolved-qualifier", "proposition-role", "proposition-qualifier"),
+)
+def test_foundation_safety_query_constraints_are_not_flat_fact_patterns(position, kind, linked_authority):
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        child = _matrix_state()
+        filler = UnresolvedValue("unresolved:constraint") if kind == "unresolved" else ApplicationFiller(child.application_ref)
+        constraint = RoleBinding("role:object" if position == "role" else "role:content", filler)
+        roles = (RoleBinding("role:subject", GroundedReference("entity:alice")),)
+        app = SemanticApplication("application:constraint", "op:relation", "rel:likes", (*roles, constraint) if position == "role" else roles, (constraint,) if position == "qualifier" else ())
+        known = _matrix_relation()
+        expression = SemanticExpression.create(
+            applications=(app, known, child) if kind == "proposition" else (app, known),
+            root_refs=(app.application_ref, known.application_ref),
+            unresolved_fillers=(UnresolvedFiller("unresolved:constraint", app.application_ref, constraint.role_ref, "reference", ("entity",), True),) if kind == "unresolved" else (),
+        )
+        canonical_app = next(row for row in expression.applications if any(isinstance(binding.filler, (UnresolvedValue, ApplicationFiller)) for binding in (*row.roles, *row.qualifiers)))
+        canonical_constraint = next(binding for binding in (*canonical_app.roles, *canonical_app.qualifiers) if isinstance(binding.filler, (UnresolvedValue, ApplicationFiller)))
+        # Deliberately hostile flat evidence matching a candidate-local ID must
+        # never count as evidence for the proposition denoted by that ID.
+        value = canonical_constraint.filler.node_ref if kind == "proposition" else "entity:bob"
+        stores.world.commit((
+            Fact("fact:safety-constraint", "op:relation", {"predicate_ref": "rel:likes", "role:subject": "entity:alice", canonical_constraint.role_ref: value}, proof={"source": "source:safety-constraint"}),
+            Fact("fact:safety-known", "op:relation", {"predicate_ref": "rel:likes", "role:subject": "entity:alice", "role:object": "entity:bob"}, proof={"source": "source:safety-known"}),
+        ), expected_revision=0)
+        before = stores.revisions(), stores.r3_world_facts()
+        result = QueryDecisionOwner(stores, RuntimeConfig.release(), linked_authority).evaluate_full(expression, project_expression(expression), _matrix_situation(stores))
+        assert result.query_results[0].status is QueryStatus.PARTIAL
+        assert result.query_results[0].proof is None and result.query_results[0].bindings == ()
+        assert canonical_constraint.role_ref in result.contribution.blocker_refs
+        assert result.contribution.action is DecisionAction.REQUEST_CLARIFICATION
+        assert (stores.revisions(), stores.r3_world_facts()) == before
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize(
+    "link_type", ("link:conjunction", "link:condition"),
+    ids=("link-conjunction", "link-condition"),
+)
+def test_foundation_safety_compound_conflict_keeps_both_actual_sources(link_type, linked_authority):
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        facts = _matrix_seed_likes(stores, conflict=True)
+        first, second = _matrix_relation(), _matrix_state()
+        link = ExpressionLink("link:conflict", link_type, (first.application_ref, second.application_ref))
+        expression = SemanticExpression.create(applications=(first, second), expression_links=(link,), root_refs=(link.link_ref,))
+        result = QueryDecisionOwner(stores, RuntimeConfig.release(), linked_authority).evaluate_full(expression, project_expression(expression), _matrix_situation(stores))
+        query = result.query_results[0]
+        assert query.status is QueryStatus.CONFLICT and query.proof is not None
+        assert set(query.proof.source_refs) == {fact.proof["source"] for fact in facts}
+        assert {ref for node in query.proof.nodes for ref in node.source_fact_refs} == {fact.fact_ref for fact in facts}
+        assert result.contribution.action is DecisionAction.REQUEST_CLARIFICATION
+    finally:
+        stores.close()
+
+
+def test_foundation_safety_no_effect_terminal_retry_is_identity_preserving(linked_authority):
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        situation = _matrix_operation_situation(stores, permitted=False)
+        meaning = _matrix_meaning(_matrix_expression(_matrix_event()), situation.revision_pin)
+        result = R3EvaluationOwner(linked_authority, stores, RuntimeConfig.release()).evaluate(meaning, situation)
+        adapter = _FoundationLampAdapter()
+        gateway = R3EffectGateway(stores, AdapterRegistry({"adapter:state": adapter}))
+        receipt = gateway.execute(result, meaning, situation)
+        assert type(receipt) is NoEffectReceipt
+        before = stores.revisions(), stores.r3_world_facts()
+        assert gateway.execute(result, meaning, situation) == receipt
+        assert (stores.revisions(), stores.r3_world_facts()) == before
+        assert adapter.requests == []
+    finally:
+        stores.close()
+
+
+def test_foundation_safety_disjoint_joint_query_bindings_are_not_opposing_proof(linked_authority):
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        apps = tuple(SemanticApplication(f"application:{index}", "op:relation", predicate, (RoleBinding("role:subject", BoundVariable("?person")), RoleBinding("role:object", GroundedReference("entity:bob")))) for index, predicate in enumerate(("rel:likes", "rel:knows")))
+        link = ExpressionLink("link:joint", "link:conjunction", tuple(app.application_ref for app in apps))
+        binder = VariableBinder("binder:person", "?person", link.link_ref)
+        expression = SemanticExpression.create(applications=apps, expression_links=(link,), binders=(binder,), root_refs=(binder.binder_ref,))
+        stores.world.commit(tuple(Fact(f"fact:joint-{index}", "op:relation", {"predicate_ref": predicate, "role:subject": subject, "role:object": "entity:bob"}, proof={"source": f"source:joint-{index}"}) for index, (predicate, subject) in enumerate((("rel:likes", "entity:alice"), ("rel:knows", "entity:carol")))), expected_revision=0)
+        result = QueryDecisionOwner(stores, RuntimeConfig.release(), linked_authority).evaluate_full(expression, project_expression(expression), _matrix_situation(stores))
+        assert result.query_results[0].status is QueryStatus.UNKNOWN
+        assert result.query_results[0].proof is None and result.query_results[0].bindings == ()
+        assert result.contribution.blocker_refs
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("same_binding", (True, False), ids=("same-binding", "different-bindings"))
+def test_foundation_safety_opposing_query_evidence_keeps_substitutions_distinct(same_binding, linked_authority):
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        app = SemanticApplication("application:likes", "op:relation", "rel:likes", (RoleBinding("role:subject", BoundVariable("?person")), RoleBinding("role:object", GroundedReference("entity:bob"))))
+        binder = VariableBinder("binder:person", "?person", app.application_ref)
+        expression = SemanticExpression.create(applications=(app,), binders=(binder,), root_refs=(binder.binder_ref,))
+        facts = tuple(Fact(f"fact:substitution-{stance}", "op:relation", {"predicate_ref": "rel:likes", "role:subject": "entity:alice" if stance == "support" or same_binding else "entity:carol", "role:object": "entity:bob"}, stance=stance, proof={"source": f"source:substitution-{stance}"}) for stance in ("support", "deny"))
+        stores.world.commit(facts, expected_revision=0)
+        result = QueryDecisionOwner(stores, RuntimeConfig.release(), linked_authority).evaluate_full(expression, project_expression(expression), _matrix_situation(stores))
+        query = result.query_results[0]
+        if same_binding:
+            assert query.status is QueryStatus.CONFLICT and query.proof is not None
+            assert query.bindings == ((expression.binders[0].variable_ref, "entity:alice"),)
+            assert set(query.proof.source_refs) == {fact.proof["source"] for fact in facts}
+        else:
+            assert query.status is QueryStatus.PARTIAL
+            assert "query:multi_binding_projection_unsupported" in result.contribution.blocker_refs
+            assert query.bindings == () and query.proof is None
+        assert stores.world.revision == 1 and result.contribution.action is DecisionAction.REQUEST_CLARIFICATION
+    finally:
+        stores.close()

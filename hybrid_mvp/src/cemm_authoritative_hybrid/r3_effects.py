@@ -17,7 +17,7 @@ from .decision import DecisionAction, DecisionStatus
 from .expressions import VerifiedMeaning
 from .persistence import Fact, RevisionPin, SemanticStores
 from .r3_artifacts import EvaluationBundle, StateDelta
-from .r3_codec import exact_fields, exact_pin, exact_refs, exact_text, wire_refs
+from .r3_codec import exact_fields, exact_pin, exact_refs, exact_text, thaw_json, wire_refs
 from .r3_learning import DialogueObligation, LearningPlan
 from .r3_persistence import (
     EffectJournalState,
@@ -865,6 +865,9 @@ class R3EffectGateway:
         payload = stored.receipt_payload
         if payload is None:
             raise ValueError("terminal journal lacks a receipt payload")
+        # Persistence freezes nested JSON; strict wire codecs still require
+        # exact mutable dict/list shapes at this explicit decode boundary.
+        payload = thaw_json(payload)
         if "status" in payload:
             receipt = EffectReceipt.from_dict(payload)
         elif "reason" in payload:

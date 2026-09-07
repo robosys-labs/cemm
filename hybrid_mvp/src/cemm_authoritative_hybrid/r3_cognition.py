@@ -1,9 +1,11 @@
 """Expression-only R3 cognition owners.
 
-The QUERY owner evaluates the canonical root graph recursively, preserving link
-and scope semantics.  OBSERVE separates claim occurrence from admission and
-never turns ordinary text into world truth.  REQUEST/SIMULATE require exact
-reviewed transitions and independently verify state preconditions.
+QUERY evaluates bounded root graphs with explicit unsupported constraints;
+flat fact matching is not a complete typed proposition query engine. Some links
+still use conjunction-like evidence checks, not full relationship proofs.
+OBSERVE separates attributed occurrence from signed simple-state admission.
+REQUEST requires an eligible root, reviewed transition and state preconditions;
+SIMULATE previews eligible transitions without asserting current executability.
 """
 from __future__ import annotations
 
@@ -27,6 +29,7 @@ from .expressions import (
     ScopeOperator,
     SemanticApplication,
     SemanticExpression,
+    UnresolvedValue,
     VariableBinder,
 )
 from .persistence import Fact, RevisionPin, SemanticStores
@@ -431,14 +434,21 @@ def _invert(result: _NodeResult) -> _NodeResult:
 def _and(results: tuple[_NodeResult, ...], maximum: int) -> _NodeResult:
     if not results:
         return _NodeResult(QueryStatus.UNKNOWN, blockers=("query:empty_conjunction",))
+    blockers = tuple(dict.fromkeys(ref for row in results for ref in row.blockers))
     if any(row.status is QueryStatus.CONFLICT for row in results):
-        return _NodeResult(QueryStatus.CONFLICT, blockers=("query:conjunct_conflict",))
+        conflicts = tuple(row for row in results if row.status is QueryStatus.CONFLICT)
+        return _NodeResult(
+            QueryStatus.CONFLICT,
+            support=tuple(solution for row in conflicts for solution in row.support)[:maximum],
+            oppose=tuple(solution for row in conflicts for solution in row.oppose)[:maximum],
+            blockers=(*blockers, "query:conjunct_conflict"),
+        )
     if any(row.status is QueryStatus.BUDGET_EXHAUSTED for row in results):
-        return _NodeResult(QueryStatus.BUDGET_EXHAUSTED, truncated=True, blockers=("query:budget",))
-    if any(row.status is QueryStatus.UNKNOWN for row in results):
-        return _NodeResult(QueryStatus.UNKNOWN, blockers=("query:unknown_conjunct",))
+        return _NodeResult(QueryStatus.BUDGET_EXHAUSTED, truncated=True, blockers=(*blockers, "query:budget"))
     if any(row.status is QueryStatus.PARTIAL for row in results):
-        return _NodeResult(QueryStatus.PARTIAL, blockers=("query:partial_conjunct",))
+        return _NodeResult(QueryStatus.PARTIAL, blockers=(*blockers, "query:partial_conjunct"))
+    if any(row.status is QueryStatus.UNKNOWN for row in results):
+        return _NodeResult(QueryStatus.UNKNOWN, blockers=(*blockers, "query:unknown_conjunct"))
     if any(row.status is QueryStatus.CONTRADICTED for row in results):
         oppose = tuple(solution for row in results for solution in row.oppose)[:maximum]
         return _NodeResult(QueryStatus.CONTRADICTED, oppose=oppose)
@@ -453,7 +463,9 @@ def _and(results: tuple[_NodeResult, ...], maximum: int) -> _NodeResult:
                     break
         solutions = next_rows
         if not solutions:
-            return _NodeResult(QueryStatus.CONFLICT, blockers=("query:binding_conflict",))
+            # No shared witness is not evidence against a proposition. Full
+            # multi-answer projection remains separate from conflict proof.
+            return _NodeResult(QueryStatus.UNKNOWN, blockers=("query:no_joint_binding",))
     return _NodeResult(QueryStatus.SUPPORTED, support=tuple(solutions))
 
 
@@ -518,6 +530,16 @@ class _RecursiveQueryEvaluator:
         return result
 
     def _application(self, app: SemanticApplication, allowed: frozenset[str] | None) -> _NodeResult:
+        blockers: list[str] = []
+        for binding in (*app.roles, *app.qualifiers):
+            if isinstance(binding.filler, UnresolvedValue):
+                blockers.extend(("query:unresolved_constraint", binding.filler.unresolved_ref, binding.role_ref))
+            elif isinstance(binding.filler, ApplicationFiller):
+                blockers.extend(("query:proposition_constraint", binding.filler.node_ref, binding.role_ref))
+        if blockers:
+            # Candidate-local application IDs are not persisted proposition
+            # identities, and an unresolved role is not a missing constraint.
+            return _NodeResult(QueryStatus.PARTIAL, blockers=tuple(dict.fromkeys(blockers)))
         pattern = _pattern(app)
         support: list[_Solution] = []
         oppose: list[_Solution] = []
@@ -531,6 +553,10 @@ class _RecursiveQueryEvaluator:
                 continue
             row = _Solution(bindings, (fact.fact_ref,))
             (support if fact.stance == "support" else oppose).append(row)
+        if support and oppose and len({row.bindings for row in (*support, *oppose)}) > 1:
+            # The single-result ABI cannot express support and denial for
+            # different substitutions as one unqualified conflict.
+            return _NodeResult(QueryStatus.PARTIAL, blockers=("query:multi_binding_projection_unsupported",))
         return _NodeResult(_status(tuple(support), tuple(oppose)), tuple(support), tuple(oppose))
 
     def _scope(self, scope: ScopeOperator, allowed: frozenset[str] | None) -> _NodeResult:
@@ -563,8 +589,10 @@ class _RecursiveQueryEvaluator:
             if antecedent.status is QueryStatus.CONTRADICTED:
                 return _NodeResult(QueryStatus.SUPPORTED, support=antecedent.oppose)
             if antecedent.status is QueryStatus.CONFLICT:
-                return _NodeResult(QueryStatus.CONFLICT, blockers=("query:condition_conflict",))
-            return _NodeResult(QueryStatus.UNKNOWN, blockers=("query:condition_antecedent_unknown",))
+                return replace(antecedent, blockers=(*antecedent.blockers, "query:condition_conflict"))
+            if antecedent.status is QueryStatus.PARTIAL:
+                return antecedent
+            return _NodeResult(QueryStatus.UNKNOWN, blockers=(*antecedent.blockers, "query:condition_antecedent_unknown"))
         # Coordination, conjunction, cause, purpose, contrast and sequence all
         # require every ordered operand to hold. Their distinct link identity is
         # retained in the expression and proof lineage.
@@ -603,6 +631,14 @@ class QueryDecisionOwner:
             root_result = replace(root_result, status=QueryStatus.BUDGET_EXHAUSTED, truncated=True)
         chosen_solutions = root_result.support or root_result.oppose
         chosen = chosen_solutions[0] if chosen_solutions else _Solution((), ())
+        if root_result.status is QueryStatus.CONFLICT:
+            # Keep actual opposing evidence through conservative compound
+            # conflict reporting; never manufacture proof from a blocker.
+            substitutions = {solution.bindings for solution in (*root_result.support, *root_result.oppose)}
+            chosen = _Solution(next(iter(substitutions)) if len(substitutions) == 1 else (), tuple(dict.fromkeys(
+                ref for solution in (*root_result.support, *root_result.oppose)
+                for ref in solution.fact_refs
+            )))
         selected = tuple(evaluator.fact_by_ref[ref] for ref in chosen.fact_refs)
         proof = _proof(selected, evaluator.fact_by_ref, chosen.bindings, situation.revision_pin)
         result = QueryResult.create(
@@ -631,7 +667,7 @@ class QueryDecisionOwner:
         elif root_result.status in {QueryStatus.CONFLICT, QueryStatus.UNKNOWN, QueryStatus.PARTIAL}:
             action = DecisionAction.REQUEST_CLARIFICATION
             answer_ref = None
-            blockers = root_result.blockers or (f"query:{root_result.status.value}",)
+            blockers = tuple(dict.fromkeys(root_result.blockers)) or (f"query:{root_result.status.value}",)
         else:
             action = DecisionAction.NO_OP
             answer_ref = None
@@ -680,7 +716,7 @@ def _placement_for_root(expression: SemanticExpression, projection: ExpressionPr
     return PlacementMode.OBSERVED if situation.mode is SemanticMode.OBSERVE else PlacementMode.SIMULATED
 
 
-def _state_delta(app: SemanticApplication, occurrence: ClaimOccurrence, pin: RevisionPin) -> StateDelta:
+def _state_delta(app: SemanticApplication, stance: str, occurrence: ClaimOccurrence, pin: RevisionPin) -> StateDelta:
     roles = tuple(sorted(
         (binding.role_ref, value)
         for binding in (*app.roles, *app.qualifiers)
@@ -690,31 +726,69 @@ def _state_delta(app: SemanticApplication, occurrence: ClaimOccurrence, pin: Rev
         operator_ref=app.operator,
         predicate_ref=app.predicate_ref,
         role_values=roles,
-        stance="support",
+        stance=stance,
         occurrence_ref=occurrence.occurrence_ref,
         proof_refs=(occurrence.occurrence_ref,),
         revision_pin=pin,
     )
 
 
-def _contains_state_conflict(expression: SemanticExpression) -> bool:
-    values_by_state: dict[tuple[str, str, str], set[str]] = {}
-    for app in expression.applications:
-        if app.operator != "op:state":
+def _signed_root_node(projection: ExpressionProjection, root_ref: str) -> tuple[object | None, str]:
+    """Follow polarity only; never distribute it through a compound node."""
+    node = projection.node_by_ref[root_ref]
+    stance = "support"
+    while isinstance(node, ScopeOperator):
+        if node.operator_type != "scope:polarity":
+            return None, stance
+        if node.value_ref in _NEGATIVE_POLARITY:
+            stance = "deny" if stance == "support" else "support"
+        elif node.value_ref not in _POSITIVE_POLARITY:
+            return None, stance
+        node = projection.node_by_ref[node.operand_ref]
+    return node, stance
+
+
+def _admissible_state(node: object) -> bool:
+    return (
+        isinstance(node, SemanticApplication)
+        and node.operator == "op:state"
+        and {"role:subject", "role:value"} <= {binding.role_ref for binding in node.roles}
+        and all(isinstance(binding.filler, GroundedReference) for binding in (*node.roles, *node.qualifiers))
+    )
+
+
+def _contains_state_conflict(expression: SemanticExpression, projection: ExpressionProjection) -> bool:
+    # Conflict evidence may compare actual conjuncts, but this does not license
+    # admitting a compound expression by flattening it into independent facts.
+    values_by_state: dict[tuple[object, ...], dict[str, set[GroundedReference]]] = {}
+    pending = list(expression.root_refs)
+    seen: set[str] = set()
+    while pending:
+        ref = pending.pop()
+        if ref in seen:
             continue
-        roles = {
-            binding.role_ref: _filler_value(binding)
-            for binding in app.roles
-        }
-        subject = roles.get("role:subject")
-        dimension = roles.get("role:dimension")
+        seen.add(ref)
+        node, stance = _signed_root_node(projection, ref)
+        if isinstance(node, ExpressionLink):
+            if stance == "support" and node.link_type in {"link:conjunction", "link:coordination"}:
+                pending.extend(node.operand_refs)
+            continue
+        if not isinstance(node, SemanticApplication) or node.operator != "op:state":
+            continue
+        roles = {binding.role_ref: binding.filler for binding in node.roles}
         value = roles.get("role:value")
-        if subject is None or dimension is None or value is None:
+        if not isinstance(value, GroundedReference) or not isinstance(roles.get("role:subject"), GroundedReference):
             continue
-        values_by_state.setdefault(
-            (app.predicate_ref, subject, dimension), set()
-        ).add(value)
-    return any(len(values) > 1 for values in values_by_state.values())
+        if any(not isinstance(binding.filler, (GroundedReference, LiteralValue)) for binding in (*node.roles, *node.qualifiers)):
+            continue
+        # Keep every contextual role/qualifier typed. A literal spelled like a
+        # reference cannot put two claims into the same context.
+        context = (node.predicate_ref, tuple(binding for binding in node.roles if binding.role_ref != "role:value"), node.qualifiers)
+        signed_values = values_by_state.setdefault(context, {"support": set(), "deny": set()})
+        signed_values[stance].add(value)
+        if len(signed_values["support"]) > 1 or signed_values["support"] & signed_values["deny"]:
+            return True
+    return False
 
 
 class ObserveDecisionOwner:
@@ -725,6 +799,7 @@ class ObserveDecisionOwner:
         occurrences: list[ClaimOccurrence] = []
         admissions: list[AdmissionDecision] = []
         deltas: list[StateDelta] = []
+        blockers: list[str] = []
         for root_ref in expression.root_refs:
             placement = _placement_for_root(expression, projection, root_ref, situation)
             occurrence = ClaimOccurrence.create(
@@ -742,10 +817,13 @@ class ObserveDecisionOwner:
                 revision_pin=situation.revision_pin,
             )
             occurrences.append(occurrence)
-            can_admit = situation.trusted_observation and placement is PlacementMode.OBSERVED
+            node, stance = _signed_root_node(projection, root_ref)
+            eligible = _admissible_state(node)
+            if not eligible:
+                blockers.append("observation:unsupported_state_admission")
+            can_admit = situation.trusted_observation and placement is PlacementMode.OBSERVED and eligible
             if can_admit:
-                root_apps = projection.descendant_applications(root_ref)
-                root_deltas = tuple(_state_delta(app, occurrence, situation.revision_pin) for app in root_apps)
+                root_deltas = (_state_delta(node, stance, occurrence, situation.revision_pin),)
                 deltas.extend(root_deltas)
                 admission = AdmissionDecision.create(
                     occurrence_ref=occurrence.occurrence_ref,
@@ -767,7 +845,7 @@ class ObserveDecisionOwner:
                     revision_pin=situation.revision_pin,
                 )
             admissions.append(admission)
-        conflict = _contains_state_conflict(expression)
+        conflict = _contains_state_conflict(expression, projection)
         if conflict:
             status, action = (
                 DecisionStatus.CONFLICT,
@@ -806,7 +884,7 @@ class ObserveDecisionOwner:
             ),
             source_refs=situation.source_refs,
             policy_refs=tuple(dict.fromkeys(row.policy_ref for row in admissions)),
-            blocker_refs=("expected_conflict",) if conflict else (),
+            blocker_refs=("expected_conflict",) if conflict else tuple(dict.fromkeys(blockers)),
         )
         return ModeEvaluation(
             contribution=contribution,
@@ -869,6 +947,21 @@ class _TransitionOwnerBase:
         self._authority = authority
         self._stores = stores
         self._config = config
+
+    @staticmethod
+    def _eligible_root(expression: SemanticExpression, projection: ExpressionProjection) -> tuple[SemanticApplication | None, tuple[str, ...]]:
+        if len(expression.root_refs) != 1:
+            return None, ("transition:multiple_roots",)
+        node = projection.node_by_ref[expression.root_refs[0]]
+        while isinstance(node, ScopeOperator):
+            if node.operator_type != "scope:polarity" or node.value_ref not in _POSITIVE_POLARITY:
+                return None, ("transition:unsupported_scope", node.scope_ref)
+            node = projection.node_by_ref[node.operand_ref]
+        if not isinstance(node, SemanticApplication) or node.operator not in {"op:event", "op:designation"}:
+            return None, ("transition:unsupported_root",)
+        if any(isinstance(binding.filler, ApplicationFiller) for binding in (*node.roles, *node.qualifiers)):
+            return None, ("transition:proposition_content", node.application_ref)
+        return node, ()
 
     def _transition(self, app: SemanticApplication, situation: SituationContext,
                     *, simulate: bool) -> tuple[TransitionEvaluation, CapabilityEvaluation, EffectIntent | None]:
@@ -1073,15 +1166,20 @@ class RequestDecisionOwner(_TransitionOwnerBase):
                       situation: SituationContext) -> ModeEvaluation:
         if situation.mode is not SemanticMode.REQUEST:
             raise ValueError("RequestDecisionOwner requires REQUEST")
-        app = next(iter(projection.event_applications()), None) or next(iter(expression.applications), None)
+        app, blockers = self._eligible_root(expression, projection)
         if app is None:
             return ModeEvaluation(contribution=DecisionContribution(
                 status=DecisionStatus.UNKNOWN, action=DecisionAction.NO_OP,
-                blocker_refs=("request:no_application",), policy_refs=("policy:request_transition:v2",),
+                blocker_refs=blockers, policy_refs=("policy:request_transition:v2",),
             ))
         learning = self._learning_directive(app, situation)
         if learning is not None:
             return learning
+        if any(not isinstance(binding.filler, GroundedReference) for binding in (*app.roles, *app.qualifiers)):
+            return ModeEvaluation(contribution=DecisionContribution(
+                status=DecisionStatus.UNKNOWN, action=DecisionAction.NO_OP,
+                blocker_refs=("transition:unresolved_or_literal_role",), policy_refs=("policy:request_transition:v2",),
+            ))
         transition, capability, intent = self._transition(app, situation, simulate=False)
         if capability.status is CapabilityStatus.AVAILABLE and intent is not None:
             status, action = DecisionStatus.PENDING, DecisionAction.REQUEST_EFFECT
@@ -1118,11 +1216,13 @@ class SimulateDecisionOwner(_TransitionOwnerBase):
                       situation: SituationContext) -> ModeEvaluation:
         if situation.mode is not SemanticMode.SIMULATE:
             raise ValueError("SimulateDecisionOwner requires SIMULATE")
-        app = next(iter(projection.event_applications()), None) or next(iter(expression.applications), None)
+        app, blockers = self._eligible_root(expression, projection)
+        if app is not None and any(not isinstance(binding.filler, GroundedReference) for binding in (*app.roles, *app.qualifiers)):
+            app, blockers = None, ("transition:unresolved_or_literal_role",)
         if app is None:
             return ModeEvaluation(contribution=DecisionContribution(
                 status=DecisionStatus.UNKNOWN, action=DecisionAction.NO_OP,
-                blocker_refs=("simulation:no_application",), policy_refs=("policy:simulation_no_effect:v2",),
+                blocker_refs=blockers, policy_refs=("policy:simulation_no_effect:v2",),
             ))
         transition, capability, _ = self._transition(app, situation, simulate=True)
         if transition.status is TransitionStatus.SIMULATED:
