@@ -643,6 +643,51 @@ pass on that clean checkpoint. No push, merge or root adoption occurred.
 - [ ] Demonstrate that a proposed new identity remains subject to acquisition
   policy; no default-to-concept or research-result auto-admission.
 
+### Task 5 dependency hard cut
+
+Do not turn the three remaining matrix failures green independently and call the
+conversation complete. They are the visible leaves of one ordered continuation
+and acquisition path. Implement and review these owners in order:
+
+1. **Pending-query continuity.** Read only the bounded, authenticated obligation
+   refs already captured by the exact `SituationContext`. Bind a learning answer
+   to one same-session, pending, unexpired `LEARNING_ANSWER` and its exact answer
+   contract. Zero, multiple, missing, foreign, completed, expired or corrupt rows
+   fail closed. A synthetic `learning_source_query` is not an exact `QueryResult`.
+2. **Continuation content.** An unknown query must create one typed continuation
+   containing enough canonical query/expression and outstanding-slot evidence to
+   prove that a later answer answers that query. Merely copying an opaque query
+   ref cannot prove that `foo means X` answers a prior question about `bar`.
+   Reuse the dialogue-obligation owner; do not add a parallel intent/session ABI.
+3. **Reviewed learning authority.** Replace unlinked string defaults with one
+   active, linked designation-learning contract aligned to the already linked
+   `cap:learn_alias`, `permission:write_alias`, `event:learn_alias` and
+   `op:designation`. User wording may propose a plan but cannot issue reviewer
+   authority. Existing-target aliases and new-identity acquisition remain
+   separate policies.
+4. **Transactional publication.** After explicit review authorization, Stage 13
+   commits exactly one designation fact and consumes exactly the originating
+   continuation only after its successful receipt. Retry is idempotent; denial,
+   conflict, expiry, stale revisions and partial failure leave world, obligation
+   and indexes unchanged.
+5. **Bounded restart reuse.** Build the runtime designation overlay from only
+   admitted alias facts through a revision-keyed index. Validate target existence,
+   target kind, proof and authority generation. Never rescan every world fact on
+   a turn, treat a teaching claim as admitted, regenerate a form pack, or alter
+   immutable authority atoms. Prove restart and unseen subject/object reversal.
+6. **Fragment and response continuity.** A verified focus writer and an exact
+   outstanding content slot must precede contextual fragment completion. A fresh
+   fragment requests clarification without becoming a world claim. Diagnostic
+   realization then renders the typed response compositionally; release profiles
+   remain fail-closed until R5 realization equivalence is independently proved.
+
+The currently seeded restart test is useful only as an admitted-world-fact/index
+seam probe. Its manually inserted `Fact` is not acquisition authorization and
+cannot satisfy steps 3–4. Likewise, manually constructing a pending obligation
+is a continuity seam probe, not evidence that an unknown public query creates a
+usable continuation. Keep those distinctions explicit so later work cannot
+recurse by substituting fixtures for the missing runtime owners.
+
 ## Task 6 — Repair measured search/retrieval bounds and confirm preservation
 
 - [ ] Reproduce program/meaning duplication with the audit's multi-root and
