@@ -71,6 +71,118 @@ from cemm_authoritative_hybrid.verifier_reconstruction import reconstruct_expect
 ROOT = Path(__file__).parents[1]
 
 __cemm_test_inventory__ = {
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_r3_writer_preserves_atomic_metadata[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-r3-writer-preserves-atomic-metadata-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "0a7ba39a2c789874dc4ddcf27119160a05214ef804b886e81a6af7a75a6b15f8"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_r3_writer_preserves_atomic_metadata[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-r3-writer-preserves-atomic-metadata-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "0a7ba39a2c789874dc4ddcf27119160a05214ef804b886e81a6af7a75a6b15f8"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_failed_completion_is_atomic[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-failed-completion-is-atomic-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "8520ec577d5b16ba95c657e21ece4eb25afd73906d6a364a63d0acbd275ad6c2"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_failed_completion_is_atomic[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-failed-completion-is-atomic-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "8520ec577d5b16ba95c657e21ece4eb25afd73906d6a364a63d0acbd275ad6c2"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_codec_is_exact": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-codec-is-exact",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "0b5257f9a732a2adbd25e493a5b453956215bbe1f4b8c235300a45accc463abc"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_reads_exact_keys_and_rejects_invalid_lifecycle[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-reads-exact-keys-and-rejects-invalid-lifecycle-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "e472db9e0386b249b61d1a206d2f6d4792131286d2a5bdc48049a8be5c49fc7d"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_reads_exact_keys_and_rejects_invalid_lifecycle[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-reads-exact-keys-and-rejects-invalid-lifecycle-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "e472db9e0386b249b61d1a206d2f6d4792131286d2a5bdc48049a8be5c49fc7d"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_reads_exact_keys_and_rejects_invalid_lifecycle[sqlite-reopen]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-reads-exact-keys-and-rejects-invalid-lifecycle-sqlite-reopen",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "e472db9e0386b249b61d1a206d2f6d4792131286d2a5bdc48049a8be5c49fc7d"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_authenticates_payload_and_detaches_writes[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-authenticates-payload-and-detaches-writes-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "1822a2237c04902ff5622b0d24bc6b3d71bdb9d76a846a297d0032a796d224f3"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_authenticates_payload_and_detaches_writes[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-authenticates-payload-and-detaches-writes-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "1822a2237c04902ff5622b0d24bc6b3d71bdb9d76a846a297d0032a796d224f3"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_rejects_forged_envelopes_and_future_pins[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-rejects-forged-envelopes-and-future-pins-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "c06e7d3dc8fcfcfedebfb1de2600ae8ad815c02ea077f151dd37aee2de19b9e2"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_rejects_forged_envelopes_and_future_pins[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-rejects-forged-envelopes-and-future-pins-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "c06e7d3dc8fcfcfedebfb1de2600ae8ad815c02ea077f151dd37aee2de19b9e2"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_work_is_key_bounded[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-work-is-key-bounded-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "62e4ee5cd35c7bd9d8121f073076fe45071b20b391118f4b49fcd3a4d93d9d94"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_work_is_key_bounded[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-pending-dialogue-work-is-key-bounded-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Task-5",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "62e4ee5cd35c7bd9d8121f073076fe45071b20b391118f4b49fcd3a4d93d9d94"
+    },
     "tests/test_foundation_semantics.py::test_foundation_lexical_typed_query_pattern_preserves_repeated_role_constraint": {
         "activation_phase": "R3",
         "assertion_ref": "assertion:foundation-lexical-typed-query-pattern-preserves-repeated-role-constraint",
@@ -5530,5 +5642,213 @@ def test_foundation_lexical_typed_query_pattern_preserves_repeated_role_constrai
         result = QueryDecisionOwner(stores, RuntimeConfig.release(), linked_authority).evaluate_full(expression, project_expression(expression), _matrix_situation(stores))
         assert result.query_results[0].status is QueryStatus.UNKNOWN
         assert result.query_results[0].proof is None and result.query_results[0].bindings == ()
+    finally:
+        stores.close()
+
+
+def _pending_dialogue(stores, suffix="one", **changes):
+    values = dict(kind=ObligationKind.LEARNING_ANSWER, session_ref="session:pending",
+        source_query_ref=f"query:{suffix}", expected_answer_contract_ref="contract:designation_answer:v2",
+        created_turn_index=1, expires_turn_index=5, source_decision_ref=f"decision:{suffix}",
+        completion_receipt_ref=None, revision_pin=stores.revision_pin())
+    values.update(changes)
+    return DialogueObligation.create(**values)
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite"), ids=("memory", "sqlite"))
+def test_foundation_pending_dialogue_r3_writer_preserves_atomic_metadata(backend, tmp_path):
+    # Persistence seam only: this does not authorize or prove alias acquisition.
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        stores.r3_effect_journal_begin(idempotency_key="key:learning", intent_ref="intent:learning",
+            decision_ref="decision:learning", request_payload={"session_ref": "session:pending", "turn_index": 1},
+            expected_effect_revision=0)
+        row = _pending_dialogue(stores)
+        before = (stores.revision_pin(), stores.obligations.revision, stores.r3_effect_journal_get("key:learning"))
+        commit = lambda payload: stores.r3_commit_learning_outcome(session_ref=row.session_ref,
+            obligation_ref=row.obligation_ref, obligation_payload=payload, idempotency_key="key:learning",
+            intent_ref="intent:learning", decision_ref="decision:learning", receipt_payload={"receipt_ref": "receipt:learning"},
+            expected_revision_pin=before[0])
+        with pytest.raises(TypeError):
+            commit({**row.as_dict(), "not_json": {1}})
+        assert (stores.revision_pin(), stores.obligations.revision, stores.r3_effect_journal_get("key:learning")) == before
+        assert stores.sessions.get(row.session_ref) is None
+        assert stores.obligations.keyed_row(row.obligation_ref) is None
+        commit(row.as_dict())
+        assert stores.obligations.revision == 1
+        assert stores.pending_dialogue_obligations(row.session_ref, (row.obligation_ref,), maximum=1, turn_index=2) == (row,)
+        assert stores.r3_obligation_snapshot(row.session_ref, maximum=1)["obligation_refs"] == [row.obligation_ref]
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite"), ids=("memory", "sqlite"))
+def test_foundation_pending_dialogue_failed_completion_is_atomic(backend, tmp_path):
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        row = _pending_dialogue(stores)
+        stores.obligations.commit(row.obligation_ref, row.session_ref, row.as_dict(), expected_revision=0)
+        before = stores.obligations.keyed_row(row.obligation_ref)
+        with pytest.raises(TypeError):
+            stores.obligations.complete(row.obligation_ref, "completed:invalid", row.session_ref,
+                {"completion_receipt_ref": "receipt:done", "not_json": {1}}, expected_revision=1)
+        assert stores.obligations.revision == 1
+        assert stores.obligations.keyed_row(row.obligation_ref) == before
+        assert stores.obligations.get("completed:invalid") is None
+    finally:
+        stores.close()
+
+
+def test_foundation_pending_dialogue_codec_is_exact():
+    stores = memory_stores()
+    try:
+        for kind in ObligationKind:
+            row = _pending_dialogue(stores, kind=kind)
+            assert DialogueObligation.from_dict(row.as_dict()) == row
+        original = _pending_dialogue(stores).as_dict()
+        class RefSubclass(str):
+            pass
+        for patch in ({"abi_version": True}, {"abi_version": 1.0}, {"abi_version": 2},
+                      {"kind": "unknown"}, {"created_turn_index": True},
+                      {"expires_turn_index": 1}, {"obligation_ref": "forged"},
+                      {"resolved": False}, {"revision_pin": {}}, {"obligation_ref": RefSubclass(original["obligation_ref"])}):
+            with pytest.raises((TypeError, ValueError)):
+                DialogueObligation.from_dict({**original, **patch})
+        missing = dict(original)
+        del missing["source_query_ref"]
+        with pytest.raises(ValueError):
+            DialogueObligation.from_dict(missing)
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite", "sqlite-reopen"), ids=("memory", "sqlite", "sqlite-reopen"))
+def test_foundation_pending_dialogue_reads_exact_keys_and_rejects_invalid_lifecycle(backend, tmp_path):
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        first = _pending_dialogue(stores)
+        second = _pending_dialogue(stores, "two", kind=ObligationKind.CLARIFICATION)
+        foreign = _pending_dialogue(stores, "foreign", session_ref="session:foreign")
+        for row in (first, second, foreign):
+            stores.obligations.commit(row.obligation_ref, row.session_ref, row.as_dict(), expected_revision=stores.obligations.revision)
+        stores = _restart_reopen(stores, backend, tmp_path)
+        before = (stores.revision_pin(), stores.obligations.revision)
+        read = lambda refs, turn=2: stores.pending_dialogue_obligations("session:pending", refs, maximum=2, turn_index=turn)
+        assert read((second.obligation_ref, first.obligation_ref)) == (second, first)
+        assert read(()) == ()
+        for refs in ((first.obligation_ref, "missing"), (foreign.obligation_ref,), (first.obligation_ref,) * 2,
+                     (first.obligation_ref, second.obligation_ref, foreign.obligation_ref), [first.obligation_ref]):
+            with pytest.raises((TypeError, ValueError)):
+                read(refs)
+        for turn in (0, 5):
+            with pytest.raises(ValueError):
+                read((first.obligation_ref,), turn)
+        assert (stores.revision_pin(), stores.obligations.revision) == before
+        completed = _pending_dialogue(stores, completion_receipt_ref="receipt:done", revision_pin=first.revision_pin)
+        stores.obligations.complete(first.obligation_ref, completed.obligation_ref, first.session_ref, completed.as_dict(), expected_revision=stores.obligations.revision)
+        for ref in (first.obligation_ref, completed.obligation_ref):
+            with pytest.raises(ValueError):
+                read((ref,))
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite"), ids=("memory", "sqlite"))
+def test_foundation_pending_dialogue_authenticates_payload_and_detaches_writes(backend, tmp_path):
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        row = _pending_dialogue(stores)
+        payload = row.as_dict()
+        stores.obligations.commit(row.obligation_ref, row.session_ref, payload, expected_revision=0)
+        payload["revision_pin"]["world_revision"] = 999
+        read = lambda: stores.pending_dialogue_obligations(row.session_ref, (row.obligation_ref,), maximum=1, turn_index=2)
+        assert read() == (row,)
+        if backend == "memory":
+            stores.obligations._obligations[row.obligation_ref]["source_query_ref"] = "query:tampered"
+        else:
+            stores._backend._conn.execute("UPDATE obligations SET payload_hash='tampered' WHERE obligation_ref=?", (row.obligation_ref,))
+            stores._backend._conn.commit()
+        before = (stores.revision_pin(), stores.obligations.revision)
+        with pytest.raises(ValueError, match="hash"):
+            read()
+        assert (stores.revision_pin(), stores.obligations.revision) == before
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite"), ids=("memory", "sqlite"))
+def test_foundation_pending_dialogue_rejects_forged_envelopes_and_future_pins(backend, tmp_path):
+    from cemm_authoritative_hybrid.persistence import _payload_hash
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        row = _pending_dialogue(stores)
+        stores.obligations.commit(row.obligation_ref, row.session_ref, row.as_dict(), expected_revision=0)
+        original = stores.obligations.keyed_row(row.obligation_ref)
+        key, session, payload, digest, revision, resolved = original
+        variants = [
+            (key, "session:forged", payload, digest, revision, resolved),
+            (key, session, payload, digest, 0, resolved),
+            (key, session, payload, digest, 2, resolved),
+            (key, session, payload, digest, revision, 1),
+        ]
+        for change in ({"resolved": 0}, {"extra": "field"}, {"obligation_ref": "forged"}):
+            altered = {**payload, **change}
+            variants.append((key, session, altered, _payload_hash(altered), revision, resolved))
+        for field in ("authority_generation", "world_revision", "session_revision", "episode_revision", "effect_revision"):
+            pin = row.revision_pin.as_dict()
+            pin[field] = "authority:foreign" if field == "authority_generation" else 99
+            other = _pending_dialogue(stores, revision_pin=RevisionPin.from_dict(pin))
+            data = {**other.as_dict(), "resolved": False}
+            stores.obligations.commit(other.obligation_ref, session, data, expected_revision=stores.obligations.revision)
+            with pytest.raises(ValueError, match="generation|revision pin"):
+                stores.pending_dialogue_obligations(session, (other.obligation_ref,), maximum=1, turn_index=2)
+        # Use a definitely future commit revision after the additional writes.
+        variants[2] = (key, session, payload, digest, stores.obligations.revision + 1, resolved)
+        for _, db_session, data, data_hash, commit_revision, status in variants:
+            if backend == "memory":
+                stores.obligations._obligations[key] = data
+                stores.obligations._row_metadata[key] = (db_session, data_hash, commit_revision, status)
+            else:
+                stores._backend._conn.execute(
+                    "UPDATE obligations SET session_ref=?, payload_json=?, payload_hash=?, revision=?, resolved=? WHERE obligation_ref=?",
+                    (db_session, json.dumps(data), data_hash, commit_revision, status, key))
+                stores._backend._conn.commit()
+            before = (stores.revision_pin(), stores.obligations.revision)
+            with pytest.raises((TypeError, ValueError)):
+                stores.pending_dialogue_obligations(session, (key,), maximum=1, turn_index=2)
+            assert (stores.revision_pin(), stores.obligations.revision) == before
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite"), ids=("memory", "sqlite"))
+def test_foundation_pending_dialogue_work_is_key_bounded(backend, tmp_path, monkeypatch):
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        row = _pending_dialogue(stores)
+        stores.obligations.commit(row.obligation_ref, row.session_ref, row.as_dict(), expected_revision=0)
+        for index in range(128):
+            stores.obligations.commit(f"unrelated:{index}", "session:elsewhere", {"not": "a dialogue payload"}, expected_revision=stores.obligations.revision)
+        keyed = stores.obligations.keyed_row
+        visited = []
+        def counted(ref):
+            visited.append(ref)
+            return keyed(ref)
+        monkeypatch.setattr(stores.obligations, "keyed_row", counted)
+        if backend == "memory":
+            class NoEnumeration(dict):
+                def __iter__(self): raise AssertionError("whole-store enumeration")
+                def items(self): raise AssertionError("whole-store enumeration")
+                def values(self): raise AssertionError("whole-store enumeration")
+            stores.obligations._obligations = NoEnumeration(stores.obligations._obligations)
+        else:
+            plan = stores._backend._conn.execute("EXPLAIN QUERY PLAN SELECT obligation_ref, session_ref, payload_json, payload_hash, revision, resolved FROM obligations WHERE obligation_ref=?", (row.obligation_ref,)).fetchall()
+            assert all("SCAN" not in str(part).upper() for part in plan)
+        assert stores.pending_dialogue_obligations(row.session_ref, (row.obligation_ref,), maximum=1, turn_index=2) == (row,)
+        assert visited == [row.obligation_ref]
+        for refs, maximum, turn in (((row.obligation_ref,) * 2, 1, 2), ((row.obligation_ref,), True, 2), ((row.obligation_ref,), 1, True)):
+            with pytest.raises((TypeError, ValueError)):
+                stores.pending_dialogue_obligations(row.session_ref, refs, maximum=maximum, turn_index=turn)
+        assert visited == [row.obligation_ref]
     finally:
         stores.close()

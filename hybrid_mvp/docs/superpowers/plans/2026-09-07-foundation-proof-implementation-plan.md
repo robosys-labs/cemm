@@ -665,7 +665,7 @@ and acquisition path. Implement and review these owners in order:
    `op:designation`. User wording may propose a plan but cannot issue reviewer
    authority. Existing-target aliases and new-identity acquisition remain
    separate policies.
-4. **Transactional publication.** After explicit review authorization, Stage 13
+4. **Transactional publication.** After explicit review authorization, EFFECT
    commits exactly one designation fact and consumes exactly the originating
    continuation only after its successful receipt. Retry is idempotent; denial,
    conflict, expiry, stale revisions and partial failure leave world, obligation
@@ -687,6 +687,55 @@ cannot satisfy steps 3–4. Likewise, manually constructing a pending obligation
 is a continuity seam probe, not evidence that an unknown public query creates a
 usable continuation. Keep those distinctions explicit so later work cannot
 recurse by substituting fixtures for the missing runtime owners.
+
+### Pending-record retrieval prerequisite (September 7)
+
+Implemented the strict ABI-1 `DialogueObligation.from_dict` decoder and a bounded,
+pending-only keyed read in the existing persistence owner. Memory and SQLite
+authenticate the payload hash, semantic identity, stored session/status, commit
+revision, active authority generation and non-future store pins. Reads reject
+missing, foreign, completed, expired or malformed requested records as a whole;
+they do not silently select another row. SQLite restart preserves the result.
+The memory backend now detaches nested payloads and prepares both completion
+records before publication, including the existing direct R3 outcome writer.
+Resolved tombstones remain valid storage history but cannot be pending answers.
+
+Fourteen focused cases pass. Independent review found and drove repairs for
+partial memory completion on serialization failure and a reference-string
+subclass accepted by the exact decoder. Both were reproduced RED before repair.
+Keyed reads visit exactly the requested key with 128 unrelated records; SQLite
+uses its existing primary-key search. No new index, runtime gate, ABI, owner,
+authority default, pack or search bound is introduced. These are direct-owner
+tests, not multilingual understanding or end-to-end acquisition evidence.
+
+This is only the retrieval prerequisite of step 1, **not pending-query binding**.
+The new reader does not establish membership in the exact SituationContext
+snapshot, does not load canonical query content, and does not authorize an alias
+write. The distinct plan-derived `r3_learning.DialogueObligation` wire shape is
+not adapted into the generic dialogue shape. The broader 267-node R3-owner run
+at the twelve-case checkpoint gives 266 passes and the retained actual-query
+binding failure; no prior failure was removed or marked successful.
+
+Next: bind the captured snapshot and its exact pending continuation through the
+existing situation/dialogue owners, then preserve the canonical source query and
+outstanding answer slot before enabling learning materialization. Copying only
+`source_query_ref` would make the seam test green without preventing a `foo`
+answer from binding a `bar` question. The synthetic query fallback, unlinked
+learning defaults, transactional alias publication, admitted-index reuse and
+fragment/response continuity remain explicitly open. Bulk R4.1/R5 remains frozen.
+
+Final focused checkpoint: the authenticated active foundation matrix gives
+288 passes / the same three fragment, actual-query binding and alias-reuse
+failures. A raw whole-module run additionally executes the already superseded
+form-hash assertion; it is not an active regression and its frozen body remains
+unchanged. All 123 prior test/helper ASTs and 278 literal metadata records are
+preserved; 14 case records were added. R3/R4/R5 structural checks, the active
+legacy audit (zero findings), 517 R3/R4 metadata checks, fresh authority-linked
+SQLite activation/reopen/integrity and the exact R4/R5 gate-plan tests pass.
+Selectors and the living receipt regenerate twice byte-identically with active
+counts G0 191 / R1 783 / R2 1173 / R3 1705 / R4 2043 / R5 2168. No phase
+admission, complete regression success, alias acquisition or root adoption is
+claimed by this prerequisite checkpoint.
 
 ## Task 6 — Repair measured search/retrieval bounds and confirm preservation
 

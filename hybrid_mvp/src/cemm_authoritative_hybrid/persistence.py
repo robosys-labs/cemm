@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING, Any, Iterable, Mapping, Sequence
 from .canonical import canonical_bytes, stable_ref, stable
 
 if TYPE_CHECKING:
-    from .dialogue import VerifiedSemanticFocus
+    from .dialogue import DialogueObligation, VerifiedSemanticFocus
 
 __all__ = [
     "StaleRevisionError",
@@ -1005,6 +1005,15 @@ class _SQLiteObligationStore:
                 corrupt.append(row[0])
         return tuple(corrupt)
 
+    def keyed_row(self, obligation_ref: str) -> tuple[Any, ...] | None:
+        row = self._conn.execute(
+            "SELECT obligation_ref, session_ref, payload_json, payload_hash, revision, resolved "
+            "FROM obligations WHERE obligation_ref=?", (obligation_ref,),
+        ).fetchone()
+        if row is None:
+            return None
+        return (row[0], row[1], json.loads(row[2]), row[3], row[4], row[5])
+
 
 # ---------------------------------------------------------------------------
 # SQLite SemanticStores
@@ -1339,6 +1348,17 @@ class _MemoryObligationStore:
     def __init__(self) -> None:
         self.revision = 0
         self._obligations: dict[str, dict[str, Any]] = {}
+        self._row_metadata: dict[str, tuple[str, str, int, int]] = {}
+
+    @staticmethod
+    def _prepare_row(session_ref: str, payload: Mapping[str, Any], revision: int, resolved: bool) -> tuple[dict[str, Any], tuple[str, str, int, int]]:
+        # Detach nested values exactly as SQLite serialization does. Metadata is
+        # independent of the payload, so keyed reads can authenticate both.
+        data = json.loads(json.dumps(dict(payload), ensure_ascii=False))
+        return data, (session_ref, _payload_hash(data), revision, int(resolved))
+
+    def _store_row(self, obligation_ref: str, prepared: tuple[dict[str, Any], tuple[str, str, int, int]]) -> None:
+        self._obligations[obligation_ref], self._row_metadata[obligation_ref] = prepared
 
     def commit(self, obligation_ref: str, session_ref: str, payload: Mapping[str, Any], *, expected_revision: int, resolved: bool = False) -> CommitReceipt:
         if expected_revision != self.revision:
@@ -1346,7 +1366,8 @@ class _MemoryObligationStore:
         delta_hash = _payload_hash(payload)
         transaction_ref = stable_ref("txn", {"store": "obligations", "parent": expected_revision, "delta_hash": delta_hash})
         new_revision = self.revision + 1
-        self._obligations[obligation_ref] = {**dict(payload), "obligation_ref": obligation_ref, "session_ref": session_ref, "resolved": resolved}
+        prepared = self._prepare_row(session_ref, {**dict(payload), "obligation_ref": obligation_ref, "session_ref": session_ref, "resolved": resolved}, new_revision, resolved)
+        self._store_row(obligation_ref, prepared)
         self.revision = new_revision
         return CommitReceipt("obligations", expected_revision, new_revision, delta_hash, transaction_ref)
 
@@ -1390,15 +1411,28 @@ class _MemoryObligationStore:
             {"store": "obligations", "parent": expected_revision, "delta_hash": delta_hash},
         )
         new_revision = self.revision + 1
-        self._obligations[pending_ref] = pending_data
-        self._obligations[completed_ref] = completed_data
+        prepared_pending = self._prepare_row(session_ref, pending_data, new_revision, True)
+        prepared_completed = self._prepare_row(session_ref, completed_data, new_revision, True)
+        self._store_row(pending_ref, prepared_pending)
+        self._store_row(completed_ref, prepared_completed)
         self.revision = new_revision
         return CommitReceipt(
             "obligations", expected_revision, new_revision, delta_hash, transaction_ref
         )
 
     def get(self, obligation_ref: str) -> dict[str, Any] | None:
-        return self._obligations.get(obligation_ref)
+        payload = self._obligations.get(obligation_ref)
+        return json.loads(json.dumps(payload, ensure_ascii=False)) if payload is not None else None
+
+    def keyed_row(self, obligation_ref: str) -> tuple[Any, ...] | None:
+        payload = self._obligations.get(obligation_ref)
+        if payload is None:
+            return None
+        metadata = self._row_metadata.get(obligation_ref)
+        if metadata is None:
+            raise ValueError("obligation authentication metadata missing")
+        session, digest, revision, resolved = metadata
+        return (obligation_ref, session, json.loads(json.dumps(payload, ensure_ascii=False)), digest, revision, resolved)
 
 
 class InMemorySemanticStore:
@@ -1617,6 +1651,53 @@ class SemanticStores:
             "snapshot_ref": stable_ref("r3_focus_snapshot", material),
             **material,
         }
+
+    def pending_dialogue_obligations(
+        self, session_ref: str, obligation_refs: tuple[str, ...], *, maximum: int, turn_index: int,
+    ) -> tuple["DialogueObligation", ...]:
+        """Authenticate only requested pending dialogue records, in input order.
+
+        This is a keyed persistence read, not proof that these refs belong to a
+        SituationContext or that an answer fills the source query's exact slot.
+        The distinct plan-derived R3 learning wire shape is not adapted here.
+        """
+        from .dialogue import DialogueObligation
+        from .r3_codec import exact_int, exact_refs, exact_text
+
+        exact_text(session_ref, "session_ref")
+        exact_int(maximum, "maximum", minimum=1, maximum=512)
+        exact_refs(obligation_refs, "obligation_refs", maximum=maximum)
+        exact_int(turn_index, "turn_index")
+        pin, store_revision = self.revision_pin(), self.obligations.revision
+        entries = []
+        for ref in obligation_refs:
+            stored = self.obligations.keyed_row(ref)
+            if stored is None:
+                raise ValueError("requested obligation is missing")
+            key, session, payload, digest, revision, resolved = stored
+            if _payload_hash(payload) != digest:
+                raise ValueError("obligation payload hash mismatch")
+            if type(payload) is not dict or type(payload.get("resolved")) is not bool:
+                raise ValueError("invalid obligation status envelope")
+            if type(resolved) is not int or resolved != 0 or payload["resolved"] is not False:
+                raise ValueError("obligation is not pending")
+            data = {name: value for name, value in payload.items() if name != "resolved"}
+            row = DialogueObligation.from_dict(data)
+            if key != ref or row.obligation_ref != ref or session != session_ref or row.session_ref != session:
+                raise ValueError("obligation stored key/session mismatch")
+            exact_int(revision, "obligation commit revision", minimum=1)
+            if revision > store_revision:
+                raise ValueError("obligation commit revision exceeds current store revision")
+            if row.revision_pin.authority_generation != pin.authority_generation:
+                raise ValueError("obligation authority generation differs from active store")
+            if any(getattr(row.revision_pin, name) > getattr(pin, name) for name in (
+                "world_revision", "session_revision", "episode_revision", "effect_revision",
+            )):
+                raise ValueError("obligation revision pin exceeds current store revision")
+            if row.completion_receipt_ref is not None or not row.created_turn_index <= turn_index < row.expires_turn_index:
+                raise ValueError("obligation is completed, not yet active or expired")
+            entries.append(row)
+        return tuple(entries)
 
     def r3_obligation_snapshot(
         self, session_ref: str, *, maximum: int
@@ -2168,6 +2249,7 @@ class SemanticStores:
             self.obligations.revision = new_obligation
             self.effects.revision = new_effect
         else:
+            prepared_obligation = self._backend.obligations._prepare_row(session_ref, obligation_data, new_obligation, False)
             session, _payload = _r3_session_material(
                 session_ref=session_ref,
                 turn_index=turn_index,
@@ -2176,7 +2258,7 @@ class SemanticStores:
             )
             self._backend.sessions._sessions[session_ref] = session
             self.sessions.revision = new_session
-            self._backend.obligations._obligations[obligation_ref] = obligation_data
+            self._backend.obligations._store_row(obligation_ref, prepared_obligation)
             self.obligations.revision = new_obligation
             self._backend._r3_effect_journals[idempotency_key] = stored
             self.effects.revision = new_effect

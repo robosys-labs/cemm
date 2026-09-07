@@ -298,6 +298,30 @@ class DialogueObligation:
         return {"abi_version": DIALOGUE_ABI_VERSION, "obligation_ref": self.obligation_ref, "kind": self.kind.value, "session_ref": self.session_ref, "source_query_ref": self.source_query_ref, "expected_answer_contract_ref": self.expected_answer_contract_ref, "created_turn_index": self.created_turn_index, "expires_turn_index": self.expires_turn_index, "source_decision_ref": self.source_decision_ref, "completion_receipt_ref": self.completion_receipt_ref, "revision_pin": self.revision_pin.as_dict()}
 
 
+    @classmethod
+    def from_dict(cls, value: dict[str, Any]) -> "DialogueObligation":
+        data = exact_fields(value, frozenset({
+            "abi_version", "obligation_ref", "kind", "session_ref", "source_query_ref",
+            "expected_answer_contract_ref", "created_turn_index", "expires_turn_index",
+            "source_decision_ref", "completion_receipt_ref", "revision_pin",
+        }), "DialogueObligation")
+        exact_text(data["obligation_ref"], "obligation_ref")
+        exact_int(data["abi_version"], "abi_version")
+        if data["abi_version"] != DIALOGUE_ABI_VERSION:
+            raise ValueError("unsupported DialogueObligation ABI")
+        rebuilt = cls.create(
+            kind=ObligationKind(exact_text(data["kind"], "kind")),
+            session_ref=data["session_ref"], source_query_ref=data["source_query_ref"],
+            expected_answer_contract_ref=data["expected_answer_contract_ref"],
+            created_turn_index=data["created_turn_index"], expires_turn_index=data["expires_turn_index"],
+            source_decision_ref=data["source_decision_ref"], completion_receipt_ref=data["completion_receipt_ref"],
+            revision_pin=RevisionPin.from_dict(data["revision_pin"]),
+        )
+        if rebuilt.obligation_ref != data["obligation_ref"] or rebuilt.as_dict() != data:
+            raise ValueError("non-canonical dialogue obligation encoding")
+        return rebuilt
+
+
 class DialogueObligationManager:
     """Own the lifecycle of typed dialogue obligations.
 
