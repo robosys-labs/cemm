@@ -1646,6 +1646,10 @@ class ProposalContextBuilder:
             profiles_by_target,
             predicate_targets,
         )
+        if orientation.mode is not SemanticMode.QUERY:
+            application_frames, contribution_slots = _nominal_predication_evidence(
+                application_frames, contribution_slots, form_lattice,
+            )
         learning_surface_contributions = self._learning_surface_evidence(
             designation_slots,
             application_frames,
@@ -1798,6 +1802,7 @@ class ProposalContextBuilder:
         consumed = {
             source_ref
             for contribution in contribution_slots
+            if not _is_orthographic_evidence(contribution)
             for source_ref in contribution.source_unit_refs
         }
         residual_evidence = _residual_evidence(form_lattice, consumed)
@@ -2736,6 +2741,14 @@ class ProposalContextBuilder:
         }
         for unit in form_lattice.units:
             for category, value in unit.features:
+                if category == "orthography":
+                    contributions.append(ContributionSlot.create(
+                        contribution_ref=stable_ref("form_contribution", (unit.unit_ref, category, value)),
+                        kind="discourse", source_unit_refs=(unit.unit_ref,),
+                        target_ref=None, target_kind=None, input_ports=(), output_ports=(),
+                        constraints=((category, value),), provenance_refs=(unit.unit_ref,),
+                    ))
+                    continue
                 if category == "discourse" and value == "discourse_particle":
                     continue
                 if category == "participant":
@@ -3366,7 +3379,10 @@ def _reference_roles(target_kind: str) -> tuple[str, ...]:
             "role:participant",
             "role:subject",
             "role:target",
+            "role:instance",
         )
+    if target_kind in {"entity", "concept"}:
+        return ("role:subject", "role:object", "role:target", "role:instance")
     return ("role:subject", "role:object", "role:target")
 
 
@@ -3644,6 +3660,8 @@ def _derived_roles_for_kind(
         return (("role:label_type", target_ref),)
     if target_kind == "state_dimension":
         return (("role:dimension", target_ref),)
+    if target_kind == "concept":
+        return (("role:class", target_ref),)
     return ()
 
 
@@ -3911,6 +3929,164 @@ def _expression_link_slots(
         if len(slots) >= config.max_orientation_alternatives:
             break
     return tuple(slots)
+
+
+def _is_orthographic_evidence(row: ContributionSlot) -> bool:
+    return (
+        row.kind == "discourse" and row.target_ref is None
+        and row.target_kind is None and not row.input_ports and not row.output_ports
+        and len(row.source_unit_refs) == 1
+        and row.provenance_refs == row.source_unit_refs
+        and row.constraints in {(("orthography", "whitespace"),), (("orthography", "punctuation"),)}
+        and row.contribution_ref == stable_ref(
+            "form_contribution", (row.source_unit_refs[0], *row.constraints[0])
+        )
+    )
+
+
+def _nominal_predication_evidence(frames, contributions, lattice):
+    """Extend nominal predicates with one local copula and optional determiner.
+
+    Whitespace and polarity are traversed, never consumed by the predicate.
+    Query-variable creation is deliberately outside this membership repair.
+    """
+    units = lattice.units
+    positions = {unit.unit_ref: index for index, unit in enumerate(units)}
+    replacements = {}
+    result = []
+    for frame in frames:
+        if frame.operator_ref != "op:type" or frame.predicate_kind != "concept":
+            result.append(frame)
+            continue
+        cursor = min(positions[ref] for ref in frame.source_unit_refs) - 1
+        extension = []
+        determiner = False
+        polarity = False
+        while cursor >= 0:
+            unit = units[cursor]
+            if ("orthography", "whitespace") in unit.features:
+                cursor -= 1
+                continue
+            if not determiner and not polarity and any(key == "determiner" for key, _ in unit.features):
+                extension.append(unit.unit_ref)
+                determiner = True
+            elif not polarity and any(key == "polarity" for key, _ in unit.features):
+                polarity = True
+            elif ("binder", "copula") in unit.features:
+                extension.append(unit.unit_ref)
+                break
+            else:
+                extension = []
+                break
+            cursor -= 1
+        if not extension or cursor < 0:
+            result.append(frame)
+            continue
+        source_refs = tuple(sorted((*frame.source_unit_refs, *extension), key=positions.__getitem__))
+        values = {row.name: getattr(frame, row.name) for row in fields(frame) if row.init and row.name != "slot_ref"}
+        result.append(ApplicationFrameSlot.create(**{**values, "source_unit_refs": source_refs}))
+        for contribution in contributions:
+            if (contribution.kind == "predicate"
+                and contribution.target_ref == frame.predicate_target_ref
+                and contribution.source_unit_refs == frame.source_unit_refs):
+                values = {row.name: getattr(contribution, row.name) for row in fields(contribution) if row.init and row.name != "slot_ref"}
+                replacements[contribution.slot_ref] = ContributionSlot.create(**{
+                    **values, "source_unit_refs": source_refs,
+                    "contribution_ref": stable_ref("nominal_predication_contribution", (contribution.contribution_ref, source_refs)),
+                })
+    return tuple(result), tuple(replacements.get(row.slot_ref, row) for row in contributions)
+
+
+def _nominal_predication_source_is_exact(frame, designation, context) -> bool:
+    """Validate only local source extension, never waive arbitrary extra units."""
+    original = set(designation.source_unit_refs)
+    actual = set(frame.source_unit_refs)
+    if actual == original:
+        return True
+    if not original < actual:
+        return False
+    positions = {ref: index for index, ref in enumerate(context.source_unit_refs)}
+    rows_by_source = {}
+    for row in context.contribution_slots:
+        if len(row.source_unit_refs) == 1:
+            rows_by_source.setdefault(row.source_unit_refs[0], []).append(row)
+    cursor = min(positions[ref] for ref in original) - 1
+    expected = set(original)
+    determiner = polarity = False
+    while cursor >= 0:
+        ref = context.source_unit_refs[cursor]
+        rows = rows_by_source.get(ref, ())
+        if any(_is_orthographic_evidence(row) and row.constraints == (("orthography", "whitespace"),) for row in rows):
+            if len(rows) != 1:
+                return False
+        elif not determiner and not polarity and any(row.kind == "qualifier" and any(key == "determiner" for key, _ in row.constraints) for row in rows):
+            expected.add(ref)
+            determiner = True
+        elif not polarity and any(row.kind == "scope" and any(key == "polarity" for key, _ in row.constraints) for row in rows):
+            polarity = True
+        elif any(row.kind == "binder" and ("binder", "copula") in row.constraints for row in rows):
+            expected.add(ref)
+            return actual == expected and tuple(sorted(actual, key=positions.__getitem__)) == frame.source_unit_refs
+        else:
+            return False
+        cursor -= 1
+    return False
+
+
+def nominal_predication_choice_index(
+    context: ProposalContext,
+) -> tuple[Mapping[str, frozenset[str]], Mapping[str, frozenset[str]]]:
+    """Index local nominal ports once for a bounded PROPOSE invocation.
+
+    These are legal choices over ORIENT-owned slots, not a verification receipt.
+    VERIFY independently reconstructs the full role and scope source proof.
+    Non-nominal frames and their scope choices are not constrained here.
+    """
+    whitespace = frozenset(
+        row.source_unit_refs[0] for row in context.contribution_slots
+        if _is_orthographic_evidence(row)
+        and row.constraints == (("orthography", "whitespace"),)
+    )
+    binders = frozenset(
+        row.source_unit_refs[0] for row in context.contribution_slots
+        if row.kind == "binder" and len(row.source_unit_refs) == 1
+        and ("binder", "copula") in row.constraints
+    )
+    bindings: dict[str, frozenset[str]] = {}
+    scopes: dict[str, set[str]] = {}
+    for frame in context.application_frames:
+        if type(frame) is not ApplicationFrameSlot or frame.operator_ref != "op:type":
+            continue
+        bindings[frame.slot_ref] = frozenset()
+        designation = context.designation(frame.designation_slot_ref)
+        if designation is None or not _nominal_predication_source_is_exact(frame, designation, context):
+            continue
+        local_binders = (set(frame.source_unit_refs) - set(designation.source_unit_refs)) & binders
+        if len(local_binders) != 1:
+            continue
+        binder_span = context.source_span(tuple(local_binders))
+        nominal_span = context.source_span(designation.source_unit_refs)
+        if binder_span is None or nominal_span is None:
+            continue
+        allowed = set()
+        for slot in (*context.reference_slots, *context.contribution_slots):
+            if slot.target_kind not in {"entity", "participant", "concept"}:
+                continue
+            span = context.source_span(slot.source_unit_refs)
+            if span is None or span[1] > binder_span[0]:
+                continue
+            if any(ref not in whitespace for ref, start, end in context.source_unit_spans
+                   if span[1] <= start and end <= binder_span[0]):
+                continue
+            allowed.add(slot.slot_ref)
+        bindings[frame.slot_ref] = frozenset(allowed)
+        for scope in context.scope_slots:
+            if scope.operator_type != "scope:polarity":
+                continue
+            span = context.source_span(scope.source_unit_refs)
+            if span is not None and binder_span[1] <= span[0] and span[1] <= nominal_span[0]:
+                scopes.setdefault(scope.slot_ref, set()).add(frame.slot_ref)
+    return MappingProxyType(bindings), MappingProxyType({key: frozenset(value) for key, value in scopes.items()})
 
 
 def _expanded_nominal_source_refs(
@@ -4368,6 +4544,8 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
     contribution_target_counts: dict[str, int] = {}
     contributed_sources: set[str] = set()
     for contribution in context.contribution_slots:
+        if _is_orthographic_evidence(contribution):
+            continue
         contributed_sources.update(contribution.source_unit_refs)
         if contribution.target_ref is None:
             continue
@@ -4543,6 +4721,8 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             )
         if frame.designation_slot_ref not in frame.provenance_refs:
             raise ValueError("application frame provenance omits its designation slot")
+        if frame.operator_ref == "op:type" and not _nominal_predication_source_is_exact(frame, designation, context):
+            raise ValueError("nominal predication has invalid source geometry")
         frame_input_roles = set(frame.required_roles) | set(frame.optional_roles)
         compatible_contribution = any(
             contribution.target_kind == frame.predicate_kind

@@ -1699,6 +1699,15 @@ def _reconstruct_expected_expression(
     context: ProposalContext,
 ) -> SemanticExpression | None:
     """Reconstruct the expected expression, trying R1 first then R2."""
+    if any(
+        action.action_type == "instantiate_operator"
+        and (frame := context.frame(action.arguments[1])) is not None
+        and frame.operator_ref == "op:type"
+        for action in program.actions
+    ):
+        # Nominal membership has one independent reconstruction owner,
+        # including its predication and role-source geometry proof.
+        return _reconstruct_r2_expression(program, context)
     expected = _reconstruct_expected_r1_expression(program, context)
     if expected is not None:
         return expected

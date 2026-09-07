@@ -16,8 +16,10 @@ import pytest
 
 from cemm_authoritative_hybrid.bootstrap import load_runtime
 from cemm_authoritative_hybrid.affordances import SemanticAffordanceIndex
+from cemm_authoritative_hybrid.authority import DesignationFact, DesignationIndex
 from cemm_authoritative_hybrid.canonical import stable_ref
 from cemm_authoritative_hybrid.config import RuntimeConfig
+from cemm_authoritative_hybrid.contributions import ContributionExpander
 from cemm_authoritative_hybrid.cycle import SemanticMode
 from cemm_authoritative_hybrid.decision import DecisionAction, DecisionStatus
 from cemm_authoritative_hybrid.dialogue import (
@@ -41,6 +43,7 @@ from cemm_authoritative_hybrid.expressions import (
     VerifiedMeaning,
 )
 from cemm_authoritative_hybrid.forms import FormResolver
+from cemm_authoritative_hybrid.grounding import Grounder
 from cemm_authoritative_hybrid.persistence import Fact, RevisionPin, memory_stores, open_stores
 from cemm_authoritative_hybrid.proposal_context import (
     ContributionSlot, ProposalContext, ProposalContextBuilder, VariableSlot,
@@ -61,11 +64,343 @@ from cemm_authoritative_hybrid.r4_contracts import (
 )
 from cemm_authoritative_hybrid.r4_pipeline import load_reviewed_scenarios
 from cemm_authoritative_hybrid.situation import SituationContext
+from cemm_authoritative_hybrid.runtime import RuntimeOrientationOwner
 from cemm_authoritative_hybrid.verifier import ExactProgramVerifier
+from cemm_authoritative_hybrid.verifier_reconstruction import reconstruct_expected_expression
 
 ROOT = Path(__file__).parents[1]
 
 __cemm_test_inventory__ = {
+    "tests/test_foundation_semantics.py::test_foundation_membership_bounded_pair_public_preserves_independent_graph[positive-pair]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-membership-bounded-pair-public-preserves-independent-graph-positive-pair",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership-Pruning",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "30362bb49d57befcdf7fb5f33e933103ad58dc8f968ad23da0f7b44afd544928"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_bounded_pair_public_preserves_independent_graph[mixed-pair]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-membership-bounded-pair-public-preserves-independent-graph-mixed-pair",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership-Pruning",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "30362bb49d57befcdf7fb5f33e933103ad58dc8f968ad23da0f7b44afd544928"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_bounded_pair_public_preserves_independent_graph[negative-pair]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-membership-bounded-pair-public-preserves-independent-graph-negative-pair",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership-Pruning",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "30362bb49d57befcdf7fb5f33e933103ad58dc8f968ad23da0f7b44afd544928"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_bounded_pair_public_preserves_independent_graph[coordinated-mixed]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-membership-bounded-pair-public-preserves-independent-graph-coordinated-mixed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership-Pruning",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "30362bb49d57befcdf7fb5f33e933103ad58dc8f968ad23da0f7b44afd544928"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_proposal_prunes_impossible_local_choices[positive-pair]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-proposal-prunes-impossible-local-choices-positive-pair",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership-Pruning",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "4948516dd6a722aa8504d12e52e9366687e8b48e845dd3ce527ce6d4222d798e"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_proposal_prunes_impossible_local_choices[mixed-pair]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-proposal-prunes-impossible-local-choices-mixed-pair",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership-Pruning",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "4948516dd6a722aa8504d12e52e9366687e8b48e845dd3ce527ce6d4222d798e"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_proposal_prunes_impossible_local_choices[negative-pair]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-proposal-prunes-impossible-local-choices-negative-pair",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership-Pruning",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "4948516dd6a722aa8504d12e52e9366687e8b48e845dd3ce527ce6d4222d798e"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_proposal_prunes_impossible_local_choices[coordinated-mixed]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-proposal-prunes-impossible-local-choices-coordinated-mixed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership-Pruning",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "4948516dd6a722aa8504d12e52e9366687e8b48e845dd3ce527ce6d4222d798e"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_pruning_preserves_unresolved_frame_union": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-pruning-preserves-unresolved-frame-union",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership-Pruning",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "a3d5cbf410bbe043848ac6711e909d8e48fbb8f75ed0a60cc8d8f71334f8d364"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_pruning_preserves_nonnominal_polysemy_scope": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-pruning-preserves-nonnominal-polysemy-scope",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership-Pruning",
+        "owner_ref": "recursive-composer",
+        "source_ast_sha256": "c212784bb4eb7f3f95e472fd1b1c81fbe6c2fe418cb10da0cc04d225f95742a6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_composed_malformed_graphs_preserve_all_exact_guards": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-sr4-5-composed-expression-rejects-noncanonical-graphs",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "0d8285dd7199f759b122eb85176fa2b6cae9d311acb1a3db73aabddf6e3ab22d",
+        "supersedes_node_id": "tests/test_r4_assertion_compiler.py::test_sr4_5_composed_expression_rejects_noncanonical_graphs"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_public_preserves_exact_roles_scope_and_attribution[bare]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-membership-public-preserves-exact-roles-scope-and-attribution-bare",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "4fda752cd673dabe384cdf2e521e6b81f8c142d74595de1b5f94e12211f8889d"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_public_preserves_exact_roles_scope_and_attribution[determined]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-membership-public-preserves-exact-roles-scope-and-attribution-determined",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "4fda752cd673dabe384cdf2e521e6b81f8c142d74595de1b5f94e12211f8889d"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_public_preserves_exact_roles_scope_and_attribution[negative]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-membership-public-preserves-exact-roles-scope-and-attribution-negative",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "4fda752cd673dabe384cdf2e521e6b81f8c142d74595de1b5f94e12211f8889d"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_public_preserves_exact_roles_scope_and_attribution[multiword]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-membership-public-preserves-exact-roles-scope-and-attribution-multiword",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "4fda752cd673dabe384cdf2e521e6b81f8c142d74595de1b5f94e12211f8889d"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_form_geometry_has_typed_nonsemantic_gaps[english]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-form-geometry-has-typed-nonsemantic-gaps-english",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "662ef2598f93483326258da894778ab916179f0583d5a7d93a7d46011d3ceb16"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_form_geometry_has_typed_nonsemantic_gaps[spanish]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-form-geometry-has-typed-nonsemantic-gaps-spanish",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "662ef2598f93483326258da894778ab916179f0583d5a7d93a7d46011d3ceb16"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_reviewed_alias_inherits_type_frame_without_pack_changes[unseen-alias]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-membership-reviewed-alias-inherits-type-frame-without-pack-changes-unseen-alias",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "3c94ed6bc6222c64587b1d04272834ded76c8853c519da101357b3aac7548330"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_reviewed_alias_inherits_type_frame_without_pack_changes[unseen-multiword]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-membership-reviewed-alias-inherits-type-frame-without-pack-changes-unseen-multiword",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "3c94ed6bc6222c64587b1d04272834ded76c8853c519da101357b3aac7548330"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_reviewed_alias_inherits_type_frame_without_pack_changes[spanish]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-membership-reviewed-alias-inherits-type-frame-without-pack-changes-spanish",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "3c94ed6bc6222c64587b1d04272834ded76c8853c519da101357b3aac7548330"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_reviewed_alias_inherits_type_frame_without_pack_changes[spanish-unseen-multiword]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-membership-reviewed-alias-inherits-type-frame-without-pack-changes-spanish-unseen-multiword",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "3c94ed6bc6222c64587b1d04272834ded76c8853c519da101357b3aac7548330"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_composed_gold_uses_world_membership": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:foundation-membership-composed-gold-uses-world-membership",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "f8c938567d14d1e9b16873ee3eaf36e97b43055cffb1544f9bef9a2e6fc26a8c"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_composed_multiroot_canonicalization_and_linear_work": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-sr4-5-true-multi-root-and-type-role-remain-one-meaning",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "d6690d7af34837d8ba0cf7ffd35f5f53a712c03888c78588402c0a2af86bb10a",
+        "supersedes_node_id": "tests/test_r4_assertion_compiler.py::test_sr4_5_true_multi_root_and_type_role_remain_one_meaning"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_composed_gold_rejects_nonmembership[registry-kind]": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:foundation-membership-composed-gold-rejects-nonmembership-registry-kind",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "b42e868d386f88ff038d1e630355e43cc1c4cd361222935c1d9794bb8d432c94"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_composed_gold_rejects_nonmembership[wrong-class]": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:foundation-membership-composed-gold-rejects-nonmembership-wrong-class",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "b42e868d386f88ff038d1e630355e43cc1c4cd361222935c1d9794bb8d432c94"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_composed_gold_rejects_nonmembership[literal-instance]": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:foundation-membership-composed-gold-rejects-nonmembership-literal-instance",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "b42e868d386f88ff038d1e630355e43cc1c4cd361222935c1d9794bb8d432c94"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_composed_gold_rejects_nonmembership[wrong-instance-kind]": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:foundation-membership-composed-gold-rejects-nonmembership-wrong-instance-kind",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "b42e868d386f88ff038d1e630355e43cc1c4cd361222935c1d9794bb8d432c94"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_multiclause_reconstruction_keeps_instance_and_scope_owner[scope-transfer]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-multiclause-reconstruction-keeps-instance-and-scope-owner-scope-transfer",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "c268729d98b8803fc9cca02cd6f08600ccc30b8923d0271e75bdba076d96ca10"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_multiclause_reconstruction_keeps_instance_and_scope_owner[widened-instance]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-multiclause-reconstruction-keeps-instance-and-scope-owner-widened-instance",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "c268729d98b8803fc9cca02cd6f08600ccc30b8923d0271e75bdba076d96ca10"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_requires_reviewed_predication_not_juxtaposition[juxtaposition]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-requires-reviewed-predication-not-juxtaposition-juxtaposition",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "25ad5cc953137ce761439d303453627410b0a4d41fa5310c797b674f7e8eddf8"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_requires_reviewed_predication_not_juxtaposition[separate-clause]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-requires-reviewed-predication-not-juxtaposition-separate-clause",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "25ad5cc953137ce761439d303453627410b0a4d41fa5310c797b674f7e8eddf8"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_requires_reviewed_predication_not_juxtaposition[reversed]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-requires-reviewed-predication-not-juxtaposition-reversed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "25ad5cc953137ce761439d303453627410b0a4d41fa5310c797b674f7e8eddf8"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_independent_reconstruction_rejects_source_forgery[missing-gap]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-independent-reconstruction-rejects-source-forgery-missing-gap",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "d4cae991cccb8affb09532d6e8d0363549a6184df0600a0970b1b3155b025440"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_independent_reconstruction_rejects_source_forgery[forged-gap]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-independent-reconstruction-rejects-source-forgery-forged-gap",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "d4cae991cccb8affb09532d6e8d0363549a6184df0600a0970b1b3155b025440"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_independent_reconstruction_rejects_source_forgery[missing-binder]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-independent-reconstruction-rejects-source-forgery-missing-binder",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "d4cae991cccb8affb09532d6e8d0363549a6184df0600a0970b1b3155b025440"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_independent_reconstruction_rejects_source_forgery[missing-determiner]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-independent-reconstruction-rejects-source-forgery-missing-determiner",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "d4cae991cccb8affb09532d6e8d0363549a6184df0600a0970b1b3155b025440"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_independent_reconstruction_rejects_source_forgery[foreign-instance]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-independent-reconstruction-rejects-source-forgery-foreign-instance",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "d4cae991cccb8affb09532d6e8d0363549a6184df0600a0970b1b3155b025440"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_context_rejects_unowned_predication_geometry[remote-binder]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-context-rejects-unowned-predication-geometry-remote-binder",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "5a66bd9756abeff2d6ea248627aad813261cfecca182738b83520468f5f52c0c"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_context_rejects_unowned_predication_geometry[remote-determiner]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-context-rejects-unowned-predication-geometry-remote-determiner",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "5a66bd9756abeff2d6ea248627aad813261cfecca182738b83520468f5f52c0c"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_context_rejects_unowned_predication_geometry[punctuation-gap]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-context-rejects-unowned-predication-geometry-punctuation-gap",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "5a66bd9756abeff2d6ea248627aad813261cfecca182738b83520468f5f52c0c"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_membership_context_rejects_unowned_predication_geometry[semantic-gap]": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-membership-context-rejects-unowned-predication-geometry-semantic-gap",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Membership",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "5a66bd9756abeff2d6ea248627aad813261cfecca182738b83520468f5f52c0c"
+    },
     "tests/test_foundation_semantics.py::test_foundation_safety_unsupported_admission_retains_exact_occurrence[negative-compound]": {
         "activation_phase": "R3",
         "assertion_ref": "assertion:foundation-safety-unsupported-admission-retains-exact-occurrence-negative-compound",
@@ -1623,6 +1958,543 @@ def test_foundation_matrix_speech_content_focus_keeps_speaker_session_and_recenc
         assert result.proof_refs == (rows[1].focus_ref,)
     finally:
         stores.close()
+
+
+def _membership_expected(class_ref="concept:mother", *, negative=False):
+    app = SemanticApplication(
+        "application:independent-membership", "op:type", class_ref,
+        (RoleBinding("role:instance", GroundedReference("entity:alice")),
+         RoleBinding("role:class", GroundedReference(class_ref))),
+    )
+    if not negative:
+        return SemanticExpression.create(applications=(app,), root_refs=(app.application_ref,))
+    scope = ScopeOperator("scope:independent-negative", "scope:polarity", "scope_value:polarity:negative", app.application_ref)
+    return SemanticExpression.create(applications=(app,), scope_operators=(scope,), root_refs=(scope.scope_ref,))
+
+
+@pytest.mark.parametrize(
+    ("surface", "class_ref", "negative"),
+    (("Alice is mother.", "concept:mother", False),
+     ("Alice is a mother.", "concept:mother", False),
+     ("Alice is not a mother.", "concept:mother", True),
+     ("Alice is a job role.", "concept:job_role", False)),
+    ids=("bare", "determined", "negative", "multiword"),
+)
+def test_foundation_membership_public_preserves_exact_roles_scope_and_attribution(surface, class_ref, negative, tmp_path):
+    expected = _membership_expected(class_ref, negative=negative)
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "membership.db")
+    try:
+        before = runtime.stores.world.revision, runtime.stores.r3_world_facts()
+        result = runtime.process("session:membership-owner", surface)
+        assert result.verification.selected_meaning is not None
+        assert result.verification.selected_meaning.expression == expected
+        assert result.evaluation.decision.action is DecisionAction.RETAIN_ATTRIBUTION
+        assert result.evaluation.effect_intents == ()
+        assert (runtime.stores.world.revision, runtime.stores.r3_world_facts()) == before
+        assert isinstance(result.effect_receipt, NoEffectReceipt)
+    finally:
+        runtime.stores.close()
+
+
+@pytest.mark.parametrize("language", ("en", "es"), ids=("english", "spanish"))
+def test_foundation_membership_form_geometry_has_typed_nonsemantic_gaps(language):
+    pack = json.loads((ROOT / "data/languages" / language / "forms.json").read_text(encoding="utf-8"))
+    surface = "Alice is a mother." if language == "en" else "Alice es una madre."
+    lattice = FormResolver(pack, RuntimeConfig.release()).resolve(surface)
+    for unit in lattice.units:
+        if unit.source_text.isspace():
+            assert ("orthography", "whitespace") in unit.features
+        elif unit.source_text == ".":
+            assert ("orthography", "punctuation") in unit.features
+        else:
+            assert not any(key == "orthography" for key, _ in unit.features)
+    assert not any(row.construction == "orthography" for row in lattice.hypotheses)
+
+
+@pytest.mark.parametrize(
+    ("language", "alias", "surface"),
+    (("en", "velnora", "Alice is a velnora."),
+     ("en", "care giver", "Alice is a care giver."),
+     ("es", "madre", "Alice es una madre."),
+     ("es", "luz velnora", "Alice es una luz velnora.")),
+    ids=("unseen-alias", "unseen-multiword", "spanish", "spanish-unseen-multiword"),
+)
+def test_foundation_membership_reviewed_alias_inherits_type_frame_without_pack_changes(language, alias, surface, tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "reviewed-alias.db")
+    pack_path = ROOT / "data/languages" / language / "forms.json"
+    before_pack = pack_path.read_bytes()
+    pack = json.loads(before_pack)
+    config = RuntimeConfig.release()
+    facts = (
+        DesignationFact.create(surface="Alice", target_ref="entity:alice", language=language),
+        DesignationFact.create(surface=alias, target_ref="concept:mother", language=language),
+    )
+    class ReviewedIndex:
+        def build_index(self):
+            return DesignationIndex(facts)
+    try:
+        resolver = FormResolver(pack, config)
+        affordances = SemanticAffordanceIndex(runtime.authority, config)
+        runtime._owners["orientation"] = RuntimeOrientationOwner(
+            authority=runtime.authority, stores=runtime.stores, config=config,
+            form_resolver=resolver,
+            grounder=Grounder(runtime.authority, config, form_pack=pack, form_pack_hash=resolver.form_pack_hash, designation_store=ReviewedIndex()),
+            contribution_expander=ContributionExpander(affordances, config),
+            context_builder=ProposalContextBuilder(runtime.authority, affordances, config, form_pack=pack),
+        )
+        atoms = dict(runtime.authority.atoms)
+        _, context = runtime.orient("session:reviewed-nominal", surface)
+        predicate = next(row for row in context.application_frames if row.operator_ref == "op:type")
+        assert context.designation(predicate.designation_slot_ref).designation_fact_ref == facts[1].designation_fact_ref
+        result = runtime.process("session:reviewed-nominal", surface)
+        assert result.verification.selected_meaning is not None
+        assert result.verification.selected_meaning.expression == _membership_expected()
+        assert result.evaluation.decision.action is DecisionAction.RETAIN_ATTRIBUTION
+        assert runtime.stores.world.revision == 0 and runtime.stores.r3_world_facts() == ()
+        assert dict(runtime.authority.atoms) == atoms and pack_path.read_bytes() == before_pack
+        assert result.proposal.explored_states == 4 and not result.proposal.truncated
+    finally:
+        runtime.stores.close()
+
+
+def _membership_composed_scenario(roles):
+    roles = {role: ({"kind": "grounded", "target": value["target_ref"]}
+                    if value["kind"] == "grounded" else value) for role, value in roles.items()}
+    return ReviewedScenario.from_dict({
+        "scenario_ref": "scenario:foundation-composed-membership", "review_status": "reviewed",
+        "competency_category": "type", "semantic_assertions": [{
+            "kind": "composed_expression", "shape": "multi_root",
+            "applications": [
+                {"local_ref": "membership", "operator": "op:type", "predicate": "concept:mother", "roles": roles},
+                {"local_ref": "relation", "operator": "op:relation", "predicate": "rel:likes", "roles": {
+                    "role:subject": {"kind": "grounded", "target": "entity:alice"},
+                    "role:object": {"kind": "grounded", "target": "entity:bob"},
+                }},
+            ], "expression_links": [], "root_local_refs": ["membership", "relation"],
+        }], "surface_examples": ["Alice is a mother. Alice likes Bob."], "metadata": {},
+    })
+
+
+def test_foundation_membership_composed_gold_uses_world_membership(linked_authority):
+    scenario = _membership_composed_scenario({
+        "role:instance": {"kind": "grounded", "target_ref": "entity:alice"},
+        "role:class": {"kind": "grounded", "target_ref": "concept:mother"},
+    })
+    membership = _membership_expected().applications[0]
+    relation = _matrix_relation()
+    expected = SemanticExpression.create(applications=(membership, relation), root_refs=(membership.application_ref, relation.application_ref))
+    assert _compile_scenario(linked_authority, scenario).expected_expressions == (expected,)
+
+
+def test_foundation_membership_composed_multiroot_canonicalization_and_linear_work(linked_authority, monkeypatch):
+    # Same-assertion successor: true multi-root canonicalization and bounded
+    # compiler work survive retirement of registry-kind-shaped type gold.
+    scenario = _membership_composed_scenario({
+        "role:instance": {"kind": "grounded", "target_ref": "entity:alice"},
+        "role:class": {"kind": "grounded", "target_ref": "concept:mother"},
+    })
+    first = _compile_scenario(linked_authority, scenario)
+    raw = scenario.as_dict()
+    assertion = raw["semantic_assertions"][0]
+    assertion["applications"].reverse()
+    for app in assertion["applications"]:
+        app["local_ref"] = {"membership": "renamed_type", "relation": "renamed_relation"}[app["local_ref"]]
+        app["roles"] = dict(reversed(tuple(app["roles"].items())))
+    assertion["root_local_refs"] = ["renamed_relation", "renamed_type"]
+    # Scenario and assertion IDs are reviewed lineage, not expression identity.
+    raw.pop("source_digest", None)
+    raw.pop("source_hash", None)
+    second = _compile_scenario(linked_authority, ReviewedScenario.from_dict(raw))
+    assert first.expression_relation.value == "single"
+    assert len(first.expected_expressions) == 1 and len(first.expected_expressions[0].root_refs) == 2
+    assert first.expected_expressions == second.expected_expressions
+    assert not first.expected_expressions[0].expression_links
+    work = []
+    monkeypatch.setattr(ExpectedCycleContractCompiler, "_record_composed_work", lambda _owner, operation: work.append(operation))
+    for count in (2, 8):
+        applications = [{"local_ref": f"membership_{index}", "operator": "op:type", "predicate": "concept:mother", "roles": {
+            "role:instance": {"kind": "grounded", "target": "entity:alice"},
+            "role:class": {"kind": "grounded", "target": "concept:mother"},
+        }} for index in range(count)]
+        current = ReviewedScenario.from_dict({
+            "scenario_ref": "scenario:membership-linear-work", "review_status": "reviewed", "competency_category": "type",
+            "semantic_assertions": [{"kind": "composed_expression", "shape": "multi_root", "applications": applications,
+                "expression_links": [], "root_local_refs": [row["local_ref"] for row in applications]}],
+            "surface_examples": ["Alice is a mother."], "metadata": {},
+        })
+        work.clear()
+        _compile_scenario(linked_authority, current)
+        assert work.count("local_ref_duplicate_probe") == count
+        assert work.count("local_ref_insert") == count
+        assert work.count("root_resolution") == count
+        assert work.count("proposition_resolution") == 0 and work.count("link_operand_resolution") == 0
+        assert len(work) == 3 * count
+    linked = ReviewedScenario.from_dict({
+        "scenario_ref": "scenario:membership-link-work", "review_status": "reviewed", "competency_category": "type",
+        "semantic_assertions": [{"kind": "composed_expression", "shape": "linked", "mode": "SIMULATE", "applications": [
+            {"local_ref": "power", "operator": "op:state", "predicate": "dim:power", "roles": {
+                "role:subject": {"kind": "grounded", "target": "entity:lamp"},
+                "role:dimension": {"kind": "grounded", "target": "dim:power"},
+                "role:value": {"kind": "grounded", "target": "value:on"}}},
+            {"local_ref": "greeting", "operator": "op:event", "predicate": "event:greeting", "roles": {
+                "role:actor": {"kind": "grounded", "target": "participant:user"},
+                "role:addressee": {"kind": "grounded", "target": "participant:system"}}}],
+            "expression_links": [{"local_ref": "joined", "link_type": "link:condition", "operand_local_refs": ["power", "greeting"]}],
+            "root_local_refs": ["joined"]}], "surface_examples": ["A conditional greeting."], "metadata": {},
+    })
+    work.clear()
+    _compile_scenario(linked_authority, linked)
+    assert work == ["local_ref_duplicate_probe", "local_ref_insert", "local_ref_duplicate_probe", "local_ref_insert",
+                    "local_ref_duplicate_probe", "local_ref_insert", "root_resolution", "link_operand_resolution", "link_operand_resolution"]
+
+
+def test_foundation_membership_composed_malformed_graphs_preserve_all_exact_guards(linked_authority):
+    from tests.test_r4_assertion_compiler import _assert_composed_expression_rejects_noncanonical_graph
+
+    # Preserve the 26 unaffected malformed assertions verbatim through their
+    # frozen helper; replace only the five registry-kind-shaped fixtures below.
+    for mutation, error in (
+        ("duplicate_local", "duplicate"), ("duplicate_root", "duplicate"),
+        ("unknown_root", "unknown|dangling"), ("unknown_shape", "shape"),
+        ("bad_link_arity", "arity"), ("unknown_link", "unsupported expression link"),
+        ("dangling_operand", "unknown expression link operand"),
+        ("multi_root_with_link", "multi_root"), ("linked_without_link", "linked"),
+        ("unknown_operator", "operator"), ("unknown_predicate", "authority ref"),
+        ("wrong_predicate_kind", "incompatible kind"), ("unknown_role", "role"),
+        ("unknown_filler", "filler kind"), ("literal_event_actor", "literal filler"),
+        ("designation_non_string", "designation surface"), ("designation_empty", "designation surface"),
+        ("dangling_proposition", "unknown proposition"), ("orphan", "non-root"),
+        ("cycle", "cycle|parent"), ("extra_application_field", "fields must match"),
+        ("missing_link_field", "fields must match"), ("extra_filler_field", "fields must match"),
+        ("over_role_bound", "role bound"), ("over_application_bound", "application"), ("over_link_bound", "link"),
+    ):
+        _assert_composed_expression_rejects_noncanonical_graph(mutation, error)
+
+    def compile_fields(fields):
+        return _compile_scenario(linked_authority, ReviewedScenario.from_dict({
+            "scenario_ref": "scenario:membership-malformed-guard", "review_status": "reviewed", "competency_category": "type",
+            "semantic_assertions": [{"kind": "composed_expression", **fields}],
+            "surface_examples": ["Alice is a mother."], "metadata": {},
+        }))
+
+    def membership(index):
+        return {"local_ref": f"member_{index}", "operator": "op:type", "predicate": "concept:mother", "roles": {
+            "role:instance": {"kind": "grounded", "target": "entity:alice"},
+            "role:class": {"kind": "grounded", "target": "concept:mother"}}}
+
+    valid = {"shape": "multi_root", "applications": [membership(0), membership(1)],
+             "expression_links": [], "root_local_refs": ["member_0", "member_1"]}
+    assert len(compile_fields(valid).expected_expressions[0].root_refs) == 2
+    for value, value_type, error in ((True, "integer", "integer"), (1, "boolean", "boolean"), ("adapter", "string", "type class")):
+        malformed = json.loads(json.dumps(valid))
+        malformed["applications"][0]["roles"]["role:class"] = {"kind": "literal", "value_type": value_type, "value": value}
+        # The third guard now rejects a nongrounded class, not registry metadata.
+        with pytest.raises((AssertionCompilerError, TypeError, ValueError), match=error):
+            compile_fields(malformed)
+    for count in (6, 8):
+        deep = {"shape": "linked", "applications": [membership(index) for index in range(count)],
+            "expression_links": [{"local_ref": f"link_{index}", "link_type": "link:condition",
+                "operand_local_refs": ["member_0" if index == 0 else f"link_{index - 1}", f"member_{index + 1}"]}
+                for index in range(count - 1)], "root_local_refs": [f"link_{count - 2}"]}
+        if count == 6:
+            assert len(compile_fields(deep).expected_expressions) == 1
+        else:
+            with pytest.raises((AssertionCompilerError, TypeError, ValueError), match="depth"):
+                compile_fields(deep)
+    too_many_roots = {"shape": "multi_root", "applications": [membership(index) for index in range(9)],
+        "expression_links": [], "root_local_refs": [f"member_{index}" for index in range(9)]}
+    with pytest.raises((AssertionCompilerError, TypeError, ValueError), match="root"):
+        compile_fields(too_many_roots)
+
+
+@pytest.mark.parametrize(
+    "case", ("registry-kind", "wrong-class", "literal-instance", "wrong-instance-kind"),
+    ids=("registry-kind", "wrong-class", "literal-instance", "wrong-instance-kind"),
+)
+def test_foundation_membership_composed_gold_rejects_nonmembership(case, linked_authority):
+    roles = {
+        "role:instance": {"kind": "grounded", "target_ref": "entity:alice"},
+        "role:class": {"kind": "grounded", "target_ref": "concept:mother"},
+    }
+    if case == "registry-kind":
+        roles = {"role:subject": {"kind": "grounded", "target_ref": "concept:mother"},
+                 "role:type": {"kind": "literal", "value_type": "string", "value": "concept"}}
+    elif case == "wrong-class":
+        roles["role:class"]["target_ref"] = "concept:person"
+    elif case == "literal-instance":
+        roles["role:instance"] = {"kind": "literal", "value_type": "string", "value": "Alice"}
+    else:
+        roles["role:instance"]["target_ref"] = "rel:likes"
+    with pytest.raises(ValueError):
+        _compile_scenario(linked_authority, _membership_composed_scenario(roles))
+
+
+def _membership_slot_with(slot, **changes):
+    values = {row.name: getattr(slot, row.name) for row in fields(slot) if row.init and row.name != "slot_ref"}
+    values.update(changes)
+    return type(slot).create(**values)
+
+
+def _membership_unchecked(value, **changes):
+    forged = object.__new__(type(value))
+    for row in fields(value):
+        object.__setattr__(forged, row.name, changes.get(row.name, getattr(value, row.name)))
+    if isinstance(forged, ProposalContext):
+        forged._build_indexes()
+    return forged
+
+
+@pytest.mark.parametrize("attack", ("scope-transfer", "widened-instance"), ids=("scope-transfer", "widened-instance"))
+def test_foundation_membership_multiclause_reconstruction_keeps_instance_and_scope_owner(attack, tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "clauses.db")
+    try:
+        _, context = runtime.orient("session:nominal-clauses", "Alice is not a mother. Bob is a mother.")
+        proposal = runtime.proposal_model.propose(context)
+        assert proposal.candidates and not proposal.truncated
+        alice = _membership_expected(negative=True)
+        bob = SemanticApplication("application:bob", "op:type", "concept:mother", (
+            RoleBinding("role:instance", GroundedReference("entity:bob")),
+            RoleBinding("role:class", GroundedReference("concept:mother")),
+        ))
+        expected = SemanticExpression.create(applications=(*alice.applications, bob),
+            scope_operators=alice.scope_operators, root_refs=(*alice.root_refs, bob.application_ref))
+        reconstructed = tuple((candidate.program, reconstruct_expected_expression(candidate.program, context)) for candidate in proposal.candidates)
+        correct = next(program for program, expression in reconstructed if expression == expected)
+        if attack == "scope-transfer":
+            assert all(expression is None or expression == expected for _, expression in reconstructed)
+        else:
+            instance = next(row for row in context.reference_slots if row.target_ref == "entity:bob")
+            forged = _membership_unchecked(context, reference_slots=tuple(
+                _membership_unchecked(row, source_unit_refs=("unit:0", "unit:11")) if row == instance else row
+                for row in context.reference_slots))
+            assert reconstruct_expected_expression(correct, forged) is None
+    finally:
+        runtime.stores.close()
+
+
+@pytest.mark.parametrize("surface", ("Alice mother", "Alice. mother", "mother is Alice"), ids=("juxtaposition", "separate-clause", "reversed"))
+def test_foundation_membership_requires_reviewed_predication_not_juxtaposition(surface, tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "unlicensed.db")
+    try:
+        _, context = runtime.orient("session:unlicensed-membership", surface)
+        proposal = runtime.proposal_model.propose(context)
+        for candidate in proposal.candidates:
+            assert reconstruct_expected_expression(candidate.program, context) is None
+        result = runtime.process("session:unlicensed-membership", surface)
+        assert result.verification.selected_meaning is None
+        assert runtime.stores.world.revision == 0
+    finally:
+        runtime.stores.close()
+
+
+@pytest.mark.parametrize(
+    "corruption", ("missing-gap", "forged-gap", "missing-binder", "missing-determiner", "foreign-instance"),
+    ids=("missing-gap", "forged-gap", "missing-binder", "missing-determiner", "foreign-instance"),
+)
+def test_foundation_membership_independent_reconstruction_rejects_source_forgery(corruption, tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "reconstruction.db")
+    try:
+        _, context = runtime.orient("session:independent-membership", "Alice is a mother.")
+        proposal = runtime.proposal_model.propose(context)
+        assert proposal.candidates
+        program = proposal.candidates[0].program
+        contributions = context.contribution_slots
+        references = context.reference_slots
+        if corruption in {"missing-gap", "missing-binder", "missing-determiner"}:
+            source = {"missing-gap": "unit:3", "missing-binder": "unit:2", "missing-determiner": "unit:4"}[corruption]
+            contributions = tuple(row for row in contributions if row.source_unit_refs != (source,))
+        elif corruption == "forged-gap":
+            gap = next(row for row in contributions if row.source_unit_refs == ("unit:3",))
+            invalid_gap = _membership_slot_with(gap, provenance_refs=("unit:7",))
+            contributions = tuple(invalid_gap if row.slot_ref == gap.slot_ref else row for row in contributions)
+        else:
+            instance = next(row for row in references if row.target_ref == "entity:alice")
+            references = tuple(_membership_unchecked(row, source_unit_refs=("unit:7",)) if row == instance else row for row in references)
+        forged = _membership_unchecked(context, contribution_slots=contributions, reference_slots=references)
+        assert reconstruct_expected_expression(program, forged) is None
+    finally:
+        runtime.stores.close()
+
+
+@pytest.mark.parametrize(
+    "extension", ("remote-binder", "remote-determiner", "punctuation-gap", "semantic-gap"),
+    ids=("remote-binder", "remote-determiner", "punctuation-gap", "semantic-gap"),
+)
+def test_foundation_membership_context_rejects_unowned_predication_geometry(extension, tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "forged.db")
+    try:
+        _, context = runtime.orient("session:forged-membership", "Alice is a mother. Bob is a person.")
+        frame = next(row for row in context.application_frames if row.predicate_target_ref == "concept:mother")
+        designation = context.designation(frame.designation_slot_ref)
+        # Independently named source positions; no parser-authored semantic gold.
+        injected = {"remote-binder": "unit:11", "remote-determiner": "unit:13",
+                    "punctuation-gap": "unit:7", "semantic-gap": "unit:9"}[extension]
+        refs = tuple(dict.fromkeys((*designation.source_unit_refs, injected)))
+        forged_frame = _membership_slot_with(frame, source_unit_refs=refs)
+        predicate = next(row for row in context.contribution_slots if row.kind == "predicate" and row.target_ref == "concept:mother")
+        forged_predicate = _membership_slot_with(predicate, source_unit_refs=refs)
+        values = {row.name: getattr(context, row.name) for row in fields(context)
+                  if row.init and row.name not in {"context_ref", "abi_version"}}
+        values["application_frames"] = tuple(forged_frame if row.slot_ref == frame.slot_ref else row for row in context.application_frames)
+        values["contribution_slots"] = tuple(forged_predicate if row.slot_ref == predicate.slot_ref else row for row in context.contribution_slots)
+        values["residual_evidence"] = tuple(row for row in context.residual_evidence if row.source_unit_ref not in refs)
+        with pytest.raises(ValueError, match="nominal predication.*source"):
+            ProposalContext.create(**values)
+    finally:
+        runtime.stores.close()
+
+
+def _membership_pair_expected(case):
+    alice = SemanticApplication("application:pair-alice", "op:type", "concept:mother", (
+        RoleBinding("role:instance", GroundedReference("entity:alice")),
+        RoleBinding("role:class", GroundedReference("concept:mother")),
+    ))
+    bob = SemanticApplication("application:pair-bob", "op:type", "concept:mother", (
+        RoleBinding("role:instance", GroundedReference("entity:bob")),
+        RoleBinding("role:class", GroundedReference("concept:mother")),
+    ))
+    scopes = []
+    roots = [alice.application_ref, bob.application_ref]
+    if case != "positive-pair":
+        scopes.append(ScopeOperator("scope:pair-alice-negative", "scope:polarity", "scope_value:polarity:negative", alice.application_ref))
+        roots[0] = scopes[-1].scope_ref
+    if case == "negative-pair":
+        scopes.append(ScopeOperator("scope:pair-bob-negative", "scope:polarity", "scope_value:polarity:negative", bob.application_ref))
+        roots[1] = scopes[-1].scope_ref
+    links = []
+    if case == "coordinated-mixed":
+        links.append(ExpressionLink("link:pair-conjunction", "link:conjunction", tuple(roots)))
+        roots = [links[0].link_ref]
+    return SemanticExpression.create(applications=(alice, bob), scope_operators=tuple(scopes),
+        expression_links=tuple(links), root_refs=tuple(roots))
+
+
+@pytest.mark.parametrize(
+    ("case", "surface"),
+    (("positive-pair", "Alice is a mother. Bob is a mother."),
+     ("mixed-pair", "Alice is not a mother. Bob is a mother."),
+     ("negative-pair", "Alice is not a mother. Bob is not a mother."),
+     ("coordinated-mixed", "Alice is not a mother and Bob is a mother.")),
+    ids=("positive-pair", "mixed-pair", "negative-pair", "coordinated-mixed"),
+)
+def test_foundation_membership_bounded_pair_public_preserves_independent_graph(case, surface, tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "bounded-pair.db")
+    try:
+        before = runtime.stores.world.revision, runtime.stores.r3_world_facts()
+        result = runtime.process("session:bounded-membership-pair", surface)
+        assert not result.proposal.truncated
+        assert result.verification.selected_meaning is not None
+        assert result.verification.selected_meaning.expression == _membership_pair_expected(case)
+        assert result.evaluation.decision.action is DecisionAction.RETAIN_ATTRIBUTION
+        assert result.evaluation.effect_intents == ()
+        assert (runtime.stores.world.revision, runtime.stores.r3_world_facts()) == before
+        assert isinstance(result.effect_receipt, NoEffectReceipt)
+    finally:
+        runtime.stores.close()
+
+
+@pytest.mark.parametrize(
+    ("case", "surface"),
+    (("positive-pair", "Alice is a mother. Bob is a mother."),
+     ("mixed-pair", "Alice is not a mother. Bob is a mother."),
+     ("negative-pair", "Alice is not a mother. Bob is not a mother."),
+     ("coordinated-mixed", "Alice is not a mother and Bob is a mother.")),
+    ids=("positive-pair", "mixed-pair", "negative-pair", "coordinated-mixed"),
+)
+def test_foundation_membership_proposal_prunes_impossible_local_choices(case, surface, tmp_path, monkeypatch):
+    from cemm_authoritative_hybrid.recursive_composer._search import RecursiveComposer
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "local-choices.db")
+    seen = []
+    original = RecursiveComposer._apply
+    try:
+        _, context = runtime.orient("session:local-membership-choices", surface)
+        boundary = surface.index("Bob")
+
+        def observed_apply(owner, state, choice):
+            action = choice.action
+            applications = dict(state.application_frames)
+            if action.action_type in {"bind_reference", "bind_role"}:
+                app_ref, role, slot_ref = action.arguments
+                frame = context.frame(applications[app_ref])
+                if frame.operator_ref == "op:type":
+                    predicate_start = context.source_span(context.designation(frame.designation_slot_ref).source_unit_refs)[0]
+                    expected_instance = "entity:alice" if predicate_start < boundary else "entity:bob"
+                    slot = context.reference(slot_ref) if action.action_type == "bind_reference" else context.contribution(slot_ref)
+                    assert role == "role:instance" and slot.target_ref == expected_instance
+                    seen.append("instance")
+            elif action.action_type == "attach_scope":
+                _, slot_ref, operand = action.arguments
+                scope = context.scope(slot_ref)
+                assert operand in applications, "local polarity cannot wrap the compound root"
+                frame = context.frame(applications[operand])
+                predicate_start = context.source_span(context.designation(frame.designation_slot_ref).source_unit_refs)[0]
+                polarity_start = context.source_span(scope.source_unit_refs)[0]
+                assert (predicate_start < boundary) == (polarity_start < boundary)
+                seen.append("polarity")
+            return original(owner, state, choice)
+
+        monkeypatch.setattr(RecursiveComposer, "_apply", observed_apply)
+        proposal = runtime.proposal_model.propose(context)
+        assert proposal.candidates and not proposal.truncated
+        assert "instance" in seen and (case == "positive-pair" or "polarity" in seen)
+        assert all(reconstruct_expected_expression(row.program, context) == _membership_pair_expected(case) for row in proposal.candidates)
+        assert len(proposal.candidates) <= 20
+    finally:
+        runtime.stores.close()
+
+
+def test_foundation_membership_pruning_preserves_unresolved_frame_union():
+    from tests.test_proposal_context_abi1 import _context_with_unresolved_designation
+    from cemm_authoritative_hybrid.proposal_context import nominal_predication_choice_index
+    from cemm_authoritative_hybrid.recursive_composer._search import RecursiveComposer
+
+    context, unresolved = _context_with_unresolved_designation()
+    restored = ProposalContext.from_dict(context.as_dict())
+    assert restored.unresolved_designation_frame(unresolved.slot_ref) == unresolved
+    bindings, scopes = nominal_predication_choice_index(restored)
+    assert dict(bindings) == {} and dict(scopes) == {}
+    owner = RecursiveComposer(restored)
+    assert owner.explored == 0 and not owner.truncated
+
+
+def test_foundation_membership_pruning_preserves_nonnominal_polysemy_scope(tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "polysemy.db")
+    pack = json.loads((ROOT / "data/languages/en/forms.json").read_text(encoding="utf-8"))
+    config = RuntimeConfig.release()
+    facts = (
+        DesignationFact.create(surface="Alice", target_ref="entity:alice", language="en"),
+        DesignationFact.create(surface="velnora", target_ref="concept:mother", language="en"),
+        DesignationFact.create(surface="velnora", target_ref="value:on", language="en"),
+    )
+    class ReviewedIndex:
+        def build_index(self):
+            return DesignationIndex(facts)
+    try:
+        resolver = FormResolver(pack, config)
+        affordances = SemanticAffordanceIndex(runtime.authority, config)
+        runtime._owners["orientation"] = RuntimeOrientationOwner(
+            authority=runtime.authority, stores=runtime.stores, config=config,
+            form_resolver=resolver,
+            grounder=Grounder(runtime.authority, config, form_pack=pack, form_pack_hash=resolver.form_pack_hash, designation_store=ReviewedIndex()),
+            contribution_expander=ContributionExpander(affordances, config),
+            context_builder=ProposalContextBuilder(runtime.authority, affordances, config, form_pack=pack),
+        )
+        _, context = runtime.orient("session:polysemy", "Alice is not velnora.")
+        assert {frame.operator_ref for frame in context.application_frames} == {"op:type", "op:state"}
+        proposal = runtime.proposal_model.propose(context)
+        app = SemanticApplication("application:independent-state", "op:state", "dim:power", (
+            RoleBinding("role:subject", GroundedReference("entity:alice")),
+            RoleBinding("role:dimension", GroundedReference("dim:power")),
+            RoleBinding("role:value", GroundedReference("value:on")),
+        ))
+        scope = ScopeOperator("scope:independent-state-negative", "scope:polarity", "scope_value:polarity:negative", app.application_ref)
+        state_expected = SemanticExpression.create(applications=(app,), scope_operators=(scope,), root_refs=(scope.scope_ref,))
+        expressions = {reconstruct_expected_expression(row.program, context) for row in proposal.candidates}
+        assert not proposal.truncated
+        assert state_expected in expressions, "an unselected nominal alternative cannot suppress state polarity"
+        assert runtime.stores.world.revision == 0 and runtime.stores.r3_world_facts() == ()
+    finally:
+        runtime.stores.close()
 
 
 def _matrix_designation_query(surface):

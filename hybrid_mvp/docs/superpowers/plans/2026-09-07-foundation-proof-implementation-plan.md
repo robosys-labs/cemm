@@ -315,6 +315,102 @@ then reviewed query/content-slot/learning contract alignment before attempting
 the complete conversation. These are capability repairs, not reasons to resume
 bulk supervision, training, or root adoption prematurely.
 
+Ordinary membership repair scope: preserve the canonical `role:instance` /
+`role:class` graph and derive reference compatibility from semantic kinds.
+Copula and adjacent determiner evidence must have exact local source ownership,
+independently checked by VERIFY. Existing context spans currently erase the
+distinction between whitespace and punctuation. If needed, retain that distinction
+as form-owned structural evidence in existing contribution constraints, without a
+new ABI field, semantic target or port. It must not select meaning, alter query
+variable creation, or make punctuation/clauses transparent to predication.
+Whitespace remains noncritical evidence, accounted for exactly once. Test missing
+or forged gap evidence, clause boundaries, scope, unseen reviewed synonyms and
+non-English form-feature controls before claiming this owner repaired.
+
+Restart retrieval also needs truthful reachability reporting: the current
+`ReferenceResolver`/`FocusStore` case exercises a dialogue owner directly. The
+active runtime consumes the separate R3 focus snapshot; rehydrating the direct
+owner alone does not prove a public speech-history query or content-slot fragment
+completion. Preserve this distinction while aligning bounded persisted reads.
+The current SQLite focus query's independent `EXPLAIN QUERY PLAN` reports
+`SCAN focus` and a temporary sort. Its output limit does not bound rows visited.
+The restart repair should use the existing persistence owner's session/recency
+indexing, authenticate only retrieved records, and test memory/SQLite ordering
+and irrelevant-session growth; it should not add a normal-cycle whole-store
+validation pass or expose unverified focus as dialogue evidence.
+
+Pre-pruning membership checkpoint: independent source spec review passed. The
+public ordinary-membership matrix case is now green; all 31 new controls pass,
+including English/Spanish reviewed-index aliases, multiword forms, source-gap
+tampering, widened foreign-clause instances and transferred polarity. The four
+alias/form pipelines each visit four search states without truncation. There are
+no pack, authority, ABI or cap changes. All 91 predecessor foundation case
+metadata entries and their test ASTs remain unchanged. Two explicit same-assertion
+successors retire only composed registry-kind type expectations, preserving
+renaming/canonicalization, 2/8-root linear work, and the complete 31 malformed-
+graph controls. The foundation file is 118 passes / four retained failures;
+the independently authenticated 353-node owner union is 336 passes / 17 retained
+failures. Queries, restart and learning are not established by membership.
+At this pre-pruning checkpoint, configured selectors and the canonical living
+receipt were regenerated twice with identical bytes; no owner or validation tier
+was added. Quality review remains open on the practical composition issue below;
+the membership increment is not yet accepted as complete.
+
+Independent quality probes found that late-only nominal geometry rejection
+wastes the existing proposal budget. Two positive clauses explore 63 states and
+produce 12 complete derivations (six illegal instance bindings); one negative and
+one positive explore 151 / produce 40 (30 illegal role/scope choices). Two
+negative clauses explore 551 / produce 200, of which only 20 are legal; a mixed
+negative/positive coordination explores 215 / produces 52, of which 10 are legal.
+The latter two exhaust the 48-candidate output cap and public VERIFY selects no
+meaning despite valid survivors. This is not the 768-state ceiling and is not a
+reason to raise either limit or train around the missing constraint propagation.
+Before accepting membership, apply the existing local instance/polarity evidence
+to PROPOSE's legal choices, retain independent VERIFY reconstruction, and require
+the independently specified two-negative and coordinated graphs without
+truncation. Do not invoke VERIFY as a proposal filter or introduce heuristic state
+deduplication. Valid derivation-order duplication remains the separate Task 6
+equivalence obligation; removing known-illegal choices needs no new ABI or gate.
+
+Completed bounded membership checkpoint: independent spec and quality reviews
+pass after early local-choice pruning. PROPOSE builds one immutable context-local
+index; VERIFY still reconstructs source ownership independently. The four paired
+cases now visit 31 / 50 / 89 / 66 states and emit 6 / 10 / 20 / 10 candidates,
+respectively. Independent before/after comparison preserves every legal program
+identity, not merely one surviving expression. All four public cases select the
+independently specified graph without truncation. An exact frame-union guard
+preserves unresolved designation contexts; an unselected nominal alternative
+does not suppress a valid negative state interpretation. This remains bounded
+copular membership, not general grammar, query or multilingual scope completion.
+
+All 42 membership cases pass. The final authenticated 363-node owner union gives
+346 passes / the same 17 retained failures; the membership failure is repaired,
+not the four remaining foundation capability gaps or 13 predecessor/data gaps.
+All 50 prior foundation function ASTs and 91 metadata entries are unchanged;
+41 cases were added in total. R1/R2/R3 structural scans report zero forbidden
+matches; R3/R4/R5 hard-cut checks, authority linking, fresh SQLite activation,
+reopen and integrity pass. Four post-VERIFY canaries retain their previous
+status classes and zero world delta. The reviewed input pack and frozen inventory
+are byte-unchanged. Configured selectors and the canonical living receipt were
+regenerated twice with identical bytes: G0 191, R1 783, R2 1170, R3 1556,
+R4 1893, R5 2018. These are checkpoint diagnostics, not phase admission.
+
+The wider diagnostic also identifies a test-infrastructure dependency to repair
+before the next capability increment. A matched read-only `a164996` replay of
+69 cases gives 41 failures / 28 passes: 40 in `test_proposal_context_abi1.py`
+(despite its filename, its active contract is ABI 2) and
+`test_coverage_abi2.py::test_variable_slot_role_must_belong_to_its_exact_body_frame`.
+Their shared or local fixtures use source-free variables, rejected by the earlier
+exact-variable-evidence containment before the intended codec/coverage assertion
+runs. Repair the fixtures with independently specified query evidence; where a
+frozen body hardcodes the invalid setup or geometry, add an explicit same-
+assertion successor retaining the original negative control. Do not relax the
+runtime rule, convert these checks into skips, or count early fixture rejection
+as proof of their intended assertion. Then proceed to bounded restart retrieval.
+The final pre-repair active union of both complete modules contains 135 cases:
+94 pass and the same 41 fixtures fail. This wider count includes unaffected
+coverage controls and is distinct from the earlier 69-case predecessor probe.
+
 ## Task 5 — Prove a complete reference conversation
 
 - [ ] Run independently specified expressions through existing cognition,

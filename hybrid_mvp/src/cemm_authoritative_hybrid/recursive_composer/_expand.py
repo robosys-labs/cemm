@@ -21,6 +21,7 @@ from ._core import (
     _predicate_source_refs,
     _roots,
     _support_bundles,
+    _subtree_nodes,
     _used_sources,
     _variable_owner,
 )
@@ -49,6 +50,9 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
                 if contribution.kind not in _ROLE_KINDS:
                     continue
                 if role_ref not in contribution.output_ports:
+                    continue
+                nominal_slots = owner._nominal_binding_slots.get(frame_ref)
+                if nominal_slots is not None and contribution.slot_ref not in nominal_slots:
                     continue
                 sources = tuple(contribution.source_unit_refs)
                 if not sources or any(ref in used_sources for ref in sources):
@@ -94,6 +98,9 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
                 key=lambda row: (-row.score_q, row.slot_ref),
             ):
                 if role_ref not in reference.compatible_roles:
+                    continue
+                nominal_slots = owner._nominal_binding_slots.get(frame_ref)
+                if nominal_slots is not None and reference.slot_ref not in nominal_slots:
                     continue
                 scoped_frames = tuple(
                     ref
@@ -335,6 +342,19 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
             if scope.slot_ref in state.used_structure_slots:
                 continue
             for operand_ref in roots:
+                if scope.operator_type == "scope:polarity":
+                    applications = dict(state.application_frames)
+                    nominal_owners = owner._nominal_scope_frames.get(scope.slot_ref, frozenset())
+                    nominal_operand = any(
+                        applications.get(ref) in owner._nominal_binding_slots
+                        for ref in _subtree_nodes(state, operand_ref)
+                    )
+                    # Unselected nominal alternatives cannot constrain another
+                    # interpretation. Once active, a nominal source owns only
+                    # its direct application, never another root or forest.
+                    if nominal_operand or nominal_owners.intersection(applications.values()):
+                        if applications.get(operand_ref) not in nominal_owners:
+                            continue
                 scope_ref = _next_node_ref("scope", state)
                 action = ProgramAction.create(
                     action_index=action_index,

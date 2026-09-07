@@ -25,6 +25,7 @@ from .expressions import (
 )
 from .programs import PERSISTENT_OPERATORS
 from .literal_codec import decode_literal_slot
+from .canonical import stable_ref
 
 _R2_EXPRESSION_ACTIONS = frozenset(
     {
@@ -102,6 +103,139 @@ def _node_children(program: Any) -> dict[str, tuple[str, ...]]:
     return {key: tuple(value) for key, value in grouped.items()}
 
 
+def _nominal_form_feature(context: Any, source: str, kind: str, category: str, value: str | None = None) -> bool:
+    """Authenticate a single form-owned feature, independent of frame claims."""
+    for row in context.contributions_for_source(source):
+        if (row.source_unit_refs != (source,) or row.kind != kind
+            or row.target_ref is not None or row.target_kind is not None
+            or row.provenance_refs != (source,) or len(row.constraints) != 1):
+            continue
+        key, feature = row.constraints[0]
+        if key != category or (value is not None and feature != value):
+            continue
+        if row.contribution_ref != stable_ref("form_contribution", (source, key, feature)):
+            continue
+        if category == "orthography" and (row.input_ports or row.output_ports):
+            continue
+        return True
+    return False
+
+
+def _nominal_whitespace(context: Any, source: str) -> bool:
+    rows = context.contributions_for_source(source)
+    return _nominal_form_feature(context, source, "discourse", "orthography", "whitespace") and all(
+        row.kind == "discourse" and not row.input_ports and not row.output_ports
+        for row in rows
+    )
+
+
+def _nominal_binder_position(frame: Any, context: Any) -> int | None:
+    """Reconstruct the full binder→nominal interval from typed source units."""
+    designation = context.designation(frame.designation_slot_ref)
+    if (designation is None or designation.target_kind != "concept"
+        or frame.predicate_kind != "concept"
+        or frame.predicate_target_ref != designation.target_ref
+        or frame.structural_role_ref != "role:class"
+        or frame.required_roles != ("role:instance",)
+        or frame.optional_roles or frame.proposition_roles
+        or frame.derived_role_targets != (("role:class", designation.target_ref),)):
+        return None
+    positions = {source: index for index, source in enumerate(context.source_unit_refs)}
+    nominal = set(designation.source_unit_refs)
+    source = set(frame.source_unit_refs)
+    extras = source - nominal
+    binders = tuple(ref for ref in extras if _nominal_form_feature(context, ref, "binder", "binder", "copula"))
+    if len(binders) != 1 or not nominal < source:
+        return None
+    binder = positions[binders[0]]
+    start, end = min(positions[ref] for ref in nominal), max(positions[ref] for ref in nominal)
+    if binder >= start or frame.source_unit_refs != tuple(sorted(source, key=positions.__getitem__)):
+        return None
+    owned = {binders[0], *nominal}
+    determiner = polarity = False
+    for ref in context.source_unit_refs[binder + 1:start]:
+        if _nominal_whitespace(context, ref):
+            continue
+        if not polarity and not determiner and _nominal_form_feature(context, ref, "scope", "polarity"):
+            polarity = True
+        elif not determiner and _nominal_form_feature(context, ref, "qualifier", "determiner"):
+            determiner = True
+            owned.add(ref)
+        else:
+            return None
+    if any(ref not in nominal and not _nominal_whitespace(context, ref)
+           for ref in context.source_unit_refs[start:end + 1]):
+        return None
+    return binder if source == owned else None
+
+
+def _nominal_instance_is_local(frame: Any, slot: Any, context: Any) -> bool:
+    binder = _nominal_binder_position(frame, context)
+    if binder is None or slot.target_kind not in {"entity", "participant", "concept"} or not slot.source_unit_refs:
+        return False
+    positions = {source: index for index, source in enumerate(context.source_unit_refs)}
+    # Authenticate the entire referent span, not only its rightmost position.
+    witnessed = False
+    for designation in context.designation_slots:
+        if (designation.target_ref != slot.target_ref or designation.target_kind != slot.target_kind
+            or designation.slot_ref not in slot.provenance_refs):
+            continue
+        nominal = set(designation.source_unit_refs)
+        supplied = set(slot.source_unit_refs)
+        if supplied == nominal:
+            witnessed = True
+            break
+        extra = supplied - nominal
+        if not nominal < supplied or len(extra) != 1:
+            continue
+        determiner = next(iter(extra))
+        first = min(positions[ref] for ref in nominal)
+        before = positions[determiner]
+        if (before < first and _nominal_form_feature(context, determiner, "qualifier", "determiner")
+            and all(_nominal_whitespace(context, ref) for ref in context.source_unit_refs[before + 1:first])):
+            witnessed = True
+            break
+    if not witnessed and len(slot.source_unit_refs) == 1:
+        source = slot.source_unit_refs[0]
+        witnessed = any(
+            row.kind == "reference" and row.target_ref == slot.target_ref
+            and row.target_kind == slot.target_kind and row.source_unit_refs == (source,)
+            and row.provenance_refs == (source,) and len(row.constraints) == 1
+            and row.constraints[0][0] == "participant"
+            and row.contribution_ref == stable_ref("form_contribution", (source, *row.constraints[0], slot.target_ref))
+            for row in context.contributions_for_source(source)
+        )
+    if not witnessed:
+        return False
+    end = max(positions[ref] for ref in slot.source_unit_refs)
+    return end < binder and all(_nominal_whitespace(context, ref) for ref in context.source_unit_refs[end + 1:binder])
+
+
+def _nominal_scope_is_local(program: Any, app_ref: str, frame: Any, context: Any) -> bool:
+    binder = _nominal_binder_position(frame, context)
+    if binder is None:
+        return False
+    positions = {source: index for index, source in enumerate(context.source_unit_refs)}
+    designation = context.designation(frame.designation_slot_ref)
+    start = min(positions[ref] for ref in designation.source_unit_refs)
+    expected = {source for source in context.source_unit_refs[binder + 1:start]
+                if _nominal_form_feature(context, source, "scope", "polarity")}
+    attached = set()
+    for action in program.actions:
+        if action.action_type != "attach_scope":
+            continue
+        _, slot_ref, operand = action.arguments
+        scope = context.scope(slot_ref)
+        if scope is None or scope.operator_type != "scope:polarity":
+            continue
+        if app_ref not in _reachable_nodes(program, operand):
+            continue
+        if operand != app_ref or not set(scope.source_unit_refs) <= expected:
+            return False
+        attached.update(scope.source_unit_refs)
+    return attached == expected
+
+
 def _reachable_nodes(program: Any, body_ref: str) -> tuple[str, ...]:
     children = _node_children(program)
     result: list[str] = []
@@ -177,6 +311,8 @@ def reconstruct_expected_expression(
             return None
         if not _designation_frame_is_exact(frame):
             return None
+        if frame.operator_ref == "op:type" and _nominal_binder_position(frame, context) is None:
+            return None
         st.grounding.add(frame.predicate_target_ref)
         st.grounding.update(t for _, t in frame.derived_role_targets)
         st.role_bindings[app_ref] = {
@@ -202,6 +338,8 @@ def reconstruct_expected_expression(
             slot = context.contribution(slot_ref)
             if slot is None or role_ref not in slot.output_ports:
                 return None
+            if frame.operator_ref == "op:type" and not _nominal_instance_is_local(frame, slot, context):
+                return None
             if slot.target_ref is not None:
                 filler: Any = GroundedReference(slot.target_ref)
                 st.grounding.add(slot.target_ref)
@@ -214,6 +352,8 @@ def reconstruct_expected_expression(
         else:
             slot = context.reference(slot_ref)
             if slot is None or role_ref not in slot.compatible_roles:
+                return None
+            if frame.operator_ref == "op:type" and not _nominal_instance_is_local(frame, slot, context):
                 return None
             filler = GroundedReference(slot.target_ref)
             st.grounding.update({slot.target_ref, *slot.provenance_refs})
@@ -286,6 +426,8 @@ def reconstruct_expected_expression(
         app_ref, frame_slot_ref = a.arguments
         frame = context.frame(frame_slot_ref)
         if frame is None:
+            return None
+        if frame.operator_ref == "op:type" and not _nominal_scope_is_local(program, app_ref, frame, context):
             return None
         bindings = st.role_bindings.get(app_ref, {})
         if any(r not in bindings for r in frame.required_roles):

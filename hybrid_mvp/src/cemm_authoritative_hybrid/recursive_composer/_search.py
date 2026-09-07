@@ -7,7 +7,7 @@ from itertools import islice
 from typing import Any
 
 from ..programs import ProgramAction, SemanticSwitchProgram, SourceAssignment
-from ..proposal_context import ProposalContext
+from ..proposal_context import ProposalContext, nominal_predication_choice_index
 from ._core import (
     _ACTION_OVERHEAD,
     _CRITICAL_KINDS,
@@ -44,6 +44,8 @@ class RecursiveComposer:
         "_branch_bound",
         "_explored",
         "_truncated",
+        "_nominal_binding_slots",
+        "_nominal_scope_frames",
     )
 
     def __init__(
@@ -80,6 +82,7 @@ class RecursiveComposer:
         self._branch_bound = _DEFAULT_BRANCH_BOUND
         self._explored = 0
         self._truncated = False
+        self._nominal_binding_slots, self._nominal_scope_frames = nominal_predication_choice_index(context)
 
     @property
     def explored(self) -> int:

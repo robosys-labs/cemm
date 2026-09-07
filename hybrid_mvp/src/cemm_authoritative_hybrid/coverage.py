@@ -15,7 +15,7 @@ from typing import Any, Iterable, Mapping
 from .canonical import stable_ref
 from .config import RuntimeConfig
 from .persistence import RevisionPin
-from .proposal_context import ProposalContext
+from .proposal_context import ProposalContext, _is_orthographic_evidence
 from .programs import ProgramAction, SemanticSwitchProgram, SourceAssignment
 
 
@@ -601,7 +601,12 @@ class CoverageVerifier:
         contributions_for_source = context.contributions_for_source
 
         for residual_row in context.residual_evidence:
-            conflicting = contributions_for_source(residual_row.source_unit_ref)
+            # Evidence-only token classes describe residual geometry; they do
+            # not assign or consume a semantic source role.
+            conflicting = tuple(
+                row for row in contributions_for_source(residual_row.source_unit_ref)
+                if not _is_orthographic_evidence(row)
+            )
             if conflicting:
                 report(
                     "context_residual_contribution_conflict",

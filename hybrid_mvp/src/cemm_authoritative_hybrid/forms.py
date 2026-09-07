@@ -1104,6 +1104,12 @@ class FormResolver:
         source = text[start:end]
         norm = self._normalize_surface(source)
         features = tuple(self._feature_map.get(norm, ()))
+        # Token-class evidence has no semantic target. Preserve it for exact
+        # interval checks after the raw source leaves the form-owner boundary.
+        if source.isspace():
+            features = (*features, ("orthography", "whitespace"))
+        elif source in self._punctuation:
+            features = (*features, ("orthography", "punctuation"))
         normalized_forms: tuple[str, ...]
         if source.strip() and source != norm:
             normalized_forms = (norm,)

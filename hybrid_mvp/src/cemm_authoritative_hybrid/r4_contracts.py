@@ -2054,21 +2054,15 @@ class ExpectedCycleContractCompiler:
                 raise ValueError("designation target must be grounded")
             return
         if app.operator == "op:type":
-            if set(by_role) != frozenset({"role:subject", "role:type"}):
+            if set(by_role) != frozenset({"role:instance", "role:class"}):
                 raise ValueError("type application roles must be exact")
-            subject = by_role["role:subject"]
-            if not isinstance(subject, GroundedReference) or subject.target_ref != app.predicate_ref:
-                raise ValueError("type subject must ground its predicate")
-            type_value = by_role["role:type"]
-            expected_kind = getattr(
-                self._authority.atoms[app.predicate_ref], "kind", None
-            )
-            if (
-                not isinstance(type_value, LiteralValue)
-                or type_value.value_type != "string"
-                or type_value.value != expected_kind
-            ):
-                raise ValueError("type role must be literal")
+            instance, class_value = by_role["role:instance"], by_role["role:class"]
+            if not isinstance(instance, GroundedReference):
+                raise ValueError("type instance must be grounded")
+            self._authority.require_ref(instance.target_ref, "type instance", kinds=("entity", "participant", "concept"))
+            if not isinstance(class_value, GroundedReference) or class_value.target_ref != app.predicate_ref:
+                raise ValueError("type class must ground its predicate")
+            self._authority.require_ref(app.predicate_ref, "type class", kinds=("concept",))
             return
         if app.operator == "op:relation":
             self._authority.require_ref(
