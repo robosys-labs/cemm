@@ -260,6 +260,13 @@ not be reconnected to bypass these missing active owners.
   Keep simple positive/denied controls and exact provenance. Do not distribute
   compound negation, invent a conditional planner, change authority defaults,
   widen caps, or add a parallel validator/query engine in this increment.
+- [x] Repair ordinary membership roles, local predication/source ownership and
+  early legal-choice propagation without losing valid alternative meanings.
+- [x] Restore stale codec/coverage fixtures and explicitly preserve their
+  original safety assertions before the next capability increment.
+- [ ] Restore indexed, bounded, authenticated focus reads across restart in the
+  existing persistence/dialogue owners; preserve current window-overflow honesty
+  and distinguish this repair from public speech/content integration.
 - [ ] Specify query answer projection explicitly: designation target, type
   membership, description/identification or location; bare `What is X?` retains
   contextual alternatives. Use the existing binders/roles when expressive; an
@@ -338,6 +345,20 @@ The restart repair should use the existing persistence owner's session/recency
 indexing, authenticate only retrieved records, and test memory/SQLite ordering
 and irrelevant-session growth; it should not add a normal-cycle whole-store
 validation pass or expose unverified focus as dialogue evidence.
+The canonical focus decoder also currently accepts `abi_version=True` and `1.0`
+as ABI 1 in direct probes. Repair that exact scalar check with the restart read
+owner; Python value equality is not canonical wire equality. Preserve the existing
+codec bounds rather than introducing a parallel record validator.
+
+A further direct-owner probe confirms that 17 canonical focus records in one
+session make the active 16-alternative snapshot raise its existing bound error;
+the snapshot currently emits focus-record identities, not their expression
+content. No active normal focus writer was found. These are distinct unresolved
+window/content-integration requirements, not a demonstrated 17-turn production
+regression or permission to silently drop history. First repair indexed,
+authenticated retrieval and restart parity while preserving current overflow
+honesty; then specify a bounded focus window and content projection with explicit
+coverage/frontier behavior before claiming a usable speech-history loop.
 
 Pre-pruning membership checkpoint: independent source spec review passed. The
 public ordinary-membership matrix case is now green; all 31 new controls pass,
@@ -410,6 +431,28 @@ as proof of their intended assertion. Then proceed to bounded restart retrieval.
 The final pre-repair active union of both complete modules contains 135 cases:
 94 pass and the same 41 fixtures fail. This wider count includes unaffected
 coverage controls and is distinct from the earlier 69-case predecessor probe.
+The membership repair is committed locally as `1875d35`; all 111 active governance
+checks pass on that clean checkpoint. No root adoption or remote push occurred.
+
+Completed fixture prerequisite: the shared ABI-2 context now has a distinct,
+independently specified query contribution and source span. Thirty-five affected
+tests run unchanged after this setup repair. Six explicit same-assertion
+successors preserve geometry/source-partition, non-state transition and variable-
+body role guards; one positive fixture control is added. The transition successor
+also retains query source ownership when replacing the predicate, so an early
+partition failure cannot mask its intended guard. The coverage contrast starts
+with a fully executable positive projection and produces only
+`variable_role_incompatible` when the body role is changed.
+
+Independent spec and quality reviews pass. The authenticated fixture union is
+136 passes; with all 42 membership controls it is 178 passes. The widened
+499-node owner union is 482 passes / the same 17 retained capability/data
+failures. All 118 prior test-function ASTs and 267 metadata entries across the
+three relevant modules are unchanged; the coverage source itself is byte-
+unchanged. Runtime, authority, pack, frozen inventory, ledger and anchors are
+unchanged. Existing configured selectors and the living receipt regenerate
+twice with identical bytes: G0 191, R1 783, R2 1171, R3 1557, R4 1894,
+R5 2019. No owner, tier, runtime gate or compatibility wrapper was added.
 
 ## Task 5 — Prove a complete reference conversation
 

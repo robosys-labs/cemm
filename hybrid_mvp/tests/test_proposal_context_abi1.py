@@ -65,6 +65,16 @@ def _slots() -> dict[str, Any]:
         provenance_refs=("designation:availability",),
         literal_value=None,
     )
+    query_contribution = ContributionSlot.create(
+        contribution_ref="contribution:grounded-query-variable",
+        kind="open_variable",
+        source_unit_refs=("unit:grounded-query",),
+        target_ref=None,
+        target_kind=None,
+        input_ports=(),
+        output_ports=("role:object",),
+        constraints=(),
+    )
     mode = ModeSlot.create(
         mode="OBSERVE",
         source_unit_refs=(),
@@ -112,7 +122,7 @@ def _slots() -> dict[str, Any]:
         application_frame_ref=frame.slot_ref,
         role_ref="role:object",
         required_kinds=("entity",),
-        source_unit_refs=(),
+        source_unit_refs=query_contribution.source_unit_refs,
         construction_ref="construction:query",
     )
     transition = TransitionSlot.create(
@@ -135,6 +145,7 @@ def _slots() -> dict[str, Any]:
         "designation": designation,
         "contribution": contribution,
         "predicate_contribution": predicate_contribution,
+        "query_contribution": query_contribution,
         "mode": mode,
         "frame": frame,
         "reference": reference,
@@ -154,7 +165,10 @@ def _context(*, pin: RevisionPin | None = None) -> ProposalContext:
         form_lattice_ref="lattice:1",
         grounding_ref="grounding:1",
         designation_slots=(slots["designation"],),
-        contribution_slots=(slots["contribution"], slots["predicate_contribution"]),
+        contribution_slots=(
+            slots["contribution"], slots["predicate_contribution"],
+            slots["query_contribution"],
+        ),
         mode_slots=(slots["mode"],),
         application_frames=(slots["frame"],),
         reference_slots=(slots["reference"],),
@@ -164,11 +178,12 @@ def _context(*, pin: RevisionPin | None = None) -> ProposalContext:
         transition_slots=(slots["transition"],),
         residual_evidence=(slots["residual"],),
         context_refs=("turn:1",),
-        source_unit_refs=("unit:alice", "unit:loves", "unit:period"),
+        source_unit_refs=("unit:alice", "unit:loves", "unit:period", "unit:grounded-query"),
         source_unit_spans=(
             ("unit:alice", 0, 5),
             ("unit:loves", 5, 10),
             ("unit:period", 10, 11),
+            ("unit:grounded-query", 11, 15),
         ),
         revision_pin=pin or _pin(),
     )

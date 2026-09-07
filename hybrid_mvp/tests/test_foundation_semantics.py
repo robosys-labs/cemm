@@ -71,6 +71,68 @@ from cemm_authoritative_hybrid.verifier_reconstruction import reconstruct_expect
 ROOT = Path(__file__).parents[1]
 
 __cemm_test_inventory__ = {
+    "tests/test_foundation_semantics.py::test_foundation_nonstate_transition_guard_preserves_complete_source_partition": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-proposal-context-abi1-test-context-rejects-transition-on-non-state-frame",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "3cfdb1558ccd22713b6f297ce989dc94e4a1963efd42ed5d3d845516789a98d3",
+        "supersedes_node_id": "tests/test_proposal_context_abi1.py::test_context_rejects_transition_on_non_state_frame"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_context_fixture_has_independent_exact_query_evidence": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-context-fixture-independent-exact-query-evidence",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "17f6529a4b382fca5fa771757b4dbc35aba998a0529dde976860807ae5ccb1a2"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_context_duplicate_source_and_span_guards_have_valid_query_setup": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-proposal-context-abi1-test-context-rejects-duplicate-slots-unknown-sources-and-invalid-spans",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "4896508b28d99ae36736434f288f64ec242824bb7deb68c6dc62e6c06d920384",
+        "supersedes_node_id": "tests/test_proposal_context_abi1.py::test_context_rejects_duplicate_slots_unknown_sources_and_invalid_spans"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_context_exact_geometry_guards_have_complete_query_sources[zero-width]": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-proposal-context-abi1-test-direct-context-rejects-zero-width-and-noncontiguous-spans-zero-width",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "fa0858d369939e09da8739eedf96e3e8350cc708a248f81b07d37c4b44201408",
+        "supersedes_node_id": "tests/test_proposal_context_abi1.py::test_direct_context_rejects_zero_width_and_noncontiguous_spans[zero-width]"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_context_exact_geometry_guards_have_complete_query_sources[gap]": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-proposal-context-abi1-test-direct-context-rejects-zero-width-and-noncontiguous-spans-gap",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "fa0858d369939e09da8739eedf96e3e8350cc708a248f81b07d37c4b44201408",
+        "supersedes_node_id": "tests/test_proposal_context_abi1.py::test_direct_context_rejects_zero_width_and_noncontiguous_spans[gap]"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_context_exact_geometry_guards_have_complete_query_sources[overlap]": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-proposal-context-abi1-test-direct-context-rejects-zero-width-and-noncontiguous-spans-overlap",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "fa0858d369939e09da8739eedf96e3e8350cc708a248f81b07d37c4b44201408",
+        "supersedes_node_id": "tests/test_proposal_context_abi1.py::test_direct_context_rejects_zero_width_and_noncontiguous_spans[overlap]"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_variable_role_guard_has_exact_query_evidence_and_body_coverage": {
+        "activation_phase": "R1",
+        "assertion_ref": "assertion:r1-coverage-abi2-test-variable-slot-role-must-belong-to-its-exact-body-frame",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
+        "owner_ref": "program-verifier",
+        "source_ast_sha256": "1ab248554e3c65d4fb9d6b4706405336c25418ff5ee5b72cfb2105083c4ed917",
+        "supersedes_node_id": "tests/test_coverage_abi2.py::test_variable_slot_role_must_belong_to_its_exact_body_frame"
+    },
     "tests/test_foundation_semantics.py::test_foundation_membership_bounded_pair_public_preserves_independent_graph[positive-pair]": {
         "activation_phase": "R3",
         "assertion_ref": "assertion:foundation-membership-bounded-pair-public-preserves-independent-graph-positive-pair",
@@ -2495,6 +2557,198 @@ def test_foundation_membership_pruning_preserves_nonnominal_polysemy_scope(tmp_p
         assert runtime.stores.world.revision == 0 and runtime.stores.r3_world_facts() == ()
     finally:
         runtime.stores.close()
+
+
+def test_foundation_context_fixture_has_independent_exact_query_evidence():
+    from tests.test_proposal_context_abi1 import _context, _context_with_unresolved_designation
+
+    context = _context()
+    query = context.contribution_slots[2]
+    variable = context.variable_slots[0]
+    assert query.kind == "open_variable"
+    assert query.target_ref is None and query.target_kind is None
+    assert query.source_unit_refs == variable.source_unit_refs == ("unit:grounded-query",)
+    assert query.output_ports == (variable.role_ref,) == ("role:object",)
+    assert context.source_unit_spans == (
+        ("unit:alice", 0, 5), ("unit:loves", 5, 10),
+        ("unit:period", 10, 11), ("unit:grounded-query", 11, 15),
+    )
+    assert context.contributions_for_source("unit:grounded-query") == (query,)
+    assert context.contribution_slots[0].source_unit_refs == ("unit:alice",)
+    assert context.contribution_slots[1].source_unit_refs == ("unit:loves",)
+    assert context.residual_for_source("unit:period") is context.residual_evidence[0]
+    assert context.variables_for_frame_role(variable.application_frame_ref, "role:object") == (variable,)
+    unresolved, _ = _context_with_unresolved_designation()
+    assert set(context.source_unit_refs).isdisjoint(unresolved.source_unit_refs)
+    assert ProposalContext.from_dict(context.as_dict()) == context
+
+
+def test_foundation_context_duplicate_source_and_span_guards_have_valid_query_setup():
+    from tests.test_proposal_context_abi1 import _context, _creation_fields
+    from cemm_authoritative_hybrid.proposal_context import ResidualEvidence
+
+    context = _context()
+    base = _creation_fields(context)
+    assert ProposalContext.create(**base) == context
+    with pytest.raises(ValueError, match="^duplicate designation slot$"):
+        ProposalContext.create(**(base | {"designation_slots": context.designation_slots * 2}))
+
+    # Remove only the predicate source; the query's evidence remains exact.
+    missing_source = base | {
+        "source_unit_refs": ("unit:alice", "unit:period", "unit:grounded-query"),
+        "source_unit_spans": (
+            ("unit:alice", 0, 5), ("unit:period", 5, 6),
+            ("unit:grounded-query", 6, 10),
+        ),
+    }
+    with pytest.raises(ValueError, match="unknown source unit"):
+        ProposalContext.create(**missing_source)
+
+    invalid_spans = (("unit:alice", 5, 0), *context.source_unit_spans[1:])
+    assert tuple(row[0] for row in invalid_spans) == context.source_unit_refs
+    with pytest.raises(ValueError, match="^source span must have positive width$"):
+        ProposalContext.create(**(base | {"source_unit_spans": invalid_spans}))
+
+    duplicate_residual = ResidualEvidence.create(
+        source_unit_ref="unit:period", contribution_kind="discourse",
+        critical=False, reason="terminal punctuation",
+    )
+    with pytest.raises(ValueError, match="^duplicate residual source unit$"):
+        ProposalContext.create(**(base | {
+            "residual_evidence": (*context.residual_evidence, duplicate_residual),
+        }))
+
+
+@pytest.mark.parametrize(
+    ("span_index", "changed_span", "message"),
+    (
+        (3, ("unit:grounded-query", 11, 11), "source span must have positive width"),
+        (0, ("unit:alice", 0, 4), "source spans must be contiguous and monotonic"),
+        (0, ("unit:alice", 0, 6), "source spans must be contiguous and monotonic"),
+    ),
+    ids=("zero-width", "gap", "overlap"),
+)
+def test_foundation_context_exact_geometry_guards_have_complete_query_sources(span_index, changed_span, message):
+    from tests.test_proposal_context_abi1 import _context, _creation_fields
+
+    context = _context()
+    base = _creation_fields(context)
+    assert ProposalContext.create(**base) == context
+    spans = (
+        *context.source_unit_spans[:span_index], changed_span,
+        *context.source_unit_spans[span_index + 1:],
+    )
+    assert len(spans) == len(context.source_unit_refs)
+    assert tuple(row[0] for row in spans) == context.source_unit_refs
+    with pytest.raises(ValueError, match=f"^{message}$"):
+        ProposalContext.create(**(base | {"source_unit_spans": spans}))
+
+
+def test_foundation_nonstate_transition_guard_preserves_complete_source_partition():
+    from tests.test_proposal_context_abi1 import _context, _creation_fields
+    from cemm_authoritative_hybrid.proposal_context import TransitionSlot
+
+    context = _context()
+    designation = _membership_slot_with(
+        context.designation_slots[0], target_ref="relation:love",
+        target_kind="relation_type", designation_fact_ref="designation:love",
+    )
+    frame = _membership_slot_with(
+        context.application_frames[0], designation_slot_ref=designation.slot_ref,
+        predicate_target_ref=designation.target_ref, predicate_kind=designation.target_kind,
+        operator_ref="op:relation", structural_role_ref="role:relation",
+        required_roles=("role:subject", "role:object"), derived_role_targets=(),
+        affordance_frame_ref="frame:love", provenance_refs=(designation.slot_ref, "frame:love"),
+    )
+    predicate = _membership_slot_with(
+        context.contribution_slots[1], contribution_ref="contribution:love-predicate",
+        target_ref=designation.target_ref, target_kind=designation.target_kind,
+        input_ports=("role:subject", "role:object"), output_ports=("role:relation",),
+        constraints=(), provenance_refs=("frame:love",),
+    )
+    creation = _creation_fields(context) | {
+        "designation_slots": (designation,), "application_frames": (frame,),
+        "contribution_slots": (context.contribution_slots[0], predicate, context.contribution_slots[2]),
+        "variable_slots": (), "transition_slots": (),
+    }
+    valid = ProposalContext.create(**creation)
+    assert ProposalContext.from_dict(valid.as_dict()) == valid
+    assert valid.source_unit_refs == context.source_unit_refs
+    transition = TransitionSlot.create(
+        application_frame_ref=frame.slot_ref, event_type_ref="event:set_state",
+        compatible_modes=("REQUEST",), required_roles=("role:actor",),
+        required_capabilities=("cap:set_state",), required_permissions=("permission:set_state",),
+        adapter_ref="adapter:state", source_unit_refs=frame.source_unit_refs,
+    )
+    with pytest.raises(ValueError, match="^transition requires an op:state application frame$"):
+        ProposalContext.create(**(creation | {"transition_slots": (transition,)}))
+
+
+def _foundation_query_variable_coverage_case(role_ref):
+    from tests.test_coverage_abi2 import _context, _rebuild_context
+    from cemm_authoritative_hybrid.proposal_context import ModeSlot
+    from cemm_authoritative_hybrid.programs import ProgramAction, SemanticSwitchProgram, SourceAssignment
+
+    context = _context()
+    query = ContributionSlot.create(
+        contribution_ref="contribution:independent-query", kind="open_variable",
+        source_unit_refs=("unit:query",), target_ref=None, target_kind=None,
+        input_ports=(), output_ports=("role:subject", "role:object"), constraints=(),
+    )
+    variable = VariableSlot.create(
+        application_frame_ref=context.application_frames[0].slot_ref,
+        role_ref=role_ref, required_kinds=("entity",),
+        source_unit_refs=query.source_unit_refs, construction_ref="construction:query",
+    )
+    mode = ModeSlot.create(
+        mode="QUERY", source_unit_refs=(), construction_ref="construction:query",
+        requested_effect="query",
+    )
+    context = _rebuild_context(
+        context, contribution_slots=(context.contribution_slots[0], query),
+        mode_slots=(mode,), variable_slots=(variable,),
+        source_unit_refs=("unit:predicate", "unit:query"),
+        source_unit_spans=(("unit:predicate", 0, 5), ("unit:query", 5, 9)),
+    )
+    actions = (
+        ProgramAction.create(action_index=0, action_type="select_context", arguments=(context.context_ref,)),
+        ProgramAction.create(action_index=1, action_type="select_mode", arguments=(mode.slot_ref,)),
+        ProgramAction.create(action_index=2, action_type="select_designation", arguments=(context.designation_slots[0].slot_ref,)),
+        ProgramAction.create(action_index=3, action_type="instantiate_operator", arguments=("application:0", context.application_frames[0].slot_ref), source_unit_refs=("unit:predicate",)),
+        ProgramAction.create(action_index=4, action_type="project_variable", arguments=("binder:0", variable.slot_ref, "application:0"), source_unit_refs=query.source_unit_refs),
+        ProgramAction.create(action_index=5, action_type="complete_program", arguments=()),
+    )
+    assignments = (
+        SourceAssignment.create(source_unit_ref="unit:predicate", contribution_slot_ref=context.contribution_slots[0].slot_ref, assignment_kind="predicate", target_action_ref=actions[3].action_ref, target_role_ref=None, residual_kind=None, critical=False),
+        SourceAssignment.create(source_unit_ref="unit:query", contribution_slot_ref=query.slot_ref, assignment_kind="role", target_action_ref=actions[4].action_ref, target_role_ref=role_ref, residual_kind=None, critical=False),
+    )
+    candidate = SemanticSwitchProgram.create(
+        orientation_ref=context.orientation_ref, proposal_context_ref=context.context_ref,
+        actions=actions, root_refs=("binder:0",), mode_slot_ref=mode.slot_ref,
+        goal_refs=(), source_unit_refs=context.source_unit_refs,
+        source_assignments=assignments, revision_pin=context.revision_pin,
+    )
+    return context, candidate
+
+
+def test_foundation_variable_role_guard_has_exact_query_evidence_and_body_coverage():
+    from cemm_authoritative_hybrid.coverage import CoverageReceipt, CoverageVerifier
+
+    context, candidate = _foundation_query_variable_coverage_case("role:subject")
+    assert ProposalContext.from_dict(context.as_dict()) == context
+    positive = CoverageVerifier().verify(context, candidate)
+    assert positive.executable and positive.errors == ()
+    assert positive.assignments == candidate.source_assignments
+    assert CoverageReceipt.from_dict(positive.as_dict()) == positive
+
+    wrong_context, wrong_candidate = _foundation_query_variable_coverage_case("role:object")
+    assert wrong_context.application_frames == context.application_frames
+    assert wrong_context.contribution_slots == context.contribution_slots
+    assert wrong_context.source_unit_spans == context.source_unit_spans
+    negative = CoverageVerifier().verify(wrong_context, wrong_candidate)
+    assert not negative.executable
+    assert tuple(error.code for error in negative.errors) == ("variable_role_incompatible",)
+    assert negative.errors[0].target_role_ref == "role:object"
 
 
 def _matrix_designation_query(surface):
