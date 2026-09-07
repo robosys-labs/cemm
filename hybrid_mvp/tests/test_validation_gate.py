@@ -1815,17 +1815,21 @@ def test_r4_gate_plans_are_exact_bounded_and_single_process() -> None:
     )
     expected_steps = {
         "artifact-integrity": "r4_artifact_integrity_owner_tests",
+        "exact-program-verifier": "r4_exact_program_verifier_owner_tests",
         "expected-contract": "r4_contract_review_owner_tests",
         "governance": "r4_governance_owner_tests",
         "mutation-partition": "r4_data_owner_tests",
+        "proposal-context": "r4_proposal_context_owner_tests",
         "structural-sufficiency": "r4_structural_sufficiency_owner_tests",
         "surface-expansion": "r4_surface_expansion_owner_tests",
     }
     expected_counts = {
         "artifact-integrity": 16,
-        "expected-contract": 48,
+        "exact-program-verifier": 1,
+        "expected-contract": 64,
         "governance": 2,
-        "mutation-partition": 111,
+        "mutation-partition": 106,
+        "proposal-context": 1,
         "structural-sufficiency": 2,
         "surface-expansion": 8,
     }
@@ -1848,7 +1852,7 @@ def test_r4_gate_plans_are_exact_bounded_and_single_process() -> None:
     assert graph.pytest_process_count("R4", "phase") == 1
     phase_nodes = graph.resolve_pytest_nodes("R4", "phase")
     assert phase_nodes == inventory.phase_node_ids
-    assert len(phase_nodes) == 33
+    assert len(phase_nodes) == 35
     assert owner_nodes.isdisjoint(phase_nodes)
 
     admission = graph.resolve_phase("R4", "admission")
@@ -2214,7 +2218,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r4-validation-plans-exact-bounded-single-process",
         "diagnostic_role": "admission_only",
         "introduced_by_task": "R4-Partition-Corrective-Task-8",
-        "source_ast_sha256": "7c1c0fc0f848a6d539bfe1b48215de51ff753f09aeaa2b4f563e0968f8acd67b"
+        "source_ast_sha256": "c2933290bfe173eaaf166a205dde8ecb67092fd174cd75349ccf9dd34338b0fc"
     },
     "tests/test_validation_gate.py::test_r5_admission_rejects_before_execution_or_publication": {
         "activation_phase": "R5",

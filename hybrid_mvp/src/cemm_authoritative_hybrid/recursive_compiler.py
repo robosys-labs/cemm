@@ -30,6 +30,7 @@ from .expressions import (
 )
 from .programs import PERSISTENT_OPERATORS
 from .literal_codec import decode_literal_slot
+from .proposal_context import UnresolvedDesignationFrame
 
 
 class _State:
@@ -187,6 +188,28 @@ def _collect_applications(program: Any, context: Any, st: _State) -> Compilation
                 "designation frame lacks canonical label_type structure and exact roles",
                 a.action_ref,
             )
+        if type(frame) is UnresolvedDesignationFrame:
+            literal = context.contribution(frame.literal_contribution_slot_ref)
+            binder = context.contribution(frame.query_binder_slot_ref)
+            if (a.source_unit_refs or frame.label_type_ref != "label:lexical"
+                or frame.label_type_ref not in frame.provenance_refs
+                or literal is None or literal.kind != "literal" or literal.target_ref is not None
+                or literal.source_unit_refs != frame.source_unit_refs
+                or binder is None or binder.kind != "binder"):
+                return _fail("invalid_unresolved_designation_frame", "unbound designation source authority is not exact", a.action_ref)
+            source_provenance = (frame.construction_ref, context.form_lattice_ref)
+            if (literal.provenance_refs != source_provenance or binder.provenance_refs != source_provenance
+                or binder.constraints != (("binder", "explicit_lexical_target_query"),)
+                or len(binder.source_unit_refs) != 2):
+                return _fail("unresolved_designation_source_provenance", "literal and binder require exact current construction provenance", a.action_ref)
+            features = {ref: row.constraints for row in context.contribution_slots for ref in row.source_unit_refs if len(row.source_unit_refs) == 1 and row.kind in {"open_variable", "binder", "discourse"} and not any(key == "orthography" for key, _ in row.constraints)}
+            queries = tuple(ref for ref, values in features.items() if ("interrogative", "content") in values and ("query", "query") in values)
+            auxiliary, terminal = binder.source_unit_refs
+            if (len(queries) != 1
+                or ("construction_role", "lexical_query_auxiliary") not in features.get(auxiliary, ())
+                or ("query", "query_auxiliary") not in features.get(auxiliary, ())
+                or ("construction_role", "lexical_query_terminal") not in features.get(terminal, ())):
+                return _fail("unresolved_designation_form_evidence", "query requires reviewed content, auxiliary and terminal features", a.action_ref)
         st.grounding.add(frame.predicate_target_ref)
         st.grounding.update(t for _, t in frame.derived_role_targets)
         st.role_bindings[app_ref] = {
@@ -214,9 +237,13 @@ def _collect_role_bindings(program: Any, context: Any, st: _State) -> Compilatio
         if role_ref not in all_roles:
             return _fail("frame_role_mismatch", "role is not licensed by the application frame", a.action_ref)
         if a.action_type == "bind_role":
+            if type(frame) is UnresolvedDesignationFrame and (role_ref != "role:surface" or slot_ref != frame.literal_contribution_slot_ref):
+                return _fail("unresolved_designation_literal_pointer", "literal must be the exact frame-owned contribution", a.action_ref)
             slot = context.contribution(slot_ref)
             if slot is None:
                 return _fail("unknown_contribution_slot", "contribution pointer is not in context", a.action_ref)
+            if type(frame) is UnresolvedDesignationFrame and a.source_unit_refs != slot.source_unit_refs:
+                return _fail("unresolved_designation_literal_sources", "surface action must consume the exact literal", a.action_ref)
             if role_ref not in slot.output_ports:
                 return _fail("contribution_role_mismatch", "contribution does not expose the selected role port", a.action_ref)
             if slot.target_ref is not None:
@@ -229,6 +256,8 @@ def _collect_role_bindings(program: Any, context: Any, st: _State) -> Compilatio
                 return _fail("unresolved_contribution", "contribution has no resolved filler", a.action_ref)
             st.grounding.update(slot.provenance_refs)
         else:
+            if type(frame) is UnresolvedDesignationFrame:
+                return _fail("unresolved_designation_reference", "unbound target cannot bind a reference", a.action_ref)
             slot = context.reference(slot_ref)
             if slot is None:
                 return _fail("unknown_reference_slot", "reference pointer is not in context", a.action_ref)
@@ -372,6 +401,36 @@ def _collect_binders(program: Any, context: Any, st: _State) -> CompilationFailu
                 a.action_ref,
             )
         role_ref = slot.role_ref
+        frame = context.frame(slot.application_frame_ref)
+        if type(frame) is UnresolvedDesignationFrame:
+            binder = context.contribution(frame.query_binder_slot_ref)
+            qualifying_queries = tuple(
+                row
+                for row in context.contribution_slots
+                if row.kind == "open_variable"
+                and len(row.source_unit_refs) == 1
+                and ("query", "query") in row.constraints
+                and ("interrogative", "content") in row.constraints
+            )
+            interrogative_sources = (
+                set(slot.source_unit_refs) - set(binder.source_unit_refs)
+                if binder is not None
+                else set()
+            )
+            if (role_ref != "role:target" or slot.construction_ref != frame.construction_ref
+                or binder is None or not set(binder.source_unit_refs) < set(slot.source_unit_refs)
+                or len(qualifying_queries) != 1
+                or set(qualifying_queries[0].source_unit_refs) != interrogative_sources
+                or a.source_unit_refs != slot.source_unit_refs):
+                return _fail("unresolved_designation_variable_sources", "query must consume its own binder and interrogative", a.action_ref)
+            assignments = {row.source_unit_ref: row for row in program.source_assignments}
+            if any(ref not in assignments or assignments[ref].contribution_slot_ref != binder.slot_ref for ref in binder.source_unit_refs):
+                return _fail("unresolved_designation_binder_pointer", "query source assignment does not bind its own binder", a.action_ref)
+            query = qualifying_queries[0]
+            query_source = query.source_unit_refs[0]
+            if (query_source not in assignments
+                or assignments[query_source].contribution_slot_ref != query.slot_ref):
+                return _fail("unresolved_designation_interrogative_pointer", "query source assignment does not bind its exact content-interrogative evidence", a.action_ref)
         st.role_bindings[owner_ref][role_ref] = RoleBinding(
             role_ref, BoundVariable(var_ref)
         )

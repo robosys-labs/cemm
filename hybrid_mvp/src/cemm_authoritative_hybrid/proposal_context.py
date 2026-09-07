@@ -487,6 +487,17 @@ class UnresolvedDesignationFrame(_ContentAddressedSlot):
     _NAMESPACE = "unresolved_designation_frame"
     _TUPLE_FIELDS = frozenset({"source_unit_refs", "provenance_refs"})
 
+    # Nonserialized common application structure. These are not grounding or
+    # designation evidence: the literal's target remains an unbound variable.
+    operator_ref = property(lambda self: "op:designation")
+    predicate_target_ref = property(lambda self: self.label_type_ref)
+    predicate_kind = property(lambda self: "label_type")
+    structural_role_ref = property(lambda self: "role:label_type")
+    required_roles = property(lambda self: ("role:surface", "role:target"))
+    optional_roles = property(lambda self: ())
+    proposition_roles = property(lambda self: ())
+    derived_role_targets = property(lambda self: (("role:label_type", self.label_type_ref),))
+
     def __post_init__(self) -> None:
         for name in (
             "slot_ref",
@@ -1516,6 +1527,7 @@ class ProposalContextBuilder:
         self._authority = authority
         self._affordance_index = affordance_index
         self._config = config
+        self._designation_target_kinds = tuple(sorted({row.kind for row in authority.atoms.values() if type(row) is AtomRecord and row.reviewed}))
         self._language = "en"
         self._scope_values: Mapping[str, Mapping[str, str]] = {}
         self._link_schemas: Mapping[str, Mapping[str, Any]] = {}
@@ -1573,6 +1585,24 @@ class ProposalContextBuilder:
             unit_by_ref,
             unit_ref_set,
         )
+        if orientation.mode is SemanticMode.QUERY:
+            lexical_contributions, lexical_frames, lexical_variables = _explicit_lexical_query_evidence(form_lattice, self._authority, self._designation_target_kinds)
+            if lexical_frames:
+                # The complete reviewed construction mentions the literal;
+                # its constituent designations are evidence, not predicates.
+                forms, _ = self._form_evidence_slots(orientation, form_lattice, {})
+                slots = _bounded_unique_contributions((*forms, *lexical_contributions), self._config)
+                consumed = {ref for row in slots if not _is_orthographic_evidence(row) for ref in row.source_unit_refs}
+                return ProposalContext.create(
+                    orientation_ref=orientation.orientation_ref, evidence_packet_ref=evidence.packet_ref,
+                    form_lattice_ref=form_lattice.lattice_ref, grounding_ref=grounding_result.grounding_ref,
+                    designation_slots=designation_slots, contribution_slots=slots,
+                    mode_slots=(_mode_slot(orientation, form_lattice),), application_frames=lexical_frames,
+                    reference_slots=(), scope_slots=(), expression_link_slots=(), variable_slots=lexical_variables,
+                    transition_slots=(), residual_evidence=_residual_evidence(form_lattice, consumed),
+                    context_refs=_orientation_context_refs(orientation, self._config),
+                    source_unit_refs=tuple(row.unit_ref for row in form_lattice.units),
+                    source_unit_spans=source_spans, revision_pin=orientation.revision_pin, config=self._config)
         nominal_source_refs = {
             designation.slot_ref: _expanded_nominal_source_refs(
                 designation,
@@ -2794,6 +2824,8 @@ class ProposalContextBuilder:
                     )
                     continue
                 contribution_kind = feature_kinds.get(category)
+                if category == "query" and value == "query_auxiliary":
+                    contribution_kind = "binder"
                 if contribution_kind is None:
                     continue
                 input_ports, output_ports = ports[contribution_kind]
@@ -2809,7 +2841,7 @@ class ProposalContextBuilder:
                         target_kind=None,
                         input_ports=input_ports,
                         output_ports=output_ports,
-                        constraints=((category, value),),
+                        constraints=((category, value), *(pair for pair in unit.features if pair[0] in {"interrogative", "construction_role"})),
                         provenance_refs=(unit.unit_ref,),
                     )
                 )
@@ -3384,6 +3416,49 @@ def _reference_roles(target_kind: str) -> tuple[str, ...]:
     if target_kind in {"entity", "concept"}:
         return ("role:subject", "role:object", "role:target", "role:instance")
     return ("role:subject", "role:object", "role:target")
+
+
+def _explicit_lexical_query_evidence(lattice, authority, target_kinds):
+    """One reviewed unquoted construction; no target lookup licenses its form."""
+    units = tuple(row for row in lattice.units if ("orthography", "whitespace") not in row.features)
+    if units and ("discourse", "question") in units[-1].features:
+        units = units[:-1]
+    if len(units) < 4 or ("interrogative", "content") not in units[0].features:
+        return (), (), ()
+    if (("construction_role", "lexical_query_auxiliary") not in units[1].features
+        or ("query", "query_auxiliary") not in units[1].features
+        or ("construction_role", "lexical_query_terminal") not in units[-1].features
+        or any(row.features for row in units[2:-1])):
+        return (), (), ()
+    label = authority.atoms.get("label:lexical")
+    if type(label) is not AtomRecord or not label.reviewed or label.kind != "label_type":
+        return (), (), ()
+    literal_units = tuple(row for row in lattice.units if units[2].source_start <= row.source_start and row.source_end <= units[-2].source_end)
+    literal_refs = tuple(row.unit_ref for row in literal_units)
+    binder_refs = (units[1].unit_ref, units[-1].unit_ref)
+    construction = stable_ref("lexical_query_construction", (lattice.lattice_ref, units[0].unit_ref, binder_refs, literal_refs))
+    binder = ContributionSlot.create(
+        contribution_ref=stable_ref("lexical_query_binder", construction), kind="binder",
+        source_unit_refs=binder_refs, target_ref=None, target_kind=None,
+        input_ports=(), output_ports=("role:variable",),
+        constraints=(("binder", "explicit_lexical_target_query"),),
+        provenance_refs=(construction, lattice.lattice_ref))
+    literal = ContributionSlot.create(
+        contribution_ref=stable_ref("lexical_query_literal", construction), kind="literal",
+        source_unit_refs=literal_refs, target_ref=None, target_kind=None,
+        input_ports=(), output_ports=("role:surface",), constraints=(("literal_kind", "string"),),
+        literal_value=lattice.source_text[units[2].source_start:units[-2].source_end],
+        provenance_refs=(construction, lattice.lattice_ref))
+    frame = UnresolvedDesignationFrame.create(label_type_ref=label.ref,
+        literal_contribution_slot_ref=literal.slot_ref, query_binder_slot_ref=binder.slot_ref,
+        source_unit_refs=literal_refs, construction_ref=construction,
+        provenance_refs=(construction, lattice.lattice_ref, label.ref, authority.content_hash))
+    # This activation-derived domain records admitted target kinds, not an
+    # ontology restriction on the canonical (unrestricted) BoundVariable.
+    variable = VariableSlot.create(application_frame_ref=frame.slot_ref, role_ref="role:target",
+        required_kinds=target_kinds,
+        source_unit_refs=(units[0].unit_ref, *binder_refs), construction_ref=construction)
+    return (binder, literal), (frame,), (variable,)
 
 
 def _variable_slots(
@@ -4304,6 +4379,8 @@ def _residual_evidence(
             ),
             None,
         )
+        if ("query", "query_auxiliary") in unit.features:
+            contribution_kind = "binder"
         orthographic = not any(character.isalnum() for character in unit.source_text)
         explicitly_noncritical_discourse = any(
             feature == "discourse" and value == "discourse_particle"
@@ -4620,7 +4697,8 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             raise ValueError("unresolved designation variable construction mismatch")
         if (
             not variable.source_unit_refs
-            or not set(variable.source_unit_refs) <= open_variable_sources
+            or not set(variable.source_unit_refs) & open_variable_sources
+            or not set(variable.source_unit_refs) <= open_variable_sources | set(binder.source_unit_refs)
         ):
             raise ValueError(
                 "unresolved designation variable requires open_variable source evidence"
@@ -4852,6 +4930,8 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
     for variable in context.variable_slots:
         frame = frame_by_ref[variable.application_frame_ref]
         allowed_sources = open_variable_sources
+        if type(frame) is UnresolvedDesignationFrame:
+            allowed_sources = open_variable_sources | set(contribution_by_ref[frame.query_binder_slot_ref].source_unit_refs)
         if (
             type(frame) is ApplicationFrameSlot
             and frame.predicate_kind == "label_type"

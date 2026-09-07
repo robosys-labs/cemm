@@ -316,11 +316,12 @@ while retaining occurrence proof refs; payload retention needs an explicit
 provenance repair. This increment preserves unsupported non-conflicting
 occurrences and query conflict proof, not that separate conflict-storage path.
 
-Next implementation order remains in this plan: ordinary membership's reference
-roles and predication source ownership; bounded authenticated restart retrieval;
-then reviewed query/content-slot/learning contract alignment before attempting
-the complete conversation. These are capability repairs, not reasons to resume
-bulk supervision, training, or root adoption prematurely.
+At the safety checkpoint, the next dependencies were ordinary membership,
+bounded authenticated restart retrieval, then query/content-slot/learning
+alignment. Membership and restart are now repaired as recorded below. The
+explicit lexical-target increment below is the current next work; the older
+traces retain pre-repair evidence, not instructions to repeat completed work.
+None of these checkpoints resumes bulk supervision, training or root adoption.
 
 Ordinary membership repair scope: preserve the canonical `role:instance` /
 `role:class` graph and derive reference compatibility from semantic kinds.
@@ -334,43 +335,166 @@ Whitespace remains noncritical evidence, accounted for exactly once. Test missin
 or forged gap evidence, clause boundaries, scope, unseen reviewed synonyms and
 non-English form-feature controls before claiming this owner repaired.
 
-Restart retrieval also needs truthful reachability reporting: the current
+Restart retrieval also needs truthful reachability reporting: the direct
 `ReferenceResolver`/`FocusStore` case exercises a dialogue owner directly. The
 active runtime consumes the separate R3 focus snapshot; rehydrating the direct
 owner alone does not prove a public speech-history query or content-slot fragment
 completion. Preserve this distinction while aligning bounded persisted reads.
-The current SQLite focus query's independent `EXPLAIN QUERY PLAN` reports
+The pre-repair SQLite focus query's independent `EXPLAIN QUERY PLAN` reported
 `SCAN focus` and a temporary sort. Its output limit does not bound rows visited.
-The restart repair should use the existing persistence owner's session/recency
-indexing, authenticate only retrieved records, and test memory/SQLite ordering
-and irrelevant-session growth; it should not add a normal-cycle whole-store
-validation pass or expose unverified focus as dialogue evidence.
-The canonical focus decoder also currently accepts `abi_version=True` and `1.0`
-as ABI 1 in direct probes. Repair that exact scalar check with the restart read
-owner; Python value equality is not canonical wire equality. Preserve the existing
-codec bounds rather than introducing a parallel record validator.
+The completed restart repair uses the existing persistence owner's session/recency
+indexing, authenticates only retrieved records, and tests memory/SQLite ordering
+and irrelevant-session growth. It adds no normal-cycle whole-store validation
+pass and does not expose unverified focus as dialogue evidence.
+The pre-repair canonical focus decoder also accepted `abi_version=True` and `1.0`
+as ABI 1 in direct probes. The restart repair fixes that exact scalar check;
+Python value equality is not canonical wire equality. Existing codec bounds
+remain intact, with no parallel record validator.
 
 A further direct-owner probe confirms that 17 canonical focus records in one
 session make the active 16-alternative snapshot raise its existing bound error;
 the snapshot currently emits focus-record identities, not their expression
 content. No active normal focus writer was found. These are distinct unresolved
 window/content-integration requirements, not a demonstrated 17-turn production
-regression or permission to silently drop history. First repair indexed,
-authenticated retrieval and restart parity while preserving current overflow
-honesty; then specify a bounded focus window and content projection with explicit
-coverage/frontier behavior before claiming a usable speech-history loop.
+regression or permission to silently drop history. Indexed authenticated reads
+and restart parity are now repaired, with overflow honesty preserved. A bounded
+focus window and content projection with explicit coverage/frontier behavior
+are still required before claiming a usable speech-history loop.
 
-Query dependency tracing also distinguishes representation from reachability.
-`UnresolvedDesignationFrame` has an exact context codec, but the current builder
-does not construct it and recursive expansion instantiates frames only through
-selected designations. A valid independent unresolved-frame context therefore
-visits one search state and emits no completed program. The compiler, coverage
-and reconstruction consumers also assume grounded frame fields. Complete this
-existing union coherently before claiming an unknown-lookup path; do not invent
-a designation or target merely to enter the grounded-frame route. The earlier
-generic `What is X?` fixtures do not override this amendment's requirement to
-preserve contextual alternatives. Explicit lexical-query projection, source
-ownership and independent negative contrasts must govern the eventual wiring.
+The pre-repair query dependency trace at `a97858d` distinguished representation
+from reachability. `UnresolvedDesignationFrame` had an exact context codec, but
+the builder did not construct it, recursive expansion reached frames only through
+selected designations, and compiler/coverage/reconstruction consumers assumed a
+grounded frame. An independently constructed unresolved frame therefore visited
+one search state and emitted no program. The bounded lexical-target checkpoint
+below repairs that exact union without inventing a designation or target. Generic
+`What is X?` remains outside this license and retains contextual alternatives.
+
+### Next bounded increment — explicit, language-unspecified lexical target lookup
+
+Independent traces at `a97858d` identify three connected missing owners: the
+frame union is not executable, query auxiliaries are projected as extra answer
+variables, and a correct independent designation query cannot read the admitted
+designation index. `What does mother mean?` creates two instance variables;
+`What does zorbulate mean?` stops at a critical anchor. Neither failure is a
+training or search-cap problem. The pack correctly marks `does` as an auxiliary,
+but loses the distinctions among genuine interrogatives.
+
+Complete this public development-runtime increment before broader definition,
+inverse-surface or conversational learning work:
+
+- [x] Preserve reviewed interrogative features in `data/languages/en/forms.json`
+  and `forms.py`; an auxiliary supplies construction/binder evidence, not a new
+  answer hole. License lexical lookup from exact local form features, never raw
+  phrase dispatch. Generic nominal, person and location questions are not lookup
+  fallbacks. Preserve existing query evidence and authorized realization fields.
+- [x] In `proposal_context.py`, compose the exact literal plus its owned query
+  binder into an acyclic `UnresolvedDesignationFrame`, for known and unknown
+  spellings alike. The answer remains a variable across admitted semantic target
+  kinds; recognizing the spelling must not pre-bind the requested answer.
+- [x] Complete the existing frame union in recursive expansion/search, compiler,
+  coverage and independent reconstruction. Structural instantiation consumes no
+  literal source; the surface binding consumes that literal once; variable
+  projection consumes only the interrogative and its own binder evidence.
+  Preserve all other role, scope, reference and residual constraints.
+- [x] Add an activation-built exact cross-language surface index in `authority.py`.
+  `r3_cognition.py` must use original admitted designation facts and their
+  generation/content provenance through the existing query/proof owners. Do not
+  scan every world fact or language bucket for a pure lexical query. Exact means
+  case-sensitive: Grounder's case-fold fallback is not proof about another literal.
+- [x] Preserve typed target projection: a string starting with `?` is still a
+  literal, not a binder. Distinct language/target alternatives yield honest
+  PARTIAL/clarification with retained evidence, not the first substitution.
+  Empty retrieval yields UNKNOWN (no admitted designation found), never a claim
+  that the expression has no meaning. Neither result permits a world write.
+- [x] Exercise independently authored graphs and the actual public path through
+  VERIFY, QueryResult and ResponseMeaning: known/unknown, non-concept targets,
+  multiword and exact-case literals, multilingual form-feature controls,
+  competing languages/targets, irrelevant-index growth and overflow. Attack
+  transferred binder/literal sources, extra clauses, scope, teaching and unknown
+  event arguments. Explicit language restrictions must remain critical and must
+  prevent acceptance of an easier unqualified lookup.
+- [x] Review the source spec, then quality; preserve earlier test ASTs/metadata
+  and immutable inventory. A changed pack needs an explicit preservation successor
+  to historical whole-pack hash assertions, not a rewritten frozen assertion.
+  Regenerate the existing selectors/receipt twice and run the authenticated owner
+  union plus existing structural/authority/activation/governance checks.
+
+The independently specified expression remains the three-role designation query:
+`label:lexical`, exact string surface and bound target variable, under its binder.
+No stated language means unspecified, never English or the interface language.
+The single-answer result must not erase even same-target/different-language
+alternatives. A response describes admitted evidence, not universal language truth.
+The first public construction uses an unquoted, otherwise feature-free literal
+span; quotation and lookup of closed-class forms need their own reversible form
+evidence. Non-English synthetic feature transport is an anti-dispatch control,
+not proof of natural Spanish or other-language grammar competence. Direct typed
+query tests may exercise a wider exact-literal set than this first surface path.
+This first increment changes no numeric ABI, qualifier grammar, kernel operator,
+program action, gate, bound, learning authority or normal realization policy.
+
+The durable next representation for an explicitly mentioned language is an
+optional `role:language` string qualifier on lexical designation, retaining its
+three primary roles. Situation language alone cannot preserve content identity.
+That extension is **not implemented or activated by the first increment**: it
+requires exact source ownership, compiler/reconstruction, matching, canonical
+identity and ABI-registry alignment before qualified lookup or language-specific
+learning is supported. Never silently infer it from the form pack. Inverse
+surface projection also remains open: current string substitutions become
+GroundedReference fillers and cannot faithfully supply a literal answer. Genuine
+definitions still require descriptive semantic content, not lexical target lookup.
+
+Completed lexical-target checkpoint: the public development path now composes an
+exact, language-unspecified `op:designation` query for the reviewed construction
+`What does <literal> mean?`. Known targets are read from an activation-built exact
+cross-language designation index; missing evidence remains `UNKNOWN`, while
+language/target alternatives and retrieval overflow remain `PARTIAL`. Query
+identity and proof lineage retain original designation facts plus authority
+generation/content identity. No world fact can substitute for designation
+authority, and lookup does not mutate world state.
+
+The frame union is implemented through proposal, expansion/search, coverage,
+compilation and independent reconstruction. Structural instantiation consumes no
+surface evidence; the literal, content interrogative, auxiliary and terminal each
+retain exact local ownership. Canonical forgery controls reject redirected
+literal, binder and interrogative assignments in all three validation owners.
+The target binder remains unrestricted in the canonical expression; the reviewed
+kind list is activation-derived metadata and is not coupled to the 16-alternative
+search cap. Pure lookup visits at most the existing 16 indexed matches and does
+not enumerate omitted rows or world facts.
+
+Independent source-spec review passes after the kind-domain correction. Quality
+review found and drove the interrogative-pointer repair, then passed its fresh
+re-review with no remaining issue. All 56 focused lexical/integration cases and
+seven unresolved-frame guards pass. The authenticated 1,032-node owner union is
+1,019 passes / the same 13 retained failures: three fragment/alias gaps and ten
+historical invalid-definition aggregates. No new regression is hidden by that
+known-failure accounting.
+
+The active R4 validation-plan assertion was also stale: it still encoded the
+six-owner, 33-phase-node topology that predated the already-reviewed
+`exact-program-verifier` and `proposal-context` owners. It now asserts the
+inventory-derived eight-owner, 35-phase-node topology and current owner counts;
+this changes no gate, owner group or selector policy.
+
+The original 104 foundation test functions and 222 metadata entries remain
+unchanged; 56 literal case records were added. The immutable inventory, replay
+ledger, invalidation record, R5 dispositions and ledger anchors are byte-identical.
+Existing selectors and the G0 inventory receipt regenerate twice identically:
+G0 191, R1 783, R2 1,173, R3 1,691, R4 2,029 and R5 2,154 active nodes; the
+validation graph still has 44 steps and the same owner groups. Selector-config
+SHA-256 is `ba2dad980f2b631036cabad565f7e0369435df5f5b3588183498211af148ccd2`;
+receipt SHA-256 is `89cb2fb782b86de6ac3e2feb34708c388cfdcfefe24005006d62f57f68b6377f`.
+
+The R4 scoped-event expectation now agrees with its existing
+`PARTIAL + REQUEST_CLARIFICATION` decision by requiring `clarify`, not
+`acknowledge`; the unchanged authentic modality aggregate is retained.
+
+This checkpoint does not implement natural multilingual grammar, explicit
+language qualification, inverse literal projection, definitions, normal R5
+surface realization, alias commit/restart reuse, research or acquisition. The
+non-English case transports synthetic reviewed features only. These boundaries
+remain Task 5 or later obligations rather than permissive fallbacks.
 
 Pre-pruning membership checkpoint: independent source spec review passed. The
 public ordinary-membership matrix case is now green; all 31 new controls pass,
@@ -502,6 +626,8 @@ zero world delta. Pack, authority, frozen inventory and ledger are unchanged.
 Configured selectors and the living receipt regenerate twice byte-identically:
 G0 191, R1 783, R2 1171, R3 1640, R4 1977, R5 2102. These are diagnostic
 checkpoints, not replay admission, corpus authorization or root adoption.
+The repair is committed locally as `a97858d`; all 111 active governance checks
+pass on that clean checkpoint. No push, merge or root adoption occurred.
 
 ## Task 5 — Prove a complete reference conversation
 

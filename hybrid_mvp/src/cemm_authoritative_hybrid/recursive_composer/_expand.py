@@ -6,6 +6,7 @@ from itertools import combinations, islice, permutations
 from typing import Any, Iterable, Iterator
 
 from ..programs import ProgramAction
+from ..proposal_context import UnresolvedDesignationFrame
 from ._core import (
     _Choice,
     _CRITICAL_KINDS,
@@ -50,6 +51,8 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
                 if contribution.kind not in _ROLE_KINDS:
                     continue
                 if role_ref not in contribution.output_ports:
+                    continue
+                if type(frame) is UnresolvedDesignationFrame and (role_ref != "role:surface" or contribution.slot_ref != frame.literal_contribution_slot_ref):
                     continue
                 nominal_slots = owner._nominal_binding_slots.get(frame_ref)
                 if nominal_slots is not None and contribution.slot_ref not in nominal_slots:
@@ -97,6 +100,8 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
                 owner._context.reference_slots,
                 key=lambda row: (-row.score_q, row.slot_ref),
             ):
+                if type(frame) is UnresolvedDesignationFrame:
+                    continue
                 if role_ref not in reference.compatible_roles:
                     continue
                 nominal_slots = owner._nominal_binding_slots.get(frame_ref)
@@ -236,6 +241,11 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
                 branch_bound=owner._branch_bound,
             )
             for raw_uses in bundles:
+                frame = owner._context.frame(variable.application_frame_ref)
+                if type(frame) is UnresolvedDesignationFrame:
+                    binder = owner._context.contribution(frame.query_binder_slot_ref)
+                    if binder is None or any(use.source_unit_ref in binder.source_unit_refs and use.contribution_slot_ref != binder.slot_ref for use in raw_uses):
+                        continue
                 uses = tuple(
                     _SourceUse(
                         source_unit_ref=use.source_unit_ref,
@@ -266,6 +276,15 @@ def iter_choices(owner: Any, state: _State) -> Iterator[_Choice]:
         > 0
     )
     if not has_missing_required:
+        if len(state.application_frames) < owner._max_applications:
+            for frame in owner._context.unresolved_designation_frames:
+                if frame.slot_ref in state.used_frame_slots or any(ref in used_sources for ref in frame.source_unit_refs):
+                    continue
+                app_ref = _next_node_ref("application", state)
+                action = ProgramAction.create(action_index=action_index, action_type="instantiate_operator", arguments=(app_ref, frame.slot_ref), source_unit_refs=())
+                yield _Choice(action=action, declared_node_ref=app_ref,
+                    application_frame=(app_ref, frame.slot_ref), used_frame_slot=frame.slot_ref,
+                    provenance_refs=(frame.label_type_ref, *frame.provenance_refs))
         # Select designations whose frame has unused predicate geometry.
         for designation in sorted(
             owner._context.designation_slots,

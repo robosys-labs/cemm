@@ -71,6 +71,433 @@ from cemm_authoritative_hybrid.verifier_reconstruction import reconstruct_expect
 ROOT = Path(__file__).parents[1]
 
 __cemm_test_inventory__ = {
+    "tests/test_foundation_semantics.py::test_foundation_lexical_typed_query_pattern_preserves_repeated_role_constraint": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-typed-query-pattern-preserves-repeated-role-constraint",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "584c1bb7aa2d27040e1da0f343f2ff7bee27a7872e1a3b460cb176958c937173"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_exact_target_lookup[known]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-exact-target-lookup-known",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "eb7b7237c721aa3c2a46922e491df7bd04ddddf44b1a91ba9bac78a0b7331e2d"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_exact_target_lookup[unknown]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-exact-target-lookup-unknown",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "eb7b7237c721aa3c2a46922e491df7bd04ddddf44b1a91ba9bac78a0b7331e2d"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_exact_target_lookup[multiword]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-exact-target-lookup-multiword",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "eb7b7237c721aa3c2a46922e491df7bd04ddddf44b1a91ba9bac78a0b7331e2d"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_exact_target_lookup[exact-case]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-exact-target-lookup-exact-case",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "eb7b7237c721aa3c2a46922e491df7bd04ddddf44b1a91ba9bac78a0b7331e2d"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_exact_index_retrieves_admitted_target": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-exact-index-retrieves-admitted-target",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "0d6728211a4e8b5a703c0e8441698684801428be221453f8a7d0a6244a721c33"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[other-language]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-authority-ambiguity-and-typed-constraints-other-language",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[nonconcept]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-authority-ambiguity-and-typed-constraints-nonconcept",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[same-target-languages]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-authority-ambiguity-and-typed-constraints-same-target-languages",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[competing-targets]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-authority-ambiguity-and-typed-constraints-competing-targets",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[overflow]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-authority-ambiguity-and-typed-constraints-overflow",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[literal-question-prefix]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-authority-ambiguity-and-typed-constraints-literal-question-prefix",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[teaching-only]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-authority-ambiguity-and-typed-constraints-teaching-only",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[inverse]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-authority-ambiguity-and-typed-constraints-inverse",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[mixed]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-authority-ambiguity-and-typed-constraints-mixed",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[negative]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-authority-ambiguity-and-typed-constraints-negative",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[reported]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-authority-ambiguity-and-typed-constraints-reported",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[conditional]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-authority-ambiguity-and-typed-constraints-conditional",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[generic-what]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-does-not-launder-unsupported-evidence-generic-what",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "62e4668a099dba4e847ee05ea23e521e1f74843a460d3c73fd237a836e76a648"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[generic-who]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-does-not-launder-unsupported-evidence-generic-who",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "62e4668a099dba4e847ee05ea23e521e1f74843a460d3c73fd237a836e76a648"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[generic-where]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-does-not-launder-unsupported-evidence-generic-where",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "62e4668a099dba4e847ee05ea23e521e1f74843a460d3c73fd237a836e76a648"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[reason]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-does-not-launder-unsupported-evidence-reason",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "62e4668a099dba4e847ee05ea23e521e1f74843a460d3c73fd237a836e76a648"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[past]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-does-not-launder-unsupported-evidence-past",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "62e4668a099dba4e847ee05ea23e521e1f74843a460d3c73fd237a836e76a648"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[language-trailing]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-does-not-launder-unsupported-evidence-language-trailing",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "62e4668a099dba4e847ee05ea23e521e1f74843a460d3c73fd237a836e76a648"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[language-internal]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-does-not-launder-unsupported-evidence-language-internal",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "62e4668a099dba4e847ee05ea23e521e1f74843a460d3c73fd237a836e76a648"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[negative]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-does-not-launder-unsupported-evidence-negative",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "62e4668a099dba4e847ee05ea23e521e1f74843a460d3c73fd237a836e76a648"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[punctuated-clause]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-does-not-launder-unsupported-evidence-punctuated-clause",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "62e4668a099dba4e847ee05ea23e521e1f74843a460d3c73fd237a836e76a648"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[extra-clause]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-does-not-launder-unsupported-evidence-extra-clause",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "62e4668a099dba4e847ee05ea23e521e1f74843a460d3c73fd237a836e76a648"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[teaching]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-does-not-launder-unsupported-evidence-teaching",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "62e4668a099dba4e847ee05ea23e521e1f74843a460d3c73fd237a836e76a648"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[unknown-event-argument]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-does-not-launder-unsupported-evidence-unknown-event-argument",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "62e4668a099dba4e847ee05ea23e521e1f74843a460d3c73fd237a836e76a648"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_independent_reconstruction_checks_exact_owners[borrowed-literal]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-independent-reconstruction-checks-exact-owners-borrowed-literal",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "326cb5518d576d5e90da9f6365f96534b21096b41049b86b16a4863d6fadf82b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_independent_reconstruction_checks_exact_owners[binder-only]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-independent-reconstruction-checks-exact-owners-binder-only",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "326cb5518d576d5e90da9f6365f96534b21096b41049b86b16a4863d6fadf82b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_independent_reconstruction_checks_exact_owners[foreign-query]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-independent-reconstruction-checks-exact-owners-foreign-query",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "326cb5518d576d5e90da9f6365f96534b21096b41049b86b16a4863d6fadf82b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_independent_reconstruction_checks_exact_owners[foreign-binder]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-independent-reconstruction-checks-exact-owners-foreign-binder",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "326cb5518d576d5e90da9f6365f96534b21096b41049b86b16a4863d6fadf82b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_independent_reconstruction_checks_exact_owners[label]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-independent-reconstruction-checks-exact-owners-label",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "326cb5518d576d5e90da9f6365f96534b21096b41049b86b16a4863d6fadf82b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_language_unspecified_and_response[nonconcept]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-language-unspecified-and-response-nonconcept",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "fe07acaa1c72dad61339af31af8a42f50fa3c4babb44fa732026b85a2c8902d0"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_language_unspecified_and_response[other-language]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-language-unspecified-and-response-other-language",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "fe07acaa1c72dad61339af31af8a42f50fa3c4babb44fa732026b85a2c8902d0"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_language_unspecified_and_response[ambiguous]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-language-unspecified-and-response-ambiguous",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "fe07acaa1c72dad61339af31af8a42f50fa3c4babb44fa732026b85a2c8902d0"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_public_language_unspecified_and_response[synthetic-feature-transport]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-public-language-unspecified-and-response-synthetic-feature-transport",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "fe07acaa1c72dad61339af31af8a42f50fa3c4babb44fa732026b85a2c8902d0"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_index_work_is_bounded_and_never_scans_world[small]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-index-work-is-bounded-and-never-scans-world-small",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "3282d4f86fa8a05c3c54b6e0030d1d27b5d1f309ff98b7f7be3e2001a69407c8"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_index_work_is_bounded_and_never_scans_world[grown]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-index-work-is-bounded-and-never-scans-world-grown",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "3282d4f86fa8a05c3c54b6e0030d1d27b5d1f309ff98b7f7be3e2001a69407c8"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_unknown_identity_binds_source_content": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-unknown-identity-binds-source-content",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "6920feb41e07888de3b9f5af739911cd851862b3472e9e743ca00d90f0a2d974"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_mentioned_multiword_does_not_expand_constituent_predicates": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-mentioned-multiword-does-not-expand-constituent-predicates",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "e854e58d708e1746cfd13afce706798ed4d8af50c421ec1a01a76268726d2f10"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_projection_consumes_exact_owned_binder": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-projection-consumes-exact-owned-binder",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "769fa3e7cb785cb61ed381d18c8e7dcc8c0ae8973b39017baaf0d98ca619e531"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_original_feature_and_assignment_authority_is_independent[literal-provenance]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-original-feature-and-assignment-authority-is-independent-literal-provenance",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "07bacaa1693995e50f393aee59a84eb345a4360f41c74705d1900a0b5e6753d6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_original_feature_and_assignment_authority_is_independent[binder-provenance]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-original-feature-and-assignment-authority-is-independent-binder-provenance",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "07bacaa1693995e50f393aee59a84eb345a4360f41c74705d1900a0b5e6753d6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_original_feature_and_assignment_authority_is_independent[interrogative-feature]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-original-feature-and-assignment-authority-is-independent-interrogative-feature",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "07bacaa1693995e50f393aee59a84eb345a4360f41c74705d1900a0b5e6753d6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_original_feature_and_assignment_authority_is_independent[auxiliary-feature]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-original-feature-and-assignment-authority-is-independent-auxiliary-feature",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "07bacaa1693995e50f393aee59a84eb345a4360f41c74705d1900a0b5e6753d6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_original_feature_and_assignment_authority_is_independent[binder-assignment]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-lexical-original-feature-and-assignment-authority-is-independent-binder-assignment",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "decision-query-proof",
+        "source_ast_sha256": "07bacaa1693995e50f393aee59a84eb345a4360f41c74705d1900a0b5e6753d6"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_pack_preserves_all_predecessor_fields": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-retiring-definition-cue-preserves-all-other-reviewed-form-fields",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "12715ca076dffabd7bf77c9639dd4f976f533dc589bc4d5d64aacd59e5911d6b",
+        "supersedes_node_id": "tests/test_foundation_semantics.py::test_retiring_definition_cue_preserves_all_other_reviewed_form_fields"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_explicit_unknown_frame_preserves_literal_query_and_binder": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-closure-unknown-designation-current-context-blocker",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "proposal-context",
+        "source_ast_sha256": "99ec5c79f05e814f47baa5092208bbfb86f2e7951240e3392c067ebee95537ed",
+        "supersedes_node_id": "tests/test_proposal_context_builder.py::test_unknown_designation_query_builds_one_exact_unresolved_designation_frame"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_explicit_unknown_uses_unchanged_program_actions": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-derivation-uses-program-abi-2-without-new-actions",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "cce1414858f352aca00906b0c3d80c2812646d7330cb0d3c6121b6e17dd50fea",
+        "supersedes_node_id": "tests/test_proposal_context_program_verifier_canary.py::test_unresolved_designation_derivation_uses_program_abi_2_without_new_actions"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_explicit_unknown_preserves_response_lineage": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:r4-closure-unknown-designation-preserves-literal",
+        "diagnostic_role": "phase",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "source_ast_sha256": "699450c4eec78e5ef441fe39c469514fe076a5b2d745b47f9fbdd8cce7da55fc",
+        "supersedes_node_id": "tests/test_r3_r4_predecessor_regressions.py::test_closure_unknown_designation_preserves_literal_and_unknown_action"
+    },
     "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_fresh_identity_is_failure_atomic[unhashable-session]": {
         "activation_phase": "R3",
         "assertion_ref": "assertion:foundation-focus-restart-invalid-fresh-identity-is-failure-atomic-unhashable-session",
@@ -1831,6 +2258,30 @@ __cemm_test_inventory__ = {
         "owner_ref": "expected-contract",
         "source_ast_sha256": "cd61d9f00df28b8f76175421a9419bacbff286e7697c700a7a9d60a281b229b9"
     },
+    "tests/test_foundation_semantics.py::test_foundation_scoped_event_query_contract_requests_clarification": {
+        "activation_phase": "R4",
+        "assertion_ref": "assertion:foundation-scoped-event-query-contract-requests-clarification",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "expected-contract",
+        "source_ast_sha256": "f25b01f8524e08ef9ca92034c814b8dbb72a721453f6d8ea2d55b7de6807d14f"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_context_kind_domain_is_not_an_orientation_alternative_cap": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-lexical-context-kind-domain-is-not-orientation-alternative-cap",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "6508217ead27b59f6f6cf6fdb3f9e93c609e55dbc5acf0a59c43d11a557920e5"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_lexical_content_interrogative_assignment_uses_exact_evidence": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:foundation-lexical-content-interrogative-assignment-uses-exact-evidence",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
+        "owner_ref": "exact-verifier",
+        "source_ast_sha256": "06a65053ffb1cf0cfe1af0697ad851eefd723ff57443941a731d8625f37e1876"
+    },
     "tests/test_foundation_semantics.py::test_known_definition_traversal_is_retired_not_completed": {
         "activation_phase": "R4",
         "assertion_ref": "assertion:r4-closure-known-definition-selected-semantic-path",
@@ -2244,6 +2695,113 @@ def test_explicit_ordinary_type_application_remains_compilable(linked_authority)
         "role:subject": GroundedReference("entity:alice"),
         "role:type": GroundedReference("concept:mother"),
     }
+
+
+def test_foundation_scoped_event_query_contract_requests_clarification(linked_authority) -> None:
+    scenario = ReviewedScenario.from_dict({
+        "scenario_ref": "scenario:foundation-independent-scoped-event-query",
+        "review_status": "reviewed",
+        "competency_category": "modality",
+        "semantic_assertions": [{
+            "actor": "participant:user",
+            "event_target": "participant:system",
+            "kind": "modality",
+            "modality_kind": "capability",
+            "surface": "CEMM",
+            "target": "event:learn_alias",
+        }],
+        "surface_examples": ["independent form evidence"],
+        "metadata": {},
+    })
+
+    contract = _compile_scenario(linked_authority, scenario)
+
+    assert contract.expected_mode is SemanticMode.QUERY
+    assert contract.expected_decision.status is DecisionStatus.PARTIAL
+    assert contract.expected_decision.action is DecisionAction.REQUEST_CLARIFICATION
+    assert contract.expected_decision.blocker_refs == ("query:partial_conjunct",)
+    assert contract.expected_response.cycle_status.value == "partial"
+    assert contract.expected_response.discourse_action == "clarify"
+    assert contract.expected_response.epistemic_status_ref == "epistemic_status:partial"
+
+
+def test_foundation_lexical_context_kind_domain_is_not_an_orientation_alternative_cap(
+    tmp_path: Path,
+) -> None:
+    from cemm_authoritative_hybrid.authority import AtomRecord
+
+    runtime = load_runtime(
+        ROOT,
+        profile="development",
+        store_path=tmp_path / "reviewed-kind-domain.db",
+    )
+    try:
+        config = RuntimeConfig.release()
+        base_authority = runtime.authority
+
+        class ReviewedAuthorityView:
+            def __init__(self) -> None:
+                self.atoms = dict(base_authority.atoms)
+                self.atoms.update({
+                    f"synthetic:test-kind-{index}": AtomRecord(
+                        ref=f"synthetic:test-kind-{index}",
+                        kind=f"reviewed_test_kind_{index}",
+                    )
+                    for index in range(config.max_orientation_alternatives + 1)
+                })
+
+            def __getattr__(self, name):
+                return getattr(base_authority, name)
+
+        authority = ReviewedAuthorityView()
+        pack = json.loads(
+            (ROOT / "data/languages/en/forms.json").read_text(encoding="utf-8")
+        )
+        resolver = FormResolver(pack, config)
+        affordances = SemanticAffordanceIndex(authority, config)
+
+        class ReviewedIndex:
+            def build_index(self):
+                return authority.designations
+
+        builder = ProposalContextBuilder(
+            authority,
+            affordances,
+            config,
+            form_pack=pack,
+        )
+        runtime._owners["orientation"] = RuntimeOrientationOwner(
+            authority=authority,
+            stores=runtime.stores,
+            config=config,
+            form_resolver=resolver,
+            grounder=Grounder(
+                authority,
+                config,
+                form_pack=pack,
+                form_pack_hash=resolver.form_pack_hash,
+                designation_store=ReviewedIndex(),
+            ),
+            contribution_expander=ContributionExpander(affordances, config),
+            context_builder=builder,
+        )
+
+        _, context = runtime.orient(
+            "session:reviewed-kind-domain",
+            "What does mother mean?",
+        )
+
+        assert len(builder._designation_target_kinds) > config.max_orientation_alternatives
+        frame = context.unresolved_designation_frames[0]
+        variable = next(
+            row
+            for row in context.variable_slots
+            if row.application_frame_ref == frame.slot_ref
+        )
+        assert variable.required_kinds == builder._designation_target_kinds
+        assert ProposalContext.from_dict(context.as_dict()) == context
+    finally:
+        runtime.stores.close()
 
 
 def test_known_definition_traversal_is_retired_not_completed(tmp_path: Path) -> None:
@@ -4451,5 +5009,526 @@ def test_foundation_safety_opposing_query_evidence_keeps_substitutions_distinct(
             assert "query:multi_binding_projection_unsupported" in result.contribution.blocker_refs
             assert query.bindings == () and query.proof is None
         assert stores.world.revision == 1 and result.contribution.action is DecisionAction.REQUEST_CLARIFICATION
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize(
+    ("literal", "status", "target"),
+    (("mother", QueryStatus.SUPPORTED, "concept:mother"),
+     ("zorbulate", QueryStatus.UNKNOWN, None),
+     ("job role", QueryStatus.SUPPORTED, "concept:job_role"),
+     ("Mother", QueryStatus.UNKNOWN, None)),
+    ids=("known", "unknown", "multiword", "exact-case"),
+)
+def test_foundation_lexical_public_exact_target_lookup(literal, status, target, tmp_path):
+    expected = _matrix_designation_query(literal)
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "lexical.db")
+    try:
+        before = runtime.stores.world.revision, runtime.stores.r3_world_facts()
+        result = runtime.process("session:lexical", f"What does {literal} mean?")
+        assert result.verification.selected_meaning is not None
+        assert result.verification.selected_meaning.expression == expected
+        query = result.evaluation.query_results[0]
+        assert query.status is status
+        assert query.bindings == (((expected.binders[0].variable_ref, target),) if target else ())
+        assert (query.proof is not None) is (target is not None)
+        assert result.response_meaning.discourse_action == ("answer" if target else "unknown")
+        assert isinstance(result.effect_receipt, NoEffectReceipt)
+        assert (runtime.stores.world.revision, runtime.stores.r3_world_facts()) == before
+    finally:
+        runtime.stores.close()
+
+
+def test_foundation_lexical_exact_index_retrieves_admitted_target(linked_authority):
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        expression = _matrix_designation_query("mother")
+        result = QueryDecisionOwner(stores, RuntimeConfig.release(), linked_authority).evaluate_full(
+            expression, project_expression(expression), _matrix_situation(stores))
+        query = result.query_results[0]
+        assert query.status is QueryStatus.SUPPORTED
+        assert query.bindings == ((expression.binders[0].variable_ref, "concept:mother"),)
+        expected = linked_authority.designations.facts_for_surface("mother", "en")[0]
+        assert query.retrieval_refs == (expected.designation_fact_ref, linked_authority.content_hash)
+        assert expected.designation_fact_ref in query.proof.source_refs
+        assert linked_authority.generation in query.proof.source_refs
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("case", ("other-language", "nonconcept", "same-target-languages", "competing-targets", "overflow", "literal-question-prefix", "teaching-only", "inverse", "mixed", "negative", "reported", "conditional"),
+    ids=("other-language", "nonconcept", "same-target-languages", "competing-targets", "overflow", "literal-question-prefix", "teaching-only", "inverse", "mixed", "negative", "reported", "conditional"))
+def test_foundation_lexical_authority_ambiguity_and_typed_constraints(case, linked_authority):
+    from types import SimpleNamespace
+    literal = "?verbatim" if case == "literal-question-prefix" else "velnora"
+    target = "event:learn_alias" if case == "nonconcept" else "concept:mother"
+    facts = (DesignationFact.create(surface=literal, target_ref=target, language="es"),)
+    if case == "same-target-languages":
+        facts += (DesignationFact.create(surface=literal, target_ref=target, language="en"),)
+    if case == "competing-targets":
+        facts += (DesignationFact.create(surface=literal, target_ref="concept:person", language="es"),)
+    if case == "overflow":
+        facts = tuple(DesignationFact.create(surface=literal, target_ref=target, language=f"language-{index}") for index in range(40))
+    if case == "teaching-only":
+        facts = ()
+    authority = SimpleNamespace(designations=DesignationIndex(facts), generation=linked_authority.generation,
+        content_hash=stable_ref("authority-content", [fact.designation_fact_ref for fact in facts]), atoms=linked_authority.atoms,
+        capabilities=linked_authority.capabilities, rules={})
+    stores = memory_stores(authority_generation=authority.generation)
+    try:
+        stores.world.commit((Fact("fact:untrusted-teaching", "op:designation", {"predicate_ref": "label:lexical", "role:label_type": "label:lexical", "role:surface": literal, "role:target": target}),), expected_revision=0)
+        expression = _matrix_designation_query(literal)
+        if case == "inverse":
+            app = SemanticApplication("app:inverse", "op:designation", "label:lexical", (RoleBinding("role:label_type", GroundedReference("label:lexical")), RoleBinding("role:surface", BoundVariable("?surface")), RoleBinding("role:target", GroundedReference(target))))
+            binder = VariableBinder("binder:surface", "?surface", app.application_ref)
+            expression = SemanticExpression.create(applications=(app,), binders=(binder,), root_refs=(binder.binder_ref,))
+        elif case == "mixed":
+            expression = SemanticExpression.create(applications=(*expression.applications, _matrix_state()), binders=expression.binders, root_refs=(*expression.root_refs, _matrix_state().application_ref))
+        elif case in {"negative", "reported"}:
+            scope = ScopeOperator("scope:query", "scope:polarity" if case == "negative" else "scope:attribution", "polarity:negative" if case == "negative" else "scope_value:attribution:reported", expression.root_refs[0])
+            expression = SemanticExpression.create(applications=expression.applications, binders=expression.binders, scope_operators=(scope,), root_refs=(scope.scope_ref,))
+        elif case == "conditional":
+            link = ExpressionLink("link:query", "link:condition", (_matrix_state().application_ref, expression.root_refs[0]))
+            expression = SemanticExpression.create(applications=(*expression.applications, _matrix_state()), binders=expression.binders, expression_links=(link,), root_refs=(link.link_ref,))
+        result = QueryDecisionOwner(stores, RuntimeConfig.release(), authority).evaluate_full(expression, project_expression(expression), _matrix_situation(stores))
+        query = result.query_results[0]
+        if case in {"other-language", "nonconcept", "literal-question-prefix"}:
+            assert query.status is QueryStatus.SUPPORTED
+            assert query.bindings == ((expression.binders[0].variable_ref, target),)
+            assert query.proof and set(query.proof.source_refs) == {facts[0].designation_fact_ref, authority.generation, authority.content_hash}
+        else:
+            assert query.status is (QueryStatus.UNKNOWN if case == "teaching-only" else QueryStatus.PARTIAL)
+            assert query.proof is None and query.bindings == ()
+            assert result.contribution.answer_expression_ref is None
+        assert stores.world.revision == 1
+        if case not in {"mixed", "conditional", "inverse"}:
+            assert "fact:untrusted-teaching" not in query.retrieval_refs
+            assert authority.content_hash in query.retrieval_refs
+        if case in {"same-target-languages", "competing-targets", "overflow"}:
+            assert set(query.retrieval_refs) - {authority.content_hash} == {fact.designation_fact_ref for fact in sorted(facts, key=lambda row: (row.language, row.target_ref, row.designation_fact_ref))[:16]}
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("surface", ("What is zorbulate?", "Who is mother?", "Where is mother?", "Why does mother mean?", "What did mother mean?", "What does mother mean in Spanish?", "What does mother in Spanish mean?", "What does mother not mean?", "What does mother; Alice likes Bob mean?", "What does mother mean and Bob likes Alice?", "zorbulate means mother.", "Alice learns zorbulate."),
+    ids=("generic-what", "generic-who", "generic-where", "reason", "past", "language-trailing", "language-internal", "negative", "punctuated-clause", "extra-clause", "teaching", "unknown-event-argument"))
+def test_foundation_lexical_public_does_not_launder_unsupported_evidence(surface, tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "blocked-lexical.db")
+    try:
+        _, context = runtime.orient("session:blocked", surface)
+        assert context.unresolved_designation_frames == ()
+        before = runtime.stores.world.revision
+        result = runtime.process("session:blocked", surface)
+        assert result.evaluation is None or all(row.status is not QueryStatus.SUPPORTED for row in result.evaluation.query_results)
+        assert runtime.stores.world.revision == before
+    finally:
+        runtime.stores.close()
+
+
+@pytest.mark.parametrize("corruption", ("borrowed-literal", "binder-only", "foreign-query", "foreign-binder", "label"), ids=("borrowed-literal", "binder-only", "foreign-query", "foreign-binder", "label"))
+def test_foundation_lexical_independent_reconstruction_checks_exact_owners(corruption, tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "forged-lexical.db")
+    try:
+        _, context = runtime.orient("session:forged", "What does mother mean?")
+        proposal = runtime.proposal_model.propose(context)
+        program = next(row.program for row in proposal.candidates if any(action.action_type == "instantiate_operator" and context.unresolved_designation_frame(action.arguments[1]) for action in row.program.actions))
+        frame = context.unresolved_designation_frames[0]
+        if corruption == "borrowed-literal":
+            forged_frame = _membership_unchecked(frame, literal_contribution_slot_ref="contribution:foreign")
+            forged = _membership_unchecked(context, application_frames=tuple(forged_frame if row == frame else row for row in context.application_frames))
+        elif corruption == "label":
+            forged_frame = _membership_unchecked(frame, label_type_ref="concept:mother")
+            forged = _membership_unchecked(context, application_frames=tuple(forged_frame if row == frame else row for row in context.application_frames))
+        else:
+            variable = next(row for row in context.variable_slots if row.application_frame_ref == frame.slot_ref)
+            source = {"binder-only": ("unit:2", "unit:6"), "foreign-query": ("unit:7", "unit:2", "unit:6"), "foreign-binder": ("unit:0", "unit:2")}[corruption]
+            forged_variable = _membership_unchecked(variable, source_unit_refs=source)
+            forged = _membership_unchecked(context, variable_slots=tuple(forged_variable if row == variable else row for row in context.variable_slots))
+        assert reconstruct_expected_expression(program, forged) is None
+    finally:
+        runtime.stores.close()
+
+
+@pytest.mark.parametrize("case", ("nonconcept", "other-language", "ambiguous", "synthetic-feature-transport"), ids=("nonconcept", "other-language", "ambiguous", "synthetic-feature-transport"))
+def test_foundation_lexical_public_language_unspecified_and_response(case, tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "languages.db")
+    try:
+        if case == "nonconcept":
+            surface, literal, target = "What does learn mean?", "learn", "event:learn_alias"
+        else:
+            literal, target = "luz velnora", "concept:mother"
+            facts = (DesignationFact.create(surface=literal, target_ref=target, language="es"),)
+            if case == "ambiguous":
+                facts += (DesignationFact.create(surface=literal, target_ref=target, language="fr"),)
+            runtime.authority.designations = DesignationIndex(facts)
+            runtime.authority.content_hash = stable_ref("authority-content", [row.designation_fact_ref for row in facts])
+            surface = "What does luz velnora mean?"
+        if case == "synthetic-feature-transport":
+            # Synthetic reviewed-feature transport, not natural Spanish grammar.
+            pack = json.loads((ROOT / "data/languages/en/forms.json").read_text())
+            pack["language"] = "es"
+            pack["query_projection"]["qué"] = pack["query_projection"].pop("what")
+            pack["query_projection"]["auxiliar"] = pack["query_projection"].pop("does")
+            pack["discourse"]["significa"] = pack["discourse"].pop("mean")
+            resolver = FormResolver(pack, RuntimeConfig.release())
+            affordances = SemanticAffordanceIndex(runtime.authority, RuntimeConfig.release())
+            class ReviewedIndex:
+                def build_index(self):
+                    return runtime.authority.designations
+            runtime._owners["orientation"] = RuntimeOrientationOwner(
+                authority=runtime.authority, stores=runtime.stores, config=RuntimeConfig.release(),
+                form_resolver=resolver, grounder=Grounder(runtime.authority, RuntimeConfig.release(), form_pack=pack, form_pack_hash=resolver.form_pack_hash, designation_store=ReviewedIndex()),
+                contribution_expander=ContributionExpander(affordances, RuntimeConfig.release()),
+                context_builder=ProposalContextBuilder(runtime.authority, affordances, RuntimeConfig.release(), form_pack=pack))
+            surface = "Qué auxiliar luz velnora significa?"
+        result = runtime.process("session:languages", surface)
+        assert result.verification.selected_meaning.expression == _matrix_designation_query(literal)
+        query = result.evaluation.query_results[0]
+        if case == "ambiguous":
+            assert query.status is QueryStatus.PARTIAL and query.bindings == () and query.proof is None
+            assert result.response_meaning.discourse_action == "clarify"
+            assert result.response_meaning.bindings == ()
+        else:
+            assert query.status is QueryStatus.SUPPORTED
+            assert query.bindings == ((_matrix_designation_query(literal).binders[0].variable_ref, target),)
+            assert result.response_meaning.discourse_action == "answer"
+        assert isinstance(result.effect_receipt, NoEffectReceipt)
+        assert runtime.stores.world.revision == 0
+    finally:
+        runtime.stores.close()
+
+
+@pytest.mark.parametrize("growth", (0, 10000), ids=("small", "grown"))
+def test_foundation_lexical_index_work_is_bounded_and_never_scans_world(growth, linked_authority, monkeypatch):
+    from types import SimpleNamespace
+    from cemm_authoritative_hybrid.persistence import SemanticStores
+    facts = tuple(DesignationFact.create(surface=f"unrelated-{index}", target_ref="concept:mother", language="en") for index in range(growth))
+    matches = tuple(DesignationFact.create(surface="velnora", target_ref="concept:mother", language=f"l-{index:02}") for index in range(40))
+    index = DesignationIndex((*facts, *matches))
+    visits = []
+    class CountedRows:
+        def __len__(self):
+            return len(matches)
+        def __getitem__(self, selection):
+            assert selection == slice(None, 16)
+            visits.extend(range(16))
+            return matches[selection]
+    index._exact_surface_all_languages["velnora"] = CountedRows()
+    authority = SimpleNamespace(designations=index, generation=linked_authority.generation, content_hash=stable_ref("authority-content", growth))
+    stores = memory_stores(authority_generation=authority.generation)
+    try:
+        def forbidden(*args, **kwargs):
+            raise AssertionError("pure lexical target lookup scanned the world")
+        monkeypatch.setattr(SemanticStores, "r3_world_facts", forbidden)
+        expression = _matrix_designation_query("velnora")
+        result = QueryDecisionOwner(stores, RuntimeConfig.release(), authority).evaluate_full(expression, project_expression(expression), _matrix_situation(stores))
+        assert visits == list(range(16))
+        assert result.query_results[0].status is QueryStatus.PARTIAL
+        assert len(result.query_results[0].retrieval_refs) == 17  # 16 rows plus exact snapshot content ref.
+    finally:
+        stores.close()
+
+
+def test_foundation_lexical_unknown_identity_binds_source_content(linked_authority):
+    from types import SimpleNamespace
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        results = []
+        expression = _matrix_designation_query("zorbulate")
+        for content in ("authority-content:first", "authority-content:second"):
+            authority = SimpleNamespace(designations=DesignationIndex(()), generation=linked_authority.generation, content_hash=content)
+            result = QueryDecisionOwner(stores, RuntimeConfig.release(), authority).evaluate_full(expression, project_expression(expression), _matrix_situation(stores)).query_results[0]
+            assert result.status is QueryStatus.UNKNOWN and result.proof is None and result.bindings == ()
+            assert result.retrieval_refs == (content,)
+            results.append(result.query_result_ref)
+        assert len(set(results)) == 2
+    finally:
+        stores.close()
+
+
+def test_foundation_lexical_mentioned_multiword_does_not_expand_constituent_predicates(tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "mentioned.db")
+    try:
+        literal = "job role job role"
+        result = runtime.process("session:mentioned", f"What does {literal} mean?")
+        assert result.verification.selected_meaning.expression == _matrix_designation_query(literal)
+        assert result.evaluation.query_results[0].status is QueryStatus.UNKNOWN
+        assert result.proposal.explored_states <= 8 and not result.proposal.truncated
+        assert runtime.stores.world.revision == 0
+    finally:
+        runtime.stores.close()
+
+
+def test_foundation_lexical_projection_consumes_exact_owned_binder(tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "binder.db")
+    try:
+        _, context = runtime.orient("session:binder", "What does mother mean?")
+        frame = context.unresolved_designation_frames[0]
+        binder = context.contribution(frame.query_binder_slot_ref)
+        literal = context.contribution(frame.literal_contribution_slot_ref)
+        assert not any(row.kind == "open_variable" and "unit:2" in row.source_unit_refs for row in context.contribution_slots)
+        assert set(next(row for row in context.variable_slots if row.application_frame_ref == frame.slot_ref).required_kinds) == {row.kind for row in runtime.authority.atoms.values() if row.reviewed}
+        proposal = runtime.proposal_model.propose(context)
+        assert proposal.candidates
+        for candidate in proposal.candidates:
+            program = candidate.program
+            assert next(row for row in program.actions if row.action_type == "instantiate_operator").source_unit_refs == ()
+            surface_action = next(row for row in program.actions if row.action_type == "bind_role")
+            assert surface_action.source_unit_refs == literal.source_unit_refs
+            assignments = {row.source_unit_ref: row for row in program.source_assignments}
+            assert all(assignments[ref].contribution_slot_ref == binder.slot_ref and assignments[ref].critical for ref in binder.source_unit_refs)
+    finally:
+        runtime.stores.close()
+
+
+@pytest.mark.parametrize("corruption", ("literal-provenance", "binder-provenance", "interrogative-feature", "auxiliary-feature", "binder-assignment"), ids=("literal-provenance", "binder-provenance", "interrogative-feature", "auxiliary-feature", "binder-assignment"))
+def test_foundation_lexical_original_feature_and_assignment_authority_is_independent(corruption, tmp_path):
+    from cemm_authoritative_hybrid.recursive_compiler import compile_recursive
+    from cemm_authoritative_hybrid.expressions import CompilationFailure
+    from cemm_authoritative_hybrid.coverage import CoverageVerifier
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "original-owners.db")
+    try:
+        _, context = runtime.orient("session:original", "What does mother mean?")
+        program = runtime.proposal_model.propose(context).candidates[0].program
+        frame = context.unresolved_designation_frames[0]
+        slots = context.contribution_slots
+        if corruption in {"literal-provenance", "binder-provenance"}:
+            ref = frame.literal_contribution_slot_ref if corruption == "literal-provenance" else frame.query_binder_slot_ref
+            slots = tuple(_membership_unchecked(row, provenance_refs=("form_lattice:foreign",)) if row.slot_ref == ref else row for row in slots)
+        elif corruption in {"interrogative-feature", "auxiliary-feature"}:
+            source = "unit:0" if corruption == "interrogative-feature" else "unit:2"
+            slots = tuple(_membership_unchecked(row, constraints=(("query", "query"), ("interrogative", "person"))) if row.source_unit_refs == (source,) else row for row in slots)
+        else:
+            other = next(row for row in slots if row.source_unit_refs == ("unit:2",) and row.kind == "binder")
+            assignments = tuple(type(row).create(**{field.name: other.slot_ref if field.name == "contribution_slot_ref" else getattr(row, field.name) for field in fields(row) if field.name != "assignment_ref"}) if row.source_unit_ref == "unit:2" else row for row in program.source_assignments)
+            program = _membership_unchecked(program, source_assignments=assignments)
+            assert not CoverageVerifier(RuntimeConfig.release()).verify(context, program).executable
+        forged = _membership_unchecked(context, contribution_slots=slots)
+        assert isinstance(compile_recursive(program, forged), CompilationFailure)
+        assert reconstruct_expected_expression(program, forged) is None
+    finally:
+        runtime.stores.close()
+
+
+def test_foundation_lexical_content_interrogative_assignment_uses_exact_evidence(
+    tmp_path,
+):
+    from cemm_authoritative_hybrid.coverage import CoverageVerifier
+    from cemm_authoritative_hybrid.expressions import CompilationFailure
+    from cemm_authoritative_hybrid.programs import (
+        ProgramAction,
+        SemanticSwitchProgram,
+        SourceAssignment,
+    )
+    from cemm_authoritative_hybrid.recursive_compiler import compile_recursive
+
+    runtime = load_runtime(
+        ROOT,
+        profile="development",
+        store_path=tmp_path / "interrogative-assignment.db",
+    )
+    try:
+        _, context = runtime.orient(
+            "session:interrogative-assignment",
+            "What does mother mean?",
+        )
+        program = runtime.proposal_model.propose(context).candidates[0].program
+        query = next(
+            row
+            for row in context.contribution_slots
+            if row.kind == "open_variable"
+            and ("interrogative", "content") in row.constraints
+        )
+        competing_binder = ContributionSlot.create(
+            contribution_ref="contribution:competing-content-interrogative",
+            kind="binder",
+            source_unit_refs=query.source_unit_refs,
+            target_ref=query.target_ref,
+            target_kind=query.target_kind,
+            input_ports=query.input_ports,
+            output_ports=query.output_ports,
+            constraints=query.constraints,
+            provenance_refs=query.provenance_refs,
+        )
+        forged_context = ProposalContext.create(
+            orientation_ref=context.orientation_ref,
+            evidence_packet_ref=context.evidence_packet_ref,
+            form_lattice_ref=context.form_lattice_ref,
+            grounding_ref=context.grounding_ref,
+            designation_slots=context.designation_slots,
+            contribution_slots=(*context.contribution_slots, competing_binder),
+            mode_slots=context.mode_slots,
+            application_frames=context.application_frames,
+            reference_slots=context.reference_slots,
+            scope_slots=context.scope_slots,
+            expression_link_slots=context.expression_link_slots,
+            variable_slots=context.variable_slots,
+            transition_slots=context.transition_slots,
+            residual_evidence=context.residual_evidence,
+            context_refs=context.context_refs,
+            source_unit_refs=context.source_unit_refs,
+            source_unit_spans=context.source_unit_spans,
+            revision_pin=context.revision_pin,
+        )
+        actions = tuple(
+            ProgramAction.create(
+                action_index=action.action_index,
+                action_type=action.action_type,
+                arguments=(forged_context.context_ref,),
+                source_unit_refs=action.source_unit_refs,
+            )
+            if action.action_type == "select_context"
+            else action
+            for action in program.actions
+        )
+        assignments = tuple(
+            SourceAssignment.create(
+                source_unit_ref=row.source_unit_ref,
+                contribution_slot_ref=(
+                    competing_binder.slot_ref
+                    if row.source_unit_ref == query.source_unit_refs[0]
+                    else row.contribution_slot_ref
+                ),
+                assignment_kind=row.assignment_kind,
+                target_action_ref=row.target_action_ref,
+                target_role_ref=row.target_role_ref,
+                residual_kind=row.residual_kind,
+                critical=row.critical,
+            )
+            for row in program.source_assignments
+        )
+        forged_program = SemanticSwitchProgram.create(
+            orientation_ref=program.orientation_ref,
+            proposal_context_ref=forged_context.context_ref,
+            actions=actions,
+            root_refs=program.root_refs,
+            mode_slot_ref=program.mode_slot_ref,
+            goal_refs=program.goal_refs,
+            source_unit_refs=program.source_unit_refs,
+            source_assignments=assignments,
+            revision_pin=program.revision_pin,
+        )
+
+        assert ProposalContext.from_dict(forged_context.as_dict()) == forged_context
+        assert SemanticSwitchProgram.from_dict(forged_program.as_dict()) == forged_program
+        coverage = CoverageVerifier(RuntimeConfig.release()).verify(
+            forged_context,
+            forged_program,
+        )
+        compiled = compile_recursive(forged_program, forged_context)
+        reconstructed = reconstruct_expected_expression(
+            forged_program,
+            forged_context,
+        )
+        assert (
+            coverage.executable,
+            not isinstance(compiled, CompilationFailure),
+            reconstructed is not None,
+        ) == (False, False, False)
+        assert tuple(error.code for error in coverage.errors) == (
+            "unresolved_designation_interrogative_pointer",
+        )
+    finally:
+        runtime.stores.close()
+
+
+def test_foundation_lexical_pack_preserves_all_predecessor_fields():
+    # Same assertion as the frozen Task-2 whole-pack hash test. Reconstruct
+    # only the explicitly reviewed metadata additions and retired define cue.
+    pack = json.loads((ROOT / "data/languages/en/forms.json").read_text(encoding="utf-8"))
+    assert "define" not in pack["query_projection"] and pack["abi_version"] == 7
+    for word, kind in (("what", "content"), ("who", "person"), ("where", "location"), ("when", "time"), ("why", "reason"), ("which", "selection"), ("how", "manner")):
+        assert pack["query_projection"][word].pop("interrogative") == kind
+        assert pack["query_projection"][word] == {"kind": "query"}
+    assert pack["query_projection"]["does"].pop("construction_role") == "lexical_query_auxiliary"
+    assert pack["discourse"]["mean"].pop("construction_role") == "lexical_query_terminal"
+    assert pack["linkers"].pop("in") == {"kind": "restriction_linker"}
+    pack["query_projection"]["define"] = {"kind": "query"}
+    assert FormResolver(pack, RuntimeConfig.release()).form_pack_hash == "sha256:32f5133c901afc05cc5345bc5766d00c97518b54025cad4ca0fb3707ad40b5ad"
+
+
+def test_foundation_lexical_explicit_unknown_frame_preserves_literal_query_and_binder(tmp_path):
+    # Same-assertion successor to the generic What-is fixture: explicit lexical
+    # construction now provides the missing positive license, not copula alone.
+    from cemm_authoritative_hybrid.proposal_context import UnresolvedDesignationFrame
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "exact-frame.db")
+    try:
+        source = "What does zorbulate mean?"
+        _, context = runtime.orient("session:exact-frame", source)
+        assert len(context.unresolved_designation_frames) == 1
+        frame = context.unresolved_designation_frames[0]
+        assert type(frame) is UnresolvedDesignationFrame and frame.label_type_ref == "label:lexical"
+        literal = context.contribution(frame.literal_contribution_slot_ref)
+        assert literal.kind == "literal" and literal.literal_value == "zorbulate"
+        assert literal.source_unit_refs == frame.source_unit_refs == ("unit:4",)
+        assert context.source_span(frame.source_unit_refs) == (source.index("zorbulate"), source.index("zorbulate") + len("zorbulate"))
+        variables = context.variables_for_frame_role(frame.slot_ref, "role:target")
+        assert len(variables) == 1 and variables[0].application_frame_ref == frame.slot_ref
+        assert any(row.kind == "open_variable" and row.source_unit_refs == ("unit:0",) for row in context.contribution_slots)
+        assert any(row.kind == "discourse" and row.source_unit_refs == ("unit:7",) for row in context.contribution_slots)
+        binder = context.contribution(frame.query_binder_slot_ref)
+        assert binder.kind == "binder" and binder.source_unit_refs == ("unit:2", "unit:6")
+        assert variables[0].source_unit_refs == ("unit:0", *binder.source_unit_refs)
+        assert all(context.residual_for_source(ref) is None for ref in ("unit:0", "unit:4", "unit:7"))
+        assert runtime.orient("session:generic-frame", "What is zorbulate?")[1].unresolved_designation_frames == ()
+    finally:
+        runtime.stores.close()
+
+
+def test_foundation_lexical_explicit_unknown_uses_unchanged_program_actions(tmp_path):
+    # Same-assertion successor to the generic question derivation canary.
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "actions.db")
+    try:
+        _, context = runtime.orient("session:actions", "What does zorbulate mean?")
+        proposal = runtime.proposal_model.propose(context)
+        assert proposal.status == "candidates" and not proposal.truncated
+        assert proposal.candidates
+        verified = ExactProgramVerifier().verify_candidates(proposal, context)
+        assert verified.selected_meaning.expression == _matrix_designation_query("zorbulate")
+        for candidate in proposal.candidates:
+            program = candidate.program
+            assert program.as_dict()["abi_version"] == 2
+            actions = {row.action_type for row in program.actions}
+            assert actions == {"select_context", "select_mode", "instantiate_operator", "bind_role", "project_variable", "complete_program"}
+            assert "select_designation" not in actions
+        assert all(receipt.accepted for receipt in verified.candidate_receipts)
+    finally:
+        runtime.stores.close()
+
+
+def test_foundation_lexical_explicit_unknown_preserves_response_lineage(tmp_path):
+    # Same-assertion successor to the closure unknown-action canary. A missing
+    # designation is unknown lookup evidence, never proof of meaninglessness.
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "response-lineage.db")
+    try:
+        result = runtime.process("session:response-lineage", "What does zorbulate mean?")
+        assert result.orientation.mode is SemanticMode.QUERY
+        meaning, response = result.verification.selected_meaning, result.response_meaning
+        assert meaning.expression == _matrix_designation_query("zorbulate")
+        assert tuple(binding.filler for app in response.response_expression.applications for binding in app.roles if binding.role_ref == "role:surface") == (LiteralValue("string", "zorbulate"),)
+        assert response.verified_meaning_ref == meaning.verified_meaning_ref
+        assert response.source_expression_ref == meaning.expression.expression_ref
+        assert response.decision_ref == result.evaluation.decision.decision_ref
+        assert result.evaluation.decision.source_refs
+        assert set(result.evaluation.decision.source_refs) <= set(response.source_refs)
+        assert response.discourse_action == "unknown" and response.bindings == ()
+        assert result.evaluation.query_results[0].proof is None
+        assert isinstance(result.effect_receipt, NoEffectReceipt) and runtime.stores.world.revision == 0
+    finally:
+        runtime.stores.close()
+
+
+def test_foundation_lexical_typed_query_pattern_preserves_repeated_role_constraint(linked_authority):
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        app = SemanticApplication("application:typed", "op:relation", "rel:likes",
+            (RoleBinding("role:subject", BoundVariable("?person")), RoleBinding("role:object", GroundedReference("entity:alice"))),
+            (RoleBinding("role:subject", GroundedReference("entity:bob")),))
+        binder = VariableBinder("binder:person", "?person", app.application_ref)
+        expression = SemanticExpression.create(applications=(app,), binders=(binder,), root_refs=(binder.binder_ref,))
+        result = QueryDecisionOwner(stores, RuntimeConfig.release(), linked_authority).evaluate_full(expression, project_expression(expression), _matrix_situation(stores))
+        assert result.query_results[0].status is QueryStatus.UNKNOWN
+        assert result.query_results[0].proof is None and result.query_results[0].bindings == ()
     finally:
         stores.close()

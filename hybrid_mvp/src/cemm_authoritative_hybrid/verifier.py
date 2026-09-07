@@ -35,7 +35,7 @@ from .programs import (
     ProgramAction,
     SemanticSwitchProgram,
 )
-from .proposal_context import ProposalContext
+from .proposal_context import ProposalContext, UnresolvedDesignationFrame, ApplicationFrameSlot
 from .literal_codec import decode_literal_slot
 from .transition_preview import TransitionPreview, extract_transition_previews
 from .verifier_reconstruction import reconstruct_expected_expression as _reconstruct_r2_expression
@@ -1109,7 +1109,7 @@ class LegalActionIndex:
             frame = self._context.frame(args[1])
             return (
                 frame is not None
-                and frame.designation_slot_ref in designations
+                and (type(frame) is UnresolvedDesignationFrame or frame.designation_slot_ref in designations)
                 and args[0] not in nodes
             )
         if action.action_type == "bind_role":
@@ -1324,11 +1324,14 @@ def _replay_program(
             if frame is None:
                 report("unknown_application_frame", action=action)
                 continue
-            if frame.designation_slot_ref not in selected_designations:
+            if type(frame) is ApplicationFrameSlot and frame.designation_slot_ref not in selected_designations:
                 report("unselected_application_designation", action=action)
-            designation = context.designation(frame.designation_slot_ref)
+            designation = context.designation(frame.designation_slot_ref) if type(frame) is ApplicationFrameSlot else None
             designation_frame = False
-            if designation is None:
+            if type(frame) is UnresolvedDesignationFrame:
+                if action.source_unit_refs or frame.label_type_ref != "label:lexical" or frame.label_type_ref not in frame.provenance_refs:
+                    report("invalid_unresolved_designation_frame", action=action)
+            elif designation is None:
                 report("unknown_application_designation", action=action)
             else:
                 designation_frame = _is_reviewed_designation_frame(

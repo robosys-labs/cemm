@@ -528,7 +528,7 @@ class BootstrapProposer:
             return self._abstained(context, "proposal:critical_residual", 0)
         if not context.mode_slots:
             return self._abstained(context, "proposal:no_mode", 0)
-        if not context.designation_slots or not context.application_frames:
+        if not context.application_frames:
             return self._abstained(context, "proposal:no_application_frame", 0)
 
         from .recursive_composer import RecursiveComposer
@@ -593,4 +593,3 @@ class BootstrapProposer:
             model_identity=self.model_identity,
             revision_pin=context.revision_pin,
         )
-

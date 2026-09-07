@@ -1008,6 +1008,13 @@ class FormResolver:
                     )
                     norm = self._normalize_surface(surface)
                     self._feature_map.setdefault(norm, []).append((category, kind))
+                    if isinstance(info, dict):
+                        for feature in ("interrogative", "construction_role"):
+                            if feature in info:
+                                value = info[feature]
+                                if type(value) is not str or not value:
+                                    raise ValueError("reviewed form metadata must be a nonempty string")
+                                self._feature_map[norm].append((feature, value))
             elif isinstance(entries, list):
                 for surface in entries:
                     norm = self._normalize_surface(surface)

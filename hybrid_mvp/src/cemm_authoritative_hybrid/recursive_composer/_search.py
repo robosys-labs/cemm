@@ -7,7 +7,7 @@ from itertools import islice
 from typing import Any
 
 from ..programs import ProgramAction, SemanticSwitchProgram, SourceAssignment
-from ..proposal_context import ProposalContext, nominal_predication_choice_index
+from ..proposal_context import ProposalContext, ApplicationFrameSlot, nominal_predication_choice_index
 from ._core import (
     _ACTION_OVERHEAD,
     _CRITICAL_KINDS,
@@ -327,6 +327,7 @@ class RecursiveComposer:
             frame.designation_slot_ref
             for _, frame_ref in state.application_frames
             if (frame := self._context.frame(frame_ref)) is not None
+            and type(frame) is ApplicationFrameSlot
         }
         if used_designations != set(state.selected_designations):
             return None

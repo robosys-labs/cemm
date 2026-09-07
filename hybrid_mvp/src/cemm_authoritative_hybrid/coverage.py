@@ -15,7 +15,7 @@ from typing import Any, Iterable, Mapping
 from .canonical import stable_ref
 from .config import RuntimeConfig
 from .persistence import RevisionPin
-from .proposal_context import ProposalContext, _is_orthographic_evidence
+from .proposal_context import ProposalContext, UnresolvedDesignationFrame, _is_orthographic_evidence
 from .programs import ProgramAction, SemanticSwitchProgram, SourceAssignment
 
 
@@ -642,6 +642,8 @@ class CoverageVerifier:
                 else:
                     application_frame_by_local[args[0]] = frame
                     node_frame_by_local[args[0]] = frame
+                    if type(frame) is UnresolvedDesignationFrame and action.source_unit_refs:
+                        report("unresolved_designation_instantiation_consumes_source", **action_common)
             elif action.action_type == "bind_role":
                 frame = application_frame_by_local.get(args[0])
                 contribution = find_contribution(args[2])
@@ -654,6 +656,8 @@ class CoverageVerifier:
                         *frame.optional_roles,
                         *(role for role, _ in frame.derived_role_targets),
                     }
+                    if type(frame) is UnresolvedDesignationFrame and (args[1] != "role:surface" or args[2] != frame.literal_contribution_slot_ref):
+                        report("unresolved_designation_literal_pointer", **action_common)
                     if args[1] not in roles:
                         report(
                             "incompatible_target_role",
@@ -892,6 +896,7 @@ class CoverageVerifier:
                 action,
                 report,
                 find_designation,
+                find_contribution,
                 mode_slot,
                 frame_slot,
                 reference_slot,
@@ -900,6 +905,7 @@ class CoverageVerifier:
                 variable_slot,
                 transition_slot,
                 application_frame_by_local,
+                context.contribution_slots,
             )
         unique_assignments = {
             row.source_unit_ref: row
@@ -970,6 +976,7 @@ class CoverageVerifier:
         action: ProgramAction,
         report: Any,
         find_designation: Any,
+        find_contribution: Any,
         mode_slot: Any,
         frame_slot: Any,
         reference_slot: Any,
@@ -978,6 +985,7 @@ class CoverageVerifier:
         variable_slot: Any,
         transition_slot: Any,
         application_frame_by_local: Mapping[str, Any],
+        contribution_slots: tuple[Any, ...],
     ) -> None:
         common = {
             "source_unit_ref": row.source_unit_ref,
@@ -1075,6 +1083,39 @@ class CoverageVerifier:
                 report("unknown_variable_slot", **common)
             else:
                 geometry(variable, "variable_source_geometry_mismatch")
+                owner_frame = frame_slot(variable.application_frame_ref)
+                if type(owner_frame) is UnresolvedDesignationFrame:
+                    owned_binder = find_contribution(owner_frame.query_binder_slot_ref)
+                    if owned_binder is not None and row.source_unit_ref in owned_binder.source_unit_refs and row.contribution_slot_ref != owned_binder.slot_ref:
+                        report("unresolved_designation_binder_pointer", **common)
+                    if owned_binder is not None:
+                        interrogative_sources = (
+                            set(variable.source_unit_refs)
+                            - set(owned_binder.source_unit_refs)
+                        )
+                        qualifying = tuple(
+                            candidate
+                            for candidate in contribution_slots
+                            if candidate.kind == "open_variable"
+                            and len(candidate.source_unit_refs) == 1
+                            and ("query", "query") in candidate.constraints
+                            and ("interrogative", "content")
+                            in candidate.constraints
+                        )
+                        if (
+                            row.source_unit_ref in interrogative_sources
+                            and (
+                                len(qualifying) != 1
+                                or set(qualifying[0].source_unit_refs)
+                                != interrogative_sources
+                                or row.contribution_slot_ref
+                                != qualifying[0].slot_ref
+                            )
+                        ):
+                            report(
+                                "unresolved_designation_interrogative_pointer",
+                                **common,
+                            )
                 if row.target_role_ref is not None and (
                     row.target_role_ref != variable.role_ref
                 ):

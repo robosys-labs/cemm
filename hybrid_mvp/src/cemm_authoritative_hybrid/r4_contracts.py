@@ -3233,7 +3233,7 @@ class ExpectedCycleContractCompiler:
                         ExpectedEffectKind.NO_EFFECT, "read_only"
                     ),
                     ExpectedResponseContract(
-                        "acknowledge",
+                        "clarify",
                         CycleStatus.PARTIAL,
                         "polarity:positive",
                         "modality:actual",

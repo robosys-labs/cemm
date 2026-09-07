@@ -204,13 +204,13 @@ def _filler_value(binding: RoleBinding) -> str | None:
     return None
 
 
-def _pattern(app: SemanticApplication) -> tuple[tuple[str, str], ...]:
-    rows: list[tuple[str, str]] = []
+def _pattern(app: SemanticApplication) -> tuple[tuple[str, str | BoundVariable], ...]:
+    rows: list[tuple[str, str | BoundVariable]] = []
     for binding in (*app.roles, *app.qualifiers):
         value = _filler_value(binding)
         if value is not None:
-            rows.append((binding.role_ref, value))
-    return tuple(sorted(rows))
+            rows.append((binding.role_ref, binding.filler if isinstance(binding.filler, BoundVariable) else value))
+    return tuple(sorted(rows, key=lambda row: row[0]))
 
 
 def _merge_bindings(*rows: tuple[tuple[str, str], ...]) -> tuple[tuple[str, str], ...] | None:
@@ -224,18 +224,18 @@ def _merge_bindings(*rows: tuple[tuple[str, str], ...]) -> tuple[tuple[str, str]
     return tuple(sorted(merged.items()))
 
 
-def _match(pattern: tuple[tuple[str, str], ...], fact: _FactView) -> tuple[tuple[str, str], ...] | None:
+def _match(pattern: tuple[tuple[str, str | BoundVariable], ...], fact: _FactView) -> tuple[tuple[str, str], ...] | None:
     roles = dict(fact.roles)
     bindings: dict[str, str] = {}
     for role, expected in pattern:
         actual = roles.get(role)
         if actual is None:
             return None
-        if expected.startswith("?"):
-            previous = bindings.get(expected)
+        if isinstance(expected, BoundVariable):
+            previous = bindings.get(expected.variable_ref)
             if previous is not None and previous != actual:
                 return None
-            bindings[expected] = actual
+            bindings[expected.variable_ref] = actual
         elif expected != actual:
             return None
     return tuple(sorted(bindings.items()))
@@ -501,13 +501,15 @@ _POSITIVE_POLARITY = frozenset({"scope_value:polarity:positive", "polarity:posit
 class _RecursiveQueryEvaluator:
     def __init__(self, expression: SemanticExpression, projection: ExpressionProjection,
                  facts: tuple[_FactView, ...], config: RuntimeConfig,
-                 allowed_placements: frozenset[str] | None = None) -> None:
+                 allowed_placements: frozenset[str] | None = None,
+                 designation_blockers: tuple[str, ...] = ()) -> None:
         self.expression = expression
         self.projection = projection
         self.facts = facts
         self.fact_by_ref = {row.fact_ref: row for row in facts}
         self.config = config
         self.allowed_placements = allowed_placements
+        self.designation_blockers = designation_blockers
         self.memo: dict[tuple[str, frozenset[str] | None], _NodeResult] = {}
 
     def evaluate(self, ref: str, allowed: frozenset[str] | None = None) -> _NodeResult:
@@ -531,6 +533,10 @@ class _RecursiveQueryEvaluator:
 
     def _application(self, app: SemanticApplication, allowed: frozenset[str] | None) -> _NodeResult:
         blockers: list[str] = []
+        if app.operator == "op:designation":
+            if any(isinstance(row.filler, BoundVariable) for row in app.roles) and not _lexical_target_application(app):
+                blockers.append("query:designation_projection_unsupported")
+            blockers.extend(self.designation_blockers)
         for binding in (*app.roles, *app.qualifiers):
             if isinstance(binding.filler, UnresolvedValue):
                 blockers.extend(("query:unresolved_constraint", binding.filler.unresolved_ref, binding.role_ref))
@@ -599,6 +605,16 @@ class _RecursiveQueryEvaluator:
         return _and(rows, self.config.max_inference_facts)
 
 
+def _lexical_target_application(app: SemanticApplication) -> bool:
+    roles = {row.role_ref: row.filler for row in app.roles}
+    return (app.operator == "op:designation" and app.predicate_ref == "label:lexical"
+            and not app.qualifiers and set(roles) == {"role:label_type", "role:surface", "role:target"}
+            and roles["role:label_type"] == GroundedReference(app.predicate_ref)
+            and isinstance(roles["role:surface"], LiteralValue)
+            and roles["role:surface"].value_type == "string"
+            and isinstance(roles["role:target"], BoundVariable))
+
+
 class QueryDecisionOwner:
     def __init__(self, stores: SemanticStores, config: RuntimeConfig, authority: Any) -> None:
         self._stores = stores
@@ -609,24 +625,50 @@ class QueryDecisionOwner:
                       situation: SituationContext) -> ModeEvaluation:
         if situation.mode is not SemanticMode.QUERY:
             raise ValueError("QueryDecisionOwner requires QUERY")
-        base = tuple(
-            dict.fromkeys(
-                (
-                    *_fact_views(self._stores),
-                    *_authority_control_fact_views(
-                        expression,
-                        self._authority,
-                        self._config.max_applications,
-                    ),
+        lexical_apps = tuple(app for app in expression.applications if _lexical_target_application(app))
+        lexical = len(expression.applications) == 1 and bool(lexical_apps)
+        designation_blockers: tuple[str, ...] = ()
+        if lexical:
+            app = expression.applications[0]
+            roles = {row.role_ref: row.filler for row in app.roles}
+            rows, overflow = self._authority.designations.exact_facts_for_surface(
+                roles["role:surface"].value, self._config.max_orientation_alternatives)
+            base = tuple(_FactView(
+                fact_ref=row.designation_fact_ref, operator="op:designation", predicate_ref=app.predicate_ref,
+                roles=(("role:label_type", app.predicate_ref), ("role:surface", row.surface), ("role:target", row.target_ref)),
+                stance="support", placement="reviewed",
+                source_refs=(row.designation_fact_ref, self._authority.generation, self._authority.content_hash),
+            ) for row in rows)
+            if overflow or len({(row.language, row.target_ref) for row in rows}) > 1:
+                designation_blockers = ("query:designation_retrieval_overflow" if overflow else "query:designation_alternatives",)
+            if expression.scope_operators or expression.expression_links:
+                designation_blockers += ("query:scoped_designation_unsupported",)
+            facts, rule_refs, rounds, truncated = base, (), 1, False
+        elif lexical_apps:
+            # Unsupported compound projection cannot change the admitted
+            # designation source into arbitrary world teaching claims.
+            facts, rule_refs, rounds, truncated = (), (), 1, False
+        else:
+            base = tuple(
+                dict.fromkeys(
+                    (
+                        *_fact_views(self._stores),
+                        *_authority_control_fact_views(
+                            expression,
+                            self._authority,
+                            self._config.max_applications,
+                        ),
+                    )
                 )
             )
-        )
-        facts, rule_refs, rounds, truncated = _rule_closure(base, self._authority, self._config)
-        evaluator = _RecursiveQueryEvaluator(expression, projection, facts, self._config)
+            facts, rule_refs, rounds, truncated = _rule_closure(base, self._authority, self._config)
+        evaluator = _RecursiveQueryEvaluator(expression, projection, facts, self._config, designation_blockers=designation_blockers)
         root_result = _and(
             tuple(evaluator.evaluate(ref) for ref in expression.root_refs),
             self._config.max_inference_facts,
         )
+        if lexical_apps and not lexical:
+            root_result = _NodeResult(QueryStatus.PARTIAL, blockers=("query:compound_designation_projection_unsupported",))
         if truncated and root_result.status is QueryStatus.UNKNOWN:
             root_result = replace(root_result, status=QueryStatus.BUDGET_EXHAUSTED, truncated=True)
         chosen_solutions = root_result.support or root_result.oppose
@@ -646,7 +688,8 @@ class QueryDecisionOwner:
             status=root_result.status,
             bindings=chosen.bindings,
             proof=proof,
-            retrieval_refs=tuple(dict.fromkeys((*tuple(row.fact_ref for row in facts), *rule_refs)))[: self._config.max_inference_facts],
+            retrieval_refs=tuple(dict.fromkeys((*tuple(row.fact_ref for row in facts), *rule_refs,
+                *((self._authority.content_hash,) if lexical_apps else ()))))[: self._config.max_inference_facts],
             rounds=max(1, rounds),
             revision_pin=situation.revision_pin,
         )
@@ -679,7 +722,10 @@ class QueryDecisionOwner:
             bindings=result.bindings,
             query_result_refs=(result.query_result_ref,),
             proof_refs=(proof.proof_ref,) if proof else (),
-            source_refs=proof.source_refs if proof else (),
+            source_refs=proof.source_refs if proof else (
+                (self._authority.generation, self._authority.content_hash, *(row.fact_ref for row in facts))
+                if lexical_apps else ()
+            ),
             blocker_refs=blockers,
             policy_refs=("policy:recursive_expression_query:v1",),
         )

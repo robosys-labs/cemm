@@ -45,15 +45,15 @@
     "being": {"kind": "copula"}
   },
   "query_projection": {
-    "what": {"kind": "query"},
-    "who": {"kind": "query"},
-    "where": {"kind": "query"},
-    "when": {"kind": "query"},
-    "why": {"kind": "query"},
-    "which": {"kind": "query"},
-    "how": {"kind": "query"},
+    "what": {"kind": "query", "interrogative": "content"},
+    "who": {"kind": "query", "interrogative": "person"},
+    "where": {"kind": "query", "interrogative": "location"},
+    "when": {"kind": "query", "interrogative": "time"},
+    "why": {"kind": "query", "interrogative": "reason"},
+    "which": {"kind": "query", "interrogative": "selection"},
+    "how": {"kind": "query", "interrogative": "manner"},
     "do": {"kind": "query_auxiliary"},
-    "does": {"kind": "query_auxiliary"},
+    "does": {"kind": "query_auxiliary", "construction_role": "lexical_query_auxiliary"},
     "did": {"kind": "query_auxiliary"},
     "has": {"kind": "query_auxiliary"},
     "have": {"kind": "query_auxiliary"},
@@ -132,7 +132,7 @@
     "asked": {"kind": "report"},
     "says": {"kind": "report"},
     "means": {"kind": "definition_marker"},
-    "mean": {"kind": "definition_marker"},
+    "mean": {"kind": "definition_marker", "construction_role": "lexical_query_terminal"},
     "means that": {"kind": "definition_marker"},
     "it": {"kind": "discourse_particle"},
     "there": {"kind": "discourse_particle"}
@@ -147,6 +147,7 @@
     "every": {"kind": "determiner"}
   },
   "linkers": {
+    "in": {"kind": "restriction_linker"},
     "to": {"kind": "linker"},
     "of": {"kind": "linker"},
     "as": {"kind": "linker"},

@@ -25,6 +25,7 @@ from .expressions import (
 )
 from .programs import PERSISTENT_OPERATORS
 from .literal_codec import decode_literal_slot
+from .proposal_context import UnresolvedDesignationFrame
 from .canonical import stable_ref
 
 _R2_EXPRESSION_ACTIONS = frozenset(
@@ -311,6 +312,35 @@ def reconstruct_expected_expression(
             return None
         if not _designation_frame_is_exact(frame):
             return None
+        if type(frame) is UnresolvedDesignationFrame:
+            surface = context.contribution(frame.literal_contribution_slot_ref)
+            query = context.contribution(frame.query_binder_slot_ref)
+            if (a.source_unit_refs != () or frame.label_type_ref != "label:lexical"
+                or frame.label_type_ref not in frame.provenance_refs
+                or surface is None or surface.kind != "literal" or surface.target_ref is not None
+                or surface.source_unit_refs != frame.source_unit_refs
+                or query is None or query.kind != "binder"):
+                return None
+            expected_provenance = (frame.construction_ref, context.form_lattice_ref)
+            if surface.provenance_refs != expected_provenance or query.provenance_refs != expected_provenance:
+                return None
+            if query.constraints != (("binder", "explicit_lexical_target_query"),) or len(query.source_unit_refs) != 2:
+                return None
+            original = tuple(row for row in context.contribution_slots if len(row.source_unit_refs) == 1)
+            wh = tuple(row.source_unit_refs[0] for row in original if row.kind == "open_variable" and ("interrogative", "content") in row.constraints and ("query", "query") in row.constraints)
+            if len(wh) != 1:
+                return None
+            for ref, feature in zip(query.source_unit_refs, ("lexical_query_auxiliary", "lexical_query_terminal"), strict=True):
+                if not any(row.source_unit_refs == (ref,) and ("construction_role", feature) in row.constraints for row in original):
+                    return None
+            whitespace = {row.source_unit_refs[0] for row in original if row.constraints == (("orthography", "whitespace"),)}
+            punctuation = {row.source_unit_refs[0] for row in original if ("discourse", "question") in row.constraints}
+            significant = tuple(ref for ref in context.source_unit_refs if ref not in whitespace)
+            if significant and significant[-1] in punctuation:
+                significant = significant[:-1]
+            literal_sources = tuple(ref for ref in surface.source_unit_refs if ref not in whitespace)
+            if significant != (wh[0], query.source_unit_refs[0], *literal_sources, query.source_unit_refs[1]):
+                return None
         if frame.operator_ref == "op:type" and _nominal_binder_position(frame, context) is None:
             return None
         st.grounding.add(frame.predicate_target_ref)
@@ -335,8 +365,12 @@ def reconstruct_expected_expression(
         if role_ref not in legal or role_ref in st.role_bindings[app_ref]:
             return None
         if a.action_type == "bind_role":
+            if type(frame) is UnresolvedDesignationFrame and (role_ref != "role:surface" or slot_ref != frame.literal_contribution_slot_ref):
+                return None
             slot = context.contribution(slot_ref)
             if slot is None or role_ref not in slot.output_ports:
+                return None
+            if type(frame) is UnresolvedDesignationFrame and a.source_unit_refs != slot.source_unit_refs:
                 return None
             if frame.operator_ref == "op:type" and not _nominal_instance_is_local(frame, slot, context):
                 return None
@@ -350,6 +384,8 @@ def reconstruct_expected_expression(
                 return None
             st.grounding.update(slot.provenance_refs)
         else:
+            if type(frame) is UnresolvedDesignationFrame:
+                return None
             slot = context.reference(slot_ref)
             if slot is None or role_ref not in slot.compatible_roles:
                 return None
@@ -416,6 +452,34 @@ def reconstruct_expected_expression(
         if owner_ref is None:
             return None
         role_ref = slot.role_ref
+        frame = context.frame(slot.application_frame_ref)
+        if type(frame) is UnresolvedDesignationFrame:
+            evidence = context.contribution(frame.query_binder_slot_ref)
+            qualifying_queries = tuple(
+                row
+                for row in context.contribution_slots
+                if row.kind == "open_variable"
+                and len(row.source_unit_refs) == 1
+                and ("query", "query") in row.constraints
+                and ("interrogative", "content") in row.constraints
+            )
+            interrogative_sources = (
+                set(slot.source_unit_refs) - set(evidence.source_unit_refs)
+                if evidence is not None
+                else set()
+            )
+            if (evidence is None or not set(evidence.source_unit_refs) < set(slot.source_unit_refs)
+                or len(qualifying_queries) != 1
+                or set(qualifying_queries[0].source_unit_refs) != interrogative_sources
+                or role_ref != "role:target" or slot.construction_ref != frame.construction_ref
+                or a.source_unit_refs != slot.source_unit_refs):
+                return None
+            assigned = {row.source_unit_ref: row.contribution_slot_ref for row in program.source_assignments}
+            if any(assigned.get(ref) != evidence.slot_ref for ref in evidence.source_unit_refs):
+                return None
+            query = qualifying_queries[0]
+            if assigned.get(query.source_unit_refs[0]) != query.slot_ref:
+                return None
         st.role_bindings[owner_ref][role_ref] = RoleBinding(
             role_ref, BoundVariable(var_ref)
         )

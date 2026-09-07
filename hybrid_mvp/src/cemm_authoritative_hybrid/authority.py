@@ -195,6 +195,7 @@ class DesignationIndex:
         "_facts_by_folded_surface",
         "_facts_by_target",
         "_facts_by_ref",
+        "_exact_surface_all_languages",
     )
 
     def __init__(self, facts: tuple[DesignationFact, ...]) -> None:
@@ -206,16 +207,22 @@ class DesignationIndex:
         by_surface: dict[tuple[str, str], list[DesignationFact]] = {}
         by_target: dict[tuple[str, str], list[DesignationFact]] = {}
         folded: dict[tuple[str, str], list[DesignationFact]] = {}
+        exact_surface: dict[str, list[DesignationFact]] = {}
         for fact in facts:
             if fact.designation_fact_ref in facts_by_ref:
                 raise ValueError(
                     f"duplicate designation fact: {fact.designation_fact_ref}"
                 )
             facts_by_ref[fact.designation_fact_ref] = fact
+            exact_surface.setdefault(fact.surface, []).append(fact)
             by_surface.setdefault((fact.surface, fact.language), []).append(fact)
             by_target.setdefault((fact.target_ref, fact.language), []).append(fact)
             folded.setdefault((fact.surface.casefold(), fact.language), []).append(fact)
         self._facts_by_ref = facts_by_ref
+        self._exact_surface_all_languages = {
+            key: tuple(sorted(rows, key=lambda row: (row.language, row.target_ref, row.designation_fact_ref)))
+            for key, rows in exact_surface.items()
+        }
         self._facts_by_surface = {
             key: tuple(
                 sorted(rows, key=lambda row: (row.target_ref, row.designation_fact_ref))
@@ -242,6 +249,13 @@ class DesignationIndex:
         if exact:
             return exact
         return self._facts_by_folded_surface.get((surface.casefold(), language), ())
+
+    def exact_facts_for_surface(self, surface: str, maximum: int) -> tuple[tuple[DesignationFact, ...], bool]:
+        """Exact language-unspecified retrieval; overflow does not visit omitted rows."""
+        if type(surface) is not str or type(maximum) is not int or maximum < 1:
+            raise ValueError("exact designation retrieval requires string and positive bound")
+        rows = self._exact_surface_all_languages.get(surface, ())
+        return rows[:maximum], len(rows) > maximum
 
     def facts_for_target(
         self, target_ref: str, language: str
