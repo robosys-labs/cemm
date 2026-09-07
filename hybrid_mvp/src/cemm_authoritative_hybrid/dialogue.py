@@ -322,6 +322,114 @@ class DialogueObligation:
         return rebuilt
 
 
+def bind_learning_answer(stores: SemanticStores, situation: Any, answer: Any, *, maximum: int) -> DialogueObligation:
+    """Bind a target substitution to one persisted, exact unknown query.
+
+    The journal is gateway-authored continuity evidence, not reviewer authority.
+    This read neither publishes an alias nor consumes the pending obligation.
+    """
+    from .cycle import SemanticMode
+    from .decision import DecisionStatus
+    from .expressions import BoundVariable, GroundedReference, LiteralValue, SemanticApplication, SemanticExpression
+    from .expression_transform import instantiate_bindings
+    from .r3_artifacts import EvaluationBundle, QueryStatus
+    from .r3_codec import thaw_json
+    from .r3_effects import NoEffectReason, NoEffectReceipt, R3EffectGateway
+    from .r3_persistence import EffectJournalEntry, EffectJournalState, effect_journal_get
+    from .situation import SituationContext
+
+    if type(stores) is not SemanticStores or type(situation) is not SituationContext or type(answer) is not SemanticApplication:
+        raise TypeError("continuation binding requires exact stores, situation and application")
+    exact_int(maximum, "maximum", minimum=1, maximum=512)
+    if situation.mode is not SemanticMode.REQUEST or situation.revision_pin != stores.revision_pin():
+        raise ValueError("continuation requires a current REQUEST situation")
+    snapshot = stores.r3_obligation_snapshot(situation.session_ref, maximum=maximum)
+    if snapshot["snapshot_ref"] != situation.obligation_snapshot_ref or tuple(snapshot["obligation_refs"]) != situation.obligation_refs:
+        raise ValueError("continuation obligation snapshot mismatch")
+    rows = stores.pending_dialogue_obligations(situation.session_ref, situation.obligation_refs,
+        maximum=maximum, turn_index=situation.turn_index)
+    pending = tuple(row for row in rows if row.kind is ObligationKind.LEARNING_ANSWER)
+    if len(pending) != 1:
+        raise ValueError("continuation requires exactly one pending learning answer")
+    row = pending[0]
+    if row.expected_answer_contract_ref != "contract:designation_answer:v2":
+        raise ValueError("continuation answer contract is unsupported")
+    key = R3EffectGateway._effect_key(row.source_decision_ref, None, "no_effect:unknown")
+    stored = effect_journal_get(stores, key)
+    if stored is None or stored.entry.state is not EffectJournalState.NO_EFFECT:
+        raise ValueError("continuation source query has no terminal journal")
+    request = stored.entry.request_payload
+    evaluation = EvaluationBundle.from_dict(thaw_json(request.get("query_evaluation")))
+    receipt = NoEffectReceipt.from_dict(thaw_json(stored.receipt_payload))
+    decision, expression, source = evaluation.decision, evaluation.expression, evaluation.situation
+    origin = stable_ref("effect_journal_origin", {"decision_ref": row.source_decision_ref, "kind": "no_effect:unknown"})
+    planned = EffectJournalEntry.create(idempotency_key=key, state=EffectJournalState.PLANNED,
+        attempt_index=0, intent_ref=origin, decision_ref=row.source_decision_ref, request_payload=request,
+        observation_payload=None, outcome_ref=None, blocker_refs=(), parent_journal_ref=None,
+        effect_revision=exact_int(request.get("query_planned_effect_revision"), "query planned revision", minimum=1,
+                                  maximum=stored.entry.effect_revision - 1))
+    if (stored.entry.idempotency_key != key or stored.entry.intent_ref != origin or stored.entry.attempt_index != 0
+            or stored.entry.parent_journal_ref != planned.journal_ref or receipt.journal_preterminal_ref != planned.journal_ref
+            or receipt.journal_origin_ref != origin or request.get("turn_ref") != source.turn_ref
+            or request.get("session_phase_ref") != source.session_phase_ref):
+        raise ValueError("continuation journal chain differs from the original query")
+    if (decision.status is not DecisionStatus.UNKNOWN or source.mode is not SemanticMode.QUERY
+            or len(evaluation.query_results) != 1):
+        raise ValueError("continuation source must be one unknown query")
+    query = evaluation.query_results[0]
+    if (query.status is not QueryStatus.UNKNOWN or query.bindings or query.proof is not None
+            or query.query_result_ref != row.source_query_ref
+            or decision.query_result_refs != (query.query_result_ref,)
+            or query.expression_ref != expression.expression_ref
+            or query.revision_pin != evaluation.revision_pin or row.revision_pin != query.revision_pin):
+        raise ValueError("continuation source query content mismatch")
+    if (decision.decision_ref != row.source_decision_ref or stored.entry.decision_ref != decision.decision_ref
+            or source.session_ref != row.session_ref or source.turn_index != row.created_turn_index
+            or source.turn_index >= situation.turn_index
+            or request.get("session_ref") != source.session_ref or request.get("turn_index") != source.turn_index
+            or request.get("kind") != "no_effect" or request.get("reason") != "unknown"
+            or request.get("decision_ref") != decision.decision_ref):
+        raise ValueError("continuation source session/decision mismatch")
+    if (receipt.reason is not NoEffectReason.UNKNOWN or receipt.idempotency_key != key
+            or receipt.program_ref != decision.program_ref or receipt.proof_refs != decision.proof_refs
+            or receipt.blocker_refs != decision.blocker_refs or stored.entry.blocker_refs != decision.blocker_refs
+            or receipt.decision_ref != decision.decision_ref or receipt.expression_ref != expression.expression_ref
+            or receipt.situation_ref != source.situation_ref or receipt.verified_meaning_ref != decision.verified_meaning_ref
+            or receipt.input_revision_pin != evaluation.revision_pin
+            or receipt.journal_preterminal_ref != stored.entry.parent_journal_ref
+            or receipt.journal_origin_ref != request.get("journal_origin_ref")
+            or receipt.output_revision_pin.effect_revision != stored.entry.effect_revision):
+        raise ValueError("continuation terminal receipt mismatch")
+    if (receipt.output_revision_pin.world_revision != receipt.input_revision_pin.world_revision
+            or receipt.output_revision_pin.episode_revision != receipt.input_revision_pin.episode_revision):
+        raise ValueError("query continuation cannot carry world or episode mutation")
+    current = stores.revision_pin()
+    if (receipt.output_revision_pin.authority_generation != current.authority_generation
+            or any(getattr(receipt.output_revision_pin, name) > getattr(current, name) for name in (
+                "world_revision", "session_revision", "episode_revision", "effect_revision"))):
+        raise ValueError("continuation terminal receipt has a future/foreign revision")
+    if (len(expression.applications) != 1 or len(expression.binders) != 1
+            or expression.scope_operators or expression.expression_links or expression.unresolved_fillers):
+        raise ValueError("continuation requires one exact unscoped answer slot")
+    app, binder = expression.applications[0], expression.binders[0]
+    roles = {binding.role_ref: binding.filler for binding in app.roles}
+    if (app.operator != "op:designation" or app.predicate_ref != "label:lexical" or app.qualifiers
+            or set(roles) != {"role:label_type", "role:surface", "role:target"}
+            or roles["role:label_type"] != GroundedReference("label:lexical")
+            or type(roles["role:surface"]) is not LiteralValue or roles["role:surface"].value_type != "string"
+            or roles["role:target"] != BoundVariable(binder.variable_ref)
+            or binder.body_ref != app.application_ref or expression.root_refs != (binder.binder_ref,)):
+        raise ValueError("continuation does not identify an exact lexical target slot")
+    target = next((binding.filler for binding in answer.roles if binding.role_ref == "role:target"), None)
+    if type(target) is not GroundedReference:
+        raise ValueError("continuation answer target must be a grounded reference")
+    expected = instantiate_bindings(expression, ((binder.variable_ref, target.target_ref),))
+    actual = SemanticExpression.create(applications=(answer,), root_refs=(answer.application_ref,))
+    if actual != expected:
+        raise ValueError("continuation answer changes content outside the outstanding slot")
+    return row
+
+
 class DialogueObligationManager:
     """Own the lifecycle of typed dialogue obligations.
 

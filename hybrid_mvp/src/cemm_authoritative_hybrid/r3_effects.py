@@ -13,16 +13,16 @@ from enum import Enum
 from typing import Any, Mapping, Protocol, runtime_checkable
 
 from .canonical import stable_ref
+from .cycle import SemanticMode
 from .decision import DecisionAction, DecisionStatus
 from .expressions import VerifiedMeaning
 from .persistence import Fact, RevisionPin, SemanticStores
-from .r3_artifacts import EvaluationBundle, StateDelta
+from .r3_artifacts import EvaluationBundle, QueryStatus, StateDelta
 from .r3_codec import exact_fields, exact_pin, exact_refs, exact_text, thaw_json, wire_refs
 from .r3_learning import DialogueObligation, LearningPlan
 from .r3_persistence import (
     EffectJournalState,
     StoredEffectJournal,
-    commit_learning_outcome,
     effect_journal_begin,
     effect_journal_commit,
     effect_journal_get,
@@ -903,7 +903,13 @@ class R3EffectGateway:
         if action is DecisionAction.CREATE_LEARNING_OBLIGATION:
             if learning_plan is None or obligation is None:
                 raise ValueError("learning decision requires exact plan and obligation")
-            return self._commit_learning(evaluation, meaning, situation, learning_plan, obligation)
+            if learning_plan.decision_ref != evaluation.decision.decision_ref or obligation.plan_ref != learning_plan.plan_ref:
+                raise ValueError("learning artifacts do not bind the Decision")
+            # The previous path persisted a second, plan-derived obligation
+            # beside the originating query continuation. Binding is not yet
+            # reviewed publication; leave every store unchanged until that
+            # transactional owner is implemented.
+            raise ValueError("reviewed continuation publication is unavailable")
         reason = {
             DecisionAction.PREVIEW_TRANSITION: NoEffectReason.SIMULATION,
             DecisionAction.RETAIN_ATTRIBUTION: NoEffectReason.ATTRIBUTED_ONLY,
@@ -925,6 +931,8 @@ class R3EffectGateway:
         if existing is not None:
             return existing
         pin = self._stores.revision_pin()
+        if "query_evaluation" in request_payload:
+            request_payload = {**request_payload, "query_planned_effect_revision": pin.effect_revision + 1}
         return effect_journal_begin(
             self._stores,
             idempotency_key=key,
@@ -947,17 +955,35 @@ class R3EffectGateway:
             "decision_ref": decision.decision_ref,
             "kind": f"no_effect:{reason.value}",
         })
+        request_payload = {
+            "journal_origin_ref": origin,
+            "kind": "no_effect",
+            "reason": reason.value,
+            "decision_ref": decision.decision_ref,
+            **self._turn_payload(situation),
+        }
+        if (
+            situation.mode is SemanticMode.QUERY
+            and decision.status is DecisionStatus.UNKNOWN
+            and len(evaluation.query_results) == 1
+            and evaluation.query_results[0].status is QueryStatus.UNKNOWN
+        ):
+            query = evaluation.query_results[0]
+            if (
+                decision.query_result_refs != (query.query_result_ref,)
+                or query.expression_ref != evaluation.expression.expression_ref
+                or evaluation.expression.expression_ref != meaning.expression.expression_ref
+                or query.revision_pin != evaluation.revision_pin
+            ):
+                raise ValueError("unknown query witness lineage mismatch")
+            # Preserve exact read-only evidence for a later, separately
+            # authorized continuation; this creates no learning obligation.
+            request_payload["query_evaluation"] = evaluation.as_dict()
         stored = self._begin(
             key=key,
             intent_ref=origin,
             decision_ref=decision.decision_ref,
-            request_payload={
-                "journal_origin_ref": origin,
-                "kind": "no_effect",
-                "reason": reason.value,
-                "decision_ref": decision.decision_ref,
-                **self._turn_payload(situation),
-            },
+            request_payload=request_payload,
         )
         if stored.entry.state.terminal:
             receipt = self._terminal_receipt(stored)
@@ -1000,76 +1026,6 @@ class R3EffectGateway:
             raise RuntimeError("no-effect journal did not terminate")
         if self._stores.revision_pin() != receipt.output_revision_pin:
             raise RuntimeError("no-effect persistence revision mismatch")
-        return receipt
-
-    def _commit_learning(
-        self,
-        evaluation: EvaluationBundle,
-        meaning: VerifiedMeaning,
-        situation: SituationContext,
-        plan: LearningPlan,
-        obligation: DialogueObligation,
-    ) -> NoEffectReceipt:
-        decision = evaluation.decision
-        if plan.decision_ref != decision.decision_ref or obligation.plan_ref != plan.plan_ref:
-            raise ValueError("learning artifacts do not bind the Decision")
-        key = self._effect_key(decision.decision_ref, plan.plan_ref, "learning_obligation")
-        origin = stable_ref("effect_journal_origin", {
-            "decision_ref": decision.decision_ref,
-            "plan_ref": plan.plan_ref,
-            "kind": "learning_obligation",
-        })
-        stored = self._begin(
-            key=key,
-            intent_ref=plan.plan_ref,
-            decision_ref=decision.decision_ref,
-            request_payload={
-                "journal_origin_ref": origin,
-                "kind": "learning_obligation",
-                "plan_ref": plan.plan_ref,
-                "obligation_ref": obligation.obligation_ref,
-                **self._turn_payload(situation),
-            },
-        )
-        if stored.entry.state.terminal:
-            receipt = self._terminal_receipt(stored)
-            if type(receipt) is not NoEffectReceipt:
-                raise ValueError("learning key resolved to EffectReceipt")
-            return receipt
-        if stored.entry.state is not EffectJournalState.PLANNED:
-            raise ValueError("learning journal is in an invalid state")
-        current = self._stores.revision_pin()
-        output = _predicted_pin(current, session=1, effects=1)
-        receipt = NoEffectReceipt.create(
-            reason=NoEffectReason.LEARNING_OBLIGATION_ONLY,
-            idempotency_key=key,
-            journal_origin_ref=origin,
-            journal_preterminal_ref=stored.entry.journal_ref,
-            decision_ref=decision.decision_ref,
-            verified_meaning_ref=meaning.verified_meaning_ref,
-            expression_ref=meaning.expression.expression_ref,
-            situation_ref=situation.situation_ref,
-            program_ref=meaning.program_ref,
-            learning_plan_ref=plan.plan_ref,
-            obligation_ref=obligation.obligation_ref,
-            proof_refs=decision.proof_refs,
-            blocker_refs=(),
-            input_revision_pin=situation.revision_pin,
-            output_revision_pin=output,
-        )
-        terminal, actual = commit_learning_outcome(
-            self._stores,
-            session_ref=situation.session_ref,
-            obligation_ref=obligation.obligation_ref,
-            obligation_payload=obligation.as_dict(),
-            idempotency_key=key,
-            intent_ref=plan.plan_ref,
-            decision_ref=decision.decision_ref,
-            receipt_payload=receipt.as_dict(),
-            expected_revision_pin=current,
-        )
-        if actual != output or terminal.entry.outcome_ref != receipt.receipt_ref:
-            raise RuntimeError("learning outcome revision or receipt mismatch")
         return receipt
 
     def _commit_semantic(

@@ -45,6 +45,15 @@ unproved obligations. Historical R3 admission is not an end-to-end MVP proof.
 | R5 Test Disposition ABI | **1** | `governance/r5_test_dispositions.json` | Reviewed governance input; generated receipt is evidence only | `schemas/r5_test_dispositions.schema.json`, `scripts/r5_test_dispositions.py`, `scripts/generate_r5_test_dispositions.py` | Requires an exact 17-successor/25-deferred/1-retired partition of the frozen R5 predecessor set. Deferral is not admission evidence, and `artifacts/validation/R5_TEST_DISPOSITIONS.json` is deterministic evidence rather than authority. |
 | R5 Foundation Contract ABI | **1** | `configs/r5_foundation.json` | Reviewed phase-boundary configuration | `schemas/r5_foundation.schema.json` and `tests/test_r5_foundation.py` | Declares five exact foundation owners, red effective status, unavailable admission and four future data-access classes. It does not activate a neural model or materialize selection, calibration or frozen-test partitions. |
 
+Task 5 continuation binding retains existing ABI versions. The existing effect
+journal request payload may retain the canonical EvaluationBundle for one exact
+unknown QUERY; this is attributable query-content evidence, not truth or learning
+authority. Generic dialogue obligations and plan-derived learning obligations
+are not interchangeable. The plan-only obligation fields in R3Artifacts and
+NoEffectReceipt must not be populated with a generic continuation or fake plan.
+Automatic continuation publication remains unimplemented; the duplicate pending
+learning-obligation effect path is disabled under the foundation plan.
+
 ## 2. Canonical program identity
 
 The Program ABI v2 hash includes the complete ordered payload:

@@ -227,3 +227,11 @@ capability, permission, provenance and transactional effect checks; new identity
 acquisition remains separate. Later external research is a bounded permissioned
 consumer of an exact unknown QueryResult, never grounding or automatic authority.
 This increment authorizes no network adapter or root adoption.
+
+Continuation answers must bind the exact pending snapshot and the original
+gateway-persisted query evaluation, not only a query-ref string. Unknown-query
+journal retention and diagnostic plan materialization do not authorize alias
+publication. The former EFFECT path that appended a second plan-derived learning
+obligation is disabled pending the reviewed transactional publication owner;
+do not restore it as a compatibility path. Automatic generic query-continuation
+creation and its expiry/receipt policy remain explicit Task 5 work.

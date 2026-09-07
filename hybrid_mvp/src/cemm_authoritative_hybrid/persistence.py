@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from itertools import islice
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Mapping, Sequence
+from itertools import islice
 
 from .canonical import canonical_bytes, stable_ref, stable
 
@@ -1349,16 +1350,37 @@ class _MemoryObligationStore:
         self.revision = 0
         self._obligations: dict[str, dict[str, Any]] = {}
         self._row_metadata: dict[str, tuple[str, str, int, int]] = {}
+        self._pending_by_session: dict[str, dict[str, None]] = {}
 
     @staticmethod
-    def _prepare_row(session_ref: str, payload: Mapping[str, Any], revision: int, resolved: bool) -> tuple[dict[str, Any], tuple[str, str, int, int]]:
+    def _prepare_row(obligation_ref: str, session_ref: str, payload: Mapping[str, Any], revision: int, resolved: bool) -> tuple[dict[str, Any], tuple[str, str, int, int]]:
         # Detach nested values exactly as SQLite serialization does. Metadata is
         # independent of the payload, so keyed reads can authenticate both.
+        from .r3_codec import exact_bool, exact_int
+        if type(obligation_ref) is not str or not obligation_ref:
+            raise TypeError("obligation_ref must be exact nonempty str")
+        if type(session_ref) is not str or not session_ref:
+            raise TypeError("session_ref must be exact nonempty str")
+        exact_int(revision, "obligation commit revision", minimum=1)
+        exact_bool(resolved, "resolved")
         data = json.loads(json.dumps(dict(payload), ensure_ascii=False))
         return data, (session_ref, _payload_hash(data), revision, int(resolved))
 
     def _store_row(self, obligation_ref: str, prepared: tuple[dict[str, Any], tuple[str, str, int, int]]) -> None:
+        previous = self._row_metadata.get(obligation_ref)
+        if previous is not None:
+            prior_session = self._pending_by_session.get(previous[0])
+            if prior_session is not None:
+                prior_session.pop(obligation_ref, None)
+                if not prior_session:
+                    del self._pending_by_session[previous[0]]
         self._obligations[obligation_ref], self._row_metadata[obligation_ref] = prepared
+        session, _digest, _revision, resolved = prepared[1]
+        if resolved == 0:
+            self._pending_by_session.setdefault(session, {})[obligation_ref] = None
+
+    def pending_refs(self, session_ref: str, maximum: int) -> list[str]:
+        return list(islice(self._pending_by_session.get(session_ref, {}), maximum))
 
     def commit(self, obligation_ref: str, session_ref: str, payload: Mapping[str, Any], *, expected_revision: int, resolved: bool = False) -> CommitReceipt:
         if expected_revision != self.revision:
@@ -1366,7 +1388,7 @@ class _MemoryObligationStore:
         delta_hash = _payload_hash(payload)
         transaction_ref = stable_ref("txn", {"store": "obligations", "parent": expected_revision, "delta_hash": delta_hash})
         new_revision = self.revision + 1
-        prepared = self._prepare_row(session_ref, {**dict(payload), "obligation_ref": obligation_ref, "session_ref": session_ref, "resolved": resolved}, new_revision, resolved)
+        prepared = self._prepare_row(obligation_ref, session_ref, {**dict(payload), "obligation_ref": obligation_ref, "session_ref": session_ref, "resolved": resolved}, new_revision, resolved)
         self._store_row(obligation_ref, prepared)
         self.revision = new_revision
         return CommitReceipt("obligations", expected_revision, new_revision, delta_hash, transaction_ref)
@@ -1411,8 +1433,8 @@ class _MemoryObligationStore:
             {"store": "obligations", "parent": expected_revision, "delta_hash": delta_hash},
         )
         new_revision = self.revision + 1
-        prepared_pending = self._prepare_row(session_ref, pending_data, new_revision, True)
-        prepared_completed = self._prepare_row(session_ref, completed_data, new_revision, True)
+        prepared_pending = self._prepare_row(pending_ref, session_ref, pending_data, new_revision, True)
+        prepared_completed = self._prepare_row(completed_ref, session_ref, completed_data, new_revision, True)
         self._store_row(pending_ref, prepared_pending)
         self._store_row(completed_ref, prepared_completed)
         self.revision = new_revision
@@ -1715,12 +1737,7 @@ class SemanticStores:
             ).fetchall()
             refs = [str(row[0]) for row in rows]
         else:
-            refs = sorted(
-                ref
-                for ref, payload in self._backend.obligations._obligations.items()
-                if payload.get("session_ref") == session_ref
-                and not payload.get("resolved", False)
-            )[: maximum + 1]
+            refs = self._backend.obligations.pending_refs(session_ref, maximum + 1)
         if len(refs) > maximum:
             raise ValueError("obligation snapshot exceeds its configured bound")
         material = {
@@ -2249,7 +2266,7 @@ class SemanticStores:
             self.obligations.revision = new_obligation
             self.effects.revision = new_effect
         else:
-            prepared_obligation = self._backend.obligations._prepare_row(session_ref, obligation_data, new_obligation, False)
+            prepared_obligation = self._backend.obligations._prepare_row(obligation_ref, session_ref, obligation_data, new_obligation, False)
             session, _payload = _r3_session_material(
                 session_ref=session_ref,
                 turn_index=turn_index,

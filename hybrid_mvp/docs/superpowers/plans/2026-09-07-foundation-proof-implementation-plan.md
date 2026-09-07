@@ -716,7 +716,8 @@ not adapted into the generic dialogue shape. The broader 267-node R3-owner run
 at the twelve-case checkpoint gives 266 passes and the retained actual-query
 binding failure; no prior failure was removed or marked successful.
 
-Next: bind the captured snapshot and its exact pending continuation through the
+At that checkpoint the next dependency was to bind the captured snapshot and its
+exact pending continuation through the
 existing situation/dialogue owners, then preserve the canonical source query and
 outstanding answer slot before enabling learning materialization. Copying only
 `source_query_ref` would make the seam test green without preventing a `foo`
@@ -736,6 +737,67 @@ Selectors and the living receipt regenerate twice byte-identically with active
 counts G0 191 / R1 783 / R2 1173 / R3 1705 / R4 2043 / R5 2168. No phase
 admission, complete regression success, alias acquisition or root adoption is
 claimed by this prerequisite checkpoint.
+
+### Exact query-content binding checkpoint (September 7)
+
+The retrieval-only checkpoint above is now followed by executable binding through
+the existing dialogue and learning owners. An UNKNOWN QUERY with one exact
+UNKNOWN result retains its canonical `EvaluationBundle` in the originating
+effect journal's existing bounded request payload. Known, partial and non-query
+outcomes do not gain this witness. No new serialized ABI or episode scan is used.
+
+The answer owner authenticates the complete current obligation snapshot, one
+same-session pending learning answer, its exact answer contract, and the original
+terminal journal. It reconstructs the preterminal journal identity and checks
+the actual planned revision retained at journal creation (global revisions need
+not be consecutive when another session progresses). It also checks
+the source decision, query result, expression, turn, session and receipt lineage.
+For the bounded lexical-target contract, existing expression instantiation fills
+one target variable; every other role and the exact literal must remain equal.
+Different spellings, case, sessions, expired or stale snapshots and missing or
+rehashed foreign journal evidence cannot produce a learning draft. Materialization
+independently rechecks this binding and target kind, inherits the pending expiry,
+and no longer fabricates a `learning_source_query` identity.
+
+Memory snapshots now use a maintained per-session pending index and commit order,
+matching the existing SQLite indexed read. Snapshot and record work stay bounded
+by the active configuration. No new gate, phase, semantic operator, authority
+default, form-pack rewrite or increased search bound is introduced.
+
+This proves a public unknown query plus an **explicitly constructed pending
+obligation** can support an exact later answer before and after restart. Automatic
+generic-continuation creation is still missing. It must be EFFECT-owned and
+receipt-bound, with reviewed expiry and the one-pending policy, not a fabricated
+LearningPlan. The generic dialogue record and the plan-derived learning record
+retain distinct wire contracts; neither is adapted into the other.
+
+Review exposed that the old EFFECT path would append a second plan-derived
+obligation after successful binding. That path is removed and explicitly raises
+`reviewed continuation publication is unavailable` before any store change.
+Materialized plans are diagnostic, not executable acquisition authority. The
+linked contract, review/capability/permission checks, one transactional alias
+publication and successful-receipt consumption remain the next implementation
+dependencies. Do not re-enable the removed duplicate-obligation writer merely to
+make a public conversation proceed. This checkpoint does not yet provide a usable
+complete learning conversation or resume R4.1/R5 work.
+
+Four prior assertions receive explicit same-assertion successors with a real
+query witness: exact source-query continuity, evaluated-draft materialization,
+unbound-draft rejection, and positive-directive eligibility. Their original ASTs
+remain unchanged. The negative scope/directive protections remain active. This
+is not a waiver of those assertions or replacement of independent gold with
+bootstrap output: expected alias content is independently specified.
+
+Final bounded evidence: 48 new focused cases pass after independent spec and
+quality reviews. The authenticated affected-owner/foundation union gives
+382 passes / two retained failures (fresh-fragment clarification and admitted
+alias restart reuse). This is not a full R4/R5 regression pass or a count of all
+remaining MVP work. Original test files, the form pack, frozen inventory and
+replay ledger are byte-identical. R3/R4/R5 structure checks, active legacy audit
+(zero findings), 517 R3/R4 metadata checks, fresh SQLite activation/reopen/integrity
+and the four post-VERIFY canaries pass. Existing selectors and the living receipt
+regenerate twice identically: G0 191 / R1 783 / R2 1173 / R3 1749 / R4 2087 /
+R5 2212 active nodes. No gate or owner group was added.
 
 ## Task 6 — Repair measured search/retrieval bounds and confirm preservation
 

@@ -1186,15 +1186,26 @@ class RequestDecisionOwner(_TransitionOwnerBase):
                 )
             )
         atom = getattr(self._authority, "atoms", {}).get(target)
-        target_kind = getattr(atom, "kind", "unknown")
+        from .dialogue import bind_learning_answer
+        try:
+            pending = bind_learning_answer(self._stores, situation, app, maximum=self._config.max_orientation_alternatives)
+            if atom is None:
+                raise ValueError("learning target is not an existing reviewed identity")
+        except (TypeError, ValueError):
+            return ModeEvaluation(contribution=DecisionContribution(
+                status=DecisionStatus.UNKNOWN, action=DecisionAction.REQUEST_CLARIFICATION,
+                blocker_refs=("learning:unbound_query_continuation",),
+                policy_refs=("policy:learning_directive_requires_review:v2",),
+            ))
+        target_kind = atom.kind
         draft = LearningDraft.create(
             kind="directive",
             surface_literal=surface,
             target_ref=target,
             expected_target_kinds=(target_kind,),
-            source_query_ref=None,
+            source_query_ref=pending.source_query_ref,
             answer_contract_ref="contract:designation_answer:v2",
-            proof_refs=(app.application_ref,),
+            proof_refs=(app.application_ref, pending.obligation_ref),
             revision_pin=situation.revision_pin,
         )
         return ModeEvaluation(

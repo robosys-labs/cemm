@@ -136,7 +136,7 @@ class R3Kernel:
         self._situation_builder = SituationContextBuilder(authority)
         self._situation_verifier = SituationContextVerifier(authority)
         self._evaluator = R3EvaluationOwner(authority, stores, config)
-        self._learning = LearningCoordinator(authority, stores)
+        self._learning = LearningCoordinator(authority, stores, config)
         self._effects = R3EffectGateway(stores, self._adapters)
         self._response = ResponseBuilder()
 

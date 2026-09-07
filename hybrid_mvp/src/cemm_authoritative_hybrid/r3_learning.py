@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .canonical import stable_ref
+from .config import RuntimeConfig
 from .cycle import SemanticMode
 from .decision import DecisionAction
 from .expressions import VerifiedMeaning
@@ -303,9 +304,10 @@ class DialogueObligation:
 class LearningCoordinator:
     """Materialize the exact evaluated learning draft; never reinterpret meaning."""
 
-    def __init__(self, authority: Any, stores: SemanticStores) -> None:
+    def __init__(self, authority: Any, stores: SemanticStores, config: RuntimeConfig | None = None) -> None:
         self._authority = authority
         self._stores = stores
+        self._config = config or RuntimeConfig.release()
 
     def materialize(self, evaluation: EvaluationBundle, meaning: VerifiedMeaning,
                     situation: SituationContext) -> tuple[LearningPlan | None, DialogueObligation | None]:
@@ -325,6 +327,8 @@ class LearningCoordinator:
         if len(evaluation.learning_drafts) != 1:
             raise ValueError("learning obligation requires exactly one evaluated draft")
         draft = evaluation.learning_drafts[0]
+        if draft.kind != "directive":
+            raise ValueError("learning materialization requires a directive draft")
         if decision.learning_draft_refs != (draft.learning_draft_ref,):
             raise ValueError("learning Decision does not bind the evaluated draft")
         if draft.revision_pin != situation.revision_pin:
@@ -333,16 +337,29 @@ class LearningCoordinator:
             raise ValueError("materializable learning draft requires target_ref")
         if not draft.expected_target_kinds:
             raise ValueError("materializable learning draft requires expected_target_kinds")
-        query_ref = draft.source_query_ref or stable_ref(
-            "learning_source_query",
-            {"expression_ref": meaning.expression.expression_ref},
-        )
+        from .dialogue import bind_learning_answer
+        from .expression_projection import project_expression
+        from .r3_cognition import RequestDecisionOwner
+
+        app, blockers = RequestDecisionOwner._eligible_root(meaning.expression, project_expression(meaning.expression))
+        if app is None or blockers:
+            raise ValueError("learning materialization requires an eligible request root")
+        pending = bind_learning_answer(self._stores, situation, app, maximum=self._config.max_orientation_alternatives)
+        if draft.source_query_ref != pending.source_query_ref or pending.obligation_ref not in draft.proof_refs:
+            raise ValueError("learning draft does not bind the exact pending query")
+        roles = {binding.role_ref: binding.filler for binding in app.roles}
+        if (draft.surface_literal != roles["role:surface"].value or draft.target_ref != roles["role:target"].target_ref
+                or draft.answer_contract_ref != pending.expected_answer_contract_ref):
+            raise ValueError("learning draft changes the bound answer")
+        atom = self._authority.atoms.get(draft.target_ref)
+        if atom is None or draft.expected_target_kinds != (atom.kind,):
+            raise ValueError("learning draft target kind differs from reviewed identity")
         plan = LearningPlan.create(
             verified_meaning_ref=meaning.verified_meaning_ref,
             expression_ref=meaning.expression.expression_ref,
             situation_ref=situation.situation_ref,
             decision_ref=decision.decision_ref,
-            source_query_ref=query_ref,
+            source_query_ref=pending.source_query_ref,
             surface_literal=draft.surface_literal,
             target_ref=draft.target_ref,
             expected_target_kinds=draft.expected_target_kinds,
@@ -354,7 +371,7 @@ class LearningCoordinator:
                 *draft.proof_refs,
             ))),
             revision_pin=situation.revision_pin,
-            expires_at_turn=1,
+            expires_at_turn=pending.expires_turn_index,
         )
         obligation = DialogueObligation.create(plan=plan, session_ref=situation.session_ref)
         # Persistence is owned by EFFECT so obligation creation and its effect
