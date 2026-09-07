@@ -1,5 +1,14 @@
 # Unresolved Designation Vertical Slice Implementation Plan
 
+> **Historical evidence — superseded on 2026-09-07; no execution authority.**
+> The [foundation amendment](../specs/2026-09-07-foundation-proof-corrective-amendment.md)
+> and [current plan](2026-09-07-foundation-proof-implementation-plan.md)
+> replace this narrow Task 4 and stop-at-first-unrelated-failure route. Only
+> `governance/replay_status.jsonl` owns replay status and admission identities.
+> Original tasks and exact stops are preserved, not reissued instructions. Reuse
+> valid acyclic-frame/designation work; do not preserve the false atom-kind
+> definition answer. Its historical green proved traversal, not correct meaning.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make `What is zorbulate?` compile and verify as an exact open `op:designation` query, return `UNKNOWN` without proposal abstention or mutation, and hard-cut known and unknown designation expressions to the same reviewed label-family encoding.

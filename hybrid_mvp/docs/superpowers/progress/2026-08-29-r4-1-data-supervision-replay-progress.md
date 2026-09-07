@@ -9,16 +9,17 @@ below is work coordination evidence only and must be reconciled against the
 governing design, governing implementation plan, committed source, exact test
 evidence, and the append-only ledger before any release decision.
 
-**Stop-the-line note (2026-09-03):** T03 is stopped at its existing evidence
-boundary. The [R4 closure slice](../specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
-has now recorded a STOPPED/BLOCKED result at the unresolved-designation
-ProposalContext/application-frame representation boundary. Guided review,
-assistant pre-review, selection export and bulk authoring are superseded
-routes; their local state is evidence only. T04-T18 cannot begin through this
-tracker. The only next task is a new reviewed unresolved-designation
-representation design with an explicit ABI decision; it is design work, not
-implementation, source publication, artifact generation, training, R5 work or
-root adoption.
+**Current-route notice (2026-09-07):** The approved
+[foundation amendment](../specs/2026-09-07-foundation-proof-corrective-amendment.md)
+and [current plan](../plans/2026-09-07-foundation-proof-implementation-plan.md)
+own execution. The September 3 closure and unresolved-designation routes below
+are historical evidence; their design-only/Task 4 stop no longer governs.
+Preserve the exact recorded stops and completed work. This tracker cannot
+restart T04-T18, export historical selections or admit data. Bulk R4.1 work and
+R5 training/activation remain frozen; no pilot training is authorized before
+fresh R4.1 admission and explicit isolated R4.1-compliant data authorization.
+The foundation permits only the specified development semantic/response reference
+through existing owners, not a release fallback, network research or root adoption.
 
 ### R4 closure-slice execution record
 
@@ -38,9 +39,10 @@ question-discourse contributions plus a critical anchor residual for
 predicate/lowering proof, the composer reaches a frame only from a selected
 designation, and Program ABI 2 has no unresolved-designation frame/action
 shape. A fake identity, implicit/default `concept`, ref-name spelling dispatch
-or phrase branch is forbidden. Known definition and direct invalid-Program
-rejection passed; the other nine surface cases were not executed after the
-mandated stop.
+or phrase branch is forbidden. The known-definition case passed traversal only,
+not intended-meaning or definition correctness; its false atom-kind answer is
+retired by the foundation amendment. Direct invalid-Program rejection passed;
+the other nine surface cases were not executed after the mandated stop.
 
 This is diagnostic coordination evidence only. It creates no artifact, gate,
 ABI, phase, admission or root-runtime adoption. Bulk R4.1 source correction,

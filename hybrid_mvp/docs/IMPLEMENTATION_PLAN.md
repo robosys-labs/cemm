@@ -1,115 +1,47 @@
-# Production Evolution Plan
+# Current Implementation Route
 
-> **Planning status:** This original high-level outline is retained as routing
-> context and does not carry execution or admission authority. Current work is
-> governed by the [August 29 R4.1 data/supervision amendment](superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md),
-> the [2026-08-02 semantic-algebra amendment](superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md),
-> and the machine-readable [document authority map](DOCUMENT_AUTHORITY.json).
->
-> The reviewed pre-implementation R5/R6 readiness package is:
->
-> - [R5/R6 Plan Readiness Review](superpowers/progress/2026-08-22-r5-r6-plan-readiness-review.md)
-> - [R5 Neural Activation and R6 Composition Design](superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md)
-> - [R5 Neural Activation and R6 Composition Plan](superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md)
->
-> The R5/R6 package remains a conditional target beneath the August 29
-> amendment. Its efficiency and anti-bloat contract remains binding, but none
-> of its activation tasks can execute before authentic R4.1 admission.
->
-> Current replay status and exact admission identities are derived only from
-> [`governance/replay_status.jsonl`](../governance/replay_status.jsonl). This
-> page does not copy or promote phase status.
->
-> R5 training, selection, calibration, frozen evaluation and realization
-> activation are unavailable until a fresh R4.1 admission proves meaningful
-> purpose-class semantic coverage and independent derivation/realization gold.
+The approved [foundation-proof amendment](superpowers/specs/2026-09-07-foundation-proof-corrective-amendment.md)
+and [foundation-proof implementation plan](superpowers/plans/2026-09-07-foundation-proof-implementation-plan.md)
+own current execution. The plan is the single working checklist; this page is
+only its router. [DOCUMENT_AUTHORITY.json](DOCUMENT_AUTHORITY.json) owns document
+precedence, with AGENTS first, the foundation amendment/plan next, and the
+August 29 data/supervision amendment and retained semantic laws beneath them.
 
-## Current governing route
+Current work corrects documentation before code, specifies the whole independent
+foundation matrix, removes false atom-kind definition answers, and repairs the
+earliest query, scoped-uncertainty, learning, response and measured-search owners.
+Graph validity, intended meaning, support and permission are distinct. Removing
+a wrong answer is containment, not completion of open-query support or a useful
+conversation loop.
 
-**Closure stopped.** The
-[R4 closure design](superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
-records a STOPPED/BLOCKED result at the unresolved-designation representation
-boundary. The approved
-[unresolved-designation design](superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md)
-owns the repair together with the approved
-[implementation plan](superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md).
-Tasks 1–3 are reviewed; the vertical path remains incomplete. Task 4
-is blocked on a reviewed form-evidence amendment, as its preflight demonstrates
-that generic query evidence cannot distinguish designation from location.
-The former
-closure implementation plan is historical evidence only. Bulk R4.1 review,
-source authoring, selection export, corpus expansion, regeneration and training
-remain frozen. This routing adds no phase, gate, ABI, runtime owner or admission
-claim.
+The September 3 fixed closure and narrow unresolved-designation designs/plans
+are historical evidence. Preserve their original task and stop records and reuse
+valid acyclic-frame/canonical-designation work; their Task 4 and stop-at-first-
+unrelated-failure sequencing no longer governs. The obsolete numbered production
+outline is retained in Git history, not as a competing current roadmap.
 
-## Phase 1 — Evaluation expansion
+## Development proof and release boundary
 
-- expand to the 210-case semantic matrix;
-- add naturally written, template-disjoint paraphrases;
-- add lexical, relation, event-role and authority-target holdouts;
-- add malformed/adversarial abstention benchmarks;
-- compare retrieval recall separately from ranking accuracy.
+An explicitly development-only compositional response reference may use existing
+semantic owner APIs before R5. It must preserve roles, scopes, perspective,
+provenance and uncertainty. It is not learned output, a product fallback or a
+second semantic runtime, and cannot record normal verified focus without the
+existing exact realization-equivalence checks.
 
-## Phase 2 — Retrieved graph-action decoder
+Bulk R4.1 authoring, review/export, purpose allocation, realization-recipe review,
+corpus expansion and source-package publication remain frozen. Historical working
+selections are diagnostic, not gold. R5 training, selection, calibration, frozen
+evaluation and realization activation remain unavailable until fresh R4.1
+admission proves the August 29 independent-supervision and class-local data
+contract. No pilot training is authorized before that admission and explicit
+isolated R4.1-compliant data authorization.
 
-- replace full candidate enumeration with incremental decoding;
-- retrieve authority targets at every semantic-selection step;
-- apply exact legality masks before each action;
-- preserve an explicit abstention/frontier action;
-- train from accepted and verifier-rejected programs.
+The conditional [R5/R6 design](superpowers/specs/2026-08-22-r5-neural-activation-r6-composition-design.md)
+and [plan](superpowers/plans/2026-08-22-r5-neural-activation-r6-composition-plan.md)
+retain their subordinate hard-cut, isolation, efficiency and activation
+requirements; they do not authorize current training or activation.
 
-## Phase 3 — Context and state encoder
-
-- encode active session event stack;
-- encode participants, focus and obligations;
-- encode relevant current state projections and proof summaries;
-- predict context-event attachment;
-- test multi-turn reference and ellipsis.
-
-## Phase 4 — Rich recursive semantics
-
-- coordination and multiple roots;
-- explicit attribution trees;
-- polarity, tense, aspect and temporal intervals;
-- quantified constraints;
-- definitions and reviewed rule proposals;
-- correction and contradiction semantics.
-
-## Phase 5 — Scalable stores
-
-- replace in-memory stores with SQLite/PostgreSQL authority/world/session stores;
-- immutable episodic columnar shards;
-- rebuildable retrieval indexes;
-- transactional effect receipts;
-- snapshot and rollback support.
-
-## Phase 6 — Real operations
-
-- adapter registry and schemas;
-- capability/permission/policy proofs;
-- idempotency and retries;
-- reversible/irreversible effect declarations;
-- compensation and cancellation;
-- operation observation assimilation.
-
-## Phase 7 — Native reviewed learning
-
-- designation and entity learning;
-- definition graph proposals;
-- frame and state-schema induction;
-- transition mechanism proposals;
-- consolidation with evidence thresholds;
-- human or policy review before authority promotion.
-
-## Phase 8 — Neural realization
-
-Historical outline only. The active R5/R6 design requires exact
-`ResponseMeaning`, a constrained pointer-aware learned decoder, multilingual
-language packs, semantic round-trip verification, and **no normal fallback**.
-
-## Phase 9 — Shadow comparison and cutover decision
-
-- run current CEMM and authoritative hybrid on identical episodes;
-- compare semantic graph correctness, proof, abstention, latency and effect safety;
-- prohibit compatibility paths that recreate parallel authority;
-- cut over only after the new runtime exceeds semantic and governance gates.
+Current replay status and exact admission identities are derived only from
+[`governance/replay_status.jsonl`](../governance/replay_status.jsonl). This page
+does not copy or promote phase status. The foundation introduces no phase or
+gate and authorizes no network research adapter, root adoption, merge or push.

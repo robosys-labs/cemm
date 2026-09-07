@@ -1,5 +1,18 @@
 # R4.1 Data and Supervision Corrective Replay Implementation Plan
 
+> **Subordinate dependency notice (2026-09-07):** The [foundation amendment](../specs/2026-09-07-foundation-proof-corrective-amendment.md)
+> and [current plan](2026-09-07-foundation-proof-implementation-plan.md)
+> own current execution; retained data, isolation, provenance and hard-cut laws
+> below remain binding. Only `governance/replay_status.jsonl` owns phase status.
+> A development-only semantic/response reference is permitted through existing
+> owners; it is not learned output, a normal fallback or R5 activation, and cannot
+> bypass normal verified-focus equivalence. Bulk R4.1 authoring, review/export,
+> purpose allocation, realization-recipe review, corpus expansion and publication
+> remain frozen. R5 training, selection, calibration, frozen evaluation and
+> activation remain unavailable until fresh R4.1 admission. No pilot training is
+> authorized before that admission and explicit isolated R4.1-compliant data
+> authorization. Older task sequencing cannot override this boundary.
+
 > **For agentic workers:** Use `subagent-driven-development` in the current
 > session or `executing-plans` in a separate session. Execute one task at a
 > time, keep the progress tracker current, and stop at every review checkpoint.

@@ -11,10 +11,14 @@
 **Root adoption:** requires a separate reviewed migration decision
 **Source review package:** `hybrid_semantic_algebra_docs`
 
-This amendment is subordinate only to `hybrid_mvp/AGENTS.md` and supersedes every
-conflicting semantic-object, identity, corpus, evaluation and realization claim
-in the earlier Hybrid MVP documents. It does not reactivate superseded July-29
-or July-30 execution plans and does not alter root-runtime authority.
+This semantic-algebra contract remains binding beneath `hybrid_mvp/AGENTS.md`,
+the [September 7 foundation amendment](2026-09-07-foundation-proof-corrective-amendment.md)
+and its current plan, and the August 29 data/supervision amendment, in the order
+owned by `docs/DOCUMENT_AUTHORITY.json`. It supersedes conflicting semantic-object,
+identity, corpus, evaluation and realization claims in earlier Hybrid documents.
+It does not reactivate superseded July-29 or July-30 execution plans or alter
+root-runtime authority. Its historical ABI-1 implementation target below does
+not override the current registry's unadmitted Semantic Expression ABI 2 target.
 
 Stage 0–22 remains retired inside the Hybrid MVP and the six-phase runtime
 remains a hard cutover. The additional correction is that a proposed

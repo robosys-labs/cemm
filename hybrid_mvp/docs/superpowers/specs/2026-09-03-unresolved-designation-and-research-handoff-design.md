@@ -1,7 +1,16 @@
 # Unresolved Designation and Research Handoff Design
 
+> **Historical evidence — superseded on 2026-09-07; no execution authority.**
+> The [foundation amendment](2026-09-07-foundation-proof-corrective-amendment.md)
+> and [current plan](../plans/2026-09-07-foundation-proof-implementation-plan.md)
+> replace the narrow Task 4 and fixed-closure sequencing. Only
+> `governance/replay_status.jsonl` owns replay status and admission identities.
+> Preserve the original body, stop evidence and valid acyclic-frame/designation
+> work. Bare `What is X?` does not establish lexical lookup. Known-definition
+> traversal was not semantic correctness; the false atom-kind answer is retired.
+
 **Date:** 2026-09-03
-**Status:** design, implementation plan and acyclic ownership amendment approved; Tasks 1–3 reviewed; vertical implementation incomplete before Task 4
+**Status at supersession:** design, implementation plan and acyclic ownership amendment approved; Tasks 1–3 reviewed; vertical implementation incomplete before Task 4
 **Scope:** `hybrid_mvp/` representation closure and its bounded handoff to a
 future self-research capability
 

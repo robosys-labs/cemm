@@ -1,12 +1,15 @@
 # CEMM Hybrid ABI Registry
 
-**Status:** active target contract under the 2026-08-02 Hybrid-only amendment
+**Status:** active target registry under the Hybrid-only semantic-algebra and foundation-proof amendments; no admission claim
 **Runtime cutover:** hard
 **Scope:** `hybrid_mvp/` only; root adoption requires separate review
 
 This registry distinguishes derivation ABIs from semantic-content ABIs. An ABI
 version change invalidates every dependent scenario, episode, partition,
 checkpoint, calibration, evaluation, activation and release artifact.
+The [foundation amendment](superpowers/specs/2026-09-07-foundation-proof-corrective-amendment.md)
+and [implementation plan](superpowers/plans/2026-09-07-foundation-proof-implementation-plan.md)
+own current repair dependencies; the September 3 narrow Task 4 route is historical.
 
 ## 1. Active target registry
 
@@ -15,7 +18,7 @@ checkpoint, calibration, evaluation, activation and release artifact.
 | Orientation ABI | 1 | `src/cemm_authoritative_hybrid/cycle.py` | Transient / episode-serializable | `OrientationProjector` / `Orientation.from_dict` | Complete-content `orientation_ref` covers every serialized semantic and lineage field with `RevisionPin` as sole revision owner; transient `cache_key` is omitted and cannot affect identity. |
 | Evidence ABI | 1 | `src/cemm_authoritative_hybrid/forms.py` | Transient / episode-serializable | `FormResolver` | Exact reversible source geometry; one immutable evidence packet; no downstream retokenization authority. |
 | Semantic Contribution ABI | 1 | `src/cemm_authoritative_hybrid/contributions.py` | Transient | `ContributionExpander` | Every source unit yields bounded typed contributions or one typed unresolved contribution. |
-| Proposal Context ABI | **2** | `src/cemm_authoritative_hybrid/proposal_context.py` | Transient / episode-serializable | `ProposalContextBuilder` | Unadmitted repair target: closed grounded/unresolved-designation frame union, acyclic variable-to-frame ownership, exact spans and revision pin; bounded derived indexes built once. Unresolved builder emission remains blocked on reviewed form evidence. |
+| Proposal Context ABI | **2** | `src/cemm_authoritative_hybrid/proposal_context.py` | Transient / episode-serializable | `ProposalContextBuilder` | Unadmitted repair target: closed grounded/unresolved-designation frame union, acyclic variable-to-frame ownership, exact spans and revision pin; bounded derived indexes built once. Foundation-proof work must establish exact answer projection and reviewed interrogative evidence before unresolved emission; a generic nominal question is not automatically lexical lookup. |
 | Semantic Switch Program ABI | **2** | `src/cemm_authoritative_hybrid/programs.py` | Episode-serializable | `SemanticExpressionCompiler` and `ExactProgramVerifier` | Exactly one class owner; frozen per-action slot schemas; complete ordered full-content program hash including ABI, context ref, indexed actions, pointers, roots, assignments and revisions; no resolved expression and no sorted action identity. |
 | Semantic Expression ABI | **2** | `src/cemm_authoritative_hybrid/expressions.py` | Episode/world/reference serializable as permitted | `SemanticExpressionCompiler` | Unadmitted repair target: canonical recursive five-operator forest. Designation predicate is its grounded label family with exact label_type/surface/target roles; ABI 1 and legacy target-as-predicate content fail closed. |
 | Compilation Proof ABI | **1** | `src/cemm_authoritative_hybrid/expressions.py` | Episode-serializable | `ExactProgramVerifier` | Binds program/context/expression/revision and proves every action, source assignment and declared root translated exactly once; proof rows are retained, not only hashed. |
@@ -159,8 +162,8 @@ program, expression and verified meaning may not change.
 
 The current hard-cut targets are Proposal Context ABI v2, unchanged Program
 ABI v2, and Semantic Expression ABI v2. Dependent artifacts require fresh
-reviewed regeneration/admission; this does not authorize bulk rebuilding while
-the R4 closure is stopped. Invalidated descendants include:
+reviewed regeneration/admission; the foundation-proof route does not authorize
+bulk R4.1 rebuilding, training or R5 activation. Invalidated descendants include:
 
 ```text
 reviewed expected contracts

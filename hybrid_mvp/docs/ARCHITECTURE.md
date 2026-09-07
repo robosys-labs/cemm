@@ -6,13 +6,14 @@
 
 ## Purpose
 
-This isolated bundle combines three proven ideas without inheriting their unsafe shortcuts:
+This isolated development proof targets bounded conversation that preserves
+meaning, reasons from attributable evidence, clarifies uncertainty, learns
+authorized aliases and produces faithful readable responses. It retains the
+five-operator exact core, reviewed authority, bounded inference, session context
+and sole effect ownership. Learned proposal and realization are release targets,
+not claims that an admitted neural runtime or complete conversation loop exists.
 
-1. **Current CEMM:** five-operator proposition graphs, reviewed semantic authority, bounded proof inference.
-2. **True-hybrid runtime:** session/event lifecycle, four semantic modes, obligations, exact effect ownership.
-3. **Neural MVP:** a real trainable PyTorch semantic proposal boundary.
-
-The runtime pipeline is:
+The target runtime pipeline is:
 
 ```text
 closed-class form evidence + reviewed/world designations
@@ -89,32 +90,54 @@ mother_in_law(Alice, Bob)
 → marital_status(Bob, married)
 ```
 
-## Neural model
+## Neural model target
 
-A PyTorch Transformer independently encodes:
+The retained neural design uses a PyTorch Transformer to encode:
 
 - normalized input plus closed-class/semantic features;
 - candidate graph-action token sequence.
 
-A learned cross-encoder-style scorer ranks candidate programs. The model owns ranking only. Exact owners validate and compile programs, group derivational duplicates by expression, and retain truth, effects and semantic realization-equivalence authority. Normal surface choice may be learned but remains constrained and round-trip verified.
+A learned scorer is intended to rank candidate programs; ranking cannot own
+semantic authority. Exact owners validate and compile programs, group derivations
+by expression, and retain truth, effects and realization-equivalence authority.
+This describes a conditional model target, not current learned activation.
+
+Graph validity, intended-meaning correspondence, evidential support and permission
+are distinct judgments. Same-parser round-trip proves consistency under that
+parser; independently specified contrasts must also test human meaning. Internal
+atom kind is not a definition, and proof of that different proposition is not a
+correct answer to a definition request.
 
 ## R3 cognition and R4 reviewed-data activation
 
-R3 consumes only selected `VerifiedMeaning.expression` plus an independently verified `SituationContext`. It emits one canonical Decision, exactly one Effect/No-Effect receipt, and one `ResponseMeaning`, then stops at the R5 surface-realization contract. Program identity is derivation lineage only.
+R3's semantic contract consumes selected `VerifiedMeaning.expression` plus an
+independently verified `SituationContext`, producing a canonical Decision,
+exactly one Effect/No-Effect receipt and one `ResponseMeaning`. Program identity
+remains derivation lineage. Normal learned surface realization remains subject
+to R5 admission rather than being implied by a selected expression.
 
-**Closure stopped.** The
-[bounded closure design](superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
-records a STOPPED/BLOCKED result at the unresolved-designation ProposalContext/
-application-frame boundary. The approved
-[unresolved-designation design](superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md)
-owns the representation correction and a later evidence-only research handoff.
-The approved
-[implementation plan](superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md)
-governs the isolated repair. Tasks 1–3 are reviewed; the vertical path remains
-incomplete. Its Task 4 preflight requires a reviewed form-evidence
-amendment before unresolved query-frame emission. Bulk authoring, review,
-artifact generation and training remain frozen. The stop is not a seventh
-phase, another gate or a new ABI.
+The approved [foundation amendment](superpowers/specs/2026-09-07-foundation-proof-corrective-amendment.md)
+and [implementation plan](superpowers/plans/2026-09-07-foundation-proof-implementation-plan.md)
+own current execution. Inspect the whole independent semantic matrix before
+choosing dependency repairs. The September 3 closure and unresolved-designation
+designs/plans are historical evidence, including their exact stops and reusable
+acyclic-frame/canonical-designation work. The historical known-definition green
+proved traversal despite a false atom-kind answer; removing that answer is only
+containment, with open-query and useful-response acceptance still required.
+
+An explicitly development-only compositional response reference may use existing
+semantic owners before R5. It preserves roles, scopes, perspective, provenance
+and uncertainty; it cannot become a release fallback, a second semantic runtime
+or purported learned output. Normal verified focus still requires exact
+realization equivalence. This adds no phase or gate.
+
+Bulk R4.1 authoring, review/export, purpose allocation, realization-recipe review,
+corpus expansion and source-package publication remain frozen. R5 training,
+selection, calibration, frozen evaluation and realization activation remain
+unavailable until fresh R4.1 admission. No pilot training is authorized before
+that admission plus explicit isolated R4.1-compliant data authorization. Later
+research is a separate bounded permissioned evidence consumer; no network adapter
+is authorized by the foundation increment.
 
 R4.1 separates duplicate-risk grouping from semantic stratification. Reviewed
 lineage groups prevent source, paraphrase, normalization, mutation and
@@ -134,13 +157,15 @@ bootstrap proposal output remains diagnostic lineage and cannot become gold.
 The R5 hard-cut foundation is shaped so its source, owner and phase gates pass
 independently while admission remains unavailable until a separately reviewed
 activation increment provides its missing owners. This is a static architectural
-boundary, not a replay-status claim. Current status is derived only from the
-replay ledger named above; this document is not admission evidence.
+boundary subordinate to the foundation-proof amendment, not a replay-status
+claim. Current status is derived only from the replay ledger named above; this
+document is not admission evidence.
 
 The foundation authenticates the artifact, proposal, data-isolation,
 realization and legacy-hard-cut boundaries without claiming that neural proposal
-or realization is active. Release training can open the authenticated,
-authorization- and capability-bound canonical train partition only. The isolated
+or realization is active. Only after fresh R4.1 admission may release training
+open the authenticated, authorization- and capability-bound canonical train
+partition. The isolated
 consumer receives one immutable train snapshot and its provenance; it receives
 no sibling class path, hash, ref, count, payload, or manifest identity. The
 `train`, `selection`, `calibration`, and `frozen_test` names are current R4

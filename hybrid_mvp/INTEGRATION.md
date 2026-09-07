@@ -29,8 +29,9 @@ identities are derived only from
 does not copy or promote phase status. If the ledger is absent or fails
 validation, no prose summary or inherited receipt can promote a replay phase.
 
-The corrective investigation found upstream contract, data and runtime drift,
-not insufficient training:
+The inherited milestone investigation recorded upstream contract, data and
+runtime drift, not insufficient training. The following are historical findings,
+not a fresh inventory of current owners:
 
 - M1's validation receipt is too weak (`--profile` mostly changes the label).
 - M2 introduced two incompatible `SemanticSwitchProgram`/`ProposalResult`
@@ -49,20 +50,29 @@ pipeline, not a release or replay receipt.
 
 ## Next steps
 
-Proceed under the [August 29 R4.1 data/supervision amendment](docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md),
-the [semantic-algebra amendment](docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md),
-the [R4 closure-slice design](docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md),
-and the [document authority map](docs/DOCUMENT_AUTHORITY.json). **Closure
-stopped:** the slice is STOPPED/BLOCKED at the unresolved-designation
-representation boundary. The approved
-`docs/superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md`
-owns the repair together with the approved
-[implementation plan](docs/superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md).
-Tasks 1–3 are reviewed; the vertical path remains incomplete.
-Task 4 cannot emit an unresolved query frame until a reviewed form-evidence amendment
-supplies the missing interrogative form distinction. Bulk review,
-authoring, regeneration and training remain stopped.
+Proceed under the approved
+[foundation amendment](docs/superpowers/specs/2026-09-07-foundation-proof-corrective-amendment.md)
+and [implementation plan](docs/superpowers/plans/2026-09-07-foundation-proof-implementation-plan.md),
+with the [document authority map](docs/DOCUMENT_AUTHORITY.json) defining precedence.
+Preserve the August 29 data/supervision and August 2 semantic-algebra laws.
+The September 3 closure and narrow unresolved-designation routes are historical;
+their completed acyclic frame and canonical designation work remains reusable.
+
+Correct stale documentation first, specify the complete independent semantic
+matrix, remove false atom-kind definition answers and repair the earliest query,
+uncertainty, learning and response owners. Graph validity is distinct from
+intended meaning and supported answers. Containment alone does not complete
+definition support or the conversation loop.
+
+A development-only compositional response reference through existing owners is
+permitted, not a learned surface or product fallback. It preserves provenance,
+scope and perspective and cannot bypass normal verified-focus equivalence.
+Bulk R4.1 authoring, review/export, purpose allocation, realization-recipe review,
+corpus expansion and package publication remain frozen.
 
 R5 training, selection, calibration, frozen evaluation and realization
 activation are unavailable until a fresh R4.1 admission proves meaningful
 purpose-class semantic coverage and independent derivation/realization gold.
+No pilot training is authorized before that admission and explicit isolated
+R4.1-compliant data authorization. This increment authorizes no network research
+adapter, root adoption, new phase or new gate.

@@ -1,5 +1,18 @@
 # Hybrid MVP Corrective Replay Master Plan
 
+> **Subordinate dependency / superseded sequencing notice (2026-09-07):** The [foundation amendment](../specs/2026-09-07-foundation-proof-corrective-amendment.md)
+> and [current plan](2026-09-07-foundation-proof-implementation-plan.md)
+> own current execution; retained data, isolation, provenance and hard-cut laws
+> below remain binding. Only `governance/replay_status.jsonl` owns phase status.
+> A development-only semantic/response reference is permitted through existing
+> owners; it is not learned output, a normal fallback or R5 activation, and cannot
+> bypass normal verified-focus equivalence. Bulk R4.1 authoring, review/export,
+> purpose allocation, realization-recipe review, corpus expansion and publication
+> remain frozen. R5 training, selection, calibration, frozen evaluation and
+> activation remain unavailable until fresh R4.1 admission. No pilot training is
+> authorized before that admission and explicit isolated R4.1-compliant data
+> authorization. Older task sequencing cannot override this boundary.
+
 > **Historical progress notice (2026-08-13):** The phase allocation remains a
 > governing design, but status, paths, and completed execution steps in the body
 > are historical snapshots. Status is derived only from
@@ -8,6 +21,11 @@
 > partition assignment, intersection allowlist, and external-review steps are
 > narrowly superseded by the 2026-08-14 partition corrective design and plan;
 > the remaining phase allocation stays governing.
+
+The preceding August 13 notice is a historical snapshot: its August 14
+partition route was subsequently superseded by the August 29 data/supervision
+amendment. Current foundation execution follows the September 7 notice above;
+neither older route authorizes bulk data work or training.
 
 > **For Codex:** REQUIRED SUB-SKILL: Use `subagent-driven-development` to execute each detailed phase plan task-by-task, with test-first implementation, contract review, code-quality review, and controller verification.
 

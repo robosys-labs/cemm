@@ -14,25 +14,29 @@ completion claims cannot authorize current work. Files in `historical_evidence`
 record completed tranches, analysis or generated evidence and own no current
 execution or phase status.
 
-The 2026-08-29 R4.1 data/supervision amendment is subordinate only to
-`AGENTS.md`. It rejects the two defective partition generations and owns the
-fresh R4.1 prerequisites for R5. The 2026-08-02 semantic-algebra amendment
-continues to distinguish `SemanticSwitchProgram` derivation from canonical
-`SemanticExpression` meaning. Neither amendment reactivates a superseded plan.
+Immediately beneath `AGENTS.md`, the approved
+[foundation amendment](superpowers/specs/2026-09-07-foundation-proof-corrective-amendment.md)
+and [implementation plan](superpowers/plans/2026-09-07-foundation-proof-implementation-plan.md)
+own the current execution route. The August 29 R4.1 amendment follows them and
+retains every data/supervision protection and fresh R4.1 prerequisite for R5.
+The August 2 semantic-algebra amendment still distinguishes program derivation
+from canonical expression meaning. No document reactivates a superseded plan.
 
-**Closure stopped.** The
-[R4 closure design](superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
-records a STOPPED/BLOCKED result at the unresolved-designation representation
-boundary. The approved
-[unresolved-designation design](superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md)
-owns the correction and constrains its later research handoff. The approved
-[implementation plan](superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md)
-governs the isolated repair. Tasks 1–3 are reviewed; the vertical path remains
-incomplete. Task 4 requires a reviewed form-evidence amendment
-before unresolved builder emission. All bulk R4.1 review, authoring, export,
-regeneration and training workflows remain suspended. The former implementation
-plan is historical evidence and owns no current execution authority. This
-routing adds no new phase, gate, ABI or runtime owner.
+Both September 3 closure and unresolved-designation design/plan pairs are
+historical evidence. Preserve their task bodies, exact stop records and valid
+acyclic-frame/canonical-designation work, but do not follow their old narrow
+Task 4 or stop-at-first-unrelated-failure route. The September 7 audit is also
+historical evidence, not admission authority. Current work inspects the complete
+independent foundation matrix and repairs earliest semantic owners. A historical
+known-definition traversal pass does not prove correct intended meaning, and
+containment of its false atom-kind answer does not complete useful query support.
+
+The development-only compositional response reference is permitted through
+existing owners under the foundation amendment. It is not learned output,
+release activation or a normal fallback, and cannot bypass normal verified-focus
+equivalence. Bulk R4.1 authoring, review/export, purpose allocation, realization-
+recipe review, corpus expansion and package publication remain frozen. This
+routing adds no phase, gate or parallel semantic runtime.
 
 Current replay status and exact admission identities are derived only from
 [`governance/replay_status.jsonl`](../governance/replay_status.jsonl). This page
@@ -43,3 +47,6 @@ independent gold, or R4.1 admission.
 R5 training, selection, calibration, frozen evaluation and realization
 activation are unavailable until a fresh R4.1 admission proves meaningful
 purpose-class semantic coverage and independent derivation/realization gold.
+No pilot training is authorized before fresh R4.1 admission plus explicit
+isolated R4.1-compliant data authorization. Root adoption and network research
+adapters remain outside the foundation increment.

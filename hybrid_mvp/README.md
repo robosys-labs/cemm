@@ -1,8 +1,9 @@
 # CEMM Authoritative Hybrid MVP
 
-An isolated, executable neural-symbolic semantic cognition runtime that combines
-CEMM's strongest exact semantics with a true-hybrid ownership model and a real
-trainable PyTorch ranker.
+An isolated development proof for a neural-symbolic semantic cognition runtime.
+Its target combines CEMM's exact semantics with learned proposal and realization;
+an admitted learned model and a complete useful conversation loop are not claimed.
+Current work repairs and tests the interpretation-to-answer foundation.
 
 **Runtime cutover: hard.** This is a hard cutover from the legacy stage-bound
 runtime. It carries no backward-compatible runtime, ABI adapter, legacy
@@ -40,26 +41,32 @@ Current replay status and exact admission identities are derived only from
 [`governance/replay_status.jsonl`](governance/replay_status.jsonl). This page
 does not copy or promote phase status. Use
 [`docs/DOCUMENT_AUTHORITY.json`](docs/DOCUMENT_AUTHORITY.json) for document
-precedence and the [August 29 R4.1 amendment](docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md)
-for the current data and supervision repair boundary.
+precedence. The approved
+[foundation amendment](docs/superpowers/specs/2026-09-07-foundation-proof-corrective-amendment.md)
+and [implementation plan](docs/superpowers/plans/2026-09-07-foundation-proof-implementation-plan.md)
+own current work, with the
+[August 29 R4.1 amendment](docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md)
+retaining all data and supervision protections. The September 3 closure and
+unresolved-designation documents are historical evidence, not the active route.
 
-**Closure stopped.** The
-[R4 closure design](docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md)
-records a STOPPED/BLOCKED result at the unresolved-designation representation
-boundary. The approved
-[unresolved-designation design](docs/superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md)
-owns the repair and its future evidence-only self-research handoff. The approved
-[implementation plan](docs/superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md)
-now governs the isolated repair. Tasks 1–3 are reviewed; the vertical path
-remains incomplete. Its Task 4 preflight records missing interrogative
-form evidence, so unresolved builder emission requires a reviewed form-evidence amendment.
-Bulk corpus authoring, review, regeneration
-and training remain frozen, and R5 remains unavailable until a future
-successful closure rerun and authentic R4.1 admission.
+Exact graph acceptance is not proof that the graph answers the intended question.
+The historical known-definition pass established traversal despite an incorrect
+atom-kind answer. Removing that answer is containment; useful open-query and
+response behavior remain separate acceptance obligations. Inspect the complete
+independent foundation matrix before repairing its missing semantic owners.
+
+An explicitly development-only compositional response reference is permitted
+through existing owners. It is not learned output, a product fallback or release
+activation, and cannot bypass exact equivalence for normal verified focus.
+Bulk R4.1 authoring, review/export, purpose allocation, realization-recipe review,
+corpus expansion and source-package publication remain frozen.
 
 R5 training, selection, calibration, frozen evaluation and realization
 activation are unavailable until a fresh R4.1 admission proves meaningful
 purpose-class semantic coverage and independent derivation/realization gold.
+No pilot training is authorized before fresh R4.1 admission and explicit isolated
+R4.1-compliant data authorization. No network research adapter is authorized by
+the foundation increment.
 
 `SemanticSwitchProgram` is a construction procedure, not canonical meaning.
 Program identity is ordered and includes every dynamic pointer and binding.
@@ -100,9 +107,10 @@ kernel operators or phrase intents.
 - Capability, permission and adapter dependencies are checked independently.
 - Queries and simulations cannot mutate world memory.
 - Attributed content is not automatically admitted as world truth.
-- Normal realization is constrained and learned; emission is authorized only
+- The release realization target is constrained and learned; emission is authorized only
   after round-trip canonical-expression equivalence plus situated qualifiers.
-  Static text is limited to closed critical-failure semantics.
+  Release static text is limited to closed critical-failure semantics; the
+  foundation's development-only reference is not a release path.
 
 ## Frozen configuration
 
@@ -148,6 +156,8 @@ unverified surfaces.
 
 - [`AGENTS.md`](AGENTS.md) — Hybrid MVP constitution and hard-cutover contract.
 - [`docs/DOCUMENT_AUTHORITY.json`](docs/DOCUMENT_AUTHORITY.json) — machine-readable document precedence and scope.
+- [Foundation proof amendment](docs/superpowers/specs/2026-09-07-foundation-proof-corrective-amendment.md) — current semantic/response proof contract, with no phase admission.
+- [Foundation proof implementation plan](docs/superpowers/plans/2026-09-07-foundation-proof-implementation-plan.md) — single current execution checklist.
 - [`docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md`](docs/superpowers/specs/2026-08-29-r4-1-data-supervision-corrective-amendment.md) — current R4.1 data/supervision repair contract and R5 prerequisite.
 - [`docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md`](docs/superpowers/specs/2026-08-02-hybrid-semantic-algebra-corrective-replay-amendment.md) — active Program→Expression corrective amendment.
 - [`docs/REPLAY_GOVERNANCE.md`](docs/REPLAY_GOVERNANCE.md) — precedence, evidence and status-ownership boundaries.

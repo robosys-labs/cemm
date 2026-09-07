@@ -1,10 +1,19 @@
 # R4 Closure Slice and Anti-Recursion Design
 
+> **Historical evidence — superseded on 2026-09-07; no execution authority.**
+> The [foundation amendment](2026-09-07-foundation-proof-corrective-amendment.md)
+> and [current plan](../plans/2026-09-07-foundation-proof-implementation-plan.md)
+> replace this document's sequencing and stop rules. Only
+> `governance/replay_status.jsonl` owns replay status and admission identities.
+> Original case, task and stop evidence below is preserved as recorded, not
+> current direction. The known-definition green proved traversal, not semantic
+> correctness: its atom-kind answer is retired, not genuine definition support.
+
 **Date:** 2026-09-03
-**Status:** STOPPED / BLOCKED at the unresolved-designation representation boundary
+**Historical status:** STOPPED / BLOCKED at the unresolved-designation representation boundary
 **Scope:** recorded closure stop and freeze boundary for `hybrid_mvp/` R4.1
 
-This design is subordinate only to `AGENTS.md` and the August 29 R4.1
+At publication, this design was subordinate to `AGENTS.md` and the August 29 R4.1
 data/supervision amendment. It constrains the older R4.1 replay and
 source-readiness plans until the closure result is recorded. Current replay
 status remains owned only by `governance/replay_status.jsonl`.
@@ -82,7 +91,8 @@ internal-ref spelling, and a raw-surface/phrase branch for this question.
 
 The bounded execution result is:
 
-- `What is CEMM?` passed the selected semantic path;
+- `What is CEMM?` passed the selected semantic path (traversal only, not
+  intended-meaning or definition correctness);
 - the direct invalid Program ABI 2 mutation passed by receiving the expected
   typed VERIFY rejection;
 - `What is zorbulate?` remains intentionally RED at PROPOSE with

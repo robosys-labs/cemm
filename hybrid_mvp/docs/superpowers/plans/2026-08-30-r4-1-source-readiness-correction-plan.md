@@ -1,5 +1,18 @@
 # R4.1 Source-Readiness Correction Implementation Plan
 
+> **Subordinate dependency notice (2026-09-07):** The [foundation amendment](../specs/2026-09-07-foundation-proof-corrective-amendment.md)
+> and [current plan](2026-09-07-foundation-proof-implementation-plan.md)
+> own current execution; retained data, isolation, provenance and hard-cut laws
+> below remain binding. Only `governance/replay_status.jsonl` owns phase status.
+> A development-only semantic/response reference is permitted through existing
+> owners; it is not learned output, a normal fallback or R5 activation, and cannot
+> bypass normal verified-focus equivalence. Bulk R4.1 authoring, review/export,
+> purpose allocation, realization-recipe review, corpus expansion and publication
+> remain frozen. R5 training, selection, calibration, frozen evaluation and
+> activation remain unavailable until fresh R4.1 admission. No pilot training is
+> authorized before that admission and explicit isolated R4.1-compliant data
+> authorization. Older task sequencing cannot override this boundary.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > `subagent-driven-development` (recommended) or `executing-plans` to implement
 > this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

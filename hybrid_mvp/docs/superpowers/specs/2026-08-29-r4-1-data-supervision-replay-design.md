@@ -1,5 +1,18 @@
 # R4.1 Data and Supervision Corrective Replay Design
 
+> **Subordinate dependency notice (2026-09-07):** The [foundation amendment](2026-09-07-foundation-proof-corrective-amendment.md)
+> and [current plan](../plans/2026-09-07-foundation-proof-implementation-plan.md)
+> own current execution; retained data, isolation, provenance and hard-cut laws
+> below remain binding. Only `governance/replay_status.jsonl` owns phase status.
+> A development-only semantic/response reference is permitted through existing
+> owners; it is not learned output, a normal fallback or R5 activation, and cannot
+> bypass normal verified-focus equivalence. Bulk R4.1 authoring, review/export,
+> purpose allocation, realization-recipe review, corpus expansion and publication
+> remain frozen. R5 training, selection, calibration, frozen evaluation and
+> activation remain unavailable until fresh R4.1 admission. No pilot training is
+> authorized before that admission and explicit isolated R4.1-compliant data
+> authorization. Older task sequencing cannot override this boundary.
+
 **Date:** 2026-08-29
 
 **Status:** approved design; implementation and activation pending

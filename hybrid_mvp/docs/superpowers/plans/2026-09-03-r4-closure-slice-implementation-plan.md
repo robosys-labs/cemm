@@ -1,11 +1,20 @@
 # R4 Closure Slice Historical Stop Record
 
+> **Historical evidence — superseded on 2026-09-07; no execution authority.**
+> The [foundation amendment](../specs/2026-09-07-foundation-proof-corrective-amendment.md)
+> and [current plan](2026-09-07-foundation-proof-implementation-plan.md)
+> own current work, not the stopped closure design. Only
+> `governance/replay_status.jsonl` owns replay status and admission identities.
+> Original stop evidence remains below. The known-definition green proved
+> traversal, not semantic correctness: its atom-kind answer is retired, and
+> suppressing that answer alone does not establish definition support.
+
 **Classification:** historical evidence; no execution authority
 
 Recorded closure outcome: STOPPED / BLOCKED on 2026-09-03. Current replay
 status remains owned only by `governance/replay_status.jsonl`.
 
-Current authority is the governing stopped design at
+Authority at the recorded stop was the design at
 `docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md`.
 Operational coordination evidence is recorded at
 `docs/superpowers/progress/2026-08-29-r4-1-data-supervision-replay-progress.md`.
@@ -41,7 +50,8 @@ No implementation may begin until that design is approved.
 
 - Task 0 completed in prerequisite commit `c3e6739`.
 - Task 1 froze the twelve-row matrix and the first three acceptance rows.
-- `What is CEMM?` traversed the selected semantic path.
+- `What is CEMM?` traversed the selected semantic path; this did not establish
+  intended-meaning or definition correctness.
 - The direct invalid Program ABI 2 mutation received its expected typed VERIFY
   rejection.
 - `What is zorbulate?` remains intentionally RED at PROPOSE with

@@ -120,10 +120,9 @@ R4_1_REPLAY_PROGRESS = (
 
 GOVERNING_DOCUMENTS = (
     "AGENTS.md",
+    "docs/superpowers/specs/2026-09-07-foundation-proof-corrective-amendment.md",
+    "docs/superpowers/plans/2026-09-07-foundation-proof-implementation-plan.md",
     R4_1_AMENDMENT,
-    R4_CLOSURE_SLICE_DESIGN,
-    UNRESOLVED_DESIGNATION_DESIGN,
-    UNRESOLVED_DESIGNATION_PLAN,
     SEMANTIC_ALGEBRA_AMENDMENT,
     R4_1_REPLAY_DESIGN,
     R4_1_REPLAY_PLAN,
@@ -180,11 +179,15 @@ HISTORICAL_EVIDENCE = (
     "docs/superpowers/plans/2026-08-13-r5-hard-cut-foundation-plan.md",
     "docs/superpowers/plans/2026-08-29-hybrid-authority-cleanup-plan.md",
     R4_CLOSURE_SLICE_PLAN,
+    UNRESOLVED_DESIGNATION_PLAN,
     "docs/superpowers/progress/2026-08-14-r4-partition-corrective-replay-progress.md",
     "docs/superpowers/progress/2026-08-22-r5-r6-plan-readiness-review.md",
     R4_1_REPLAY_PROGRESS,
+    "docs/superpowers/progress/2026-09-07-cemm-goal-and-foundation-audit.md",
     "docs/superpowers/specs/2026-08-12-r1-legacy-test-retirement-design.md",
     "docs/superpowers/specs/2026-08-29-hybrid-authority-cleanup-design.md",
+    R4_CLOSURE_SLICE_DESIGN,
+    UNRESOLVED_DESIGNATION_DESIGN,
     "artifacts/",
 )
 

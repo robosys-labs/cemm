@@ -16,14 +16,17 @@ structure is deleted.
 This contract governs only `hybrid_mvp/`. The repository-root `../AGENTS.md`
 continues to govern the root runtime, and Hybrid MVP adoption at root requires a
 separate reviewed decision. Document precedence within this subtree is owned by
-`docs/DOCUMENT_AUTHORITY.json`. The approved 2026-08-29 R4.1 data/supervision
-amendment has precedence over conflicting partition, feasibility,
-proposal-gold, realization-target, and calibration instructions in earlier
-Hybrid documents. It does not promote a phase or reactivate a superseded plan.
-The 2026-08-02 semantic-algebra amendment and the 2026-07-31 corrective-replay
-design/plans retain their classified authority beneath it. Generated artifacts
-and inherited receipts are evidence, not authority. The append-only replay
-status ledger is introduced by G0 Task 2.
+`docs/DOCUMENT_AUTHORITY.json`. Immediately beneath this contract, the approved
+2026-09-07 foundation-proof amendment and implementation plan own the current
+execution route. They supersede the September 3 closure and narrow unresolved-
+designation sequencing, not the August 29 R4.1 data/supervision protections.
+The August 29 amendment retains precedence over conflicting older partition,
+feasibility, proposal-gold, realization-target and calibration instructions.
+The August 2 semantic-algebra amendment and July 31 corrective-replay laws
+retain their classified authority beneath these documents. Generated artifacts,
+the September 7 audit and inherited receipts are evidence, not authority.
+Only `governance/replay_status.jsonl` owns replay status and admission identities;
+this routing neither promotes a phase nor reactivates a superseded plan.
 
 ## 1. Unchanging thesis
 
@@ -185,39 +188,42 @@ behind permissive fallback behaviour. No active release test may use skip or
 xfail markers; final release gates contain zero skips, xfails, xpasses,
 fallback paths, compatibility adapters or unverified surfaces.
 
-## 8. Current anti-recursion closure contract
+## 8. Current foundation-proof contract
 
-**Closure stopped.** The fixed R4 closure slice governed by
-`docs/superpowers/specs/2026-09-03-r4-closure-slice-anti-recursion-design.md`
-is STOPPED/BLOCKED at the unresolved-designation ProposalContext/application-
-frame representation boundary. The approved
-`docs/superpowers/specs/2026-09-03-unresolved-designation-and-research-handoff-design.md`
-now owns that repair together with the approved
-`docs/superpowers/plans/2026-09-03-unresolved-designation-implementation-plan.md`.
-The approved acyclic ownership amendment retains `VariableSlot -> frame`
-ownership and forbids a reciprocal hashed variable pointer on the frame.
-Task 2 repair passed renewed spec and quality review at `aeaad1f`; Task 3 passed
-both reviews at `40151e8`. Task 4 preflight found no interrogative
-distinction between designation and location questions; a reviewed form-evidence
-amendment is required before unresolved builder emission. This does not
-admit the ABI change or reopen bulk R4.1/R5 work.
+The approved
+[foundation amendment](docs/superpowers/specs/2026-09-07-foundation-proof-corrective-amendment.md)
+and [implementation plan](docs/superpowers/plans/2026-09-07-foundation-proof-implementation-plan.md)
+own current work. Inspect the complete independent semantic case matrix, record
+missing owners together and repair the earliest dependencies. The September 3
+closure and unresolved-designation designs/plans are historical evidence; their
+stop-at-first-unrelated-failure route no longer governs. Preserve their exact
+stop records and independently valid acyclic frame/canonical designation work.
+Task 2 may first contain the already-audited false atom-kind answer; broader
+capability repairs follow the independent matrix, as the amendment specifies.
 
-Bulk R4.1 authoring, purpose allocation, realization-recipe review, corpus
-expansion, source-package publication and all R5 work remain frozen. The old
-closure implementation plan is historical evidence and carries no execution
-authority.
+Keep graph validity, intended-meaning correspondence, evidential support and
+permission/current executability separate. The historical known-definition
+pass proved traversal, not a correct definition. The atom-kind answer to a
+generic question is retired; suppressing it is containment, not completion of
+definition/query projection or a useful response loop. Same-parser round-trip
+consistency still requires independent meaning contrasts.
 
-Review workflows are suspended. Existing working selections and action logs
-are diagnostic evidence only; they must not be exported, admitted or treated
-as semantic gold. The review UI, guided review, assistant pre-review and
-reviewer-identity plans cannot authorize current work.
+The foundation permits an explicitly development-only compositional response
+reference through existing semantic owners. It must preserve roles, scopes,
+perspective, provenance and uncertainty; it is neither learned output, a normal
+fallback nor a second semantic runtime. Normal verified focus still requires
+the existing exact realization-equivalence checks. No new phase or gate is added.
 
-The intentional unknown-designation RED and its diagnostic context test remain
-evidence of the blocker. They do not authorize a fake designation identity,
-default-to-concept target, internal-ref lexicalization or surface-phrase
-dispatch. R5 remains unavailable until a future approved design is implemented,
-the fixed closure is rerun successfully and fresh R4.1 admission exists.
+Bulk R4.1 authoring, review/export, purpose allocation, realization-recipe review,
+corpus expansion and source-package publication remain frozen. Historical review
+selections and action logs are diagnostic evidence, not semantic gold. R5
+training, selection, calibration, frozen evaluation and realization activation
+remain unavailable until fresh R4.1 admission; no pilot training is authorized
+before that admission and explicit isolated R4.1-compliant data authorization.
 
-External lexical or encyclopedic research is a later, permissioned consumer of
-the exact unknown QueryResult. It cannot participate in R4 grounding/proposal,
-make the closure pass, auto-admit meaning or publish authority.
+No fake designation, default-to-concept target, internal-ref lexicalization or
+surface-phrase dispatch is authorized. Existing-target alias learning retains
+capability, permission, provenance and transactional effect checks; new identity
+acquisition remains separate. Later external research is a bounded permissioned
+consumer of an exact unknown QueryResult, never grounding or automatic authority.
+This increment authorizes no network adapter or root adoption.
