@@ -15,11 +15,16 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+from collections import OrderedDict
 from dataclasses import dataclass, field
+from itertools import islice
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, Sequence
 
 from .canonical import canonical_bytes, stable_ref, stable
+
+if TYPE_CHECKING:
+    from .dialogue import VerifiedSemanticFocus
 
 __all__ = [
     "StaleRevisionError",
@@ -803,20 +808,28 @@ class _SQLiteFocusStore:
         )
 
     def commit(self, focus_ref: str, session_ref: str, payload: Mapping[str, Any], *, expected_revision: int) -> CommitReceipt:
+        if type(focus_ref) is not str or not focus_ref:
+            raise TypeError("focus_ref must be exact nonempty str")
+        if type(session_ref) is not str or not session_ref:
+            raise TypeError("session_ref must be exact nonempty str")
         if expected_revision != self.revision:
             raise StaleRevisionError(f"focus: expected {expected_revision}, got {self.revision}")
         new_revision = self.revision + 1
-        data = {**dict(payload), "focus_ref": focus_ref, "session_ref": session_ref}
-        delta_hash = _payload_hash(data)
+        payload_json = json.dumps(
+            {**dict(payload), "focus_ref": focus_ref, "session_ref": session_ref},
+            sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+        )
+        # Hash the stored JSON value, including tuple-to-list normalization.
+        delta_hash = _payload_hash(json.loads(payload_json))
         transaction_ref = stable_ref("txn", {"store": "focus", "parent": expected_revision, "delta_hash": delta_hash})
         self._conn.execute("BEGIN IMMEDIATE")
         try:
             self._conn.execute(
                 "INSERT INTO focus(focus_ref, session_ref, payload_json, payload_hash, revision) "
                 "VALUES(?, ?, ?, ?, ?) "
-                "ON CONFLICT(focus_ref) DO UPDATE SET payload_json=excluded.payload_json, "
+                "ON CONFLICT(focus_ref) DO UPDATE SET session_ref=excluded.session_ref, payload_json=excluded.payload_json, "
                 "payload_hash=excluded.payload_hash, revision=excluded.revision",
-                (focus_ref, session_ref, json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False), delta_hash, new_revision),
+                (focus_ref, session_ref, payload_json, delta_hash, new_revision),
             )
             self._save_revision(new_revision)
             self._conn.commit()
@@ -831,6 +844,19 @@ class _SQLiteFocusStore:
             "SELECT payload_json FROM focus WHERE focus_ref = ?", (focus_ref,)
         ).fetchone()
         return json.loads(row[0]) if row else None
+
+    def recent_rows(self, maximum: int, session_ref: str | None) -> tuple:
+        # Both orderings have physical indexes. Session selection precedes LIMIT.
+        where = "" if session_ref is None else " WHERE session_ref=?"
+        parameters = (maximum,) if session_ref is None else (session_ref, maximum)
+        return tuple(
+            (ref, session, json.loads(payload), payload_hash, revision)
+            for ref, session, payload, payload_hash, revision in self._conn.execute(
+                "SELECT focus_ref, session_ref, payload_json, payload_hash, revision "
+                f"FROM focus{where} ORDER BY revision DESC, focus_ref LIMIT ?",
+                parameters,
+            )
+        )
 
     def verify(self) -> tuple[str, ...]:
         corrupt: list[str] = []
@@ -1022,6 +1048,8 @@ CREATE TABLE IF NOT EXISTS focus (
     payload_hash TEXT NOT NULL,
     revision INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS focus_session_recent ON focus(session_ref, revision DESC, focus_ref);
+CREATE INDEX IF NOT EXISTS focus_recent ON focus(revision DESC, focus_ref);
 CREATE TABLE IF NOT EXISTS obligations (
     obligation_ref TEXT PRIMARY KEY,
     session_ref TEXT NOT NULL,
@@ -1270,19 +1298,41 @@ class _MemoryFocusStore:
     def __init__(self) -> None:
         self.revision = 0
         self._focus: dict[str, dict[str, Any]] = {}
+        self._recent: OrderedDict[str, tuple[str, str, int]] = OrderedDict()
+        self._session_recent: dict[str, OrderedDict[str, None]] = {}
 
     def commit(self, focus_ref: str, session_ref: str, payload: Mapping[str, Any], *, expected_revision: int) -> CommitReceipt:
+        if type(focus_ref) is not str or not focus_ref:
+            raise TypeError("focus_ref must be exact nonempty str")
+        if type(session_ref) is not str or not session_ref:
+            raise TypeError("session_ref must be exact nonempty str")
         if expected_revision != self.revision:
             raise StaleRevisionError(f"focus: expected {expected_revision}, got {self.revision}")
-        delta_hash = _payload_hash(payload)
+        data = json.loads(json.dumps({**dict(payload), "focus_ref": focus_ref, "session_ref": session_ref}))
+        delta_hash = _payload_hash(data)
         transaction_ref = stable_ref("txn", {"store": "focus", "parent": expected_revision, "delta_hash": delta_hash})
         new_revision = self.revision + 1
-        self._focus[focus_ref] = {**dict(payload), "focus_ref": focus_ref, "session_ref": session_ref}
+        previous = self._recent.pop(focus_ref, None)
+        if previous is not None:
+            previous_session = previous[0]
+            del self._session_recent[previous_session][focus_ref]
+            if not self._session_recent[previous_session]:
+                del self._session_recent[previous_session]
+        self._focus[focus_ref] = data
+        self._recent[focus_ref] = (session_ref, delta_hash, new_revision)
+        self._session_recent.setdefault(session_ref, OrderedDict())[focus_ref] = None
         self.revision = new_revision
         return CommitReceipt("focus", expected_revision, new_revision, delta_hash, transaction_ref)
 
     def get(self, focus_ref: str) -> dict[str, Any] | None:
         return self._focus.get(focus_ref)
+
+    def recent_rows(self, maximum: int, session_ref: str | None) -> tuple:
+        index = self._recent if session_ref is None else self._session_recent.get(session_ref, {})
+        return tuple(
+            (ref, self._recent[ref][0], self._focus[ref], self._recent[ref][1], self._recent[ref][2])
+            for ref in islice(reversed(index), maximum)
+        )
 
 
 class _MemoryObligationStore:
@@ -1510,38 +1560,52 @@ class SemanticStores:
             **material,
         }
 
+    def _recent_focus_entries(
+        self, maximum: int, *, session_ref: str | None = None
+    ) -> tuple["VerifiedSemanticFocus", ...]:
+        """Decode only a bounded recent window of trusted persisted records.
+
+        Rows are newest commit first, independently of ref spelling. The upper
+        bound includes the R3 wrapper's overflow sentinel; the dialogue API keeps
+        its own smaller bound. Authentication here proves stored-record integrity
+        and revision consistency, not existence of a realization-equivalence
+        receipt or permission to create new semantic focus.
+        """
+        from .dialogue import VerifiedSemanticFocus
+        from .r3_codec import exact_int, optional_text
+
+        exact_int(maximum, "maximum", maximum=10_000 + 1)
+        optional_text(session_ref, "session_ref")
+        pin = self.revision_pin()
+        focus_revision = self.focus.revision
+        entries = []
+        for ref, session, payload, payload_hash, revision in self.focus.recent_rows(maximum, session_ref):
+            if _payload_hash(payload) != payload_hash:
+                raise ValueError("focus payload hash mismatch")
+            row = VerifiedSemanticFocus.from_dict(payload)
+            if row.focus_ref != ref or row.session_ref != session or (session_ref is not None and session != session_ref):
+                raise ValueError("focus stored key/session mismatch")
+            exact_int(revision, "focus commit revision", minimum=1)
+            if revision > focus_revision:
+                raise ValueError("focus commit revision exceeds current store revision")
+            if row.revision_pin.authority_generation != pin.authority_generation:
+                raise ValueError("focus authority generation differs from active store")
+            if any(getattr(row.revision_pin, name) > getattr(pin, name) for name in (
+                "world_revision", "session_revision", "episode_revision", "effect_revision",
+            )):
+                raise ValueError("focus revision pin exceeds current store revision")
+            entries.append(row)
+        return tuple(entries)
+
     def r3_focus_snapshot(
         self, session_ref: str, *, maximum: int
     ) -> Mapping[str, Any]:
         if type(session_ref) is not str or not session_ref:
             raise TypeError("session_ref must be exact nonempty str")
-        if type(maximum) is not int or isinstance(maximum, bool) or maximum < 1:
+        if type(maximum) is not int or not 1 <= maximum <= 10_000:
             raise ValueError("maximum must be a positive exact int")
-        refs: list[str] = []
-        if isinstance(self._backend, SQLiteSemanticStore):
-            rows = self._backend._conn.execute(
-                "SELECT focus_ref, payload_json FROM focus WHERE session_ref=? "
-                "ORDER BY revision DESC, focus_ref LIMIT ?",
-                (session_ref, maximum + 1),
-            ).fetchall()
-            for row in rows:
-                payload = json.loads(row[1])
-                ref = payload.get("target_ref", payload.get("semantic_ref", row[0]))
-                if type(ref) is str and ref and ref not in refs:
-                    refs.append(ref)
-        else:
-            rows = sorted(
-                (
-                    (ref, payload)
-                    for ref, payload in self._backend.focus._focus.items()
-                    if payload.get("session_ref") == session_ref
-                ),
-                key=lambda row: row[0],
-            )
-            for ref, payload in rows[: maximum + 1]:
-                value = payload.get("target_ref", payload.get("semantic_ref", ref))
-                if type(value) is str and value and value not in refs:
-                    refs.append(value)
+        # These remain record identities, not speech-content projection.
+        refs = [row.focus_ref for row in self._recent_focus_entries(maximum + 1, session_ref=session_ref)]
         if len(refs) > maximum:
             raise ValueError("focus snapshot exceeds its configured bound")
         material = {

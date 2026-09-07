@@ -65,6 +65,7 @@ class VerifiedSemanticFocus:
     def from_dict(cls, value: dict[str, Any]) -> "VerifiedSemanticFocus":
         fields = frozenset({"abi_version", "focus_ref", "expression_refs", "entity_refs", "event_refs", "salience_proof_refs", "participant_ref", "session_ref", "turn_ref", "revision_pin"})
         data = exact_fields(value, fields, "VerifiedSemanticFocus")
+        exact_int(data["abi_version"], "abi_version")
         if data["abi_version"] != DIALOGUE_ABI_VERSION or type(data["revision_pin"]) is not dict: raise ValueError("unsupported Focus ABI")
         rebuilt = cls.create(expression_refs=wire_refs(data["expression_refs"], "expression_refs", nonempty=True), entity_refs=wire_refs(data["entity_refs"], "entity_refs"), event_refs=wire_refs(data["event_refs"], "event_refs"), salience_proof_refs=wire_refs(data["salience_proof_refs"], "salience_proof_refs"), participant_ref=data["participant_ref"], session_ref=data["session_ref"], turn_ref=data["turn_ref"], revision_pin=RevisionPin.from_dict(data["revision_pin"]))
         if rebuilt.focus_ref != data["focus_ref"] or rebuilt.as_dict() != data: raise ValueError("non-canonical focus encoding")
@@ -72,8 +73,18 @@ class VerifiedSemanticFocus:
 
 
 class FocusStore:
+    """Direct dialogue owner with authenticated persisted recent reads.
+
+    ``entries`` and ``refs`` are transient diagnostic views of this instance's
+    additions, not persisted public query support. A read authenticates trusted
+    store records; it does not establish realization-equivalence provenance.
+    Normal focus admission still requires the existing realization-equivalence
+    checks; this read path is not a normal focus writer.
+    """
+
     def __init__(self, stores: SemanticStores | None = None) -> None:
         self._stores = stores; self._entries: list[VerifiedSemanticFocus] = []
+        self._session_entries: dict[str, list[VerifiedSemanticFocus]] = {}
 
     def add(self, focus: VerifiedSemanticFocus) -> None:
         if type(focus) is not VerifiedSemanticFocus: raise TypeError("focus must be exact VerifiedSemanticFocus")
@@ -81,6 +92,7 @@ class FocusStore:
             receipt = self._stores.focus.commit(focus.focus_ref, focus.session_ref, focus.as_dict(), expected_revision=self._stores.focus.revision)
             if receipt.new_revision <= receipt.parent_revision: raise ValueError("focus commit did not advance revision")
         self._entries.append(focus)
+        self._session_entries.setdefault(focus.session_ref, []).append(focus)
 
     @property
     def entries(self) -> tuple[VerifiedSemanticFocus, ...]: return tuple(self._entries)
@@ -89,8 +101,14 @@ class FocusStore:
     def refs(self) -> frozenset[str]:
         return frozenset(ref for row in self._entries for ref in (*row.expression_refs, *row.entity_refs, *row.event_refs))
 
-    def recent_entries(self, n: int) -> tuple[VerifiedSemanticFocus, ...]:
-        exact_int(n, "n", maximum=512); return tuple(self._entries[-n:]) if n else ()
+    def recent_entries(self, n: int, *, session_ref: str | None = None) -> tuple[VerifiedSemanticFocus, ...]:
+        """Return the chosen window oldest to newest, selecting session first."""
+        exact_int(n, "n", maximum=512)
+        optional_text(session_ref, "session_ref")
+        if self._stores is not None:
+            return tuple(reversed(self._stores._recent_focus_entries(n, session_ref=session_ref)))
+        entries = self._entries if session_ref is None else self._session_entries.get(session_ref, [])
+        return tuple(entries[-n:]) if n else ()
 
 
 @dataclass(frozen=True)
@@ -208,7 +226,7 @@ class ReferenceResolver:
 
         entries = tuple(
             row
-            for row in self._focus_store.recent_entries(constraints.recency or 512)
+            for row in self._focus_store.recent_entries(constraints.recency or 512, session_ref=constraints.scope_ref)
             if row.turn_ref != current_turn_ref
             and self._participant_matches(row, constraints.person)
             and self._scope_matches(row, constraints.scope_ref)

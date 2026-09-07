@@ -264,7 +264,7 @@ not be reconnected to bypass these missing active owners.
   early legal-choice propagation without losing valid alternative meanings.
 - [x] Restore stale codec/coverage fixtures and explicitly preserve their
   original safety assertions before the next capability increment.
-- [ ] Restore indexed, bounded, authenticated focus reads across restart in the
+- [x] Restore indexed, bounded, authenticated focus reads across restart in the
   existing persistence/dialogue owners; preserve current window-overflow honesty
   and distinguish this repair from public speech/content integration.
 - [ ] Specify query answer projection explicitly: designation target, type
@@ -360,6 +360,18 @@ authenticated retrieval and restart parity while preserving current overflow
 honesty; then specify a bounded focus window and content projection with explicit
 coverage/frontier behavior before claiming a usable speech-history loop.
 
+Query dependency tracing also distinguishes representation from reachability.
+`UnresolvedDesignationFrame` has an exact context codec, but the current builder
+does not construct it and recursive expansion instantiates frames only through
+selected designations. A valid independent unresolved-frame context therefore
+visits one search state and emits no completed program. The compiler, coverage
+and reconstruction consumers also assume grounded frame fields. Complete this
+existing union coherently before claiming an unknown-lookup path; do not invent
+a designation or target merely to enter the grounded-frame route. The earlier
+generic `What is X?` fixtures do not override this amendment's requirement to
+preserve contextual alternatives. Explicit lexical-query projection, source
+ownership and independent negative contrasts must govern the eventual wiring.
+
 Pre-pruning membership checkpoint: independent source spec review passed. The
 public ordinary-membership matrix case is now green; all 31 new controls pass,
 including English/Spanish reviewed-index aliases, multiword forms, source-gap
@@ -453,6 +465,43 @@ unchanged. Runtime, authority, pack, frozen inventory, ledger and anchors are
 unchanged. Existing configured selectors and the living receipt regenerate
 twice with identical bytes: G0 191, R1 783, R2 1171, R3 1557, R4 1894,
 R5 2019. No owner, tier, runtime gate or compatibility wrapper was added.
+
+Completed restart checkpoint (independent spec and quality passed): direct dialogue reads
+and the active R3 snapshot now share bounded authenticated persisted retrieval.
+SQLite uses session/global recency indexes; memory maintains commit-order indexes
+at writes. Session selection precedes the window, then existing person/turn
+filters apply within it. Retrieved records require exact ABI, payload hash,
+key/session and generation/revision consistency. Raw target/semantic payloads
+cannot become focus. SQL and memory recommits agree; SQL hashes the exact stored
+JSON, repairing the tuple/list normalization defect found in independent review.
+Both commit owners reject invalid focus/session identities before any mutation;
+failed fresh writes and replacements leave payloads, indexes and revisions intact
+and allow valid retry. This repairs the in-memory index corruption caught by
+quality review without imposing a new identifier-length cap.
+
+All 85 focus/restart cases pass, including the original after-reopen case.
+The final authenticated 853-node owner union gives 837 passes / 16 retained
+failures: the three fragment/alias foundation gaps plus the same 13 predecessor/
+source-data gaps. All 56 prior foundation test ASTs, their 139 metadata entries
+and all prior helper functions are unchanged; 83 cases are added. SQLite work is
+59 / 56 / 56 VM steps with 0 / 128 / 4,224 irrelevant-session rows; its global
+bounded query takes 17 steps with 4,096 other records. Memory reads visit exactly
+16 window entries or 17 with the overflow sentinel, without global enumeration.
+
+No normal focus writer, expression-content projection, conversation-window
+policy, ABI or cap change is included. Direct reads retain the 512 bound; the R3
+wrapper retains its 10,000 input maximum and nested JSON sequence limit of 512.
+The active 16-alternative snapshot still reports overflow at 17, and emits record
+identities, not expression content. Canonical record authentication does not
+establish existence of a realization-equivalence receipt. Public speech history
+and fragment completion remain open, not implied by the restored direct owner.
+
+R1/R2/R3 structural scans, authority linking, fresh SQLite activation/reopen/
+integrity and four post-VERIFY canaries pass with unchanged status classes and
+zero world delta. Pack, authority, frozen inventory and ledger are unchanged.
+Configured selectors and the living receipt regenerate twice byte-identically:
+G0 191, R1 783, R2 1171, R3 1640, R4 1977, R5 2102. These are diagnostic
+checkpoints, not replay admission, corpus authorization or root adoption.
 
 ## Task 5 — Prove a complete reference conversation
 

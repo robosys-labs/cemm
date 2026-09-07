@@ -71,6 +71,670 @@ from cemm_authoritative_hybrid.verifier_reconstruction import reconstruct_expect
 ROOT = Path(__file__).parents[1]
 
 __cemm_test_inventory__ = {
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_fresh_identity_is_failure_atomic[unhashable-session]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-fresh-identity-is-failure-atomic-unhashable-session",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "fefbb08c67b05eddfd284db7b85ed7aac5486437f9a6cdd753fd6d9e01bb6c86"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_fresh_identity_is_failure_atomic[unhashable-focus]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-fresh-identity-is-failure-atomic-unhashable-focus",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "fefbb08c67b05eddfd284db7b85ed7aac5486437f9a6cdd753fd6d9e01bb6c86"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_fresh_identity_is_failure_atomic[numeric-session]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-fresh-identity-is-failure-atomic-numeric-session",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "fefbb08c67b05eddfd284db7b85ed7aac5486437f9a6cdd753fd6d9e01bb6c86"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_fresh_identity_is_failure_atomic[numeric-focus]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-fresh-identity-is-failure-atomic-numeric-focus",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "fefbb08c67b05eddfd284db7b85ed7aac5486437f9a6cdd753fd6d9e01bb6c86"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_fresh_identity_is_failure_atomic[empty-session]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-fresh-identity-is-failure-atomic-empty-session",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "fefbb08c67b05eddfd284db7b85ed7aac5486437f9a6cdd753fd6d9e01bb6c86"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_fresh_identity_is_failure_atomic[empty-focus]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-fresh-identity-is-failure-atomic-empty-focus",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "fefbb08c67b05eddfd284db7b85ed7aac5486437f9a6cdd753fd6d9e01bb6c86"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_fresh_identity_is_failure_atomic[boolean-session]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-fresh-identity-is-failure-atomic-boolean-session",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "fefbb08c67b05eddfd284db7b85ed7aac5486437f9a6cdd753fd6d9e01bb6c86"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_fresh_identity_is_failure_atomic[boolean-focus]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-fresh-identity-is-failure-atomic-boolean-focus",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "fefbb08c67b05eddfd284db7b85ed7aac5486437f9a6cdd753fd6d9e01bb6c86"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_recommit_identity_is_failure_atomic[unhashable-session]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-recommit-identity-is-failure-atomic-unhashable-session",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "c48e7376c74b48ad063da5d997799c6ec86045f933f669ad2b822d7b27aa891b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_recommit_identity_is_failure_atomic[unhashable-focus]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-recommit-identity-is-failure-atomic-unhashable-focus",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "c48e7376c74b48ad063da5d997799c6ec86045f933f669ad2b822d7b27aa891b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_recommit_identity_is_failure_atomic[numeric-session]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-recommit-identity-is-failure-atomic-numeric-session",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "c48e7376c74b48ad063da5d997799c6ec86045f933f669ad2b822d7b27aa891b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_recommit_identity_is_failure_atomic[numeric-focus]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-recommit-identity-is-failure-atomic-numeric-focus",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "c48e7376c74b48ad063da5d997799c6ec86045f933f669ad2b822d7b27aa891b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_recommit_identity_is_failure_atomic[empty-session]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-recommit-identity-is-failure-atomic-empty-session",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "c48e7376c74b48ad063da5d997799c6ec86045f933f669ad2b822d7b27aa891b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_recommit_identity_is_failure_atomic[empty-focus]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-recommit-identity-is-failure-atomic-empty-focus",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "c48e7376c74b48ad063da5d997799c6ec86045f933f669ad2b822d7b27aa891b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_recommit_identity_is_failure_atomic[boolean-session]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-recommit-identity-is-failure-atomic-boolean-session",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "c48e7376c74b48ad063da5d997799c6ec86045f933f669ad2b822d7b27aa891b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_recommit_identity_is_failure_atomic[boolean-focus]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-invalid-recommit-identity-is-failure-atomic-boolean-focus",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "c48e7376c74b48ad063da5d997799c6ec86045f933f669ad2b822d7b27aa891b"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_generic_identity_checks_add_no_length_cap": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-generic-identity-checks-add-no-length-cap",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "db3e72860569c179d4cca70ae799c39293276864229c5577a4584aef98a33f96"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_commit_hashes_exact_stored_json[tuple]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-commit-hashes-exact-stored-json-tuple",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "03e6a7edb61ca96fb385b695a991d3bacff3f91952632398ba0d4e95af008aad"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_commit_hashes_exact_stored_json[list]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-commit-hashes-exact-stored-json-list",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "03e6a7edb61ca96fb385b695a991d3bacff3f91952632398ba0d4e95af008aad"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_commit_hashes_exact_stored_json[nested-tuples-and-lists]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-commit-hashes-exact-stored-json-nested-tuples-and-lists",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "03e6a7edb61ca96fb385b695a991d3bacff3f91952632398ba0d4e95af008aad"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_json_normalization_preserves_canonical_record[canonical-lists]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-json-normalization-preserves-canonical-record-canonical-lists",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "cc4c796ffe5b36a00869ed3bc33bf1581011e2a1589e3a19bb5f58d551ad6a79"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_json_normalization_preserves_canonical_record[normalized-tuples]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-json-normalization-preserves-canonical-record-normalized-tuples",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "cc4c796ffe5b36a00869ed3bc33bf1581011e2a1589e3a19bb5f58d551ad6a79"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_session_window_precedes_person_and_turn_filter[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-session-window-precedes-person-and-turn-filter-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "82d69234997c24967c893fb3ec45a11627794a3586fb4c4fb7166dc3c4ec4101"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_session_window_precedes_person_and_turn_filter[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-session-window-precedes-person-and-turn-filter-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "82d69234997c24967c893fb3ec45a11627794a3586fb4c4fb7166dc3c4ec4101"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_session_window_precedes_person_and_turn_filter[sqlite-reopen]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-session-window-precedes-person-and-turn-filter-sqlite-reopen",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "82d69234997c24967c893fb3ec45a11627794a3586fb4c4fb7166dc3c4ec4101"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_commit_order_and_record_snapshot_identity[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-commit-order-and-record-snapshot-identity-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "e46b84986e8d3e44fc20a1042d3640fa6ea856f248d7cf661f24016b302996f8"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_commit_order_and_record_snapshot_identity[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-commit-order-and-record-snapshot-identity-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "e46b84986e8d3e44fc20a1042d3640fa6ea856f248d7cf661f24016b302996f8"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_commit_order_and_record_snapshot_identity[sqlite-reopen]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-commit-order-and-record-snapshot-identity-sqlite-reopen",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "e46b84986e8d3e44fc20a1042d3640fa6ea856f248d7cf661f24016b302996f8"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_codec_requires_exact_abi[boolean]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-codec-requires-exact-abi-boolean",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "82f7fdb79bac233c527454df0ec3613b5ed8d62c4a720fc7f6a2ba57c6b5870a"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_codec_requires_exact_abi[float]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-codec-requires-exact-abi-float",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "82f7fdb79bac233c527454df0ec3613b5ed8d62c4a720fc7f6a2ba57c6b5870a"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[raw-target-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-raw-target-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[raw-target-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-raw-target-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[raw-semantic-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-raw-semantic-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[raw-semantic-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-raw-semantic-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[unknown-field-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-unknown-field-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[unknown-field-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-unknown-field-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[empty-expression-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-empty-expression-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[empty-expression-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-empty-expression-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[abi-bool-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-abi-bool-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[abi-bool-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-abi-bool-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[abi-float-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-abi-float-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[abi-float-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-abi-float-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[key-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-key-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[key-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-key-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[session-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-session-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[session-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-session-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[generation-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-generation-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[generation-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-generation-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[world-future-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-world-future-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[world-future-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-world-future-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[session-future-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-session-future-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[session-future-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-session-future-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[episode-future-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-episode-future-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[episode-future-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-episode-future-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[effect-future-memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-effect-future-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_rejects_unauthenticated_record[effect-future-sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-rejects-unauthenticated-record-effect-future-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "973b1e430cd39f7a807fdd7063c40296a8e401eeb6a8f892f1d8f64f53f35498"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_checks_payload_hash_at_read_boundary[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-checks-payload-hash-at-read-boundary-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "225b42dc854d3b6cd918dc384df535342335d75eff856398726971f828f4aeed"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_checks_payload_hash_at_read_boundary[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-checks-payload-hash-at-read-boundary-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "225b42dc854d3b6cd918dc384df535342335d75eff856398726971f828f4aeed"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_checks_sqlite_row_envelope[stored-key]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-checks-sqlite-row-envelope-stored-key",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "8239bb4b8941dda16f163cd057b301603bc0e11872ada9101ca30824f35cf875"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_checks_sqlite_row_envelope[stored-session]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-checks-sqlite-row-envelope-stored-session",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "8239bb4b8941dda16f163cd057b301603bc0e11872ada9101ca30824f35cf875"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_checks_sqlite_row_envelope[stored-future-revision]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-checks-sqlite-row-envelope-stored-future-revision",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "8239bb4b8941dda16f163cd057b301603bc0e11872ada9101ca30824f35cf875"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_only_authenticates_requested_window[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-only-authenticates-requested-window-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "5dae337360681112f02390352c88fdd407c9ed4d0152044d8fb0a9d33ca3e620"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_only_authenticates_requested_window[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-only-authenticates-requested-window-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "5dae337360681112f02390352c88fdd407c9ed4d0152044d8fb0a9d33ca3e620"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_preserves_active_window_overflow[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-preserves-active-window-overflow-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "665f2f0e93470c08f653705d6615af4ccd724a932ddd3a6c4c87edc9327c77cf"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_preserves_active_window_overflow[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-preserves-active-window-overflow-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "665f2f0e93470c08f653705d6615af4ccd724a932ddd3a6c4c87edc9327c77cf"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_preserves_active_window_overflow[sqlite-reopen]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-preserves-active-window-overflow-sqlite-reopen",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "665f2f0e93470c08f653705d6615af4ccd724a932ddd3a6c4c87edc9327c77cf"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_sqlite_index_and_irrelevant_session_work": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-sqlite-index-and-irrelevant-session-work",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "5c942184b45c3f9d7c0b4eadffdd003a655c22f81d54a95dc2f293238a00aecd"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_memory_does_not_enumerate_global_history": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-memory-does-not-enumerate-global-history",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "86e183a649afb0436ab53bfeffc2b96d33da8aa568c3186670d2ac4125b18a3c"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_cross_session_recommit_stays_untrusted[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-cross-session-recommit-stays-untrusted-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "620f029a5bc993375c4d1d71379e6485d365c28fa028833626d126b75a3d1bd5"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_cross_session_recommit_stays_untrusted[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-cross-session-recommit-stays-untrusted-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "620f029a5bc993375c4d1d71379e6485d365c28fa028833626d126b75a3d1bd5"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_cross_session_recommit_stays_untrusted[sqlite-reopen]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-cross-session-recommit-stays-untrusted-sqlite-reopen",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "620f029a5bc993375c4d1d71379e6485d365c28fa028833626d126b75a3d1bd5"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_preserves_input_and_codec_limits[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-preserves-input-and-codec-limits-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "7000320fd106f22d8aa873677e6e88a8061f925f8cf755050896c8d4f334ceee"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_preserves_input_and_codec_limits[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-preserves-input-and-codec-limits-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "7000320fd106f22d8aa873677e6e88a8061f925f8cf755050896c8d4f334ceee"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_r3_maximum_retains_sentinel_and_nested_codec_bound": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-r3-maximum-retains-sentinel-and-nested-codec-bound",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "5e91274fec110a399e573cda15267764d4c474941592953335bc01398266e629"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_index_activation_preserves_rows_and_revisions": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-index-activation-preserves-rows-and-revisions",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "928b5214bbe98c22ac7de7e8817b1e79cf4c55aef83e71c3b0b8bf406f5877a3"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_standalone_diagnostic_api_remains_transient": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-standalone-diagnostic-api-remains-transient",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "1d1409b2ddbfbe4fa4d80853309c2ec30f6e3330e422c38705850a877a61d0c2"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_active_orient_preserves_record_identity_without_writing[current-session]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-active-orient-preserves-record-identity-without-writing-current-session",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "337be4a4b413b76ab4a1838dc3f126bf65a163fdaecdd073e23cbc4ee81443d5"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_active_orient_preserves_record_identity_without_writing[after-reopen]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-active-orient-preserves-record-identity-without-writing-after-reopen",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "337be4a4b413b76ab4a1838dc3f126bf65a163fdaecdd073e23cbc4ee81443d5"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_historical_pin_remains_valid_after_store_advances[memory]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-historical-pin-remains-valid-after-store-advances-memory",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "af56dc00a50a609364d3df327a1637bab707ce14ee9c6773d90acb7737aa7b4c"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_historical_pin_remains_valid_after_store_advances[sqlite]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-historical-pin-remains-valid-after-store-advances-sqlite",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "af56dc00a50a609364d3df327a1637bab707ce14ee9c6773d90acb7737aa7b4c"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_historical_pin_remains_valid_after_store_advances[sqlite-reopen]": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-historical-pin-remains-valid-after-store-advances-sqlite-reopen",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "af56dc00a50a609364d3df327a1637bab707ce14ee9c6773d90acb7737aa7b4c"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_sqlite_unscoped_window_uses_recency_index": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-sqlite-unscoped-window-uses-recency-index",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "b4a9a0aca9e7b89244503752c4377210fdf71deafc374799ed74eda2565f32f8"
+    },
+    "tests/test_foundation_semantics.py::test_foundation_focus_restart_memory_window_visits_only_limit_and_sentinel": {
+        "activation_phase": "R3",
+        "assertion_ref": "assertion:foundation-focus-restart-memory-window-visits-only-limit-and-sentinel",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-4",
+        "owner_ref": "situation-context",
+        "source_ast_sha256": "2a71b2df31d3af77fa9af62f714744ba7e6f98483729bcf4f8a480c6be1d6ef0"
+    },
     "tests/test_foundation_semantics.py::test_foundation_nonstate_transition_guard_preserves_complete_source_partition": {
         "activation_phase": "R1",
         "assertion_ref": "assertion:r1-proposal-context-abi1-test-context-rejects-transition-on-non-state-frame",
@@ -2020,6 +2684,649 @@ def test_foundation_matrix_speech_content_focus_keeps_speaker_session_and_recenc
         assert result.proof_refs == (rows[1].focus_ref,)
     finally:
         stores.close()
+
+
+def _restart_focus(stores, suffix, *, session="session:focus", participant="participant:system", pin=None):
+    """Trusted direct-owner fixture; no assertion of a real equivalence receipt."""
+    return VerifiedSemanticFocus.create(
+        expression_refs=(f"expression:{suffix}",), entity_refs=(), event_refs=(),
+        salience_proof_refs=(f"proof:trusted-fixture:{suffix}",),
+        participant_ref=participant, session_ref=session, turn_ref=f"turn:{suffix}",
+        revision_pin=pin or stores.revision_pin(),
+    )
+
+
+def _restart_stores(backend, tmp_path):
+    return memory_stores() if backend == "memory" else open_stores(
+        tmp_path / "focus.db", authority_generation="authority:generation-test",
+    )
+
+
+def _restart_reopen(stores, backend, tmp_path):
+    if backend == "sqlite-reopen":
+        stores.close()
+        return _restart_stores(backend, tmp_path)
+    return stores
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite", "sqlite-reopen"), ids=("memory", "sqlite", "sqlite-reopen"))
+def test_foundation_focus_restart_session_window_precedes_person_and_turn_filter(backend, tmp_path, linked_authority):
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        writer = FocusStore(stores)
+        old = _restart_focus(stores, "old")
+        latest = _restart_focus(stores, "latest")
+        user = _restart_focus(stores, "user", participant="participant:user")
+        current = _restart_focus(stores, "current")
+        for row in (old, latest, user, current):
+            writer.add(row)
+        for index in range(40):
+            writer.add(_restart_focus(stores, f"other-{index}", session="session:other"))
+        stores = _restart_reopen(stores, backend, tmp_path)
+        reader = FocusStore(stores)
+        before = (stores.revision_pin(), stores.focus.revision, stores.obligations.revision, stores.r3_world_facts())
+        resolver = ReferenceResolver(reader, linked_authority)
+        result = resolver.resolve("reference:content", ReferenceConstraints("second", None, "content", 4, "session:focus"), "turn:current")
+        assert result.selected_ref == latest.expression_refs[0]
+        assert result.alternative_refs == old.expression_refs
+        assert result.proof_refs == (latest.focus_ref,)
+        # Person/current-turn filtering cannot silently search beyond this window.
+        narrow = resolver.resolve("reference:content", ReferenceConstraints("second", None, "content", 2, "session:focus"), "turn:current")
+        assert narrow.selected_ref is None and narrow.alternative_refs == () and narrow.proof_refs == ()
+        assert reader.entries == () and reader.refs == frozenset()
+        assert (stores.revision_pin(), stores.focus.revision, stores.obligations.revision, stores.r3_world_facts()) == before
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite", "sqlite-reopen"), ids=("memory", "sqlite", "sqlite-reopen"))
+def test_foundation_focus_restart_commit_order_and_record_snapshot_identity(backend, tmp_path):
+    from cemm_authoritative_hybrid.r3_persistence import focus_snapshot
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        first = _restart_focus(stores, "first")
+        second = _restart_focus(stores, "second")
+        third = _restart_focus(stores, "third", session="session:other")
+        writer = FocusStore(stores)
+        for row in (first, second, third, first):
+            writer.add(row)
+        stores = _restart_reopen(stores, backend, tmp_path)
+        reader = FocusStore(stores)
+        assert reader.recent_entries(3) == (second, third, first)
+        assert reader.recent_entries(2, session_ref="session:focus") == (second, first)
+        material = {"session_ref": "session:focus", "focus_refs": [first.focus_ref, second.focus_ref], "focus_store_revision": 4}
+        assert stores.r3_focus_snapshot("session:focus", maximum=2) == {"snapshot_ref": stable_ref("r3_focus_snapshot", material), **material}
+        snapshot = focus_snapshot(stores, "session:focus", maximum=2)
+        assert tuple(snapshot["focus_refs"]) == (first.focus_ref, second.focus_ref)
+        assert not set(snapshot["focus_refs"]) & set(first.expression_refs + second.expression_refs)
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("abi", (True, 1.0), ids=("boolean", "float"))
+def test_foundation_focus_restart_codec_requires_exact_abi(abi):
+    stores = memory_stores()
+    row = _restart_focus(stores, "codec")
+    wire = row.as_dict()
+    assert VerifiedSemanticFocus.from_dict(wire) == row
+    wire["abi_version"] = abi
+    with pytest.raises(TypeError, match="abi_version must be exact int"):
+        VerifiedSemanticFocus.from_dict(wire)
+
+
+@pytest.mark.parametrize(
+    "backend,attack", (
+        ("memory", "raw-target"),
+        ("sqlite", "raw-target"),
+        ("memory", "raw-semantic"),
+        ("sqlite", "raw-semantic"),
+        ("memory", "unknown-field"),
+        ("sqlite", "unknown-field"),
+        ("memory", "empty-expression"),
+        ("sqlite", "empty-expression"),
+        ("memory", "abi-bool"),
+        ("sqlite", "abi-bool"),
+        ("memory", "abi-float"),
+        ("sqlite", "abi-float"),
+        ("memory", "key"),
+        ("sqlite", "key"),
+        ("memory", "session"),
+        ("sqlite", "session"),
+        ("memory", "generation"),
+        ("sqlite", "generation"),
+        ("memory", "world-future"),
+        ("sqlite", "world-future"),
+        ("memory", "session-future"),
+        ("sqlite", "session-future"),
+        ("memory", "episode-future"),
+        ("sqlite", "episode-future"),
+        ("memory", "effect-future"),
+        ("sqlite", "effect-future"),
+    ), ids=(
+        "raw-target-memory",
+        "raw-target-sqlite",
+        "raw-semantic-memory",
+        "raw-semantic-sqlite",
+        "unknown-field-memory",
+        "unknown-field-sqlite",
+        "empty-expression-memory",
+        "empty-expression-sqlite",
+        "abi-bool-memory",
+        "abi-bool-sqlite",
+        "abi-float-memory",
+        "abi-float-sqlite",
+        "key-memory",
+        "key-sqlite",
+        "session-memory",
+        "session-sqlite",
+        "generation-memory",
+        "generation-sqlite",
+        "world-future-memory",
+        "world-future-sqlite",
+        "session-future-memory",
+        "session-future-sqlite",
+        "episode-future-memory",
+        "episode-future-sqlite",
+        "effect-future-memory",
+        "effect-future-sqlite",
+    ),
+)
+def test_foundation_focus_restart_rejects_unauthenticated_record(backend, attack, tmp_path):
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        row = _restart_focus(stores, "auth")
+        payload = row.as_dict()
+        key = row.focus_ref
+        session = row.session_ref
+        error = ValueError
+        match = "VerifiedSemanticFocus fields mismatch"
+        if attack.startswith("raw-"):
+            payload = {"target_ref" if attack == "raw-target" else "semantic_ref": "entity:arbitrary"}
+        elif attack == "unknown-field":
+            payload["extra"] = "unreviewed"
+        elif attack == "empty-expression":
+            payload["expression_refs"] = []
+            match = "expression_refs must be nonempty"
+        elif attack in {"abi-bool", "abi-float"}:
+            payload["abi_version"] = True if attack == "abi-bool" else 1.0
+            error, match = TypeError, "abi_version must be exact int"
+        elif attack == "key":
+            key, match = "focus:wrong-key", "non-canonical focus encoding"
+        elif attack == "session":
+            session, match = "session:wrong", "non-canonical focus encoding"
+        else:
+            pin = stores.revision_pin().as_dict()
+            if attack == "generation":
+                pin["authority_generation"] = "authority:stale"
+                match = "focus authority generation differs"
+            else:
+                pin[attack.removesuffix("-future") + "_revision"] += 1
+                match = "focus revision pin exceeds"
+            row = _restart_focus(stores, "auth", pin=RevisionPin.from_dict(pin))
+            payload, key = row.as_dict(), row.focus_ref
+        stores.focus.commit(key, session, payload, expected_revision=0)
+        before = stores.revision_pin(), stores.focus.revision
+        with pytest.raises(error, match=match):
+            stores.r3_focus_snapshot(session, maximum=16)
+        with pytest.raises(error, match=match):
+            FocusStore(stores).recent_entries(1)
+        assert (stores.revision_pin(), stores.focus.revision) == before
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite"), ids=("memory", "sqlite"))
+def test_foundation_focus_restart_checks_payload_hash_at_read_boundary(backend, tmp_path):
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        row = _restart_focus(stores, "original")
+        FocusStore(stores).add(row)
+        if backend == "sqlite":
+            stores._backend._conn.execute("UPDATE focus SET payload_hash=? WHERE focus_ref=?", ("tampered", row.focus_ref))
+            stores._backend._conn.commit()
+        else:
+            stores.focus._focus[row.focus_ref]["turn_ref"] = "turn:tampered"
+        with pytest.raises(ValueError, match="focus payload hash mismatch"):
+            stores.r3_focus_snapshot(row.session_ref, maximum=16)
+        with pytest.raises(ValueError, match="focus payload hash mismatch"):
+            FocusStore(stores).recent_entries(1)
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("column", ("focus_ref", "session_ref", "revision"), ids=("stored-key", "stored-session", "stored-future-revision"))
+def test_foundation_focus_restart_checks_sqlite_row_envelope(column, tmp_path):
+    stores = _restart_stores("sqlite", tmp_path)
+    try:
+        row = _restart_focus(stores, "envelope")
+        FocusStore(stores).add(row)
+        value = 2 if column == "revision" else "ref:tampered"
+        stores._backend._conn.execute(f"UPDATE focus SET {column}=?", (value,))
+        stores._backend._conn.commit()
+        match = "focus commit revision exceeds" if column == "revision" else "focus stored key/session mismatch"
+        with pytest.raises(ValueError, match=match):
+            FocusStore(stores).recent_entries(1)
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite"), ids=("memory", "sqlite"))
+def test_foundation_focus_restart_only_authenticates_requested_window(backend, tmp_path):
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        stores.focus.commit("focus:malformed-old", "session:focus", {"target_ref": "entity:untrusted"}, expected_revision=0)
+        row = _restart_focus(stores, "valid")
+        FocusStore(stores).add(row)
+        stores.focus.commit("focus:malformed-other", "session:other", {}, expected_revision=2)
+        reader = FocusStore(stores)
+        assert reader.recent_entries(1, session_ref=row.session_ref) == (row,)
+        with pytest.raises(ValueError, match="VerifiedSemanticFocus fields mismatch"):
+            reader.recent_entries(2, session_ref=row.session_ref)
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite", "sqlite-reopen"), ids=("memory", "sqlite", "sqlite-reopen"))
+def test_foundation_focus_restart_preserves_active_window_overflow(backend, tmp_path):
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        writer = FocusStore(stores)
+        for index in range(16):
+            writer.add(_restart_focus(stores, f"bounded-{index}"))
+        assert len(stores.r3_focus_snapshot("session:focus", maximum=16)["focus_refs"]) == 16
+        writer.add(_restart_focus(stores, "overflow"))
+        stores = _restart_reopen(stores, backend, tmp_path)
+        with pytest.raises(ValueError, match="focus snapshot exceeds its configured bound"):
+            stores.r3_focus_snapshot("session:focus", maximum=16)
+        assert len(FocusStore(stores).recent_entries(16)) == 16
+    finally:
+        stores.close()
+
+
+def test_foundation_focus_restart_sqlite_index_and_irrelevant_session_work(tmp_path):
+    stores = _restart_stores("sqlite", tmp_path)
+    try:
+        for index in range(4):
+            FocusStore(stores).add(_restart_focus(stores, f"wanted-{index}"))
+        conn = stores._backend._conn
+        work = []
+        for count in (0, 128, 4096):
+            for index in range(count):
+                # Unrelated records need not be decoded during the requested read.
+                stores.focus.commit(f"focus:other-{count}-{index}", "session:other", {}, expected_revision=stores.focus.revision)
+            steps = []
+            statements = []
+            conn.set_progress_handler(lambda: steps.append(1) or 0, 1)
+            conn.set_trace_callback(statements.append)
+            try:
+                assert len(stores.r3_focus_snapshot("session:focus", maximum=16)["focus_refs"]) == 4
+            finally:
+                conn.set_progress_handler(None, 0)
+                conn.set_trace_callback(None)
+            work.append(len(steps))
+            queries = [sql for sql in statements if "FROM focus" in sql]
+            assert len(queries) == 1
+            plan = tuple(row[3] for row in conn.execute("EXPLAIN QUERY PLAN " + queries[0]))
+            assert any("USING INDEX" in detail for detail in plan), plan
+            assert all("SCAN focus" not in detail and "TEMP B-TREE" not in detail for detail in plan), plan
+        assert max(work) <= min(work) + 16, work
+        print("focus SQLite VM steps at 0/128/4224 irrelevant rows:", work)
+    finally:
+        stores.close()
+
+
+def test_foundation_focus_restart_memory_does_not_enumerate_global_history():
+    class NoEnumeration(dict):
+        def __iter__(self):
+            raise AssertionError("global focus iteration is unbounded")
+        def items(self):
+            raise AssertionError("global focus items are unbounded")
+        def values(self):
+            raise AssertionError("global focus values are unbounded")
+    stores = memory_stores()
+    row = _restart_focus(stores, "wanted")
+    FocusStore(stores).add(row)
+    for index in range(4096):
+        stores.focus.commit(f"focus:other-{index}", "session:other", {}, expected_revision=stores.focus.revision)
+    stores.focus._focus = NoEnumeration(stores.focus._focus)
+    assert stores.r3_focus_snapshot(row.session_ref, maximum=16)["focus_refs"] == [row.focus_ref]
+    assert FocusStore(stores).recent_entries(1, session_ref=row.session_ref) == (row,)
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite", "sqlite-reopen"), ids=("memory", "sqlite", "sqlite-reopen"))
+def test_foundation_focus_restart_cross_session_recommit_stays_untrusted(backend, tmp_path):
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        row = _restart_focus(stores, "moved")
+        FocusStore(stores).add(row)
+        # Reusing a content-addressed key for different content is not verified
+        # focus. The generic persistence owner still indexes the committed session.
+        stores.focus.commit(row.focus_ref, "session:moved", row.as_dict(), expected_revision=1)
+        stores = _restart_reopen(stores, backend, tmp_path)
+        assert stores.r3_focus_snapshot(row.session_ref, maximum=16)["focus_refs"] == []
+        with pytest.raises(ValueError, match="non-canonical focus encoding"):
+            stores.r3_focus_snapshot("session:moved", maximum=16)
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite"), ids=("memory", "sqlite"))
+def test_foundation_focus_restart_preserves_input_and_codec_limits(backend, tmp_path):
+    from cemm_authoritative_hybrid.r3_persistence import focus_snapshot
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        reader = FocusStore(stores)
+        assert reader.recent_entries(0) == () and reader.recent_entries(512) == ()
+        assert focus_snapshot(stores, "session:focus", maximum=10_000)["focus_refs"] == ()
+        for invalid in (True, 1.0, -1, 513):
+            with pytest.raises((TypeError, ValueError)):
+                reader.recent_entries(invalid)
+        for invalid in (True, 1.0, 0, -1, 10_001):
+            with pytest.raises((TypeError, ValueError)):
+                focus_snapshot(stores, "session:focus", maximum=invalid)
+        for invalid in (True, "", "s" * 513):
+            with pytest.raises((TypeError, ValueError)):
+                reader.recent_entries(1, session_ref=invalid)
+        row = _restart_focus(stores, "codec-limits")
+        wire = row.as_dict()
+        wire["expression_refs"] = [f"expression:{index}" for index in range(513)]
+        with pytest.raises(ValueError, match="expression_refs exceeds 512 rows"):
+            VerifiedSemanticFocus.from_dict(wire)
+        at_bound = VerifiedSemanticFocus.create(
+            expression_refs=tuple(wire["expression_refs"][:512]), entity_refs=(), event_refs=(),
+            salience_proof_refs=(), participant_ref=row.participant_ref,
+            session_ref=row.session_ref, turn_ref=row.turn_ref, revision_pin=row.revision_pin,
+        )
+        assert VerifiedSemanticFocus.from_dict(at_bound.as_dict()) == at_bound
+    finally:
+        stores.close()
+
+
+def test_foundation_focus_restart_r3_maximum_retains_sentinel_and_nested_codec_bound():
+    from cemm_authoritative_hybrid.r3_persistence import focus_snapshot
+    stores = memory_stores()
+    for index in range(513):
+        row = _restart_focus(stores, f"many-{index}")
+        stores.focus.commit(row.focus_ref, row.session_ref, row.as_dict(), expected_revision=stores.focus.revision)
+    assert len(stores.r3_focus_snapshot("session:focus", maximum=10_000)["focus_refs"]) == 513
+    assert len(FocusStore(stores).recent_entries(512)) == 512
+    with pytest.raises(ValueError, match="JSON sequence exceeds bound"):
+        focus_snapshot(stores, "session:focus", maximum=10_000)
+    for index in range(513, 10_001):
+        row = _restart_focus(stores, f"many-{index}")
+        stores.focus.commit(row.focus_ref, row.session_ref, row.as_dict(), expected_revision=stores.focus.revision)
+    with pytest.raises(ValueError, match="focus snapshot exceeds its configured bound"):
+        focus_snapshot(stores, "session:focus", maximum=10_000)
+
+
+def test_foundation_focus_restart_index_activation_preserves_rows_and_revisions(tmp_path):
+    stores = _restart_stores("sqlite", tmp_path)
+    row = _restart_focus(stores, "activation")
+    FocusStore(stores).add(row)
+    before = stores.revision_pin(), stores.focus.revision, stores.focus.get(row.focus_ref)
+    conn = stores._backend._conn
+    conn.execute("DROP INDEX focus_session_recent")
+    conn.execute("DROP INDEX focus_recent")
+    conn.commit()
+    stores.close()
+    stores = _restart_stores("sqlite", tmp_path)
+    try:
+        assert (stores.revision_pin(), stores.focus.revision, stores.focus.get(row.focus_ref)) == before
+        assert FocusStore(stores).recent_entries(1) == (row,)
+        indexes = {item[1] for item in stores._backend._conn.execute("PRAGMA index_list(focus)")}
+        assert {"focus_session_recent", "focus_recent"} <= indexes
+        assert stores._backend._conn.execute("PRAGMA user_version").fetchone()[0] == 0
+        assert stores._backend._conn.execute("SELECT value FROM metadata WHERE key='schema_version'").fetchone()[0] == "1"
+    finally:
+        stores.close()
+
+
+def test_foundation_focus_restart_standalone_diagnostic_api_remains_transient():
+    source = memory_stores()
+    reader = FocusStore()
+    first = _restart_focus(source, "first")
+    other = _restart_focus(source, "other", session="session:other")
+    for row in (first, other, first):
+        reader.add(row)
+    assert reader.entries == (first, other, first)
+    assert reader.refs == frozenset(first.expression_refs + other.expression_refs)
+    assert reader.recent_entries(2) == (other, first)
+    assert reader.recent_entries(2, session_ref=first.session_ref) == (first, first)
+    assert source.focus.revision == 0
+
+
+@pytest.mark.parametrize("restart", (False, True), ids=("current-session", "after-reopen"))
+def test_foundation_focus_restart_active_orient_preserves_record_identity_without_writing(restart, tmp_path):
+    runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "runtime-focus.db")
+    try:
+        row = _restart_focus(runtime.stores, "active")
+        FocusStore(runtime.stores).add(row)
+        if restart:
+            runtime.stores.close()
+            runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "runtime-focus.db")
+        before = runtime.stores.revision_pin(), runtime.stores.focus.revision, runtime.stores.obligations.revision
+        orientation, _ = runtime.orient(row.session_ref, "Alice is a mother.")
+        assert orientation.focus_refs == (row.focus_ref,)
+        assert row.expression_refs[0] not in orientation.focus_refs
+        assert (runtime.stores.revision_pin(), runtime.stores.focus.revision, runtime.stores.obligations.revision) == before
+        # No claim that a record identity answers a speech-history content query.
+    finally:
+        runtime.stores.close()
+
+
+@pytest.mark.parametrize("backend", ("memory", "sqlite", "sqlite-reopen"), ids=("memory", "sqlite", "sqlite-reopen"))
+def test_foundation_focus_restart_historical_pin_remains_valid_after_store_advances(backend, tmp_path):
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        row = _restart_focus(stores, "historical")
+        FocusStore(stores).add(row)
+        stores.world.commit((Fact("fact:later", "op:relation", {"subject": "entity:alice"}),), expected_revision=0)
+        stores.sessions.create()
+        stores.episodes.append({"event": "later"})
+        stores.effects.commit({"effect_key": "effect:later", "payload": {"action": "noop"}})
+        stores = _restart_reopen(stores, backend, tmp_path)
+        assert stores.revision_pin() != row.revision_pin
+        assert FocusStore(stores).recent_entries(1) == (row,)
+        assert stores.r3_focus_snapshot(row.session_ref, maximum=16)["focus_refs"] == [row.focus_ref]
+    finally:
+        stores.close()
+
+
+def test_foundation_focus_restart_sqlite_unscoped_window_uses_recency_index(tmp_path):
+    stores = _restart_stores("sqlite", tmp_path)
+    try:
+        for index in range(4096):
+            stores.focus.commit(f"focus:old-{index}", "session:other", {}, expected_revision=stores.focus.revision)
+        row = _restart_focus(stores, "latest-global")
+        FocusStore(stores).add(row)
+        conn = stores._backend._conn
+        statements, steps = [], []
+        conn.set_trace_callback(statements.append)
+        conn.set_progress_handler(lambda: steps.append(1) or 0, 1)
+        try:
+            assert FocusStore(stores).recent_entries(1) == (row,)
+        finally:
+            conn.set_trace_callback(None)
+            conn.set_progress_handler(None, 0)
+        queries = [sql for sql in statements if "FROM focus" in sql]
+        assert len(queries) == 1
+        plan = tuple(item[3] for item in conn.execute("EXPLAIN QUERY PLAN " + queries[0]))
+        assert any("USING INDEX focus_recent" in detail for detail in plan), plan
+        assert all("TEMP B-TREE" not in detail for detail in plan), plan
+        assert len(steps) < 64, len(steps)
+        print("focus unscoped SQLite VM steps at 4096 irrelevant rows:", len(steps))
+    finally:
+        stores.close()
+
+
+def test_foundation_focus_restart_memory_window_visits_only_limit_and_sentinel():
+    from collections import OrderedDict
+    class CountedRecency(OrderedDict):
+        def __reversed__(self):
+            for key in super().__reversed__():
+                visits.append(key)
+                yield key
+    stores = memory_stores()
+    for index in range(512):
+        row = _restart_focus(stores, f"same-session-{index}")
+        FocusStore(stores).add(row)
+    visits = []
+    stores.focus._session_recent[row.session_ref] = CountedRecency(stores.focus._session_recent[row.session_ref])
+    assert len(FocusStore(stores).recent_entries(16, session_ref=row.session_ref)) == 16
+    assert len(visits) == 16
+    visits.clear()
+    with pytest.raises(ValueError, match="focus snapshot exceeds its configured bound"):
+        stores.r3_focus_snapshot(row.session_ref, maximum=16)
+    assert len(visits) == 17
+
+
+@pytest.mark.parametrize(
+    "supplied,stored", (
+        ({"values": ("a", "b")}, {"values": ["a", "b"]}),
+        ({"values": ["a", "b"]}, {"values": ["a", "b"]}),
+        ({"values": ({"inner": ("a", ["b", ("c",)])},)}, {"values": [{"inner": ["a", ["b", ["c"]]]}]}),
+    ), ids=("tuple", "list", "nested-tuples-and-lists"),
+)
+def test_foundation_focus_restart_commit_hashes_exact_stored_json(supplied, stored, tmp_path):
+    from hashlib import sha256
+    from cemm_authoritative_hybrid.canonical import canonical_bytes
+    memory = _restart_stores("memory", tmp_path)
+    sqlite = _restart_stores("sqlite", tmp_path)
+    try:
+        expected = {**stored, "focus_ref": "focus:normalization", "session_ref": "session:normalization"}
+        expected_hash = sha256(canonical_bytes(expected)).hexdigest()
+        receipts = []
+        for stores in (memory, sqlite):
+            receipt = stores.focus.commit("focus:normalization", "session:normalization", supplied, expected_revision=0)
+            assert stores.focus.get("focus:normalization") == expected
+            assert receipt.delta_hash == expected_hash
+            receipts.append(receipt)
+        assert receipts[0] == receipts[1]
+        assert sqlite.focus.verify() == ()
+        sqlite.close()
+        sqlite = _restart_stores("sqlite", tmp_path)
+        assert sqlite.focus.verify() == ()
+        assert sqlite.focus.get("focus:normalization") == expected
+        assert sqlite.focus.revision == 1
+        # Generic JSON normalization is not admission as verified semantic focus.
+        with pytest.raises(ValueError, match="VerifiedSemanticFocus fields mismatch"):
+            sqlite.r3_focus_snapshot("session:normalization", maximum=16)
+    finally:
+        memory.close()
+        sqlite.close()
+
+
+@pytest.mark.parametrize("sequence_kind", ("list", "tuple"), ids=("canonical-lists", "normalized-tuples"))
+def test_foundation_focus_restart_json_normalization_preserves_canonical_record(sequence_kind, tmp_path):
+    memory = _restart_stores("memory", tmp_path)
+    sqlite = _restart_stores("sqlite", tmp_path)
+    try:
+        row = _restart_focus(memory, "normalized-record")
+        payload = row.as_dict()
+        if sequence_kind == "tuple":
+            for field in ("expression_refs", "entity_refs", "event_refs", "salience_proof_refs"):
+                payload[field] = tuple(payload[field])
+            # The exact codec still requires wire lists. Only the generic JSON
+            # persistence boundary normalizes its accepted Python sequences.
+            with pytest.raises(TypeError, match="expression_refs wire value must be an exact list"):
+                VerifiedSemanticFocus.from_dict(payload)
+        receipts = []
+        for stores in (memory, sqlite):
+            receipts.append(stores.focus.commit(row.focus_ref, row.session_ref, payload, expected_revision=0))
+            assert stores.focus.get(row.focus_ref) == row.as_dict()
+            assert FocusStore(stores).recent_entries(1) == (row,)
+            assert stores.r3_focus_snapshot(row.session_ref, maximum=16)["focus_refs"] == [row.focus_ref]
+        assert receipts[0] == receipts[1]
+        assert sqlite.focus.verify() == ()
+        sqlite.close()
+        sqlite = _restart_stores("sqlite", tmp_path)
+        assert FocusStore(sqlite).recent_entries(1) == (row,)
+        assert sqlite.focus.verify() == ()
+    finally:
+        memory.close()
+        sqlite.close()
+
+
+def _assert_focus_identity_failure_atomic(backend, field, invalid, *, recommit, tmp_path):
+    stores = _restart_stores(backend, tmp_path)
+    try:
+        row = _restart_focus(stores, "failure-atomic")
+        if recommit:
+            stores.focus.commit(row.focus_ref, row.session_ref, row.as_dict(), expected_revision=0)
+        revision = int(recommit)
+        expected_payload = row.as_dict() if recommit else None
+        expected_entries = (row,) if recommit else ()
+        before_pin = stores.revision_pin()
+        before_session = dict(stores.r3_focus_snapshot(row.session_ref, maximum=16))
+        assert stores.focus.get(row.focus_ref) == expected_payload
+        assert FocusStore(stores).recent_entries(16) == expected_entries
+        key = invalid if field == "focus_ref" else row.focus_ref
+        session = invalid if field == "session_ref" else row.session_ref
+        statements = []
+        if backend == "sqlite":
+            stores._backend._conn.set_trace_callback(statements.append)
+        try:
+            with pytest.raises(TypeError):
+                stores.focus.commit(key, session, row.as_dict(), expected_revision=revision)
+        finally:
+            if backend == "sqlite":
+                stores._backend._conn.set_trace_callback(None)
+        assert statements == [], "invalid identities must be rejected before a SQLite transaction"
+        assert stores.focus.revision == revision
+        assert stores.revision_pin() == before_pin
+        assert stores.focus.get(row.focus_ref) == expected_payload
+        assert FocusStore(stores).recent_entries(16) == expected_entries
+        assert dict(stores.r3_focus_snapshot(row.session_ref, maximum=16)) == before_session
+        # A failed generic commit cannot remove recency entries, publish a bad
+        # payload, advance revisions, or poison the next legitimate retry.
+        receipt = stores.focus.commit(row.focus_ref, row.session_ref, row.as_dict(), expected_revision=revision)
+        assert receipt.parent_revision == revision and receipt.new_revision == revision + 1
+        assert stores.focus.get(row.focus_ref) == row.as_dict()
+        assert FocusStore(stores).recent_entries(16) == (row,)
+        assert stores.r3_focus_snapshot(row.session_ref, maximum=16)["focus_refs"] == [row.focus_ref]
+    finally:
+        stores.close()
+
+
+@pytest.mark.parametrize(
+    "field,invalid", (
+        ("session_ref", []), ("focus_ref", []),
+        ("session_ref", 7), ("focus_ref", 7),
+        ("session_ref", ""), ("focus_ref", ""),
+        ("session_ref", True), ("focus_ref", True),
+    ), ids=("unhashable-session", "unhashable-focus", "numeric-session", "numeric-focus", "empty-session", "empty-focus", "boolean-session", "boolean-focus"),
+)
+def test_foundation_focus_restart_invalid_fresh_identity_is_failure_atomic(field, invalid, tmp_path):
+    for backend in ("memory", "sqlite"):
+        _assert_focus_identity_failure_atomic(backend, field, invalid, recommit=False, tmp_path=tmp_path)
+
+
+@pytest.mark.parametrize(
+    "field,invalid", (
+        ("session_ref", []), ("focus_ref", []),
+        ("session_ref", 7), ("focus_ref", 7),
+        ("session_ref", ""), ("focus_ref", ""),
+        ("session_ref", True), ("focus_ref", True),
+    ), ids=("unhashable-session", "unhashable-focus", "numeric-session", "numeric-focus", "empty-session", "empty-focus", "boolean-session", "boolean-focus"),
+)
+def test_foundation_focus_restart_invalid_recommit_identity_is_failure_atomic(field, invalid, tmp_path):
+    for backend in ("memory", "sqlite"):
+        _assert_focus_identity_failure_atomic(backend, field, invalid, recommit=True, tmp_path=tmp_path)
+
+
+def test_foundation_focus_restart_generic_identity_checks_add_no_length_cap(tmp_path):
+    receipts = []
+    focus_ref, session_ref = "f" * 513, "s" * 513
+    for backend in ("memory", "sqlite"):
+        stores = _restart_stores(backend, tmp_path)
+        try:
+            receipt = stores.focus.commit(focus_ref, session_ref, {"value": "generic-json"}, expected_revision=0)
+            assert stores.focus.get(focus_ref) == {"focus_ref": focus_ref, "session_ref": session_ref, "value": "generic-json"}
+            assert stores.focus.revision == 1
+            receipts.append(receipt)
+        finally:
+            stores.close()
+    assert receipts[0] == receipts[1]
 
 
 def _membership_expected(class_ref="concept:mother", *, negative=False):
