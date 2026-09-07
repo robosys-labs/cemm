@@ -106,7 +106,7 @@ assert not any(
   Preserve ordinary questions, nominal affordances and multiword designations;
   record the pack diff/hash and unchanged authorized realization behavior.
 
-Containment evidence (uncommitted implementation under independent review):
+Containment evidence (commit `8288794`):
 28 foundation cases pass after observed REDs; a 39-case focused run also passes
 verifier reconstruction, recursive-query, learning-transaction and real-index
 multiword-designation controls. A discarded copula/orthography experiment was
@@ -132,9 +132,10 @@ the same source-data failures and three unresolved-designation predecessor
 failures described below. All four post-VERIFY R3 canaries pass: OBSERVE is
 contested, QUERY/REQUEST are unknown, SIMULATE is simulation; all four return
 NoEffectReceipt with zero world delta. They do not prove successful operations
-or answered questions. The 111-case
-active governance run has 110 passes and the expected dirty-input CLI failure;
-the clean-checkpoint run remains required, without weakening that check.
+or answered questions. All 111 active governance cases pass on clean `8288794`,
+and the status CLI verifies the historical chain with R4–R8 still red. The
+earlier dirty-input failure was resolved by the reviewed local checkpoint,
+not by weakening validation. No commit has been pushed or adopted at root.
 
 The initial 243-node authenticated owner diagnostic had 229 passes and 14 failures:
 
@@ -161,34 +162,67 @@ useful definitions, complete unknown handling, or a passing full regression.
 
 ## Task 3 — Establish the independent foundation semantic contract
 
-- [ ] Add parameterized cases to the same foundation test module for ordinary
+- [x] Add parameterized cases to the same foundation test module for ordinary
   type membership, ordered relation roles, polarity and scoped/attributed facts.
   Expected expressions are independently written; never snapshot current output
   as gold. Confirm roles, binders, scope and requested projection, not operator
   sets or program hashes alone.
-- [ ] Add real initial-context setup for speech history and fragments. Separate
-  fresh-context clarification from successful context-bound interpretation.
-- [ ] Add an explicit operation target/value and remove its permission in the
+- [x] Add real initial-context setup for speech history and fresh fragments.
+  Separate persisted speech retrieval from successful context-bound fragment
+  interpretation; the latter lacks an active content-slot obligation contract.
+- [x] Add an explicit operation target/value and remove its permission in the
   denial case. Check mutation receipts and store revisions.
-- [ ] Run the whole diagnostic matrix and record all missing owners together.
+- [x] Run the whole diagnostic matrix and record all missing owners together.
   Do not stop discovery at the first failing surface and regenerate bulk gold.
 
-### Matrix preparation findings (September 7, not completion evidence)
+### Executed diagnostic matrix (September 7, not capability completion)
 
-Independent review identified the following owners to exercise together. These
-are not additional release gates. Existing canonical types/owner APIs supply the
-test inputs; parser output must not supply the expectations.
+The 25 added cases produce 10 passes and 15 failures; with the 28 containment
+cases, the independently repeated module result is 38 passes and 15 failures.
+Expected graphs and observed device deltas are independently specified, not
+copied from parser output or requested effects. Direct post-VERIFY owner cases
+do not establish public parser/verifier reachability. These are existing-owner
+diagnostics, not additional release gates or R4 admission evidence.
+The authenticated bounded owner union is 258 passes and 28 failures across 286
+nodes: these 15 new diagnostics plus the 13 retained Task 2 failures. No earlier
+passing assertion was changed to manufacture this result. Independent matrix
+spec and quality reviews passed. Selectors and the canonical living inventory
+receipt have been regenerated from the authenticated source metadata.
 
 | Boundary | Independent expectation | Evidence so far |
 |---|---|---|
-| Ordinary facts | Explicit membership/ordered relation evidence supports only the specified proposition and proof. | Canonical application, binder and query APIs exist; Task 2 contains registry-kind substitution. |
-| Type-role alignment | The surface path, independent compiler and query owner agree on the same membership roles; a metadata classification is not substituted. | Static inspection: nominal affordances use `role:instance`/`role:class`; an explicit compiler application permits `role:subject`/`role:type`, while its composed-type validator still requires a registry-kind literal. Direct-query positives do not prove cross-path equivalence. |
-| Polarity/admission | A negative state is not admitted as positive; a conditional does not admit either operand unconditionally. | Direct `ObserveDecisionOwner` probes reproduce both wrong delta outputs. No gateway was invoked; public reachability is not yet established. |
-| Scoped requests | A nested, negated or conditional event is not an unconditional executable request. | Static inspection: request owner selects the first event anywhere in the expression. Requires executable contrast, not an exploit claim. |
-| Partial meaning | Unresolved role constraints survive; known facts cannot satisfy a pattern made broader by dropping that role. | Static inspection: query pattern drops `UnresolvedValue`; VERIFY currently blocks critical residuals before compilation. |
-| Speech/fragments | Context retrieval preserves speaker, session, prior expression and exact outstanding content slot. | Low-level resolver tests exist, but active snapshots return refs without the complete semantic focus; public continuation is not demonstrated. |
-| Operations | A predeclared system/lamp/power/on request produces an independently specified observed delta only with permission; replay commits once. | Existing adapter echo of expected deltas is not an independent correctness oracle. |
-| Learning/reuse | Actual unknown QueryResult → authorized existing-target alias → one commit → restart → unseen composition. | Current R3 path materializes a known-target obligation, can synthesize a query ref, and does not complete a durable alias commit/reuse loop. |
+| Ordinary facts | Ordered relation evidence supports only the specified proposition and proof. | Forward, reversed and negative controls pass; conflict drops the opposing proof and fails the decisive-status constructor. |
+| Type-role alignment | Compiler and public surface produce one independently specified membership graph. | Explicit instance/class compilation agrees; public `Alice is a mother.` returns no complete candidate (3 states, not truncated). Static composed-type validation still imposes a registry-kind literal. |
+| Polarity/admission | Negative states are denied, conditions are not unconditional facts, opposing roots remain conflicting. | Negative scope is lost; a conditional attempts to encode a relation as StateDelta; opposing roots produce two positive deltas. Positive state and reported/speech non-admission controls pass. |
+| Scoped requests | A negated, reported or conditional event is not an unconditional executable request. | All three produce effect intents at the post-VERIFY seam. Tests stop before executing those intents. OBSERVE and capability QUERY do not execute. |
+| Partial meaning | Unknown role constraints survive alongside known roots. | Both unknown-object cases falsely return supported after dropping the object. Public VERIFY's critical-residual boundary remains distinct. |
+| Speech/fragments | Retrieval preserves speaker, session, recency and an exact outstanding content slot. | In-memory speech focus passes; persisted focus is not rehydrated. Fresh fragment has no clarification evaluation (5 states, not truncated). Context-bound completion lacks a content-slot obligation representation. |
+| Operations | Explicit lamp-on intent has independent observed evidence, permission and commit-once receipt. | Permitted first execution commits the exact delta once; terminal replay fails strict decoding of frozen receipt mappings. Permission denial passes. |
+| Learning/reuse | Actual unknown QueryResult → authorized alias → one commit → restart → unseen composition. | Draft loses the actual query ref; no active authorized alias commit exists. A separately reviewed seeded alias survives storage but is absent from the reopened runtime's designation frames. Neither fixture claims completed acquisition. |
+
+Representation/authority boundaries identified together, not hidden by green
+containment tests:
+
+- `data/authority/contracts/designation_learning.json` is a predecessor ABI 1
+  file, absent from the active manifest's three owners. Active ABI 2 drafts and
+  obligation materialization do not link it. Defaults use `cap:learn` and
+  `permission:learn_designation`, while linked authority supplies `cap:learn_alias`
+  and `permission:write_alias`. The test supplies the linked refs but proves only
+  query/obligation continuity, not authorization. Contract identifiers need not
+  be atoms; the missing piece is an active reviewed contract and commit owner.
+- Generic dialogue obligations do not carry the enclosing expression and exact
+  outstanding content slot needed to complete a prior fragment. A speech-focus
+  ref alone is not that obligation or proof of contextual understanding.
+- Flat persisted fact arguments and query string coercion cannot distinguish
+  typed literals, semantic references and embedded propositions. Additional
+  direct probes reproduce literal/reference collisions and candidate-local
+  application-ID matching. A safe unsupported result is possible now; complete
+  typed matching needs a reviewed representation/migration, not ref-name
+  inference or a permissive compatibility fallback.
+- Placement-sensitive retrieval and rule closure need coordinated review:
+  filtering derived results alone can launder an attributed premise. Cause,
+  purpose and sequence must not gain full relationship-proof claims from their
+  current conjunction-like evaluation.
 
 After the full matrix runs, repair admission/scope safety before expanding
 question or learning capabilities. Preserve the positive simple-state and denied-
@@ -198,6 +232,14 @@ not be reconnected to bypass these missing active owners.
 
 ## Task 4 — Complete open queries and scoped uncertainty through existing owners
 
+- [ ] First repair bounded safety owners exposed by the matrix: preserve signed
+  admission and reject unsupported enclosing scopes; select only an eligible
+  requested root before both learning and operation paths; retain unresolved or
+  proposition-valued query constraints as typed blockers; preserve both sides
+  of conflict proof; thaw stored terminal receipts at the strict decode boundary.
+  Keep simple positive/denied controls and exact provenance. Do not distribute
+  compound negation, invent a conditional planner, change authority defaults,
+  widen caps, or add a parallel validator/query engine in this increment.
 - [ ] Specify query answer projection explicitly: designation target, type
   membership, description/identification or location; bare `What is X?` retains
   contextual alternatives. Use the existing binders/roles when expressive; an
