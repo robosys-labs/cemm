@@ -11,6 +11,11 @@ The [foundation amendment](superpowers/specs/2026-09-07-foundation-proof-correct
 and [implementation plan](superpowers/plans/2026-09-07-foundation-proof-implementation-plan.md)
 own current repair dependencies; the September 3 narrow Task 4 route is historical.
 
+The canary row below records the current bounded R3 implementation, not a waiver
+of the July 31 admission design's full-cycle evidence requirement. Public
+interpretation, useful response behavior and later realization remain separate
+unproved obligations. Historical R3 admission is not an end-to-end MVP proof.
+
 ## 1. Active target registry
 
 | ABI | Version | Canonical owner | Persistence | Validator / compiler | Activation gate |
@@ -27,7 +32,7 @@ own current repair dependencies; the September 3 narrow Task 4 route is historic
 | Verification Batch ABI | **2** | `src/cemm_authoritative_hybrid/verifier.py` | Episode-serializable | `ExactProgramVerifier` | One receipt per candidate; accepted receipts carry `expression_ref` and compilation proof; disposition is selected/ambiguous/rejected/abstained. |
 | Verified Meaning ABI | **1** | `src/cemm_authoritative_hybrid/expressions.py` | Transient / episode-serializable | `VerifiedMeaningValidator` | Binds program lineage, canonical expression, grounding, coverage, compilation proof, verification receipt and revision pin. |
 | Decision ABI | **1** | `src/cemm_authoritative_hybrid/decision.py` | Transient / episode-serializable | `DecisionEvaluator` | Consumes exactly one `VerifiedMeaning` plus one independently verified `SituationContext`; produces one typed `Decision` with query/proof/admission/transition/capability refs; never accepts a raw program. |
-| Activation Canary Receipt ABI | **1** | `scripts/run_r3_canaries.py` + `scripts/validation_gate.py` | Serialized admission evidence | public `HybridRuntime` replay + admission verifier | Every row is freshly replayed and binds observed `semantic_mode`, cycle, VerifiedMeaning, SituationContext, Decision, effect/no-effect, ResponseMeaning, exact R5 gap and final RevisionPin; admission requires coverage of OBSERVE, QUERY, REQUEST and SIMULATE. |
+| Activation Canary Receipt ABI | **1** | `scripts/run_r3_canaries.py` + `scripts/validation_gate.py` | Serialized admission evidence | R3-owned post-VERIFY `R3Kernel.run` replay + admission verifier | Fixed independently supplied expressions bind observed `semantic_mode`, VerifiedMeaning, SituationContext, Decision, effect/no-effect, ResponseMeaning and final RevisionPin across OBSERVE, QUERY, REQUEST and SIMULATE. These canaries do not exercise public ORIENT/PROPOSE/VERIFY or R5 surface realization; the structural check separately checks the typed R5 handoff. |
 | Diagnostic Semantic Episode ABI | **2** | `src/cemm_authoritative_hybrid/episodes.py` | Serialized diagnostic / future corpus source | `validate_episode` | Separates Program ABI 2 derivation lineage from `VerifiedMeaning`; binds the exact action-schema hash and rejects all Program-as-meaning Episode ABI 1 partitions. R1 records later artifacts as not admitted and cannot serve as R4 gold. |
 | Situation Context ABI | 1 | `src/cemm_authoritative_hybrid/situation.py` | Transient / episode-serializable | `SituationContextValidator` | Independently binds force/mode, participants, temporal/source/epistemic and session context; never inferred from program identity. |
 | Effect / No-Effect Receipt ABI | 1 | `src/cemm_authoritative_hybrid/r3_effects.py` | Serialized | `EffectGateway` | Exactly one receipt per cycle; all mutations/adapters bind decision and verified-meaning refs and are idempotent. |

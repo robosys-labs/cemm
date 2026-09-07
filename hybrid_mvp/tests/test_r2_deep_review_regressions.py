@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+from cemm_authoritative_hybrid.authority import DesignationFact, DesignationIndex
 from cemm_authoritative_hybrid.config import RuntimeConfig
 from cemm_authoritative_hybrid.forms import FormResolver
 from cemm_authoritative_hybrid.grounding import Grounder
@@ -23,6 +24,15 @@ from cemm_authoritative_hybrid.proposal_context import (
 )
 
 __cemm_test_inventory__ = {
+    "tests/test_r2_deep_review_regressions.py::test_multi_unit_designation_retains_exact_fact_and_span": {
+        "activation_phase": "R2",
+        "assertion_ref": "assertion:r2-multi-unit-designation-is-grounded-as-one-span",
+        "diagnostic_role": "owner",
+        "introduced_by_task": "Foundation-Proof-Task-2",
+        "owner_ref": "form-context",
+        "source_ast_sha256": "1fc6ca60c0956b9b4e9c511ba0b8d9714e486c813eae6da31a82ee8535f922d1",
+        "supersedes_node_id": "tests/test_r2_deep_review_regressions.py::test_multi_unit_designation_is_grounded_as_one_span"
+    },
     "tests/test_r2_deep_review_regressions.py::test_literal_decoder_returns_exact_scalar_types": {
         "activation_phase": "R2",
         "assertion_ref": "assertion:r2-literal-decoder-returns-exact-scalar-types",
@@ -211,3 +221,33 @@ def test_query_mode_preserves_variable_source_for_projection():
     ]
     assert len(variable_assignments) == 1
     assert variable_assignments[0].target_role_ref == "role:subject"
+
+
+def test_multi_unit_designation_retains_exact_fact_and_span():
+    fact = DesignationFact.create(
+        surface="mother in law", target_ref="rel:mother_in_law", language="en"
+    )
+    authority = SimpleNamespace(designations=DesignationIndex((fact,)))
+    config = RuntimeConfig.release()
+    form_pack = {
+        "language": "en",
+        "tokenization": {"lowercase": True, "punctuation": []},
+    }
+    resolver = FormResolver(form_pack, config)
+    lattice = resolver.resolve(fact.surface)
+    grounder = Grounder(
+        authority=authority,
+        config=config,
+        form_pack=form_pack,
+        form_pack_hash=resolver.form_pack_hash,
+    )
+    pin = RevisionPin("authority:test", 1, 2, 3, 4, "bootstrap-proposer")
+    result = grounder.ground_lattice(lattice, pin)
+    matches = [row for row in result.designations if row.target_ref == fact.target_ref]
+    assert len(matches) == 1
+    assert len(matches[0].unit_refs) == 3
+    assert matches[0].unit_refs == tuple(
+        unit.unit_ref for unit in lattice.units if unit.normalized_forms
+    )
+    assert matches[0].designation_fact_ref == fact.designation_fact_ref
+    assert result.created_refs == ()

@@ -59,8 +59,7 @@
     "have": {"kind": "query_auxiliary"},
     "list": {"kind": "query"},
     "tell": {"kind": "query"},
-    "report": {"kind": "query"},
-    "define": {"kind": "query"}
+    "report": {"kind": "query"}
   },
   "polarity": {
     "not": {"kind": "negation"},

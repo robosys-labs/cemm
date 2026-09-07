@@ -1,4 +1,4 @@
-"""Exact typed-literal decoding for Semantic Expression ABI 1."""
+"""Exact typed-literal decoding for Semantic Expression ABI 2."""
 
 from __future__ import annotations
 

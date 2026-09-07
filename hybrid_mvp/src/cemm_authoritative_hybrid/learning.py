@@ -1,7 +1,11 @@
-"""Typed designation learning and reviewed acquisition without conversational
-authority escalation.
+"""Predecessor learning/acquisition helpers for historical security assertions.
 
-This module owns the Learning Plan ABI (version 1). It defines
+This module retains Learning Plan ABI 1; it is not the active ABI 2 owner.
+The six-phase runtime uses ``r3_learning.LearningPlan``
+through the verified decision and effect boundaries. Do not reconnect this
+predecessor coordinator or its program-based query engine as a runtime fallback.
+
+This module defines
 :class:`LearningPlan`, :class:`ReviewedAcquisitionPlan`,
 :class:`ReviewerAuthorization`, :class:`DesignationCommitReceipt`,
 :class:`AcquisitionReceipt`, :class:`LearningCoordinator`, and the test-only

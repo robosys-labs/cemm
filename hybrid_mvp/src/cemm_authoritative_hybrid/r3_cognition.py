@@ -134,73 +134,6 @@ def _fact_views(stores: SemanticStores) -> tuple[_FactView, ...]:
     return tuple(result)
 
 
-def _authority_type_fact_views(
-    expression: SemanticExpression,
-    authority: Any,
-    maximum: int,
-) -> tuple[_FactView, ...]:
-    """Expose exact linked atom-kind facts required by nominal type queries."""
-    candidates: list[
-        tuple[SemanticApplication, GroundedReference, LiteralValue]
-    ] = []
-    for app in expression.applications:
-        if app.operator != "op:type":
-            continue
-        roles = {binding.role_ref: binding.filler for binding in app.roles}
-        subject = roles.get("role:subject")
-        semantic_kind = roles.get("role:type")
-        if (
-            isinstance(subject, GroundedReference)
-            and isinstance(semantic_kind, LiteralValue)
-            and semantic_kind.value_type == "string"
-            and type(semantic_kind.value) is str
-            and subject.target_ref == app.predicate_ref
-        ):
-            candidates.append((app, subject, semantic_kind))
-    if not candidates:
-        return ()
-
-    rows: list[_FactView] = []
-    atoms = getattr(authority, "atoms", {})
-    generation = getattr(authority, "generation", None)
-    if not isinstance(atoms, Mapping) or type(generation) is not str:
-        raise TypeError("authority lacks an exact atom index and generation")
-    for app, subject, semantic_kind in candidates:
-        atom = atoms.get(app.predicate_ref)
-        if (
-            atom is None
-            or getattr(atom, "kind", None) != semantic_kind.value
-            or getattr(atom, "reviewed", None) is not True
-        ):
-            continue
-        material = {
-            "authority_generation": generation,
-            "operator": app.operator,
-            "predicate_ref": app.predicate_ref,
-            "roles": [
-                ["role:subject", subject.target_ref],
-                ["role:type", semantic_kind.value],
-            ],
-        }
-        rows.append(
-            _FactView(
-                fact_ref=stable_ref("r3_authority_type_fact", material),
-                operator="op:type",
-                predicate_ref=app.predicate_ref,
-                roles=(
-                    ("role:subject", subject.target_ref),
-                    ("role:type", semantic_kind.value),
-                ),
-                stance="support",
-                placement="reviewed",
-                source_refs=(generation, app.predicate_ref),
-            )
-        )
-        if len(rows) >= maximum:
-            break
-    return tuple(rows)
-
-
 def _authority_control_fact_views(
     expression: SemanticExpression,
     authority: Any,
@@ -652,11 +585,6 @@ class QueryDecisionOwner:
             dict.fromkeys(
                 (
                     *_fact_views(self._stores),
-                    *_authority_type_fact_views(
-                        expression,
-                        self._authority,
-                        self._config.max_applications,
-                    ),
                     *_authority_control_fact_views(
                         expression,
                         self._authority,

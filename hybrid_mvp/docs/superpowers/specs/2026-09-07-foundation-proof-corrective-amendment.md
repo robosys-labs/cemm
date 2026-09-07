@@ -91,6 +91,17 @@ is explicitly retired as an incorrect interpretation. Remove its builder and
 verification exceptions and its automatic query support. Explicit ordinary
 world type facts remain valid; introspection, if later supported, requires its
 own correctly expressed query/evidence rather than this implicit substitution.
+The same retirement applies to corpus compilation: a `defines` assertion with
+only a target and its registry kind cannot author definition gold. Reject it
+as missing semantic content; retain the source as historical evidence until a
+properly reviewed replacement supplies the requested meaning.
+
+The input-pack `define` interrogative cue was part of that retired path: it
+creates an answer variable without a reviewed meaning for the defining request.
+Retire that cue rather than compensating with downstream copula/orthography
+rules. Until its semantic affordance exists, retain typed unresolved evidence.
+This is not a general retirement of genuine interrogatives, ordinary nominal
+predicates, designation questions or the eventual definition capability.
 
 A first containment test may prove that the false answer is no longer emitted.
 It is not a completion test. Until a genuine definition/query projection exists,

@@ -1691,25 +1691,6 @@ class ProposalContextBuilder:
                 (*application_frames, *transition_frames),
                 self._config.max_orientation_alternatives,
             )
-        definition_contributions, definition_frames = (
-            self._definition_application_evidence(
-                orientation.mode,
-                designation_slots,
-                form_lattice,
-                unit_by_ref,
-                nominal_source_refs,
-                reviewed_role_bindings,
-            )
-        )
-        if definition_contributions:
-            contribution_slots = _bounded_unique_contributions(
-                (*contribution_slots, *definition_contributions),
-                self._config,
-            )
-            application_frames = _bounded_unique_slots(
-                (*application_frames, *definition_frames),
-                self._config.max_orientation_alternatives,
-            )
         teaching_contributions, teaching_frames = (
             self._prospective_designation_evidence(
                 designation_slots,
@@ -2652,156 +2633,6 @@ class ProposalContextBuilder:
                     return tuple(contributions), tuple(rows)
         return tuple(contributions), tuple(rows)
 
-    def _definition_application_evidence(
-        self,
-        mode: SemanticMode,
-        designations: tuple[DesignationSlot, ...],
-        form_lattice: FormLattice,
-        unit_by_ref: Mapping[str, Any],
-        nominal_source_refs: Mapping[str, tuple[str, ...]],
-        reviewed_role_bindings: Mapping[str, tuple[str, ...]],
-    ) -> tuple[tuple[ContributionSlot, ...], tuple[ApplicationFrameSlot, ...]]:
-        """Expose one typed nominal-definition query from reviewed form proof."""
-        if mode is not SemanticMode.QUERY:
-            return (), ()
-        query_refs = tuple(
-            unit.unit_ref
-            for unit in form_lattice.units
-            if any(category == "query" for category, _ in unit.features)
-        )
-        if not query_refs:
-            return (), ()
-        binder_refs = tuple(
-            unit.unit_ref
-            for unit in form_lattice.units
-            if any(category == "binder" for category, _ in unit.features)
-        )
-        def local_binder_refs(source_unit_refs: tuple[str, ...]) -> tuple[str, ...]:
-            value_units = tuple(unit_by_ref[ref] for ref in source_unit_refs)
-            value_start = min(unit.source_start for unit in value_units)
-            value_end = max(unit.source_end for unit in value_units)
-            scored = []
-            for ref in binder_refs:
-                unit = unit_by_ref[ref]
-                if unit.source_end <= value_start:
-                    distance = value_start - unit.source_end
-                elif value_end <= unit.source_start:
-                    distance = unit.source_start - value_end
-                else:
-                    distance = 0
-                scored.append((distance, unit.source_start, unit.source_end, ref))
-            if not scored:
-                return ()
-            best_distance = min(distance for distance, *_rest in scored)
-            return tuple(ref for distance, _start, _end, ref in scored if distance == best_distance)
-
-        contributions: list[ContributionSlot] = []
-        frames: list[ApplicationFrameSlot] = []
-        for designation in designations:
-            definition_target_ref = (
-                designation.target_ref
-                if designation.target_kind == "concept"
-                else getattr(self._authority, "definition_targets", {}).get(
-                    designation.target_ref
-                )
-            )
-            definition_target = self._authority.atoms.get(definition_target_ref)
-            if (
-                not isinstance(definition_target, AtomRecord)
-                or definition_target.kind != "concept"
-                or "role:subject"
-                not in reviewed_role_bindings.get(designation.slot_ref, ())
-            ):
-                continue
-            predicate_source_refs = nominal_source_refs.get(
-                designation.slot_ref,
-                designation.source_unit_refs,
-            )
-            support_refs = tuple(
-                dict.fromkeys(
-                    (
-                        *query_refs,
-                        *local_binder_refs(designation.source_unit_refs),
-                    )
-                )
-            )
-            provenance = tuple(
-                dict.fromkeys(
-                    (
-                        designation.slot_ref,
-                        designation.designation_fact_ref,
-                        definition_target_ref,
-                        *designation.provenance_refs,
-                        *support_refs,
-                    )
-                )
-            )
-            predicate = ContributionSlot.create(
-                contribution_ref=stable_ref(
-                    "definition_query_predicate",
-                    {
-                        "designation_slot_ref": designation.slot_ref,
-                        "target_ref": definition_target_ref,
-                        "source_unit_refs": list(predicate_source_refs),
-                    },
-                ),
-                kind="predicate",
-                source_unit_refs=predicate_source_refs,
-                target_ref=definition_target_ref,
-                target_kind="concept",
-                input_ports=("role:type",),
-                output_ports=("role:class",),
-                constraints=(
-                    ("definition_query", "nominal_type"),
-                    ("semantic_kind", definition_target.kind),
-                    ("definition_source_ref", designation.target_ref),
-                    ("definition_target_ref", definition_target_ref),
-                ),
-                provenance_refs=provenance,
-            )
-            literal = ContributionSlot.create(
-                contribution_ref=stable_ref(
-                    "definition_query_kind_literal",
-                    {
-                        "designation_slot_ref": designation.slot_ref,
-                        "semantic_kind": definition_target.kind,
-                        "source_unit_refs": list(support_refs),
-                    },
-                ),
-                kind="literal",
-                source_unit_refs=support_refs,
-                target_ref=None,
-                target_kind=None,
-                input_ports=(),
-                output_ports=("role:type",),
-                constraints=(
-                    ("literal", definition_target.kind),
-                    ("literal_kind", "string"),
-                    ("definition_query", "nominal_type"),
-                ),
-                provenance_refs=provenance,
-                literal_value=definition_target.kind,
-            )
-            frame = ApplicationFrameSlot.create(
-                designation_slot_ref=designation.slot_ref,
-                predicate_target_ref=definition_target_ref,
-                predicate_kind="concept",
-                operator_ref="op:type",
-                structural_role_ref="role:class",
-                required_roles=("role:type",),
-                optional_roles=(),
-                proposition_roles=(),
-                source_unit_refs=predicate_source_refs,
-                derived_role_targets=(
-                    ("role:subject", definition_target_ref),
-                ),
-                affordance_frame_ref=None,
-                provenance_refs=provenance,
-            )
-            contributions.extend((predicate, literal))
-            frames.append(frame)
-        return tuple(contributions), tuple(frames)
-
     def _contribution_slots(
         self,
         contributions: tuple[SemanticContribution, ...],
@@ -3574,13 +3405,6 @@ def _variable_slots(
         "role:surface": ("literal",),
         "role:type": ("concept", "event_type"),
     }
-    reviewed_definition_designations = {
-        frame.designation_slot_ref
-        for frame in frames
-        if frame.affordance_frame_ref is None
-        and any(role == "role:subject" for role, _ in frame.derived_role_targets)
-        and any(source_ref in frame.provenance_refs for source_ref in variable_sources)
-    }
     slots: list[VariableSlot] = []
     binder_sources = tuple(
         dict.fromkeys(
@@ -3593,8 +3417,6 @@ def _variable_slots(
     for source_ref in variable_sources:
         for frame in frames:
             if (
-                frame.designation_slot_ref in reviewed_definition_designations
-                or
                 frame.affordance_frame_ref is None
                 and source_ref in frame.provenance_refs
             ):
@@ -3869,26 +3691,6 @@ def _is_state_value_application_frame(
         )
         and frame.affordance_frame_ref is None
         and designation.designation_fact_ref in frame.provenance_refs
-    )
-
-
-def _is_definition_application_frame(
-    frame: ApplicationFrameSlot,
-    designation: DesignationSlot,
-) -> bool:
-    return (
-        frame.predicate_kind == "concept"
-        and frame.operator_ref == "op:type"
-        and frame.structural_role_ref == "role:class"
-        and frame.required_roles == ("role:type",)
-        and frame.optional_roles == ()
-        and frame.proposition_roles == ()
-        and set(designation.source_unit_refs) <= set(frame.source_unit_refs)
-        and frame.derived_role_targets
-        == (("role:subject", frame.predicate_target_ref),)
-        and frame.affordance_frame_ref is None
-        and designation.designation_fact_ref in frame.provenance_refs
-        and frame.predicate_target_ref in frame.provenance_refs
     )
 
 
@@ -4665,10 +4467,6 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             frame,
             designation,
         )
-        definition_frame = _is_definition_application_frame(
-            frame,
-            designation,
-        )
         transition_value_frame = _is_transition_value_application_frame(
             frame,
             designation,
@@ -4678,7 +4476,7 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
         if (
             frame.predicate_target_ref != designation.target_ref
             or frame.predicate_kind != designation.target_kind
-        ) and not (state_value_frame or definition_frame or designation_frame):
+        ) and not (state_value_frame or designation_frame):
             raise ValueError("application frame predicate disagrees with designation")
         if designation_frame:
             expected_operator = "op:designation"
@@ -4693,12 +4491,6 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
             expected_derived_roles = (
                 ("role:dimension", frame.predicate_target_ref),
                 ("role:value", designation.target_ref),
-            )
-        elif definition_frame:
-            expected_operator = "op:type"
-            expected_structural_role = "role:class"
-            expected_derived_roles = (
-                ("role:subject", frame.predicate_target_ref),
             )
         elif transition_value_frame:
             expected_operator = "op:event"
@@ -4779,28 +4571,6 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
                     in contribution.constraints
                     and (
                         "value_dimension_ref",
-                        frame.predicate_target_ref,
-                    )
-                    in contribution.constraints
-                )
-            )
-            and (
-                not definition_frame
-                or (
-                    ("definition_query", "nominal_type")
-                    in contribution.constraints
-                    and (
-                        "semantic_kind",
-                        frame.predicate_kind,
-                    )
-                    in contribution.constraints
-                    and (
-                        "definition_source_ref",
-                        designation.target_ref,
-                    )
-                    in contribution.constraints
-                    and (
-                        "definition_target_ref",
                         frame.predicate_target_ref,
                     )
                     in contribution.constraints
@@ -4893,6 +4663,26 @@ def _validate_context(context: Any, config: RuntimeConfig) -> None:
         row.application_frame_ref not in frame_by_ref for row in context.variable_slots
     ):
         raise ValueError("variable contains unknown application frame")
+    binder_sources = {
+        source_ref
+        for contribution in context.contribution_slots
+        if contribution.kind == "binder"
+        for source_ref in contribution.source_unit_refs
+    }
+    for variable in context.variable_slots:
+        frame = frame_by_ref[variable.application_frame_ref]
+        allowed_sources = open_variable_sources
+        if (
+            type(frame) is ApplicationFrameSlot
+            and frame.predicate_kind == "label_type"
+            and variable.role_ref == "role:surface"
+        ):
+            # The reviewed designation surface contract retains its query
+            # source plus predication binders; a binder alone is not a query.
+            allowed_sources = open_variable_sources | binder_sources
+        sources = set(variable.source_unit_refs)
+        if not sources & open_variable_sources or not sources <= allowed_sources:
+            raise ValueError("variable requires exact open_variable source evidence")
     for transition in context.transition_slots:
         frame = frame_by_ref.get(transition.application_frame_ref)
         if frame is None:

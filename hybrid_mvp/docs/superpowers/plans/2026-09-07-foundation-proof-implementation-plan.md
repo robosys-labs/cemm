@@ -33,7 +33,7 @@ known repair targets, not permission to weaken exact safety checks.
 Files: `AGENTS.md`, `README.md`, `INTEGRATION.md`, `docs/ARCHITECTURE.md`,
 `docs/IMPLEMENTATION_PLAN.md`, `docs/REPLAY_GOVERNANCE.md`,
 `docs/DOCUMENT_AUTHORITY.json`, `docs/ABI_REGISTRY.md`, affected older specs/plans,
-and explicit routing-test successors in `tests/test_replay_governance.py`.
+and explicit routing-test successors in `tests/test_foundation_governance.py`.
 
 - [x] Classify the September 3 closure and unresolved design/plan as historical;
   preserve completed work and exact stop records, add a supersession banner.
@@ -47,9 +47,16 @@ and explicit routing-test successors in `tests/test_replay_governance.py`.
   documents so they cannot override that distinction.
 - [x] Replace stale routing-test obligations through explicit successors;
   preserve immutable inventory/ledger anchors and refresh later AST metadata.
-- [ ] Run `python -m pytest tests/test_replay_governance.py tests/test_test_inventory.py -q`
-  using the current inventory-aware mechanism where required. Record failures
+- [x] Run the authenticated active union for `test_replay_governance.py`,
+  `test_foundation_governance.py` and `test_test_inventory.py`. Record failures
   by owner, never rewrite expected hashes to conceal a changed frozen assertion.
+
+Evidence: all 107 active cases passed on clean commit `372aaa9`; the two new
+routing assertions were observed RED before migration. Independent spec/quality
+reviews passed. G0–R5 configured selectors match the authenticated inventory.
+The clean status CLI verifies the historical chain: G0–R3 green, R4–R8 red;
+this is not fresh admission of changed semantic owners. Commit `315202c` records
+the migration; `372aaa9` restores the living receipt's canonical no-newline bytes.
 
 ## Task 2 — Remove false definition answers with independent regressions
 
@@ -57,12 +64,12 @@ This is the amendment's bounded containment exception, based on the audit's
 reproduced false answer. It precedes full-matrix capability repair selection;
 its completion must not be used as evidence that a definition can be answered.
 
-Files: `src/cemm_authoritative_hybrid/proposal_context.py`,
-`src/cemm_authoritative_hybrid/r3_cognition.py`, dependent exact reconstruction
+Files: `data/languages/en/forms.json`, `src/cemm_authoritative_hybrid/proposal_context.py`,
+`src/cemm_authoritative_hybrid/r3_cognition.py`, `r4_contracts.py`, dependent exact reconstruction
 owners, `tests/test_foundation_semantics.py`, explicit successors of misleading
 definition tests, and affected test metadata.
 
-- [ ] Write and run RED public-runtime contrasts for `What is CEMM?`, `Who is
+- [x] Write and run RED public-runtime contrasts for `What is CEMM?`, `Who is
   CEMM?`, `Where is CEMM?`, `Define mother.` and `What is a mother?`. Assert that
   no selected expression substitutes an internal atom-kind statement for the
   requested content. Assert no world mutation. Do not assert that abstention
@@ -78,16 +85,79 @@ assert not any(
 )  # when there is a selected expression
 ```
 
-- [ ] Add an independent cognition test: an atom-kind-shaped pattern receives
+- [x] Add an independent cognition test: an atom-kind-shaped pattern receives
   no automatic support from the atom registry. Add positive controls showing
   explicit ordinary world type facts still supply the proper binding/proof.
-- [ ] Delete nominal-definition-to-kind synthesis and its special validation
+- [x] Delete nominal-definition-to-kind synthesis and its special validation
   allowances, then remove automatic registry-kind support from the query owner.
   Keep valid designation, state and normal nominal-predicate affordances.
-- [ ] Run the new tests GREEN and the existing relevant R2/R3/R4 owner suites.
+- [x] Reject the R4 compiler's metadata-only `defines(target, semantic_kind)`
+  assertion with an exact typed error. It currently reconstructs the same false
+  definition gold; missing semantic content must not be invented or silently
+  filtered out of frozen corpus obligations. Preserve explicit ordinary facts.
+- [x] Run the new tests GREEN and the existing relevant R2/R3/R4 owner suites.
   Give obsolete definition-gold/traversal tests explicit honest successors,
   preserving their historical bodies and independent safety assertions.
-- [ ] Record the remaining open-definition/description capability as incomplete.
+- [x] Record the remaining open-definition/description capability as incomplete.
+- [x] Retire the erroneous `define` interrogative cue at the input-pack source
+  owner. Independently require genuine open-variable evidence for query slots,
+  preserving role-specific binder evidence in designation/name questions. No
+  runtime surface branch, new copula parser, raw orthography channel or ABI bump.
+  Preserve ordinary questions, nominal affordances and multiword designations;
+  record the pack diff/hash and unchanged authorized realization behavior.
+
+Containment evidence (uncommitted implementation under independent review):
+28 foundation cases pass after observed REDs; a 39-case focused run also passes
+verifier reconstruction, recursive-query, learning-transaction and real-index
+multiword-designation controls. A discarded copula/orthography experiment was
+found to constrain unrelated questions. The final implementation instead removes
+the erroneous source-pack cue and checks exact query-variable source ownership.
+`Define mother.` remains typed unresolved; genuine nominal questions, including
+multiword `job role`, retain their existing variables. The narrower correction
+does not establish punctuation, clause-locality or zero-copula competence, and
+must not be described as useful definition support.
+
+Pack preservation: `data/languages/en/forms.json` is directly reviewed input,
+not generator output; no current writer was found. The diff removes only the
+`define` query cue, preserving all other fields and Form ABI 7. The regression
+restores that one entry in memory and independently requires the predecessor
+canonical hash `32f5133c901afc05cc5345bc5766d00c97518b54025cad4ca0fb3707ad40b5ad`.
+The pack contains no response grammar or realization records. Frozen input/corpus
+witnesses are retained, not regenerated; unavailable R5 realization is not
+claimed as tested. Actual public and post-VERIFY controls are reported separately.
+Independent spec and quality reviews passed for this containment checkpoint.
+The final bounded
+authenticated owner run has 248 passes and 13 failures across 261 nodes, with
+the same source-data failures and three unresolved-designation predecessor
+failures described below. All four post-VERIFY R3 canaries pass: OBSERVE is
+contested, QUERY/REQUEST are unknown, SIMULATE is simulation; all four return
+NoEffectReceipt with zero world delta. They do not prove successful operations
+or answered questions. The 111-case
+active governance run has 110 passes and the expected dirty-input CLI failure;
+the clean-checkpoint run remains required, without weakening that check.
+
+The initial 243-node authenticated owner diagnostic had 229 passes and 14 failures:
+
+- Ten expose invalid historical `defines` gold. They are the assertion compiler's
+  `test_core_reviewed_assertion_families_compile_without_propose` and these
+  closeout tests: `test_every_reviewed_scenario_matches_authentic_cycles`,
+  `test_every_reviewed_surface_compiles_and_round_trips_canonically`,
+  `test_external_sensor_provenance_is_not_mistaken_for_active_adapter_authority`,
+  the `adversarial`/`gaps`/`restart` cases of
+  `test_fail_closed_boundary_families_match_authentic_cycles`,
+  `test_learning_reported_speech_and_effect_contracts_have_connected_compatible_topology`,
+  and both `test_singleton_polysemy_*` tests. Their source is retained and failures
+  remain visible; no aggregate was silently filtered or superseded.
+- Four also fail when the relevant owner modules are loaded read-only from
+  baseline `372aaa9`: the unknown designation frame-builder test, unresolved
+  derivation canary, closure unknown-designation test, and the multi-unit
+  designation fixture lacking `facts_for_surface`. The latter now has a real-
+  `DesignationIndex` successor retaining the same assertion and adding exact
+  fact/span provenance checks; it passes. The other three remain repair items.
+
+Source inventory authenticates R2/R3/R4; immutable inventory and frozen test
+bodies/metadata are unchanged. These results do not establish phase admission,
+useful definitions, complete unknown handling, or a passing full regression.
 
 ## Task 3 — Establish the independent foundation semantic contract
 
@@ -102,6 +172,29 @@ assert not any(
   denial case. Check mutation receipts and store revisions.
 - [ ] Run the whole diagnostic matrix and record all missing owners together.
   Do not stop discovery at the first failing surface and regenerate bulk gold.
+
+### Matrix preparation findings (September 7, not completion evidence)
+
+Independent review identified the following owners to exercise together. These
+are not additional release gates. Existing canonical types/owner APIs supply the
+test inputs; parser output must not supply the expectations.
+
+| Boundary | Independent expectation | Evidence so far |
+|---|---|---|
+| Ordinary facts | Explicit membership/ordered relation evidence supports only the specified proposition and proof. | Canonical application, binder and query APIs exist; Task 2 contains registry-kind substitution. |
+| Type-role alignment | The surface path, independent compiler and query owner agree on the same membership roles; a metadata classification is not substituted. | Static inspection: nominal affordances use `role:instance`/`role:class`; an explicit compiler application permits `role:subject`/`role:type`, while its composed-type validator still requires a registry-kind literal. Direct-query positives do not prove cross-path equivalence. |
+| Polarity/admission | A negative state is not admitted as positive; a conditional does not admit either operand unconditionally. | Direct `ObserveDecisionOwner` probes reproduce both wrong delta outputs. No gateway was invoked; public reachability is not yet established. |
+| Scoped requests | A nested, negated or conditional event is not an unconditional executable request. | Static inspection: request owner selects the first event anywhere in the expression. Requires executable contrast, not an exploit claim. |
+| Partial meaning | Unresolved role constraints survive; known facts cannot satisfy a pattern made broader by dropping that role. | Static inspection: query pattern drops `UnresolvedValue`; VERIFY currently blocks critical residuals before compilation. |
+| Speech/fragments | Context retrieval preserves speaker, session, prior expression and exact outstanding content slot. | Low-level resolver tests exist, but active snapshots return refs without the complete semantic focus; public continuation is not demonstrated. |
+| Operations | A predeclared system/lamp/power/on request produces an independently specified observed delta only with permission; replay commits once. | Existing adapter echo of expected deltas is not an independent correctness oracle. |
+| Learning/reuse | Actual unknown QueryResult → authorized existing-target alias → one commit → restart → unseen composition. | Current R3 path materializes a known-target obligation, can synthesize a query ref, and does not complete a durable alias commit/reuse loop. |
+
+After the full matrix runs, repair admission/scope safety before expanding
+question or learning capabilities. Preserve the positive simple-state and denied-
+effect controls. Retained predecessor `query.py`/`learning.py` docstrings now
+identify their historical status and whole-store retrieval limitation; they must
+not be reconnected to bypass these missing active owners.
 
 ## Task 4 — Complete open queries and scoped uncertainty through existing owners
 

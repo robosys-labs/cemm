@@ -1,13 +1,18 @@
-"""Indexed query, proof-bearing retrieval, and bounded recursive inference.
+"""Predecessor query/description helpers; not the active six-phase query owner.
+
+The active runtime evaluates canonical expressions through
+``r3_cognition.QueryDecisionOwner`` and returns ``r3_artifacts.QueryResult``.
+The types below remain available to historical security assertions; their
+program-based observation path must not be wired into the current runtime.
 
 This module owns :class:`Query`, :class:`QueryResult`,
 :class:`SemanticDescription`, :class:`RetrievalReceipt`,
 :class:`InferenceLimits`, :class:`QueryEngine`,
 :class:`GenericDefinitionLowerer`, and :class:`LoweringPreview`.
 
-The :class:`QueryEngine` evaluates queries against revision-pinned semantic
-stores using predicate/role/argument indexes.  It retrieves only rules whose
-heads can unify with the query or recursively opened subgoals, memoises by
+The :class:`QueryEngine` materializes the whole fact store and authority rule
+collection before matching. Its configured inference limits do not bound that
+initial retrieval cost. It memoises by
 ``(query structure, authority revision, world revision, epistemic placement)``,
 and records fact/rule probes in a :class:`RetrievalReceipt`.
 
@@ -339,11 +344,10 @@ _FORM_FEATURE_MAP: dict[tuple[str, str], tuple[tuple[str, ...], tuple[str, ...]]
 
 
 class QueryEngine:
-    """Indexed query engine with proof-bearing bounded recursive inference.
+    """Predecessor query engine with proof-bearing inference.
 
-    Evaluates queries against revision-pinned semantic stores using
-    predicate/role/argument indexes.  Retrieves only rules whose heads can
-    unify with the query or recursively opened subgoals.  Memoises by
+    Materializes all stored facts and authority rules before matching;
+    this is not indexed bounded retrieval. Memoises by
     ``(query structure, authority revision, world revision, epistemic
     placement)`` and records fact/rule probes.
 

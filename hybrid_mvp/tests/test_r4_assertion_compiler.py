@@ -1,4 +1,11 @@
-"""R4 total assertion compiler tests."""
+"""R4 assertion compiler contracts, including preserved predecessor assertions.
+
+The September 7 foundation amendment retires metadata-only ``defines`` gold.
+The historical all-families aggregate still contains that invalid assertion
+and remains a visible source-repair obligation; it does not authorize restoring
+the false definition-to-registry-kind mapping. Independent current rejection
+and ordinary-application controls are in test_foundation_semantics.py.
+"""
 from __future__ import annotations
 
 import pytest

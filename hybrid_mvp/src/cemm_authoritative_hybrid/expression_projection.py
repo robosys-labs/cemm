@@ -1,4 +1,4 @@
-"""Read-only structural projection over Semantic Expression ABI 1.
+"""Read-only structural projection over Semantic Expression ABI 2.
 
 The projection validates and indexes canonical expression structure for R3
 owners.  It never inspects source text, construction programs, or internal ref

@@ -1430,12 +1430,11 @@ class ExpectedCycleContractCompiler:
                 SemanticMode.QUERY if len(expressions) > 1 else SemanticMode.OBSERVE
             ), None
         if family == "definition":
-            target = self._authority.require_ref(fields["target"], "definition target")
-            return (
-                self._type_expression(
-                    target, exact_text(fields["semantic_kind"], "semantic_kind")
-                ),
-            ), normalized, SemanticMode.QUERY, None
+            raise AssertionCompilerError(
+                "definition_requires_semantic_content",
+                assertion.assertion_ref,
+                "target and registry kind do not specify a definition",
+            )
         if family == "entity":
             target = self._authority.require_ref(fields["target"], "entity target")
             if fields.get("role") is not None:

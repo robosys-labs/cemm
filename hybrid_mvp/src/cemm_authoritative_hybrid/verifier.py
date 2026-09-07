@@ -2,7 +2,7 @@
 
 VERIFY consumes the complete ranked proposal once.  It independently replays
 Program ABI 2 pointers, validates Source Coverage ABI 2, compiles canonical
-Semantic Expression ABI 1, and checks the retained proof domains.  It never
+Semantic Expression ABI 2, and checks the retained proof domains.  It never
 opens authority data, repairs a candidate, or sums duplicate derivation scores.
 """
 
@@ -104,38 +104,6 @@ def _is_reviewed_state_value_frame(
                 "value_dimension_ref",
                 frame.predicate_target_ref,
             )
-            in row.constraints
-            for row in context.contribution_slots
-        )
-    )
-
-
-def _is_reviewed_definition_frame(
-    context: ProposalContext,
-    frame: Any,
-    designation: Any,
-) -> bool:
-    return (
-        frame.predicate_kind == "concept"
-        and frame.operator_ref == "op:type"
-        and frame.structural_role_ref == "role:class"
-        and frame.required_roles == ("role:type",)
-        and frame.optional_roles == ()
-        and frame.proposition_roles == ()
-        and frame.derived_role_targets
-        == (("role:subject", frame.predicate_target_ref),)
-        and frame.affordance_frame_ref is None
-        and designation.designation_fact_ref in frame.provenance_refs
-        and frame.predicate_target_ref in frame.provenance_refs
-        and any(
-            row.kind == "predicate"
-            and row.target_ref == frame.predicate_target_ref
-            and row.target_kind == frame.predicate_kind
-            and row.source_unit_refs == frame.source_unit_refs
-            and ("definition_query", "nominal_type") in row.constraints
-            and ("definition_source_ref", designation.target_ref)
-            in row.constraints
-            and ("definition_target_ref", frame.predicate_target_ref)
             in row.constraints
             for row in context.contribution_slots
         )
@@ -1374,10 +1342,6 @@ def _replay_program(
                 designation.target_ref != frame.predicate_target_ref
                 or designation.target_kind != frame.predicate_kind
             ) and not _is_reviewed_state_value_frame(
-                context,
-                frame,
-                designation,
-            ) and not _is_reviewed_definition_frame(
                 context,
                 frame,
                 designation,

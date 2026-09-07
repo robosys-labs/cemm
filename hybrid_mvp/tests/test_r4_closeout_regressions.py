@@ -1,8 +1,12 @@
 """Behavioral R4 closeout regressions over the reviewed corpus.
 
-These tests keep the independent expected-contract compiler total over the
-reviewed scenario source without allowing runtime/proposer outputs to influence
-expectations.
+These tests check source/compiler agreement without allowing runtime/proposer
+outputs to author expectations. The September 7 foundation amendment retires
+metadata-only definition gold: aggregate source compilation now exposes those
+unrepaired rows with ``definition_requires_semantic_content``. Do not restore
+the false compiler mapping or silently filter rows to make these tests green.
+Exact definition-case successors live in test_foundation_semantics.py; remaining
+aggregate failures are tracked in the current foundation implementation plan.
 """
 from __future__ import annotations
 
