@@ -66,8 +66,16 @@ LearningPlan and original pending/source-query witnesses in the existing journal
 request; they use the current `LEARNING_OBLIGATION_ONLY` no-effect receipt, not a
 new artifact ABI or obligation record. Terminal retry is read-only; unfinished
 recovery remains bound to the original answer reservation. The duplicate
-plan-derived type is removed and reviewed continuation publication remains
-disabled under the foundation plan. Non-null
+plan-derived type is removed. Candidate out-of-band publication uses a distinct
+request in the existing EFFECT journal and current EffectReceipt ABI 2; it adds
+no semantic role, artifact ABI, table or phase. It requires independently
+configured store-bound review authentication, preserves the historical meaning
+and answer pins, and atomically completes the original obligation with one
+designation fact and receipt without advancing a dialogue turn. Explicit alias
+language and publication-key locators are review/proof metadata, not designation
+roles or authority by themselves. Shared admitted lookup and restart composition
+remain foundation-plan dependencies; ordinary runtime construction still has no
+review verifier. Non-null
 journal receipts must decode under the current receipt ABI on activation;
 planned rows with no receipt retain their existing recovery semantics.
 

@@ -430,13 +430,7 @@ def learning_answer_binding(stores: SemanticStores, situation: Any, answer: Any,
     This read neither publishes an alias nor consumes the pending obligation.
     """
     from .cycle import SemanticMode
-    from .decision import DecisionStatus
-    from .expressions import BoundVariable, GroundedReference, LiteralValue, SemanticApplication, SemanticExpression
-    from .expression_transform import instantiate_bindings
-    from .r3_artifacts import EvaluationBundle, QueryStatus
-    from .r3_codec import thaw_json
-    from .r3_effects import NoEffectReason, NoEffectReceipt, R3EffectGateway
-    from .r3_persistence import EffectJournalEntry, EffectJournalState, effect_journal_get
+    from .expressions import SemanticApplication
     from .situation import SituationContext
 
     if type(stores) is not SemanticStores or type(situation) is not SituationContext or type(answer) is not SemanticApplication:
@@ -453,6 +447,24 @@ def learning_answer_binding(stores: SemanticStores, situation: Any, answer: Any,
     if len(pending) != 1:
         raise ValueError("continuation requires exactly one pending learning answer")
     row = pending[0]
+    return validate_learning_source(stores, row, situation, answer)
+
+
+def validate_learning_source(stores, row, situation, answer):
+    """Authenticate retained query proof without repinning an historical answer.
+
+    The caller owns current pending/session eligibility. This same proof check is
+    used both by answer materialization and by out-of-band publication.
+    """
+    from .cycle import SemanticMode
+    from .decision import DecisionStatus
+    from .expressions import BoundVariable, GroundedReference, LiteralValue, SemanticExpression
+    from .expression_transform import instantiate_bindings
+    from .r3_artifacts import EvaluationBundle, QueryStatus
+    from .r3_codec import thaw_json
+    from .r3_effects import NoEffectReason, NoEffectReceipt, R3EffectGateway
+    from .r3_persistence import EffectJournalEntry, EffectJournalState, effect_journal_get
+
     if row.expected_answer_contract_ref != "contract:designation_answer:v2":
         raise ValueError("continuation answer contract is unsupported")
     key = R3EffectGateway._effect_key(row.source_decision_ref, None, "no_effect:unknown")

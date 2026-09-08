@@ -242,10 +242,14 @@ terminal no-effect receipt consumes the answer turn once, without world mutation
 renewal or completion of the pending record. Exact journal-bound retries preserve
 that receipt, including after restart; unfinished proposals cannot repin their
 source reservation. This is not authenticated review or alias acquisition.
-The duplicate plan-derived obligation type is removed. The former EFFECT
-publication path remains disabled pending the reviewed transactional publication
-owner; do not restore it or a direct second-obligation writer as a compatibility
-path. Automatic generic query-continuation
+The duplicate plan-derived obligation type and direct learning-outcome writer
+are removed; do not restore either as a compatibility path. The candidate
+out-of-band `publish_learning` path uses the existing EFFECT journal and atomic
+commit owner. It defaults to denial without a separately configured store-bound
+review verifier; dialogue cannot install that verifier or issue its signed grant.
+Its verification and remaining admitted-lookup work are tracked in the foundation
+plan. Publication must preserve the original answer history and complete the
+original pending record only with its atomic successful receipt. Automatic generic query-continuation
 creation is implemented in the current Task 5 repair, with acceptance and
 remaining dependencies tracked in the foundation plan. The user approved its
 four-subsequent-same-session-turn lifecycle on September 8, as recorded in the

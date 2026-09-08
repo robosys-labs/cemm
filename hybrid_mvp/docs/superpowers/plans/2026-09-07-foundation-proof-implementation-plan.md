@@ -1365,6 +1365,23 @@ the actual admitted fact/review/commit lineage, not label a learned fact as an
 immutable authority-source fact. This is still an implementation dependency,
 not evidence that the current seeded alias-index test proves acquisition.
 
+The shared reader must also serve the context builder's canonical-surface lookup
+for designation-as-application lowering; leave frozen R4 authoring untouched.
+Keep the canonical surface/target/language designation identity separate from
+the admitted world Fact identity. Existing grounding-candidate provenance and
+query Fact-view/source-proof fields can carry the actual admission lineage; no
+new semantic ABI or separate VERIFY validation tier is required. Admission is
+authenticated at publication and checked on reading through the trusted
+ORIENT/context and query owners. An unkeyed receipt hash is not a claim of
+protection against fabrication of an entire database by an offline attacker.
+
+SQLite's cached `revision_pin()` values cannot authorize reads of newer live
+rows. The admitted reader must compare fixed metadata revisions against its
+expected pin within one read snapshot before using a cache or bounded rows and
+keyed proof records. Prefer one scope for ORIENT's bounded batch; query uses the
+same rule. Never silently rebase a constructed context. Final publication
+conflict/currentness checks remain inside the existing write transaction.
+
 ### Learning-proposal transaction increment — September 8
 
 The bounded proposal transaction passed independent specification and quality
@@ -1443,12 +1460,12 @@ the expected dirty-input status failure. Selectors/counts and gate config remain
 unchanged; the existing receipt regenerates twice identically to
 `f15098d2f50d7d6b6b87d21664fc4c0f3e8bc82417d94db0aa397f8bd4e3a972`.
 No runtime, architecture, authority or frozen-inventory change accompanies this
-test correction. Clean-checkpoint verification follows the local commit.
+test correction. At local checkpoint `3d1bf7d`, the combined governance/config/
+proposal modules passed **141 tests in 18.70 seconds** with a clean worktree.
 
-**Remaining ordered work:** authenticated out-of-band reviewer publication using
-a distinct journal and fresh commit snapshot; atomic alias/original-obligation
-completion/receipt; shared admitted-designation lookup through grounding and
-query; isolated restart and unseen-composition demo. The review must remain
+**Remaining ordered work:** shared admitted-designation lookup through grounding,
+the context builder and query; isolated restart and unseen-composition demo.
+The publication implementation and verification are recorded below. Review remains
 default-deny and genuinely authenticated, not inferred from a teaching utterance
 or a reviewer-looking source string. The exact scope and acyclic receipt lineage
 above remain governing. Fragment, composition and response repairs are still open.
@@ -1462,6 +1479,67 @@ VerifiedMeaning's grounding/coverage references, which do not contain those
 payloads. The teaching utterance's language need not equal the designation's
 language. Do not alter historical meaning or LP3 to manufacture that association.
 Plain strings naming a reviewer or store do not authenticate either one.
+
+The review verifier is privileged, store-scoped configuration and defaults to
+absent. Its signed grant is the exact language authorization; no second language
+allowlist or language role is introduced merely to validate that grant. Language
+remains review/provenance metadata, not an extra designation application role.
+One-use means the exact originating plan/publication journal can commit once;
+changing a nonce cannot obtain a second commit. A separately signed review is a
+distinct authorization, not forged merely because its explicit language differs.
+The isolated SQLite demo binds the actual named database path and separately
+configured signing key; memory requires an explicit trusted harness binding.
+Neither dialogue nor a caller-supplied store label can install that authority.
+
+### Authenticated alias-publication increment — September 8
+
+The candidate publication path passed scoped specification and quality review,
+including a second review after an actual transaction-port defect was repaired.
+`R3EffectGateway.publish_learning` requires separately configured HMAC review,
+binds the actual SQLite database or explicit trusted memory harness, and retains
+the exact signed grant. Its distinct journal captures a fresh publication pin
+without repinning the original answer. The existing commit transaction writes
+one designation fact, resolves the original pending row and retains its canonical
+completed record with the successful receipt. Session, episode and turn history
+do not advance. Exact terminal retries return the same receipt, including after
+reopen; incomplete retries cannot rebase onto changed state.
+
+Review reproduced two internally consistent but unauthorized port substitutions:
+a rehashed receipt naming another decision, and an observed designation naming
+an unreviewed target. Both originally committed on memory and SQLite. Shared pure
+builders now reconstruct the expected observation, fact and **complete** receipt
+from retained proposal/LP3/review evidence. Existing transition/commit owners
+compare that material before mutation, independently of live eligibility checks.
+No new validation tier, semantic role, artifact ABI or authority source is added.
+
+Main independently passed all **76 publication cases in 33.37 seconds**. Each
+reviewer additionally passed 26 adversarial/retry/reopen controls after the fix;
+the implementer passed 206 combined publication and existing owner tests.
+The capability/permission negatives now test their specific rejected grant, not
+an unrelated generation mismatch. SQLite rollback is exercised after actual
+fact, obligation and journal writes; PLANNED, AUTHORIZED and OBSERVED recovery
+are tested through real close/reopen. Four isolated post-VERIFY canaries retain
+zero world delta; they are not the requested usable conversation demo.
+
+The new indexed raw alias read is **conflict evidence only**. It must not be wired
+directly into grounding or query as admission. The shared authenticated reader
+and its snapshot/proof requirements above remain unimplemented. No existing
+test body or unmapped successor assertion is removed or credited by this increment.
+Final authenticated R3 replay: **2014 passed / 166 failed / 2180**, in 274.73
+seconds. The exact failed-node set is unchanged: 163 unmapped successor assertions,
+fresh-fragment clarification, authenticated-alias restart/reversal integration,
+and dirty-input status. There is no new active R3 failure. Structure, 507 later
+R3/R4 metadata records, legacy hard-cut audit (zero findings), compilation and
+diff checks pass. The frozen inventory and all existing test bodies are unchanged.
+Selectors/receipt regenerate twice byte-identically: G0 191 / R1 939 / R2 1329 /
+R3 2180 / R4 2518 / R5 2643. Only the existing effect-learning owner gains 76
+test nodes and one input path; gate definitions, dependencies and limits are
+unchanged. Config SHA-256:
+`aefa0629c868b30a62e68f3980f12af8f7e016533674418b0899885632e0d1f5`;
+receipt SHA-256:
+`5415d67b957edbe5518e3ea3a98c5f0e3470c7458665511dbd3a5cbd2a5dfd01`.
+Clean-checkpoint status verification follows the local commit. This is not
+Task 5 completion, a green R3 release, R4/R5 admission or root adoption.
 
 ## Task 6 — Repair measured search/retrieval bounds and confirm preservation
 
@@ -1494,6 +1572,17 @@ before reducing search duplication or claiming the two-sentence demo is faithful
   and revision-pinned retrieval. Test behavior with increasing irrelevant facts.
 - [ ] Keep configured caps and truncation honesty; measure real work, preserve
   denied-effect and authority boundaries, run multilingual/unseen-synonym tests.
+  The existing `BudgetExhausted` classifier does not establish runtime handling:
+  `HybridRuntime.process_evidence` and CLI callers currently propagate ORIENT
+  exceptions. Repair the existing early-failure/finalization owner when routing
+  bounded lookup overflow. A typed exception is fail-closed but is not a completed
+  CycleResult or usable budget response; never silently keep the first eight
+  alternatives or report overflow as an unknown meaning.
+  The existing R3 CycleResult validator also requires ORIENT, PROPOSE and VERIFY
+  artifacts and exactly three or six phase records. An ORIENT exception cannot
+  be caught and passed to it with missing artifacts. Repair that earliest-failure
+  representation explicitly, preserving strict lineage and ABI ownership; never
+  invent a successful orientation/proposal/verification to satisfy the validator.
 - [ ] Regenerate changed deterministic artifacts twice; require byte identity
   and preservation of every previously authorized realization contract.
 

@@ -1081,6 +1081,8 @@ CREATE TABLE IF NOT EXISTS obligations (
     resolved INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS obligations_session_pending ON obligations(session_ref, resolved, revision, obligation_ref);
+CREATE INDEX IF NOT EXISTS world_designation_surface_language ON world_facts(
+    operator, json_extract(args_json, '$."role:surface"'), json_extract(proof_json, '$.alias_language'), fact_ref);
 CREATE TABLE IF NOT EXISTS episodes (
     episode_ref TEXT PRIMARY KEY,
     session_ref TEXT NOT NULL,
@@ -1230,6 +1232,18 @@ class _MemoryWorldStore:
     def __init__(self) -> None:
         self.revision = 0
         self._facts: dict[str, Fact] = {}
+        self._alias_index: dict[tuple[str, str], dict[str, None]] = {}
+
+    def _store_fact(self, fact):
+        previous = self._facts.get(fact.fact_ref)
+        if (previous is not None and previous.operator == "op:designation"
+                and type(previous.args.get("role:surface")) is str
+                and type(previous.proof.get("alias_language")) is str):
+            self._alias_index.get((previous.args.get("role:surface"), previous.proof.get("alias_language")), {}).pop(fact.fact_ref, None)
+        self._facts[fact.fact_ref] = fact
+        if (fact.operator == "op:designation" and type(fact.args.get("role:surface")) is str
+                and type(fact.proof.get("alias_language")) is str):
+            self._alias_index.setdefault((fact.args.get("role:surface"), fact.proof.get("alias_language")), {})[fact.fact_ref] = None
 
     def commit(self, facts: Iterable[Fact], *, expected_revision: int) -> CommitReceipt:
         facts = tuple(facts)
@@ -1240,7 +1254,7 @@ class _MemoryWorldStore:
         transaction_ref = stable_ref("txn", {"store": "world", "parent": expected_revision, "delta_hash": delta_hash})
         new_revision = self.revision + 1
         for fact in facts:
-            self._facts[fact.fact_ref] = fact
+            self._store_fact(fact)
         self.revision = new_revision
         return CommitReceipt("world", expected_revision, new_revision, delta_hash, transaction_ref)
 
@@ -1546,6 +1560,35 @@ class SemanticStores:
     def revision_pin(self) -> RevisionPin:
         return self._backend.revision_pin()
 
+    @property
+    def learning_store_binding(self) -> str | None:
+        """The actual named SQLite database, never a caller's convenient label."""
+        if not isinstance(self._backend, SQLiteSemanticStore):
+            return None
+        rows = self._backend._conn.execute("PRAGMA database_list").fetchall()
+        path = next((row[2] for row in rows if row[1] == "main"), None)
+        return None if not path else str(Path(path).resolve())
+
+    def r3_alias_facts(self, surface: str, language: str, *, maximum: int) -> tuple[Fact, ...]:
+        """Bounded relevant world evidence; this read alone never admits an alias."""
+        from .r3_codec import exact_int, exact_text
+        exact_text(surface, "alias surface")
+        exact_text(language, "alias language")
+        exact_int(maximum, "alias maximum", minimum=1, maximum=512)
+        if isinstance(self._backend, SQLiteSemanticStore):
+            rows = self._backend._conn.execute(
+                "SELECT fact_ref, operator, args_json, stance, confidence, derived, proof_json FROM world_facts "
+                "WHERE operator='op:designation' AND json_extract(args_json, '$.\"role:surface\"')=? "
+                "AND json_extract(proof_json, '$.alias_language')=? ORDER BY fact_ref LIMIT ?",
+                (surface, language, maximum + 1)).fetchall()
+            facts = tuple(_row_to_fact(row) for row in rows)
+        else:
+            index = self._backend.world._alias_index.get((surface, language), {})
+            facts = tuple(self._backend.world._facts[ref] for ref in islice(index, maximum + 1))
+        if len(facts) > maximum:
+            raise ValueError("alias relevant evidence exceeds bound")
+        return facts
+
     def revisions(self) -> dict[str, int]:
         """Return a snapshot of all store revisions."""
         return {
@@ -1840,6 +1883,10 @@ class SemanticStores:
         if "learning_plan" in entry.request_payload:
             from .r3_learning import validate_learning_proposal_request
             validate_learning_proposal_request(self, entry.request_payload, planned=False)
+        publication = entry.request_payload.get("kind") == "learning_publication"
+        if publication:
+            from .r3_learning import validate_publication_snapshot
+            validate_publication_snapshot(self, entry.request_payload, effect_increments=0)
         if isinstance(self._backend, SQLiteSemanticStore):
             conn = self._backend._conn
             conn.execute("BEGIN IMMEDIATE")
@@ -1871,6 +1918,11 @@ class SemanticStores:
                     if (int(row[0]) if row else 0) != self.obligations.revision:
                         raise StaleRevisionError("learning proposal obligation revision changed concurrently")
                     validate_learning_proposal_request(self, entry.request_payload, planned=False)
+                if publication:
+                    row = conn.execute("SELECT value FROM metadata WHERE key='obligation_revision'").fetchone()
+                    if (int(row[0]) if row else 0) != self.obligations.revision:
+                        raise StaleRevisionError("publication obligation revision changed concurrently")
+                    validate_publication_snapshot(self, entry.request_payload, effect_increments=0)
                 entry_json = _r3_canonical_json(entry.as_dict())
                 conn.execute(
                     "INSERT INTO r3_effect_journal(idempotency_key, entry_json, "
@@ -2056,6 +2108,16 @@ class SemanticStores:
         )
         stored = StoredEffectJournal(entry, receipt_payload).as_dict()
         _r3_canonical_json(stored)
+        publication = entry.request_payload.get("kind") == "learning_publication"
+        if publication and target.terminal:
+            raise ValueError("publication terminal writes require atomic fact/completion commit")
+        if publication:
+            from .r3_effects import R3EffectGateway
+            from .r3_codec import thaw_json
+            expected_observation = (R3EffectGateway._publication_observation(entry.request_payload)[1]
+                if target is EffectJournalState.OBSERVED else None)
+            if thaw_json(entry.observation_payload) != expected_observation:
+                raise ValueError("publication observation lineage mismatch")
         terminal = target.terminal
         obligation_parent = self.obligations.revision
         prepared_obligations = ()
@@ -2077,7 +2139,7 @@ class SemanticStores:
                 # the separate obligation revision. Another connection may have
                 # committed since the gateway assembled this receipt.
                 revision_fields = (("effect_revision", expected_effect_revision),)
-                if "query_continuation" in entry.request_payload or "learning_plan" in entry.request_payload:
+                if "query_continuation" in entry.request_payload or "learning_plan" in entry.request_payload or publication:
                     pin = self.revision_pin()
                     revision_fields += (("session_revision", pin.session_revision),
                         ("world_revision", pin.world_revision), ("episode_revision", pin.episode_revision),
@@ -2087,6 +2149,10 @@ class SemanticStores:
                     if (int(row[0]) if row else 0) != expected_revision:
                         raise StaleRevisionError(f"query/effect transition {name} changed concurrently")
                 self._validate_learning_proposal_transition(entry, receipt_payload)
+                if publication:
+                    from .r3_learning import validate_publication_snapshot
+                    validate_publication_snapshot(self, entry.request_payload,
+                        effect_increments={"planned": 1, "authorized": 2}[source.value])
                 prepared_obligations = self._prepare_query_continuation_transition(entry, receipt_payload)
                 session_parent = self.sessions.revision
                 session_new = session_parent
@@ -2157,6 +2223,10 @@ class SemanticStores:
                 self.obligations.revision = obligation_parent + 1
         else:
             self._validate_learning_proposal_transition(entry, receipt_payload)
+            if publication:
+                from .r3_learning import validate_publication_snapshot
+                validate_publication_snapshot(self, entry.request_payload,
+                    effect_increments={"planned": 1, "authorized": 2}[source.value])
             prepared_obligations = self._prepare_query_continuation_transition(entry, receipt_payload)
             if terminal:
                 session_ref, turn_index, phase = _r3_terminal_turn(entry)
@@ -2225,7 +2295,23 @@ class SemanticStores:
             effect_revision=new_effect,
         )
         stored = StoredEffectJournal(entry, receipt_payload).as_dict()
-        session_ref, turn_index, phase = _r3_terminal_turn(entry)
+        publication = entry.request_payload.get("kind") == "learning_publication"
+        obligation_parent = self.obligations.revision
+        prepared_obligations = ()
+        # Complete all potentially failing serialization before mutating memory.
+        entry_json = _r3_canonical_json(entry.as_dict())
+        receipt_json = _r3_canonical_json(receipt_payload)
+        prepared_facts = tuple({**_fact_to_row(fact), "payload_hash": _payload_hash(_fact_payload(fact)),
+            "revision": new_world} for fact in facts)
+        world_delta = [_fact_payload(row) for row in facts]
+        _r3_canonical_json(world_delta)
+        if publication:
+            new_session = expected_revision_pin.session_revision
+            prepared_obligations = self._prepare_publication_commit(current_entry, entry, receipt_payload, facts)
+        else:
+            session_ref, turn_index, phase = _r3_terminal_turn(entry)
+            session, _payload = _r3_session_material(session_ref=session_ref, turn_index=turn_index,
+                session_phase_ref=phase, revision=new_session)
         if isinstance(self._backend, SQLiteSemanticStore):
             conn = self._backend._conn
             conn.execute("BEGIN IMMEDIATE")
@@ -2234,6 +2320,8 @@ class SemanticStores:
                     ("world_revision", expected_revision_pin.world_revision),
                     ("session_revision", expected_revision_pin.session_revision),
                     ("effect_revision", expected_revision_pin.effect_revision),
+                    ("episode_revision", expected_revision_pin.episode_revision),
+                    *(((("obligation_revision", obligation_parent),) if publication else ())),
                 ):
                     row = conn.execute(
                         "SELECT value FROM metadata WHERE key=?", (key,)
@@ -2243,9 +2331,12 @@ class SemanticStores:
                         raise StaleRevisionError(
                             f"{key}: expected {expected}, got {actual}"
                         )
-                for fact in facts:
-                    row = _fact_to_row(fact)
-                    payload = _fact_payload(fact)
+                locked = self.r3_effect_journal_get(idempotency_key)
+                if locked is None or locked["entry"]["journal_ref"] != current_entry.journal_ref:
+                    raise StaleRevisionError("effect journal parent changed concurrently")
+                if publication:
+                    prepared_obligations = self._prepare_publication_commit(current_entry, entry, receipt_payload, facts)
+                for row in prepared_facts:
                     conn.execute(
                         "INSERT INTO world_facts(fact_ref, operator, args_json, "
                         "stance, confidence, derived, proof_json, payload_hash, revision) "
@@ -2256,7 +2347,7 @@ class SemanticStores:
                         "confidence=excluded.confidence, derived=excluded.derived, "
                         "proof_json=excluded.proof_json, payload_hash=excluded.payload_hash, "
                         "revision=excluded.revision",
-                        {**row, "payload_hash": _payload_hash(payload), "revision": new_world},
+                        row,
                     )
                 world_delta = [_fact_payload(row) for row in facts]
                 conn.execute(
@@ -2271,14 +2362,27 @@ class SemanticStores:
                     new_revision=new_world,
                     delta_hash=_payload_hash(world_delta),
                 )
-                _r3_write_session_sqlite(
-                    conn,
-                    session_ref=session_ref,
-                    turn_index=turn_index,
-                    session_phase_ref=phase,
-                    parent_revision=expected_revision_pin.session_revision,
-                    new_revision=new_session,
-                )
+                if not publication:
+                    _r3_write_session_sqlite(conn, session_ref=session_ref, turn_index=turn_index,
+                        session_phase_ref=phase, parent_revision=expected_revision_pin.session_revision,
+                        new_revision=new_session)
+                for index, (ref, (payload, metadata)) in enumerate(prepared_obligations):
+                    owner_session, digest, revision, resolved = metadata
+                    if index == 0:
+                        changed = conn.execute("UPDATE obligations SET payload_json=?,payload_hash=?,revision=?,resolved=1 "
+                            "WHERE obligation_ref=? AND session_ref=? AND resolved=0",
+                            (_r3_canonical_json(payload), digest, revision, ref, owner_session)).rowcount
+                        if changed != 1:
+                            raise StaleRevisionError("publication pending row changed concurrently")
+                    else:
+                        conn.execute("INSERT INTO obligations(obligation_ref,session_ref,payload_json,payload_hash,revision,resolved) "
+                            "VALUES(?,?,?,?,?,1)", (ref, owner_session, _r3_canonical_json(payload), digest, revision))
+                if prepared_obligations:
+                    conn.execute("INSERT INTO metadata(key,value) VALUES('obligation_revision',?) "
+                        "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (str(obligation_parent + 1),))
+                    _r3_insert_revision(conn, store="obligations", parent_revision=obligation_parent,
+                        new_revision=obligation_parent + 1,
+                        delta_hash=_payload_hash([row[1][0] for row in prepared_obligations]))
                 entry_json = _r3_canonical_json(entry.as_dict())
                 receipt_json = _r3_canonical_json(receipt_payload)
                 conn.execute(
@@ -2313,22 +2417,43 @@ class SemanticStores:
             self.world.revision = new_world
             self.sessions.revision = new_session
             self.effects.revision = new_effect
+            if prepared_obligations:
+                self.obligations.revision = obligation_parent + 1
         else:
             for fact in facts:
-                self._backend.world._facts[fact.fact_ref] = fact
+                self._backend.world._store_fact(fact)
             self.world.revision = new_world
-            session, _payload = _r3_session_material(
-                session_ref=session_ref,
-                turn_index=turn_index,
-                session_phase_ref=phase,
-                revision=new_session,
-            )
-            self._backend.sessions._sessions[session_ref] = session
+            if not publication:
+                self._backend.sessions._sessions[session_ref] = session
+            for ref, prepared in prepared_obligations:
+                self._backend.obligations._store_row(ref, prepared)
+            if prepared_obligations:
+                self.obligations.revision = obligation_parent + 1
             self.sessions.revision = new_session
             self._backend._r3_effect_journals[idempotency_key] = stored
             self.effects.revision = new_effect
         pin = self.revision_pin()
         return {"journal": stored, "revision_pin": pin.as_dict()}
+
+    def _prepare_publication_commit(self, parent, entry, receipt_payload, facts):
+        from .r3_learning import validate_publication_snapshot
+        from .r3_codec import thaw_json
+        from .r3_effects import EffectReceipt, R3EffectGateway
+        from .dialogue import DialogueObligation
+        source = validate_publication_snapshot(self, entry.request_payload, effect_increments=3)
+        receipt = EffectReceipt.from_dict(dict(receipt_payload))
+        observation, expected_fact, expected_receipt = R3EffectGateway._publication_commit_material(parent, self.revision_pin())
+        if (thaw_json(entry.observation_payload) != observation or thaw_json(parent.observation_payload) != observation
+                or facts != (expected_fact,) or receipt != expected_receipt or entry.outcome_ref != expected_receipt.receipt_ref):
+            raise ValueError("publication fact/receipt lineage mismatch")
+        completed = DialogueObligation.create(kind=source.kind, session_ref=source.session_ref,
+            source_query_ref=source.source_query_ref, expected_answer_contract_ref=source.expected_answer_contract_ref,
+            created_turn_index=source.created_turn_index, expires_turn_index=source.expires_turn_index,
+            source_decision_ref=source.source_decision_ref, completion_receipt_ref=receipt.receipt_ref,
+            revision_pin=source.revision_pin)
+        return tuple((row.obligation_ref, _MemoryObligationStore._prepare_row(row.obligation_ref,
+            row.session_ref, {**row.as_dict(), "resolved": True}, self.obligations.revision + 1, True))
+            for row in (source, completed))
 
     def close(self) -> None:
         self._backend.close()

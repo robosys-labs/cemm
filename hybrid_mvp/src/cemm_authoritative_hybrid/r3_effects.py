@@ -809,7 +809,8 @@ class R3EffectGateway:
     """The sole owner of world mutation, adapter invocation, and effect journals."""
 
     def __init__(self, stores: SemanticStores, adapters: AdapterRegistry, config: RuntimeConfig | None = None,
-                 *, authority: LinkedAuthority | None = None) -> None:
+                 *, authority: LinkedAuthority | None = None, review_verifier=None,
+                 memory_review_binding: str | None = None) -> None:
         if type(stores) is not SemanticStores:
             raise TypeError("stores must be exact SemanticStores")
         if type(adapters) is not AdapterRegistry:
@@ -819,6 +820,15 @@ class R3EffectGateway:
         self._stores = stores
         self._adapters = adapters
         self._authority = authority
+        from .r3_learning import AliasReviewVerifier
+        if review_verifier is not None and type(review_verifier) is not AliasReviewVerifier:
+            raise TypeError("review_verifier must be separately configured AliasReviewVerifier")
+        if memory_review_binding is not None:
+            _text(memory_review_binding, "memory review binding")
+            if stores.learning_store_binding is not None:
+                raise ValueError("named SQLite stores cannot override their actual binding")
+        self._review_verifier = review_verifier
+        self._memory_review_binding = memory_review_binding
         self._config = RuntimeConfig.release() if config is None else config
         if type(self._config) is not RuntimeConfig:
             raise TypeError("config must be exact RuntimeConfig")
@@ -829,6 +839,142 @@ class R3EffectGateway:
             "r3_effect_key",
             {"decision_ref": decision_ref, "intent_ref": intent_ref, "kind": kind},
         )
+
+    def publish_learning(self, proposal_key: str, signed_review) -> EffectReceipt:
+        """Publish a persisted proposal using independent, out-of-band review.
+
+        Never advances a dialogue turn or rebuilds/repins its historical meaning.
+        Only privileged application configuration can install the verifier.
+        """
+        from .r3_learning import publication_lineage, validate_publication_snapshot
+        if self._review_verifier is None:
+            raise PermissionError("alias publication has no independent review verifier")
+        binding = self._stores.learning_store_binding or self._memory_review_binding
+        if binding is None:
+            raise PermissionError("memory publication requires explicit process-local trusted binding")
+        review = self._review_verifier.verify(signed_review, store_binding=binding)
+        grant = review["grant"]
+        if grant["proposal_key"] != proposal_key:
+            raise PermissionError("alias review names a different proposal")
+        proposal = effect_journal_get(self._stores, proposal_key)
+        if proposal is None:
+            raise ValueError("learning proposal is absent")
+        key = self._effect_key(proposal.entry.decision_ref, grant["plan_ref"], "learning_publication")
+        stored = effect_journal_get(self._stores, key)
+        if stored is not None:
+            request = thaw_json(stored.entry.request_payload)
+            if request.get("kind") != "learning_publication" or request.get("review") != review or request.get("proposal") != proposal.as_dict():
+                raise ValueError("publication retry differs from original immutable grant/proposal")
+            if stored.entry.state is EffectJournalState.COMMITTED:
+                return self._terminal_receipt(stored)
+        meaning, evaluation, plan, source, contract = publication_lineage(self._stores, self._authority, proposal, grant)
+        if stored is None:
+            current = self._stores.revision_pin()
+            origin = stable_ref("effect_journal_origin", {"kind": "learning_publication", "plan_ref": plan.plan_ref})
+            request = {"kind": "learning_publication", "journal_origin_ref": origin,
+                "publication_key": key,
+                "proposal": proposal.as_dict(), "review": review,
+                "publication_pin": current.as_dict(),
+                "publication_obligation_revision": self._stores.obligations.revision,
+                "publication_session": dict(self._stores.r3_session_snapshot(source.session_ref)),
+                "publication_obligation_snapshot": dict(self._stores.r3_obligation_snapshot(source.session_ref,
+                    maximum=self._config.max_orientation_alternatives))}
+            validate_publication_snapshot(self._stores, request, effect_increments=0)
+            stored = self._begin(key=key, intent_ref=origin, decision_ref=plan.decision_ref,
+                request_payload=request, input_revision_pin=current)
+        _delta, observation = self._publication_observation(request)
+        for before, after, offset in ((EffectJournalState.PLANNED, EffectJournalState.AUTHORIZED, 1),
+                (EffectJournalState.AUTHORIZED, EffectJournalState.OBSERVED, 2)):
+            if stored.entry.state is before:
+                validate_publication_snapshot(self._stores, request, effect_increments=offset)
+                stored = effect_journal_transition(self._stores, idempotency_key=key,
+                    expected_state=before, next_state=after,
+                    observation_payload=observation if after is EffectJournalState.OBSERVED else None,
+                    outcome_ref=None, receipt_payload=None, blocker_refs=(),
+                    expected_effect_revision=self._stores.effects.revision)
+        if stored.entry.state is not EffectJournalState.OBSERVED or thaw_json(stored.entry.observation_payload) != observation:
+            raise ValueError("publication requires exact authenticated observed review")
+        validate_publication_snapshot(self._stores, request, effect_increments=3)
+        publication_lineage(self._stores, self._authority, proposal, grant)
+        current = self._stores.revision_pin()
+        observation, fact, receipt = self._publication_commit_material(stored.entry, current)
+        _, actual = effect_journal_commit(self._stores, idempotency_key=key,
+            observation_payload=observation, outcome_ref=receipt.receipt_ref, receipt_payload=receipt.as_dict(),
+            facts=(fact,), expected_revision_pin=current)
+        if actual != receipt.output_revision_pin:
+            raise RuntimeError("publication persistence revision mismatch")
+        return receipt
+
+    @staticmethod
+    def _publication_observation(request):
+        """Derive one observation from retained reviewed scope, not caller deltas."""
+        request = thaw_json(request)
+        proposal = request["proposal"]
+        original = proposal["entry"]["request_payload"]
+        plan = LearningPlan.from_dict(original["learning_plan"])
+        source = DialogueObligation.from_dict(original["learning_source_obligation"])
+        query = EvaluationBundle.from_dict(original["learning_source_journal"]["entry"]["request_payload"]["query_evaluation"])
+        grant = request["review"]["grant"]
+        expected_scope = {"surface": plan.surface_literal, "target_ref": plan.target_ref,
+            "plan_ref": plan.plan_ref, "source_obligation_ref": source.obligation_ref,
+            "source_query_ref": source.source_query_ref, "proposal_key": proposal["entry"]["idempotency_key"],
+            "proposal_journal_ref": proposal["entry"]["journal_ref"],
+            "proposal_receipt_ref": proposal["receipt"]["receipt_ref"],
+            "source_journal_ref": original["learning_source_journal"]["entry"]["journal_ref"]}
+        if any(grant.get(name) != value for name, value in expected_scope.items()):
+            raise ValueError("publication observation scope lineage mismatch")
+        plan.validate_source(source)
+        label_ref = query.expression.applications[0].predicate_ref
+        review_ref = stable_ref("authenticated_alias_review", request["review"])
+        delta = ObservedDelta.create(operator_ref=plan.commit_operator_ref, predicate_ref=label_ref,
+            role_values=tuple(sorted((("role:label_type", label_ref),
+                ("role:surface", plan.surface_literal), ("role:target", plan.target_ref)))),
+            stance="support", evidence_refs=(review_ref, plan.plan_ref, source.obligation_ref,
+                proposal["entry"]["journal_ref"], grant["source_journal_ref"]))
+        return delta, {"observed_deltas": [delta.as_dict()], "operation_receipt_ref": review_ref}
+
+    @classmethod
+    def _publication_commit_material(cls, parent, current_pin):
+        """One canonical fact/receipt builder shared with transactional validation."""
+        request = thaw_json(parent.request_payload)
+        original = request["proposal"]["entry"]["request_payload"]
+        plan = LearningPlan.from_dict(original["learning_plan"])
+        meaning = VerifiedMeaning.from_dict(original["learning_meaning"])
+        evaluation = EvaluationBundle.from_dict(original["learning_evaluation"])
+        source = DialogueObligation.from_dict(original["learning_source_obligation"])
+        key = cls._effect_key(plan.decision_ref, plan.plan_ref, "learning_publication")
+        origin = stable_ref("effect_journal_origin", {"kind": "learning_publication", "plan_ref": plan.plan_ref})
+        if (parent.state is not EffectJournalState.OBSERVED or parent.idempotency_key != key
+                or parent.intent_ref != origin or parent.decision_ref != plan.decision_ref
+                or request.get("publication_key") != key or request.get("journal_origin_ref") != origin):
+            raise ValueError("publication journal lineage mismatch")
+        delta, observation = cls._publication_observation(request)
+        fact = cls._publication_fact(delta, decision_ref=plan.decision_ref,
+            review=request["review"], publication_key=key)
+        review_ref = observation["operation_receipt_ref"]
+        receipt = EffectReceipt.create(status=EffectStatus.COMMITTED, idempotency_key=key,
+            journal_origin_ref=origin, journal_preterminal_ref=parent.journal_ref,
+            reconciliation_required=False, decision_ref=plan.decision_ref,
+            verified_meaning_ref=meaning.verified_meaning_ref, expression_ref=meaning.expression.expression_ref,
+            situation_ref=plan.situation_ref, program_ref=meaning.program_ref, effect_intent_ref=None,
+            actor_ref=evaluation.situation.actor_ref, event_type_ref=meaning.expression.applications[0].predicate_ref,
+            transition_ref=None, adapter_ref=None, adapter_result_ref=None, operation_receipt_ref=review_ref,
+            observed_delta_refs=(delta.observed_delta_ref,), committed_fact_refs=(fact.fact_ref,),
+            proof_refs=tuple(dict.fromkeys((*evaluation.decision.proof_refs, plan.plan_ref,
+                source.obligation_ref, request["proposal"]["entry"]["journal_ref"], review_ref))), blocker_refs=(),
+            input_revision_pin=RevisionPin.from_dict(request["publication_pin"]),
+            output_revision_pin=_predicted_pin(current_pin, world=1, effects=1))
+        return observation, fact, receipt
+
+    @classmethod
+    def _publication_fact(cls, delta, *, decision_ref, review, publication_key):
+        # Language is authenticated review scope and indexed evidence metadata,
+        # never a newly invented semantic role in the designation signature.
+        from dataclasses import replace
+        fact = cls._fact(delta, decision_ref=decision_ref,
+            operation_receipt_ref=stable_ref("authenticated_alias_review", review))
+        return replace(fact, proof={**fact.proof, "alias_language": review["grant"]["language"],
+            "publication_key": publication_key})
 
     @staticmethod
     def _turn_payload(situation: SituationContext) -> dict[str, Any]:

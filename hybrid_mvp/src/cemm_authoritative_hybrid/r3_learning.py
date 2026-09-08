@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import hmac
+import json
 from typing import Any, Mapping
 
 from .authority import DesignationLearningContract, LinkedAuthority
@@ -21,6 +24,51 @@ from .r3_artifacts import EvaluationBundle
 from .situation import SituationContext
 
 LEARNING_PLAN_ABI_VERSION = 3
+
+
+class AliasReviewVerifier:
+    """Privileged per-store HMAC configuration, never supplied through dialogue.
+
+    A canonical public grant is evidence only until this separately configured
+    key authenticates it. The verifier intentionally has no signing API.
+    """
+
+    _GRANT_FIELDS = frozenset({"proposal_key", "proposal_journal_ref", "proposal_receipt_ref",
+        "plan_ref", "source_obligation_ref", "source_query_ref", "source_journal_ref",
+        "surface", "target_ref", "language", "reviewer_ref", "policy_ref", "key_ref",
+        "store_binding", "nonce", "expires_at_turn"})
+
+    def __init__(self, *, key: bytes, key_ref: str, reviewer_ref: str, policy_ref: str, store_binding: str):
+        if type(key) is not bytes or len(key) < 32:
+            raise ValueError("review key must contain at least 256 bits of separately configured secret material")
+        self.__key = key
+        self.key_ref = _text(key_ref, "key_ref")
+        self.reviewer_ref = _text(reviewer_ref, "reviewer_ref")
+        self.policy_ref = _text(policy_ref, "policy_ref")
+        self.store_binding = _text(store_binding, "store_binding")
+
+    def verify(self, signed_review, *, store_binding):
+        # Serialize once before authentication and retain those exact detached
+        # bytes: caller mutation cannot replace a verified grant after the check.
+        encoded = json.dumps(signed_review, ensure_ascii=False, sort_keys=True,
+            separators=(",", ":"), allow_nan=False)
+        if len(encoded) > 16384:
+            raise ValueError("review exceeds bound")
+        review = json.loads(encoded)
+        exact_fields(review, {"grant", "signature"}, "signed alias review")
+        grant = exact_fields(review["grant"], self._GRANT_FIELDS, "alias review grant")
+        for name in self._GRANT_FIELDS - {"expires_at_turn"}:
+            _text(grant[name], name)
+        exact_int(grant["expires_at_turn"], "review expiry", minimum=1)
+        signature = _text(review["signature"], "review signature")
+        payload = json.dumps(grant, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+        if not hmac.compare_digest(hmac.new(self.__key, payload, hashlib.sha256).hexdigest(), signature):
+            raise PermissionError("alias review authentication failed")
+        if (grant["key_ref"] != self.key_ref or grant["reviewer_ref"] != self.reviewer_ref
+                or grant["policy_ref"] != self.policy_ref or grant["store_binding"] != self.store_binding
+                or store_binding != self.store_binding):
+            raise PermissionError("alias review privileged scope mismatch")
+        return review
 
 __all__ = [
     "LEARNING_PLAN_ABI_VERSION",
@@ -465,3 +513,128 @@ def validate_learning_proposal_request(stores: SemanticStores, request: Mapping[
     if journal is None or journal.as_dict() != request["learning_source_journal"]:
         raise ValueError("learning proposal source query journal changed")
     return meaning, evaluation, plan, source
+
+
+def publication_lineage(stores, authority, proposal, grant):
+    """Validate historical proposal proof and today's linked semantic authority."""
+    from .r3_codec import thaw_json
+    from .r3_effects import NoEffectReceipt, NoEffectReason, R3EffectGateway, _predicted_pin
+    from .r3_persistence import EffectJournalEntry, EffectJournalState
+    if type(authority) is not LinkedAuthority or authority.generation != stores.revision_pin().authority_generation:
+        raise ValueError("publication requires current linked authority")
+    request = thaw_json(proposal.entry.request_payload)
+    meaning = VerifiedMeaning.from_dict(request["learning_meaning"])
+    evaluation = EvaluationBundle.from_dict(request["learning_evaluation"])
+    plan = LearningPlan.from_dict(request["learning_plan"])
+    source = dialogue.DialogueObligation.from_dict(request["learning_source_obligation"])
+    situation, decision = evaluation.situation, evaluation.decision
+    plan.validate_source(source, situation)
+    if situation.revision_pin.model_identity != stores.revision_pin().model_identity:
+        raise ValueError("publication cannot reuse a foreign model meaning")
+    lowered = lower_designation_learning(authority, meaning.expression, situation)
+    contract = lowered.contract
+    _, source_journal = dialogue.validate_learning_source(stores, source, situation, lowered.designation)
+    if source_journal.as_dict() != request["learning_source_journal"]:
+        raise ValueError("publication source query journal changed")
+    if len(evaluation.learning_drafts) != 1:
+        raise ValueError("publication requires one exact learning draft")
+    draft = evaluation.learning_drafts[0]
+    roles = {binding.role_ref: binding.filler for binding in lowered.designation.roles}
+    expected_plan = LearningPlan.create(contract_ref=contract.contract_ref, goal_ref=contract.goal_ref,
+        capability_ref=contract.capability_ref, permission_ref=contract.permission_ref,
+        commit_operator_ref=contract.commit_operator_ref, verified_meaning_ref=meaning.verified_meaning_ref,
+        expression_ref=meaning.expression.expression_ref, situation_ref=situation.situation_ref,
+        decision_ref=decision.decision_ref, source_query_ref=source.source_query_ref,
+        source_obligation_ref=source.obligation_ref, surface_literal=roles["role:surface"].value,
+        target_ref=roles["role:target"].target_ref,
+        expected_target_kinds=(authority.atoms[roles["role:target"].target_ref].kind,),
+        answer_contract_ref=contract.answer_contract_ref,
+        provenance_refs=tuple(dict.fromkeys((meaning.verification_receipt_ref, meaning.compilation_proof_ref,
+            draft.learning_draft_ref, *draft.proof_refs))), revision_pin=situation.revision_pin,
+        expires_at_turn=source.expires_turn_index)
+    if (plan != expected_plan or meaning.expression != evaluation.expression
+            or meaning.revision_pin != situation.revision_pin or evaluation.revision_pin != situation.revision_pin
+            or decision.verified_meaning_ref != meaning.verified_meaning_ref
+            or decision.action is not DecisionAction.CREATE_LEARNING_OBLIGATION
+            or decision.proof_refs != lowered.proof_refs or decision.policy_refs != (contract.review_policy_ref,)
+            or draft.proof_refs != (*lowered.proof_refs, source.obligation_ref)
+            or draft.source_query_ref != source.source_query_ref
+            or draft.surface_literal != plan.surface_literal or draft.target_ref != plan.target_ref
+            or draft.expected_target_kinds != plan.expected_target_kinds
+            or draft.answer_contract_ref != plan.answer_contract_ref):
+        raise ValueError("publication proposal semantic lineage mismatch")
+    key = R3EffectGateway._effect_key(decision.decision_ref, None, "no_effect:learning_obligation_only")
+    origin = stable_ref("effect_journal_origin", {"decision_ref": decision.decision_ref,
+        "kind": "no_effect:learning_obligation_only"})
+    planned = EffectJournalEntry.create(idempotency_key=key, state=EffectJournalState.PLANNED,
+        attempt_index=0, intent_ref=origin, decision_ref=decision.decision_ref, request_payload=request,
+        observation_payload=None, outcome_ref=None, blocker_refs=(), parent_journal_ref=None,
+        effect_revision=situation.revision_pin.effect_revision + 1)
+    expected_receipt = NoEffectReceipt.create(reason=NoEffectReason.LEARNING_OBLIGATION_ONLY,
+        idempotency_key=key, journal_origin_ref=origin, journal_preterminal_ref=planned.journal_ref,
+        decision_ref=decision.decision_ref, verified_meaning_ref=meaning.verified_meaning_ref,
+        expression_ref=meaning.expression.expression_ref, situation_ref=situation.situation_ref,
+        program_ref=meaning.program_ref, learning_plan_ref=plan.plan_ref, source_obligation_ref=source.obligation_ref,
+        proof_refs=decision.proof_refs, blocker_refs=decision.blocker_refs, input_revision_pin=situation.revision_pin,
+        output_revision_pin=_predicted_pin(situation.revision_pin, effects=2, session=1))
+    if (proposal.entry.state is not EffectJournalState.NO_EFFECT or proposal.entry.idempotency_key != key
+            or proposal.entry.parent_journal_ref != planned.journal_ref
+            or proposal.entry.outcome_ref != expected_receipt.receipt_ref
+            or thaw_json(proposal.receipt_payload) != expected_receipt.as_dict()
+            or proposal.entry.effect_revision != expected_receipt.output_revision_pin.effect_revision):
+        raise ValueError("publication proposal terminal lineage mismatch")
+    expected_scope = {"proposal_key": key, "proposal_journal_ref": proposal.entry.journal_ref,
+        "proposal_receipt_ref": expected_receipt.receipt_ref, "plan_ref": plan.plan_ref,
+        "source_obligation_ref": source.obligation_ref, "source_query_ref": source.source_query_ref,
+        "source_journal_ref": source_journal.entry.journal_ref, "surface": plan.surface_literal,
+        "target_ref": plan.target_ref, "policy_ref": contract.review_policy_ref}
+    if any(grant[name] != value for name, value in expected_scope.items()):
+        raise PermissionError("alias review does not authorize this exact proposal")
+    if not source.created_turn_index < situation.turn_index < grant["expires_at_turn"] <= source.expires_turn_index:
+        raise PermissionError("alias review expiry exceeds the original pending window")
+    session = stores.r3_session_snapshot(source.session_ref)
+    signature = authority.by_event_signature(contract.source_event_ref)
+    if session["session_phase_ref"] not in signature.valid_session_phases:
+        raise PermissionError("publication phase is not currently authorized")
+    if authority.designations.facts_for_surface(plan.surface_literal, grant["language"]):
+        raise ValueError("publication conflicts with an existing linked designation")
+    return meaning, evaluation, plan, source, contract
+
+
+def validate_publication_snapshot(stores, request, *, effect_increments):
+    """Recheck bounded exact publication witnesses under the persistence lock."""
+    from .r3_codec import thaw_json
+    from .r3_effects import _predicted_pin
+    from .r3_persistence import effect_journal_get
+    from .persistence import StaleRevisionError
+    request = thaw_json(request)
+    pin = RevisionPin.from_dict(request["publication_pin"])
+    if stores.revision_pin() != _predicted_pin(pin, effects=effect_increments):
+        raise StaleRevisionError("publication snapshot revision changed")
+    if stores.obligations.revision != request["publication_obligation_revision"]:
+        raise StaleRevisionError("publication obligation revision changed")
+    proposal = request["proposal"]
+    original = proposal["entry"]["request_payload"]
+    source = dialogue.DialogueObligation.from_dict(original["learning_source_obligation"])
+    situation = EvaluationBundle.from_dict(original["learning_evaluation"]).situation
+    for key, expected in ((proposal["entry"]["idempotency_key"], proposal),
+            (original["learning_source_key"], original["learning_source_journal"])):
+        journal = effect_journal_get(stores, key)
+        if journal is None or journal.as_dict() != expected:
+            raise ValueError("publication original proposal/source journal changed")
+    session = stores.r3_session_snapshot(source.session_ref)
+    if session != request["publication_session"]:
+        raise StaleRevisionError("publication session snapshot changed")
+    if not source.created_turn_index < situation.turn_index <= session["turn_index"] < request["review"]["grant"]["expires_at_turn"] <= source.expires_turn_index:
+        raise ValueError("publication source/answer/current turn window is invalid")
+    snapshot = stores.r3_obligation_snapshot(source.session_ref, maximum=RuntimeConfig.max_orientation_alternatives)
+    if snapshot != request["publication_obligation_snapshot"]:
+        raise StaleRevisionError("publication pending snapshot changed")
+    pending = stores.pending_dialogue_obligations(source.session_ref, (source.obligation_ref,),
+        maximum=1, turn_index=session["turn_index"])
+    if pending != (source,) or snapshot["obligation_refs"] != [source.obligation_ref]:
+        raise ValueError("publication requires its exact original single pending obligation")
+    if stores.r3_alias_facts(request["review"]["grant"]["surface"], request["review"]["grant"]["language"],
+            maximum=RuntimeConfig.max_designations_per_span):
+        raise ValueError("publication alias conflicts with existing world evidence")
+    return source
