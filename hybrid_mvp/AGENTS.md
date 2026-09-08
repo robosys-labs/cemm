@@ -234,4 +234,9 @@ journal retention and diagnostic plan materialization do not authorize alias
 publication. The former EFFECT path that appended a second plan-derived learning
 obligation is disabled pending the reviewed transactional publication owner;
 do not restore it as a compatibility path. Automatic generic query-continuation
-creation and its expiry/receipt policy remain explicit Task 5 work.
+creation is implemented in the current Task 5 repair, with acceptance and
+remaining dependencies tracked in the foundation plan. The user approved its
+four-subsequent-same-session-turn lifecycle on September 8, as recorded in the
+foundation implementation plan. Do not reopen that policy approval, silently
+renew a live continuation, or mistake lifecycle approval for alias-publication
+authority or repair completion.

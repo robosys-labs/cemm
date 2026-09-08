@@ -51,8 +51,12 @@ unknown QUERY; this is attributable query-content evidence, not truth or learnin
 authority. Generic dialogue obligations and plan-derived learning obligations
 are not interchangeable. The plan-only obligation fields in R3Artifacts and
 NoEffectReceipt must not be populated with a generic continuation or fake plan.
-Automatic continuation publication remains unimplemented; the duplicate pending
-learning-obligation effect path is disabled under the foundation plan.
+Automatic generic continuation creation uses the existing UNKNOWN no-effect
+journal transaction, with exact source-session reservation and obligation
+snapshot revalidation. A source turn `n` expires exclusively at `n+5`; a live
+record is not renewed and expired retirement/replacement is atomic. This is not
+alias publication. The duplicate plan-derived pending-obligation effect path
+remains disabled under the foundation plan.
 
 ## 2. Canonical program identity
 

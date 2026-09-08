@@ -13,6 +13,7 @@ from enum import Enum
 from typing import Any, Mapping, Protocol, runtime_checkable
 
 from .canonical import stable_ref
+from .config import RuntimeConfig
 from .cycle import SemanticMode
 from .decision import DecisionAction, DecisionStatus
 from .expressions import VerifiedMeaning
@@ -805,13 +806,16 @@ class NoEffectReceipt:
 class R3EffectGateway:
     """The sole owner of world mutation, adapter invocation, and effect journals."""
 
-    def __init__(self, stores: SemanticStores, adapters: AdapterRegistry) -> None:
+    def __init__(self, stores: SemanticStores, adapters: AdapterRegistry, config: RuntimeConfig | None = None) -> None:
         if type(stores) is not SemanticStores:
             raise TypeError("stores must be exact SemanticStores")
         if type(adapters) is not AdapterRegistry:
             raise TypeError("adapters must be exact AdapterRegistry")
         self._stores = stores
         self._adapters = adapters
+        self._config = RuntimeConfig.release() if config is None else config
+        if type(self._config) is not RuntimeConfig:
+            raise TypeError("config must be exact RuntimeConfig")
 
     @staticmethod
     def _effect_key(decision_ref: str, intent_ref: str | None, kind: str) -> str:
@@ -976,9 +980,18 @@ class R3EffectGateway:
                 or query.revision_pin != evaluation.revision_pin
             ):
                 raise ValueError("unknown query witness lineage mismatch")
-            # Preserve exact read-only evidence for a later, separately
-            # authorized continuation; this creates no learning obligation.
+            # Preserve exact query evidence; generic dialogue continuity is
+            # separate from the still-disabled alias publication transaction.
             request_payload["query_evaluation"] = evaluation.as_dict()
+            existing = effect_journal_get(self._stores, key)
+            if existing is None:
+                from .dialogue import query_continuation_request
+                request_payload.update(query_continuation_request(self._stores, evaluation,
+                    maximum=self._config.max_orientation_alternatives))
+            else:
+                for name, value in request_payload.items():
+                    if thaw_json(existing.entry.request_payload.get(name)) != value:
+                        raise ValueError("query retry differs from its persisted request")
         stored = self._begin(
             key=key,
             intent_ref=origin,

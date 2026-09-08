@@ -322,6 +322,97 @@ class DialogueObligation:
         return rebuilt
 
 
+def query_continuation(evaluation: Any) -> DialogueObligation | None:
+    """Derive only the reviewed, single lexical-target query continuation."""
+    from .cycle import SemanticMode
+    from .decision import DecisionStatus
+    from .expressions import BoundVariable, GroundedReference, LiteralValue
+    from .r3_artifacts import EvaluationBundle, QueryStatus
+
+    if type(evaluation) is not EvaluationBundle:
+        raise TypeError("query continuation requires an exact EvaluationBundle")
+    decision, expression, source = evaluation.decision, evaluation.expression, evaluation.situation
+    if (source.mode is not SemanticMode.QUERY or decision.status is not DecisionStatus.UNKNOWN
+            or len(evaluation.query_results) != 1):
+        return None
+    query = evaluation.query_results[0]
+    if (query.status is not QueryStatus.UNKNOWN or query.bindings or query.proof is not None
+            or len(expression.applications) != 1 or len(expression.binders) != 1
+            or expression.scope_operators or expression.expression_links or expression.unresolved_fillers):
+        return None
+    app, binder = expression.applications[0], expression.binders[0]
+    roles = {binding.role_ref: binding.filler for binding in app.roles}
+    if (app.operator != "op:designation" or app.predicate_ref != "label:lexical" or app.qualifiers
+            or set(roles) != {"role:label_type", "role:surface", "role:target"}
+            or roles["role:label_type"] != GroundedReference("label:lexical")
+            or type(roles["role:surface"]) is not LiteralValue or roles["role:surface"].value_type != "string"
+            or roles["role:target"] != BoundVariable(binder.variable_ref)
+            or binder.body_ref != app.application_ref or expression.root_refs != (binder.binder_ref,)):
+        return None
+    if (decision.query_result_refs != (query.query_result_ref,)
+            or query.expression_ref != expression.expression_ref or query.revision_pin != evaluation.revision_pin):
+        raise ValueError("query continuation lineage mismatch")
+    return DialogueObligation.create(kind=ObligationKind.LEARNING_ANSWER,
+        session_ref=source.session_ref, source_query_ref=query.query_result_ref,
+        expected_answer_contract_ref="contract:designation_answer:v2",
+        created_turn_index=source.turn_index, expires_turn_index=source.turn_index + 5,
+        source_decision_ref=decision.decision_ref, completion_receipt_ref=None,
+        revision_pin=query.revision_pin)
+
+
+def query_continuation_request(stores: SemanticStores, evaluation: Any, *, maximum: int) -> dict[str, Any]:
+    """Capture bounded continuity state for the existing atomic EFFECT owner.
+
+    These journal fields are continuity evidence, not a LearningPlan or authority
+    to publish an alias. A live row is never renewed or replaced.
+    """
+    exact_int(maximum, "maximum", minimum=1, maximum=512)
+    candidate = query_continuation(evaluation)
+    if candidate is None:
+        return {}
+    current = stores.revision_pin()
+    if any(getattr(candidate.revision_pin, name) != getattr(current, name) for name in
+           ("authority_generation", "model_identity", "world_revision", "episode_revision")):
+        raise ValueError("query continuation source revision changed")
+    source = evaluation.situation
+    session = stores.r3_session_snapshot(source.session_ref)
+    # ORIENT's reservation is read-only. Authenticate that this session still
+    # precedes the exact source turn; a different session may advance the global
+    # revision without consuming this reservation.
+    reservation = {"session_ref": source.session_ref, "turn_index": source.turn_index,
+                   "session_store_revision": source.revision_pin.session_revision}
+    if (source.turn_ref != stable_ref("turn", reservation)
+            or session["turn_index"] != source.turn_index - 1
+            or session["session_phase_ref"] != source.session_phase_ref
+            or session["session_record_revision"] > source.revision_pin.session_revision):
+        raise ValueError("query continuation source session reservation changed")
+    session_state = {name: session[name] for name in
+                     ("session_ref", "turn_index", "session_phase_ref", "session_record_revision")}
+    snapshot = stores.r3_obligation_snapshot(candidate.session_ref, maximum=maximum)
+    if (snapshot["snapshot_ref"] != source.obligation_snapshot_ref
+            or tuple(snapshot["obligation_refs"]) != source.obligation_refs):
+        raise ValueError("query continuation differs from the oriented obligation snapshot")
+    rows = stores.pending_dialogue_obligations(candidate.session_ref, tuple(snapshot["obligation_refs"]),
+        maximum=maximum, turn_index=candidate.created_turn_index, include_expired=True)
+    learning = tuple(row for row in rows if row.kind is ObligationKind.LEARNING_ANSWER)
+    if len(learning) > 1:
+        raise ValueError("query continuation exceeds one pending learning answer")
+    live = any(row.expires_turn_index > candidate.created_turn_index for row in learning)
+    retired = () if live else learning
+    if not live and len(rows) - len(retired) >= maximum:
+        raise ValueError("query continuation exceeds obligation snapshot bound")
+    if not live and stores.obligations.keyed_row(candidate.obligation_ref) is not None:
+        raise ValueError("query continuation cannot resurrect an existing record")
+    return {
+        "query_session_state": session_state,
+        "query_obligation_maximum": maximum,
+        "query_continuation": None if live else candidate.as_dict(),
+        "query_obligation_snapshot": dict(snapshot),
+        "query_obligation_rows": [row.as_dict() for row in rows],
+        "query_retired_obligation_refs": [row.obligation_ref for row in retired],
+    }
+
+
 def bind_learning_answer(stores: SemanticStores, situation: Any, answer: Any, *, maximum: int) -> DialogueObligation:
     """Bind a target substitution to one persisted, exact unknown query.
 
@@ -360,6 +451,9 @@ def bind_learning_answer(stores: SemanticStores, situation: Any, answer: Any, *,
         raise ValueError("continuation source query has no terminal journal")
     request = stored.entry.request_payload
     evaluation = EvaluationBundle.from_dict(thaw_json(request.get("query_evaluation")))
+    if (query_continuation(evaluation) != row
+            or thaw_json(request.get("query_continuation")) != row.as_dict()):
+        raise ValueError("continuation differs from the gateway-recorded canonical obligation")
     receipt = NoEffectReceipt.from_dict(thaw_json(stored.receipt_payload))
     decision, expression, source = evaluation.decision, evaluation.expression, evaluation.situation
     origin = stable_ref("effect_journal_origin", {"decision_ref": row.source_decision_ref, "kind": "no_effect:unknown"})

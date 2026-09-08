@@ -1068,6 +1068,7 @@ CREATE TABLE IF NOT EXISTS obligations (
     revision INTEGER NOT NULL,
     resolved INTEGER NOT NULL DEFAULT 0
 );
+CREATE INDEX IF NOT EXISTS obligations_session_pending ON obligations(session_ref, resolved, revision, obligation_ref);
 CREATE TABLE IF NOT EXISTS episodes (
     episode_ref TEXT PRIMARY KEY,
     session_ref TEXT NOT NULL,
@@ -1676,6 +1677,7 @@ class SemanticStores:
 
     def pending_dialogue_obligations(
         self, session_ref: str, obligation_refs: tuple[str, ...], *, maximum: int, turn_index: int,
+        include_expired: bool = False,
     ) -> tuple["DialogueObligation", ...]:
         """Authenticate only requested pending dialogue records, in input order.
 
@@ -1684,12 +1686,13 @@ class SemanticStores:
         The distinct plan-derived R3 learning wire shape is not adapted here.
         """
         from .dialogue import DialogueObligation
-        from .r3_codec import exact_int, exact_refs, exact_text
+        from .r3_codec import exact_bool, exact_int, exact_refs, exact_text
 
         exact_text(session_ref, "session_ref")
         exact_int(maximum, "maximum", minimum=1, maximum=512)
         exact_refs(obligation_refs, "obligation_refs", maximum=maximum)
         exact_int(turn_index, "turn_index")
+        exact_bool(include_expired, "include_expired")
         pin, store_revision = self.revision_pin(), self.obligations.revision
         entries = []
         for ref in obligation_refs:
@@ -1716,7 +1719,8 @@ class SemanticStores:
                 "world_revision", "session_revision", "episode_revision", "effect_revision",
             )):
                 raise ValueError("obligation revision pin exceeds current store revision")
-            if row.completion_receipt_ref is not None or not row.created_turn_index <= turn_index < row.expires_turn_index:
+            if (row.completion_receipt_ref is not None or row.created_turn_index > turn_index
+                    or (not include_expired and turn_index >= row.expires_turn_index)):
                 raise ValueError("obligation is completed, not yet active or expired")
             entries.append(row)
         return tuple(entries)
@@ -1854,6 +1858,70 @@ class SemanticStores:
             self.effects.revision = new_revision
         return stored
 
+    def _prepare_query_continuation_transition(self, entry, receipt_payload):
+        """Authenticate journal-bound continuity and prepare every row before writes.
+
+        The caller holds the SQLite transaction (or the synchronous memory
+        transition). Obligation revision is deliberately not a RevisionPin field.
+        """
+        from .dialogue import query_continuation, query_continuation_request
+        from .config import RuntimeConfig
+        from .r3_artifacts import EvaluationBundle
+        from .r3_codec import exact_int, thaw_json
+        from .r3_effects import NoEffectReason, NoEffectReceipt, R3EffectGateway, _predicted_pin
+        from .r3_persistence import EffectJournalState
+
+        request = thaw_json(entry.request_payload)
+        if "query_evaluation" not in request and "query_continuation" not in request:
+            return ()
+        evaluation = EvaluationBundle.from_dict(request.get("query_evaluation"))
+        if "query_continuation" not in request:
+            if query_continuation(evaluation) is not None:
+                raise ValueError("query journal is missing its required continuation")
+            return ()
+        decision, source = evaluation.decision, evaluation.situation
+        if entry.state is not EffectJournalState.NO_EFFECT:
+            raise ValueError("query continuation requires terminal no-effect")
+        receipt = NoEffectReceipt.from_dict(thaw_json(receipt_payload))
+        origin = stable_ref("effect_journal_origin", {"decision_ref": decision.decision_ref, "kind": "no_effect:unknown"})
+        if (entry.idempotency_key != R3EffectGateway._effect_key(decision.decision_ref, None, "no_effect:unknown")
+                or entry.intent_ref != origin or entry.decision_ref != decision.decision_ref
+                or request.get("journal_origin_ref") != origin or request.get("kind") != "no_effect"
+                or request.get("reason") != "unknown" or request.get("decision_ref") != decision.decision_ref
+                or any(request.get(name) != getattr(source, name) for name in
+                       ("session_ref", "turn_ref", "turn_index", "session_phase_ref"))):
+            raise ValueError("query continuation journal lineage mismatch")
+        expected_receipt = NoEffectReceipt.create(reason=NoEffectReason.UNKNOWN,
+            idempotency_key=entry.idempotency_key, journal_origin_ref=origin,
+            journal_preterminal_ref=entry.parent_journal_ref, decision_ref=decision.decision_ref,
+            verified_meaning_ref=decision.verified_meaning_ref, expression_ref=evaluation.expression.expression_ref,
+            situation_ref=source.situation_ref, program_ref=decision.program_ref,
+            learning_plan_ref=None, obligation_ref=None, proof_refs=decision.proof_refs,
+            blocker_refs=decision.blocker_refs, input_revision_pin=evaluation.revision_pin,
+            output_revision_pin=_predicted_pin(self.revision_pin(), session=1, effects=1))
+        if (receipt != expected_receipt or entry.outcome_ref != receipt.receipt_ref
+                or entry.blocker_refs != decision.blocker_refs):
+            raise ValueError("query continuation terminal receipt mismatch")
+        # Compare the snapshot before decoding rows: an intervening legitimate
+        # revision is a stale request, never permission to refresh its meaning.
+        maximum = exact_int(request.get("query_obligation_maximum"), "query obligation maximum",
+            minimum=1, maximum=RuntimeConfig.max_orientation_alternatives)
+        snapshot = self.r3_obligation_snapshot(source.session_ref, maximum=maximum)
+        if snapshot != request.get("query_obligation_snapshot"):
+            raise StaleRevisionError("query continuation obligation snapshot changed")
+        expected = query_continuation_request(self, evaluation, maximum=maximum)
+        if not expected or any(request.get(name) != value for name, value in expected.items()):
+            raise ValueError("query continuation canonical rows changed")
+        candidate = expected["query_continuation"]
+        if candidate is None:
+            return ()
+        retired = set(expected["query_retired_obligation_refs"])
+        data = [(row["obligation_ref"], {**row, "resolved": True})
+                for row in expected["query_obligation_rows"] if row["obligation_ref"] in retired]
+        data.append((candidate["obligation_ref"], {**candidate, "resolved": False}))
+        return tuple((ref, _MemoryObligationStore._prepare_row(ref, source.session_ref, payload,
+            self.obligations.revision + 1, payload["resolved"])) for ref, payload in data)
+
     def r3_effect_journal_transition(
         self,
         *,
@@ -1907,6 +1975,8 @@ class SemanticStores:
         )
         stored = StoredEffectJournal(entry, receipt_payload).as_dict()
         terminal = target.terminal
+        obligation_parent = self.obligations.revision
+        prepared_obligations = ()
         if isinstance(self._backend, SQLiteSemanticStore):
             conn = self._backend._conn
             conn.execute("BEGIN IMMEDIATE")
@@ -1921,6 +1991,20 @@ class SemanticStores:
                 observed = _r3_verify_journal_row(row[0], row[1], row[2], row[3])
                 if observed["entry"]["journal_ref"] != current_entry.journal_ref:
                     raise StaleRevisionError("effect journal parent changed concurrently")
+                # Recheck cached revisions against the locked database, including
+                # the separate obligation revision. Another connection may have
+                # committed since the gateway assembled this receipt.
+                revision_fields = (("effect_revision", expected_effect_revision),)
+                if "query_continuation" in entry.request_payload:
+                    pin = self.revision_pin()
+                    revision_fields += (("session_revision", pin.session_revision),
+                        ("world_revision", pin.world_revision), ("episode_revision", pin.episode_revision),
+                        ("obligation_revision", obligation_parent))
+                for name, expected_revision in revision_fields:
+                    row = conn.execute("SELECT value FROM metadata WHERE key=?", (name,)).fetchone()
+                    if (int(row[0]) if row else 0) != expected_revision:
+                        raise StaleRevisionError(f"query/effect transition {name} changed concurrently")
+                prepared_obligations = self._prepare_query_continuation_transition(entry, receipt_payload)
                 session_parent = self.sessions.revision
                 session_new = session_parent
                 if terminal:
@@ -1934,6 +2018,22 @@ class SemanticStores:
                         parent_revision=session_parent,
                         new_revision=session_new,
                     )
+                for ref, (payload, metadata) in prepared_obligations:
+                    session, digest, revision, resolved = metadata
+                    if resolved:
+                        changed = conn.execute("UPDATE obligations SET payload_json=?, payload_hash=?, revision=?, resolved=1 "
+                            "WHERE obligation_ref=? AND session_ref=? AND resolved=0",
+                            (_r3_canonical_json(payload), digest, revision, ref, session)).rowcount
+                        if changed != 1:
+                            raise StaleRevisionError("expired continuation changed concurrently")
+                    else:
+                        conn.execute("INSERT INTO obligations(obligation_ref, session_ref, payload_json, payload_hash, revision, resolved) "
+                            "VALUES(?, ?, ?, ?, ?, 0)", (ref, session, _r3_canonical_json(payload), digest, revision))
+                if prepared_obligations:
+                    conn.execute("INSERT INTO metadata(key, value) VALUES('obligation_revision', ?) "
+                        "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (str(obligation_parent + 1),))
+                    _r3_insert_revision(conn, store="obligations", parent_revision=obligation_parent,
+                        new_revision=obligation_parent + 1, delta_hash=_payload_hash([row[1][0] for row in prepared_obligations]))
                 entry_json = _r3_canonical_json(entry.as_dict())
                 receipt_json = (
                     None if receipt_payload is None else _r3_canonical_json(receipt_payload)
@@ -1970,7 +2070,10 @@ class SemanticStores:
             self.effects.revision = new_effect_revision
             if terminal:
                 self.sessions.revision = session_new
+            if prepared_obligations:
+                self.obligations.revision = obligation_parent + 1
         else:
+            prepared_obligations = self._prepare_query_continuation_transition(entry, receipt_payload)
             if terminal:
                 session_ref, turn_index, phase = _r3_terminal_turn(entry)
                 session_parent = self.sessions.revision
@@ -1983,6 +2086,10 @@ class SemanticStores:
                 )
                 self._backend.sessions._sessions[session_ref] = session
                 self.sessions.revision = session_new
+            for ref, prepared in prepared_obligations:
+                self._backend.obligations._store_row(ref, prepared)
+            if prepared_obligations:
+                self.obligations.revision = obligation_parent + 1
             self._backend._r3_effect_journals[idempotency_key] = stored
             self.effects.revision = new_effect_revision
         return stored

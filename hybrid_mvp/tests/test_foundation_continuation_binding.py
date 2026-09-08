@@ -1,4 +1,4 @@
-"""Exact query-content continuity; manual obligation setup is a seam, not acquisition."""
+"""Exact query-content continuity from automatic obligations, not acquisition."""
 from dataclasses import fields, replace
 from pathlib import Path
 import json
@@ -57,7 +57,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "4aa3b646b81362556ae31afba8c9c8c8f0e6acd4d26bdeaf2164b9fb9c688efc"
+        "source_ast_sha256": "d5aee350190968b49fbde49340c1c2dd170362319fac2b4046a3f6d0d3be8581"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_snapshot_work_and_order_are_session_indexed[sqlite]": {
         "activation_phase": "R3",
@@ -65,7 +65,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "4aa3b646b81362556ae31afba8c9c8c8f0e6acd4d26bdeaf2164b9fb9c688efc"
+        "source_ast_sha256": "d5aee350190968b49fbde49340c1c2dd170362319fac2b4046a3f6d0d3be8581"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_exact_answer_binds_real_query_and_expiry[same-process]": {
         "activation_phase": "R3",
@@ -181,7 +181,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "b69e741083dcd155b2e6fb6963191f52d2ccac8768f4018fa593fdfefe10954d"
+        "source_ast_sha256": "72ba281a7020f5048ab86273c6f966415cf20fcf97355c49addfee818b5ca5dd"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_invalid_answer_cannot_materialize[case-sensitive]": {
         "activation_phase": "R3",
@@ -189,7 +189,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "b69e741083dcd155b2e6fb6963191f52d2ccac8768f4018fa593fdfefe10954d"
+        "source_ast_sha256": "72ba281a7020f5048ab86273c6f966415cf20fcf97355c49addfee818b5ca5dd"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_invalid_answer_cannot_materialize[forged-snapshot]": {
         "activation_phase": "R3",
@@ -197,7 +197,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "b69e741083dcd155b2e6fb6963191f52d2ccac8768f4018fa593fdfefe10954d"
+        "source_ast_sha256": "72ba281a7020f5048ab86273c6f966415cf20fcf97355c49addfee818b5ca5dd"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_invalid_answer_cannot_materialize[omitted-ref]": {
         "activation_phase": "R3",
@@ -205,7 +205,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "b69e741083dcd155b2e6fb6963191f52d2ccac8768f4018fa593fdfefe10954d"
+        "source_ast_sha256": "72ba281a7020f5048ab86273c6f966415cf20fcf97355c49addfee818b5ca5dd"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_invalid_answer_cannot_materialize[foreign-session]": {
         "activation_phase": "R3",
@@ -213,7 +213,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "b69e741083dcd155b2e6fb6963191f52d2ccac8768f4018fa593fdfefe10954d"
+        "source_ast_sha256": "72ba281a7020f5048ab86273c6f966415cf20fcf97355c49addfee818b5ca5dd"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_invalid_answer_cannot_materialize[expired]": {
         "activation_phase": "R3",
@@ -221,7 +221,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "b69e741083dcd155b2e6fb6963191f52d2ccac8768f4018fa593fdfefe10954d"
+        "source_ast_sha256": "72ba281a7020f5048ab86273c6f966415cf20fcf97355c49addfee818b5ca5dd"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_invalid_answer_cannot_materialize[missing-witness]": {
         "activation_phase": "R3",
@@ -229,7 +229,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "b69e741083dcd155b2e6fb6963191f52d2ccac8768f4018fa593fdfefe10954d"
+        "source_ast_sha256": "72ba281a7020f5048ab86273c6f966415cf20fcf97355c49addfee818b5ca5dd"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_rejects_rehashed_foreign_receipt_lineage[program]": {
         "activation_phase": "R3",
@@ -261,7 +261,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "b69e741083dcd155b2e6fb6963191f52d2ccac8768f4018fa593fdfefe10954d"
+        "source_ast_sha256": "72ba281a7020f5048ab86273c6f966415cf20fcf97355c49addfee818b5ca5dd"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_invalid_answer_cannot_materialize[completed]": {
         "activation_phase": "R3",
@@ -269,7 +269,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "b69e741083dcd155b2e6fb6963191f52d2ccac8768f4018fa593fdfefe10954d"
+        "source_ast_sha256": "72ba281a7020f5048ab86273c6f966415cf20fcf97355c49addfee818b5ca5dd"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_invalid_answer_cannot_materialize[multiple]": {
         "activation_phase": "R3",
@@ -277,7 +277,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "b69e741083dcd155b2e6fb6963191f52d2ccac8768f4018fa593fdfefe10954d"
+        "source_ast_sha256": "72ba281a7020f5048ab86273c6f966415cf20fcf97355c49addfee818b5ca5dd"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_memory_index_rejects_invalid_writes_without_partial_change": {
         "activation_phase": "R3",
@@ -404,7 +404,7 @@ def test_continuation_snapshot_work_and_order_are_session_indexed(tmp_path, back
             stores.obligations._obligations = NoEnumeration(stores.obligations._obligations)
         else:
             plan = stores._backend._conn.execute("EXPLAIN QUERY PLAN SELECT obligation_ref FROM obligations WHERE session_ref=? AND resolved=0 ORDER BY revision, obligation_ref LIMIT ?", ("session:chosen", 3)).fetchall()
-            assert all("SCAN" not in str(row).upper() and "TEMP" not in str(row).upper() for row in plan)
+            assert all("SCAN" not in row[3].upper() and "TEMP" not in row[3].upper() for row in plan)
         assert stores.r3_obligation_snapshot("session:chosen", maximum=2)["obligation_refs"] == ["obligation:z", "obligation:a"]
         with pytest.raises(ValueError, match="bound"):
             stores.r3_obligation_snapshot("session:chosen", maximum=1)
@@ -453,9 +453,9 @@ def _setup(tmp_path):
     pending = DialogueObligation.create(kind=ObligationKind.LEARNING_ANSWER,
         session_ref="session:continuation", source_query_ref=query.query_result_ref,
         expected_answer_contract_ref="contract:designation_answer:v2", created_turn_index=1,
-        expires_turn_index=5, source_decision_ref=query_cycle.evaluation.decision.decision_ref,
+        expires_turn_index=6, source_decision_ref=query_cycle.evaluation.decision.decision_ref,
         completion_receipt_ref=None, revision_pin=query.revision_pin)
-    DialogueObligationManager(runtime.stores).add(pending)
+    assert runtime.stores.obligations.get(pending.obligation_ref) == {**pending.as_dict(), "resolved": False}
     return runtime, query_cycle, pending
 
 
@@ -626,7 +626,7 @@ def test_continuation_invalid_answer_cannot_materialize(tmp_path, case):
         if case == "forged-snapshot": changes["obligation_snapshot_ref"] = "snapshot:forged"
         if case == "omitted-ref": changes["obligation_refs"] = ()
         if case == "foreign-session": changes["session_ref"] = "session:foreign"
-        if case == "expired": changes["turn_index"] = 5
+        if case == "expired": changes["turn_index"] = 6
         if case == "same-turn": changes["turn_index"] = 1
         if case == "completed":
             runtime.stores.obligations.commit(pending.obligation_ref, pending.session_ref, pending.as_dict(), expected_revision=runtime.stores.obligations.revision, resolved=True)

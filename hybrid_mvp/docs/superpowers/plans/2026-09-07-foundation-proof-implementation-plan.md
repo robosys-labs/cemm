@@ -799,6 +799,90 @@ and the four post-VERIFY canaries pass. Existing selectors and the living receip
 regenerate twice identically: G0 191 / R1 783 / R2 1173 / R3 1749 / R4 2087 /
 R5 2212 active nodes. No gate or owner group was added.
 
+### Continuation lifecycle approval (September 8)
+
+**Status: user-approved policy; automatic creation and bounded storage repair
+implemented and independently reviewed. Remaining Task 5 dependencies are open.**
+This records the user's explicit approval of the four-turn recommendation; it
+does not derive authority from the inactive historical learning-policy files.
+
+- A continuation created at same-session turn `n` is eligible during turns
+  `n+1` through `n+4`; its exclusive `expires_turn_index` is `n+5`.
+- Keep one pending learning answer per session. Do not silently replace or
+  renew a live record, including on repeated lookup, restart or failed review.
+- Preserve expired history. Retirement and replacement must be one successful
+  EFFECT transaction; retirement is not successful learning completion.
+- Alias publication remains separately authorized. Approval of this lifecycle
+  is not reviewer authorization for any proposed alias or new identity.
+
+Implement through the existing generic dialogue and effect-journal owners,
+retaining exact query content and binding the persisted continuation to its
+receipt chain. No fake LearningPlan, new ABI, new runtime gate or increased
+search limit is authorized. Check the bounded obligation snapshot atomically:
+its store revision is separate from RevisionPin. Preserve failure atomicity,
+blockers, idempotency and same-session ownership in memory and SQLite.
+
+The required completion evidence is automatic public-query creation, deadline and
+replacement behavior, restart/retry, and exact later-answer binding without
+manual pending-record insertion. This does not by itself close Task 5: linked
+learning authority, transactional alias publication, admitted-index reuse,
+fragment handling and faithful response realization remain open. Task 4's
+remaining semantic-query obligations and Tasks 6–7 also remain open. The prior
+48-case checkpoint is not full repair completion or R4/R5 admission.
+
+**Demo-only review approval (September 8):** the user explicitly approved the
+alias `velnora` to the existing `likes` meaning for an isolated temporary-store
+demo. The demo uses English publication metadata and the existing `rel:likes`
+identity. This approval must not add an alias to checked-in authority, authorize
+other mappings or stores, or become a default runtime reviewer grant. The demo
+must exercise the real publication/restart path once that owner is implemented.
+
+### Automatic continuation checkpoint (September 8)
+
+Public unknown lexical-target queries now create the generic continuation in the
+existing terminal no-effect transaction. Canonical query content and pending
+snapshot remain independently authenticated. Live records are preserved; expired
+retirement and replacement are atomic. Same-session reservation checks prevent a
+delayed query from rewinding the session; ordinary foreign-session progress is
+permitted when the captured obligation snapshot is unchanged. A foreign obligation
+write can still invalidate the global snapshot and fail closed; no new per-session
+snapshot ABI is introduced.
+
+Independent semantic review and a separate main run each passed 102 focused
+cases. The authenticated 438-node affected-owner/foundation union gives 436 passes
+and the same two retained fragment/alias-index failures. This is not the complete
+MVP regression suite or a claim that only two repair tasks remain.
+
+Quality review found a missing SQLite pending-session index: the new transaction
+checks amplified an existing snapshot scan. Measured work grew from 35 to 12,323
+VM steps with 0 to 4,096 unrelated rows. Earlier claims that this snapshot was
+indexed were not supported by its test, which inspected the representation of a
+SQLite Row rather than its query-plan detail. Repair the schema owner and verify
+real plan detail, scaling and existing-store reopen before marking this increment
+complete. Memory already uses its bounded per-session pending index.
+
+R3/R4/R5 structural checks, 517 R3/R4 metadata checks and the active legacy audit
+(zero findings) pass at this pre-index checkpoint. Existing selectors and living
+receipt were regenerated twice identically; they will be refreshed after the
+index tests. No authority data, form pack, frozen inventory, ledger, cap or runtime
+gate changed. Alias-publication, restart reuse, response/fragment continuity,
+semantic-query projection and measured composition repairs remain open.
+
+The index repair is now verified: existing-schema activation creates the covering
+`obligations(session_ref, resolved, revision, obligation_ref)` index. Twice-reopened
+older indexless stores retain exact records, revisions and schema version. Actual
+plan-detail assertions prove indexed SEARCH without a temporary sort. The public
+continuation-request probe takes 39 VM steps at 0, 128 and 4,096 foreign rows.
+Snapshot reads take 28/29/29 steps for both foreign-pending and same-session-resolved
+history; the one-step boundary check is constant, not growth with store size.
+
+Final independent quality re-review passes 114 focused foundation/effect/public-
+cycle/situation controls. The next dependency is active linked learning authority,
+followed by reviewed transactional publication, not a renewed continuation review.
+The main agent's final three-module run passes all 105 cases. Selector/receipt
+regeneration is twice byte-identical with G0 191 / R1 783 / R2 1173 / R3 1806 /
+R4 2144 / R5 2269 active nodes; the original frozen inventory remains unchanged.
+
 ## Task 6 — Repair measured search/retrieval bounds and confirm preservation
 
 - [ ] Reproduce program/meaning duplication with the audit's multi-root and

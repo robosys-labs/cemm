@@ -137,7 +137,7 @@ class R3Kernel:
         self._situation_verifier = SituationContextVerifier(authority)
         self._evaluator = R3EvaluationOwner(authority, stores, config)
         self._learning = LearningCoordinator(authority, stores, config)
-        self._effects = R3EffectGateway(stores, self._adapters)
+        self._effects = R3EffectGateway(stores, self._adapters, config)
         self._response = ResponseBuilder()
 
     def run(self, *, meaning: VerifiedMeaning, orientation: Orientation,
