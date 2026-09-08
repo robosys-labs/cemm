@@ -464,13 +464,14 @@ def _answer(runtime, source_situation, *, surface="velnora", **changes):
     values = {f.name: getattr(source_situation, f.name) for f in fields(source_situation)
               if f.name not in {"abi_version", "situation_ref"}}
     values.update(mode=SemanticMode.REQUEST, turn_index=2, turn_ref="turn:answer",
+        actor_ref=source_situation.addressee_ref,
         epistemic_scope_ref="epistemic_scope:requested",
         obligation_refs=tuple(snapshot["obligation_refs"]), obligation_snapshot_ref=snapshot["snapshot_ref"],
         revision_pin=runtime.stores.revision_pin())
     values.update(changes)
     situation = SituationContext.create(**values)
-    app = SemanticApplication("app:answer", "op:designation", "label:lexical", (
-        RoleBinding("role:label_type", GroundedReference("label:lexical")),
+    app = SemanticApplication("app:answer", "op:event", "event:learn_alias", (
+        RoleBinding("role:actor", GroundedReference(source_situation.addressee_ref)),
         RoleBinding("role:surface", LiteralValue("string", surface)),
         RoleBinding("role:target", GroundedReference("rel:likes"))))
     expression = SemanticExpression.create(applications=(app,), root_refs=(app.application_ref,))

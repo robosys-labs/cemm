@@ -931,6 +931,114 @@ The fresh intersection of R1-owner controls and current R3 lineage gives 852
 passes and only the expected dirty-input status rejection (853 selected nodes).
 R3/R4/R5 structural checks and 517 R3/R4 metadata checks also pass.
 
+### Linked event lowering checkpoint (September 8, reviewed)
+
+The shared pure lowerer now selects only the exact linked learning-event source,
+then validates the complete positive single-application graph, explicit addressed
+executor, current phase, actual and captured actor grants, and reviewed existing
+target kind. It derives canonical designation answer content without replacing
+the original event meaning. EVALUATE and materialization independently bind that
+content to the exact pending query and rederive source/actor/authority proofs.
+Plan contract, goal, capability, permission and commit refs have no unlinked
+defaults. Capability and event-specific permission lookups are activation-indexed.
+
+Direct designation requests no longer use the old role-shape learning shortcut.
+Teaching claims remain attributed content. Missing capability remains UNKNOWN;
+missing permission is DENIED. A bounded typed lowering error retains the exact
+missing-target diagnostic at its owner. The incomplete-learning assertion has a
+same-assertion successor over the reviewed event source; its predecessor body
+remains unchanged. The later continuation fixture now supplies this actual event
+and actor instead of a designation request with no actor.
+
+A fresh main run passes all 244 focused cases, including 40 lowering cases.
+The public forms `learn velnora means likes` and `learn that velnora means likes`
+reach the inspected EFFECT boundary with original event meaning and a linked
+plan. An independently reviewed unseen learning synonym reaches the same path
+without pack regeneration. These boundary probes intentionally stop before
+EFFECT: they are not publication or a completed conversation demo. Authority
+source, form packs and historical splitter remain unchanged from `c29768b`.
+Independent spec review passes 177 controls; quality review passes 244 and
+additional positive/negative/multi-root graph probes. Existing selectors and
+living receipt regenerate twice byte-identically: G0 191 / R1 879 / R2 1269 /
+R3 1941 / R4 2279 / R5 2404. Structural checks and 517 R3/R4 metadata checks pass.
+
+The full current R3 selection gives **1916 passes / 25 failures**. Twenty-four
+failures independently reproduce in an exact temporary `git archive` of the
+preceding `c29768b` checkpoint; representative traces confirm the same failure
+owners. The remaining failure is dirty-input replay-status rejection. This
+establishes no newly failing selected R3 test in this increment, not a green R3
+release or complete repairs. The pre-existing active failures are:
+
+- 19 learning-closeout wrappers all execute the same old helper, which still
+  calls superseded direct-designation/unbound-query tests. Their individual
+  acquisition, capability, review, retry and consumption assertions need real
+  current-path coverage as those owners are completed. Do not redirect nineteen
+  names to one shared smoke check and call those distinct properties proved.
+- The five-operator adversarial successor constructs stale derived-role targets;
+  the frame-ref test assumes a reviewed greeting frame; the unresolved-query
+  test still forces generic `What is zorbulate?` into lexical lookup. Reconcile
+  these with current source/frame/query contracts using honest successors,
+  retaining independent operator, provenance and binder protections.
+- Fresh-fragment clarification and admitted-alias restart reuse remain the two
+  retained direct foundation failures. The broader count must not be reduced
+  to those two or presented as only two remaining implementation tasks.
+
+LearningPlan ABI 2's diagnostic plan-derived obligation remains unchanged in
+this increment. Its retirement and the explicit version migration below must
+precede enabling proposal persistence; no second pending record is reintroduced.
+
+### Publication transaction boundary (implementation pending)
+
+The learning utterance is a proposal, not reviewer authority. Preserve its exact
+query, expression, situation, plan and terminal no-effect receipt as immutable
+lineage. A later explicit review must use a distinct publication journal and a
+fresh commit snapshot. It must not replay the utterance, rewrite historical pins,
+rewind a session, create a second pending obligation or consume another turn.
+
+For source-query turn `n`, answer turn `a` and current session turn `m`, require
+`n < a <= m < n+5`. Current linked target, grants, pending row, exact source
+evidence and conflict checks still apply. Publication commits one alias fact,
+the original obligation's completion and one receipt atomically. Only world,
+effect and obligation revisions advance; the out-of-band review leaves session
+and episode revisions unchanged. Denial or failure cannot publish a fact, consume
+the pending obligation or update designation indexes. A durable failed attempt
+may remain journal evidence; it must never be mistaken for successful completion.
+
+Avoid a receipt hash cycle: the fact may cite the independent authenticated
+review observation; the final successful effect receipt cites that fact and the
+original pending obligation. The completed obligation then cites the final
+successful receipt, not merely a review authorization that might never commit.
+All three records become visible together. Identical retries return the same
+receipt; changed grants cannot republish the same plan. This boundary does not
+activate publication; its implementation and race/restart tests remain open.
+
+The reviewed source-obligation design requires an explicit hard-cut migration,
+not an ABI-2 substitution: LearningPlan ABI 3 hashes a required
+`source_obligation_ref`; R3Artifacts ABI 2 and ResponseMeaning ABI 3 carry the
+exact existing generic dialogue record; Effect/No-Effect Receipt ABI 2 binds
+that source obligation rather than a plan-derived duplicate. Generic Dialogue
+ABI 1, Decision and EvaluationBundle remain unchanged. These are **pending
+migration targets**, not active constants or admission claims. Remove the
+duplicate learning-obligation class and its active imports together; no decoder
+adapter, fake record or permissive version fallback is allowed. Update the ABI
+registry, strict decoders, active test successors and deterministic selectors
+before enabling the proposal transaction. Prove preserved non-learning response
+contracts and reject old incompatible serialized artifacts explicitly.
+
+Restart reuse must cover both grounding and lexical-query retrieval. Currently
+`bootstrap._DesignationStore` returns only the immutable authority index, while
+`QueryDecisionOwner` independently reads that same static index. Repairing only
+the grounding hook would leave a learned word usable in a clause but unknown to
+its own lexical query. Use one admitted-designation lookup contract through
+these existing owners, without mutating `LinkedAuthority.designations` or making
+world aliases into R4 source authority. Preserve exact/case-folded distinctions,
+ambiguity and source proofs; a mutable entry must not silently shadow immutable
+authority. Bound relevant reads and cached results by revision and lookup key,
+not a full-world rebuild per span or turn. Grounding and query proof must retain
+the actual admitted fact/review/commit lineage, not label a learned fact as an
+immutable authority-source fact. This is still an implementation dependency,
+not evidence that the current seeded alias-index test proves acquisition.
+
 ## Task 6 — Repair measured search/retrieval bounds and confirm preservation
 
 - [ ] Reproduce program/meaning duplication with the audit's multi-root and

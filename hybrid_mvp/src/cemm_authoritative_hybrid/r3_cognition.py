@@ -1144,68 +1144,54 @@ class RequestDecisionOwner(_TransitionOwnerBase):
     def _learning_directive(
         self,
         app: SemanticApplication,
+        expression: SemanticExpression,
         situation: SituationContext,
     ) -> ModeEvaluation | None:
-        signature_method = getattr(self._authority, "by_event_signature", None)
-        signature = (
-            signature_method(app.predicate_ref)
-            if callable(signature_method) and app.operator == "op:event"
-            else None
-        )
-        signature_roles = {
-            row.role: row for row in getattr(signature, "roles", ())
-        }
-        surface_spec = signature_roles.get("role:surface")
-        target_spec = signature_roles.get("role:target")
-        reviewed_naming_event = (
-            surface_spec is not None
-            and target_spec is not None
-            and "literal" in surface_spec.filler_kinds
-        )
-        if app.operator != "op:designation" and not reviewed_naming_event:
+        from .r3_learning import LearningLoweringError, lower_designation_learning
+
+        contract = self._authority.learning_contract_for_source(app.operator, app.predicate_ref)
+        if contract is None:
             return None
-        surface = _role_target(app, ("role:surface",))
-        target = _role_target(
-            app, ("role:target", "role:object", "role:meaning")
-        )
-        missing = tuple(
-            blocker
-            for blocker, value in (
-                ("learning:surface_missing", surface),
-                ("learning:target_missing", target),
-            )
-            if value is None
-        )
-        if missing:
-            return ModeEvaluation(
-                contribution=DecisionContribution(
-                    status=DecisionStatus.UNKNOWN,
-                    action=DecisionAction.REQUEST_CLARIFICATION,
-                    blocker_refs=missing,
-                    policy_refs=("policy:learning_directive_requires_review:v2",),
-                )
-            )
-        atom = getattr(self._authority, "atoms", {}).get(target)
+        try:
+            lowered = lower_designation_learning(self._authority, expression, situation)
+        except PermissionError:
+            return ModeEvaluation(contribution=DecisionContribution(
+                status=DecisionStatus.DENIED, action=DecisionAction.NO_OP,
+                blocker_refs=(contract.permission_ref,), policy_refs=(contract.review_policy_ref,),
+            ))
+        except LearningLoweringError as exc:
+            return ModeEvaluation(contribution=DecisionContribution(
+                status=DecisionStatus.UNKNOWN, action=DecisionAction.REQUEST_CLARIFICATION,
+                blocker_refs=(exc.blocker_ref,), policy_refs=(contract.review_policy_ref,),
+            ))
+        except (TypeError, ValueError):
+            return ModeEvaluation(contribution=DecisionContribution(
+                status=DecisionStatus.UNKNOWN, action=DecisionAction.REQUEST_CLARIFICATION,
+                blocker_refs=("learning:ineligible_directive",), policy_refs=(contract.review_policy_ref,),
+            ))
         from .dialogue import bind_learning_answer
         try:
-            pending = bind_learning_answer(self._stores, situation, app, maximum=self._config.max_orientation_alternatives)
-            if atom is None:
-                raise ValueError("learning target is not an existing reviewed identity")
+            pending = bind_learning_answer(self._stores, situation, lowered.designation, maximum=self._config.max_orientation_alternatives)
+            if pending.expected_answer_contract_ref != contract.answer_contract_ref:
+                raise ValueError("learning answer contract differs from the linked source contract")
         except (TypeError, ValueError):
             return ModeEvaluation(contribution=DecisionContribution(
                 status=DecisionStatus.UNKNOWN, action=DecisionAction.REQUEST_CLARIFICATION,
                 blocker_refs=("learning:unbound_query_continuation",),
-                policy_refs=("policy:learning_directive_requires_review:v2",),
+                policy_refs=(contract.review_policy_ref,),
             ))
-        target_kind = atom.kind
+        roles = {binding.role_ref: binding.filler for binding in lowered.designation.roles}
+        surface = roles["role:surface"].value
+        target = roles["role:target"].target_ref
+        target_kind = self._authority.atoms[target].kind
         draft = LearningDraft.create(
             kind="directive",
             surface_literal=surface,
             target_ref=target,
             expected_target_kinds=(target_kind,),
             source_query_ref=pending.source_query_ref,
-            answer_contract_ref="contract:designation_answer:v2",
-            proof_refs=(app.application_ref, pending.obligation_ref),
+            answer_contract_ref=contract.answer_contract_ref,
+            proof_refs=(*lowered.proof_refs, pending.obligation_ref),
             revision_pin=situation.revision_pin,
         )
         return ModeEvaluation(
@@ -1213,8 +1199,8 @@ class RequestDecisionOwner(_TransitionOwnerBase):
                 status=DecisionStatus.PENDING,
                 action=DecisionAction.CREATE_LEARNING_OBLIGATION,
                 learning_draft_refs=(draft.learning_draft_ref,),
-                proof_refs=(app.application_ref,),
-                policy_refs=("policy:learning_directive_requires_review:v2",),
+                proof_refs=lowered.proof_refs,
+                policy_refs=(contract.review_policy_ref,),
             ),
             learning_drafts=(draft,),
         )
@@ -1229,7 +1215,7 @@ class RequestDecisionOwner(_TransitionOwnerBase):
                 status=DecisionStatus.UNKNOWN, action=DecisionAction.NO_OP,
                 blocker_refs=blockers, policy_refs=("policy:request_transition:v2",),
             ))
-        learning = self._learning_directive(app, situation)
+        learning = self._learning_directive(app, expression, situation)
         if learning is not None:
             return learning
         if any(not isinstance(binding.filler, GroundedReference) for binding in (*app.roles, *app.qualifiers)):

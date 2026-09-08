@@ -429,6 +429,8 @@ class LinkedAuthority:
         "_by_transition_signature",
         "_learning_contracts_by_ref",
         "_learning_contracts_by_source",
+        "_capability_grants",
+        "_permission_grants",
     )
 
     def __init__(
@@ -482,6 +484,19 @@ class LinkedAuthority:
             (contract.source_operator_ref, contract.source_event_ref): contract
             for contract in learning_contracts
         }
+        self._capability_grants = frozenset(
+            (participant, capability)
+            for participant, refs in capabilities.items() for capability in refs
+        )
+        self._permission_grants = frozenset(permissions)
+
+    def capability_granted(self, actor_ref: str, capability_ref: str) -> bool:
+        """Activation-indexed actor-specific capability authority."""
+        return (actor_ref, capability_ref) in self._capability_grants
+
+    def permission_granted(self, actor_ref: str, permission_ref: str, event_ref: str) -> bool:
+        """Activation-indexed exact actor/permission/event authorization."""
+        return (actor_ref, permission_ref, event_ref) in self._permission_grants
 
     def learning_contract(self, contract_ref: str) -> DesignationLearningContract | None:
         """Exact activation-built lookup; absent authority has no default."""
