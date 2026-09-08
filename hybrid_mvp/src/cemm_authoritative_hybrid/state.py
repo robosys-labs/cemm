@@ -9,8 +9,10 @@ is ``"conflict"`` and both source refs are returned.
 assertions.  ``preview_sequence()`` composes typed transition relations
 left-to-right only when each resulting state satisfies the next signature; it
 records proof lineage and has no implicit commutativity, inverse, or
-overwrite law.  ``commit()`` accepts only a verified transition/effect
-receipt, uses optimistic revision checks, and appends history.
+overwrite law. The direct ``commit()`` below is an unauthenticated predecessor
+write path, not the runtime EFFECT gateway. It must not be connected to the
+runtime; its removal and assertion-specific test successors are tracked in the
+foundation implementation plan.
 """
 
 from __future__ import annotations
@@ -321,10 +323,11 @@ class TransitionEngine:
         )
 
     def commit(self, preview: TransitionPreview, stores: SemanticStores) -> CommitReceipt:
-        """Commit a verified transition preview to the world store.
+        """Predecessor direct write; not authorized for runtime execution.
 
-        Accepts only a verified transition/effect receipt (the preview's
-        proof refs).  Uses optimistic revision checks and appends history.
+        A preview and its proof refs are not a verified EFFECT receipt. This
+        method checks a world revision but not gateway authority, permission,
+        observation or journal lineage. Do not reuse it as an effect owner.
         """
         expected = preview.resulting_state.revision
         state = preview.resulting_state

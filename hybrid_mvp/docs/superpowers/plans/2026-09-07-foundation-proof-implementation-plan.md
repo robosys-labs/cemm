@@ -1074,10 +1074,13 @@ with byte-identical hashes; no commit was pushed or adopted at root.
 
 ### Publication transaction boundary (implementation pending)
 
-**Execution pause — governing scope decision required.** The frame checkpoint
-is complete, but the canonical-continuation migration has not begun. Its target
-ABIs remain pending, not active. The user's demo-only English `velnora` →
-`rel:likes` approval remains recorded and does not need reopening.
+**Scope correction — proceed with the approved foundation repair.** The earlier
+execution pause in `9ccc4a2` overstated historical test names as current feature
+requirements. The user approved the recommendation to correct stale test routing
+and requested a broader regression-inducing/stale-test audit before continuing.
+Canonical-continuation migration remains pending; its target ABIs are not active.
+The demo-only English `velnora` → `rel:likes` approval remains recorded and does
+not need reopening.
 
 Independent inspection of all nineteen failing learning wrappers and their
 deleted ancestor bodies (`6b8fc23^`) found eleven designation/lookup protections
@@ -1090,15 +1093,107 @@ original `tests/test_synonym_acquisition.py` and confirmed that distinction.
 Its retired program-shaped implementation and teaching fixtures must not be
 reconnected as a shortcut under canonical-expression authority.
 
-Do not redirect these eight wrappers to a passing alias smoke test, silently
-retire them, or count an unavailable rule owner as satisfying positive rule
-publication. Recommended scope decision: finish the bounded conversation/alias
-foundation and demo, while explicitly deferring the separate rule-publication
-requirements with their evidence preserved and no full-R3/MVP admission claim.
-That deferral is a proposed governing decision, **not yet approved or applied**.
-Alternatively, completing rule publication in this increment would require an
-explicitly expanded implementation scope. No test or disposition was changed
-by this audit; all eight remain visible in the current active failure set.
+The current wrappers do not execute those ancestor assertions. All nineteen
+route to one cached learning smoke helper; `assertion_ref` is only prefix-checked
+and never selects the assertion being proved. A reproduced five-rule wrapper
+fails at an unrelated `PENDING` versus `UNKNOWN` expectation, while the direct
+current reviewed-rule inference/proof-lineage test passes. Reviewed-rule use and
+external rule publication are distinct capabilities. The foundation amendment
+requires the former where relevant and bounded existing-target alias learning;
+it does not require restoring the old external five-rule publisher.
+
+Do not redirect publication assertions to passing alias smoke tests or restore
+retired program-shaped teaching fixtures. Preserve ancestor evidence and make
+unproved coverage explicit. Keep independently valid one-use/idempotence,
+authorization, capability, exact-plan binding, compatibility and atomic-rollback
+protections as assertion-specific current-path checks. Classify obsolete
+publication scenarios explicitly rather than treating their names as authority.
+No new runtime gate, rule publisher, phase admission or inventory waiver is
+authorized by this correction. Frozen inventory and historical ASTs remain
+unchanged. The same audit must inspect non-learning shared helpers and stale
+query/graph/state fixtures before their green counts are cited as coverage.
+
+**Further audit findings (September 8; not phase admission):**
+
+- All 147 non-learning closeout wrappers are active at R3 but route to only
+  eleven distinct cached, no-argument helpers. Along with the nineteen learning
+  wrappers, these are 166 named cases, not 166 independently proved contracts.
+  Invented assertion refs were accepted too. Repair the existing test dispatcher
+  with exact audited bindings and explicit failures for unproved mappings. The
+  first three audited bindings preserve raw-phrase-dispatch, cyclic-expression
+  rejection and retired-checkpoint-API protections through their actual current
+  tests. Do not infer bindings from names or silently omit unresolved wrappers.
+- State-query wrappers never execute their named present/past questions. The
+  ten `test_temporal_state.py` cases exercise a standalone index through a test
+  facade, not the public runtime. Their index assertions remain useful narrow
+  evidence; they do not prove temporal language understanding or admission.
+- The thirteen epistemic wrappers run one untrusted observation, not distinct
+  correction, trusted admission and nested-mode cases. Twenty query wrappers run
+  one supported-rule inference, not separate unknown, budget, memoization,
+  multi-hop and synonym checks. Preserve those valid assertions individually;
+  restoring old program-shaped engines is not an acceptable repair.
+- Current state/admission/receipt controls were checked independently: 33 selected
+  cases pass, including negative/conditional admission and no-effect retry
+  protections. These must not be discarded merely because nearby wrappers are
+  stale. This focused run is not a complete state or full-regression proof.
+- The directly seeded alias restart fixture is not authenticated acquisition:
+  a `proof.source` string beginning with `review:` is insufficient. Replace its
+  positive fixture through the real approved publication transaction when that
+  owner exists, and retain an unreviewed-insertion rejection contrast. Never
+  broaden admitted lookup to accept arbitrary stored designation facts merely
+  to turn this diagnostic green. Restart/unseen composition remain required.
+- The five-operator positive fixture forces a uniform subject shape and lacks
+  current operator-specific derived roles. Replace it with an explicit successor
+  proving all five shapes against independent expected expressions and linked
+  frames; retain unknown-operator rejection. The lexical-query fixture must use
+  an explicit meaning lookup, retaining exact label roles, target binder,
+  round-trip identity and no invented concept. Generic `What is X?` remains a
+  separate no-laundering contrast, not automatically a lexical query.
+- Fresh-fragment clarification is still a real usability requirement. Preserve
+  exact clarification and no mutation, but audit the test's intermediate
+  `evaluation is not None` demand against typed-frontier handling before choosing
+  an owner repair. Do not invent a settled meaning just to obtain an EVALUATE
+  artifact, nor weaken critical-residual verification.
+- `TransitionEngine.commit` is a dormant duplicate write path: it accepts a
+  preview and writes directly to the world store, despite describing a verified
+  effect receipt. It has no current runtime caller. Its direct-commit tests must
+  not motivate reconnecting it. Remove that mutation path with explicit
+  successors retaining transactional/revision/history protections at the real
+  `R3EffectGateway`; keep useful pure transition-preview/unit-index assertions.
+  This separate cleanup is identified, not yet implemented in this audit.
+
+This audit separates missing test evidence from missing runtime behavior. A
+larger explicit failure count after correcting false coverage is not evidence
+that those runtime behaviors newly regressed. Resolve each surviving assertion
+alongside its current owner; obsolete external publication scenarios remain
+unproved historical obligations, not a reason to expand this foundation task.
+
+**Test-only correction implemented:** `tests/test_foundation_test_successors.py`
+contains the two same-assertion successors and a separate unauthenticated-alias
+restart negative. It does not supersede the pending authenticated publication
+positive. Exact independent forests and complete source assignments prove the
+five operator shapes without freezing unused schema alternatives or role order.
+The generic smoke helper module is now 39 lines; its dead imports and cached
+helpers are removed, while all 166 historical wrapper bodies remain unchanged.
+Three audited safety mappings execute their actual tests; 163 mappings now fail
+explicitly as unproved rather than claiming coverage. The nine-case routing suite
+checks invented identities, wrong categories, exact runner invocation and failure
+propagation. Passing these repairs is not R3 admission. The focused routing,
+fixture, safety and governance run passes 25 cases. Existing selectors were
+regenerated twice with identical artifacts (G0 191, R1 939, R2 1329, R3 2011,
+R4 2349, R5 2474); the frozen inventory remains unchanged. No gate, owner, phase,
+bound, dependency or runtime behavior was added or changed.
+
+Independent spec and quality review passed for this correction. The complete
+authenticated current R3 selection ran 2,011 cases: 1,845 passed and 166 failed
+in 199.93 seconds. The failures are 163 explicit unproved successor mappings,
+the outstanding fragment and authenticated-alias diagnostics, and the expected
+dirty-input status check. This supersedes the misleading interpretation of the
+earlier green wrapper count, not historical run records. Remaining coverage must
+be matched to current assertions as owner repairs proceed; do not treat 163
+unproved mappings as 163 newly observed runtime defects. Canonical continuation,
+reviewed publication/restart, fragment usability and the dormant writer cleanup
+remain open. No repair-completion, demo-completion or phase-admission claim follows.
 
 The learning utterance is a proposal, not reviewer authority. Preserve its exact
 query, expression, situation, plan and terminal no-effect receipt as immutable

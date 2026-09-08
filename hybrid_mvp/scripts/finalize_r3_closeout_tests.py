@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Finalize R3 predecessor test lineages with behavioral successor leaves.
+"""Historical R3 wrapper migration; not current assertion-coverage evidence.
 
-Frozen predecessor tests are never edited in place.  This migration creates R3
-successors that preserve assertion identity and delegate to live typed-behavior
-contracts. Historical predecessor modules remain immutable and executable for
-R1/R2 replay; the R3 hard-cut audit scans only verified active R3 lineage leaves.
+This one-shot migration classified predecessors by file/category, not by their
+individual assertions. Its generated wrapper identities preserve lineage but do
+not prove behavioral equivalence. The foundation audit found unrelated cached
+smoke checks behind these wrappers. Current test routing requires independently
+audited exact assertion runners and rejects unproved mappings. Do not use this
+script to claim closeout or regenerate the existing historical wrapper module.
 """
 from __future__ import annotations
 

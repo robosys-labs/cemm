@@ -4813,8 +4813,11 @@ def test_foundation_matrix_alias_directive_binds_actual_prior_query(linked_autho
 
 
 def test_foundation_matrix_reviewed_alias_survives_restart_and_unseen_reversal(tmp_path):
-    # This is reviewed durable designation/index evidence, not a fabricated
-    # learning commit. The active ABI 2 has no authorized alias-commit owner.
+    # AUDIT: this direct seed is not authenticated review or acquisition; its
+    # reviewer-looking source string cannot authorize index admission. Preserve
+    # this diagnostic's positive restart/unseen-composition obligation through
+    # a successor using the real publication transaction once implemented.
+    # Do not make arbitrary stored designation facts trusted to pass this test.
     path = tmp_path / "alias.db"
     pack_path = ROOT / "data/languages/en/forms.json"
     pack_before = pack_path.read_bytes()

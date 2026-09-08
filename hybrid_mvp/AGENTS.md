@@ -248,3 +248,11 @@ A missing, stale or malformed registered frame source must fail linking, never
 silently erase refinements into kind defaults. Preserve all existing reviewed
 profile fields when changing authority generations. The foundation plan records
 the September 8 preservation repair and remaining continuation/publication work.
+
+Test names and historical successor metadata are not implementation authority.
+A category smoke check cannot prove unrelated assertion identities. Use explicit
+assertion-specific evidence; unreviewed successor mappings must fail descriptively,
+not inherit a cached pass. Preserve frozen evidence and valid protections without
+restoring retired paths. A directly inserted fact with a reviewer-looking source
+string is not authenticated alias acquisition. The foundation plan records the
+stale-test audit and approved scope correction; it does not add a runtime gate.
