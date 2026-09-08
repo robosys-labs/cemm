@@ -989,7 +989,7 @@ LearningPlan ABI 2's diagnostic plan-derived obligation remains unchanged in
 this increment. Its retirement and the explicit version migration below must
 precede enabling proposal persistence; no second pending record is reintroduced.
 
-### Reviewed-frame preservation repair (September 8, verified checkpoint)
+### Reviewed-frame preservation repair (September 8, verified at `b3df099`)
 
 Pause the planned artifact migration until this earlier authority owner is fixed.
 `c29768b` changed the authority generation but left the six reviewed affordance
@@ -1068,8 +1068,37 @@ The preserved frozen inventory hash remains
 This checkpoint restores reviewed frames and closes its validation/resource
 defects; it does not complete the foundation, admit a phase or publish an alias.
 Resume the pending canonical-continuation migration next.
+The clean-worktree status regression passes at `b3df099` (1 case, 3.77 seconds).
+Configured selectors and the living inventory receipt were regenerated twice
+with byte-identical hashes; no commit was pushed or adopted at root.
 
 ### Publication transaction boundary (implementation pending)
+
+**Execution pause — governing scope decision required.** The frame checkpoint
+is complete, but the canonical-continuation migration has not begun. Its target
+ABIs remain pending, not active. The user's demo-only English `velnora` →
+`rel:likes` approval remains recorded and does not need reopening.
+
+Independent inspection of all nineteen failing learning wrappers and their
+deleted ancestor bodies (`6b8fc23^`) found eleven designation/lookup protections
+and eight separate reviewed rule-acquisition assertions. The latter call
+`plan_reviewed_acquisition(..., acquisition_kind="rule")`; their positive cases
+require created rule refs, one new authority generation, unchanged compatibility
+identity and consumed-plan protection. This is not necessarily atom creation,
+but it is not alias publication either. The main agent independently read the
+original `tests/test_synonym_acquisition.py` and confirmed that distinction.
+Its retired program-shaped implementation and teaching fixtures must not be
+reconnected as a shortcut under canonical-expression authority.
+
+Do not redirect these eight wrappers to a passing alias smoke test, silently
+retire them, or count an unavailable rule owner as satisfying positive rule
+publication. Recommended scope decision: finish the bounded conversation/alias
+foundation and demo, while explicitly deferring the separate rule-publication
+requirements with their evidence preserved and no full-R3/MVP admission claim.
+That deferral is a proposed governing decision, **not yet approved or applied**.
+Alternatively, completing rule publication in this increment would require an
+explicitly expanded implementation scope. No test or disposition was changed
+by this audit; all eight remain visible in the current active failure set.
 
 The learning utterance is a proposal, not reviewer authority. Preserve its exact
 query, expression, situation, plan and terminal no-effect receipt as immutable
