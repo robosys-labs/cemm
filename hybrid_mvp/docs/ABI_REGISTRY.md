@@ -72,8 +72,9 @@ reviewed profiles under `authority-v1-2026-09-08-linked-frames`, changing genera
 content and compatibility identities. A new generation is required because the
 existing store activation owner pins that label rather than the content hash.
 Do not reset or silently repin an existing store or reactivate a model to bypass
-these identity changes. The canonical-continuation artifact migration remains
-pending until frame preservation is verified; current artifact ABIs stay as above.
+these identity changes. Frame preservation was verified at `b3df099`; it is no
+longer a blocker to the approved canonical-continuation artifact migration.
+That migration is still unimplemented, so current artifact ABIs stay as above.
 
 ## 2. Canonical program identity
 

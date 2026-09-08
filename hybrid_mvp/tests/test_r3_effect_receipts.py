@@ -1,17 +1,18 @@
 """R3 exact effect/no-effect and atomic persistence tests."""
 from __future__ import annotations
 
-from cemm_authoritative_hybrid.persistence import Fact, RevisionPin, memory_stores
+import sqlite3
+
+import pytest
+
+from cemm_authoritative_hybrid.persistence import RevisionPin
 from cemm_authoritative_hybrid.r3_effects import (
     EffectReceipt,
     EffectStatus,
     NoEffectReason,
     NoEffectReceipt,
 )
-from cemm_authoritative_hybrid.r3_persistence import (
-    commit_effect_transaction,
-    predicted_effect_pin,
-)
+from cemm_authoritative_hybrid.r3_persistence import predicted_effect_pin
 
 __cemm_test_inventory__ = {
     "tests/test_r3_effect_receipts.py::test_atomic_effect_transaction_advances_world_and_effect_together": {
@@ -20,7 +21,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R3-Complete",
         "owner_ref": "capability-effect",
-        "source_ast_sha256": "a6d3364bc9af25c96cef9cef1f9c8a9bf465e6a4c9579459aae7fd7bf10acefd"
+        "source_ast_sha256": "8a11fa057579688ee60acff6870d4cf3767e5e3b5860c04c7c4b4d5a5983c913"
     },
     "tests/test_r3_effect_receipts.py::test_committed_receipt_requires_advanced_effect_revision": {
         "activation_phase": "R3",
@@ -68,27 +69,83 @@ def test_no_effect_round_trip_preserves_reason() -> None:
     assert NoEffectReceipt.from_dict(value.as_dict()) == value
 
 
-def test_atomic_effect_transaction_advances_world_and_effect_together() -> None:
-    stores = memory_stores(
-        authority_generation="authority:test", model_identity="model:test"
+def test_atomic_effect_transaction_advances_world_and_effect_together(
+    tmp_path, linked_authority, monkeypatch
+) -> None:
+    from cemm_authoritative_hybrid import persistence, r3_persistence
+    from cemm_authoritative_hybrid.r3_codec import thaw_json
+    from cemm_authoritative_hybrid.r3_effects import AdapterRegistry, R3EffectGateway
+    from cemm_authoritative_hybrid.r3_persistence import EffectJournalState, effect_journal_get
+    from tests.test_foundation_effect_currentness import (
+        _LampAdapter, _effect_case, _seed_lamp_off, _stores,
     )
-    pin = stores.revision_pin()
-    fact = Fact(
-        fact_ref="fact:test",
-        operator="op:state",
-        args={"role:subject": "entity:lamp"},
-        proof={"source": "decision:test"},
-    )
-    output = commit_effect_transaction(
-        stores,
-        expected_pin=pin,
-        facts=(fact,),
-        effect_key="effect-key:test",
-        effect_payload={"r3_receipt": {"receipt_ref": "receipt:test"}},
-    )
-    assert output == predicted_effect_pin(pin, has_world_delta=True)
-    assert stores.world.get("fact:test") == fact
-    assert stores.effects.get("effect-key:test") is not None
+
+    stores = _stores("atomic-rollback", tmp_path, linked_authority.generation)
+    adapter = _LampAdapter()
+    try:
+        _seed_lamp_off(stores)
+        situation, meaning, evaluation = _effect_case(
+            stores, linked_authority, turn_ref="turn:atomic-rollback"
+        )
+        before = stores.revision_pin()
+        before_facts = stores.r3_world_facts()
+        before_session = stores.r3_session_snapshot(situation.session_ref)
+        original_write = persistence._r3_write_session_sqlite
+
+        def fail_after_session_write(*args, **kwargs):
+            # Real world and session SQL writes occur before this injected I/O
+            # failure. The transaction must roll them back, retaining OBSERVED.
+            original_write(*args, **kwargs)
+            raise sqlite3.OperationalError("injected terminal transaction failure")
+
+        with monkeypatch.context() as fault:
+            fault.setattr(persistence, "_r3_write_session_sqlite", fail_after_session_write)
+            with pytest.raises(sqlite3.OperationalError, match="injected terminal transaction failure"):
+                R3EffectGateway(stores, AdapterRegistry({"adapter:state": adapter})).execute(
+                    evaluation, meaning, situation
+                )
+        assert len(adapter.requests) == 1
+        key = adapter.requests[0].idempotency_key
+        observed = effect_journal_get(stores, key)
+        assert observed is not None and observed.entry.state is EffectJournalState.OBSERVED
+        assert observed.receipt_payload is None and observed.entry.outcome_ref is None
+        assert stores.r3_world_facts() == before_facts
+        assert stores.r3_session_snapshot(situation.session_ref) == before_session
+        after_failure = stores.revision_pin()
+        assert after_failure.world_revision == before.world_revision
+        assert after_failure.session_revision == before.session_revision
+        assert after_failure.effect_revision == observed.entry.effect_revision
+    finally:
+        stores.close()
+
+    reopened = _stores("atomic-rollback", tmp_path, linked_authority.generation)
+    try:
+        assert reopened.revision_pin() == after_failure
+        assert reopened.r3_world_facts() == before_facts
+        assert reopened.r3_session_snapshot(situation.session_ref) == before_session
+        assert effect_journal_get(reopened, key) == observed
+        gateway = R3EffectGateway(reopened, AdapterRegistry({"adapter:state": adapter}))
+        receipt = gateway.execute(evaluation, meaning, situation)
+        assert receipt.status is EffectStatus.COMMITTED
+        assert len(adapter.requests) == 1  # reuse the durable observation, not the device
+        assert receipt.output_revision_pin == reopened.revision_pin()
+        assert receipt.output_revision_pin.world_revision == before.world_revision + 1
+        assert receipt.output_revision_pin.session_revision == before.session_revision + 1
+        assert receipt.output_revision_pin.effect_revision == after_failure.effect_revision + 1
+        assert len(receipt.committed_fact_refs) == 1
+        assert reopened.world.get(receipt.committed_fact_refs[0]) is not None
+        terminal = effect_journal_get(reopened, key)
+        assert terminal.entry.state is EffectJournalState.COMMITTED
+        assert terminal.entry.outcome_ref == receipt.receipt_ref
+        assert terminal.entry.parent_journal_ref == observed.entry.journal_ref
+        assert EffectReceipt.from_dict(thaw_json(terminal.receipt_payload)) == receipt
+        assert gateway.execute(evaluation, meaning, situation) == receipt
+        assert reopened.revision_pin() == receipt.output_revision_pin
+        assert len(adapter.requests) == 1
+    finally:
+        reopened.close()
+    assert not hasattr(r3_persistence, "commit_effect_transaction")
+    assert "commit_effect_transaction" not in r3_persistence.__all__
 
 
 def test_committed_receipt_requires_advanced_effect_revision() -> None:

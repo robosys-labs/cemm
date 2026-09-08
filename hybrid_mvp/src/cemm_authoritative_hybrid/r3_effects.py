@@ -17,7 +17,7 @@ from .config import RuntimeConfig
 from .cycle import SemanticMode
 from .decision import DecisionAction, DecisionStatus
 from .expressions import VerifiedMeaning
-from .persistence import Fact, RevisionPin, SemanticStores
+from .persistence import Fact, RevisionPin, SemanticStores, StaleRevisionError
 from .r3_artifacts import EvaluationBundle, QueryStatus, StateDelta
 from .r3_codec import exact_fields, exact_pin, exact_refs, exact_text, thaw_json, wire_refs
 from .r3_learning import DialogueObligation, LearningPlan
@@ -929,13 +929,20 @@ class R3EffectGateway:
 
     def _begin(
         self, *, key: str, intent_ref: str, decision_ref: str,
-        request_payload: Mapping[str, Any]
+        request_payload: Mapping[str, Any],
+        input_revision_pin: RevisionPin | None = None,
     ) -> StoredEffectJournal:
         existing = effect_journal_get(self._stores, key)
-        if existing is not None:
-            return existing
         pin = self._stores.revision_pin()
-        if "query_evaluation" in request_payload:
+        if existing is not None and "query_evaluation" in request_payload:
+            persisted = thaw_json(existing.entry.request_payload)
+            for name, value in request_payload.items():
+                if persisted.get(name) != value:
+                    raise ValueError("query retry differs from its persisted request")
+            request_payload = persisted
+        elif existing is None and input_revision_pin is not None and input_revision_pin != pin:
+            raise StaleRevisionError("effect request revision pin is stale")
+        elif existing is None and "query_evaluation" in request_payload:
             request_payload = {**request_payload, "query_planned_effect_revision": pin.effect_revision + 1}
         return effect_journal_begin(
             self._stores,
@@ -944,6 +951,7 @@ class R3EffectGateway:
             decision_ref=decision_ref,
             request_payload=request_payload,
             expected_effect_revision=pin.effect_revision,
+            expected_revision_pin=(input_revision_pin if existing is None else None),
         )
 
     def _persist_no_effect(
@@ -988,10 +996,6 @@ class R3EffectGateway:
                 from .dialogue import query_continuation_request
                 request_payload.update(query_continuation_request(self._stores, evaluation,
                     maximum=self._config.max_orientation_alternatives))
-            else:
-                for name, value in request_payload.items():
-                    if thaw_json(existing.entry.request_payload.get(name)) != value:
-                        raise ValueError("query retry differs from its persisted request")
         stored = self._begin(
             key=key,
             intent_ref=origin,
@@ -1069,6 +1073,7 @@ class R3EffectGateway:
                 "expected_deltas": [row.as_dict() for row in expected],
                 **self._turn_payload(situation),
             },
+            input_revision_pin=situation.revision_pin,
         )
         if stored.entry.state.terminal:
             receipt = self._terminal_receipt(stored)
@@ -1268,6 +1273,7 @@ class R3EffectGateway:
                 intent_ref=request.effect_intent_ref,
                 decision_ref=request.decision_ref,
                 request_payload=self._request_payload(request, situation),
+                input_revision_pin=request.input_revision_pin,
             )
             if stored.entry.state.terminal:
                 receipt = self._terminal_receipt(stored)
@@ -1286,6 +1292,7 @@ class R3EffectGateway:
             intent_ref=request.effect_intent_ref,
             decision_ref=request.decision_ref,
             request_payload=self._request_payload(request, situation),
+            input_revision_pin=request.input_revision_pin,
         )
         if stored.entry.state.terminal:
             receipt = self._terminal_receipt(stored)
@@ -1416,7 +1423,7 @@ class R3EffectGateway:
         payload = stored.entry.observation_payload
         if payload is None:
             raise ValueError("observed journal lacks adapter observation")
-        result = AdapterResult.from_dict(payload)
+        result = AdapterResult.from_dict(thaw_json(payload))
         self._validate_adapter_result(result, request)
         return self._commit_observation(
             evaluation=evaluation,

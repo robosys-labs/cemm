@@ -6,7 +6,6 @@ Tests cover:
 - Composed result equals sequential result; proof_refs concatenate.
 - No implicit inverse (inverse_of always returns None).
 - Preview checks preconditions and raises on violation.
-- Commit appends history with optimistic revision checks.
 """
 
 from __future__ import annotations
@@ -20,8 +19,6 @@ from cemm_authoritative_hybrid.config import RuntimeConfig
 from cemm_authoritative_hybrid.epistemics import EpistemicPlacement
 from cemm_authoritative_hybrid.persistence import memory_stores
 from cemm_authoritative_hybrid.state import (
-    StateIndex,
-    StateClaim,
     TemporalState,
     TransitionEngine,
     TransitionPreview,
@@ -219,34 +216,3 @@ class TestPreconditionChecking:
             transition_engine.preview_sequence(
                 offline_state, ("transition:connect",)
             )
-
-
-# ---------------------------------------------------------------------------
-# Tests: commit appends history with optimistic revision checks
-# ---------------------------------------------------------------------------
-
-
-class TestCommitAppendsHistory:
-    def test_commit_increments_revision(self, transition_engine, offline_state, stores):
-        preview = transition_engine.preview(offline_state, "transition:power_on")
-        before = stores.world.revision
-        receipt = transition_engine.commit(preview, stores)
-        assert stores.world.revision == before + 1
-        assert receipt.new_revision == before + 1
-        assert receipt.parent_revision == before
-
-    def test_commit_stale_revision_raises(self, transition_engine, offline_state, stores):
-        from cemm_authoritative_hybrid.persistence import StaleRevisionError
-
-        preview = transition_engine.preview(offline_state, "transition:power_on")
-        # Commit once to advance the revision.
-        transition_engine.commit(preview, stores)
-        # Re-commit the same preview (which has the old expected revision).
-        with pytest.raises(StaleRevisionError):
-            transition_engine.commit(preview, stores)
-
-    def test_commit_records_transition_proof(self, transition_engine, offline_state, stores):
-        preview = transition_engine.preview(offline_state, "transition:power_on")
-        receipt = transition_engine.commit(preview, stores)
-        assert receipt.store == "world"
-        assert receipt.transaction_ref

@@ -1225,6 +1225,43 @@ selectors and receipt regenerate twice identically, with phase counts unchanged.
 The 163 unproved mappings remain explicit, not silently retired or counted as
 new runtime defects. Deleted source is recoverable from `add3917`.
 
+The follow-through exposed an actual EFFECT defect: a distinct new operation
+prepared on the original pin could execute after another operation committed.
+The gateway silently rebased its journal onto the newer store. New effectful
+requests now retain their source pin at the existing journal reservation, with
+SQLite revision comparisons inside `BEGIN IMMEDIATE`. Exact existing requests
+authenticate their persisted content and retain retry/reconciliation behavior;
+ordinary no-effect queries retain their separate continuation policy. Nested
+request comparison uses canonical thawing rather than shallow dictionary equality.
+`TransitionEngine.commit` and its three obsolete tests are removed; current-owner
+successors preserve revision, proof/history and restart assertions, while pure
+preview tests remain. Main observed the stale-request and direct-writer tests RED
+before the repair. Independent spec and quality reviews pass. The second dormant
+`commit_effect_transaction` helper/export is also removed. Its later atomic test
+retains the same assertion identity but now injects failure after real SQLite
+world/session writes, proves rollback and durable OBSERVED evidence, then reopens
+and commits exactly once without invoking the device again. That test exposed a
+separate restart defect: the strict adapter decoder received frozen persisted
+JSON. Thawing at that existing decode boundary repairs recovery without broadening
+the decoder or changing receipt ABIs. Both defects were observed RED before GREEN.
+
+Main's receipt/currentness/pure-preview run passes all 18 cases. The full
+authenticated R3 selection gives **1,848 passes / 166 failures across 2,014 cases**
+in 159.31 seconds. The exact failure set is unchanged: 163 unproved mappings,
+fresh-fragment clarification, the still-unimplemented authenticated-alias restart
+diagnostic, and dirty-input status rejection. This is not full repair completion.
+R3/R4/R5 structural checks, 507 later test metadata records, the active legacy audit
+(zero findings), source compilation and four post-VERIFY canaries pass. Canaries
+retain zero world delta; they are not the requested useful conversation demo.
+Selectors/receipt regenerate twice identically: G0 191 / R1 939 / R2 1329 /
+R3 2014 / R4 2352 / R5 2477. No frozen inventory, authority data, form pack, gate,
+search bound or ABI changed. New-request currentness is checked at reservation;
+in-flight recovery intentionally keeps its original request witness. This does not
+claim unrestricted concurrency after an operation has begun.
+Continue with the approved canonical-continuation artifact migration and reviewed
+publication/restart path below; query/fragment, composition and response proof
+remain open. Do not reopen the already-verified frame-preservation prerequisite.
+
 The learning utterance is a proposal, not reviewer authority. Preserve its exact
 query, expression, situation, plan and terminal no-effect receipt as immutable
 lineage. A later explicit review must use a distinct publication journal and a

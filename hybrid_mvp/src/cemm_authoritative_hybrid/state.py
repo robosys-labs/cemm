@@ -9,10 +9,7 @@ is ``"conflict"`` and both source refs are returned.
 assertions.  ``preview_sequence()`` composes typed transition relations
 left-to-right only when each resulting state satisfies the next signature; it
 records proof lineage and has no implicit commutativity, inverse, or
-overwrite law. The direct ``commit()`` below is an unauthenticated predecessor
-write path, not the runtime EFFECT gateway. It must not be connected to the
-runtime; its removal and assertion-specific test successors are tracked in the
-foundation implementation plan.
+overwrite law.
 """
 
 from __future__ import annotations
@@ -24,7 +21,6 @@ from .authority import LinkedAuthority
 from .canonical import stable_ref
 from .config import RuntimeConfig
 from .epistemics import EpistemicPlacement
-from .persistence import CommitReceipt, Fact, SemanticStores
 
 __all__ = [
     "StateClaim",
@@ -221,9 +217,7 @@ class TransitionEngine:
     returns predicted assertions without mutating any store.  ``preview_sequence()``
     composes typed transition relations left-to-right only when each resulting
     state satisfies the next signature; it records proof lineage and has no
-    implicit commutativity, inverse, or overwrite law.  ``commit()`` accepts
-    only a verified transition/effect receipt, uses optimistic revision
-    checks, and appends history.
+    implicit commutativity, inverse, or overwrite law.
     """
 
     def __init__(self, authority: LinkedAuthority, config: RuntimeConfig) -> None:
@@ -321,41 +315,6 @@ class TransitionEngine:
             proof_refs=tuple(all_proofs),
             transition_ref=last_ref,
         )
-
-    def commit(self, preview: TransitionPreview, stores: SemanticStores) -> CommitReceipt:
-        """Predecessor direct write; not authorized for runtime execution.
-
-        A preview and its proof refs are not a verified EFFECT receipt. This
-        method checks a world revision but not gateway authority, permission,
-        observation or journal lineage. Do not reuse it as an effect owner.
-        """
-        expected = preview.resulting_state.revision
-        state = preview.resulting_state
-        fact = Fact(
-            fact_ref=stable_ref(
-                "state_fact",
-                {
-                    "entity": state.entity_ref,
-                    "dimension": state.dimension_ref,
-                    "value": state.value_ref,
-                    "revision": state.revision,
-                },
-            ),
-            operator="op:state",
-            args={
-                "role:subject": state.entity_ref,
-                "role:dimension": state.dimension_ref,
-                "role:value": state.value_ref,
-            },
-            stance="support",
-            confidence=1.0,
-            derived=False,
-            proof={
-                "transition_ref": preview.transition_ref,
-                "proof_refs": list(preview.proof_refs),
-            },
-        )
-        return stores.world.commit([fact], expected_revision=expected)
 
     def inverse_of(self, transition_ref: str) -> str | None:
         """Return the inverse of ``transition_ref``, or ``None``.

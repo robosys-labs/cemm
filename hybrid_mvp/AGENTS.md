@@ -256,3 +256,11 @@ not inherit a cached pass. Preserve frozen evidence and valid protections withou
 restoring retired paths. A directly inserted fact with a reviewer-looking source
 string is not authenticated alias acquisition. The foundation plan records the
 stale-test audit and approved scope correction; it does not add a runtime gate.
+
+Pure transition previews are not write authority. Do not restore dormant direct
+commit helpers to satisfy historical tests. A new effectful request must retain
+its verified current revision pin at journal reservation; the gateway must not
+silently rebase a stale decision onto newer state. An exact journal-bound retry
+is different: authenticate its persisted request and preserve terminal receipt
+identity without a second invocation. Keep these checks in the existing effect
+and transactional persistence owners, not a parallel writer or validation tier.

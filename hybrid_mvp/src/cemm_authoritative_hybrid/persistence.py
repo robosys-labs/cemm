@@ -1779,8 +1779,10 @@ class SemanticStores:
         decision_ref: str,
         request_payload: Mapping[str, Any],
         expected_effect_revision: int,
+        expected_revision_pin: RevisionPin | None = None,
     ) -> Mapping[str, Any]:
         from .r3_persistence import EffectJournalEntry, EffectJournalState
+        from .r3_codec import thaw_json
 
         existing = self.r3_effect_journal_get(idempotency_key)
         if existing is not None:
@@ -1789,10 +1791,17 @@ class SemanticStores:
             if (
                 entry.intent_ref != intent_ref
                 or entry.decision_ref != decision_ref
-                or dict(entry.request_payload) != expected_request
+                or thaw_json(entry.request_payload) != expected_request
             ):
                 raise ValueError("idempotency key is already bound to another request")
             return existing
+        if expected_revision_pin is not None:
+            if type(expected_revision_pin) is not RevisionPin:
+                raise TypeError("expected_revision_pin must be exact RevisionPin or None")
+            if expected_revision_pin != self.revision_pin():
+                raise StaleRevisionError("effect request revision pin is stale")
+            if expected_effect_revision != expected_revision_pin.effect_revision:
+                raise ValueError("effect request effect revision does not match its pin")
         if expected_effect_revision != self.effects.revision:
             raise StaleRevisionError(
                 f"effects: expected {expected_effect_revision}, got {self.effects.revision}"
@@ -1824,6 +1833,20 @@ class SemanticStores:
                     raise StaleRevisionError(
                         f"effects: expected {expected_effect_revision}, got {current}"
                     )
+                if expected_revision_pin is not None:
+                    for field in (
+                        "world_revision",
+                        "session_revision",
+                        "episode_revision",
+                    ):
+                        row = conn.execute(
+                            "SELECT value FROM metadata WHERE key=?", (field,)
+                        ).fetchone()
+                        current = int(row[0]) if row else 0
+                        if current != getattr(expected_revision_pin, field):
+                            raise StaleRevisionError(
+                                f"effect request {field} changed concurrently"
+                            )
                 entry_json = _r3_canonical_json(entry.as_dict())
                 conn.execute(
                     "INSERT INTO r3_effect_journal(idempotency_key, entry_json, "

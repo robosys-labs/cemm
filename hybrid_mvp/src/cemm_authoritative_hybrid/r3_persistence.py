@@ -47,7 +47,6 @@ __all__ = [
     "effect_journal_commit",
     "commit_learning_outcome",
     "install_reviewed_world_facts",
-    "commit_effect_transaction",
     "predicted_effect_pin",
 ]
 
@@ -348,6 +347,7 @@ class R3StorePort(Protocol):
         decision_ref: str,
         request_payload: Mapping[str, Any],
         expected_effect_revision: int,
+        expected_revision_pin: RevisionPin | None = None,
     ) -> Mapping[str, Any]: ...
     def r3_effect_journal_transition(
         self,
@@ -499,6 +499,7 @@ def effect_journal_begin(
     decision_ref: str,
     request_payload: Mapping[str, Any],
     expected_effect_revision: int,
+    expected_revision_pin: RevisionPin | None = None,
 ) -> StoredEffectJournal:
     row = require_r3_store_port(stores).r3_effect_journal_begin(
         idempotency_key=exact_text(idempotency_key, "idempotency_key"),
@@ -507,6 +508,9 @@ def effect_journal_begin(
         request_payload=thaw_json(freeze_json(request_payload)),
         expected_effect_revision=exact_int(
             expected_effect_revision, "expected_effect_revision"
+        ),
+        expected_revision_pin=(
+            None if expected_revision_pin is None else exact_pin(expected_revision_pin)
         ),
     )
     return _stored(row, "r3_effect_journal_begin")
@@ -611,38 +615,6 @@ def commit_learning_outcome(
     if journal.entry.state is not EffectJournalState.NO_EFFECT:
         raise ValueError("learning outcome must produce no-effect journal state")
     return journal, pin
-
-
-def commit_effect_transaction(
-    stores: SemanticStores,
-    *,
-    expected_pin: RevisionPin,
-    facts: tuple[Fact, ...],
-    effect_key: str,
-    effect_payload: Mapping[str, Any],
-) -> RevisionPin:
-    """Atomically commit world facts and an effect entry in one transaction.
-
-    This is the simple atomic write port for tests and owners that need to
-    persist a committed effect with world deltas without going through the
-    full effect-journal FSM.  The revision pin is validated, world facts are
-    inserted, the effect store is advanced, and a predicted effect pin is
-    returned.
-    """
-    require_r3_store_port(stores)
-    expected_pin = exact_pin(expected_pin)
-    if type(facts) is not tuple or any(type(row) is not Fact for row in facts):
-        raise TypeError("facts must be an exact Fact tuple")
-    if type(effect_key) is not str or not effect_key:
-        raise TypeError("effect_key must be a non-empty str")
-    if not isinstance(effect_payload, Mapping):
-        raise TypeError("effect_payload must be a Mapping")
-    if expected_pin != stores.revision_pin():
-        from .persistence import StaleRevisionError
-        raise StaleRevisionError("commit_effect_transaction revision pin is stale")
-    stores.world.commit(facts, expected_revision=stores.world.revision)
-    stores.effects.commit({"effect_key": effect_key, "payload": dict(effect_payload)})
-    return predicted_effect_pin(expected_pin, has_world_delta=bool(facts))
 
 
 def install_reviewed_world_facts(
