@@ -338,7 +338,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "5a8a017e583ac0047252a1796ce30013a263bccc2b99451041ce8515b5cef276"
+        "source_ast_sha256": "a83d5bcab03cbd77254de9da30b92817bf60eca2b7b278929231c66add16daa4"
     },
     "tests/test_foundation_alias_publication.py::test_alias_publication_bounded_relevant_reader_uses_index[sqlite]": {
         "activation_phase": "R3",
@@ -346,7 +346,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "5a8a017e583ac0047252a1796ce30013a263bccc2b99451041ce8515b5cef276"
+        "source_ast_sha256": "a83d5bcab03cbd77254de9da30b92817bf60eca2b7b278929231c66add16daa4"
     },
     "tests/test_foundation_alias_publication.py::test_alias_publication_memory_requires_explicit_trusted_binding": {
         "activation_phase": "R3",
@@ -898,9 +898,15 @@ def test_alias_publication_bounded_relevant_reader_uses_index(tmp_path, monkeypa
             stance="support", confidence=1.0, derived=False, proof={"alias_language": "en"}) for i in range(3000))
         stores.world.commit(irrelevant, expected_revision=stores.world.revision)
         if backend == "sqlite":
-            plan = stores._backend._conn.execute("EXPLAIN QUERY PLAN SELECT fact_ref FROM world_facts "
-                "WHERE operator='op:designation' AND json_extract(args_json, '$.\"role:surface\"')=? "
-                "AND json_extract(proof_json, '$.alias_language')=? ORDER BY fact_ref LIMIT ?", ("velnora", "en", 9)).fetchall()
+            statements = []
+            stores._backend._conn.set_trace_callback(statements.append)
+            try:
+                stores.r3_alias_facts("velnora", "en", maximum=8)
+            finally:
+                stores._backend._conn.set_trace_callback(None)
+            queries = [sql for sql in statements if "FROM world_facts" in sql]
+            assert len(queries) == 1
+            plan = stores._backend._conn.execute("EXPLAIN QUERY PLAN " + queries[0]).fetchall()
             assert any("SEARCH" in str(row[3]) and "world_designation_surface_language" in str(row[3]) for row in plan)
         monkeypatch.setattr(persistence.SemanticStores, "r3_world_facts", lambda *a: pytest.fail("whole world scan"))
         gateway.publish_learning(grant["proposal_key"], _signed(grant, secret))

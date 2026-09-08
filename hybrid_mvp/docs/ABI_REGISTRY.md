@@ -73,9 +73,14 @@ configured store-bound review authentication, preserves the historical meaning
 and answer pins, and atomically completes the original obligation with one
 designation fact and receipt without advancing a dialogue turn. Explicit alias
 language and publication-key locators are review/proof metadata, not designation
-roles or authority by themselves. Shared admitted lookup and restart composition
-remain foundation-plan dependencies; ordinary runtime construction still has no
-review verifier. Non-null
+roles or authority by themselves. The candidate shared admitted reader adds no
+serialized ABI: its transient evidence keeps canonical designation identity,
+actual world-fact identity and publication provenance distinct. It reconstructs
+committed records inside indexed, revision-pinned read batches; expiry limits
+publication time, not later reuse. This trusts gateway-owned committed storage,
+not complete offline-database fabrication. Consumer integration and restart
+composition remain foundation-plan dependencies; ordinary runtime construction
+still has no review verifier. Non-null
 journal receipts must decode under the current receipt ABI on activation;
 planned rows with no receipt retain their existing recovery semantics.
 
@@ -85,7 +90,8 @@ change the compatibility hash; no existing model is implicitly reactivated.
 Existing-generation stores must not be reset or silently repinned. The reviewed
 owner JSON is source data, not output of the historical monolith splitter. That
 splitter now refuses nonempty authority output. Runtime contract consumption was
-implemented at `e703d49`; reviewed publication remains foundation Task 5 work.
+implemented at `e703d49`; candidate authenticated publication followed at
+`4c574be`. These checkpoints do not complete foundation Task 5.
 The September 8 frame-preservation repair additionally links the six existing
 reviewed profiles under `authority-v1-2026-09-08-linked-frames`, changing generation,
 content and compatibility identities. A new generation is required because the
@@ -94,8 +100,9 @@ Do not reset or silently repin an existing store or reactivate a model to bypass
 these identity changes. Frame preservation was verified at `b3df099`; it is no
 longer a blocker to the approved canonical-continuation artifact migration.
 The canonical-continuation codec migration is now implemented as a candidate;
-its verification checkpoint is tracked in the foundation plan. It does not
-enable proposal publication, admit a replay phase or reactivate descendants.
+its verification checkpoint is tracked in the foundation plan. That migration
+alone did not enable publication; the later authenticated transaction has its
+own recorded evidence. Neither admits a replay phase or reactivates descendants.
 
 ## 2. Canonical program identity
 

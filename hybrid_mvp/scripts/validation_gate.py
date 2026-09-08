@@ -5398,18 +5398,23 @@ class _RunContext:
                 reopened.close()
 
         database = store_root / "semantic.db"
+        connection = None
         try:
             import sqlite3
 
             connection = sqlite3.connect(f"file:{database}?mode=ro", uri=True)
+            register_functions = _runtime_owner_symbol(self.root, "persistence", "register_sqlite_functions")
+            register_functions(connection)
             integrity = connection.execute("PRAGMA integrity_check").fetchone()
             schema_rows = connection.execute(
                 "SELECT type, name, tbl_name FROM sqlite_master "
                 "WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name, tbl_name"
             ).fetchall()
-            connection.close()
         except (OSError, sqlite3.Error) as exc:
             raise GateConfigError("fresh SQLite activation cannot be independently inspected") from exc
+        finally:
+            if connection is not None:
+                connection.close()
         if integrity != ("ok",):
             raise GateConfigError("fresh SQLite activation failed integrity verification")
         schema = [

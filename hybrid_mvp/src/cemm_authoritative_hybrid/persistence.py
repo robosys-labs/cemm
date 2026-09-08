@@ -16,6 +16,7 @@ import hashlib
 import json
 import sqlite3
 from collections import OrderedDict
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from itertools import islice
 from pathlib import Path
@@ -1081,8 +1082,6 @@ CREATE TABLE IF NOT EXISTS obligations (
     resolved INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS obligations_session_pending ON obligations(session_ref, resolved, revision, obligation_ref);
-CREATE INDEX IF NOT EXISTS world_designation_surface_language ON world_facts(
-    operator, json_extract(args_json, '$."role:surface"'), json_extract(proof_json, '$.alias_language'), fact_ref);
 CREATE TABLE IF NOT EXISTS episodes (
     episode_ref TEXT PRIMARY KEY,
     session_ref TEXT NOT NULL,
@@ -1115,11 +1114,44 @@ CREATE TABLE IF NOT EXISTS r3_effect_journal (
 """
 
 
+_LEGACY_DESIGNATION_INDEXES = (
+    "world_designation_surface_language", "world_designation_surface",
+    "world_designation_folded", "world_designation_target",
+)
+_DESIGNATION_TEXT_INDEX_SQL = {
+    "world_designation_surface_language_text_v2": """CREATE INDEX IF NOT EXISTS world_designation_surface_language_text_v2
+        ON world_facts(operator, json_extract(args_json, '$."role:surface"'),
+            json_extract(proof_json, '$.alias_language'), fact_ref)
+        WHERE operator='op:designation' AND json_type(args_json, '$."role:surface"')='text'
+            AND json_type(proof_json, '$.alias_language')='text'""",
+    "world_designation_surface_text_v2": """CREATE INDEX IF NOT EXISTS world_designation_surface_text_v2
+        ON world_facts(operator, json_extract(args_json, '$."role:surface"'), fact_ref)
+        WHERE operator='op:designation' AND json_type(args_json, '$."role:surface"')='text'""",
+    "world_designation_folded_text_v2": """CREATE INDEX IF NOT EXISTS world_designation_folded_text_v2
+        ON world_facts(operator, unicode_casefold(json_extract(args_json, '$."role:surface"')),
+            json_extract(proof_json, '$.alias_language'), fact_ref)
+        WHERE operator='op:designation' AND json_type(args_json, '$."role:surface"')='text'
+            AND json_type(proof_json, '$.alias_language')='text'""",
+    "world_designation_target_text_v2": """CREATE INDEX IF NOT EXISTS world_designation_target_text_v2
+        ON world_facts(operator, json_extract(args_json, '$."role:target"'),
+            json_extract(proof_json, '$.alias_language'), fact_ref)
+        WHERE operator='op:designation' AND json_type(args_json, '$."role:target"')='text'
+            AND json_type(proof_json, '$.alias_language')='text'""",
+}
+
+
+def register_sqlite_functions(conn: sqlite3.Connection) -> None:
+    """Install deterministic index functions on runtime or read-only connections."""
+    conn.create_function("unicode_casefold", 1,
+        lambda value: value.casefold() if type(value) is str else None, deterministic=True)
+
+
 class SQLiteSemanticStore:
     """The SQLite reference persistent backend."""
 
     def __init__(self, conn: sqlite3.Connection, *, authority_generation: str, model_identity: str | None = None) -> None:
         self._conn = conn
+        register_sqlite_functions(conn)
         self._authority_generation = authority_generation
         self._model_identity = model_identity
         self._closed = False
@@ -1135,6 +1167,30 @@ class SQLiteSemanticStore:
 
     def _init_schema(self) -> None:
         self._conn.executescript(_SCHEMA_SQL)
+        self._migrate_designation_indexes()
+
+    def _migrate_designation_indexes(self) -> None:
+        """One-time physical index replacement; no fact, revision or ABI migration.
+
+        JSON1 extracts objects/arrays as SQL strings. Text-only partial indexes
+        must replace the original untyped indexes, not postfilter their results.
+        Already migrated stores perform no index DDL or rebuilding on activation.
+        """
+        names = (*_LEGACY_DESIGNATION_INDEXES, *_DESIGNATION_TEXT_INDEX_SQL)
+        present = {row[0] for row in self._conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='index' AND name IN (?,?,?,?,?,?,?,?)", names)}
+        if set(_DESIGNATION_TEXT_INDEX_SQL) <= present and not set(_LEGACY_DESIGNATION_INDEXES) & present:
+            return
+        try:
+            self._conn.execute("BEGIN IMMEDIATE")
+            for statement in _DESIGNATION_TEXT_INDEX_SQL.values():
+                self._conn.execute(statement)
+            for name in _LEGACY_DESIGNATION_INDEXES:
+                self._conn.execute(f"DROP INDEX IF EXISTS {name}")
+            self._conn.commit()
+        except BaseException:
+            self._conn.rollback()
+            raise
 
     def _activate(self) -> None:
         # Check schema version
@@ -1232,21 +1288,38 @@ class _MemoryWorldStore:
     def __init__(self) -> None:
         self.revision = 0
         self._facts: dict[str, Fact] = {}
-        self._alias_index: dict[tuple[str, str], dict[str, None]] = {}
+        self._designation_indexes: dict[tuple[str, str, str | None], dict[str, None]] = {}
+
+    @staticmethod
+    def _designation_keys(fact):
+        if fact.operator != "op:designation":
+            return ()
+        surface, language, target = fact.args.get("role:surface"), fact.proof.get("alias_language"), fact.args.get("role:target")
+        keys = []
+        if type(surface) is str:
+            keys.append(("exact", surface, None))
+            if type(language) is str:
+                keys.extend((("exact", surface, language), ("folded", surface.casefold(), language)))
+        if type(target) is str and type(language) is str:
+            keys.append(("target", target, language))
+        return keys
 
     def _store_fact(self, fact):
+        # Match SQLite's detached JSON boundary: caller mutation is not a write.
+        fact = _row_to_fact(_fact_to_row(fact))
         previous = self._facts.get(fact.fact_ref)
-        if (previous is not None and previous.operator == "op:designation"
-                and type(previous.args.get("role:surface")) is str
-                and type(previous.proof.get("alias_language")) is str):
-            self._alias_index.get((previous.args.get("role:surface"), previous.proof.get("alias_language")), {}).pop(fact.fact_ref, None)
+        if previous is not None:
+            for key in self._designation_keys(previous):
+                index = self._designation_indexes[key]
+                index.pop(fact.fact_ref, None)
+                if not index:
+                    del self._designation_indexes[key]
         self._facts[fact.fact_ref] = fact
-        if (fact.operator == "op:designation" and type(fact.args.get("role:surface")) is str
-                and type(fact.proof.get("alias_language")) is str):
-            self._alias_index.setdefault((fact.args.get("role:surface"), fact.proof.get("alias_language")), {})[fact.fact_ref] = None
+        for key in self._designation_keys(fact):
+            self._designation_indexes.setdefault(key, {})[fact.fact_ref] = None
 
     def commit(self, facts: Iterable[Fact], *, expected_revision: int) -> CommitReceipt:
-        facts = tuple(facts)
+        facts = tuple(_row_to_fact(_fact_to_row(fact)) for fact in facts)
         if expected_revision != self.revision:
             raise StaleRevisionError(f"world: expected {expected_revision}, got {self.revision}")
         delta_payload = [_fact_payload(f) for f in facts]
@@ -1259,7 +1332,8 @@ class _MemoryWorldStore:
         return CommitReceipt("world", expected_revision, new_revision, delta_hash, transaction_ref)
 
     def get(self, fact_ref: str) -> Fact | None:
-        return self._facts.get(fact_ref)
+        fact = self._facts.get(fact_ref)
+        return None if fact is None else _row_to_fact(_fact_to_row(fact))
 
 
 class _MemorySessionStore:
@@ -1560,6 +1634,82 @@ class SemanticStores:
     def revision_pin(self) -> RevisionPin:
         return self._backend.revision_pin()
 
+    def r3_assert_read_pin(self, expected: RevisionPin) -> None:
+        """Compare fixed metadata in the caller's current snapshot, never rebase."""
+        if type(expected) is not RevisionPin or self.revision_pin() != expected:
+            raise StaleRevisionError("admitted read requires the captured store pin")
+        if isinstance(self._backend, SQLiteSemanticStore):
+            names = ("authority_generation", "world_revision", "session_revision", "episode_revision", "effect_revision")
+            values = dict(self._backend._conn.execute(
+                "SELECT key,value FROM metadata WHERE key IN (?,?,?,?,?)", names).fetchall())
+            if (values.get("authority_generation") != expected.authority_generation
+                    or any(int(values.get(name, 0)) != getattr(expected, name) for name in names[1:])):
+                raise StaleRevisionError("admitted read snapshot revisions changed")
+
+    def r3_obligation_revision(self) -> int:
+        if isinstance(self._backend, SQLiteSemanticStore):
+            row = self._backend._conn.execute("SELECT value FROM metadata WHERE key='obligation_revision'").fetchone()
+            return int(row[0]) if row else 0
+        return self.obligations.revision
+
+    def r3_resolved_dialogue_obligation(self, ref: str, *, commit_revision: int):
+        """Keyed canonical completed-publication evidence, not live eligibility."""
+        from .dialogue import DialogueObligation
+        row = self.obligations.keyed_row(ref)
+        if row is None:
+            raise ValueError("publication obligation row is missing")
+        key, session, payload, digest, revision, resolved = row
+        if (type(payload) is not dict or payload.get("resolved") is not True
+                or type(resolved) is not int or resolved != 1 or _payload_hash(payload) != digest
+                or revision != commit_revision or not 1 <= revision <= self.r3_obligation_revision()):
+            raise ValueError("publication obligation metadata mismatch")
+        obligation = DialogueObligation.from_dict({k: v for k, v in payload.items() if k != "resolved"})
+        if key != ref or obligation.obligation_ref != ref or obligation.session_ref != session:
+            raise ValueError("publication obligation key/session mismatch")
+        return obligation
+
+    @contextmanager
+    def r3_read_snapshot(self, expected: RevisionPin):
+        """One read snapshot for a bounded batch and all its keyed proof reads."""
+        conn = self._backend._conn if isinstance(self._backend, SQLiteSemanticStore) else None
+        own = conn is not None and not conn.in_transaction
+        if own:
+            conn.execute("BEGIN")
+        try:
+            self.r3_assert_read_pin(expected)
+            yield
+            self.r3_assert_read_pin(expected)
+        finally:
+            if own:
+                conn.rollback()
+
+    def r3_designation_facts(self, mode: str, key: str, language: str | None, *, maximum: int) -> tuple[Fact, ...]:
+        """Indexed raw evidence, max+1 sentinel; never an admission decision."""
+        from .r3_codec import exact_int, exact_text
+        exact_text(key, "designation key")
+        if language is not None:
+            exact_text(language, "designation language")
+        exact_int(maximum, "designation maximum", minimum=1, maximum=16)
+        expressions = {"exact": 'json_extract(args_json, \'$."role:surface"\')',
+            "folded": 'unicode_casefold(json_extract(args_json, \'$."role:surface"\'))',
+            "target": 'json_extract(args_json, \'$."role:target"\')'}
+        if mode not in expressions or language is None and mode != "exact":
+            raise ValueError("unsupported designation read")
+        key = key.casefold() if mode == "folded" else key
+        if isinstance(self._backend, SQLiteSemanticStore):
+            role = "target" if mode == "target" else "surface"
+            sql = ("SELECT fact_ref, operator, args_json, stance, confidence, derived, proof_json FROM world_facts "
+                "WHERE operator='op:designation' AND " + expressions[mode] + "=?"
+                + f" AND json_type(args_json, '$.\"role:{role}\"')='text'")
+            params = [key]
+            if language is not None:
+                sql += " AND json_extract(proof_json, '$.alias_language')=? AND json_type(proof_json, '$.alias_language')='text'"
+                params.append(language)
+            rows = self._backend._conn.execute(sql + " ORDER BY fact_ref LIMIT ?", (*params, maximum + 1)).fetchall()
+            return tuple(_row_to_fact(row) for row in rows)
+        index = self.world._designation_indexes.get((mode, key, language), {})
+        return tuple(self.world.get(ref) for ref in islice(index, maximum + 1))
+
     @property
     def learning_store_binding(self) -> str | None:
         """The actual named SQLite database, never a caller's convenient label."""
@@ -1579,12 +1729,14 @@ class SemanticStores:
             rows = self._backend._conn.execute(
                 "SELECT fact_ref, operator, args_json, stance, confidence, derived, proof_json FROM world_facts "
                 "WHERE operator='op:designation' AND json_extract(args_json, '$.\"role:surface\"')=? "
-                "AND json_extract(proof_json, '$.alias_language')=? ORDER BY fact_ref LIMIT ?",
+                "AND json_type(args_json, '$.\"role:surface\"')='text' "
+                "AND json_extract(proof_json, '$.alias_language')=? "
+                "AND json_type(proof_json, '$.alias_language')='text' ORDER BY fact_ref LIMIT ?",
                 (surface, language, maximum + 1)).fetchall()
             facts = tuple(_row_to_fact(row) for row in rows)
         else:
-            index = self._backend.world._alias_index.get((surface, language), {})
-            facts = tuple(self._backend.world._facts[ref] for ref in islice(index, maximum + 1))
+            index = self._backend.world._designation_indexes.get(("exact", surface, language), {})
+            facts = tuple(self._backend.world.get(ref) for ref in islice(index, maximum + 1))
         if len(facts) > maximum:
             raise ValueError("alias relevant evidence exceeds bound")
         return facts
@@ -1615,7 +1767,7 @@ class SemanticStores:
             values = tuple(_row_to_fact(row) for row in rows)
         else:
             values = tuple(
-                self._backend.world._facts[key]
+                self._backend.world.get(key)
                 for key in sorted(self._backend.world._facts)[: maximum + 1]
             )
         if len(values) > maximum:
@@ -1630,7 +1782,7 @@ class SemanticStores:
             ).fetchall()
             return tuple(_row_to_fact(row) for row in rows)
         return tuple(
-            self._backend.world._facts[key]
+            self._backend.world.get(key)
             for key in sorted(self._backend.world._facts)
         )
 

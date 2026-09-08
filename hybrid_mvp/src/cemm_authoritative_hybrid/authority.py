@@ -314,7 +314,7 @@ class AuthorityBundle:
 
 @dataclass(frozen=True)
 class DesignationFact:
-    """One explicit authority-owned surface-to-semantic designation."""
+    """Canonical surface/target/language identity, distinct from evidence ownership."""
 
     designation_fact_ref: str
     surface: str
@@ -414,6 +414,21 @@ class DesignationIndex:
         if exact:
             return exact
         return self._facts_by_folded_surface.get((surface.casefold(), language), ())
+
+    def bounded_facts(self, mode: str, key: str, language: str | None, *, maximum: int):
+        """Raw bounded exact/folded/target access for a merged evidence reader."""
+        if type(maximum) is not int or not 1 <= maximum <= 16:
+            raise ValueError("designation maximum must be between one and sixteen")
+        if mode == "exact":
+            rows = (self._exact_surface_all_languages.get(key, ()) if language is None
+                else self._facts_by_surface.get((key, language), ()))
+        elif mode == "folded" and language is not None:
+            rows = self._facts_by_folded_surface.get((key.casefold(), language), ())
+        elif mode == "target" and language is not None:
+            rows = self._facts_by_target.get((key, language), ())
+        else:
+            raise ValueError("unsupported bounded designation lookup")
+        return rows[:maximum + 1]
 
     def exact_facts_for_surface(self, surface: str, maximum: int) -> tuple[tuple[DesignationFact, ...], bool]:
         """Exact language-unspecified retrieval; overflow does not visit omitted rows."""

@@ -25,6 +25,8 @@ from .situation import SituationContext
 
 LEARNING_PLAN_ABI_VERSION = 3
 
+from .r3_designations import AdmittedDesignationReader, DesignationEvidence
+
 
 class AliasReviewVerifier:
     """Privileged per-store HMAC configuration, never supplied through dialogue.
@@ -71,6 +73,8 @@ class AliasReviewVerifier:
         return review
 
 __all__ = [
+    "AdmittedDesignationReader",
+    "DesignationEvidence",
     "LEARNING_PLAN_ABI_VERSION",
     "LearningPlan",
     "LearningCoordinator",
@@ -515,8 +519,12 @@ def validate_learning_proposal_request(stores: SemanticStores, request: Mapping[
     return meaning, evaluation, plan, source
 
 
-def publication_lineage(stores, authority, proposal, grant):
-    """Validate historical proposal proof and today's linked semantic authority."""
+def publication_proposal_lineage(stores, authority, proposal, grant):
+    """Validate historical proposal proof against today's linked authority.
+
+    This read does not require the original pending row to remain live or its
+    publication window to remain open. Publication eligibility is separate.
+    """
     from .r3_codec import thaw_json
     from .r3_effects import NoEffectReceipt, NoEffectReason, R3EffectGateway, _predicted_pin
     from .r3_persistence import EffectJournalEntry, EffectJournalState
@@ -529,8 +537,6 @@ def publication_lineage(stores, authority, proposal, grant):
     source = dialogue.DialogueObligation.from_dict(request["learning_source_obligation"])
     situation, decision = evaluation.situation, evaluation.decision
     plan.validate_source(source, situation)
-    if situation.revision_pin.model_identity != stores.revision_pin().model_identity:
-        raise ValueError("publication cannot reuse a foreign model meaning")
     lowered = lower_designation_learning(authority, meaning.expression, situation)
     contract = lowered.contract
     _, source_journal = dialogue.validate_learning_source(stores, source, situation, lowered.designation)
@@ -592,6 +598,14 @@ def publication_lineage(stores, authority, proposal, grant):
         raise PermissionError("alias review does not authorize this exact proposal")
     if not source.created_turn_index < situation.turn_index < grant["expires_at_turn"] <= source.expires_turn_index:
         raise PermissionError("alias review expiry exceeds the original pending window")
+    return meaning, evaluation, plan, source, contract
+
+
+def publication_lineage(stores, authority, proposal, grant):
+    """Historical proof plus live publication-only model/phase/conflict checks."""
+    meaning, evaluation, plan, source, contract = publication_proposal_lineage(stores, authority, proposal, grant)
+    if plan.revision_pin.model_identity != stores.revision_pin().model_identity:
+        raise ValueError("publication cannot reuse a foreign model meaning")
     session = stores.r3_session_snapshot(source.session_ref)
     signature = authority.by_event_signature(contract.source_event_ref)
     if session["session_phase_ref"] not in signature.valid_session_phases:

@@ -15,6 +15,17 @@ surface path. A development-only response reference is distinct from R5 output.
 validation runner. Worktree: `C:\dev\cemm\.worktrees\unresolved-designation-r4`.
 All paths below are relative to its `hybrid_mvp/` subtree.
 
+**Current execution pointer (September 8):** `4c574be` completes the narrow
+authenticated publication transaction, not the conversation or foundation.
+The bounded, proof-backed admitted-designation reader has passed its scoped
+implementation reviews; final regression evidence is recorded in its checkpoint
+below. The next increment integrates grounding, designation composition and
+lexical query through that reader.
+Restart/unseen reuse, fragment handling, compositional responses and the
+remaining Task 4/6 owners still need executable proof. Dated checkpoints below
+retain their original observations; their old “pending” statements are not
+instructions to repeat work completed by a later checkpoint.
+
 ## Authority and initial evidence
 
 The [foundation amendment](../specs/2026-09-07-foundation-proof-corrective-amendment.md)
@@ -1072,13 +1083,15 @@ The clean-worktree status regression passes at `b3df099` (1 case, 3.77 seconds).
 Configured selectors and the living inventory receipt were regenerated twice
 with byte-identical hashes; no commit was pushed or adopted at root.
 
-### Publication transaction boundary (implementation pending)
+### Publication transaction boundary — historical scope correction
 
 **Scope correction — proceed with the approved foundation repair.** The earlier
 execution pause in `9ccc4a2` overstated historical test names as current feature
 requirements. The user approved the recommendation to correct stale test routing
 and requested a broader regression-inducing/stale-test audit before continuing.
-Canonical-continuation migration remains pending; its target ABIs are not active.
+At that audit checkpoint canonical-continuation migration was pending. The later
+canonical-continuation and authenticated-publication checkpoints below supersede
+that implementation status without changing the audit evidence.
 The demo-only English `velnora` → `rel:likes` approval remains recorded and does
 not need reopening.
 
@@ -1374,6 +1387,13 @@ new semantic ABI or separate VERIFY validation tier is required. Admission is
 authenticated at publication and checked on reading through the trusted
 ORIENT/context and query owners. An unkeyed receipt hash is not a claim of
 protection against fabrication of an entire database by an offline attacker.
+Each historical record must match its own original model witness; different
+conversation turns need not use one model. The answer plan, proposal receipt and
+publication retain their shared model identity, while the source query retains
+its independently authenticated original pin. A completed designation remains
+world knowledge when the proposer changes under the same authority and store.
+Keep the current-answer-model check on fresh publication, not on later admitted
+reads; neither rewrite historical pins nor add a model migration/activation path.
 
 SQLite's cached `revision_pin()` values cannot authorize reads of newer live
 rows. The admitted reader must compare fixed metadata revisions against its
@@ -1538,8 +1558,87 @@ unchanged. Config SHA-256:
 `aefa0629c868b30a62e68f3980f12af8f7e016533674418b0899885632e0d1f5`;
 receipt SHA-256:
 `5415d67b957edbe5518e3ea3a98c5f0e3470c7458665511dbd3a5cbd2a5dfd01`.
-Clean-checkpoint status verification follows the local commit. This is not
+At local checkpoint `4c574be`, the clean-worktree status check passed in 4.23
+seconds. The root checkout remained clean and nothing was pushed. This is not
 Task 5 completion, a green R3 release, R4/R5 admission or root adoption.
+
+### Admitted-designation reader increment — September 8
+
+The candidate shared reader is implemented; consumer integration is not. It
+merges exact static and admitted evidence before Unicode-folded lookup, retains
+ambiguity and separates canonical designation identity from the actual committed
+world fact. Historical publication, proposal, source-query and completed-obligation
+evidence is reconstructed through the existing owners, without a signing key,
+whole-world rebuild or new semantic ABI. Cache hits and misses require the same
+revision-pinned read snapshot as bounded keyed proof reads. SQLite uses relevant
+indexes; memory uses corresponding maintained indexes, with the duplicate raw
+alias index removed. Memory facts now detach nested input/output mappings so a
+caller's mutation cannot silently corrupt indexes without a revision change.
+
+Specification review reproduced a model-coupling defect: reopening the same
+published database with unchanged authority and a new proposer identity hid the
+alias. Main independently reproduced it. The repair separates current read
+identity from current publication eligibility while authenticating each original
+historical witness. Main's initial new-reader run passed
+**47 cases**. These include real signed Unicode/language-specific publication,
+restart after expiry/phase change without a key, model-change reuse without
+writes, corrupted lineage rejection, exact/fold ambiguity, snapshot/cache
+currentness, structured-fact parity, bounded irrelevant-row growth and SQL index
+plans. This is direct-owner evidence, not a completed conversation demo.
+
+Quality review then exposed SQLite JSON1 coercion: structured object/array roles
+could enter a text lookup and falsely exhaust its candidate budget, unlike
+memory. Main independently reproduced the public-reader failure. Text-only
+partial indexes and matching query predicates now exclude those rows before
+retrieval bounds apply, including qualified language and raw publication-conflict
+lookup. Four added controls pass in main's run: real textual JSON still works,
+structured-row growth does not increase relevant traversal, and an existing
+published store migrates its physical indexes once while preserving facts,
+journals and revisions. Later reopening performs no designation-index DDL.
+At this checkpoint the reader suite contained 51 cases; no semantic ABI or table
+was added. The read-only connection control below brings the final total to 52.
+
+A final contract audit removed an overconstraint introduced during the model
+repair: source-query and answer turns may legitimately use different models.
+The original publication owner accepted that correctly bound history. The new
+positive control retains source A and answer B, publishes under current B, then
+reads under current C without rewriting history or mutating on read. The live
+answer/current check and exact historical publication-model checks remain.
+The initial complete R3 run also exposed a genuine independent-read-only SQLite
+activation failure: its connection lacked the Unicode function used by the new
+index. Both connections now register the same type-safe deterministic SQL
+primitive. The independent inspection remains read-only, preserves integrity and
+schema checks, and closes its connection even on failure. The existing activation
+test is unchanged. Main and both final reviewers independently passed six focused
+model-lineage/read-only/reopen controls after these corrections.
+
+Scoped specification and quality re-reviews pass. The existing publication
+performance diagnostic had copied the retired untyped SQL; it now captures and
+explains the actual raw-conflict query. Main's AST audit confirms only that test
+function and its two later source hashes changed, preserving every original
+assertion and the node/assertion identities. Corrected publication controls plus
+the four new collision/migration cases pass in independent quality review (six
+cases). Final authenticated R3 replay completed: **2066 passed / 166 failed /
+2232**, in 362.30 seconds. The exact failed-node set is unchanged from publication:
+163 unproved legacy successor assertions, fresh-fragment clarification,
+authenticated-alias restart/reversal integration, and dirty-input status. The
+valid SQLite activation regression is repaired; no new active R3 failure remains.
+Structure, 507 later R3/R4 metadata records, legacy hard-cut audit (zero findings),
+compilation and diff checks pass. Four fresh temporary-store post-VERIFY canaries
+retain zero world delta; these are not the requested useful conversation demo.
+Selectors and the receipt regenerated twice byte-identically: G0 191 / R1 939 /
+R2 1329 / R3 2232 / R4 2570 / R5 2695. Only the existing effect-learning owner
+gains 52 nodes and one test input; every existing node/input remains, and gate
+definitions, owners, dependencies and limits are unchanged. Config SHA-256:
+`1b7738160531babcf807c01d6c5530d5c063a11966c7b96b0701a14714ccab7c`;
+receipt SHA-256:
+`566175e0472b06e5f8a8b8f7ceef630aadd22ab214945608e3b50630d7c1b82a`.
+The frozen inventory remains unchanged. Preliminary interrupted runs are not
+completion evidence. No historical successor assertion is credited by this
+increment. Next wire all three
+consumers—grounding, designation composition and lexical query—through this
+reader and prove actual restart/unseen composition. The early-ORIENT overflow
+response limitation and remaining foundation tasks below are still open.
 
 ## Task 6 — Repair measured search/retrieval bounds and confirm preservation
 
