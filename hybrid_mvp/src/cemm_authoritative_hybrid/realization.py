@@ -383,7 +383,7 @@ class NeuralConstrainedRealizer:
     """Historical constrained-realizer scaffold, unavailable for R5 activation.
 
     The decoder and marker-based diagnostic provide weight-use and failure-path
-    evidence only. They do not preserve the complete Response Meaning ABI 2 or
+    evidence only. They do not preserve the complete active ResponseMeaning contract or
     prove a semantic round trip.
     """
 

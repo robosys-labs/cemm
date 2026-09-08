@@ -89,7 +89,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "e0f27e0c6b11add910682806f4e9866db3182b220c12e04876d1824dab02646f",
+        "source_ast_sha256": "56c4a2d61995e94ce76dd0c400982f6b1fb5eb51859eac276273a33c0c8e8f30",
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_effect_cannot_create_a_second_pending_obligation": {
         "activation_phase": "R3",
@@ -510,7 +510,7 @@ def test_continuation_plan_preserves_exact_evaluated_draft(tmp_path):
         assert plan.expected_target_kinds == draft.expected_target_kinds
         assert plan.answer_contract_ref == draft.answer_contract_ref
         assert draft.learning_draft_ref in plan.provenance_refs
-        assert obligation.plan_ref == plan.plan_ref
+        assert plan.source_obligation_ref == obligation.obligation_ref == pending.obligation_ref
         assert plan.source_query_ref == pending.source_query_ref
         assert runtime.stores.world.revision == 0
     finally:

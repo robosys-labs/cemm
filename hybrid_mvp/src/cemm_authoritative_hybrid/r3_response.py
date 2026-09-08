@@ -1,4 +1,4 @@
-"""Response Meaning ABI 2: exact semantic contract before surface language."""
+"""Response Meaning ABI 3: exact semantic contract before surface language."""
 
 from __future__ import annotations
 
@@ -14,10 +14,12 @@ from .expression_transform import instantiate_bindings, negate_expression
 from .persistence import RevisionPin
 from .r3_artifacts import EvaluationBundle
 from .r3_effects import EffectReceipt, NoEffectReceipt
-from .r3_learning import DialogueObligation, LearningPlan
+from .dialogue import DialogueObligation
+from .r3_learning import LearningPlan
+from .r3_codec import exact_fields, exact_int, wire_refs, wire_pairs
 from .situation import SituationContext
 
-RESPONSE_MEANING_ABI_VERSION = 2
+RESPONSE_MEANING_ABI_VERSION = 3
 
 __all__ = ["RESPONSE_MEANING_ABI_VERSION", "ResponseMeaning", "ResponseBuilder"]
 
@@ -133,6 +135,13 @@ class ResponseMeaning:
                 raise ValueError("learning_plan is non-canonical")
             if learning_plan_ref != learning_plan.plan_ref:
                 raise ValueError("learning_plan_ref does not bind learning_plan")
+            if (learning_plan.decision_ref != decision_ref
+                    or learning_plan.verified_meaning_ref != verified_meaning_ref
+                    or learning_plan.expression_ref != source_expression_ref
+                    or learning_plan.situation_ref != situation_ref):
+                raise ValueError("response learning plan lineage mismatch")
+            if obligation is None:
+                raise ValueError("learning plan requires its exact source obligation")
         elif learning_plan_ref is not None:
             raise ValueError("learning_plan_ref requires exact learning_plan content")
         if obligation is not None:
@@ -140,8 +149,9 @@ class ResponseMeaning:
                 raise TypeError("obligation must be exact DialogueObligation or None")
             if obligation_ref != obligation.obligation_ref:
                 raise ValueError("obligation_ref does not bind obligation")
-            if learning_plan is None or obligation.plan_ref != learning_plan.plan_ref:
+            if learning_plan is None:
                 raise ValueError("obligation does not bind learning_plan")
+            learning_plan.validate_source(obligation)
         elif obligation_ref is not None:
             raise ValueError("obligation_ref requires exact obligation content")
         values = {
@@ -222,8 +232,9 @@ class ResponseMeaning:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ResponseMeaning":
-        if type(data) is not dict or frozenset(data) != cls._FIELDS:
-            raise ValueError("ResponseMeaning fields mismatch")
+        data = exact_fields(data, cls._FIELDS, "ResponseMeaning")
+        if exact_int(data["abi_version"], "abi_version") != RESPONSE_MEANING_ABI_VERSION:
+            raise ValueError("unsupported Response Meaning ABI")
         rebuilt = cls.create(
             decision_ref=data["decision_ref"], verified_meaning_ref=data["verified_meaning_ref"],
             source_expression_ref=data["source_expression_ref"],
@@ -242,12 +253,12 @@ class ResponseMeaning:
             ),
             mode=SemanticMode(data["mode"]), cycle_status=CycleStatus(data["cycle_status"]),
             discourse_action=data["discourse_action"],
-            bindings=tuple((row[0], row[1]) for row in data["bindings"]),
+            bindings=wire_pairs(data["bindings"], "bindings"),
             polarity_ref=data["polarity_ref"], modality_ref=data["modality_ref"],
             epistemic_status_ref=data["epistemic_status_ref"],
-            source_refs=tuple(data["source_refs"]), proof_refs=tuple(data["proof_refs"]),
-            blocker_refs=tuple(data["blocker_refs"]), policy_refs=tuple(data["policy_refs"]),
-            permitted_omissions=tuple(data["permitted_omissions"]),
+            source_refs=wire_refs(data["source_refs"], "source_refs"), proof_refs=wire_refs(data["proof_refs"], "proof_refs"),
+            blocker_refs=wire_refs(data["blocker_refs"], "blocker_refs"), policy_refs=wire_refs(data["policy_refs"], "policy_refs"),
+            permitted_omissions=wire_refs(data["permitted_omissions"], "permitted_omissions"),
             revision_pin=RevisionPin.from_dict(data["revision_pin"]),
         )
         if data["response_meaning_ref"] != rebuilt.response_meaning_ref or rebuilt.as_dict() != dict(data):
@@ -319,6 +330,25 @@ class ResponseBuilder:
               obligation: DialogueObligation | None) -> ResponseMeaning:
         if evaluation.decision.verified_meaning_ref != meaning.verified_meaning_ref:
             raise ValueError("response decision/meaning mismatch")
+        if (evaluation.situation != situation or evaluation.expression != meaning.expression
+                or evaluation.decision.expression_ref != meaning.expression.expression_ref
+                or effect.decision_ref != evaluation.decision.decision_ref
+                or effect.verified_meaning_ref != meaning.verified_meaning_ref
+                or effect.expression_ref != meaning.expression.expression_ref
+                or effect.program_ref != meaning.program_ref
+                or effect.program_ref != evaluation.decision.program_ref
+                or effect.input_revision_pin != situation.revision_pin
+                or effect.input_revision_pin != evaluation.revision_pin
+                or effect.situation_ref != situation.situation_ref):
+            raise ValueError("response evaluation/effect lineage mismatch")
+        if learning_plan is not None:
+            learning_plan.validate_source(obligation, situation)
+            if (type(effect) is not NoEffectReceipt or effect.learning_plan_ref != learning_plan.plan_ref
+                    or effect.source_obligation_ref != obligation.obligation_ref):
+                raise ValueError("response effect does not bind the learning source")
+        elif (type(effect) is NoEffectReceipt
+              and (effect.learning_plan_ref is not None or effect.source_obligation_ref is not None)):
+            raise ValueError("learning receipt requires its exact plan and source obligation")
         effect_ref = effect.receipt_ref
         status = self._status(evaluation.decision.status, effect)
         polarity = "polarity:negative" if evaluation.decision.status in {

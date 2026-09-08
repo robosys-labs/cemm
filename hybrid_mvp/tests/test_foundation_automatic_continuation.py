@@ -309,7 +309,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8eb1800083d2b5f63ec4c94a1c8a2116d43746838adf3d4563a1cfa49774b33f"
+        "source_ast_sha256": "990c66119168de35ef6d7bdf71bb68152fc24fe5216cff0f8bbfdc3ceabef074"
     },
     "tests/test_foundation_automatic_continuation.py::test_public_unknown_creates_exact_generic_continuation_and_retry[restart]": {
         "activation_phase": "R3",
@@ -317,7 +317,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8eb1800083d2b5f63ec4c94a1c8a2116d43746838adf3d4563a1cfa49774b33f"
+        "source_ast_sha256": "990c66119168de35ef6d7bdf71bb68152fc24fe5216cff0f8bbfdc3ceabef074"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[same-turn-duplicate-same-session-before-planning-memory]": {
         "activation_phase": "R3",
@@ -895,7 +895,7 @@ def test_public_unknown_creates_exact_generic_continuation_and_retry(tmp_path, r
         assert runtime.stores.obligations.get(expected.obligation_ref) == {**expected.as_dict(), "resolved": False}
         receipt = source.effect_receipt
         assert receipt.reason is NoEffectReason.UNKNOWN
-        assert receipt.learning_plan_ref is receipt.obligation_ref is None
+        assert receipt.learning_plan_ref is receipt.source_obligation_ref is None
         journal = effect_journal_get(runtime.stores, receipt.idempotency_key)
         assert thaw_json(journal.entry.request_payload)["query_continuation"] == expected.as_dict()
         assert runtime.stores.world.revision == before.world_revision

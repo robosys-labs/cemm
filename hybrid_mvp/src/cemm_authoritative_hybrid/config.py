@@ -23,8 +23,8 @@ class ABIRegistry:
     coverage: int = 2
     phase_receipt: int = 2
     gap_receipt: int = 1
-    learning_plan: int = 2
-    response_meaning: int = 2
+    learning_plan: int = 3
+    response_meaning: int = 3
     realization_receipt: int = 2
 
 

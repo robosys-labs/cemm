@@ -1290,13 +1290,64 @@ not an ABI-2 substitution: LearningPlan ABI 3 hashes a required
 `source_obligation_ref`; R3Artifacts ABI 2 and ResponseMeaning ABI 3 carry the
 exact existing generic dialogue record; Effect/No-Effect Receipt ABI 2 binds
 that source obligation rather than a plan-derived duplicate. Generic Dialogue
-ABI 1, Decision and EvaluationBundle remain unchanged. These are **pending
-migration targets**, not active constants or admission claims. Remove the
-duplicate learning-obligation class and its active imports together; no decoder
-adapter, fake record or permissive version fallback is allowed. Update the ABI
-registry, strict decoders, active test successors and deterministic selectors
-before enabling the proposal transaction. Prove preserved non-learning response
-contracts and reject old incompatible serialized artifacts explicitly.
+ABI 1, Decision and EvaluationBundle remain unchanged. These are **implemented
+candidate codec versions**, not admission claims. The duplicate learning-obligation
+class and its active imports are removed together; no decoder adapter, fake record
+or permissive version fallback is allowed. Registry defaults, strict decoders and
+active test successors follow this hard cut. Non-learning response semantics remain
+preserved; incompatible serialized receipts reject activation without resetting or
+repinning stored facts. Proposal persistence/publication is still disabled.
+
+### Canonical-continuation artifact checkpoint — September 8
+
+Learning materialization now retains the original generic pending record, with
+its exact source query, answer contract, session and exclusive expiry; it does
+not append a second obligation or renew the first. LearningPlan identity covers
+the required source-obligation reference and retains it in provenance. Response
+and R3 artifact assembly reject missing source content, foreign program lineage
+and mismatched answer-input pins. Original-query, answer-input and response-output
+pins remain distinct; valid output advancement is preserved. Receipt validation
+uses the existing activation traversal and keyed journal read, not another scan
+or validation tier. The unused duplicate-owner helper is removed as well.
+
+The focused migration/continuation/currentness/receipt set passed 201 cases;
+independent specification re-review passed 50 and quality review passed 56.
+The new artifact module has 45 concrete cases. Existing later tests were migrated
+in place with their assertions retained. The immutable configuration predecessor
+is replaced by a same-assertion successor for the new ABI tuple, retaining every
+original bound and frozen-configuration assertion; its independent review and
+focused test pass. The obsolete function is recoverable from `f5d9e80`, not a
+second live test path. No authority, form pack, search bound,
+frozen inventory or replay status is changed. The full pre-successor run yielded
+1892 passed / 167 failed: the stale ABI-tuple assertion plus the known 163 unproved
+successor mappings, fresh-fragment and reviewed-alias diagnostics, and dirty-input
+status rejection.
+
+Final authenticated R3 replay: **1893 passed / 166 failed / 2059**, in 171.31
+seconds. The exact failed-node set equals the pre-migration baseline: 163 explicit
+unproved successor mappings, fresh-fragment clarification, authenticated-alias
+restart/reversal, and dirty-input status rejection. There are no new active R3
+failures. This is not a green R3 release or foundation completion. The status check
+is rerun on the clean local checkpoint; the 165 substantive failures remain open.
+R3/R4/R5 structural checks, 507 R3/R4 metadata records, source compilation and the
+legacy-test audit (zero findings) pass. Four post-VERIFY canaries remain no-effect
+with zero world delta, not a useful conversation demo.
+
+Selectors and the existing receipt regenerate twice byte-identically: G0 191 /
+R1 939 / R2 1329 / R3 2059 / R4 2397 / R5 2522. Config SHA-256:
+`feb0c2b2a0f969e7a03c99b2b0ac9d3f488a00c4b786c8e2adea450b0e86f481`;
+receipt SHA-256:
+`5fc55e950dfa02c2fbf6e743d60a2fd8492eef637c86905b90f166a6fee7b389`.
+Existing gate definitions, owners, dependencies and limits are unchanged; only
+test selectors/source inputs are refreshed. Frozen inventory remains
+`7c27b0ad80998fc1f10876c05d0238a2498d2fd3a116ace77c9505da11d0b4b8`.
+
+**Next execution step:** implement the already-approved no-world-write learning
+proposal transaction and distinct authenticated reviewer publication through the
+existing EFFECT/persistence owners, then admitted alias lookup and restart reuse
+through both grounding and query. Preserve the exact original pending row and
+one-use review boundary described above. Do not reopen frame preservation, the
+four-turn policy or this artifact migration; do not mistake them for publication.
 
 Restart reuse must cover both grounding and lexical-query retrieval. Currently
 `bootstrap._DesignationStore` returns only the immutable authority index, while

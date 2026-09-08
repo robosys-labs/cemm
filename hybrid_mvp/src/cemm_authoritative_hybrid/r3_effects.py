@@ -20,7 +20,8 @@ from .expressions import VerifiedMeaning
 from .persistence import Fact, RevisionPin, SemanticStores, StaleRevisionError
 from .r3_artifacts import EvaluationBundle, QueryStatus, StateDelta
 from .r3_codec import exact_fields, exact_pin, exact_refs, exact_text, thaw_json, wire_refs
-from .r3_learning import DialogueObligation, LearningPlan
+from .dialogue import DialogueObligation
+from .r3_learning import LearningPlan
 from .r3_persistence import (
     EffectJournalState,
     StoredEffectJournal,
@@ -31,7 +32,7 @@ from .r3_persistence import (
 )
 from .situation import SituationContext
 
-EFFECT_RECEIPT_ABI_VERSION = 1
+EFFECT_RECEIPT_ABI_VERSION = 2
 ADAPTER_RESULT_ABI_VERSION = 1
 EFFECT_REQUEST_ABI_VERSION = 1
 
@@ -666,7 +667,7 @@ class NoEffectReceipt:
     situation_ref: str
     program_ref: str
     learning_plan_ref: str | None
-    obligation_ref: str | None
+    source_obligation_ref: str | None
     proof_refs: tuple[str, ...]
     blocker_refs: tuple[str, ...]
     input_revision_pin: RevisionPin
@@ -676,7 +677,7 @@ class NoEffectReceipt:
         "abi_version", "receipt_ref", "reason", "idempotency_key",
         "journal_origin_ref", "journal_preterminal_ref", "decision_ref",
         "verified_meaning_ref", "expression_ref", "situation_ref", "program_ref",
-        "learning_plan_ref", "obligation_ref", "proof_refs", "blocker_refs",
+        "learning_plan_ref", "source_obligation_ref", "proof_refs", "blocker_refs",
         "input_revision_pin", "output_revision_pin",
     })
 
@@ -697,7 +698,7 @@ class NoEffectReceipt:
         situation_ref: str,
         program_ref: str,
         learning_plan_ref: str | None,
-        obligation_ref: str | None,
+        source_obligation_ref: str | None,
         proof_refs: tuple[str, ...],
         blocker_refs: tuple[str, ...],
         input_revision_pin: RevisionPin,
@@ -712,7 +713,7 @@ class NoEffectReceipt:
         if output_pin.effect_revision <= input_pin.effect_revision:
             raise ValueError("persisted no-effect receipt must advance effect revision")
         plan = _optional(learning_plan_ref, "learning_plan_ref")
-        obligation = _optional(obligation_ref, "obligation_ref")
+        obligation = _optional(source_obligation_ref, "source_obligation_ref")
         if reason is NoEffectReason.LEARNING_OBLIGATION_ONLY:
             if plan is None or obligation is None or output_pin.session_revision <= input_pin.session_revision:
                 raise ValueError("learning no-effect requires plan, obligation, and session revision")
@@ -729,7 +730,7 @@ class NoEffectReceipt:
             "situation_ref": _text(situation_ref, "situation_ref"),
             "program_ref": _text(program_ref, "program_ref"),
             "learning_plan_ref": plan,
-            "obligation_ref": obligation,
+            "source_obligation_ref": obligation,
             "proof_refs": exact_refs(proof_refs, "proof_refs"),
             "blocker_refs": exact_refs(blocker_refs, "blocker_refs"),
             "input_revision_pin": input_pin,
@@ -769,7 +770,7 @@ class NoEffectReceipt:
             "situation_ref": self.situation_ref,
             "program_ref": self.program_ref,
             "learning_plan_ref": self.learning_plan_ref,
-            "obligation_ref": self.obligation_ref,
+            "source_obligation_ref": self.source_obligation_ref,
             "proof_refs": list(self.proof_refs),
             "blocker_refs": list(self.blocker_refs),
             "input_revision_pin": self.input_revision_pin.as_dict(),
@@ -792,7 +793,7 @@ class NoEffectReceipt:
             situation_ref=row["situation_ref"],
             program_ref=row["program_ref"],
             learning_plan_ref=row["learning_plan_ref"],
-            obligation_ref=row["obligation_ref"],
+            source_obligation_ref=row["source_obligation_ref"],
             proof_refs=wire_refs(row["proof_refs"], "proof_refs"),
             blocker_refs=wire_refs(row["blocker_refs"], "blocker_refs"),
             input_revision_pin=RevisionPin.from_dict(row["input_revision_pin"]),
@@ -907,8 +908,24 @@ class R3EffectGateway:
         if action is DecisionAction.CREATE_LEARNING_OBLIGATION:
             if learning_plan is None or obligation is None:
                 raise ValueError("learning decision requires exact plan and obligation")
-            if learning_plan.decision_ref != evaluation.decision.decision_ref or obligation.plan_ref != learning_plan.plan_ref:
+            if type(learning_plan) is not LearningPlan:
+                raise TypeError("learning plan must be exact LearningPlan")
+            learning_plan.validate_source(obligation, situation)
+            if (learning_plan.decision_ref != evaluation.decision.decision_ref
+                    or learning_plan.verified_meaning_ref != meaning.verified_meaning_ref
+                    or learning_plan.expression_ref != meaning.expression.expression_ref):
                 raise ValueError("learning artifacts do not bind the Decision")
+            snapshot = self._stores.r3_obligation_snapshot(situation.session_ref,
+                maximum=self._config.max_orientation_alternatives)
+            if (situation.revision_pin != self._stores.revision_pin()
+                    or snapshot["snapshot_ref"] != situation.obligation_snapshot_ref
+                    or tuple(snapshot["obligation_refs"]) != situation.obligation_refs):
+                raise ValueError("learning source pending snapshot is stale")
+            pending = self._stores.pending_dialogue_obligations(situation.session_ref,
+                situation.obligation_refs, maximum=self._config.max_orientation_alternatives,
+                turn_index=situation.turn_index)
+            if obligation not in pending:
+                raise ValueError("learning source differs from its persisted canonical row")
             # The previous path persisted a second, plan-derived obligation
             # beside the originating query continuation. Binding is not yet
             # reviewed publication; leave every store unchanged until that
@@ -1022,7 +1039,7 @@ class R3EffectGateway:
             situation_ref=situation.situation_ref,
             program_ref=meaning.program_ref,
             learning_plan_ref=None,
-            obligation_ref=None,
+            source_obligation_ref=None,
             proof_refs=decision.proof_refs,
             blocker_refs=decision.blocker_refs,
             input_revision_pin=situation.revision_pin,

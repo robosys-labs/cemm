@@ -29,7 +29,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R3-Complete",
         "owner_ref": "capability-effect",
-        "source_ast_sha256": "dd234a00c572dbfc4b12add4ce3491a272b106376870e6cbb10aad48edb1621a"
+        "source_ast_sha256": "5cfd1b8df1ee5332686e4366caa37e3807db86a9e2ed29babb5f83e0c78821aa"
     },
     "tests/test_r3_effect_receipts.py::test_no_effect_round_trip_preserves_reason": {
         "activation_phase": "R3",
@@ -37,7 +37,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R3-Complete",
         "owner_ref": "capability-effect",
-        "source_ast_sha256": "d07767618aaa49abfd13111da93adc9daaecfb2239532c1fe36c25bad3b35373"
+        "source_ast_sha256": "45c329b2dcf6ce0d5a0dc4be29443e2870ae83938aae8f763d4001b436c808d6"
     }
 }
 
@@ -60,7 +60,7 @@ def test_no_effect_round_trip_preserves_reason() -> None:
         situation_ref="situation:test",
         program_ref="program:test",
         learning_plan_ref=None,
-        obligation_ref=None,
+        source_obligation_ref=None,
         proof_refs=("proof:test",),
         blocker_refs=(),
         input_revision_pin=pin,
@@ -177,3 +177,7 @@ def test_committed_receipt_requires_advanced_effect_revision() -> None:
         output_revision_pin=output,
     )
     assert EffectReceipt.from_dict(value.as_dict()) == value
+    assert value.abi_version == 2
+    for old_or_inexact_version in (1, 2.0, True):
+        with pytest.raises(ValueError, match="unsupported Effect Receipt ABI"):
+            EffectReceipt.from_dict({**value.as_dict(), "abi_version": old_or_inexact_version})

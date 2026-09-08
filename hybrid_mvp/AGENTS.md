@@ -122,8 +122,11 @@ Verification Batch ABI: 2
 Verified Meaning ABI: 1
 Phase Receipt ABI: 2
 Gap Receipt ABI: 1
-Learning Plan ABI: 2
-Response Meaning ABI: 2
+Learning Plan ABI: 3
+Generic Dialogue Obligation ABI: 1
+R3 Artifacts ABI: 2
+Effect / No-Effect Receipt ABI: 2
+Response Meaning ABI: 3
 Realization Receipt ABI: 2
 ```
 
@@ -231,9 +234,11 @@ This increment authorizes no network adapter or root adoption.
 Continuation answers must bind the exact pending snapshot and the original
 gateway-persisted query evaluation, not only a query-ref string. Unknown-query
 journal retention and diagnostic plan materialization do not authorize alias
-publication. The former EFFECT path that appended a second plan-derived learning
-obligation is disabled pending the reviewed transactional publication owner;
-do not restore it as a compatibility path. Automatic generic query-continuation
+publication. LearningPlan ABI 3 binds the original generic obligation through its
+required, identity-covered `source_obligation_ref`; materialization returns that
+exact record. The duplicate plan-derived obligation type is removed. The former
+EFFECT publication path remains disabled pending the reviewed transactional
+publication owner; do not restore it as a compatibility path. Automatic generic query-continuation
 creation is implemented in the current Task 5 repair, with acceptance and
 remaining dependencies tracked in the foundation plan. The user approved its
 four-subsequent-same-session-turn lifecycle on September 8, as recorded in the

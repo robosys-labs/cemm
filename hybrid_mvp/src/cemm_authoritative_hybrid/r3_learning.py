@@ -1,4 +1,4 @@
-"""Learning Plan ABI 2 and persistent dialogue obligations."""
+"""Learning Plan ABI 3 binds the existing generic dialogue continuation."""
 
 from __future__ import annotations
 
@@ -9,6 +9,8 @@ from .authority import DesignationLearningContract, LinkedAuthority
 from .canonical import stable_ref
 from .config import RuntimeConfig
 from .cycle import SemanticMode
+from . import dialogue
+from .r3_codec import exact_fields, exact_int, wire_refs
 from .decision import DecisionAction
 from .expressions import (
     GroundedReference, LiteralValue, RoleBinding, SemanticApplication,
@@ -18,13 +20,11 @@ from .persistence import RevisionPin, SemanticStores
 from .r3_artifacts import EvaluationBundle
 from .situation import SituationContext
 
-LEARNING_PLAN_ABI_VERSION = 2
-DIALOGUE_OBLIGATION_ABI_VERSION = 1
+LEARNING_PLAN_ABI_VERSION = 3
 
 __all__ = [
     "LEARNING_PLAN_ABI_VERSION",
     "LearningPlan",
-    "DialogueObligation",
     "LearningCoordinator",
     "DesignationLearningLowering",
     "lower_designation_learning",
@@ -38,12 +38,6 @@ def _text(value: object, name: str) -> str:
     if len(value) > 512:
         raise ValueError(f"{name} exceeds bound")
     return value
-
-
-def _optional(value: object, name: str) -> str | None:
-    if value is None:
-        return None
-    return _text(value, name)
 
 
 def _refs(value: object, name: str) -> tuple[str, ...]:
@@ -183,7 +177,7 @@ class LearningPlan:
     provenance_refs: tuple[str, ...]
     revision_pin: RevisionPin
     expires_at_turn: int
-    obligation_ref: str
+    source_obligation_ref: str
 
     _FIELDS = frozenset({
         "abi_version", "plan_ref", "contract_ref", "verified_meaning_ref",
@@ -191,7 +185,7 @@ class LearningPlan:
         "goal_ref", "capability_ref", "permission_ref", "commit_operator_ref",
         "surface_literal", "target_ref", "expected_target_kinds",
         "answer_contract_ref", "provenance_refs", "revision_pin",
-        "expires_at_turn", "obligation_ref",
+        "expires_at_turn", "source_obligation_ref",
     })
 
     def __init__(self, *_args: Any, **_kwargs: Any) -> None:
@@ -209,12 +203,16 @@ class LearningPlan:
                contract_ref: str,
                answer_contract_ref: str,
                goal_ref: str,
-               obligation_ref: str | None = None) -> "LearningPlan":
+               source_obligation_ref: str) -> "LearningPlan":
         if type(expires_at_turn) is not int or expires_at_turn < 0:
             raise ValueError("expires_at_turn must be nonnegative int")
         expected = _refs(expected_target_kinds, "expected_target_kinds")
         provenance = _refs(provenance_refs, "provenance_refs")
+        source = _text(source_obligation_ref, "source_obligation_ref")
+        if source not in provenance:
+            raise ValueError("source obligation must be retained in plan provenance")
         base = {
+            "source_obligation_ref": source,
             "contract_ref": _text(contract_ref, "contract_ref"),
             "verified_meaning_ref": _text(verified_meaning_ref, "verified_meaning_ref"),
             "expression_ref": _text(expression_ref, "expression_ref"),
@@ -238,16 +236,10 @@ class LearningPlan:
             for key, value in {**base, "goal_ref": goal_ref}.items()
         }}
         plan_ref = stable_ref("learning_plan", provisional)
-        obligation_ref = (
-            stable_ref("learning_obligation", {"plan_ref": plan_ref, "answer_contract_ref": base["answer_contract_ref"]})
-            if obligation_ref is None else _text(obligation_ref, "obligation_ref")
-        )
-        # plan_ref includes all semantic plan content except the derived obligation;
-        # the obligation is itself deterministically derived from the plan.
         obj = object.__new__(cls)
         values = {
             "abi_version": LEARNING_PLAN_ABI_VERSION, "plan_ref": plan_ref,
-            **base, "goal_ref": goal_ref, "obligation_ref": obligation_ref,
+            **base, "goal_ref": goal_ref,
         }
         for name, item in values.items(): object.__setattr__(obj, name, item)
         return obj
@@ -268,139 +260,55 @@ class LearningPlan:
             "provenance_refs": list(self.provenance_refs),
             "revision_pin": self.revision_pin.as_dict(),
             "expires_at_turn": self.expires_at_turn,
-            "obligation_ref": self.obligation_ref,
+            "source_obligation_ref": self.source_obligation_ref,
         }
+
+    def validate_source(self, obligation: dialogue.DialogueObligation,
+                        situation: SituationContext | None = None) -> None:
+        """Authenticate the canonical source and, when supplied, its answer window."""
+        if type(obligation) is not dialogue.DialogueObligation:
+            raise TypeError("learning source must be exact generic DialogueObligation")
+        if LearningPlan.from_dict(self.as_dict()) != self or dialogue.DialogueObligation.from_dict(obligation.as_dict()) != obligation:
+            raise ValueError("non-canonical learning continuation")
+        if (self.source_obligation_ref != obligation.obligation_ref
+                or self.source_query_ref != obligation.source_query_ref
+                or self.answer_contract_ref != obligation.expected_answer_contract_ref
+                or self.expires_at_turn != obligation.expires_turn_index
+                or obligation.kind is not dialogue.ObligationKind.LEARNING_ANSWER
+                or obligation.completion_receipt_ref is not None):
+            raise ValueError("learning plan differs from its pending source obligation")
+        if situation is not None:
+            if type(situation) is not SituationContext:
+                raise TypeError("learning answer requires exact SituationContext")
+            if (situation.mode is not SemanticMode.REQUEST
+                    or self.situation_ref != situation.situation_ref
+                    or self.revision_pin != situation.revision_pin
+                    or obligation.session_ref != situation.session_ref
+                    or obligation.obligation_ref not in situation.obligation_refs
+                    or not obligation.created_turn_index < situation.turn_index < obligation.expires_turn_index):
+                raise ValueError("learning source does not bind the current pending answer session/window")
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "LearningPlan":
-        if type(data) is not dict or frozenset(data) != cls._FIELDS:
-            raise ValueError("LearningPlan fields mismatch")
+        data = exact_fields(data, cls._FIELDS, "LearningPlan")
+        if exact_int(data["abi_version"], "abi_version") != LEARNING_PLAN_ABI_VERSION:
+            raise ValueError("unsupported Learning Plan ABI")
         rebuilt = cls.create(
             verified_meaning_ref=data["verified_meaning_ref"],
             expression_ref=data["expression_ref"], situation_ref=data["situation_ref"],
             decision_ref=data["decision_ref"], source_query_ref=data["source_query_ref"],
             surface_literal=data["surface_literal"], target_ref=data["target_ref"],
-            expected_target_kinds=tuple(data["expected_target_kinds"]),
-            provenance_refs=tuple(data["provenance_refs"]),
+            expected_target_kinds=wire_refs(data["expected_target_kinds"], "expected_target_kinds", maximum=256),
+            provenance_refs=wire_refs(data["provenance_refs"], "provenance_refs", maximum=256),
             revision_pin=RevisionPin.from_dict(data["revision_pin"]),
             expires_at_turn=data["expires_at_turn"], capability_ref=data["capability_ref"],
             permission_ref=data["permission_ref"], commit_operator_ref=data["commit_operator_ref"],
             contract_ref=data["contract_ref"], answer_contract_ref=data["answer_contract_ref"],
-            goal_ref=data["goal_ref"], obligation_ref=data["obligation_ref"],
+            goal_ref=data["goal_ref"], source_obligation_ref=data["source_obligation_ref"],
         )
         if rebuilt.as_dict() != dict(data):
             raise ValueError("non-canonical LearningPlan")
         return rebuilt
-
-
-@dataclass(frozen=True, init=False)
-class DialogueObligation:
-    abi_version: int
-    obligation_ref: str
-    kind: str
-    session_ref: str
-    plan_ref: str
-    source_query_ref: str
-    expected_answer_contract_ref: str
-    expires_at_turn: int
-    completion_receipt_ref: str | None
-    revision_pin: RevisionPin
-
-    _FIELDS = frozenset({"abi_version", "obligation_ref", "kind", "session_ref", "plan_ref", "source_query_ref", "expected_answer_contract_ref", "expires_at_turn", "completion_receipt_ref", "revision_pin"})
-
-    def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-        raise TypeError("use DialogueObligation.create")
-
-    @classmethod
-    def create(cls, *, plan: LearningPlan, session_ref: str,
-               completion_receipt_ref: str | None = None) -> "DialogueObligation":
-        if type(plan) is not LearningPlan:
-            raise TypeError("plan must be exact LearningPlan")
-        values = {
-            "kind": "learning_answer", "session_ref": _text(session_ref, "session_ref"),
-            "plan_ref": plan.plan_ref, "source_query_ref": plan.source_query_ref,
-            "expected_answer_contract_ref": plan.answer_contract_ref,
-            "expires_at_turn": plan.expires_at_turn,
-            "completion_receipt_ref": _optional(completion_receipt_ref, "completion_receipt_ref"),
-            "revision_pin": plan.revision_pin,
-        }
-        material = {"abi_version": DIALOGUE_OBLIGATION_ABI_VERSION, **{
-            key: value.as_dict() if type(value) is RevisionPin else value
-            for key, value in values.items()
-        }}
-        obligation_ref = stable_ref("dialogue_obligation", material)
-        if completion_receipt_ref is None and obligation_ref != plan.obligation_ref:
-            # LearningPlan obligation identity is intentionally derived from the
-            # plan and answer contract. Keep the exact plan-owned identity.
-            obligation_ref = plan.obligation_ref
-        obj = object.__new__(cls)
-        object.__setattr__(obj, "abi_version", DIALOGUE_OBLIGATION_ABI_VERSION)
-        object.__setattr__(obj, "obligation_ref", obligation_ref)
-        for name, item in values.items(): object.__setattr__(obj, name, item)
-        return obj
-
-    def as_dict(self) -> dict[str, Any]:
-        return {"abi_version": self.abi_version, "obligation_ref": self.obligation_ref,
-                "kind": self.kind, "session_ref": self.session_ref, "plan_ref": self.plan_ref,
-                "source_query_ref": self.source_query_ref,
-                "expected_answer_contract_ref": self.expected_answer_contract_ref,
-                "expires_at_turn": self.expires_at_turn,
-                "completion_receipt_ref": self.completion_receipt_ref,
-                "revision_pin": self.revision_pin.as_dict()}
-
-    @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "DialogueObligation":
-        if type(data) is not dict or frozenset(data) != cls._FIELDS:
-            raise ValueError("DialogueObligation fields mismatch")
-        # Reconstruct the plan-owned fields without pretending the obligation can
-        # exist independently of its exact LearningPlan.  The wire value is
-        # authenticated directly by its canonical material.
-        values = {
-            "kind": _text(data["kind"], "kind"),
-            "session_ref": _text(data["session_ref"], "session_ref"),
-            "plan_ref": _text(data["plan_ref"], "plan_ref"),
-            "source_query_ref": _text(data["source_query_ref"], "source_query_ref"),
-            "expected_answer_contract_ref": _text(
-                data["expected_answer_contract_ref"],
-                "expected_answer_contract_ref",
-            ),
-            "expires_at_turn": data["expires_at_turn"],
-            "completion_receipt_ref": _optional(
-                data["completion_receipt_ref"], "completion_receipt_ref"
-            ),
-            "revision_pin": RevisionPin.from_dict(data["revision_pin"]),
-        }
-        if values["kind"] != "learning_answer":
-            raise ValueError("unsupported dialogue obligation kind")
-        if type(values["expires_at_turn"]) is not int or values["expires_at_turn"] < 0:
-            raise ValueError("expires_at_turn must be nonnegative int")
-        material = {
-            "abi_version": DIALOGUE_OBLIGATION_ABI_VERSION,
-            **{
-                key: value.as_dict() if type(value) is RevisionPin else value
-                for key, value in values.items()
-            },
-        }
-        expected_ref = stable_ref("dialogue_obligation", material)
-        stored_ref = _text(data["obligation_ref"], "obligation_ref")
-        # Pending obligations may use the plan-owned deterministic identity.
-        plan_owned = stable_ref(
-            "learning_obligation",
-            {
-                "plan_ref": values["plan_ref"],
-                "answer_contract_ref": values["expected_answer_contract_ref"],
-            },
-        )
-        if stored_ref not in {expected_ref, plan_owned}:
-            raise ValueError("DialogueObligation obligation_ref mismatch")
-        result = object.__new__(cls)
-        object.__setattr__(result, "abi_version", DIALOGUE_OBLIGATION_ABI_VERSION)
-        object.__setattr__(result, "obligation_ref", stored_ref)
-        for name, value in values.items():
-            object.__setattr__(result, name, value)
-        if result.as_dict() != dict(data):
-            raise ValueError("non-canonical DialogueObligation")
-        return result
 
 
 class LearningCoordinator:
@@ -412,7 +320,7 @@ class LearningCoordinator:
         self._config = config or RuntimeConfig.release()
 
     def materialize(self, evaluation: EvaluationBundle, meaning: VerifiedMeaning,
-                    situation: SituationContext) -> tuple[LearningPlan | None, DialogueObligation | None]:
+                    situation: SituationContext) -> tuple[LearningPlan | None, dialogue.DialogueObligation | None]:
         if type(evaluation) is not EvaluationBundle or type(meaning) is not VerifiedMeaning or type(situation) is not SituationContext:
             raise TypeError("learning materialization requires exact R3 artifacts")
         decision = evaluation.decision
@@ -471,6 +379,7 @@ class LearningCoordinator:
             situation_ref=situation.situation_ref,
             decision_ref=decision.decision_ref,
             source_query_ref=pending.source_query_ref,
+            source_obligation_ref=pending.obligation_ref,
             surface_literal=draft.surface_literal,
             target_ref=draft.target_ref,
             expected_target_kinds=draft.expected_target_kinds,
@@ -484,7 +393,5 @@ class LearningCoordinator:
             revision_pin=situation.revision_pin,
             expires_at_turn=pending.expires_turn_index,
         )
-        obligation = DialogueObligation.create(plan=plan, session_ref=situation.session_ref)
-        # Persistence is owned by EFFECT so obligation creation and its effect
-        # journal receipt are committed atomically.
-        return plan, obligation
+        # Binding is a read: retain the exact canonical source record without renewal.
+        return plan, pending

@@ -27,7 +27,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "79e3783209b16f4b228a198c6f81885d97194bde6d48fc0937e16195e3e0740e"
+        "source_ast_sha256": "6aac6f5beceb2d07b3d9284f198171453aa85f4ec2ffe5a4a8e32a4a87460492"
     },
     "tests/test_foundation_query_witness.py::test_noneligible_no_effect_preserves_minimal_journal[known-query]": {
         "activation_phase": "R3",
@@ -129,7 +129,7 @@ def test_unknown_query_witness_survives_restart_and_terminal_retry(tmp_path):
         assert query.revision_pin == evaluation.revision_pin == evaluation.situation.revision_pin
         assert receipt.situation_ref == evaluation.situation.situation_ref
         assert receipt.decision_ref == evaluation.decision.decision_ref == stored.entry.decision_ref
-        assert receipt.learning_plan_ref is None and receipt.obligation_ref is None
+        assert receipt.learning_plan_ref is None and receipt.source_obligation_ref is None
         continuation = thaw_json(stored.entry.request_payload)["query_continuation"]
         assert obligation_snapshot(runtime.stores, "session:query-witness", maximum=1)["obligation_refs"] == (continuation["obligation_ref"],)
         assert runtime.stores.world.revision == before.world_revision

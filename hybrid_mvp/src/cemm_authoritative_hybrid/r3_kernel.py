@@ -14,14 +14,15 @@ from .proposal_context import ProposalContext
 from .r3_artifacts import EvaluationBundle
 from .r3_cognition import R3EvaluationOwner
 from .r3_effects import AdapterRegistry, EffectReceipt, NoEffectReceipt, R3EffectGateway
-from .r3_learning import DialogueObligation, LearningCoordinator, LearningPlan
+from .dialogue import DialogueObligation
+from .r3_learning import LearningCoordinator, LearningPlan
 from .r3_response import ResponseBuilder, ResponseMeaning
 from .situation import (
     SituationContext, SituationContextBuilder, SituationContextVerifier,
     SituationInputBundle,
 )
 
-R3_ARTIFACT_BUNDLE_ABI_VERSION = 1
+R3_ARTIFACT_BUNDLE_ABI_VERSION = 2
 
 __all__ = ["R3Artifacts", "R3Owner", "R3Kernel"]
 
@@ -75,8 +76,32 @@ class R3Artifacts:
         if learning_plan is None and obligation is not None:
             raise ValueError("obligation requires learning plan")
         if learning_plan is not None:
-            if obligation is None or obligation.plan_ref != learning_plan.plan_ref:
-                raise ValueError("learning obligation does not bind plan")
+            learning_plan.validate_source(obligation, situation)
+            if (learning_plan.decision_ref != evaluation.decision.decision_ref
+                    or learning_plan.verified_meaning_ref != evaluation.decision.verified_meaning_ref
+                    or learning_plan.expression_ref != evaluation.expression.expression_ref
+                    or type(effect) is not NoEffectReceipt
+                    or effect.learning_plan_ref != learning_plan.plan_ref
+                    or effect.source_obligation_ref != obligation.obligation_ref):
+                raise ValueError("R3 learning source/decision/effect mismatch")
+        elif (type(effect) is NoEffectReceipt
+              and (effect.learning_plan_ref is not None or effect.source_obligation_ref is not None)):
+            raise ValueError("R3 learning receipt requires its exact plan and source obligation")
+        if (response_meaning.learning_plan != learning_plan or response_meaning.obligation != obligation
+                or response_meaning.verified_meaning_ref != evaluation.decision.verified_meaning_ref
+                or response_meaning.source_expression_ref != evaluation.expression.expression_ref
+                or response_meaning.situation_ref != situation.situation_ref
+                or effect.decision_ref != evaluation.decision.decision_ref
+                or effect.verified_meaning_ref != evaluation.decision.verified_meaning_ref
+                or effect.expression_ref != evaluation.expression.expression_ref
+                or effect.program_ref != evaluation.decision.program_ref
+                or effect.situation_ref != situation.situation_ref
+                or input_revision_pin != evaluation.revision_pin
+                or input_revision_pin != situation.revision_pin
+                or effect.input_revision_pin != input_revision_pin
+                or effect.output_revision_pin != output_revision_pin
+                or response_meaning.revision_pin != output_revision_pin):
+            raise ValueError("R3 artifact lineage mismatch")
         material = {
             "abi_version": R3_ARTIFACT_BUNDLE_ABI_VERSION,
             "situation": situation.as_dict(),

@@ -35,30 +35,36 @@ unproved obligations. Historical R3 admission is not an end-to-end MVP proof.
 | Activation Canary Receipt ABI | **1** | `scripts/run_r3_canaries.py` + `scripts/validation_gate.py` | Serialized admission evidence | R3-owned post-VERIFY `R3Kernel.run` replay + admission verifier | Fixed independently supplied expressions bind observed `semantic_mode`, VerifiedMeaning, SituationContext, Decision, effect/no-effect, ResponseMeaning and final RevisionPin across OBSERVE, QUERY, REQUEST and SIMULATE. These canaries do not exercise public ORIENT/PROPOSE/VERIFY or R5 surface realization; the structural check separately checks the typed R5 handoff. |
 | Diagnostic Semantic Episode ABI | **2** | `src/cemm_authoritative_hybrid/episodes.py` | Serialized diagnostic / future corpus source | `validate_episode` | Separates Program ABI 2 derivation lineage from `VerifiedMeaning`; binds the exact action-schema hash and rejects all Program-as-meaning Episode ABI 1 partitions. R1 records later artifacts as not admitted and cannot serve as R4 gold. |
 | Situation Context ABI | 1 | `src/cemm_authoritative_hybrid/situation.py` | Transient / episode-serializable | `SituationContextValidator` | Independently binds force/mode, participants, temporal/source/epistemic and session context; never inferred from program identity. |
-| Effect / No-Effect Receipt ABI | 1 | `src/cemm_authoritative_hybrid/r3_effects.py` | Serialized | `EffectGateway` | Exactly one receipt per cycle; all mutations/adapters bind decision and verified-meaning refs and are idempotent. |
+| Effect / No-Effect Receipt ABI | 2 | `src/cemm_authoritative_hybrid/r3_effects.py` | Serialized | `EffectGateway` | Exactly one receipt per cycle; all mutations/adapters bind decision and verified-meaning refs and are idempotent. No-effect learning lineage uses `source_obligation_ref`; incompatible ABI 1 receipts fail activation rather than being silently migrated. |
 | Gap Receipt ABI | 1 | `src/cemm_authoritative_hybrid/gaps.py` | Serialized | `GapClassifier` | Strict full-content identity covers every ordered semantic field; exact decoding rejects forged refs and oversized wire values before hashing. R1 stops after VERIFY with `LaterOwnerNotAdmitted(verified_meaning_ref, contract_ref)` and no surface or continuation. |
-| Learning Plan ABI | 2 | `src/cemm_authoritative_hybrid/r3_learning.py` | Serialized | `LearningCoordinator` | Plans bind exact verified meaning, source query, target-kind contract, provenance, permission, revision and expiry; conversation cannot self-publish authority. |
+| Learning Plan ABI | 3 | `src/cemm_authoritative_hybrid/r3_learning.py` | Serialized | `LearningCoordinator` | Plans hash the required original generic `source_obligation_ref` alongside exact verified meaning, source query, target-kind contract, provenance, permission, revision and expiry; conversation cannot self-publish authority. |
+| Generic Dialogue Obligation ABI | 1 | `src/cemm_authoritative_hybrid/dialogue.py` | Serialized | `DialogueObligation.from_dict` / `bind_learning_answer` | Sole continuation record owner; exact pending source query, session, answer contract and exclusive turn window. Learning materialization returns this record unchanged. |
+| R3 Artifacts ABI | 2 | `src/cemm_authoritative_hybrid/r3_kernel.py` | Episode-serializable | `R3Artifacts.create` | Cross-links evaluation, situation, effect, response and revision pins; learning content binds the exact original generic obligation and current answer window. |
 | Designation-learning authority source | 1 (manifest source extension) | `src/cemm_authoritative_hybrid/authority.py` + `data/authority/alias_learning.json` | Reviewed owner source, linked at activation | `DesignationLearningContract` / `AuthorityLinker` | Exact source-event, role, capability, permission, internal EFFECT lowering, goal, answer-contract and review-policy edges are validated and content-hashed. This is not a reviewer grant or runtime publication admission. |
 | Reviewed semantic-frame authority source | 1 (manifest source extension) | `src/cemm_authoritative_hybrid/authority.py` + `data/authority/frames/semantic_affordances.json` | Reviewed owner source, linked at activation | `ReviewedSemanticFrame` / `AuthorityLinker` | Exact generation, target kind, contribution kinds, ports, role candidates and signature compatibility are validated once and included in content/compatibility identities. Affordances consume the linked index; invalid registered sources never fall back to kind defaults. |
-| Response Meaning ABI | **2** | `src/cemm_authoritative_hybrid/r3_response.py` | Episode-serializable | `ResponseBuilder` | Constructed from decision, proof, blockers, effect/no-effect receipt and obligation; contains an exact semantic-expression contract. |
+| Response Meaning ABI | **3** | `src/cemm_authoritative_hybrid/r3_response.py` | Episode-serializable | `ResponseBuilder` | Constructed from decision, proof, blockers, effect/no-effect receipt and canonical generic obligation; contains an exact semantic-expression contract and validates nested learning source lineage. |
 | Realization Receipt ABI | **2** | `src/cemm_authoritative_hybrid/realization.py` | Serialized | `RealizationVerifier` | Surface is reinterpreted through the same evidence/proposal/compile/verify contracts and compared by canonical semantic expression. |
 | Phase Receipt ABI | 2 | `src/cemm_authoritative_hybrid/cycle.py` | Serialized when trace/evaluation enabled | `CycleFinalizer` | Each phase binds exact input/output refs, revisions, disposition, rejection codes and budget use. |
 | Cycle Result ABI | **3** | `src/cemm_authoritative_hybrid/r3_cycle.py` | Serialized | `CycleFinalizer` | R3 active target: one canonical six-phase result carrying EvaluationBundle, exact Effect/No-Effect receipt and ResponseMeaning. `cycle.py` ABI 2 is admitted predecessor history only and cannot serialize an R3-complete cycle. |
 | R5 Test Disposition ABI | **1** | `governance/r5_test_dispositions.json` | Reviewed governance input; generated receipt is evidence only | `schemas/r5_test_dispositions.schema.json`, `scripts/r5_test_dispositions.py`, `scripts/generate_r5_test_dispositions.py` | Requires an exact 17-successor/25-deferred/1-retired partition of the frozen R5 predecessor set. Deferral is not admission evidence, and `artifacts/validation/R5_TEST_DISPOSITIONS.json` is deterministic evidence rather than authority. |
 | R5 Foundation Contract ABI | **1** | `configs/r5_foundation.json` | Reviewed phase-boundary configuration | `schemas/r5_foundation.schema.json` and `tests/test_r5_foundation.py` | Declares five exact foundation owners, red effective status, unavailable admission and four future data-access classes. It does not activate a neural model or materialize selection, calibration or frozen-test partitions. |
 
-Task 5 continuation binding retains existing ABI versions. The existing effect
+Task 5 canonical-continuation migration uses the hard-cut versions above. The existing effect
 journal request payload may retain the canonical EvaluationBundle for one exact
 unknown QUERY; this is attributable query-content evidence, not truth or learning
-authority. Generic dialogue obligations and plan-derived learning obligations
-are not interchangeable. The plan-only obligation fields in R3Artifacts and
-NoEffectReceipt must not be populated with a generic continuation or fake plan.
+authority. There is one generic dialogue-obligation owner, not an interchangeable
+plan-derived second type. A LearningPlan hashes its exact source obligation ref;
+R3Artifacts and ResponseMeaning retain that source record. NoEffectReceipt's
+`source_obligation_ref` is paired with a learning plan, not populated by inventing
+a plan for an initial unknown query.
 Automatic generic continuation creation uses the existing UNKNOWN no-effect
 journal transaction, with exact source-session reservation and obligation
 snapshot revalidation. A source turn `n` expires exclusively at `n+5`; a live
 record is not renewed and expired retirement/replacement is atomic. This is not
-alias publication. The duplicate plan-derived pending-obligation effect path
-remains disabled under the foundation plan.
+alias publication. The duplicate plan-derived type is removed and reviewed
+continuation publication remains disabled under the foundation plan. Non-null
+journal receipts must decode under the current receipt ABI on activation;
+planned rows with no receipt retain their existing recovery semantics.
 
 The linked-alias checkpoint used generation
 `authority-v1-2026-09-08-linked-alias-contract`. Its four internal authority kinds
@@ -74,7 +80,9 @@ existing store activation owner pins that label rather than the content hash.
 Do not reset or silently repin an existing store or reactivate a model to bypass
 these identity changes. Frame preservation was verified at `b3df099`; it is no
 longer a blocker to the approved canonical-continuation artifact migration.
-That migration is still unimplemented, so current artifact ABIs stay as above.
+The canonical-continuation codec migration is now implemented as a candidate;
+its verification checkpoint is tracked in the foundation plan. It does not
+enable proposal publication, admit a replay phase or reactivate descendants.
 
 ## 2. Canonical program identity
 

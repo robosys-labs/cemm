@@ -1,4 +1,4 @@
-"""R3 Learning Plan ABI 2 and Response Meaning ABI 2 tests."""
+"""R3 Learning Plan ABI 3 and Response Meaning ABI 3 tests."""
 from __future__ import annotations
 
 import pytest
@@ -15,12 +15,12 @@ from cemm_authoritative_hybrid.persistence import RevisionPin
 from cemm_authoritative_hybrid.r3_learning import LearningPlan
 from cemm_authoritative_hybrid.r3_response import ResponseMeaning
 
-__cemm_test_inventory__ = {'tests/test_r3_learning_response.py::test_learning_plan_abi2_round_trip_binds_semantic_lineage': {'activation_phase': 'R3',
+__cemm_test_inventory__ = {'tests/test_r3_learning_response.py::test_learning_plan_abi3_round_trip_binds_semantic_lineage': {'activation_phase': 'R3',
                                                                                                    'assertion_ref': 'assertion:r3-learning-plan-abi2-round-trip-binds-semantic-lineage',
                                                                                                    'diagnostic_role': 'owner',
                                                                                                    'introduced_by_task': 'R3-Complete',
                                                                                                    'owner_ref': 'learning-response',
-                                                                                                   'source_ast_sha256': '610ed4b1fa96bf1905473e689607a768e41ffdf6baaad89af3c05b2ed3ed8212'},
+                                                                                                   'source_ast_sha256': '0e0a4fb65122163365e8d37e71c6f945c3402fdbd9a4732a533683786740b8d4'},
  'tests/test_r3_learning_response.py::test_response_meaning_round_trip_has_no_surface_text': {'activation_phase': 'R3',
                                                                                               'assertion_ref': 'assertion:r3-response-meaning-round-trip-has-no-surface-text',
                                                                                               'diagnostic_role': 'owner',
@@ -48,7 +48,7 @@ def _expression() -> SemanticExpression:
     return SemanticExpression.create(applications=(app,), root_refs=(app.application_ref,))
 
 
-def test_learning_plan_abi2_round_trip_binds_semantic_lineage() -> None:
+def test_learning_plan_abi3_round_trip_binds_semantic_lineage() -> None:
     value = LearningPlan.create(
         contract_ref="contract:designation-learning",
         verified_meaning_ref="meaning:test",
@@ -64,10 +64,10 @@ def test_learning_plan_abi2_round_trip_binds_semantic_lineage() -> None:
         target_ref="value:happy",
         expected_target_kinds=("state_value",),
         answer_contract_ref="contract:learning-answer",
-        provenance_refs=("proof:test",),
+        provenance_refs=("proof:test", "obligation:test"),
         revision_pin=_pin(),
         expires_at_turn=2,
-        obligation_ref="obligation:test",
+        source_obligation_ref="obligation:test",
     )
     assert LearningPlan.from_dict(value.as_dict()) == value
 

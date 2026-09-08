@@ -193,7 +193,7 @@ def test_pure_learning_lowering_rejects_nonlicensed_structure_or_authority(tmp_p
 
 def test_learning_plan_factory_requires_all_linked_authority_fields():
     signature = inspect.signature(LearningPlan.create)
-    for name in ("contract_ref", "goal_ref", "capability_ref", "permission_ref", "commit_operator_ref", "answer_contract_ref"):
+    for name in ("contract_ref", "goal_ref", "capability_ref", "permission_ref", "commit_operator_ref", "answer_contract_ref", "source_obligation_ref"):
         assert signature.parameters[name].default is inspect.Parameter.empty
 
 
@@ -579,7 +579,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "a7a1ca59fb26f4feb6af38aaf553ba91e8454994cf8dd32532841d69b1735152"
+        "source_ast_sha256": "9b722dd2e9394a06c0524c43bc5b7c284bd02979e3dab33fceb8841e98c44003"
     },
     "tests/test_foundation_learning_lowering.py::test_incomplete_reviewed_learning_event_requests_clarification_without_draft": {
         "activation_phase": "R3",

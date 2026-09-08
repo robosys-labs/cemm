@@ -379,6 +379,18 @@ def _r3_verify_journal_row(
             "R3 effect journal receipt hash mismatch",
             RecoveryReceipt(0, (), "restore the journal from a verified backup"),
         )
+    if receipt is not None:
+        from .r3_effects import EffectReceipt, NoEffectReceipt
+        try:
+            if type(receipt) is not dict:
+                raise TypeError("receipt must be an exact dict")
+            decoder = NoEffectReceipt if "reason" in receipt else EffectReceipt
+            decoder.from_dict(receipt)
+        except (TypeError, ValueError, KeyError) as exc:
+            raise StoreActivationError(
+                f"R3 effect journal receipt ABI/content mismatch: {exc}",
+                RecoveryReceipt(0, (), "restore a current-ABI verified backup; do not reset the database"),
+            ) from exc
     return {"entry": entry, "receipt": receipt}
 
 def _fact_to_row(fact: Fact) -> dict[str, Any]:
@@ -1683,7 +1695,7 @@ class SemanticStores:
 
         This is a keyed persistence read, not proof that these refs belong to a
         SituationContext or that an answer fills the source query's exact slot.
-        The distinct plan-derived R3 learning wire shape is not adapted here.
+        Only the canonical generic dialogue wire shape is admitted.
         """
         from .dialogue import DialogueObligation
         from .r3_codec import exact_bool, exact_int, exact_refs, exact_text
@@ -1919,7 +1931,7 @@ class SemanticStores:
             journal_preterminal_ref=entry.parent_journal_ref, decision_ref=decision.decision_ref,
             verified_meaning_ref=decision.verified_meaning_ref, expression_ref=evaluation.expression.expression_ref,
             situation_ref=source.situation_ref, program_ref=decision.program_ref,
-            learning_plan_ref=None, obligation_ref=None, proof_refs=decision.proof_refs,
+            learning_plan_ref=None, source_obligation_ref=None, proof_refs=decision.proof_refs,
             blocker_refs=decision.blocker_refs, input_revision_pin=evaluation.revision_pin,
             output_revision_pin=_predicted_pin(self.revision_pin(), session=1, effects=1))
         if (receipt != expected_receipt or entry.outcome_ref != receipt.receipt_ref

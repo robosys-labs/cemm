@@ -1,6 +1,6 @@
 """Predecessor learning/acquisition helpers for historical security assertions.
 
-This module retains Learning Plan ABI 1; it is not the active ABI 2 owner.
+This module retains Learning Plan ABI 1; it is not the active learning-plan owner.
 The six-phase runtime uses ``r3_learning.LearningPlan``
 through the verified decision and effect boundaries. Do not reconnect this
 predecessor coordinator or its program-based query engine as a runtime fallback.
