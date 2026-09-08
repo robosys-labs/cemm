@@ -31,7 +31,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Task-2",
         "owner_ref": "form-context",
         "source_ast_sha256": "1fc6ca60c0956b9b4e9c511ba0b8d9714e486c813eae6da31a82ee8535f922d1",
-        "supersedes_node_id": "tests/test_r2_deep_review_regressions.py::test_multi_unit_designation_is_grounded_as_one_span"
     },
     "tests/test_r2_deep_review_regressions.py::test_literal_decoder_returns_exact_scalar_types": {
         "activation_phase": "R2",
@@ -48,14 +47,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "R2-Implementation",
         "owner_ref": "form-context",
         "source_ast_sha256": "ae39c2c826b0da16980cf20e26b7311ba3595bee50d9d6f7c44a0a5ce632754a"
-    },
-    "tests/test_r2_deep_review_regressions.py::test_multi_unit_designation_is_grounded_as_one_span": {
-        "activation_phase": "R2",
-        "assertion_ref": "assertion:r2-multi-unit-designation-is-grounded-as-one-span",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R2-Implementation",
-        "owner_ref": "form-context",
-        "source_ast_sha256": "cd7fd00a8fe53142ba7c650352bdd1fbdb9779a74178a30a69dce46d61892e36"
     },
     "tests/test_r2_deep_review_regressions.py::test_query_mode_preserves_variable_source_for_projection": {
         "activation_phase": "R2",
@@ -88,36 +79,6 @@ def test_literal_slot_requires_one_exact_kind():
     assert type(value) is int
 
 
-def test_multi_unit_designation_is_grounded_as_one_span():
-    class _DesignationIndex:
-        @staticmethod
-        def for_surface(surface, language):
-            if (surface, language) == ("mother in law", "en"):
-                return ("rel:mother_in_law",)
-            return ()
-
-    authority = SimpleNamespace(designations=_DesignationIndex())
-    config = RuntimeConfig.release()
-    form_pack = {
-        "language": "en",
-        "tokenization": {"lowercase": True, "punctuation": []},
-    }
-    resolver = FormResolver(form_pack, config)
-    lattice = resolver.resolve("mother in law")
-    grounder = Grounder(
-        authority=authority,
-        config=config,
-        form_pack=form_pack,
-        form_pack_hash=resolver.form_pack_hash,
-    )
-    pin = RevisionPin("authority:test", 1, 2, 3, 4, "bootstrap-proposer")
-    result = grounder.ground_lattice(lattice, pin)
-    matches = [
-        row for row in result.designations
-        if row.target_ref == "rel:mother_in_law"
-    ]
-    assert len(matches) == 1
-    assert len(matches[0].unit_refs) == 3
 
 
 def _query_context() -> ProposalContext:

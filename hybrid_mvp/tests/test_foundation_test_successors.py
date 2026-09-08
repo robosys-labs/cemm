@@ -20,7 +20,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:adversarial-programs-only-five-persistent-operators-accepted",
         "diagnostic_role": "owner",
         "owner_ref": "exact-verifier",
-        "supersedes_node_id": "tests/test_adversarial_programs.py::test_canonical_designation_successor_accepts_all_five_persistent_operators",
+        "supersedes_node_id": "tests/test_adversarial_programs.py::test_only_five_persistent_operators_accepted",
         "introduced_by_task": "Foundation-Proof-Test-Fixture-Repair",
         "source_ast_sha256": "776cbf94551182ddd2ca5d3f5a69418775085ab2c2cba6c62c4cdca0f26753f5"
     },
@@ -29,7 +29,6 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-query-uses-the-same-label-application-with-bound-target",
         "diagnostic_role": "owner",
         "owner_ref": "expression-compiler",
-        "supersedes_node_id": "tests/test_semantic_expressions.py::test_unresolved_designation_query_uses_the_same_label_application_with_bound_target",
         "introduced_by_task": "Foundation-Proof-Test-Fixture-Repair",
         "source_ast_sha256": "cb3291a5a8f7696169268a5a5c847db0b20e7d3fcbcccbc9c376c9a1a7cff9f6"
     },

@@ -74,12 +74,6 @@ def test_exactly_one_owner_per_atom(authority_factory):
 # ---------------------------------------------------------------------------
 
 
-def test_link_path_returns_linked_authority():
-    linked = AuthorityLinker().link_path(ROOT / "data" / "authority" / "manifest.json")
-    assert isinstance(linked, LinkedAuthority)
-    assert linked.content_hash.startswith("authority-content:")
-    assert linked.model_compatibility_hash.startswith("authority-compat:")
-    assert linked.generation == "authority-v1-2026-07-29"
 
 
 def test_repeated_link_produces_same_hashes():
@@ -162,14 +156,6 @@ def test_kind_index_is_bounded(linked_authority):
     assert "entity:telescope" not in linked_authority.atoms
 
 
-def test_all_atoms_have_valid_kinds(linked_authority):
-    valid_kinds = {
-        "participant", "entity", "concept", "label_type", "relation_type",
-        "state_dimension", "state_value", "event_type", "capability",
-        "permission", "adapter",
-    }
-    for atom in linked_authority.atoms.values():
-        assert atom.kind in valid_kinds
 
 
 # ---------------------------------------------------------------------------

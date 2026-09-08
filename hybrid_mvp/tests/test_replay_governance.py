@@ -505,14 +505,6 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "8bab51c25b4438abb52386b60838f7837bac1b5331808bbe67c85ae8f9951a28"
     },
-    "tests/test_replay_governance.py::test_authority_cleanup_classifies_every_authority_like_document_once": {
-        "activation_phase": "G0",
-        "assertion_ref": "assertion:authority-cleanup-classifies-documents-exactly",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "Authority-Cleanup-Task-1",
-        "owner_ref": "governance",
-        "source_ast_sha256": "d74d016b5ec477aac3a78b3e715fdb0b6ffdbcde59ceccb72f84de6c031ca50a"
-    },
     "tests/test_replay_governance.py::test_r4_1_amendment_owns_authentic_r5_prerequisites": {
         "activation_phase": "G0",
         "assertion_ref": "assertion:r4-1-amendment-owns-r5-prerequisites",
@@ -520,14 +512,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Authority-Cleanup-Task-1",
         "owner_ref": "governance",
         "source_ast_sha256": "a0041e50313daf623ecc51f3696332456e724c966876e01072a1d76ce19b836d"
-    },
-    "tests/test_replay_governance.py::test_r4_closure_stop_routes_only_to_reviewed_representation_design": {
-        "activation_phase": "G0",
-        "assertion_ref": "assertion:r4-closure-stop-routes-only-to-reviewed-representation-design",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R4-Closure-Slice-Stop-Review",
-        "owner_ref": "governance",
-        "source_ast_sha256": "a2c95d331e546aeffdd9f2b66b6b942143fb2dfba2d9fd02325cdf07fb8253f9"
     },
     "tests/test_replay_governance.py::test_governing_documents_do_not_prescribe_rejected_r4_r5_paths": {
         "activation_phase": "G0",
@@ -968,13 +952,6 @@ __cemm_test_inventory__ = {
         "owner_ref": "governance",
         "source_ast_sha256": "624ebbe3db3db3b638eba09857c8c147e802a77777ac66c7461551c83f7bc15f"
     },
-    "tests/test_replay_governance.py::test_r4_partition_defect_binding_matches_current_pre_invalidation_artifacts": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-partition-defect-binding-matches-current-pre-invalidation-artifacts",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-1",
-        "source_ast_sha256": "6ede0f0b23177148ad344b7d69bb6245bc197d0531e3b2659a5f4b659a9db0d3"
-    },
 
     "tests/test_replay_governance.py::test_r4_partition_defect_binding_matches_invalidated_source_base": {
         "activation_phase": "R4",
@@ -982,7 +959,6 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "phase",
         "introduced_by_task": "R4-Partition-Corrective-Task-2",
         "source_ast_sha256": "24d967e42130097eafa992acdb96f565dc5b7b91b0310dd8a55f804537dc475b",
-        "supersedes_node_id": "tests/test_replay_governance.py::test_r4_partition_defect_binding_matches_current_pre_invalidation_artifacts"
     },
     "tests/test_replay_governance.py::test_r5_governing_plan_uses_exact_frozen_inventory_partition": {
         "activation_phase": "R5",
@@ -1165,26 +1141,6 @@ def test_document_authority_is_scoped_and_classifications_are_exact() -> None:
 
 
 
-def test_authority_cleanup_classifies_every_authority_like_document_once() -> None:
-    authority = _authority()
-    classes = (
-        tuple(authority["governing_documents"]),
-        tuple(authority["superseded_execution_claims"]),
-        tuple(authority["historical_evidence"]),
-    )
-    classified = set().union(*(set(rows) for rows in classes))
-    counts = Counter(relative for rows in classes for relative in rows)
-    markdown = {
-        path.relative_to(ROOT).as_posix()
-        for path in (ROOT / "docs").rglob("*.md")
-    }
-    assert markdown | AUTHORITY_LIKE_ROOT_FILES <= classified
-    assert all(count == 1 for count in counts.values()), counts
-    for index, left in enumerate(classes):
-        for right in classes[index + 1 :]:
-            assert set(left).isdisjoint(right)
-    assert authority["governing_documents"][0] == "AGENTS.md"
-    assert authority["governing_documents"][1] == R4_1_AMENDMENT
 
 
 def test_r4_1_amendment_owns_authentic_r5_prerequisites() -> None:
@@ -1222,84 +1178,6 @@ def test_r4_1_amendment_owns_authentic_r5_prerequisites() -> None:
     assert "the later repository admission receipt authenticates" in registry
 
 
-def test_r4_closure_stop_routes_only_to_reviewed_representation_design() -> None:
-    authority = _authority()
-    governing = tuple(authority["governing_documents"])
-    historical = set(authority["historical_evidence"])
-    superseded = set(authority["superseded_execution_claims"])
-
-    assert governing.index(R4_CLOSURE_SLICE_DESIGN) == (
-        governing.index(R4_1_AMENDMENT) + 1
-    )
-    assert governing.index(UNRESOLVED_DESIGNATION_DESIGN) == (
-        governing.index(R4_CLOSURE_SLICE_DESIGN) + 1
-    )
-    assert governing.index(UNRESOLVED_DESIGNATION_PLAN) == (
-        governing.index(UNRESOLVED_DESIGNATION_DESIGN) + 1
-    )
-    assert R4_CLOSURE_SLICE_PLAN not in governing
-    assert R4_CLOSURE_SLICE_PLAN in historical
-    assert set(SUPERSEDED_R4_REVIEW_WORKFLOW_DOCUMENTS) <= superseded
-
-    closure = (ROOT / R4_CLOSURE_SLICE_DESIGN).read_text(encoding="utf-8")
-    normalized_closure = re.sub(r"\s+", " ", closure.casefold())
-    for marker in (
-        "STOPPED",
-        "reviewed unresolved-designation representation/ABI design",
-        "No implementation may begin until that design is approved",
-    ):
-        assert marker.casefold() in normalized_closure
-    assert "only executable next step" not in normalized_closure
-
-    plan = (ROOT / R4_CLOSURE_SLICE_PLAN).read_text(encoding="utf-8")
-    normalized_plan = re.sub(r"\s+", " ", plan.casefold())
-    for marker in (
-        "historical evidence",
-        "STOPPED",
-        R4_CLOSURE_SLICE_DESIGN,
-        R4_1_REPLAY_PROGRESS,
-    ):
-        assert marker.casefold() in normalized_plan
-    assert "For agentic workers" not in plan
-    assert not re.search(r"^\s*- \[ \]", plan, re.MULTILINE)
-    assert not re.search(r"\bgit\s+(?:add|commit)\b", plan, re.IGNORECASE)
-    assert "only executable next step" not in normalized_plan
-
-    repair = (ROOT / UNRESOLVED_DESIGNATION_DESIGN).read_text(encoding="utf-8")
-    normalized_repair = re.sub(r"\s+", " ", repair.casefold())
-    for marker in (
-        "implementation plan and acyclic ownership amendment approved",
-        "no automatic authority or world write",
-        "research capability is explicitly not required to make that test pass",
-        "vocabulary bump is not authorized by this design",
-    ):
-        assert marker.casefold() in normalized_repair
-    assert "concept:zorbulate" in normalized_repair
-    assert "default concept creation" in normalized_repair
-
-    current_routes = {
-        "AGENTS.md",
-        "README.md",
-        "INTEGRATION.md",
-        "docs/IMPLEMENTATION_PLAN.md",
-        "docs/REPLAY_GOVERNANCE.md",
-        "docs/ARCHITECTURE.md",
-    }
-    for relative in current_routes:
-        text = re.sub(
-            r"\s+",
-            " ",
-            (ROOT / relative).read_text(encoding="utf-8").casefold(),
-        )
-        for marker in (
-            "closure stopped",
-            UNRESOLVED_DESIGNATION_DESIGN.rsplit("/", 1)[-1],
-            UNRESOLVED_DESIGNATION_PLAN.rsplit("/", 1)[-1],
-            "task 4",
-            "form-evidence amendment",
-        ):
-            assert marker.casefold() in text, (relative, marker)
-        assert "only executable next step" not in text, relative
 
 
 def test_governing_documents_do_not_prescribe_rejected_r4_r5_paths() -> None:
@@ -2015,18 +1893,6 @@ def test_r4_partition_corrective_documents_are_superseded() -> None:
     assert paths.isdisjoint(governing)
 
 
-def test_r4_partition_defect_binding_matches_current_pre_invalidation_artifacts() -> None:
-    allowlist = ROOT / "artifacts/r4/training_allowlist.json"
-    receipt = ROOT / "artifacts/r4/BUILD_RECEIPT.json"
-    design = (ROOT / "docs/superpowers/specs/2026-08-14-r4-partition-corrective-replay-design.md").read_text(encoding="utf-8")
-    assert _sha256(allowlist) == (
-        "3c47c3e66771add72a541342a5669ef5c93286356eb1ae0c0de9eb86d9b3d2db"
-    )
-    assert _sha256(receipt) == (
-        "0069ae2c8a301700498aba4801df96205f9166938e1b21d3336aa1768d75dec6"
-    )
-    assert "training_allowlist_v2:51c0cc234805cdda54f8e2c7" in design
-    assert "r4_build_v3:5d5eee0ee8c0e7bb1bcba522" in design
 
 
 def test_r4_partition_defect_binding_matches_invalidated_source_base(

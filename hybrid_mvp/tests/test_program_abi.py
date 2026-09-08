@@ -63,24 +63,8 @@ def test_switch_action_vocabulary_is_closed_at_twelve():
     assert len(set(SWITCH_ACTION_TYPES)) == 12
 
 
-def test_program_action_rejects_unknown_action_type():
-    with pytest.raises(ValueError):
-        ProgramAction.create(
-            action_index=0,
-            action_type="not_a_real_action",  # type: ignore[arg-type]
-            arguments=(),
-            source_unit_refs=(),
-        )
 
 
-def test_program_action_accepts_every_confirmed_type():
-    for index, action_type in enumerate(SWITCH_ACTION_TYPES):
-        ProgramAction.create(
-            action_index=index,
-            action_type=action_type,
-            arguments=_VALID_ACTION_ARGUMENTS[action_type],
-            source_unit_refs=(),
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -99,121 +83,8 @@ def test_program_uses_only_five_persistent_operators(program_factory, proposal_c
     assert ops <= PERSISTENT_OPERATORS
 
 
-def test_program_with_no_operator_has_empty_persistent_operators():
-    program = SemanticSwitchProgram.create(
-        orientation_ref="orientation:0",
-        proposal_context_ref="proposal_context:0",
-        actions=(
-            ProgramAction.create(
-                action_index=0,
-                action_type="select_context",
-                arguments=("proposal_context:0",),
-            ),
-            ProgramAction.create(
-                action_index=1,
-                action_type="select_mode",
-                arguments=("mode_slot:0",),
-            ),
-            ProgramAction.create(
-                action_index=2,
-                action_type="abstain",
-                arguments=(),
-            ),
-        ),
-        root_refs=(),
-        mode_slot_ref="mode_slot:0",
-        goal_refs=(),
-        source_unit_refs=(),
-        source_assignments=(),
-        revision_pin=_default_pin(),
-    )
-    # No instantiate_operator actions means no operators
-    ops = frozenset(
-        a for a in program.actions if a.action_type == "instantiate_operator"
-    )
-    assert len(ops) == 0
 
 
-def test_program_extracts_operators_from_instantiate_operator_actions():
-    """Operators are resolved from ApplicationFrameSlot.operator_ref, not argument spelling.
-
-    Per R2 plan section 5.1.6: Program ABI 2 instantiate_operator points to
-    an application frame; the operator must be resolved from the context,
-    not guessed from argument spelling.
-    """
-    actions = (
-        ProgramAction.create(
-            action_index=0,
-            action_type="select_context",
-            arguments=("proposal_context:0",),
-        ),
-        ProgramAction.create(
-            action_index=1,
-            action_type="select_mode",
-            arguments=("mode_slot:0",),
-        ),
-        ProgramAction.create(
-            action_index=2,
-            action_type="instantiate_operator",
-            arguments=("application:0", "application_frame_slot:0"),
-            source_unit_refs=("unit:0",),
-        ),
-        ProgramAction.create(
-            action_index=3,
-            action_type="instantiate_operator",
-            arguments=("application:1", "application_frame_slot:1"),
-            source_unit_refs=("unit:1",),
-        ),
-        ProgramAction.create(
-            action_index=4,
-            action_type="complete_program",
-            arguments=(),
-        ),
-    )
-    program = SemanticSwitchProgram.create(
-        orientation_ref="orientation:0",
-        proposal_context_ref="proposal_context:0",
-        actions=actions,
-        root_refs=("application:1",),
-        mode_slot_ref="mode_slot:0",
-        goal_refs=(),
-        source_unit_refs=("unit:0", "unit:1"),
-        source_assignments=(
-            SourceAssignment.create(
-                source_unit_ref="unit:0",
-                contribution_slot_ref="contribution_slot:0",
-                assignment_kind="predicate",
-                target_action_ref=actions[2].action_ref,
-                target_role_ref=None,
-                residual_kind=None,
-                critical=False,
-            ),
-            SourceAssignment.create(
-                source_unit_ref="unit:1",
-                contribution_slot_ref="contribution_slot:1",
-                assignment_kind="predicate",
-                target_action_ref=actions[3].action_ref,
-                target_role_ref=None,
-                residual_kind=None,
-                critical=False,
-            ),
-        ),
-        revision_pin=_default_pin(),
-    )
-    # The program actions carry application local refs and frame slot refs,
-    # not operator strings. Operators are resolved through the context's
-    # ApplicationFrameSlot.operator_ref field.
-    instantiate_actions = [
-        a for a in program.actions if a.action_type == "instantiate_operator"
-    ]
-    assert len(instantiate_actions) == 2
-    for action in instantiate_actions:
-        # Arguments are (application_local_ref, application_frame_slot_ref)
-        app_ref, frame_slot_ref = action.arguments
-        assert app_ref.startswith("application:")
-        assert frame_slot_ref.startswith("application_frame_slot:")
-        # No argument should be an op: string
-        assert not any(arg.startswith("op:") for arg in action.arguments)
 
 
 # ---------------------------------------------------------------------------
@@ -227,73 +98,6 @@ def test_action_encoding_hash_is_stable_for_same_structure(program_factory):
     assert a.program_ref == b.program_ref
 
 
-def test_action_encoding_hash_changes_with_structure(program_factory):
-    base = program_factory("what is your name?")
-    actions = (
-        ProgramAction.create(
-            action_index=0,
-            action_type="select_context",
-            arguments=("proposal_context:alt",),
-        ),
-        ProgramAction.create(
-            action_index=1,
-            action_type="select_mode",
-            arguments=("mode_slot:alt",),
-        ),
-        ProgramAction.create(
-            action_index=2,
-            action_type="select_designation",
-            arguments=("designation_slot:alt",),
-        ),
-        ProgramAction.create(
-            action_index=3,
-            action_type="instantiate_operator",
-            arguments=("application:alt", "application_frame_slot:alt"),
-            source_unit_refs=("unit:alt",),
-        ),
-        ProgramAction.create(
-            action_index=4,
-            action_type="bind_role",
-            arguments=("application:alt", "role:actor", "contribution_slot:alt"),
-            source_unit_refs=("unit:alt2",),
-        ),
-        ProgramAction.create(
-            action_index=5,
-            action_type="complete_program",
-            arguments=(),
-        ),
-    )
-    modified = SemanticSwitchProgram.create(
-        orientation_ref="orientation:alt",
-        proposal_context_ref="proposal_context:alt",
-        actions=actions,
-        root_refs=("application:alt",),
-        mode_slot_ref="mode_slot:alt",
-        goal_refs=("goal:alt",),
-        source_unit_refs=("unit:alt", "unit:alt2"),
-        source_assignments=(
-            SourceAssignment.create(
-                source_unit_ref="unit:alt",
-                contribution_slot_ref="contribution_slot:alt",
-                assignment_kind="predicate",
-                target_action_ref=actions[3].action_ref,
-                target_role_ref=None,
-                residual_kind=None,
-                critical=False,
-            ),
-            SourceAssignment.create(
-                source_unit_ref="unit:alt2",
-                contribution_slot_ref="contribution_slot:alt2",
-                assignment_kind="role",
-                target_action_ref=actions[4].action_ref,
-                target_role_ref="role:actor",
-                residual_kind=None,
-                critical=False,
-            ),
-        ),
-        revision_pin=_default_pin(),
-    )
-    assert modified.program_ref != base.program_ref
 
 
 # ---------------------------------------------------------------------------
@@ -307,15 +111,6 @@ def test_program_is_frozen(program_factory):
         program.program_ref = "program:mutated"  # type: ignore[misc]
 
 
-def test_program_action_is_frozen():
-    action = ProgramAction.create(
-        action_index=0,
-        action_type="abstain",
-        arguments=(),
-        source_unit_refs=(),
-    )
-    with pytest.raises(Exception):
-        action.action_ref = "action:1"  # type: ignore[misc]
 
 
 # ---------------------------------------------------------------------------

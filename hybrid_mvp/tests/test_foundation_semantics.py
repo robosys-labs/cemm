@@ -582,7 +582,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "form-context",
         "source_ast_sha256": "12715ca076dffabd7bf77c9639dd4f976f533dc589bc4d5d64aacd59e5911d6b",
-        "supersedes_node_id": "tests/test_foundation_semantics.py::test_retiring_definition_cue_preserves_all_other_reviewed_form_fields"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_explicit_unknown_frame_preserves_literal_query_and_binder": {
         "activation_phase": "R4",
@@ -591,7 +590,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "proposal-context",
         "source_ast_sha256": "99ec5c79f05e814f47baa5092208bbfb86f2e7951240e3392c067ebee95537ed",
-        "supersedes_node_id": "tests/test_proposal_context_builder.py::test_unknown_designation_query_builds_one_exact_unresolved_designation_frame"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_explicit_unknown_uses_unchanged_program_actions": {
         "activation_phase": "R2",
@@ -600,7 +598,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "exact-verifier",
         "source_ast_sha256": "cce1414858f352aca00906b0c3d80c2812646d7330cb0d3c6121b6e17dd50fea",
-        "supersedes_node_id": "tests/test_proposal_context_program_verifier_canary.py::test_unresolved_designation_derivation_uses_program_abi_2_without_new_actions"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_explicit_unknown_preserves_response_lineage": {
         "activation_phase": "R4",
@@ -608,7 +605,6 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "phase",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "source_ast_sha256": "699450c4eec78e5ef441fe39c469514fe076a5b2d745b47f9fbdd8cce7da55fc",
-        "supersedes_node_id": "tests/test_r3_r4_predecessor_regressions.py::test_closure_unknown_designation_preserves_literal_and_unknown_action"
     },
     "tests/test_foundation_semantics.py::test_foundation_focus_restart_invalid_fresh_identity_is_failure_atomic[unhashable-session]": {
         "activation_phase": "R3",
@@ -1281,7 +1277,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
         "owner_ref": "program-verifier",
         "source_ast_sha256": "3cfdb1558ccd22713b6f297ce989dc94e4a1963efd42ed5d3d845516789a98d3",
-        "supersedes_node_id": "tests/test_proposal_context_abi1.py::test_context_rejects_transition_on_non_state_frame"
     },
     "tests/test_foundation_semantics.py::test_foundation_context_fixture_has_independent_exact_query_evidence": {
         "activation_phase": "R2",
@@ -1298,7 +1293,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
         "owner_ref": "program-verifier",
         "source_ast_sha256": "4896508b28d99ae36736434f288f64ec242824bb7deb68c6dc62e6c06d920384",
-        "supersedes_node_id": "tests/test_proposal_context_abi1.py::test_context_rejects_duplicate_slots_unknown_sources_and_invalid_spans"
     },
     "tests/test_foundation_semantics.py::test_foundation_context_exact_geometry_guards_have_complete_query_sources[zero-width]": {
         "activation_phase": "R1",
@@ -1307,7 +1301,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
         "owner_ref": "program-verifier",
         "source_ast_sha256": "fa0858d369939e09da8739eedf96e3e8350cc708a248f81b07d37c4b44201408",
-        "supersedes_node_id": "tests/test_proposal_context_abi1.py::test_direct_context_rejects_zero_width_and_noncontiguous_spans[zero-width]"
     },
     "tests/test_foundation_semantics.py::test_foundation_context_exact_geometry_guards_have_complete_query_sources[gap]": {
         "activation_phase": "R1",
@@ -1316,7 +1309,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
         "owner_ref": "program-verifier",
         "source_ast_sha256": "fa0858d369939e09da8739eedf96e3e8350cc708a248f81b07d37c4b44201408",
-        "supersedes_node_id": "tests/test_proposal_context_abi1.py::test_direct_context_rejects_zero_width_and_noncontiguous_spans[gap]"
     },
     "tests/test_foundation_semantics.py::test_foundation_context_exact_geometry_guards_have_complete_query_sources[overlap]": {
         "activation_phase": "R1",
@@ -1325,7 +1317,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
         "owner_ref": "program-verifier",
         "source_ast_sha256": "fa0858d369939e09da8739eedf96e3e8350cc708a248f81b07d37c4b44201408",
-        "supersedes_node_id": "tests/test_proposal_context_abi1.py::test_direct_context_rejects_zero_width_and_noncontiguous_spans[overlap]"
     },
     "tests/test_foundation_semantics.py::test_foundation_variable_role_guard_has_exact_query_evidence_and_body_coverage": {
         "activation_phase": "R1",
@@ -1334,7 +1325,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Task-4-Fixture-Repair",
         "owner_ref": "program-verifier",
         "source_ast_sha256": "1ab248554e3c65d4fb9d6b4706405336c25418ff5ee5b72cfb2105083c4ed917",
-        "supersedes_node_id": "tests/test_coverage_abi2.py::test_variable_slot_role_must_belong_to_its_exact_body_frame"
     },
     "tests/test_foundation_semantics.py::test_foundation_membership_bounded_pair_public_preserves_independent_graph[positive-pair]": {
         "activation_phase": "R3",
@@ -1423,7 +1413,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Task-4-Membership",
         "owner_ref": "expected-contract",
         "source_ast_sha256": "0d8285dd7199f759b122eb85176fa2b6cae9d311acb1a3db73aabddf6e3ab22d",
-        "supersedes_node_id": "tests/test_r4_assertion_compiler.py::test_sr4_5_composed_expression_rejects_noncanonical_graphs"
     },
     "tests/test_foundation_semantics.py::test_foundation_membership_public_preserves_exact_roles_scope_and_attribution[bare]": {
         "activation_phase": "R3",
@@ -1520,7 +1509,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Task-4-Membership",
         "owner_ref": "expected-contract",
         "source_ast_sha256": "d6690d7af34837d8ba0cf7ffd35f5f53a712c03888c78588402c0a2af86bb10a",
-        "supersedes_node_id": "tests/test_r4_assertion_compiler.py::test_sr4_5_true_multi_root_and_type_role_remain_one_meaning"
     },
     "tests/test_foundation_semantics.py::test_foundation_membership_composed_gold_rejects_nonmembership[registry-kind]": {
         "activation_phase": "R4",
@@ -2154,14 +2142,6 @@ __cemm_test_inventory__ = {
         "owner_ref": "form-context",
         "source_ast_sha256": "b50c2c45bfce6f4b14a53b27f28a8f9c947e07189dcffc155ac96a3c27983334"
     },
-    "tests/test_foundation_semantics.py::test_foundation_matrix_alias_directive_binds_actual_prior_query": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:foundation-matrix-alias-directive-binds-actual-prior-query",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "Foundation-Proof-Task-3",
-        "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "7caacfc26baf1a7b0b6f70927ab2e7f122e47bcf578fd8037d3e106eaf74ef37"
-    },
     "tests/test_foundation_semantics.py::test_foundation_matrix_reviewed_alias_survives_restart_and_unseen_reversal": {
         "activation_phase": "R2",
         "assertion_ref": "assertion:foundation-matrix-reviewed-alias-survives-restart-and-unseen-reversal",
@@ -2330,14 +2310,6 @@ __cemm_test_inventory__ = {
         "owner_ref": "form-context",
         "source_ast_sha256": "32da4b32b7d3898281d4e3bf9e80c7286595c8d19b50908a5fa5008597d339ad"
     },
-    "tests/test_foundation_semantics.py::test_retiring_definition_cue_preserves_all_other_reviewed_form_fields": {
-        "activation_phase": "R2",
-        "assertion_ref": "assertion:foundation-retiring-definition-cue-preserves-all-other-reviewed-form-fields",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "Foundation-Proof-Task-2",
-        "owner_ref": "form-context",
-        "source_ast_sha256": "790d41bfd69ad5fbd47403c18d465017888935eebc6a1934f50870870d6f4884"
-    },
     "tests/test_foundation_semantics.py::test_atom_registry_does_not_supply_implicit_query_support": {
         "activation_phase": "R3",
         "assertion_ref": "assertion:foundation-atom-registry-does-not-supply-implicit-query-support",
@@ -2400,7 +2372,6 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "phase",
         "introduced_by_task": "Foundation-Proof-Task-2",
         "source_ast_sha256": "d1f3b4e2d83b2582594b9505553a9fa7b6ec8e843c7596d12d9ad237cf71db42",
-        "supersedes_node_id": "tests/test_r3_r4_predecessor_regressions.py::test_closure_known_definition_traverses_selected_semantic_path"
     },
     "tests/test_foundation_semantics.py::test_historical_definition_gold_requires_real_semantic_content[definition-digital-agent]": {
         "activation_phase": "R4",
@@ -2647,16 +2618,6 @@ def test_designation_surface_variable_preserves_query_and_binder_sources(tmp_pat
         runtime.stores.close()
 
 
-def test_retiring_definition_cue_preserves_all_other_reviewed_form_fields() -> None:
-    pack = json.loads((ROOT / "data/languages/en/forms.json").read_text(encoding="utf-8"))
-    assert "define" not in pack["query_projection"]
-    # The exact predecessor pack, reconstructed by only restoring the retired
-    # cue, must retain its known canonical hash. No other input/output field is
-    # implicitly removed or regenerated.
-    pack["query_projection"]["define"] = {"kind": "query"}
-    assert FormResolver(pack, RuntimeConfig.release()).form_pack_hash == (
-        "sha256:32f5133c901afc05cc5345bc5766d00c97518b54025cad4ca0fb3707ad40b5ad"
-    )
 
 
 def _situation(pin: RevisionPin) -> SituationContext:
@@ -4753,63 +4714,6 @@ def test_foundation_matrix_fresh_fragment_requires_clarification(tmp_path):
         runtime.stores.close()
 
 
-def test_foundation_matrix_alias_directive_binds_actual_prior_query(linked_authority):
-    # Continuity only, NOT authorization: the materializer currently defaults
-    # to unlinked cap:learn, permission:learn_designation and
-    # contract:designation_answer:v2. No reviewed answer-contract ref is linked;
-    # the obligation below preserves that existing ABI default, not new authority.
-    stores = memory_stores(authority_generation=linked_authority.generation)
-    try:
-        turn = begin_turn(stores, "session:foundation")
-        query_expression = _matrix_designation_query("velnora")
-        situation = _matrix_situation(stores, turn_ref=turn["turn_ref"], turn_index=turn["turn_index"])
-        query_meaning = _matrix_meaning(query_expression, situation.revision_pin)
-        evaluator = R3EvaluationOwner(linked_authority, stores, RuntimeConfig.release())
-        query_evaluation = evaluator.evaluate(query_meaning, situation)
-        query = query_evaluation.query_results[0]
-        assert query.status is QueryStatus.UNKNOWN and query.bindings == () and query.proof is None
-        pending = DialogueObligation.create(
-            kind=ObligationKind.LEARNING_ANSWER, session_ref="session:foundation",
-            source_query_ref=query.query_result_ref, expected_answer_contract_ref="contract:designation_answer:v2",
-            created_turn_index=turn["turn_index"], expires_turn_index=turn["turn_index"] + 4,
-            source_decision_ref=query_evaluation.decision.decision_ref,
-            completion_receipt_ref=None, revision_pin=stores.revision_pin(),
-        )
-        DialogueObligationManager(stores).add(pending)
-        snapshot = obligation_snapshot(stores, "session:foundation", maximum=8)
-        assert pending.obligation_ref in snapshot["obligation_refs"]
-        turn = begin_turn(stores, "session:foundation")
-        assert "cap:learn_alias" in linked_authority.capabilities["participant:system"]
-        assert ("participant:system", "permission:write_alias", "event:learn_alias") in linked_authority.permissions
-        request = _matrix_situation(
-            stores, SemanticMode.REQUEST, turn_ref=turn["turn_ref"], turn_index=turn["turn_index"],
-            obligation_refs=(pending.obligation_ref,), obligation_snapshot_ref=snapshot["snapshot_ref"],
-            capability_refs=("cap:learn_alias",), permission_refs=("permission:write_alias",),
-            epistemic_scope_ref="epistemic_scope:requested",
-        )
-        alias = _matrix_expression(SemanticApplication(
-            "application:alias", "op:designation", "label:lexical",
-            (RoleBinding("role:label_type", GroundedReference("label:lexical")),
-             RoleBinding("role:surface", LiteralValue("string", "velnora")),
-             RoleBinding("role:target", GroundedReference("rel:likes"))),
-        ))
-        meaning = _matrix_meaning(alias, request.revision_pin)
-        before = stores.world.revision, stores.r3_world_facts()
-        evaluation = evaluator.evaluate(meaning, request)
-        assert len(evaluation.learning_drafts) == 1
-        plan, obligation = LearningCoordinator(linked_authority, stores).materialize(evaluation, meaning, request)
-        assert (stores.world.revision, stores.r3_world_facts()) == before
-        after_snapshot = obligation_snapshot(stores, "session:foundation", maximum=8)
-        assert pending.obligation_ref in after_snapshot["obligation_refs"]
-        persisted_pending = stores.obligations.get(pending.obligation_ref)
-        assert persisted_pending is not None
-        assert persisted_pending["completion_receipt_ref"] is None
-        assert evaluation.learning_drafts[0].source_query_ref == query.query_result_ref
-        assert plan.source_query_ref == query.query_result_ref and obligation.source_query_ref == query.query_result_ref
-        assert plan.surface_literal == "velnora" and plan.target_ref == "rel:likes"
-        assert plan.expected_target_kinds == ("relation_type",)
-    finally:
-        stores.close()
 
 
 def test_foundation_matrix_reviewed_alias_survives_restart_and_unseen_reversal(tmp_path):

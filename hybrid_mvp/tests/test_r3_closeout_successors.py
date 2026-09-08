@@ -49,12 +49,6 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': '07bdecb94f784e35e1ea06b6bd34e7af931d74ad8e39adbdbab3f7f5f062ffdd',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_goal_arbiter_prefers_obligation_over_goal'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_0b18bc14e17d6cd1d567': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:safety-and-contracts-no-raw-phrase-equality-dispatch-in-runtime-source',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'cc34b3d34d543327102883434ebc221299792bfb09654953f13c7830f423756e',
-                                                                                  'supersedes_node_id': 'tests/test_r1_r2_safety_successors.py::test_r1_runtime_has_no_raw_phrase_equality_dispatch'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_0e8f1a78989177d083df': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:discourse-reference-that-resolves-most-recent-proposition',
                                                                                   'diagnostic_role': 'phase',
@@ -402,12 +396,6 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': '3973e97c34d2bed7762b2982ba24df37d113b7d4115989f96703fbeeddab3e90',
                                                                                   'supersedes_node_id': 'tests/test_epistemic_admission.py::TestNestedPlacementsRemainAttributed::test_nested_mode_is_attributed[simulated]'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_6f165d52c32e3c6be4b0': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:safety-and-contracts-safe-artifact-contract-replaces-legacy-checkpoint',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '740476e3728b3f61889c72f3b2b3d9a6d38ccf80c276961f150d342dfd02c223',
-                                                                                  'supersedes_node_id': 'tests/test_r1_r2_safety_successors.py::test_r1_safe_artifact_contract_has_no_legacy_checkpoint_api'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_70660ec884ab5d824ecf': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:restart-e2e-test-restart-preserves-revisions-restart-preserves-world-revision',
                                                                                   'diagnostic_role': 'phase',
@@ -630,12 +618,6 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': 'e453a9e8582f270baffe2cb22775f99be8a6fb6ae729bde4bc1c7cbd25e8ba0d',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_focus.py::test_focus_store_accumulates_across_turns'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_acfec94844fe97e2c9c8': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:safety-and-contracts-recursive-graph-cycle-rejected',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '2b7a4998f5f3b4505d2384cc04bba5a0c2db6fbdee3a3a260a201946bf3b2bf1',
-                                                                                  'supersedes_node_id': 'tests/test_r1_r2_safety_successors.py::test_r2_semantic_expression_rejects_application_cycle'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_ae3ce54649dca81d1f24': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:synonym-acquisition-one-invalid-definition-rejects-entire-acquisition',
                                                                                   'diagnostic_role': 'phase',
@@ -1461,14 +1443,8 @@ def test_r3_successor_a3c7e653cf515659a7a6() -> None:
 def test_r3_successor_9737c160af466856feaf() -> None:
     assert_successor_contract('restart', 'assertion:restart-e2e-test-restart-idempotency-restart-does-not-re-invoke-completed-effect')
 
-def test_r3_successor_0b18bc14e17d6cd1d567() -> None:
-    assert_successor_contract('safety', 'assertion:safety-and-contracts-no-raw-phrase-equality-dispatch-in-runtime-source')
 
-def test_r3_successor_acfec94844fe97e2c9c8() -> None:
-    assert_successor_contract('safety', 'assertion:safety-and-contracts-recursive-graph-cycle-rejected')
 
-def test_r3_successor_6f165d52c32e3c6be4b0() -> None:
-    assert_successor_contract('safety', 'assertion:safety-and-contracts-safe-artifact-contract-replaces-legacy-checkpoint')
 
 def test_r3_successor_dcac0e8e494facbd9d3f() -> None:
     assert_successor_contract('learning', 'assertion:synonym-acquisition-acquisition-consumes-plan')

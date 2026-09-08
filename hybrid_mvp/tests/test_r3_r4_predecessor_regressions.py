@@ -43,16 +43,6 @@ __cemm_test_inventory__ = {'tests/test_r3_r4_predecessor_regressions.py::test_de
                                                                                                                                   'diagnostic_role': 'phase',
                                                                                                                                   'introduced_by_task': 'R4-Predecessor-Repair',
                                                                                                                                   'source_ast_sha256': '5572e796cf5c6aa065133a02dc56af299bf9819eb34540d7eecff6918580f05a'},
- 'tests/test_r3_r4_predecessor_regressions.py::test_closure_known_definition_traverses_selected_semantic_path': {'activation_phase': 'R4',
-                                                                                                                 'assertion_ref': 'assertion:r4-closure-known-definition-selected-semantic-path',
-                                                                                                                 'diagnostic_role': 'phase',
-                                                                                                                 'introduced_by_task': 'R4-Closure-Slice-Task-1',
-                                                                                                                 'source_ast_sha256': '178efd0f372d35af17bfd06a112661e4d7b49d746b18fdc794c1d42d16ba108e'},
- 'tests/test_r3_r4_predecessor_regressions.py::test_closure_unknown_designation_preserves_literal_and_unknown_action': {'activation_phase': 'R4',
-                                                                                                                        'assertion_ref': 'assertion:r4-closure-unknown-designation-preserves-literal',
-                                                                                                                        'diagnostic_role': 'phase',
-                                                                                                                        'introduced_by_task': 'R4-Closure-Slice-Task-1',
-                                                                                                                        'source_ast_sha256': 'b43d3a7b140580839c84a9fc827ba3845dd0efd83c420eea34aa79d71e86e807'},
  'tests/test_r3_r4_predecessor_regressions.py::test_closure_invalid_program_receives_typed_verification_rejection': {'activation_phase': 'R4',
                                                                                                                      'assertion_ref': 'assertion:r4-closure-invalid-program-verification-rejected',
                                                                                                                      'diagnostic_role': 'owner',
@@ -104,52 +94,8 @@ def _assert_selected_semantic_path(result) -> None:
     assert result.response_meaning.response_expression.expression_ref
 
 
-def test_closure_known_definition_traverses_selected_semantic_path(tmp_path: Path) -> None:
-    case = _CLOSURE_CASES[0]
-    assert case.context_setup == "fresh"
-    assert case.surface is not None
-    runtime = _runtime(tmp_path)
-    try:
-        result = runtime.process("session:closure-known-definition", case.surface)
-    finally:
-        runtime.stores.close()
-    _assert_selected_semantic_path(result)
-    assert result.orientation.mode is case.expected_mode
-    assert result.response_meaning.discourse_action == case.expected_action
 
 
-def test_closure_unknown_designation_preserves_literal_and_unknown_action(tmp_path: Path) -> None:
-    case = _CLOSURE_CASES[1]
-    assert case.context_setup == "fresh"
-    assert case.surface is not None
-    runtime = _runtime(tmp_path)
-    try:
-        result = runtime.process("session:closure-unknown-designation", case.surface)
-    finally:
-        runtime.stores.close()
-    _assert_selected_semantic_path(result)
-    assert result.orientation.mode is case.expected_mode
-    response = result.response_meaning
-    meaning = result.verification.selected_meaning
-    assert response is not None
-    assert meaning is not None
-    surface_literals = tuple(
-        binding.filler
-        for application in response.response_expression.applications
-        for binding in application.roles
-        if binding.role_ref == "role:surface"
-        and type(binding.filler) is LiteralValue
-        and binding.filler == LiteralValue("string", "zorbulate")
-    )
-    assert surface_literals == (LiteralValue("string", "zorbulate"),)
-    assert response.verified_meaning_ref == meaning.verified_meaning_ref
-    assert response.source_expression_ref == meaning.expression.expression_ref
-    assert result.evaluation is not None
-    assert response.decision_ref == result.evaluation.decision.decision_ref
-    assert result.evaluation.decision.source_refs
-    assert set(result.evaluation.decision.source_refs) <= set(response.source_refs)
-    assert response.discourse_action == case.expected_action
-    assert response.discourse_action != "acknowledge"
 
 
 def test_closure_invalid_program_receives_typed_verification_rejection(

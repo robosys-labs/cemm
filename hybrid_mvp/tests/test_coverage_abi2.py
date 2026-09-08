@@ -544,40 +544,6 @@ def test_expression_link_arity_is_checked_against_exact_context_slot() -> None:
     assert "expression_link_arity_mismatch" in _codes(receipt)
 
 
-def test_variable_slot_role_must_belong_to_its_exact_body_frame() -> None:
-    context = _context()
-    variable = VariableSlot.create(
-        application_frame_ref=context.application_frames[0].slot_ref,
-        role_ref="role:object",
-        required_kinds=("entity",),
-        source_unit_refs=(),
-        construction_ref="construction:query",
-    )
-    context = _rebuild_context(context, variable_slots=(variable,))
-    program = _program(context)
-    project = ProgramAction.create(
-        action_index=5,
-        action_type="project_variable",
-        arguments=("binder:0", variable.slot_ref, "application:0"),
-    )
-    terminal = ProgramAction.create(
-        action_index=6, action_type="complete_program", arguments=()
-    )
-    candidate = SemanticSwitchProgram.create(
-        orientation_ref=program.orientation_ref,
-        proposal_context_ref=context.context_ref,
-        actions=(*program.actions[:-1], project, terminal),
-        root_refs=program.root_refs,
-        mode_slot_ref=program.mode_slot_ref,
-        goal_refs=program.goal_refs,
-        source_unit_refs=program.source_unit_refs,
-        source_assignments=program.source_assignments,
-        revision_pin=program.revision_pin,
-    )
-
-    receipt = CoverageVerifier().verify(context, candidate)
-
-    assert "variable_role_incompatible" in _codes(receipt)
 
 
 def test_transition_requires_exact_state_application_source() -> None:
@@ -1484,9 +1450,4 @@ __cemm_test_inventory__ = {'tests/test_coverage_abi2.py::test_action_source_geom
                                                                                                            'introduced_by_task': 'R1-Task-7',
                                                                                                            'owner_ref': 'program-verifier',
                                                                                                            'source_ast_sha256': '60553d34e65b34d8a1ce716e6d0d70644700f2175eb146a93d7b960b54738937'},
- 'tests/test_coverage_abi2.py::test_variable_slot_role_must_belong_to_its_exact_body_frame': {'activation_phase': 'R1',
-                                                                                              'assertion_ref': 'assertion:r1-coverage-abi2-test-variable-slot-role-must-belong-to-its-exact-body-frame',
-                                                                                              'diagnostic_role': 'owner',
-                                                                                              'introduced_by_task': 'R1-Task-7',
-                                                                                              'owner_ref': 'program-verifier',
-                                                                                              'source_ast_sha256': '1e991c413740ed34688494e1a0386f4d725ec20a06d836204c36220f8d5b1312'}}
+ }

@@ -1195,6 +1195,36 @@ unproved mappings as 163 newly observed runtime defects. Canonical continuation,
 reviewed publication/restart, fragment usability and the dormant writer cleanup
 remain open. No repair-completion, demo-completion or phase-admission claim follows.
 
+**Approved follow-through — remove obsolete tests, then finish owner repairs.**
+The user explicitly requested physical removal of redundant/obsolete tests after
+the audit. Preserve the immutable inventory and recoverable Git history at
+`add3917`, not stale duplicate pytest bodies. First remove only source functions
+whose entire parameter set is inactive across G0 through R8 and whose surviving
+assertions have actual current checks, plus redundant wrappers where selecting
+their exact underlying test preserves the assertion. Shorten later-node lineage
+edges across deleted intermediates without changing retained ancestry or phase
+coverage. Do not classify R5 deferrals or unproved assertions as obsolete merely
+because they are not currently executable. Verify exact before/after active
+coverage through the existing inventory verifier; no new runtime gate is needed.
+Remove the dormant preview-to-world writer with current EFFECT-owner protections,
+then continue the canonical-continuation/publication and remaining foundation
+tasks below. The cleanup is not a new completion boundary or permission request.
+
+Cleanup evidence: 45 whole test functions (47 cases), three redundant safety
+wrappers, the now-unused learning-transaction module and the historical wrapper
+generator were removed. The first deletion preserves exact active node/assertion
+bindings in all nine phases; the second substitutes only the three existing
+assertion-specific safety tests. Surviving test bodies are unchanged except the
+G0 module-presence list's removal of the deleted module. Twenty-five later lineage
+edges were shortened; immutable inventory and historical ledger identities did
+not change. Independent spec and quality reviews pass; 222 focused successor/control cases
+and the main 30-case authenticated governance/inventory selection pass. A raw
+historical suite-hash test still encodes an obsolete entire-suite identity; it is
+not selected by the current R3 lineage and its hash was not rewritten. Existing
+selectors and receipt regenerate twice identically, with phase counts unchanged.
+The 163 unproved mappings remain explicit, not silently retired or counted as
+new runtime defects. Deleted source is recoverable from `add3917`.
+
 The learning utterance is a proposal, not reviewer authority. Preserve its exact
 query, expression, situation, plan and terminal no-effect receipt as immutable
 lineage. A later explicit review must use a distinct publication journal and a

@@ -96,35 +96,12 @@ def reviewed_episode():
 # ---------------------------------------------------------------------------
 
 
-def test_episode_contains_every_phase_and_revision(reviewed_episode):
-    assert reviewed_episode.orientation
-    assert reviewed_episode.legal_proposals
-    assert reviewed_episode.rejected_proposals
-    assert reviewed_episode.selected_program
-    assert reviewed_episode.coverage
-    assert reviewed_episode.evaluation
-    assert reviewed_episode.effect_or_no_effect
-    assert reviewed_episode.response_meaning
-    assert reviewed_episode.realization_receipt
-    assert reviewed_episode.authority_hash and reviewed_episode.action_encoding_hash
 
 
-def test_episode_carries_generator_lineage_and_review_provenance(reviewed_episode):
-    assert reviewed_episode.generator_lineage
-    assert reviewed_episode.review_provenance
-    assert reviewed_episode.review_provenance.get("review_status") == "reviewed"
 
 
-def test_episode_has_known_abi_version(reviewed_episode):
-    assert reviewed_episode.abi_version == EPISODE_ABI_VERSION
 
 
-def test_episode_serializes_to_dict(reviewed_episode):
-    data = reviewed_episode.as_dict()
-    assert isinstance(data, dict)
-    assert data["orientation"]
-    assert data["selected_program"]
-    assert data["effect_or_no_effect"]
 
 
 # ---------------------------------------------------------------------------
@@ -179,18 +156,8 @@ def test_scenario_cases_cover_all_competency_categories(load_scenarios):
 # ---------------------------------------------------------------------------
 
 
-def test_episode_generation_is_byte_deterministic(tmp_path, builder):
-    left, right = tmp_path / "left.jsonl", tmp_path / "right.jsonl"
-    builder(left, seed=1701)
-    builder(right, seed=1701)
-    assert left.read_bytes() == right.read_bytes()
 
 
-def test_generated_episodes_match_committed_file(tmp_path, builder):
-    out = tmp_path / "regenerated.jsonl"
-    builder(out, seed=1701)
-    assert EPISODES_PATH.exists(), "Committed episodes file missing"
-    assert out.read_bytes() == EPISODES_PATH.read_bytes()
 
 
 def test_generated_episodes_count_matches_scenarios(builder, load_scenarios):
@@ -208,24 +175,10 @@ def test_generated_episodes_count_matches_scenarios(builder, load_scenarios):
 # ---------------------------------------------------------------------------
 
 
-def test_validate_episode_rejects_missing_no_effect_marker(reviewed_episode):
-    data = reviewed_episode.as_dict()
-    # Remove the no-effect marker.
-    data["effect_or_no_effect"] = None
-    with pytest.raises(ValueError):
-        validate_episode(data)
 
 
-def test_validate_episode_rejects_unknown_abi_version(reviewed_episode):
-    data = reviewed_episode.as_dict()
-    data["abi_version"] = 999
-    with pytest.raises(ValueError):
-        validate_episode(data)
 
 
-def test_validate_episode_accepts_valid_episode(reviewed_episode):
-    data = reviewed_episode.as_dict()
-    validate_episode(data)  # should not raise
 
 
 def test_training_source_kinds_are_closed():

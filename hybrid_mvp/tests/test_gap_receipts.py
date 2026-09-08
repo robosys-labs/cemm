@@ -215,25 +215,6 @@ def test_storage_failure_is_storage_kind(gap_classifier):
 # ---------------------------------------------------------------------------
 
 
-def test_gap_receipt_is_frozen_dataclass():
-    receipt = GapReceipt(
-        gap_ref="gap:test",
-        kind=GapKind.IMPLEMENTATION,
-        status="activation_failure",
-        source_refs=("cycle:test",),
-        blockers=("missing owner: realizer",),
-        missing_contract_refs=(),
-        rejected_candidate_refs=(),
-        recommended_owner=RepairOwner.RUNTIME,
-        safe_response_action="activation_failure",
-    )
-    assert dataclasses.is_dataclass(receipt)
-    try:
-        receipt.kind = GapKind.EVIDENCE  # type: ignore[misc]
-    except dataclasses.FrozenInstanceError:
-        pass
-    else:
-        raise AssertionError("GapReceipt must be frozen")
 
 
 def test_gap_receipt_has_stable_ref(gap_classifier):

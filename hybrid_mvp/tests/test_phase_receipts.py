@@ -122,34 +122,6 @@ def test_kernel_cycle_result_resolved_status(cycle_fixture):
     assert isinstance(result.final_revision_pin, RevisionPin)
 
 
-def test_orientation_is_frozen_dataclass():
-    import dataclasses
-
-    orientation = Orientation(
-        session_ref="session:test",
-        turn_ref="turn:test",
-        mode=SemanticMode.OBSERVE,
-        participant_frame="participant:user",
-        temporal_frame="now",
-        authority_generation="authority:generation-1",
-        world_revision=0,
-        session_revision=0,
-        episode_revision=0,
-        effect_revision=0,
-        model_identity=None,
-        focus_refs=(),
-        obligation_refs=(),
-        capability_summary=(),
-        permission_summary=(),
-        budgets={},
-    )
-    assert dataclasses.is_dataclass(orientation)
-    try:
-        orientation.mode = SemanticMode.QUERY  # type: ignore[misc]
-    except dataclasses.FrozenInstanceError:
-        pass
-    else:
-        raise AssertionError("Orientation must be frozen")
 
 
 def test_r1_orientation_is_canonical_frozen_dataclass():

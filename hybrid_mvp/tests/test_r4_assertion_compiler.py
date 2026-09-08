@@ -90,12 +90,6 @@ __cemm_test_inventory__ = {'tests/test_r4_assertion_compiler.py::test_unknown_as
                                                                                                          'introduced_by_task': 'R4.1-SR4.5',
                                                                                                          'owner_ref': 'expected-contract',
                                                                                                          'source_ast_sha256': '067df44389e65adb8a08968c9532bf6cf8880190becfde82404dcf45a9732128'},
- 'tests/test_r4_assertion_compiler.py::test_sr4_5_true_multi_root_and_type_role_remain_one_meaning': {'activation_phase': 'R4',
-                                                                                                      'assertion_ref': 'assertion:r4-sr4-5-true-multi-root-and-type-role-remain-one-meaning',
-                                                                                                      'diagnostic_role': 'owner',
-                                                                                                      'introduced_by_task': 'R4.1-SR4.5',
-                                                                                                      'owner_ref': 'expected-contract',
-                                                                                                      'source_ast_sha256': '5db2ca8db9295dd67b5f122a2bee4ab0af8922ebf50f9254658e44af12276ad4'},
  'tests/test_r4_assertion_compiler.py::test_sr4_5_proposition_filler_requires_reviewed_proposition_role': {'activation_phase': 'R4',
                                                                                                            'assertion_ref': 'assertion:r4-sr4-5-proposition-filler-requires-reviewed-proposition-role',
                                                                                                            'diagnostic_role': 'owner',
@@ -108,12 +102,6 @@ __cemm_test_inventory__ = {'tests/test_r4_assertion_compiler.py::test_unknown_as
                                                                                                           'introduced_by_task': 'R4.1-SR4.5',
                                                                                                           'owner_ref': 'expected-contract',
                                                                                                           'source_ast_sha256': '6d4c644ae982c9c16dea9c6035cc11c65f0a10af3fb82c0df24090086347c94d'},
- 'tests/test_r4_assertion_compiler.py::test_sr4_5_composed_expression_rejects_noncanonical_graphs': {'activation_phase': 'R4',
-                                                                                                     'assertion_ref': 'assertion:r4-sr4-5-composed-expression-rejects-noncanonical-graphs',
-                                                                                                     'diagnostic_role': 'owner',
-                                                                                                     'introduced_by_task': 'R4.1-SR4.5',
-                                                                                                     'owner_ref': 'expected-contract',
-                                                                                                     'source_ast_sha256': 'a1edf610cdf2e991aafef82954a4d29c58a58f15af00f2ea93111739846cf053'},
  'tests/test_r4_assertion_compiler.py::test_sr4_5_separate_assertions_and_conflicts_are_not_multi_root': {'activation_phase': 'R4',
                                                                                                           'assertion_ref': 'assertion:r4-sr4-5-separate-assertions-and-conflicts-are-not-multi-root',
                                                                                                           'diagnostic_role': 'owner',
@@ -933,131 +921,6 @@ def test_sr4_5_linked_composed_expression_is_one_canonical_meaning() -> None:
     )
 
 
-def test_sr4_5_true_multi_root_and_type_role_remain_one_meaning(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    fields = {
-        "shape": "multi_root",
-        "applications": [
-            _composed_application(
-                "typing",
-                "op:type",
-                "concept:agent",
-                {
-                    "role:subject": _grounded("concept:agent"),
-                    "role:type": _literal("concept"),
-                },
-            ),
-            _composed_application(
-                "liking",
-                "op:relation",
-                "rel:likes",
-                {
-                    "role:subject": _grounded("entity:alice"),
-                    "role:object": _grounded("entity:book"),
-                },
-            ),
-        ],
-        "expression_links": [],
-        "root_local_refs": ["typing", "liking"],
-    }
-
-    first = _compile("composed_expression", fields)
-    renamed = {
-        "shape": "multi_root",
-        "applications": [
-            _composed_application(
-                "second",
-                "op:relation",
-                "rel:likes",
-                {
-                    "role:object": _grounded("entity:book"),
-                    "role:subject": _grounded("entity:alice"),
-                },
-            ),
-            _composed_application(
-                "first",
-                "op:type",
-                "concept:agent",
-                {
-                    "role:type": _literal("concept"),
-                    "role:subject": _grounded("concept:agent"),
-                },
-            ),
-        ],
-        "expression_links": [],
-        "root_local_refs": ["second", "first"],
-    }
-    second = _compile("composed_expression", renamed)
-
-    assert first.expression_relation.value == "single"
-    assert len(first.expected_expressions) == 1
-    expression = first.expected_expressions[0]
-    assert len(expression.root_refs) == 2
-    assert not expression.expression_links
-    assert any(
-        application.operator == "op:type"
-        and any(role.role_ref == "role:type" for role in application.roles)
-        for application in expression.applications
-    )
-    assert second.expected_expressions[0].expression_ref == expression.expression_ref
-
-    work: list[str] = []
-
-    def counted_work(
-        _compiler: ExpectedCycleContractCompiler, operation: str
-    ) -> None:
-        work.append(operation)
-
-    monkeypatch.setattr(
-        ExpectedCycleContractCompiler,
-        "_record_composed_work",
-        counted_work,
-    )
-
-    def compile_roots(count: int) -> int:
-        work.clear()
-        root_fields = {
-            "shape": "multi_root",
-            "applications": [
-                _composed_application(
-                    f"root_{index}",
-                    "op:type",
-                    "concept:agent",
-                    {
-                        "role:subject": _grounded("concept:agent"),
-                        "role:type": _literal("concept"),
-                    },
-                )
-                for index in range(count)
-            ],
-            "expression_links": [],
-            "root_local_refs": [f"root_{index}" for index in range(count)],
-        }
-        _compile("composed_expression", root_fields)
-        assert work.count("local_ref_duplicate_probe") == count
-        assert work.count("local_ref_insert") == count
-        assert work.count("root_resolution") == count
-        assert work.count("proposition_resolution") == 0
-        assert work.count("link_operand_resolution") == 0
-        return len(work)
-
-    assert compile_roots(2) == 6
-    assert compile_roots(8) == 24
-
-    work.clear()
-    _compile("composed_expression", _linked_fields())
-    assert work == [
-        "local_ref_duplicate_probe",
-        "local_ref_insert",
-        "local_ref_duplicate_probe",
-        "local_ref_insert",
-        "local_ref_duplicate_probe",
-        "local_ref_insert",
-        "root_resolution",
-        "link_operand_resolution",
-        "link_operand_resolution",
-    ]
 
 
 def test_sr4_5_proposition_filler_requires_reviewed_proposition_role() -> None:
@@ -1307,41 +1170,6 @@ def _assert_composed_expression_rejects_noncanonical_graph(
         _compile("composed_expression", fields)
 
 
-def test_sr4_5_composed_expression_rejects_noncanonical_graphs() -> None:
-    for mutation, error in (
-        ("duplicate_local", "duplicate"),
-        ("duplicate_root", "duplicate"),
-        ("unknown_root", "unknown|dangling"),
-        ("unknown_shape", "shape"),
-        ("bad_link_arity", "arity"),
-        ("unknown_link", "unsupported expression link"),
-        ("dangling_operand", "unknown expression link operand"),
-        ("multi_root_with_link", "multi_root"),
-        ("linked_without_link", "linked"),
-        ("unknown_operator", "operator"),
-        ("unknown_predicate", "authority ref"),
-        ("wrong_predicate_kind", "incompatible kind"),
-        ("unknown_role", "role"),
-        ("unknown_filler", "filler kind"),
-        ("literal_event_actor", "literal filler"),
-        ("designation_non_string", "designation surface"),
-        ("designation_empty", "designation surface"),
-        ("dangling_proposition", "unknown proposition"),
-        ("orphan", "non-root"),
-        ("cycle", "cycle|parent"),
-        ("integer_bool", "integer"),
-        ("boolean_int", "boolean"),
-        ("wrong_type_literal", "type role"),
-        ("extra_application_field", "fields must match"),
-        ("missing_link_field", "fields must match"),
-        ("extra_filler_field", "fields must match"),
-        ("over_role_bound", "role bound"),
-        ("over_depth", "depth"),
-        ("over_application_bound", "application"),
-        ("over_link_bound", "link"),
-        ("over_root_bound", "root"),
-    ):
-        _assert_composed_expression_rejects_noncanonical_graph(mutation, error)
 
 
 def test_sr4_5_separate_assertions_and_conflicts_are_not_multi_root() -> None:

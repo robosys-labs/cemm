@@ -141,10 +141,16 @@ checks to the normal cycle. Use the existing test/inventory/validation owners.
 
 ## 6. Tests, generated artifacts and authority migration
 
-Preserve immutable test inventory and historical ledger identities. A superseded
-frozen test remains physical evidence; add an explicit same-assertion successor
-with truthful current expectations. Never refresh a frozen AST to hide a changed
-contract. Later source metadata is refreshed through the existing tool.
+Preserve immutable test inventory and historical ledger identities. The user's
+subsequent explicit test-cleanup approval permits deleting redundant or obsolete
+test bodies after identifying their exact current replacements. Historical source
+and metadata remain recoverable from Git (pre-cleanup checkpoint `add3917`), not
+required as permanently collectable stale tests. Preserve valid assertions through
+explicit same-assertion successors with truthful current expectations. Supersession
+chains may be shortened across deleted intermediates only when retained ancestry,
+assertion identity and phase coverage remain intact. Never refresh a frozen AST
+or silently drop a valid obligation to hide a changed contract. Later source
+metadata and selectors are refreshed through the existing tools.
 
 Replace stale routing assertions with successors that verify this amendment's
 precedence and historical classifications. Do not retain tests whose only purpose

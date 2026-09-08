@@ -151,52 +151,6 @@ def test_prospective_designation_fact_preserves_literal_and_target(
     assert result.response_meaning.source_expression_ref == expression.expression_ref
 
 
-def test_unresolved_designation_query_uses_the_same_label_application_with_bound_target(
-    tmp_path: Path,
-) -> None:
-    runtime = load_runtime(
-        ROOT,
-        profile="development",
-        store_path=tmp_path / "stores.db",
-    )
-    try:
-        result = runtime.process(
-            "session:unresolved-designation-expression",
-            "What is zorbulate?",
-        )
-    finally:
-        runtime.stores.close()
-
-    assert result.verification.selected_meaning is not None
-    expression = result.verification.selected_meaning.expression
-    designation = _designation_application(expression)
-    assert designation.predicate_ref == "label:lexical"
-    assert designation.qualifiers == ()
-    roles = _roles(designation)
-    assert set(roles) == {"role:label_type", "role:surface", "role:target"}
-    assert roles["role:label_type"] == GroundedReference("label:lexical")
-    assert roles["role:surface"] == LiteralValue("string", "zorbulate")
-    assert isinstance(roles["role:target"], BoundVariable)
-    matching_binders = tuple(
-        binder
-        for binder in expression.binders
-        if binder.variable_ref == roles["role:target"].variable_ref
-    )
-    assert len(matching_binders) == 1
-    assert matching_binders[0].body_ref == designation.application_ref
-    assert all(
-        application.predicate_ref != "concept:zorbulate"
-        for application in expression.applications
-    )
-    assert all(
-        not (
-            isinstance(binding.filler, GroundedReference)
-            and binding.filler.target_ref == "concept:zorbulate"
-        )
-        for application in expression.applications
-        for binding in application.roles
-    )
-    assert SemanticExpression.from_dict(expression.as_dict()) == expression
 
 
 def test_expression_is_immutable_and_excludes_evidence_geometry() -> None:
@@ -800,14 +754,6 @@ __cemm_test_inventory__ = {'tests/test_semantic_expressions.py::test_alpha_renam
         "introduced_by_task": "R2-Unresolved-Designation-Task-1",
         "owner_ref": "expression-compiler",
         "source_ast_sha256": "f2242b65c1f2b3d54fb524018cefd4ab29739d6c40f5caf678f7a8d9759430da"
-    },
-    "tests/test_semantic_expressions.py::test_unresolved_designation_query_uses_the_same_label_application_with_bound_target": {
-        "activation_phase": "R2",
-        "assertion_ref": "assertion:r2-unresolved-designation-unresolved-designation-query-uses-the-same-label-application-with-bound-target",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R2-Unresolved-Designation-Task-1",
-        "owner_ref": "expression-compiler",
-        "source_ast_sha256": "63e1e1638bcb60fa4e44af4474bf3f4e9714ebc37a2146eae1fa13f7f184e19e"
     },
     "tests/test_semantic_expressions.py::test_semantic_expression_abi2_rejects_abi1_wire_values": {
         "activation_phase": "R2",

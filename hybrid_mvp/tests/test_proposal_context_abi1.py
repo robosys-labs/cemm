@@ -755,70 +755,8 @@ def test_context_identity_covers_revision_and_all_slot_content() -> None:
     assert original.context_ref != changed.context_ref
 
 
-def test_context_rejects_duplicate_slots_unknown_sources_and_invalid_spans() -> None:
-    context = _context()
-    fields = _creation_fields(context)
-    fields["designation_slots"] = context.designation_slots * 2
-    with pytest.raises(ValueError, match="duplicate designation"):
-        ProposalContext.create(**fields)
-    fields = _creation_fields(context)
-    fields["source_unit_refs"] = ("unit:alice", "unit:period")
-    fields["source_unit_spans"] = (
-        ("unit:alice", 0, 5),
-        ("unit:period", 5, 6),
-    )
-    with pytest.raises(ValueError, match="unknown source unit"):
-        ProposalContext.create(**fields)
-    fields = _creation_fields(context)
-    fields["source_unit_spans"] = (
-        ("unit:alice", 5, 0),
-        ("unit:loves", 6, 11),
-        ("unit:period", 11, 12),
-    )
-    with pytest.raises(ValueError, match="source span"):
-        ProposalContext.create(**fields)
-    duplicate_residual = ResidualEvidence.create(
-        source_unit_ref="unit:period",
-        contribution_kind="discourse",
-        critical=False,
-        reason="terminal punctuation",
-    )
-    fields = _creation_fields(context)
-    fields["residual_evidence"] = (*context.residual_evidence, duplicate_residual)
-    with pytest.raises(ValueError, match="duplicate residual source"):
-        ProposalContext.create(**fields)
 
 
-@pytest.mark.parametrize(
-    "spans",
-    (
-        (
-            ("unit:alice", 0, 0),
-            ("unit:loves", 0, 5),
-            ("unit:period", 5, 6),
-        ),
-        (
-            ("unit:alice", 0, 5),
-            ("unit:loves", 6, 11),
-            ("unit:period", 5, 6),
-        ),
-        (
-            ("unit:alice", 0, 5),
-            ("unit:loves", 4, 9),
-            ("unit:period", 9, 10),
-        ),
-    ),
-    ids=("zero-width", "gap", "overlap"),
-)
-def test_direct_context_rejects_zero_width_and_noncontiguous_spans(
-    spans: tuple[tuple[str, int, int], ...],
-) -> None:
-    context = _context()
-    fields = _creation_fields(context)
-    fields["source_unit_spans"] = spans
-
-    with pytest.raises(ValueError, match="source span"):
-        ProposalContext.create(**fields)
 
 
 def test_context_codec_rejects_noncontiguous_wire_spans() -> None:
@@ -1081,63 +1019,6 @@ def test_context_rejects_frame_roles_not_proven_by_context(
         ProposalContext.create(**fields)
 
 
-def test_context_rejects_transition_on_non_state_frame() -> None:
-    context = _context()
-    designation = DesignationSlot.create(
-        source_unit_refs=("unit:loves",),
-        target_ref="relation:love",
-        target_kind="relation_type",
-        score_q=950_000,
-        designation_fact_ref="designation:love",
-        provenance_refs=("authority:g1",),
-    )
-    frame = ApplicationFrameSlot.create(
-        designation_slot_ref=designation.slot_ref,
-        predicate_target_ref=designation.target_ref,
-        predicate_kind=designation.target_kind,
-        operator_ref="op:relation",
-        structural_role_ref="role:relation",
-        required_roles=("role:subject", "role:object"),
-        optional_roles=(),
-        proposition_roles=(),
-        source_unit_refs=("unit:loves",),
-        derived_role_targets=(),
-        affordance_frame_ref="frame:love",
-        provenance_refs=(designation.slot_ref, "frame:love"),
-    )
-    transition = TransitionSlot.create(
-        application_frame_ref=frame.slot_ref,
-        event_type_ref="event:set_state",
-        compatible_modes=("REQUEST",),
-        required_roles=("role:actor",),
-        required_capabilities=("cap:set_state",),
-        required_permissions=("permission:set_state",),
-        adapter_ref="adapter:state",
-        source_unit_refs=("unit:loves",),
-    )
-    fields = _creation_fields(context)
-    relation_predicate = ContributionSlot.create(
-        contribution_ref="contribution:love-predicate",
-        kind="predicate",
-        source_unit_refs=("unit:loves",),
-        target_ref=designation.target_ref,
-        target_kind=designation.target_kind,
-        input_ports=("role:subject", "role:object"),
-        output_ports=("role:relation",),
-        constraints=(),
-        provenance_refs=("frame:love",),
-    )
-    fields["designation_slots"] = (designation,)
-    fields["contribution_slots"] = (
-        context.contribution_slots[0],
-        relation_predicate,
-    )
-    fields["application_frames"] = (frame,)
-    fields["variable_slots"] = ()
-    fields["transition_slots"] = (transition,)
-
-    with pytest.raises(ValueError, match="op:state"):
-        ProposalContext.create(**fields)
 
 
 class _ProposalContextSubclass(ProposalContext):
@@ -1422,12 +1303,6 @@ __cemm_test_inventory__ = {'tests/test_proposal_context_abi1.py::test_content_ad
                                                                                                      'introduced_by_task': 'R1-Task-7',
                                                                                                      'owner_ref': 'program-verifier',
                                                                                                      'source_ast_sha256': 'e7278a718241cbfffe90e16e3a2e870abf84cec85eb0a4bd055c0addea6052c5'},
- 'tests/test_proposal_context_abi1.py::test_context_rejects_duplicate_slots_unknown_sources_and_invalid_spans': {'activation_phase': 'R1',
-                                                                                                                 'assertion_ref': 'assertion:r1-proposal-context-abi1-test-context-rejects-duplicate-slots-unknown-sources-and-invalid-spans',
-                                                                                                                 'diagnostic_role': 'owner',
-                                                                                                                 'introduced_by_task': 'R1-Task-7',
-                                                                                                                 'owner_ref': 'program-verifier',
-                                                                                                                 'source_ast_sha256': 'd386d16a8542317d42a74f43b16f9a2c0615527c5a6f2a687c6c28b4293ce5d8'},
  'tests/test_proposal_context_abi1.py::test_context_rejects_frame_operator_that_disagrees_with_semantic_kind': {'activation_phase': 'R1',
                                                                                                                 'assertion_ref': 'assertion:r1-proposal-context-abi1-test-context-rejects-frame-operator-that-disagrees-with-semantic-kind',
                                                                                                                 'diagnostic_role': 'owner',
@@ -1470,36 +1345,12 @@ __cemm_test_inventory__ = {'tests/test_proposal_context_abi1.py::test_content_ad
                                                                                                'introduced_by_task': 'R1-Task-7',
                                                                                                'owner_ref': 'program-verifier',
                                                                                                'source_ast_sha256': '3dbeb1515c798e74f8e3cc2af1e2c6f6ba301f5c9c751621bfbf710782d68cc4'},
- 'tests/test_proposal_context_abi1.py::test_context_rejects_transition_on_non_state_frame': {'activation_phase': 'R1',
-                                                                                             'assertion_ref': 'assertion:r1-proposal-context-abi1-test-context-rejects-transition-on-non-state-frame',
-                                                                                             'diagnostic_role': 'owner',
-                                                                                             'introduced_by_task': 'R1-Task-7',
-                                                                                             'owner_ref': 'program-verifier',
-                                                                                             'source_ast_sha256': '75ee20127343ee929f4b910ef72179922f26efa9ae58f4e34b58729679efc1df'},
  'tests/test_proposal_context_abi1.py::test_context_slot_tuples_are_bounded_by_runtime_config': {'activation_phase': 'R1',
                                                                                                  'assertion_ref': 'assertion:r1-proposal-context-abi1-test-context-slot-tuples-are-bounded-by-runtime-config',
                                                                                                  'diagnostic_role': 'owner',
                                                                                                  'introduced_by_task': 'R1-Task-7',
                                                                                                  'owner_ref': 'program-verifier',
                                                                                                  'source_ast_sha256': '7ce0f326a84a0b51126bd78a51d69d707fca0ffce6417e34b8ca6431ae7008f4'},
- 'tests/test_proposal_context_abi1.py::test_direct_context_rejects_zero_width_and_noncontiguous_spans[gap]': {'activation_phase': 'R1',
-                                                                                                              'assertion_ref': 'assertion:r1-proposal-context-abi1-test-direct-context-rejects-zero-width-and-noncontiguous-spans-gap',
-                                                                                                              'diagnostic_role': 'owner',
-                                                                                                              'introduced_by_task': 'R1-Task-7',
-                                                                                                              'owner_ref': 'program-verifier',
-                                                                                                              'source_ast_sha256': 'd08eeae280ac84881d2d5fd59dababe317f4c81f83b78a5d3c8594cca68e2044'},
- 'tests/test_proposal_context_abi1.py::test_direct_context_rejects_zero_width_and_noncontiguous_spans[overlap]': {'activation_phase': 'R1',
-                                                                                                                  'assertion_ref': 'assertion:r1-proposal-context-abi1-test-direct-context-rejects-zero-width-and-noncontiguous-spans-overlap',
-                                                                                                                  'diagnostic_role': 'owner',
-                                                                                                                  'introduced_by_task': 'R1-Task-7',
-                                                                                                                  'owner_ref': 'program-verifier',
-                                                                                                                  'source_ast_sha256': 'd08eeae280ac84881d2d5fd59dababe317f4c81f83b78a5d3c8594cca68e2044'},
- 'tests/test_proposal_context_abi1.py::test_direct_context_rejects_zero_width_and_noncontiguous_spans[zero-width]': {'activation_phase': 'R1',
-                                                                                                                     'assertion_ref': 'assertion:r1-proposal-context-abi1-test-direct-context-rejects-zero-width-and-noncontiguous-spans-zero-width',
-                                                                                                                     'diagnostic_role': 'owner',
-                                                                                                                     'introduced_by_task': 'R1-Task-7',
-                                                                                                                     'owner_ref': 'program-verifier',
-                                                                                                                     'source_ast_sha256': 'd08eeae280ac84881d2d5fd59dababe317f4c81f83b78a5d3c8594cca68e2044'},
  'tests/test_proposal_context_abi1.py::test_every_slot_is_content_addressed_and_strictly_round_trips': {'activation_phase': 'R1',
                                                                                                         'assertion_ref': 'assertion:r1-proposal-context-abi1-test-every-slot-is-content-addressed-and-strictly-round-trips',
                                                                                                         'diagnostic_role': 'owner',

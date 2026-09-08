@@ -643,94 +643,6 @@ def test_builder_emits_reference_and_query_variable_contributions() -> None:
     assert context.residual_for_source("unit:what") is None
 
 
-def test_unknown_designation_query_builds_one_exact_unresolved_designation_frame(
-    tmp_path: Path,
-) -> None:
-    source = "What is zorbulate?"
-    runtime = load_runtime(
-        ROOT,
-        profile="development",
-        store_path=tmp_path / "stores.db",
-    )
-    try:
-        _, context = runtime.orient(
-            "session:closure-unknown-designation-context",
-            source,
-        )
-    finally:
-        runtime.stores.close()
-
-    literal_start = source.index("zorbulate")
-    literal_span = (literal_start, literal_start + len("zorbulate"))
-    literal_unit_refs = tuple(
-        unit_ref
-        for unit_ref, source_start, source_end in context.source_unit_spans
-        if (source_start, source_end) == literal_span
-    )
-    assert len(literal_unit_refs) == 1
-    literal_unit_ref = literal_unit_refs[0]
-    frame_type = getattr(
-        proposal_context_module, "UnresolvedDesignationFrame", None
-    )
-    assert frame_type is not None, (
-        "Proposal Context must own UnresolvedDesignationFrame"
-    )
-    frames = getattr(context, "unresolved_designation_frames", ())
-    assert len(frames) == 1
-    frame = frames[0]
-    assert type(frame) is frame_type
-    assert frame.label_type_ref == "label:lexical"
-    assert frame.source_unit_refs == (literal_unit_ref,)
-    assert context.source_span(frame.source_unit_refs) == literal_span
-
-    literal = context.contribution(frame.literal_contribution_slot_ref)
-    assert literal is not None
-    assert literal.kind == "literal"
-    assert literal.literal_value == "zorbulate"
-    assert literal.source_unit_refs == (literal_unit_ref,)
-
-    targets = context.variables_for_frame_role(frame.slot_ref, "role:target")
-    assert len(targets) == 1
-    target = targets[0]
-    assert target.application_frame_ref == frame.slot_ref
-
-    what_span = (0, len("What"))
-    question_span = (source.index("?"), source.index("?") + len("?"))
-    what_unit_refs = tuple(
-        unit_ref
-        for unit_ref, source_start, source_end in context.source_unit_spans
-        if (source_start, source_end) == what_span
-    )
-    question_unit_refs = tuple(
-        unit_ref
-        for unit_ref, source_start, source_end in context.source_unit_spans
-        if (source_start, source_end) == question_span
-    )
-    assert len(what_unit_refs) == len(question_unit_refs) == 1
-    assert any(
-        contribution.kind == "open_variable"
-        and contribution.source_unit_refs == what_unit_refs
-        for contribution in context.contribution_slots
-    )
-    assert any(
-        contribution.kind == "discourse"
-        and contribution.source_unit_refs == question_unit_refs
-        for contribution in context.contribution_slots
-    )
-    assert context.residual_for_source(what_unit_refs[0]) is None
-    assert context.residual_for_source(question_unit_refs[0]) is None
-
-    query_binder = context.contribution(frame.query_binder_slot_ref)
-    assert query_binder is not None
-    assert query_binder.kind == "binder"
-    assert context.source_span(query_binder.source_unit_refs) == (
-        source.index("is"),
-        source.index("is") + len("is"),
-    )
-    assert not any(
-        residual.critical and residual.source_unit_ref == literal_unit_ref
-        for residual in context.residual_evidence
-    )
 
 
 def test_plain_unknown_assertion_does_not_receive_unresolved_designation_frame(
@@ -1299,14 +1211,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "R1-Task-9",
         "owner_ref": "runtime-path",
         "source_ast_sha256": "3428d191d2a758680d7bed2239455aa05e79c046f400d2ad887dd5381ac372d7"
-    },
-    "tests/test_proposal_context_builder.py::test_unknown_designation_query_builds_one_exact_unresolved_designation_frame": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-closure-unknown-designation-current-context-blocker",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "R4-Closure-Slice-Task-2",
-        "owner_ref": "proposal-context",
-        "source_ast_sha256": "fe5fb6fdbfce9e2047946171c24daadedec6d3cc260f375e04cb241de84f17ca"
     },
     "tests/test_proposal_context_builder.py::test_plain_unknown_assertion_does_not_receive_unresolved_designation_frame": {
         "activation_phase": "R2",

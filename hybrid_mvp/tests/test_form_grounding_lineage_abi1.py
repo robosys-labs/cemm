@@ -582,23 +582,6 @@ def test_grounding_result_prebounds_before_iteration_and_child_decode() -> None:
         grounding.GroundingResult.from_dict(hostile_wire)
 
 
-def test_grounding_result_rejects_forged_refs_revision_and_created_authority() -> None:
-    result = _nested_grounding_result()
-
-    with pytest.raises(ValueError, match="GroundingResult ref mismatch"):
-        replace(result, grounding_ref="grounding_result:forged")
-    with pytest.raises(ValueError, match="created_refs.*empty"):
-        replace(result, created_refs=("concept:manufactured",))
-
-    forged_evidence = result.as_dict()
-    forged_evidence["evidence_packet_ref"] = "evidence_packet:other"
-    with pytest.raises(ValueError, match="GroundingResult ref mismatch"):
-        grounding.GroundingResult.from_dict(forged_evidence)
-
-    forged_pin = result.as_dict()
-    forged_pin["revision_pin"]["world_revision"] = True
-    with pytest.raises(TypeError, match="world_revision must be int"):
-        grounding.GroundingResult.from_dict(forged_pin)
 
 
 @pytest.mark.parametrize(
@@ -731,12 +714,6 @@ __cemm_test_inventory__ = {'tests/test_form_grounding_lineage_abi1.py::test_dupl
                                                                                                                   'introduced_by_task': 'R1-Task-9',
                                                                                                                   'owner_ref': 'runtime-path',
                                                                                                                   'source_ast_sha256': 'edc3718d58593d24549739c645211d443761978f4a7d6fdfb6b6cc2903600fc9'},
- 'tests/test_form_grounding_lineage_abi1.py::test_grounding_result_rejects_forged_refs_revision_and_created_authority': {'activation_phase': 'R1',
-                                                                                                                         'assertion_ref': 'assertion:r1-form-grounding-lineage-abi1-test-grounding-result-rejects-forged-refs-revision-and-created-authority',
-                                                                                                                         'diagnostic_role': 'owner',
-                                                                                                                         'introduced_by_task': 'R1-Task-9',
-                                                                                                                         'owner_ref': 'runtime-path',
-                                                                                                                         'source_ast_sha256': '25d79c86934a2aa8bda14beb1aff30f80924f6845a2ea30c0eb27eb640cbc3b4'},
  'tests/test_form_grounding_lineage_abi1.py::test_resolve_evidence_preserves_exact_packet_lineage': {'activation_phase': 'R1',
                                                                                                      'assertion_ref': 'assertion:r1-form-grounding-lineage-abi1-test-resolve-evidence-preserves-exact-packet-lineage',
                                                                                                      'diagnostic_role': 'owner',
@@ -749,4 +726,4 @@ __cemm_test_inventory__ = {'tests/test_form_grounding_lineage_abi1.py::test_dupl
                                                                                                                  'introduced_by_task': 'R1-Task-9',
                                                                                                                  'owner_ref': 'runtime-path',
                                                                                                                  'source_ast_sha256': '5ce4f50784ff1fcbb0c399e9a5fd98d4c6ce5eda45baabd7f70f961566a17a51',
-                                                                                                                 'supersedes_node_id': 'tests/test_form_grounding_lineage_abi1.py::test_grounding_result_rejects_forged_refs_revision_and_created_authority'},}
+                                                                                                                 },}

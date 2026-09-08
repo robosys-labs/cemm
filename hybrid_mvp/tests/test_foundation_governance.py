@@ -23,7 +23,6 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-1",
         "owner_ref": "governance",
-        "supersedes_node_id": "tests/test_replay_governance.py::test_authority_cleanup_classifies_every_authority_like_document_once",
     },
     "tests/test_foundation_governance.py::test_foundation_routes_current_work_without_promoting_admission": {
         "source_ast_sha256": "f136807893cb3334218a11e490920f10f5689fe86c396ac1e0ff829a509e6482",
@@ -32,7 +31,6 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-1",
         "owner_ref": "governance",
-        "supersedes_node_id": "tests/test_replay_governance.py::test_r4_closure_stop_routes_only_to_reviewed_representation_design",
     },
 }
 

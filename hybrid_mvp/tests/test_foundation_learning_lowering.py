@@ -588,7 +588,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
         "source_ast_sha256": "c4d9d8a9a418aa5316777cafa8b04322c824880b741a996d82b92a94487085dd",
-        "supersedes_node_id": "tests/test_r3_learning_transaction.py::test_incomplete_designation_requests_clarification_without_learning_draft"
     },
     "tests/test_foundation_learning_lowering.py::test_learning_grant_decisions_preserve_unknown_and_denied_distinction[unknown-capability]": {
         "activation_phase": "R3",

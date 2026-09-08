@@ -138,20 +138,6 @@ def test_r1_evidence_policy_has_no_external_artifact() -> None:
     assert gate._required_admission_evidence_paths("R1") == ()
 
 
-def test_authority_link_is_content_addressed_and_fail_closed(tmp_path: Path) -> None:
-    context = _context(tmp_path)
-    result = context.run_authority_link()
-    assert result.disposition == "passed"
-    assert result.report is not None
-    assert result.report["schema"] == "cemm-authority-link-step-report-v1"
-    assert result.report["generation"] == "authority-v1-2026-07-29"
-    assert result.report["authority_ref"].startswith("linked_authority:")
-
-    manifest = ROOT / "data" / "authority" / "manifest.json"
-    original = context._read_bytes
-    context._read_bytes = lambda path: b"{}" if path == manifest else original(path)
-    with pytest.raises(gate.GateConfigError, match="authority link failed"):
-        context.run_authority_link()
 
 
 def test_sqlite_activation_uses_fresh_store_and_reopens(tmp_path: Path) -> None:
@@ -197,13 +183,6 @@ def test_r1_structure_rejects_legacy_or_duplicate_paths(tmp_path: Path) -> None:
     with pytest.raises(gate.GateConfigError, match="R1 structure validation failed"):
         gate._scan_r1_structure(tmp_path)
 __cemm_test_inventory__ = {
-    "tests/test_r1_validation_gate.py::test_authority_link_is_content_addressed_and_fail_closed": {
-        "activation_phase": "R1",
-        "assertion_ref": "assertion:r1-admission-authority-link",
-        "diagnostic_role": "admission_only",
-        "introduced_by_task": "R1-Task-9-Admission",
-        "source_ast_sha256": "12bbf808cd2b35bdcb916e9d7e72a37dd8bb28584d626a23bf3ae77adc41320a",
-    },
     "tests/test_r1_validation_gate.py::test_r1_evidence_policy_has_no_external_artifact": {
         "activation_phase": "R1",
         "assertion_ref": "assertion:r1-admission-evidence-policy",

@@ -74,7 +74,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
         "source_ast_sha256": "b043e9cbbde96724e19c1d80fa2a5fc63ce374ceba198d54dac9564a2c2adf20",
-        "supersedes_node_id": "tests/test_foundation_semantics.py::test_foundation_matrix_alias_directive_binds_actual_prior_query"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_exact_answer_binds_real_query_and_expiry[restart]": {
         "activation_phase": "R3",
@@ -91,7 +90,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
         "source_ast_sha256": "e0f27e0c6b11add910682806f4e9866db3182b220c12e04876d1824dab02646f",
-        "supersedes_node_id": "tests/test_r3_learning_transaction.py::test_learning_decision_materializes_exact_evaluated_draft"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_effect_cannot_create_a_second_pending_obligation": {
         "activation_phase": "R3",
@@ -108,7 +106,6 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
         "source_ast_sha256": "5649bd69e9e2482cda45efb82952fb8d893ec1cc6b133b6da44ee98f2d052b11",
-        "supersedes_node_id": "tests/test_r3_learning_transaction.py::test_learning_finalization_rejects_unbound_draft_ref"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_positive_directive_remains_eligible_with_bound_query": {
         "activation_phase": "R3",
