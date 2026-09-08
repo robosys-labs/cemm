@@ -1,6 +1,6 @@
 {
   "abi_version": 1,
-  "generation": "authority-v1-2026-09-08-linked-alias-contract",
+  "generation": "authority-v1-2026-09-08-linked-frames",
   "owners": [
     {
       "name": "kernel",
@@ -21,6 +21,11 @@
       "name": "alias_learning",
       "path": "alias_learning.json",
       "sha256": "53de24490c3a1e6ca5a4641c2a804452cdd53eb16d124996aecd28bbed298941"
+    },
+    {
+      "name": "semantic_affordances",
+      "path": "frames/semantic_affordances.json",
+      "sha256": "69f0670f76338737e99d435130dd24be853e42d94a7a2369650460c73af3bf13"
     }
   ]
 }

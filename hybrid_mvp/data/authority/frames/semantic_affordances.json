@@ -1,5 +1,6 @@
 {
-  "generation": "authority-v1-2026-07-29",
+  "owner": "semantic_affordances",
+  "generation": "authority-v1-2026-09-08-linked-frames",
   "frames": [
     {
       "frame_ref": "frame:event:greeting",

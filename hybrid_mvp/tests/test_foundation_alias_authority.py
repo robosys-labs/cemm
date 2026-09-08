@@ -116,9 +116,9 @@ __cemm_test_inventory__ = {
     "tests/test_foundation_alias_authority.py::test_alias_authority_does_not_add_designations_or_external_adapter_availability": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-alias-alias-authority-does-not-add-designations-or-external-adapter-availability", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "9e39379d6fc2022d1f636a533ea93edb68e465e2913d2b71a8a7e7f132de43d5"},
     "tests/test_foundation_alias_authority.py::test_active_alias_authority_fresh_runtime_reopen_and_prior_generation_rejection": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-alias-active-alias-authority-fresh-runtime-reopen-and-prior-generation-rejection", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "3fb425acbf59a830ec625f3767180670d9c276ce38d64b44aaf1c00127a7947d"},
     "tests/test_foundation_alias_authority.py::test_historical_splitter_rejects_existing_authority_before_any_write": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-alias-historical-splitter-rejects-existing-authority-before-any-write", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "5aa41b6a0eef23f02b7db8be03705d6fa1585cc8c33a27b1a21d0ca1d9dc1d52"},
-    "tests/test_foundation_alias_authority.py::test_link_path_returns_current_linked_alias_authority": {"activation_phase": "R1", "assertion_ref": "assertion:authority-linker-link-path-returns-linked-authority", "diagnostic_role": "phase", "introduced_by_task": "Foundation-Task-5", "source_ast_sha256": "34a68de73cfc04082f8c792bd82e77c246159961bc5eb25bb40e86d87a2d213f", "supersedes_node_id": "tests/test_authority_linker.py::test_link_path_returns_linked_authority"},
+    "tests/test_foundation_alias_authority.py::test_link_path_returns_current_linked_alias_authority": {"activation_phase": "R1", "assertion_ref": "assertion:authority-linker-link-path-returns-linked-authority", "diagnostic_role": "phase", "introduced_by_task": "Foundation-Task-5", "source_ast_sha256": "6be32c748d13915f3d595083be030bbf0cd4a309d01d06873b226b9a880c2871", "supersedes_node_id": "tests/test_authority_linker.py::test_link_path_returns_linked_authority"},
     "tests/test_foundation_alias_authority.py::test_all_active_alias_authority_atoms_have_valid_kinds": {"activation_phase": "R1", "assertion_ref": "assertion:authority-linker-all-atoms-have-valid-kinds", "diagnostic_role": "phase", "introduced_by_task": "Foundation-Task-5", "source_ast_sha256": "01a7d3794cde8e71dc321fef9fbbdb33e8ec561bc3b438ee05cfc0b86a5ecc05", "supersedes_node_id": "tests/test_authority_linker.py::test_all_atoms_have_valid_kinds"},
-    "tests/test_foundation_alias_authority.py::test_current_alias_authority_link_is_content_addressed_and_fail_closed": {"activation_phase": "R1", "assertion_ref": "assertion:r1-admission-authority-link", "diagnostic_role": "admission_only", "introduced_by_task": "Foundation-Task-5", "source_ast_sha256": "e0ceca0b1b54ef18c970dc101930ec193b083bf8473453008f60a140801d9952", "supersedes_node_id": "tests/test_r1_validation_gate.py::test_authority_link_is_content_addressed_and_fail_closed"},
+    "tests/test_foundation_alias_authority.py::test_current_alias_authority_link_is_content_addressed_and_fail_closed": {"activation_phase": "R1", "assertion_ref": "assertion:r1-admission-authority-link", "diagnostic_role": "admission_only", "introduced_by_task": "Foundation-Task-5", "source_ast_sha256": "2c8902a66f795bee8f7d85b734867b16dd1db6794e99f2ad7aeabdcec1488bce", "supersedes_node_id": "tests/test_r1_validation_gate.py::test_authority_link_is_content_addressed_and_fail_closed"},
 }
 
 
@@ -487,7 +487,7 @@ def test_link_path_returns_current_linked_alias_authority():
     assert isinstance(linked, LinkedAuthority)
     assert linked.content_hash.startswith("authority-content:")
     assert linked.model_compatibility_hash.startswith("authority-compat:")
-    assert linked.generation == "authority-v1-2026-09-08-linked-alias-contract"
+    assert linked.generation == "authority-v1-2026-09-08-linked-frames"
 
 
 def test_all_active_alias_authority_atoms_have_valid_kinds(linked_authority):
@@ -508,7 +508,7 @@ def test_current_alias_authority_link_is_content_addressed_and_fail_closed(tmp_p
     assert result.disposition == "passed"
     assert result.report is not None
     assert result.report["schema"] == "cemm-authority-link-step-report-v1"
-    assert result.report["generation"] == "authority-v1-2026-09-08-linked-alias-contract"
+    assert result.report["generation"] == "authority-v1-2026-09-08-linked-frames"
     assert result.report["authority_ref"].startswith("linked_authority:")
 
     manifest = ROOT / "data" / "authority" / "manifest.json"

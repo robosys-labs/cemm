@@ -12,12 +12,11 @@ generation) and the target is a linked atom.  The index is bounded by
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from .contributions import ContributionKind
+from .authority import ReviewedSemanticFrame
 
 __all__ = [
     "AffordanceProfile",
@@ -287,57 +286,11 @@ class SemanticAffordanceIndex:
         self._authority_generation = authority.generation
         self._config = config
         self._max = getattr(config, "max_affordances_per_target", 4)
-        self._frames = self._load_frames()
 
     @property
     def authority_generation(self) -> str:
         """Return the exact authority generation indexed by this instance."""
         return self._authority_generation
-
-    # -- frame loading -------------------------------------------------------
-
-    def _load_frames(self) -> dict[str, list[dict[str, Any]]]:
-        """Load reviewed frame data from the frames directory.
-
-        Frames are keyed by target_ref.  Only frames whose generation matches
-        the authority generation are accepted (generation-pinned).
-        """
-        frames: dict[str, list[dict[str, Any]]] = {}
-        # Try to load from data/authority/frames/semantic_affordances.json
-        # relative to the authority manifest's directory.
-        frames_path = self._find_frames_path()
-        if frames_path is None:
-            return frames
-        try:
-            data = json.loads(Path(frames_path).read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            return frames
-
-        generation = data.get("generation", "")
-        if generation != self._authority_generation:
-            # Generation mismatch: frames are not pinned to this authority.
-            return frames
-
-        for frame in data.get("frames", []):
-            target_ref = frame.get("target_ref", "")
-            if target_ref:
-                frames.setdefault(target_ref, []).append(frame)
-        return frames
-
-    def _find_frames_path(self) -> Path | None:
-        """Locate the semantic_affordances.json file."""
-        # Try the standard location relative to the project root.
-        candidates = [
-            Path(__file__).resolve().parents[2]
-            / "data"
-            / "authority"
-            / "frames"
-            / "semantic_affordances.json",
-        ]
-        for p in candidates:
-            if p.exists():
-                return p
-        return None
 
     # -- public API -----------------------------------------------------------
 
@@ -362,11 +315,8 @@ class SemanticAffordanceIndex:
         # contribution kinds remain available.
         reviewed: list[AffordanceProfile] = []
         reviewed_kinds: set[str] = set()
-        for frame in self._frames.get(target_ref, []):
+        for frame in self._authority.reviewed_frames_for_target(target_ref):
             profile = self._frame_to_profile(target_ref, frame)
-            if profile is None:
-                continue
-            self._validate_reviewed_profile(target_ref, kind, profile)
             reviewed.append(profile)
             reviewed_kinds.update(profile.contribution_kinds)
 
@@ -413,29 +363,6 @@ class SemanticAffordanceIndex:
             ),
         )
 
-    def _validate_reviewed_profile(
-        self, target_ref: str, kind: str, profile: AffordanceProfile
-    ) -> None:
-        """Reject reviewed affordance data that contradicts linked owners."""
-        if kind != "event_type" or "predicate" not in profile.contribution_kinds:
-            return
-        signature = self._authority.by_event_signature(target_ref)
-        if signature is None:
-            raise ValueError(
-                f"reviewed event affordance lacks linked signature: {target_ref}"
-            )
-        signature_roles = tuple(role.role for role in signature.roles)
-        if profile.input_ports != signature_roles:
-            raise ValueError(
-                "reviewed event affordance input ports disagree with linked "
-                f"signature for {target_ref}"
-            )
-        if not profile.output_ports or profile.output_ports[0] != "role:event":
-            raise ValueError(
-                "reviewed event affordance must emit the structural event role "
-                f"for {target_ref}"
-            )
-
     def for_designation(self, surface: str) -> tuple[AffordanceProfile, ...]:
         """Return affordances for the target(s) designated by ``surface``.
 
@@ -464,17 +391,14 @@ class SemanticAffordanceIndex:
 
     @staticmethod
     def _frame_to_profile(
-        target_ref: str, frame: Mapping[str, Any]
-    ) -> AffordanceProfile | None:
-        """Convert a reviewed frame dict to an AffordanceProfile."""
-        kinds = tuple(frame.get("contribution_kinds", ()))
-        if not kinds:
-            return None
+        target_ref: str, frame: ReviewedSemanticFrame
+    ) -> AffordanceProfile:
+        """Convert an already linked immutable frame; never reinterpret source."""
         return AffordanceProfile(
             target_ref=target_ref,
-            contribution_kinds=kinds,
-            input_ports=tuple(frame.get("input_ports", ())),
-            output_ports=tuple(frame.get("output_ports", ())),
-            role_candidates=tuple(frame.get("role_candidates", ())),
-            frame_ref=frame.get("frame_ref"),
+            contribution_kinds=frame.contribution_kinds,
+            input_ports=frame.input_ports,
+            output_ports=frame.output_ports,
+            role_candidates=frame.role_candidates,
+            frame_ref=frame.frame_ref,
         )

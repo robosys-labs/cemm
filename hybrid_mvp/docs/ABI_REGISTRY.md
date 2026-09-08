@@ -39,6 +39,7 @@ unproved obligations. Historical R3 admission is not an end-to-end MVP proof.
 | Gap Receipt ABI | 1 | `src/cemm_authoritative_hybrid/gaps.py` | Serialized | `GapClassifier` | Strict full-content identity covers every ordered semantic field; exact decoding rejects forged refs and oversized wire values before hashing. R1 stops after VERIFY with `LaterOwnerNotAdmitted(verified_meaning_ref, contract_ref)` and no surface or continuation. |
 | Learning Plan ABI | 2 | `src/cemm_authoritative_hybrid/r3_learning.py` | Serialized | `LearningCoordinator` | Plans bind exact verified meaning, source query, target-kind contract, provenance, permission, revision and expiry; conversation cannot self-publish authority. |
 | Designation-learning authority source | 1 (manifest source extension) | `src/cemm_authoritative_hybrid/authority.py` + `data/authority/alias_learning.json` | Reviewed owner source, linked at activation | `DesignationLearningContract` / `AuthorityLinker` | Exact source-event, role, capability, permission, internal EFFECT lowering, goal, answer-contract and review-policy edges are validated and content-hashed. This is not a reviewer grant or runtime publication admission. |
+| Reviewed semantic-frame authority source | 1 (manifest source extension) | `src/cemm_authoritative_hybrid/authority.py` + `data/authority/frames/semantic_affordances.json` | Reviewed owner source, linked at activation | `ReviewedSemanticFrame` / `AuthorityLinker` | Exact generation, target kind, contribution kinds, ports, role candidates and signature compatibility are validated once and included in content/compatibility identities. Affordances consume the linked index; invalid registered sources never fall back to kind defaults. |
 | Response Meaning ABI | **2** | `src/cemm_authoritative_hybrid/r3_response.py` | Episode-serializable | `ResponseBuilder` | Constructed from decision, proof, blockers, effect/no-effect receipt and obligation; contains an exact semantic-expression contract. |
 | Realization Receipt ABI | **2** | `src/cemm_authoritative_hybrid/realization.py` | Serialized | `RealizationVerifier` | Surface is reinterpreted through the same evidence/proposal/compile/verify contracts and compared by canonical semantic expression. |
 | Phase Receipt ABI | 2 | `src/cemm_authoritative_hybrid/cycle.py` | Serialized when trace/evaluation enabled | `CycleFinalizer` | Each phase binds exact input/output refs, revisions, disposition, rejection codes and budget use. |
@@ -59,13 +60,20 @@ record is not renewed and expired retirement/replacement is atomic. This is not
 alias publication. The duplicate plan-derived pending-obligation effect path
 remains disabled under the foundation plan.
 
-The linked-alias source generation is
+The linked-alias checkpoint used generation
 `authority-v1-2026-09-08-linked-alias-contract`. Its four internal authority kinds
 change the compatibility hash; no existing model is implicitly reactivated.
 Existing-generation stores must not be reset or silently repinned. The reviewed
 owner JSON is source data, not output of the historical monolith splitter. That
-splitter now refuses nonempty authority output. Runtime contract consumption and
-the separate reviewed EFFECT publication path remain foundation Task 5 work.
+splitter now refuses nonempty authority output. Runtime contract consumption was
+implemented at `e703d49`; reviewed publication remains foundation Task 5 work.
+The September 8 frame-preservation repair additionally links the six existing
+reviewed profiles under `authority-v1-2026-09-08-linked-frames`, changing generation,
+content and compatibility identities. A new generation is required because the
+existing store activation owner pins that label rather than the content hash.
+Do not reset or silently repin an existing store or reactivate a model to bypass
+these identity changes. The canonical-continuation artifact migration remains
+pending until frame preservation is verified; current artifact ABIs stay as above.
 
 ## 2. Canonical program identity
 

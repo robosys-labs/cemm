@@ -975,10 +975,12 @@ release or complete repairs. The pre-existing active failures are:
   current-path coverage as those owners are completed. Do not redirect nineteen
   names to one shared smoke check and call those distinct properties proved.
 - The five-operator adversarial successor constructs stale derived-role targets;
-  the frame-ref test assumes a reviewed greeting frame; the unresolved-query
-  test still forces generic `What is zorbulate?` into lexical lookup. Reconcile
-  these with current source/frame/query contracts using honest successors,
-  retaining independent operator, provenance and binder protections.
+  the unresolved-query test still forces generic `What is zorbulate?` into
+  lexical lookup. Reconcile these with current source/query contracts using
+  honest successors, retaining operator, provenance and binder protections.
+- The reviewed greeting-frame test is a **real regression introduced by
+  `c29768b`**, not a stale assertion. The baseline comparison above predates only
+  the lowerer, not that authority change. See the corrective finding below.
 - Fresh-fragment clarification and admitted-alias restart reuse remain the two
   retained direct foundation failures. The broader count must not be reduced
   to those two or presented as only two remaining implementation tasks.
@@ -986,6 +988,86 @@ release or complete repairs. The pre-existing active failures are:
 LearningPlan ABI 2's diagnostic plan-derived obligation remains unchanged in
 this increment. Its retirement and the explicit version migration below must
 precede enabling proposal persistence; no second pending record is reintroduced.
+
+### Reviewed-frame preservation repair (September 8, verified checkpoint)
+
+Pause the planned artifact migration until this earlier authority owner is fixed.
+`c29768b` changed the authority generation but left the six reviewed affordance
+frames pinned to July 29. `SemanticAffordanceIndex._load_frames` independently
+loads that unlinked file and silently returns an empty index on generation
+mismatch, read failure or invalid JSON. This erased reviewed refinements into
+kind/signature defaults. The narrower authority and continuation suites missed
+it; comparing only to `c29768b` could not establish preservation of the preceding
+`de40359` behavior. Do not replace or weaken the failing frame assertion.
+
+Register the existing frame source in the manifest, hash and validate all its
+records at linking, and expose the linked generation-indexed frames to the
+affordance owner. Remove ambient file discovery and invalid-frame fallback.
+Preserve all six reviewed records, explicit frame provenance and their behavior;
+kind defaults remain valid only for targets without a reviewed frame in the
+explicit linked bundle. No per-cycle frame scan, new gate, form-pack rewrite or
+search-cap increase. Prove missing/stale/tampered/malformed frame-source rejection
+and replay both original frame controls and public learning/composition paths
+with the frames actually active before resuming the artifact migration.
+
+Use the distinct generation `authority-v1-2026-09-08-linked-frames`: the existing
+store activation owner pins generation, so retaining the preceding label would
+silently activate different frame content in an existing store. Prove prior-
+generation reopen rejection with preserved user data. This is an authority
+source migration, not a new artifact ABI, store reset or model reactivation.
+
+The reopen rejection probe also exposed an existing resource leak: `open_stores`
+did not close its SQLite connection when backend activation raised. Close only
+that failed construction's connection and retain the original error. Verify
+durable data and metadata preservation and real connection closure; SQLite WAL
+bookkeeping is not itself semantic mutation. No schema or transaction-policy
+change is part of this cleanup.
+
+The first independent spec review additionally rejected a false assurance:
+matching port names alone did not validate source roles. A hash-refreshed bundle
+could pair a malformed frame port with the same malformed signature role, accept
+a string in place of a filler-kind list or a non-boolean requirement flag, or
+leak `KeyError` on a missing field. The shared reviewed-source role parser now
+checks exact fields, bounded typed role refs/kinds, uniqueness, boolean flags and
+application/proposition agreement before activation. Seventeen observed-RED
+contrasts cover that correction; alias contracts reuse the same structural
+parser while retaining their narrower exact semantic requirements. Independent
+spec re-review passed all 171 frame/affordance/alias cases before the final
+operator-schema correction below.
+
+Main's full authenticated 1,994-node R3 run after the role-schema correction:
+1,970 passed and 24 failed in 178.51 seconds. The original reviewed-frame test
+now passes. The failure set is the preceding 25-node set minus that frame
+regression: nineteen old learning wrappers, the five-operator derived-role
+fixture, generic-question lexical assumption, fresh-fragment handling, admitted
+alias restart lookup, and the expected dirty-governed-input status rejection.
+No new failing node appeared in this replay; this is not a green full regression
+or evidence that those twenty-three non-governance obligations are complete.
+The four existing post-VERIFY canaries and R3/R4/R5 structural checks also pass;
+canaries still have zero world delta and do not establish a useful public demo.
+
+Quality review found a related operator-edge gap: missing/duplicated structural
+output ports could still agree with a frame's input list. Reviewed event and
+relation frames now require their complete fixed linked operator schemas, without
+coercing source objects into lists of keys; output ports come from those validated
+slots. Seven observed-RED cases prove the correction, including event frames in
+an explicit bundle without the alias contract. Final independent spec and quality
+reviews each pass 178 focused cases. Main's final combined frame, original
+affordance, alias, continuation, lowerer, query-witness and persistence run passes
+all 371 cases in 36.92 seconds. No frozen test body, form pack, semantic frame
+record, search cap or runtime gate was changed.
+
+Active source identities:
+`authority-content:a39de23a35b572dc0ef46014` and
+`authority-compat:567e328fb278a49cf6f2f08b`; frame owner SHA-256
+`69f0670f76338737e99d435130dd24be853e42d94a7a2369650460c73af3bf13`.
+The 60 new cases use the existing R1 runtime owner and propagate through existing
+selectors (G0 191 / R1 939 / R2 1329 / R3 2001 / R4 2339 / R5 2464).
+The preserved frozen inventory hash remains
+`7c27b0ad80998fc1f10876c05d0238a2498d2fd3a116ace77c9505da11d0b4b8`.
+This checkpoint restores reviewed frames and closes its validation/resource
+defects; it does not complete the foundation, admit a phase or publish an alias.
+Resume the pending canonical-continuation migration next.
 
 ### Publication transaction boundary (implementation pending)
 
@@ -1040,6 +1122,28 @@ immutable authority-source fact. This is still an implementation dependency,
 not evidence that the current seeded alias-index test proves acquisition.
 
 ## Task 6 — Repair measured search/retrieval bounds and confirm preservation
+
+Source-ownership investigation precedes search deduplication. The current
+`_situated_participant_references` can fill a reported event's omitted addressee
+from the current conversation, inventing whom a goodbye addressed. Speech-actor
+inheritance cannot apply to every proposition-taking event either: contrast
+`Alice said goodbye`, `Alice said leave`, and `Alice said Bob left`. No global
+actor copying or current-interlocutor default is acceptable for embedded content.
+
+The bounded follow-up design is explicit reviewed parent/child-frame control
+eligibility plus root-current-utterance-only situated-role binding. Generic form
+geometry and clause-local mode supply evidence, not speech semantics. An explicit
+child actor wins; unproved child mood or frame eligibility cannot authorize a
+copy. Reported farewell addressee must remain unspecified, while a standalone
+farewell retains its actual conversational participants. The candidate repair
+needs the optional reported addressee signature and root-only speech-act binding
+together, not an optional-role change alone. These are pending semantic-source
+changes, not part of the six-frame preservation checkpoint. Extend the existing
+frame owner explicitly if required; do not create one owner/schema per phrase.
+Any control slot/context migration must expose its exact parent, child, role,
+authority and evidence references to independent VERIFY reconstruction, rather
+than hiding scope in provenance tuple positions. Keep this dependency explicit
+before reducing search duplication or claiming the two-sentence demo is faithful.
 
 - [ ] Reproduce program/meaning duplication with the audit's multi-root and
   conditional examples; canonicalize equivalent search states only when future

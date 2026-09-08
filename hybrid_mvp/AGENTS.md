@@ -240,3 +240,11 @@ four-subsequent-same-session-turn lifecycle on September 8, as recorded in the
 foundation implementation plan. Do not reopen that policy approval, silently
 renew a live continuation, or mistake lifecycle approval for alias-publication
 authority or repair completion.
+
+Reviewed semantic frames are explicit manifest-owned authority, not optional
+ambient files. Link and validate their generation, content and target/signature
+compatibility at activation; consume the linked target index during grounding.
+A missing, stale or malformed registered frame source must fail linking, never
+silently erase refinements into kind defaults. Preserve all existing reviewed
+profile fields when changing authority generations. The foundation plan records
+the September 8 preservation repair and remaining continuation/publication work.

@@ -37,6 +37,7 @@ __all__ = [
     "EventSignature",
     "RuleRecord",
     "DesignationLearningContract",
+    "ReviewedSemanticFrame",
 ]
 
 FIXED_OPERATORS = frozenset({
@@ -97,6 +98,92 @@ class RuleRecord:
 
 class AuthorityLinkError(Exception):
     """Raised when authority linking fails validation."""
+
+
+def _validate_role_ref(ref: Any) -> None:
+    if (
+        type(ref) is not str or not 1 <= len(ref) <= 512
+        or not ref.startswith("role:") or any(char.isspace() for char in ref)
+        or any(not part for part in ref.split(":"))
+    ):
+        raise AuthorityLinkError("invalid bounded semantic role ref")
+
+
+def _validated_source_roles(
+    value: Any, allowed_filler_kinds: set[str],
+) -> tuple[RoleSpec, ...]:
+    """One strict source RoleSpec parser for reviewed frame/contract edges."""
+    if type(value) is not list or not 1 <= len(value) <= 16:
+        raise AuthorityLinkError("reviewed source roles must be a bounded nonempty list")
+    roles: list[RoleSpec] = []
+    seen: set[str] = set()
+    for row in value:
+        if type(row) is not dict or set(row) != {"role", "filler_kinds", "required", "proposition_valued"}:
+            raise AuthorityLinkError("reviewed source role has missing or unknown fields")
+        ref = row["role"]
+        _validate_role_ref(ref)
+        if ref in seen:
+            raise AuthorityLinkError("duplicate reviewed source role")
+        seen.add(ref)
+        kinds = row["filler_kinds"]
+        if (
+            type(kinds) is not list or not 1 <= len(kinds) <= 16
+            or any(type(kind) is not str or kind not in allowed_filler_kinds for kind in kinds)
+            or len(set(kinds)) != len(kinds)
+        ):
+            raise AuthorityLinkError("reviewed source role has invalid filler kinds")
+        if type(row["required"]) is not bool or type(row["proposition_valued"]) is not bool:
+            raise AuthorityLinkError("reviewed source role flags must be booleans")
+        if row["proposition_valued"] != ("application" in kinds):
+            raise AuthorityLinkError("reviewed source role proposition flag contradicts filler kinds")
+        roles.append(RoleSpec(ref, tuple(kinds), row["required"], row["proposition_valued"]))
+    return tuple(roles)
+
+
+@dataclass(frozen=True)
+class ReviewedSemanticFrame:
+    """Immutable reviewed contribution shape, linked once at activation."""
+
+    frame_ref: str
+    target_kind: str
+    target_ref: str
+    contribution_kinds: tuple[str, ...]
+    input_ports: tuple[str, ...]
+    output_ports: tuple[str, ...]
+    role_candidates: tuple[str, ...]
+
+    @classmethod
+    def from_dict(cls, value: Any) -> "ReviewedSemanticFrame":
+        if type(value) is not dict or set(value) != {item.name for item in fields(cls)}:
+            raise AuthorityLinkError("reviewed frame has missing or unknown fields")
+        for name in ("frame_ref", "target_ref"):
+            ref = value[name]
+            if (
+                type(ref) is not str or not 1 <= len(ref) <= 512
+                or ":" not in ref or any(char.isspace() for char in ref)
+                or any(not part for part in ref.split(":"))
+            ):
+                raise AuthorityLinkError(f"invalid reviewed frame {name}")
+        if not value["frame_ref"].startswith("frame:"):
+            raise AuthorityLinkError("reviewed frame identity must be a frame ref")
+        if type(value["target_kind"]) is not str:
+            raise AuthorityLinkError("reviewed frame target kind must be a string")
+        sequences = ("contribution_kinds", "input_ports", "output_ports", "role_candidates")
+        for name in sequences:
+            sequence = value[name]
+            if (
+                type(sequence) is not list or not 1 <= len(sequence) <= 16
+                or any(type(item) is not str for item in sequence)
+                or len(set(sequence)) != len(sequence)
+            ):
+                raise AuthorityLinkError(f"invalid bounded reviewed frame {name}")
+            if name != "contribution_kinds":
+                for ref in sequence:
+                    _validate_role_ref(ref)
+        return cls(**{**value, **{name: tuple(value[name]) for name in sequences}})
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
 
 @dataclass(frozen=True)
@@ -431,6 +518,7 @@ class LinkedAuthority:
         "_learning_contracts_by_source",
         "_capability_grants",
         "_permission_grants",
+        "_reviewed_frames_by_target",
     )
 
     def __init__(
@@ -456,6 +544,7 @@ class LinkedAuthority:
         by_transition: dict[str, dict[str, Any]],
         by_transition_signature: dict[tuple[str, str, str], dict[str, Any]],
         learning_contracts: tuple[DesignationLearningContract, ...] = (),
+        reviewed_frames: tuple[ReviewedSemanticFrame, ...] = (),
     ) -> None:
         self.content_hash = content_hash
         self.model_compatibility_hash = model_compatibility_hash
@@ -489,6 +578,16 @@ class LinkedAuthority:
             for participant, refs in capabilities.items() for capability in refs
         )
         self._permission_grants = frozenset(permissions)
+        frame_targets: dict[str, list[ReviewedSemanticFrame]] = {}
+        for frame in reviewed_frames:
+            frame_targets.setdefault(frame.target_ref, []).append(frame)
+        self._reviewed_frames_by_target = {
+            target: tuple(frames) for target, frames in frame_targets.items()
+        }
+
+    def reviewed_frames_for_target(self, target_ref: str) -> tuple[ReviewedSemanticFrame, ...]:
+        """Exact activation-cached lookup; no filesystem or bundle scan."""
+        return self._reviewed_frames_by_target.get(target_ref, ())
 
     def capability_granted(self, actor_ref: str, capability_ref: str) -> bool:
         """Activation-indexed actor-specific capability authority."""
@@ -604,6 +703,7 @@ class AuthorityLinker:
         all_definition_targets: dict[str, str] = {}
         all_transitions: list[dict[str, Any]] = []
         all_learning_contracts: list[tuple[DesignationLearningContract, str]] = []
+        all_frames: list[ReviewedSemanticFrame] = []
         owner_names: set[str] = set()
         owner_paths: set[Path] = set()
 
@@ -626,17 +726,33 @@ class AuthorityLinker:
             owner_paths.add(owner_path)
 
             # Verify file hash
-            actual_hash = sha256_governed_text(owner_path)
+            try:
+                actual_hash = sha256_governed_text(owner_path)
+            except (OSError, UnicodeError) as exc:
+                raise AuthorityLinkError(f"cannot read owner {owner_name}") from exc
             if actual_hash != owner_meta["sha256"]:
                 raise AuthorityLinkError(
                     f"owner {owner_name} hash mismatch"
                 )
 
-            owner_data = json.loads(
-                owner_path.read_text(encoding="utf-8-sig"), object_pairs_hook=_unique_json_object
-            )
+            try:
+                owner_data = json.loads(
+                    owner_path.read_text(encoding="utf-8-sig"), object_pairs_hook=_unique_json_object
+                )
+            except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+                raise AuthorityLinkError(f"invalid owner source {owner_name}") from exc
+            if type(owner_data) is not dict:
+                raise AuthorityLinkError("owner source must be an object")
             if owner_data.get("owner") != owner_name:
                 raise AuthorityLinkError(f"owner name mismatch: {owner_name}")
+            if owner_name == "semantic_affordances" or "frames" in owner_data:
+                if set(owner_data) != {"owner", "generation", "frames"}:
+                    raise AuthorityLinkError("reviewed frame owner has missing or unknown fields")
+                if owner_data["generation"] != generation:
+                    raise AuthorityLinkError("reviewed frame owner generation mismatch")
+                if type(owner_data["frames"]) is not list:
+                    raise AuthorityLinkError("reviewed frames must be a list")
+                all_frames.extend(ReviewedSemanticFrame.from_dict(row) for row in owner_data["frames"])
             contract_rows = owner_data.get("learning_contracts", [])
             if type(contract_rows) is not list:
                 raise AuthorityLinkError("learning_contracts must be a list")
@@ -676,7 +792,9 @@ class AuthorityLinker:
             for op, roles in owner_data.get("operator_roles", {}).items():
                 if op in all_operator_roles:
                     raise AuthorityLinkError(f"duplicate operator schema owner: {op}")
-                all_operator_roles[op] = list(roles)
+                # Preserve source type for exact linked-schema validation;
+                # converting an object to a list would authorize its keys.
+                all_operator_roles[op] = roles
 
             for value, dim in owner_data.get("value_dimensions", {}).items():
                 all_value_dimensions[value] = dim
@@ -693,6 +811,9 @@ class AuthorityLinker:
         learning_contracts = self._validate_learning_contracts(
             all_learning_contracts, all_atoms, all_event_signatures,
             all_operator_roles, all_adapters,
+        )
+        reviewed_frames = self._validate_reviewed_frames(
+            all_frames, all_atoms, all_event_signatures, all_operator_roles,
         )
 
         # -- Validate designations (targets must exist) --------------------
@@ -909,6 +1030,7 @@ class AuthorityLinker:
                 all_transitions, key=lambda t: json.dumps(t, sort_keys=True)
             ),
             "learning_contracts": [contract.to_dict() for contract in learning_contracts],
+            "reviewed_frames": [frame.to_dict() for frame in reviewed_frames],
         }
         content_hash = stable_ref("authority-content", full_payload)
 
@@ -926,6 +1048,7 @@ class AuthorityLinker:
             ],
             "value_dimensions": all_value_dimensions,
             "definition_targets": all_definition_targets,
+            "reviewed_frames": [frame.to_dict() for frame in reviewed_frames],
         }
         model_compatibility_hash = stable_ref("authority-compat", structural_payload)
 
@@ -948,14 +1071,68 @@ class AuthorityLinker:
             value_dimensions=all_value_dimensions,
             definition_targets=all_definition_targets,
             by_kind=by_kind,
-            by_frame={},
+            by_frame={frame.frame_ref: frozenset({frame.target_ref}) for frame in reviewed_frames},
             by_rule_signature=by_rule_sig,
             by_state_dimension=by_state_dim,
             by_event_signature=event_sigs,
             by_transition=by_transition,
             by_transition_signature=by_transition_signature,
             learning_contracts=learning_contracts,
+            reviewed_frames=reviewed_frames,
         )
+
+    @staticmethod
+    def _validate_reviewed_frames(
+        records: list[ReviewedSemanticFrame],
+        atoms: dict[str, tuple[AtomRecord, str]],
+        signatures: list[dict[str, Any]],
+        operator_roles: dict[str, list[str]],
+    ) -> tuple[ReviewedSemanticFrame, ...]:
+        """Link the currently reviewed event/relation contribution shapes."""
+        by_ref: dict[str, ReviewedSemanticFrame] = {}
+        target_kinds: dict[str, set[str]] = {}
+        signatures_by_event: dict[str, list[dict[str, Any]]] = {}
+        filler_kinds = {record.kind for record, _ in atoms.values()} | {"literal", "application"}
+        operator_shapes = {
+            "event_type": ("op:event", ["role:event", "role:type"]),
+            "relation_type": ("op:relation", ["role:subject", "role:relation", "role:object"]),
+        }
+        for signature in signatures:
+            signatures_by_event.setdefault(signature["event_type"], []).append(signature)
+        for frame in records:
+            if frame.frame_ref in by_ref or frame.frame_ref in atoms:
+                raise AuthorityLinkError("duplicate reviewed frame identity")
+            target = atoms.get(frame.target_ref)
+            if target is None or target[0].kind != frame.target_kind or target[0].reviewed is not True:
+                raise AuthorityLinkError("reviewed frame target must match one reviewed atom kind")
+            if frame.target_kind not in operator_shapes:
+                raise AuthorityLinkError("unsupported reviewed frame target kind")
+            operator_ref, expected_schema = operator_shapes[frame.target_kind]
+            schema = operator_roles.get(operator_ref)
+            if type(schema) is not list or schema != expected_schema:
+                raise AuthorityLinkError("reviewed frame requires the complete fixed operator schema")
+            if frame.target_kind == "event_type":
+                candidates = signatures_by_event.get(frame.target_ref, [])
+                if len(candidates) != 1:
+                    raise AuthorityLinkError("reviewed event frame requires one linked event signature")
+                roles = _validated_source_roles(candidates[0].get("roles"), filler_kinds)
+                inputs = tuple(role.role for role in roles)
+                outputs = (schema[0],)
+                kinds = {"predicate", "anchor", "reference"}
+            elif frame.target_kind == "relation_type":
+                inputs = (schema[0], schema[2])
+                outputs = (schema[1],)
+                kinds = {"predicate", "anchor"}
+            if not set(frame.contribution_kinds) <= kinds:
+                raise AuthorityLinkError("reviewed frame contribution kinds contradict target kind")
+            if frame.input_ports != inputs or frame.output_ports != outputs or frame.role_candidates != inputs:
+                raise AuthorityLinkError("reviewed frame ports or roles contradict linked signature")
+            covered = target_kinds.setdefault(frame.target_ref, set())
+            if covered.intersection(frame.contribution_kinds):
+                raise AuthorityLinkError("overlapping reviewed frames for one target")
+            covered.update(frame.contribution_kinds)
+            by_ref[frame.frame_ref] = frame
+        return tuple(by_ref[ref] for ref in sorted(by_ref))
 
     @staticmethod
     def _validate_learning_contracts(
@@ -969,6 +1146,7 @@ class AuthorityLinker:
         by_ref: dict[str, DesignationLearningContract] = {}
         sources: set[tuple[str, str]] = set()
         signatures_by_event: dict[str, list[dict[str, Any]]] = {}
+        filler_kinds = {record.kind for record, _ in atoms.values()} | {"literal", "application"}
         for signature in signatures:
             signatures_by_event.setdefault(signature["event_type"], []).append(signature)
         atom_fields = {
@@ -1043,22 +1221,16 @@ class AuthorityLinker:
                 contract.surface_role_ref: ("literal",),
                 contract.target_role_ref: contract.allowed_target_kinds,
             }
-            roles = signature.get("roles")
-            if type(roles) is not list or len(roles) != len(expected):
+            roles = _validated_source_roles(signature.get("roles"), filler_kinds)
+            if len(roles) != len(expected):
                 raise AuthorityLinkError("learning contract source role count does not match")
-            seen: set[str] = set()
             for role in roles:
-                if type(role) is not dict or set(role) != {"role", "filler_kinds", "required", "proposition_valued"}:
-                    raise AuthorityLinkError("learning contract source role has invalid fields")
-                ref = role["role"]
-                if type(ref) is not str or ref not in expected or ref in seen:
-                    raise AuthorityLinkError("learning contract source role is invalid or duplicated")
-                seen.add(ref)
+                ref = role.role
+                if ref not in expected:
+                    raise AuthorityLinkError("learning contract source role is invalid")
                 if (
-                    role["required"] is not True or role["proposition_valued"] is not False
-                    or type(role["filler_kinds"]) is not list
-                    or any(type(kind) is not str for kind in role["filler_kinds"])
-                    or tuple(role["filler_kinds"]) != expected[ref]
+                    role.required is not True or role.proposition_valued is not False
+                    or role.filler_kinds != expected[ref]
                 ):
                     raise AuthorityLinkError("learning contract source role requirements do not match")
             sources.add(source)

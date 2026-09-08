@@ -2408,15 +2408,20 @@ def open_stores(
     path.mkdir(parents=True, exist_ok=True)
     db_path = path / "semantic.db"
     conn = sqlite3.connect(str(db_path))
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA foreign_keys=ON")
-    conn.execute("PRAGMA synchronous=NORMAL")
-    backend = SQLiteSemanticStore(
-        conn,
-        authority_generation=authority_generation,
-        model_identity=model_identity,
-    )
+    try:
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        backend = SQLiteSemanticStore(
+            conn,
+            authority_generation=authority_generation,
+            model_identity=model_identity,
+        )
+    except BaseException:
+        # No store owns the connection until activation succeeds.
+        conn.close()
+        raise
     return SemanticStores(backend)
 
 
