@@ -1,6 +1,6 @@
 {
   "abi_version": 1,
-  "generation": "authority-v1-2026-07-29",
+  "generation": "authority-v1-2026-09-08-linked-alias-contract",
   "owners": [
     {
       "name": "kernel",
@@ -16,6 +16,11 @@
       "name": "state_operations",
       "path": "state_operations.json",
       "sha256": "4fa87c8d03205697407db1c841e7ec4354fcff8fae4ba99b65427fc198888250"
+    },
+    {
+      "name": "alias_learning",
+      "path": "alias_learning.json",
+      "sha256": "53de24490c3a1e6ca5a4641c2a804452cdd53eb16d124996aecd28bbed298941"
     }
   ]
 }

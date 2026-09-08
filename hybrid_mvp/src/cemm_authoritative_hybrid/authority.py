@@ -18,7 +18,7 @@ until retraining.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -36,6 +36,7 @@ __all__ = [
     "RoleSpec",
     "EventSignature",
     "RuleRecord",
+    "DesignationLearningContract",
 ]
 
 FIXED_OPERATORS = frozenset({
@@ -96,6 +97,83 @@ class RuleRecord:
 
 class AuthorityLinkError(Exception):
     """Raised when authority linking fails validation."""
+
+
+@dataclass(frozen=True)
+class DesignationLearningContract:
+    """Reviewed existing-target lowering authority, not an execution/review grant.
+
+    Operator/role refs belong to the fixed schemas; other refs must link to
+    reviewed atoms. EFFECT may later consume this contract for internal memory
+    publication, but its presence never registers an external runtime adapter.
+    """
+
+    contract_ref: str
+    goal_ref: str
+    answer_contract_ref: str
+    review_policy_ref: str
+    source_operator_ref: str
+    source_event_ref: str
+    actor_role_ref: str
+    surface_role_ref: str
+    target_role_ref: str
+    capability_ref: str
+    permission_ref: str
+    commit_operator_ref: str
+    designation_label_ref: str
+    allowed_target_kinds: tuple[str, ...]
+    internal_effect_owner: str
+    internal_adapter_ref: str
+    requires_explicit_review: bool
+    existing_targets_only: bool
+
+    def __post_init__(self) -> None:
+        for item in fields(self):
+            if item.name.endswith("_ref"):
+                value = getattr(self, item.name)
+                if (
+                    type(value) is not str or not 1 <= len(value) <= 512
+                    or ":" not in value or any(char.isspace() for char in value)
+                    or any(not part for part in value.split(":"))
+                ):
+                    raise AuthorityLinkError(f"invalid learning contract ref: {item.name}")
+        if self.requires_explicit_review is not True or self.existing_targets_only is not True:
+            raise AuthorityLinkError("learning contract requires explicit review and existing targets only")
+        if type(self.internal_effect_owner) is not str or self.internal_effect_owner != "EFFECT":
+            raise AuthorityLinkError("learning contract lowering must be owned by EFFECT")
+        kinds = self.allowed_target_kinds
+        supported = {
+            "concept", "entity", "event_type", "participant", "relation_type",
+            "state_dimension", "state_value",
+        }
+        if (
+            type(kinds) is not tuple or not 1 <= len(kinds) <= len(supported)
+            or any(type(kind) is not str or kind not in supported for kind in kinds)
+            or len(set(kinds)) != len(kinds) or tuple(sorted(kinds)) != kinds
+        ):
+            raise AuthorityLinkError("learning contract target kinds must be canonical bounded semantic kinds")
+
+    @classmethod
+    def from_dict(cls, value: Any) -> "DesignationLearningContract":
+        if type(value) is not dict or set(value) != {item.name for item in fields(cls)}:
+            raise AuthorityLinkError("learning contract has missing or unknown fields")
+        if type(value["allowed_target_kinds"]) is not list:
+            raise AuthorityLinkError("learning contract target kinds must be a list")
+        return cls(**{**value, "allowed_target_kinds": tuple(value["allowed_target_kinds"])})
+
+    def to_dict(self) -> dict[str, Any]:
+        result = asdict(self)
+        result["allowed_target_kinds"] = list(self.allowed_target_kinds)
+        return result
+
+
+def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise AuthorityLinkError(f"duplicate JSON field: {key}")
+        result[key] = value
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -349,6 +427,8 @@ class LinkedAuthority:
         "_by_event_signature",
         "_by_transition",
         "_by_transition_signature",
+        "_learning_contracts_by_ref",
+        "_learning_contracts_by_source",
     )
 
     def __init__(
@@ -373,6 +453,7 @@ class LinkedAuthority:
         by_event_signature: dict[str, EventSignature],
         by_transition: dict[str, dict[str, Any]],
         by_transition_signature: dict[tuple[str, str, str], dict[str, Any]],
+        learning_contracts: tuple[DesignationLearningContract, ...] = (),
     ) -> None:
         self.content_hash = content_hash
         self.model_compatibility_hash = model_compatibility_hash
@@ -394,6 +475,23 @@ class LinkedAuthority:
         self._by_event_signature = by_event_signature
         self._by_transition = by_transition
         self._by_transition_signature = by_transition_signature
+        self._learning_contracts_by_ref = {
+            contract.contract_ref: contract for contract in learning_contracts
+        }
+        self._learning_contracts_by_source = {
+            (contract.source_operator_ref, contract.source_event_ref): contract
+            for contract in learning_contracts
+        }
+
+    def learning_contract(self, contract_ref: str) -> DesignationLearningContract | None:
+        """Exact activation-built lookup; absent authority has no default."""
+        return self._learning_contracts_by_ref.get(contract_ref)
+
+    def learning_contract_for_source(
+        self, operator_ref: str, event_ref: str
+    ) -> DesignationLearningContract | None:
+        """Resolve one reviewed source signature without scanning the bundle."""
+        return self._learning_contracts_by_source.get((operator_ref, event_ref))
 
     def by_kind(self, kind: str) -> frozenset[str]:
         """Return all atom refs of the given kind."""
@@ -455,7 +553,9 @@ class AuthorityLinker:
         path = path.resolve()
         if not path.exists():
             raise AuthorityLinkError(f"manifest not found: {path}")
-        manifest_data = json.loads(path.read_text(encoding="utf-8-sig"))
+        manifest_data = json.loads(
+            path.read_text(encoding="utf-8-sig"), object_pairs_hook=_unique_json_object
+        )
         return self._link_manifest(manifest_data, base_dir=path.parent, store=None)
 
     def _link_from_dict(self, manifest_dict: Mapping[str, Any]) -> LinkedAuthority:
@@ -488,10 +588,16 @@ class AuthorityLinker:
         all_value_dimensions: dict[str, str] = {}
         all_definition_targets: dict[str, str] = {}
         all_transitions: list[dict[str, Any]] = []
+        all_learning_contracts: list[tuple[DesignationLearningContract, str]] = []
+        owner_names: set[str] = set()
+        owner_paths: set[Path] = set()
 
         # Load and validate each owner file
         for owner_meta in owners_meta:
             owner_name = owner_meta["name"]
+            if type(owner_name) is not str or not owner_name or owner_name in owner_names:
+                raise AuthorityLinkError("invalid or duplicate owner name")
+            owner_names.add(owner_name)
             owner_path = Path(owner_meta["path"])
             if not owner_path.is_absolute():
                 if base_dir is None:
@@ -499,6 +605,10 @@ class AuthorityLinker:
                         f"cannot resolve relative path without base dir: {owner_path}"
                     )
                 owner_path = base_dir / owner_path
+            owner_path = owner_path.resolve()
+            if owner_path in owner_paths:
+                raise AuthorityLinkError("duplicate owner path")
+            owner_paths.add(owner_path)
 
             # Verify file hash
             actual_hash = sha256_governed_text(owner_path)
@@ -507,7 +617,18 @@ class AuthorityLinker:
                     f"owner {owner_name} hash mismatch"
                 )
 
-            owner_data = json.loads(owner_path.read_text(encoding="utf-8-sig"))
+            owner_data = json.loads(
+                owner_path.read_text(encoding="utf-8-sig"), object_pairs_hook=_unique_json_object
+            )
+            if owner_data.get("owner") != owner_name:
+                raise AuthorityLinkError(f"owner name mismatch: {owner_name}")
+            contract_rows = owner_data.get("learning_contracts", [])
+            if type(contract_rows) is not list:
+                raise AuthorityLinkError("learning_contracts must be a list")
+            all_learning_contracts.extend(
+                (DesignationLearningContract.from_dict(row), owner_name)
+                for row in contract_rows
+            )
 
             # Validate and collect atoms
             for atom_data in owner_data.get("atoms", []):
@@ -538,6 +659,8 @@ class AuthorityLinker:
             all_adapters.extend(owner_data.get("adapters", []))
 
             for op, roles in owner_data.get("operator_roles", {}).items():
+                if op in all_operator_roles:
+                    raise AuthorityLinkError(f"duplicate operator schema owner: {op}")
                 all_operator_roles[op] = list(roles)
 
             for value, dim in owner_data.get("value_dimensions", {}).items():
@@ -551,6 +674,11 @@ class AuthorityLinker:
                 all_definition_targets[source] = target
 
             all_transitions.extend(owner_data.get("transitions", []))
+
+        learning_contracts = self._validate_learning_contracts(
+            all_learning_contracts, all_atoms, all_event_signatures,
+            all_operator_roles, all_adapters,
+        )
 
         # -- Validate designations (targets must exist) --------------------
         designation_facts: list[DesignationFact] = []
@@ -765,6 +893,7 @@ class AuthorityLinker:
             "transitions": sorted(
                 all_transitions, key=lambda t: json.dumps(t, sort_keys=True)
             ),
+            "learning_contracts": [contract.to_dict() for contract in learning_contracts],
         }
         content_hash = stable_ref("authority-content", full_payload)
 
@@ -810,4 +939,113 @@ class AuthorityLinker:
             by_event_signature=event_sigs,
             by_transition=by_transition,
             by_transition_signature=by_transition_signature,
+            learning_contracts=learning_contracts,
         )
+
+    @staticmethod
+    def _validate_learning_contracts(
+        records: list[tuple[DesignationLearningContract, str]],
+        atoms: dict[str, tuple[AtomRecord, str]],
+        signatures: list[dict[str, Any]],
+        operator_roles: dict[str, list[str]],
+        adapters: list[str],
+    ) -> tuple[DesignationLearningContract, ...]:
+        """Activation-only linking of every authority edge and lowering slot."""
+        by_ref: dict[str, DesignationLearningContract] = {}
+        sources: set[tuple[str, str]] = set()
+        signatures_by_event: dict[str, list[dict[str, Any]]] = {}
+        for signature in signatures:
+            signatures_by_event.setdefault(signature["event_type"], []).append(signature)
+        atom_fields = {
+            "contract_ref": "learning_contract", "goal_ref": "goal",
+            "answer_contract_ref": "answer_contract", "review_policy_ref": "policy",
+            "source_event_ref": "event_type", "capability_ref": "capability",
+            "permission_ref": "permission", "designation_label_ref": "label_type",
+            "internal_adapter_ref": "adapter",
+        }
+        for contract, owner in records:
+            if contract.contract_ref in by_ref:
+                raise AuthorityLinkError("duplicate learning contract ref")
+            source = (contract.source_operator_ref, contract.source_event_ref)
+            if source in sources:
+                raise AuthorityLinkError("duplicate learning contract source mapping")
+            for field_name, kind in atom_fields.items():
+                ref = getattr(contract, field_name)
+                atom_owner = atoms.get(ref)
+                if atom_owner is None or atom_owner[0].kind != kind or atom_owner[0].reviewed is not True:
+                    raise AuthorityLinkError(f"invalid learning contract {field_name}: {ref}")
+            if atoms[contract.contract_ref][1] != owner:
+                raise AuthorityLinkError("learning contract record differs from its atom owner")
+            if (
+                contract.source_operator_ref != "op:event"
+                or operator_roles.get(contract.source_operator_ref) != ["role:event", "role:type"]
+                or contract.commit_operator_ref != "op:designation"
+                or operator_roles.get(contract.commit_operator_ref) != ["role:target", "role:label_type", "role:surface"]
+                or contract.designation_label_ref != "label:lexical"
+            ):
+                raise AuthorityLinkError("invalid learning contract operator-role lowering")
+            if contract.internal_adapter_ref != "adapter:memory" or contract.internal_adapter_ref not in adapters:
+                raise AuthorityLinkError("learning contract requires reviewed internal memory adapter authorization")
+            candidates = signatures_by_event.get(contract.source_event_ref, [])
+            if len(candidates) != 1:
+                raise AuthorityLinkError("learning contract requires one exact source event signature")
+            signature = candidates[0]
+            if set(signature) - {
+                "event_type", "roles", "valid_session_phases", "required_capabilities",
+                "required_permissions", "adapter_ref", "effect_schema",
+            }:
+                raise AuthorityLinkError("learning contract source signature has unknown fields")
+            # This contract lowers exactly one designation. Additional event
+            # effects must not be silently discarded by that internal lowering.
+            effects = signature.get("effect_schema", [])
+            if type(effects) is not list or effects:
+                raise AuthorityLinkError("learning contract source must have no additional effects")
+            if "valid_session_phases" in signature:
+                phases = signature["valid_session_phases"]
+                # Established active conversation signatures use these phases;
+                # absence retains EventSignature's opening/active default.
+                supported_phases = {"opening", "active", "suspended"}
+                if (
+                    type(phases) is not list or not 1 <= len(phases) <= len(supported_phases)
+                    or any(type(phase) is not str or phase not in supported_phases for phase in phases)
+                    or len(set(phases)) != len(phases)
+                ):
+                    raise AuthorityLinkError("learning contract source has invalid session phases")
+            if (
+                signature.get("required_capabilities") != [contract.capability_ref]
+                or signature.get("required_permissions") != [contract.permission_ref]
+                or signature.get("adapter_ref") != contract.internal_adapter_ref
+            ):
+                raise AuthorityLinkError("learning contract source requirements do not match")
+            if (
+                contract.actor_role_ref != "role:actor"
+                or contract.surface_role_ref != "role:surface"
+                or contract.target_role_ref != "role:target"
+            ):
+                raise AuthorityLinkError("learning contract source roles do not match lowering")
+            expected = {
+                contract.actor_role_ref: ("participant",),
+                contract.surface_role_ref: ("literal",),
+                contract.target_role_ref: contract.allowed_target_kinds,
+            }
+            roles = signature.get("roles")
+            if type(roles) is not list or len(roles) != len(expected):
+                raise AuthorityLinkError("learning contract source role count does not match")
+            seen: set[str] = set()
+            for role in roles:
+                if type(role) is not dict or set(role) != {"role", "filler_kinds", "required", "proposition_valued"}:
+                    raise AuthorityLinkError("learning contract source role has invalid fields")
+                ref = role["role"]
+                if type(ref) is not str or ref not in expected or ref in seen:
+                    raise AuthorityLinkError("learning contract source role is invalid or duplicated")
+                seen.add(ref)
+                if (
+                    role["required"] is not True or role["proposition_valued"] is not False
+                    or type(role["filler_kinds"]) is not list
+                    or any(type(kind) is not str for kind in role["filler_kinds"])
+                    or tuple(role["filler_kinds"]) != expected[ref]
+                ):
+                    raise AuthorityLinkError("learning contract source role requirements do not match")
+            sources.add(source)
+            by_ref[contract.contract_ref] = contract
+        return tuple(by_ref[ref] for ref in sorted(by_ref))

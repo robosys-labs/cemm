@@ -1,8 +1,9 @@
-"""Generate the split authority data files from the legacy monolith.
+"""Historical one-time split of a legacy monolith into an empty output directory.
 
 This script reads data/authority.json, splits it into three reviewed owners
 (kernel, conversation, state_operations), a manifest, and writes them with
-correct SHA-256 hashes. Run once to produce the data split.
+correct SHA-256 hashes. This is never regeneration of an active reviewed bundle:
+existing authority is refused before any write, including supplemental owners.
 """
 import json
 from pathlib import Path
@@ -11,6 +12,8 @@ from cemm_authoritative_hybrid.canonical import sha256_governed_text
 
 ROOT = Path(__file__).resolve().parents[1]
 AUTH_DIR = ROOT / "data" / "authority"
+if AUTH_DIR.exists() and any(AUTH_DIR.iterdir()):
+    raise SystemExit("refusing to overwrite existing authority; historical split requires empty output")
 AUTH_DIR.mkdir(parents=True, exist_ok=True)
 
 legacy = json.loads((ROOT / "data" / "authority.json").read_text(encoding="utf-8"))

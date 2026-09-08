@@ -883,6 +883,54 @@ The main agent's final three-module run passes all 105 cases. Selector/receipt
 regeneration is twice byte-identical with G0 191 / R1 783 / R2 1173 / R3 1806 /
 R4 2144 / R5 2269 active nodes; the original frozen inventory remains unchanged.
 
+### Linked learning authority prerequisite (September 8, reviewed)
+
+The active manifest now links one typed `DesignationLearningContract` from
+`alias_learning.json`. It owns the existing v2 learning/answer contract refs,
+`goal:resolve_designation` and the review policy, and explicitly relates
+`event:learn_alias`, `cap:learn_alias`, `permission:write_alias` and the internal
+`op:designation` / `label:lexical` commit. Four internal kinds have no generated
+user-facing designations. This is source authority, not an approval for any alias.
+
+Generation is `authority-v1-2026-09-08-linked-alias-contract`; both content and
+model-compatibility identities change. The three prior owners and language packs
+remain unchanged. Existing stores reject the new generation rather than silently
+repinning or resetting data. The historical monolith splitter now refuses any
+nonempty authority output, preventing it from deleting supplemental authority.
+
+Activation builds exact indexes and validates/hash-binds contract fields. Review
+found that additional source `effect_schema` and malformed phase values could be
+silently accepted. Fourteen failing probes drove the repair: extra effects and
+malformed phases now fail activation; absent defaults and valid explicit phases
+remain supported. Actual runtime session phases use the established plain phase
+values; synthetic fixture labels do not expand the active phase vocabulary.
+
+Three same-assertion successors preserve generation/kind/link-validation controls
+with the new explicit source contract; frozen originals remain historical evidence.
+This source prerequisite does not complete dependency 3: the pure event-to-
+designation lowering and materializer must still consume it, retain actor/source
+provenance, enforce current capability/permission/phase and remove unlinked plan
+defaults. Dependency 4 will add separate explicit review authorization and atomic
+publication; no conversation-triggered reviewer or second pending record is allowed.
+
+Independent spec and quality reviews pass. A fresh main run passes all 204 linked-
+authority, automatic-continuation, binding and query-witness cases, including 99
+authority cases. The existing authority-linker controls also passed independently.
+Selectors and the living receipt regenerate twice identically with G0 191 / R1
+879 / R2 1269 / R3 1902 / R4 2240 / R5 2365 active nodes. The frozen inventory,
+prior authority owners and language packs remain unchanged; no gate was added.
+
+A raw R1-phase selection against the current R3 runtime also executes retired
+pre-R3 expectations. Its 24 such failures are already superseded outside the
+current R3 active set; restoring the retired runtime to satisfy them would be a
+regression. The dirty-input replay-status control remains intentionally sensitive
+before checkpoint commit. These diagnostic distinctions are not phase admission
+or a claim of a full regression pass.
+
+The fresh intersection of R1-owner controls and current R3 lineage gives 852
+passes and only the expected dirty-input status rejection (853 selected nodes).
+R3/R4/R5 structural checks and 517 R3/R4 metadata checks also pass.
+
 ## Task 6 — Repair measured search/retrieval bounds and confirm preservation
 
 - [ ] Reproduce program/meaning duplication with the audit's multi-root and

@@ -1,0 +1,56 @@
+{
+  "atoms": [
+    {
+      "kind": "learning_contract",
+      "ref": "contract:designation_learning:v2",
+      "reviewed": true
+    },
+    {
+      "kind": "goal",
+      "ref": "goal:resolve_designation",
+      "reviewed": true
+    },
+    {
+      "kind": "answer_contract",
+      "ref": "contract:designation_answer:v2",
+      "reviewed": true
+    },
+    {
+      "kind": "policy",
+      "ref": "policy:learning_directive_requires_review:v2",
+      "reviewed": true
+    }
+  ],
+  "designations": [],
+  "learning_contracts": [
+    {
+      "actor_role_ref": "role:actor",
+      "allowed_target_kinds": [
+        "concept",
+        "entity",
+        "event_type",
+        "participant",
+        "relation_type",
+        "state_dimension",
+        "state_value"
+      ],
+      "answer_contract_ref": "contract:designation_answer:v2",
+      "capability_ref": "cap:learn_alias",
+      "commit_operator_ref": "op:designation",
+      "contract_ref": "contract:designation_learning:v2",
+      "designation_label_ref": "label:lexical",
+      "existing_targets_only": true,
+      "goal_ref": "goal:resolve_designation",
+      "internal_adapter_ref": "adapter:memory",
+      "internal_effect_owner": "EFFECT",
+      "permission_ref": "permission:write_alias",
+      "requires_explicit_review": true,
+      "review_policy_ref": "policy:learning_directive_requires_review:v2",
+      "source_event_ref": "event:learn_alias",
+      "source_operator_ref": "op:event",
+      "surface_role_ref": "role:surface",
+      "target_role_ref": "role:target"
+    }
+  ],
+  "owner": "alias_learning"
+}
