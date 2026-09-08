@@ -71,22 +71,6 @@ from cemm_authoritative_hybrid.verifier_reconstruction import reconstruct_expect
 ROOT = Path(__file__).parents[1]
 
 __cemm_test_inventory__ = {
-    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_r3_writer_preserves_atomic_metadata[memory]": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:foundation-pending-dialogue-r3-writer-preserves-atomic-metadata-memory",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "Foundation-Task-5",
-        "owner_ref": "situation-context",
-        "source_ast_sha256": "0a7ba39a2c789874dc4ddcf27119160a05214ef804b886e81a6af7a75a6b15f8"
-    },
-    "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_r3_writer_preserves_atomic_metadata[sqlite]": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:foundation-pending-dialogue-r3-writer-preserves-atomic-metadata-sqlite",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "Foundation-Task-5",
-        "owner_ref": "situation-context",
-        "source_ast_sha256": "0a7ba39a2c789874dc4ddcf27119160a05214ef804b886e81a6af7a75a6b15f8"
-    },
     "tests/test_foundation_semantics.py::test_foundation_pending_dialogue_failed_completion_is_atomic[memory]": {
         "activation_phase": "R3",
         "assertion_ref": "assertion:foundation-pending-dialogue-failed-completion-is-atomic-memory",
@@ -5560,33 +5544,6 @@ def _pending_dialogue(stores, suffix="one", **changes):
         completion_receipt_ref=None, revision_pin=stores.revision_pin())
     values.update(changes)
     return DialogueObligation.create(**values)
-
-
-@pytest.mark.parametrize("backend", ("memory", "sqlite"), ids=("memory", "sqlite"))
-def test_foundation_pending_dialogue_r3_writer_preserves_atomic_metadata(backend, tmp_path):
-    # Persistence seam only: this does not authorize or prove alias acquisition.
-    stores = _restart_stores(backend, tmp_path)
-    try:
-        stores.r3_effect_journal_begin(idempotency_key="key:learning", intent_ref="intent:learning",
-            decision_ref="decision:learning", request_payload={"session_ref": "session:pending", "turn_index": 1},
-            expected_effect_revision=0)
-        row = _pending_dialogue(stores)
-        before = (stores.revision_pin(), stores.obligations.revision, stores.r3_effect_journal_get("key:learning"))
-        commit = lambda payload: stores.r3_commit_learning_outcome(session_ref=row.session_ref,
-            obligation_ref=row.obligation_ref, obligation_payload=payload, idempotency_key="key:learning",
-            intent_ref="intent:learning", decision_ref="decision:learning", receipt_payload={"receipt_ref": "receipt:learning"},
-            expected_revision_pin=before[0])
-        with pytest.raises(TypeError):
-            commit({**row.as_dict(), "not_json": {1}})
-        assert (stores.revision_pin(), stores.obligations.revision, stores.r3_effect_journal_get("key:learning")) == before
-        assert stores.sessions.get(row.session_ref) is None
-        assert stores.obligations.keyed_row(row.obligation_ref) is None
-        commit(row.as_dict())
-        assert stores.obligations.revision == 1
-        assert stores.pending_dialogue_obligations(row.session_ref, (row.obligation_ref,), maximum=1, turn_index=2) == (row,)
-        assert stores.r3_obligation_snapshot(row.session_ref, maximum=1)["obligation_refs"] == [row.obligation_ref]
-    finally:
-        stores.close()
 
 
 @pytest.mark.parametrize("backend", ("memory", "sqlite"), ids=("memory", "sqlite"))

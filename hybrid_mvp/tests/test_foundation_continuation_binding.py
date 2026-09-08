@@ -91,14 +91,6 @@ __cemm_test_inventory__ = {
         "owner_ref": "effect-learning-response",
         "source_ast_sha256": "56c4a2d61995e94ce76dd0c400982f6b1fb5eb51859eac276273a33c0c8e8f30",
     },
-    "tests/test_foundation_continuation_binding.py::test_continuation_effect_cannot_create_a_second_pending_obligation": {
-        "activation_phase": "R3",
-        "assertion_ref": "assertion:continuation-effect-cannot-create-a-second-pending-obligation",
-        "diagnostic_role": "owner",
-        "introduced_by_task": "Foundation-Task-5",
-        "owner_ref": "learning-response",
-        "source_ast_sha256": "30eb731796416a69f166f9d8eac17f04136efe19aa66057b41234b1a988f0b04"
-    },
     "tests/test_foundation_continuation_binding.py::test_continuation_finalization_rejects_unbound_draft_ref": {
         "activation_phase": "R3",
         "assertion_ref": "assertion:r3-learning-finalization-rejects-unbound-draft-ref",
@@ -540,22 +532,6 @@ def test_continuation_preserves_query_lineage_across_other_session_effects(tmp_p
         result = R3EvaluationOwner(runtime._authority, runtime.stores, runtime._config).evaluate(meaning, situation)
         assert result.learning_drafts[0].source_query_ref == pending.source_query_ref
         assert runtime.stores.world.revision == 0
-    finally:
-        runtime.stores.close()
-
-
-def test_continuation_effect_cannot_create_a_second_pending_obligation(tmp_path):
-    from cemm_authoritative_hybrid.r3_effects import AdapterRegistry, R3EffectGateway
-    runtime, source, pending = _setup(tmp_path)
-    try:
-        meaning, situation = _answer(runtime, source.evaluation.situation)
-        evaluation = R3EvaluationOwner(runtime._authority, runtime.stores, runtime._config).evaluate(meaning, situation)
-        plan, obligation = LearningCoordinator(runtime._authority, runtime.stores).materialize(evaluation, meaning, situation)
-        before = runtime.stores.revision_pin(), runtime.stores.obligations.revision
-        with pytest.raises(ValueError, match="publication.*unavailable"):
-            R3EffectGateway(runtime.stores, AdapterRegistry()).execute(evaluation, meaning, situation, learning_plan=plan, obligation=obligation)
-        assert (runtime.stores.revision_pin(), runtime.stores.obligations.revision) == before
-        assert runtime.stores.r3_obligation_snapshot(situation.session_ref, maximum=1)["obligation_refs"] == [pending.obligation_ref]
     finally:
         runtime.stores.close()
 

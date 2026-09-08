@@ -321,6 +321,12 @@ class LearningCoordinator:
 
     def materialize(self, evaluation: EvaluationBundle, meaning: VerifiedMeaning,
                     situation: SituationContext) -> tuple[LearningPlan | None, dialogue.DialogueObligation | None]:
+        plan, pending, _source_journal = self.materialize_with_source(evaluation, meaning, situation)
+        return plan, pending
+
+    def materialize_with_source(self, evaluation: EvaluationBundle, meaning: VerifiedMeaning,
+                                situation: SituationContext):
+        """Return the exact journal that the shared dialogue binding validated."""
         if type(evaluation) is not EvaluationBundle or type(meaning) is not VerifiedMeaning or type(situation) is not SituationContext:
             raise TypeError("learning materialization requires exact R3 artifacts")
         decision = evaluation.decision
@@ -335,7 +341,7 @@ class LearningCoordinator:
         if decision.action is not DecisionAction.CREATE_LEARNING_OBLIGATION:
             if evaluation.learning_drafts:
                 raise ValueError("non-learning Decision carries learning drafts")
-            return None, None
+            return None, None, None
         if situation.mode is not SemanticMode.REQUEST:
             raise ValueError("learning obligation requires REQUEST mode")
         if len(evaluation.learning_drafts) != 1:
@@ -351,10 +357,11 @@ class LearningCoordinator:
             raise ValueError("materializable learning draft requires target_ref")
         if not draft.expected_target_kinds:
             raise ValueError("materializable learning draft requires expected_target_kinds")
-        from .dialogue import bind_learning_answer
+        from .dialogue import learning_answer_binding
         lowered = lower_designation_learning(self._authority, meaning.expression, situation)
         contract, app = lowered.contract, lowered.designation
-        pending = bind_learning_answer(self._stores, situation, app, maximum=self._config.max_orientation_alternatives)
+        pending, source_journal = learning_answer_binding(self._stores, situation, app,
+            maximum=self._config.max_orientation_alternatives)
         if (draft.source_query_ref != pending.source_query_ref
                 or draft.proof_refs != (*lowered.proof_refs, pending.obligation_ref)
                 or decision.proof_refs != lowered.proof_refs
@@ -394,4 +401,67 @@ class LearningCoordinator:
             expires_at_turn=pending.expires_turn_index,
         )
         # Binding is a read: retain the exact canonical source record without renewal.
-        return plan, pending
+        return plan, pending, source_journal
+
+
+def learning_proposal_request(stores: SemanticStores, evaluation: EvaluationBundle,
+        source: dialogue.DialogueObligation, source_journal,
+        *, maximum: int) -> dict[str, Any]:
+    """Retain already-materialized evidence in the existing journal request.
+
+    The coordinator owns exact source-query validation. Its bounded journal read
+    is retained here as immutable retry evidence, never a publication grant.
+    """
+    situation = evaluation.situation
+    return {
+        "learning_source_journal": source_journal.as_dict(),
+        "learning_source_key": source_journal.entry.idempotency_key,
+        "learning_session_state": dialogue.continuation_session_reservation(stores, situation),
+        "learning_obligation_maximum": maximum,
+        "learning_obligation_snapshot": dict(stores.r3_obligation_snapshot(source.session_ref, maximum=maximum)),
+    }
+
+
+def validate_learning_proposal_request(stores: SemanticStores, request: Mapping[str, Any], *, planned: bool):
+    """Recheck retained witnesses inside the existing persistence transaction.
+
+    No historical situation is repinned or rebound. Only the proposal's own
+    PLANNED journal increment is permitted before its terminal transition.
+    """
+    from .persistence import StaleRevisionError
+    from .r3_codec import thaw_json
+    from .r3_effects import _predicted_pin
+    from .r3_persistence import effect_journal_get
+    request = thaw_json(request)
+    meaning = VerifiedMeaning.from_dict(request["learning_meaning"])
+    evaluation = EvaluationBundle.from_dict(request["learning_evaluation"])
+    plan = LearningPlan.from_dict(request["learning_plan"])
+    source = dialogue.DialogueObligation.from_dict(request["learning_source_obligation"])
+    situation, decision = evaluation.situation, evaluation.decision
+    plan.validate_source(source, situation)
+    if (meaning.expression != evaluation.expression or meaning.revision_pin != situation.revision_pin
+            or evaluation.revision_pin != situation.revision_pin
+            or decision.verified_meaning_ref != meaning.verified_meaning_ref
+            or plan.verified_meaning_ref != meaning.verified_meaning_ref
+            or plan.decision_ref != decision.decision_ref or plan.expression_ref != meaning.expression.expression_ref
+            or decision.action is not DecisionAction.CREATE_LEARNING_OBLIGATION):
+        raise ValueError("learning proposal canonical lineage mismatch")
+    if stores.revision_pin() != _predicted_pin(situation.revision_pin, effects=int(planned)):
+        raise StaleRevisionError("learning proposal reservation revision changed")
+    maximum = exact_int(request["learning_obligation_maximum"], "learning obligation maximum",
+        minimum=1, maximum=RuntimeConfig.max_orientation_alternatives)
+    snapshot = stores.r3_obligation_snapshot(source.session_ref, maximum=maximum)
+    if (snapshot != request["learning_obligation_snapshot"]
+            or snapshot["snapshot_ref"] != situation.obligation_snapshot_ref
+            or tuple(snapshot["obligation_refs"]) != situation.obligation_refs):
+        raise StaleRevisionError("learning proposal source snapshot changed")
+    pending = stores.pending_dialogue_obligations(source.session_ref, situation.obligation_refs,
+        maximum=maximum, turn_index=situation.turn_index)
+    if source not in pending:
+        raise ValueError("learning proposal source pending row changed")
+    if dialogue.continuation_session_reservation(stores, situation) != request["learning_session_state"]:
+        raise StaleRevisionError("learning proposal source session changed")
+    journal = effect_journal_get(stores, request["learning_source_key"])
+    if journal is None or journal.as_dict() != request["learning_source_journal"]:
+        raise ValueError("learning proposal source query journal changed")
+    return meaning, evaluation, plan, source

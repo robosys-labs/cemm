@@ -45,7 +45,6 @@ __all__ = [
     "effect_journal_begin",
     "effect_journal_transition",
     "effect_journal_commit",
-    "commit_learning_outcome",
     "install_reviewed_world_facts",
     "predicted_effect_pin",
 ]
@@ -372,18 +371,6 @@ class R3StorePort(Protocol):
         facts: tuple[Fact, ...],
         expected_revision_pin: RevisionPin,
     ) -> Mapping[str, Any]: ...
-    def r3_commit_learning_outcome(
-        self,
-        *,
-        session_ref: str,
-        obligation_ref: str,
-        obligation_payload: Mapping[str, Any],
-        idempotency_key: str,
-        intent_ref: str,
-        decision_ref: str,
-        receipt_payload: Mapping[str, Any],
-        expected_revision_pin: RevisionPin,
-    ) -> Mapping[str, Any]: ...
 
 
 _REQUIRED_PORT_METHODS = (
@@ -396,7 +383,6 @@ _REQUIRED_PORT_METHODS = (
     "r3_effect_journal_begin",
     "r3_effect_journal_transition",
     "r3_effect_journal_commit",
-    "r3_commit_learning_outcome",
 )
 
 
@@ -583,37 +569,6 @@ def effect_journal_commit(
     pin = RevisionPin.from_dict(row["revision_pin"])
     if journal.entry.state is not EffectJournalState.COMMITTED:
         raise ValueError("atomic effect commit did not produce committed state")
-    return journal, pin
-
-
-def commit_learning_outcome(
-    stores: SemanticStores,
-    *,
-    session_ref: str,
-    obligation_ref: str,
-    obligation_payload: Mapping[str, Any],
-    idempotency_key: str,
-    intent_ref: str,
-    decision_ref: str,
-    receipt_payload: Mapping[str, Any],
-    expected_revision_pin: RevisionPin,
-) -> tuple[StoredEffectJournal, RevisionPin]:
-    row = require_r3_store_port(stores).r3_commit_learning_outcome(
-        session_ref=exact_text(session_ref, "session_ref"),
-        obligation_ref=exact_text(obligation_ref, "obligation_ref"),
-        obligation_payload=thaw_json(freeze_json(obligation_payload)),
-        idempotency_key=exact_text(idempotency_key, "idempotency_key"),
-        intent_ref=exact_text(intent_ref, "intent_ref"),
-        decision_ref=exact_text(decision_ref, "decision_ref"),
-        receipt_payload=thaw_json(freeze_json(receipt_payload)),
-        expected_revision_pin=exact_pin(expected_revision_pin),
-    )
-    if type(row) is not dict or set(row) != {"journal", "revision_pin"}:
-        raise TypeError("r3_commit_learning_outcome returned invalid material")
-    journal = StoredEffectJournal.from_dict(row["journal"])
-    pin = RevisionPin.from_dict(row["revision_pin"])
-    if journal.entry.state is not EffectJournalState.NO_EFFECT:
-        raise ValueError("learning outcome must produce no-effect journal state")
     return journal, pin
 
 

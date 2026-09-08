@@ -1,4 +1,4 @@
-"""Effect / No-Effect Receipt ABI 1 and the sole mutation gateway.
+"""Effect / No-Effect Receipt ABI 2 and the sole mutation gateway.
 
 External operations use a durable finite-state journal.  A journal entry reaches
 ``invocation_started`` before the adapter is called.  Recovery of that state
@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping, Protocol, runtime_checkable
 
+from .authority import LinkedAuthority
 from .canonical import stable_ref
 from .config import RuntimeConfig
 from .cycle import SemanticMode
@@ -807,13 +808,17 @@ class NoEffectReceipt:
 class R3EffectGateway:
     """The sole owner of world mutation, adapter invocation, and effect journals."""
 
-    def __init__(self, stores: SemanticStores, adapters: AdapterRegistry, config: RuntimeConfig | None = None) -> None:
+    def __init__(self, stores: SemanticStores, adapters: AdapterRegistry, config: RuntimeConfig | None = None,
+                 *, authority: LinkedAuthority | None = None) -> None:
         if type(stores) is not SemanticStores:
             raise TypeError("stores must be exact SemanticStores")
         if type(adapters) is not AdapterRegistry:
             raise TypeError("adapters must be exact AdapterRegistry")
+        if authority is not None and type(authority) is not LinkedAuthority:
+            raise TypeError("authority must be exact LinkedAuthority or None")
         self._stores = stores
         self._adapters = adapters
+        self._authority = authority
         self._config = RuntimeConfig.release() if config is None else config
         if type(self._config) is not RuntimeConfig:
             raise TypeError("config must be exact RuntimeConfig")
@@ -915,22 +920,7 @@ class R3EffectGateway:
                     or learning_plan.verified_meaning_ref != meaning.verified_meaning_ref
                     or learning_plan.expression_ref != meaning.expression.expression_ref):
                 raise ValueError("learning artifacts do not bind the Decision")
-            snapshot = self._stores.r3_obligation_snapshot(situation.session_ref,
-                maximum=self._config.max_orientation_alternatives)
-            if (situation.revision_pin != self._stores.revision_pin()
-                    or snapshot["snapshot_ref"] != situation.obligation_snapshot_ref
-                    or tuple(snapshot["obligation_refs"]) != situation.obligation_refs):
-                raise ValueError("learning source pending snapshot is stale")
-            pending = self._stores.pending_dialogue_obligations(situation.session_ref,
-                situation.obligation_refs, maximum=self._config.max_orientation_alternatives,
-                turn_index=situation.turn_index)
-            if obligation not in pending:
-                raise ValueError("learning source differs from its persisted canonical row")
-            # The previous path persisted a second, plan-derived obligation
-            # beside the originating query continuation. Binding is not yet
-            # reviewed publication; leave every store unchanged until that
-            # transactional owner is implemented.
-            raise ValueError("reviewed continuation publication is unavailable")
+            return self._persist_learning_proposal(evaluation, meaning, situation, learning_plan, obligation)
         reason = {
             DecisionAction.PREVIEW_TRANSITION: NoEffectReason.SIMULATION,
             DecisionAction.RETAIN_ATTRIBUTION: NoEffectReason.ATTRIBUTED_ONLY,
@@ -943,6 +933,56 @@ class R3EffectGateway:
                 DecisionStatus.BUDGET_EXHAUSTED: NoEffectReason.UNKNOWN,
             }.get(evaluation.decision.status, NoEffectReason.READ_ONLY)
         return self._persist_no_effect(evaluation, meaning, situation, reason)
+
+    def _persist_learning_proposal(self, evaluation, meaning, situation, plan, obligation):
+        from .r3_learning import LearningCoordinator, learning_proposal_request
+        if type(self._authority) is not LinkedAuthority:
+            raise ValueError("learning proposal requires linked authority")
+        decision = evaluation.decision
+        reason = NoEffectReason.LEARNING_OBLIGATION_ONLY
+        key = self._effect_key(decision.decision_ref, None, f"no_effect:{reason.value}")
+        origin = stable_ref("effect_journal_origin", {"decision_ref": decision.decision_ref,
+            "kind": f"no_effect:{reason.value}"})
+        submitted = {"journal_origin_ref": origin, "kind": "no_effect", "reason": reason.value,
+            "decision_ref": decision.decision_ref, **self._turn_payload(situation),
+            "learning_meaning": meaning.as_dict(), "learning_evaluation": evaluation.as_dict(),
+            "learning_plan": plan.as_dict(), "learning_source_obligation": obligation.as_dict()}
+        existing = effect_journal_get(self._stores, key)
+        if existing is None:
+            expected_plan, expected_source, source_journal = LearningCoordinator(self._authority, self._stores, self._config).materialize_with_source(
+                evaluation, meaning, situation)
+            if (expected_plan, expected_source) != (plan, obligation):
+                raise ValueError("learning proposal differs from the exact evaluated plan")
+            request = {**submitted, **learning_proposal_request(self._stores, evaluation,
+                obligation, source_journal, maximum=self._config.max_orientation_alternatives)}
+        else:
+            request = thaw_json(existing.entry.request_payload)
+            if any(request.get(name) != value for name, value in submitted.items()):
+                raise ValueError("learning retry differs from its persisted request")
+        stored = self._begin(key=key, intent_ref=origin, decision_ref=decision.decision_ref,
+            request_payload=request, input_revision_pin=situation.revision_pin)
+        if stored.entry.state.terminal:
+            receipt = self._terminal_receipt(stored)
+            if type(receipt) is not NoEffectReceipt or receipt.reason is not reason:
+                raise ValueError("learning proposal key resolved to a different receipt")
+            return receipt
+        if stored.entry.state is not EffectJournalState.PLANNED:
+            raise ValueError("learning proposal journal must be planned")
+        current = self._stores.revision_pin()
+        receipt = NoEffectReceipt.create(reason=reason, idempotency_key=key, journal_origin_ref=origin,
+            journal_preterminal_ref=stored.entry.journal_ref, decision_ref=decision.decision_ref,
+            verified_meaning_ref=meaning.verified_meaning_ref, expression_ref=meaning.expression.expression_ref,
+            situation_ref=situation.situation_ref, program_ref=meaning.program_ref,
+            learning_plan_ref=plan.plan_ref, source_obligation_ref=obligation.obligation_ref,
+            proof_refs=decision.proof_refs, blocker_refs=decision.blocker_refs,
+            input_revision_pin=situation.revision_pin, output_revision_pin=_predicted_pin(current, session=1, effects=1))
+        effect_journal_transition(self._stores, idempotency_key=key, expected_state=EffectJournalState.PLANNED,
+            next_state=EffectJournalState.NO_EFFECT, observation_payload=None, outcome_ref=receipt.receipt_ref,
+            receipt_payload=receipt.as_dict(), blocker_refs=decision.blocker_refs,
+            expected_effect_revision=current.effect_revision)
+        if self._stores.revision_pin() != receipt.output_revision_pin:
+            raise RuntimeError("learning proposal persistence revision mismatch")
+        return receipt
 
     def _begin(
         self, *, key: str, intent_ref: str, decision_ref: str,

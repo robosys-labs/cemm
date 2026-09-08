@@ -233,12 +233,19 @@ This increment authorizes no network adapter or root adoption.
 
 Continuation answers must bind the exact pending snapshot and the original
 gateway-persisted query evaluation, not only a query-ref string. Unknown-query
-journal retention and diagnostic plan materialization do not authorize alias
-publication. LearningPlan ABI 3 binds the original generic obligation through its
+journal retention, plan materialization and proposal persistence do not authorize
+alias publication. LearningPlan ABI 3 binds the original generic obligation through its
 required, identity-covered `source_obligation_ref`; materialization returns that
-exact record. The duplicate plan-derived obligation type is removed. The former
-EFFECT publication path remains disabled pending the reviewed transactional
-publication owner; do not restore it as a compatibility path. Automatic generic query-continuation
+exact record. A learning proposal retains its canonical meaning, evaluation,
+plan and original source-query witnesses in the existing effect journal. Its
+terminal no-effect receipt consumes the answer turn once, without world mutation,
+renewal or completion of the pending record. Exact journal-bound retries preserve
+that receipt, including after restart; unfinished proposals cannot repin their
+source reservation. This is not authenticated review or alias acquisition.
+The duplicate plan-derived obligation type is removed. The former EFFECT
+publication path remains disabled pending the reviewed transactional publication
+owner; do not restore it or a direct second-obligation writer as a compatibility
+path. Automatic generic query-continuation
 creation is implemented in the current Task 5 repair, with acceptance and
 remaining dependencies tracked in the foundation plan. The user approved its
 four-subsequent-same-session-turn lifecycle on September 8, as recorded in the

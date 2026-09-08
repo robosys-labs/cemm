@@ -1595,6 +1595,8 @@ class SemanticStores:
         if type(session_ref) is not str or not session_ref:
             raise TypeError("session_ref must be exact nonempty str")
         session = self.sessions.get(session_ref)
+        if session is not None and session.session_ref != session_ref:
+            raise ValueError("session snapshot stored key/session mismatch")
         if session is None:
             phase = "opening"
             turn_index = 0
@@ -1833,6 +1835,11 @@ class SemanticStores:
             effect_revision=new_revision,
         )
         stored = {"entry": entry.as_dict(), "receipt": None}
+        # Serialize and authenticate proposal evidence before any memory write.
+        _r3_canonical_json(stored)
+        if "learning_plan" in entry.request_payload:
+            from .r3_learning import validate_learning_proposal_request
+            validate_learning_proposal_request(self, entry.request_payload, planned=False)
         if isinstance(self._backend, SQLiteSemanticStore):
             conn = self._backend._conn
             conn.execute("BEGIN IMMEDIATE")
@@ -1859,6 +1866,11 @@ class SemanticStores:
                             raise StaleRevisionError(
                                 f"effect request {field} changed concurrently"
                             )
+                if "learning_plan" in entry.request_payload:
+                    row = conn.execute("SELECT value FROM metadata WHERE key='obligation_revision'").fetchone()
+                    if (int(row[0]) if row else 0) != self.obligations.revision:
+                        raise StaleRevisionError("learning proposal obligation revision changed concurrently")
+                    validate_learning_proposal_request(self, entry.request_payload, planned=False)
                 entry_json = _r3_canonical_json(entry.as_dict())
                 conn.execute(
                     "INSERT INTO r3_effect_journal(idempotency_key, entry_json, "
@@ -1957,6 +1969,40 @@ class SemanticStores:
         return tuple((ref, _MemoryObligationStore._prepare_row(ref, source.session_ref, payload,
             self.obligations.revision + 1, payload["resolved"])) for ref, payload in data)
 
+    def _validate_learning_proposal_transition(self, entry, receipt_payload):
+        if "learning_plan" not in entry.request_payload:
+            return
+        from .r3_learning import validate_learning_proposal_request
+        from .r3_effects import NoEffectReason, NoEffectReceipt, R3EffectGateway, _predicted_pin
+        from .r3_persistence import EffectJournalState
+        from .r3_codec import thaw_json
+        meaning, evaluation, plan, source = validate_learning_proposal_request(self, entry.request_payload, planned=True)
+        situation, decision = evaluation.situation, evaluation.decision
+        reason = NoEffectReason.LEARNING_OBLIGATION_ONLY
+        origin = stable_ref("effect_journal_origin", {"decision_ref": decision.decision_ref,
+            "kind": f"no_effect:{reason.value}"})
+        request = entry.request_payload
+        if (entry.state is not EffectJournalState.NO_EFFECT or entry.attempt_index != 0
+                or entry.idempotency_key != R3EffectGateway._effect_key(decision.decision_ref, None, f"no_effect:{reason.value}")
+                or entry.intent_ref != origin or entry.decision_ref != decision.decision_ref
+                or request.get("journal_origin_ref") != origin or request.get("reason") != reason.value
+                or request.get("kind") != "no_effect" or request.get("decision_ref") != decision.decision_ref
+                or any(request.get(name) != getattr(situation, name) for name in
+                       ("session_ref", "turn_ref", "turn_index", "session_phase_ref"))):
+            raise ValueError("learning proposal terminal journal lineage mismatch")
+        receipt = NoEffectReceipt.from_dict(thaw_json(receipt_payload))
+        expected = NoEffectReceipt.create(reason=reason, idempotency_key=entry.idempotency_key,
+            journal_origin_ref=origin, journal_preterminal_ref=entry.parent_journal_ref,
+            decision_ref=decision.decision_ref, verified_meaning_ref=meaning.verified_meaning_ref,
+            expression_ref=meaning.expression.expression_ref, situation_ref=situation.situation_ref,
+            program_ref=meaning.program_ref, learning_plan_ref=plan.plan_ref, source_obligation_ref=source.obligation_ref,
+            proof_refs=decision.proof_refs, blocker_refs=decision.blocker_refs,
+            input_revision_pin=situation.revision_pin,
+            output_revision_pin=_predicted_pin(self.revision_pin(), session=1, effects=1))
+        if (receipt != expected or entry.outcome_ref != receipt.receipt_ref
+                or entry.blocker_refs != decision.blocker_refs):
+            raise ValueError("learning proposal terminal receipt mismatch")
+
     def r3_effect_journal_transition(
         self,
         *,
@@ -2009,6 +2055,7 @@ class SemanticStores:
             effect_revision=new_effect_revision,
         )
         stored = StoredEffectJournal(entry, receipt_payload).as_dict()
+        _r3_canonical_json(stored)
         terminal = target.terminal
         obligation_parent = self.obligations.revision
         prepared_obligations = ()
@@ -2030,7 +2077,7 @@ class SemanticStores:
                 # the separate obligation revision. Another connection may have
                 # committed since the gateway assembled this receipt.
                 revision_fields = (("effect_revision", expected_effect_revision),)
-                if "query_continuation" in entry.request_payload:
+                if "query_continuation" in entry.request_payload or "learning_plan" in entry.request_payload:
                     pin = self.revision_pin()
                     revision_fields += (("session_revision", pin.session_revision),
                         ("world_revision", pin.world_revision), ("episode_revision", pin.episode_revision),
@@ -2039,6 +2086,7 @@ class SemanticStores:
                     row = conn.execute("SELECT value FROM metadata WHERE key=?", (name,)).fetchone()
                     if (int(row[0]) if row else 0) != expected_revision:
                         raise StaleRevisionError(f"query/effect transition {name} changed concurrently")
+                self._validate_learning_proposal_transition(entry, receipt_payload)
                 prepared_obligations = self._prepare_query_continuation_transition(entry, receipt_payload)
                 session_parent = self.sessions.revision
                 session_new = session_parent
@@ -2108,6 +2156,7 @@ class SemanticStores:
             if prepared_obligations:
                 self.obligations.revision = obligation_parent + 1
         else:
+            self._validate_learning_proposal_transition(entry, receipt_payload)
             prepared_obligations = self._prepare_query_continuation_transition(entry, receipt_payload)
             if terminal:
                 session_ref, turn_index, phase = _r3_terminal_turn(entry)
@@ -2280,148 +2329,6 @@ class SemanticStores:
             self.effects.revision = new_effect
         pin = self.revision_pin()
         return {"journal": stored, "revision_pin": pin.as_dict()}
-
-    def r3_commit_learning_outcome(
-        self,
-        *,
-        session_ref: str,
-        obligation_ref: str,
-        obligation_payload: Mapping[str, Any],
-        idempotency_key: str,
-        intent_ref: str,
-        decision_ref: str,
-        receipt_payload: Mapping[str, Any],
-        expected_revision_pin: RevisionPin,
-    ) -> Mapping[str, Any]:
-        from .r3_persistence import (
-            EffectJournalEntry,
-            EffectJournalState,
-            StoredEffectJournal,
-        )
-
-        if expected_revision_pin != self.revision_pin():
-            raise StaleRevisionError("learning outcome revision pin is stale")
-        existing = self.r3_effect_journal_get(idempotency_key)
-        if existing is None:
-            raise ValueError("learning effect journal entry is absent")
-        current_entry = EffectJournalEntry.from_dict(existing["entry"])
-        if current_entry.state is not EffectJournalState.PLANNED:
-            raise ValueError("learning journal is not planned")
-        new_effect = expected_revision_pin.effect_revision + 1
-        new_session = expected_revision_pin.session_revision + 1
-        new_obligation = self.obligations.revision + 1
-        outcome_ref = receipt_payload.get("receipt_ref")
-        if type(outcome_ref) is not str or not outcome_ref:
-            raise ValueError("learning receipt lacks receipt_ref")
-        entry = EffectJournalEntry.create(
-            idempotency_key=idempotency_key,
-            state=EffectJournalState.NO_EFFECT,
-            attempt_index=current_entry.attempt_index,
-            intent_ref=intent_ref,
-            decision_ref=decision_ref,
-            request_payload=current_entry.request_payload,
-            observation_payload=None,
-            outcome_ref=outcome_ref,
-            blocker_refs=(),
-            parent_journal_ref=current_entry.journal_ref,
-            effect_revision=new_effect,
-        )
-        stored = StoredEffectJournal(entry, receipt_payload).as_dict()
-        _session_from_entry, turn_index, phase = _r3_terminal_turn(entry)
-        obligation_data = {
-            **dict(obligation_payload),
-            "obligation_ref": obligation_ref,
-            "session_ref": session_ref,
-            "resolved": False,
-        }
-        if isinstance(self._backend, SQLiteSemanticStore):
-            conn = self._backend._conn
-            conn.execute("BEGIN IMMEDIATE")
-            try:
-                _r3_write_session_sqlite(
-                    conn,
-                    session_ref=session_ref,
-                    turn_index=turn_index,
-                    session_phase_ref=phase,
-                    parent_revision=expected_revision_pin.session_revision,
-                    new_revision=new_session,
-                )
-                obligation_json = _r3_canonical_json(obligation_data)
-                conn.execute(
-                    "INSERT INTO obligations(obligation_ref, session_ref, payload_json, "
-                    "payload_hash, revision, resolved) VALUES(?, ?, ?, ?, ?, 0) "
-                    "ON CONFLICT(obligation_ref) DO UPDATE SET "
-                    "payload_json=excluded.payload_json, payload_hash=excluded.payload_hash, "
-                    "revision=excluded.revision, resolved=0",
-                    (
-                        obligation_ref,
-                        session_ref,
-                        obligation_json,
-                        _payload_hash(obligation_data),
-                        new_obligation,
-                    ),
-                )
-                conn.execute(
-                    "INSERT INTO metadata(key, value) VALUES('obligation_revision', ?) "
-                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
-                    (str(new_obligation),),
-                )
-                _r3_insert_revision(
-                    conn,
-                    store="obligations",
-                    parent_revision=self.obligations.revision,
-                    new_revision=new_obligation,
-                    delta_hash=_payload_hash(obligation_data),
-                )
-                entry_json = _r3_canonical_json(entry.as_dict())
-                receipt_json = _r3_canonical_json(receipt_payload)
-                conn.execute(
-                    "UPDATE r3_effect_journal SET entry_json=?, entry_hash=?, "
-                    "receipt_json=?, receipt_hash=?, effect_revision=? "
-                    "WHERE idempotency_key=?",
-                    (
-                        entry_json,
-                        _payload_hash(entry.as_dict()),
-                        receipt_json,
-                        _payload_hash(receipt_payload),
-                        new_effect,
-                        idempotency_key,
-                    ),
-                )
-                conn.execute(
-                    "INSERT INTO metadata(key, value) VALUES('effect_revision', ?) "
-                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
-                    (str(new_effect),),
-                )
-                _r3_insert_revision(
-                    conn,
-                    store="effects",
-                    parent_revision=expected_revision_pin.effect_revision,
-                    new_revision=new_effect,
-                    delta_hash=_payload_hash(stored),
-                )
-                conn.commit()
-            except Exception:
-                conn.rollback()
-                raise
-            self.sessions.revision = new_session
-            self.obligations.revision = new_obligation
-            self.effects.revision = new_effect
-        else:
-            prepared_obligation = self._backend.obligations._prepare_row(obligation_ref, session_ref, obligation_data, new_obligation, False)
-            session, _payload = _r3_session_material(
-                session_ref=session_ref,
-                turn_index=turn_index,
-                session_phase_ref=phase,
-                revision=new_session,
-            )
-            self._backend.sessions._sessions[session_ref] = session
-            self.sessions.revision = new_session
-            self._backend.obligations._store_row(obligation_ref, prepared_obligation)
-            self.obligations.revision = new_obligation
-            self._backend._r3_effect_journals[idempotency_key] = stored
-            self.effects.revision = new_effect
-        return {"journal": stored, "revision_pin": self.revision_pin().as_dict()}
 
     def close(self) -> None:
         self._backend.close()

@@ -59,7 +59,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "a7f8350d6a120e7734f804c93c7ddada0a8f22b535f1eb633a5892dd9ebf5800"
+        "source_ast_sha256": "c2d0b50eb17d7f2bbbbc963849339930fb0bd8f71c58ad70bf0bf80830a50c09"
     },
     "tests/test_foundation_continuation_artifacts.py::test_response_artifact_and_effect_reject_foreign_continuation[source]": {
         "activation_phase": "R3",
@@ -438,7 +438,7 @@ def test_response_artifact_and_registry_hard_cut(continuation):
     # Diagnostic artifacts alone cannot enable publication or mutate any store.
     from cemm_authoritative_hybrid.r3_effects import R3EffectGateway, AdapterRegistry
     before = runtime.stores.revision_pin(), runtime.stores.obligations.revision
-    with pytest.raises(ValueError, match="publication is unavailable"):
+    with pytest.raises(ValueError, match="requires linked authority"):
         R3EffectGateway(runtime.stores, AdapterRegistry()).execute(evaluation, meaning, situation,
             learning_plan=plan, obligation=row)
     assert (runtime.stores.revision_pin(), runtime.stores.obligations.revision) == before

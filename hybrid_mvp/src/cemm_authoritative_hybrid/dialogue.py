@@ -360,6 +360,20 @@ def query_continuation(evaluation: Any) -> DialogueObligation | None:
         revision_pin=query.revision_pin)
 
 
+def continuation_session_reservation(stores: SemanticStores, source: Any) -> dict[str, Any]:
+    """Authenticate ORIENT's read-only turn reservation without consuming it."""
+    session = stores.r3_session_snapshot(source.session_ref)
+    reservation = {"session_ref": source.session_ref, "turn_index": source.turn_index,
+                   "session_store_revision": source.revision_pin.session_revision}
+    if (source.turn_ref != stable_ref("turn", reservation)
+            or session["turn_index"] != source.turn_index - 1
+            or session["session_phase_ref"] != source.session_phase_ref
+            or session["session_record_revision"] > source.revision_pin.session_revision):
+        raise ValueError("continuation source session reservation changed")
+    return {name: session[name] for name in
+            ("session_ref", "turn_index", "session_phase_ref", "session_record_revision")}
+
+
 def query_continuation_request(stores: SemanticStores, evaluation: Any, *, maximum: int) -> dict[str, Any]:
     """Capture bounded continuity state for the existing atomic EFFECT owner.
 
@@ -375,19 +389,10 @@ def query_continuation_request(stores: SemanticStores, evaluation: Any, *, maxim
            ("authority_generation", "model_identity", "world_revision", "episode_revision")):
         raise ValueError("query continuation source revision changed")
     source = evaluation.situation
-    session = stores.r3_session_snapshot(source.session_ref)
     # ORIENT's reservation is read-only. Authenticate that this session still
     # precedes the exact source turn; a different session may advance the global
     # revision without consuming this reservation.
-    reservation = {"session_ref": source.session_ref, "turn_index": source.turn_index,
-                   "session_store_revision": source.revision_pin.session_revision}
-    if (source.turn_ref != stable_ref("turn", reservation)
-            or session["turn_index"] != source.turn_index - 1
-            or session["session_phase_ref"] != source.session_phase_ref
-            or session["session_record_revision"] > source.revision_pin.session_revision):
-        raise ValueError("query continuation source session reservation changed")
-    session_state = {name: session[name] for name in
-                     ("session_ref", "turn_index", "session_phase_ref", "session_record_revision")}
+    session_state = continuation_session_reservation(stores, source)
     snapshot = stores.r3_obligation_snapshot(candidate.session_ref, maximum=maximum)
     if (snapshot["snapshot_ref"] != source.obligation_snapshot_ref
             or tuple(snapshot["obligation_refs"]) != source.obligation_refs):
@@ -414,6 +419,11 @@ def query_continuation_request(stores: SemanticStores, evaluation: Any, *, maxim
 
 
 def bind_learning_answer(stores: SemanticStores, situation: Any, answer: Any, *, maximum: int) -> DialogueObligation:
+    """Bind an answer without retaining a second copy of source-query evidence."""
+    return learning_answer_binding(stores, situation, answer, maximum=maximum)[0]
+
+
+def learning_answer_binding(stores: SemanticStores, situation: Any, answer: Any, *, maximum: int):
     """Bind a target substitution to one persisted, exact unknown query.
 
     The journal is gateway-authored continuity evidence, not reviewer authority.
@@ -521,7 +531,7 @@ def bind_learning_answer(stores: SemanticStores, situation: Any, answer: Any, *,
     actual = SemanticExpression.create(applications=(answer,), root_refs=(answer.application_ref,))
     if actual != expected:
         raise ValueError("continuation answer changes content outside the outstanding slot")
-    return row
+    return row, stored
 
 
 class DialogueObligationManager:

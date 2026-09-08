@@ -61,8 +61,13 @@ Automatic generic continuation creation uses the existing UNKNOWN no-effect
 journal transaction, with exact source-session reservation and obligation
 snapshot revalidation. A source turn `n` expires exclusively at `n+5`; a live
 record is not renewed and expired retirement/replacement is atomic. This is not
-alias publication. The duplicate plan-derived type is removed and reviewed
-continuation publication remains disabled under the foundation plan. Non-null
+alias publication. Learning proposals retain canonical meaning, evaluation,
+LearningPlan and original pending/source-query witnesses in the existing journal
+request; they use the current `LEARNING_OBLIGATION_ONLY` no-effect receipt, not a
+new artifact ABI or obligation record. Terminal retry is read-only; unfinished
+recovery remains bound to the original answer reservation. The duplicate
+plan-derived type is removed and reviewed continuation publication remains
+disabled under the foundation plan. Non-null
 journal receipts must decode under the current receipt ABI on activation;
 planned rows with no receipt retain their existing recovery semantics.
 

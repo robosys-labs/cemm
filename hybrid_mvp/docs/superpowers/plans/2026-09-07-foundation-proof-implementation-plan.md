@@ -1296,7 +1296,9 @@ class and its active imports are removed together; no decoder adapter, fake reco
 or permissive version fallback is allowed. Registry defaults, strict decoders and
 active test successors follow this hard cut. Non-learning response semantics remain
 preserved; incompatible serialized receipts reject activation without resetting or
-repinning stored facts. Proposal persistence/publication is still disabled.
+repinning stored facts. At this codec checkpoint proposal persistence and
+publication were still disabled; the following proposal-transaction increment
+does not enable publication.
 
 ### Canonical-continuation artifact checkpoint — September 8
 
@@ -1342,7 +1344,7 @@ Existing gate definitions, owners, dependencies and limits are unchanged; only
 test selectors/source inputs are refreshed. Frozen inventory remains
 `7c27b0ad80998fc1f10876c05d0238a2498d2fd3a116ace77c9505da11d0b4b8`.
 
-**Next execution step:** implement the already-approved no-world-write learning
+**Checkpoint handoff:** implement the already-approved no-world-write learning
 proposal transaction and distinct authenticated reviewer publication through the
 existing EFFECT/persistence owners, then admitted alias lookup and restart reuse
 through both grounding and query. Preserve the exact original pending row and
@@ -1362,6 +1364,91 @@ not a full-world rebuild per span or turn. Grounding and query proof must retain
 the actual admitted fact/review/commit lineage, not label a learned fact as an
 immutable authority-source fact. This is still an implementation dependency,
 not evidence that the current seeded alias-index test proves acquisition.
+
+### Learning-proposal transaction increment — September 8
+
+The bounded proposal transaction passed independent specification and quality
+review; this is not a Task 5 completion or replay admission. The existing EFFECT
+journal now retains the exact canonical verified
+meaning, evaluation/situation, LearningPlan, original generic pending row and
+source-query journal witness for a learning proposal. Fresh proposals independently
+materialize against linked authority and authenticate the actual read-only ORIENT
+reservation. The terminal `LEARNING_OBLIGATION_ONLY` receipt advances the answer
+session once and retains the original pending record unchanged. It neither
+publishes an alias nor invokes an adapter.
+
+Existing journal begin/transition transactions own serialization, current revision
+and source-snapshot checks, parent-row comparison and SQLite rollback. A terminal
+exact retry returns its stored receipt, including after restart or source expiry;
+an unfinished proposal may only finish under its original reservation and pins,
+allowing its own journal reservation increment. No historical meaning is repinned.
+The keyed session-snapshot owner also rejects a stored key/session mismatch rather
+than concealing it in a snapshot made from the requested key.
+
+The obsolete direct learning-outcome writer, persistence-port declaration and
+helper/export are removed. Its two memory/SQLite atomic-metadata assertion
+identities now exercise invalid serialization before reservation and before
+terminal mutation in the real proposal path. The formerly blocked duplicate-row
+test is also removed: its assertion now runs against a successful SQLite proposal
+and the unchanged original pending row. These three obsolete cases remain
+recoverable from `6d448ac`, not as live alternate paths. The source-query capture
+race was reproduced and fixed by retaining the exact journal returned by shared
+binding validation, rather than rereading it after validation. Existing public
+row/pair APIs delegate to that same validation owner.
+
+No new record class, ABI, table, validation gate, full-store scan or search bound
+is introduced. The new proposal module has 48 passing cases, independently rerun
+by both reviewers. Specification review additionally passed 187 combined proposal,
+binding, artifact and lifecycle cases. Main verified preservation of all 372
+assertion identities across the affected existing test modules; surviving test
+bodies are unchanged except the artifact test's current default-deny expectation.
+
+Final authenticated R3 replay: **1938 passed / 166 failed / 2104**, in 192.49
+seconds. The exact failed-node set remains the same 163 unproved successor
+mappings, fresh-fragment clarification, authenticated-alias restart/reversal
+diagnostic and dirty-input status check. There are no new active R3 failures.
+The clean-checkpoint status test is rerun after committing; 165 substantive
+active-R3 failures remain open. This is not a green release or foundation completion.
+R3/R4/R5 structure, 507 later R3/R4 metadata records, source/scripts compilation,
+legacy-test audit (zero findings), and four post-VERIFY no-effect canaries with
+zero world delta pass. The canaries do not substitute for the requested useful
+conversation/learning demo.
+
+Existing selectors and receipt regenerate twice byte-identically: G0 191 /
+R1 939 / R2 1329 / R3 2104 / R4 2442 / R5 2567. Config SHA-256:
+`cfce3ddd325828b2a2f765e05861564898c644a5e8ddd988f39470af05ada0c4`;
+receipt SHA-256:
+`712fc11da58cf29a6b7945c1c2040baa5ad40275290c03b7011755f8fe13ed28`.
+Gate definitions, owners, dependencies and limits are unchanged. Frozen inventory
+remains `7c27b0ad80998fc1f10876c05d0238a2498d2fd3a116ace77c9505da11d0b4b8`;
+authority, language packs, replay ledger and repository-root checkout are untouched.
+
+A direct post-doc run of governance/config/proposal modules passed 139 and failed
+two: the expected dirty-input status check and the later R5 documentation test
+`test_r5_active_docs_publish_truthful_foundation_boundary`, which still requires
+the retired phrase `canonical train partition only`. The latter is outside the
+R3 selector and its source/architecture were unchanged by this increment. Repair
+that stale later assertion against the current R4.1-admission plus explicit-data-
+authorization boundary; do not restore the superseded training instruction or
+weaken the remaining registry, lineage and unavailable-admission assertions.
+
+**Remaining ordered work:** authenticated out-of-band reviewer publication using
+a distinct journal and fresh commit snapshot; atomic alias/original-obligation
+completion/receipt; shared admitted-designation lookup through grounding and
+query; isolated restart and unseen-composition demo. The review must remain
+default-deny and genuinely authenticated, not inferred from a teaching utterance
+or a reviewer-looking source string. The exact scope and acyclic receipt lineage
+above remain governing. Fragment, composition and response repairs are still open.
+
+For the approved isolated demo, review authorization is issued outside dialogue
+and binds the exact proposal/receipt/plan, source query and pending row, target
+store, reviewer/policy, finite expiry and one-use identity. The alias language
+(`en` for the approved `velnora` → `rel:likes` demo) is explicit authenticated
+publication scope. It cannot be guessed from a surface or reconstructed from
+VerifiedMeaning's grounding/coverage references, which do not contain those
+payloads. The teaching utterance's language need not equal the designation's
+language. Do not alter historical meaning or LP3 to manufacture that association.
+Plain strings naming a reviewer or store do not authenticate either one.
 
 ## Task 6 — Repair measured search/retrieval bounds and confirm preservation
 
