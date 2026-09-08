@@ -247,13 +247,16 @@ are removed; do not restore either as a compatibility path. The candidate
 out-of-band `publish_learning` path uses the existing EFFECT journal and atomic
 commit owner. It defaults to denial without a separately configured store-bound
 review verifier; dialogue cannot install that verifier or issue its signed grant.
-Its verification and remaining runtime integration are tracked in the foundation
+Its verification and remaining conversation work are tracked in the foundation
 plan. The candidate shared admitted-designation reader reconstructs actual
 committed publication evidence under a bounded, revision-pinned store snapshot;
 a reviewer-looking fact label is not admission. It distinguishes the canonical
 designation identity from its persisted world-fact and publication provenance.
-Grounding, designation composition and lexical query must share this reader
-when integrated; do not reconnect mutable-first lookup or silently truncate
+Grounding, designation composition and lexical query now share this reader.
+ORIENT uses one live batch for grounding and canonical designation composition;
+lexical EVALUATE reads at its exact situation pin. Static component/corpus
+grounding is not authenticated runtime acquisition. Do not reconnect mutable-first
+lookup or silently truncate
 alternatives. Publication must preserve the original answer history and complete the
 original pending record only with its atomic successful receipt. Automatic generic query-continuation
 creation is implemented in the current Task 5 repair, with acceptance and

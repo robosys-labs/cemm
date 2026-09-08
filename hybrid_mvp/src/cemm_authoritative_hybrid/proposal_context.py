@@ -1564,7 +1564,14 @@ class ProposalContextBuilder:
         form_lattice: FormLattice,
         grounding_result: GroundingResult,
         contributions: tuple[SemanticContribution, ...],
+        designation_batch: Any = None,
     ) -> ProposalContext:
+        if designation_batch is not None:
+            if designation_batch.reader.authority is not self._authority:
+                raise ValueError("designation batch owner differs from context authority")
+            if designation_batch.pin != orientation.revision_pin:
+                raise ValueError("designation batch pin differs from context pin")
+            designation_batch._check()
         unit_ref_set = _validate_builder_inputs(
             orientation,
             evidence,
@@ -1746,6 +1753,7 @@ class ProposalContextBuilder:
             form_lattice,
             unit_by_ref,
             nominal_source_refs,
+            designation_batch,
         )
         if designation_contributions:
             contribution_slots = _bounded_unique_contributions(
@@ -1932,6 +1940,7 @@ class ProposalContextBuilder:
         form_lattice: FormLattice,
         unit_by_ref: Mapping[str, Any],
         nominal_source_refs: Mapping[str, tuple[str, ...]],
+        designation_batch: Any = None,
     ) -> tuple[ContributionSlot, ...]:
         """Expose one explicit designation fact as a complete kernel relation.
 
@@ -1988,11 +1997,16 @@ class ProposalContextBuilder:
             ].strip()
             if not observed_surface:
                 raise ValueError("designation source span has no surface value")
-            surface = canonical_lookup(
-                observed_surface,
-                designation.target_ref,
-                self._language,
-            )
+            if designation_batch is None:
+                surface = canonical_lookup(observed_surface, designation.target_ref, self._language)
+            else:
+                candidates = designation_batch.canonical_surface_for_target(
+                    designation.target_ref, self._language, observed_surface,
+                    maximum=self._config.max_orientation_alternatives,
+                )
+                matches = tuple(row for row in candidates
+                    if row.designation.designation_fact_ref == designation.designation_fact_ref)
+                surface = matches[0].designation.surface if matches else None
             if surface is None:
                 continue
             provenance = tuple(

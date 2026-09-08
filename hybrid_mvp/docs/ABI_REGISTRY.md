@@ -78,9 +78,12 @@ serialized ABI: its transient evidence keeps canonical designation identity,
 actual world-fact identity and publication provenance distinct. It reconstructs
 committed records inside indexed, revision-pinned read batches; expiry limits
 publication time, not later reuse. This trusts gateway-owned committed storage,
-not complete offline-database fabrication. Consumer integration and restart
-composition remain foundation-plan dependencies; ordinary runtime construction
-still has no review verifier. Non-null
+not complete offline-database fabrication. Grounding and canonical designation
+composition share one ORIENT read batch; lexical query uses the same reader at
+its exact situation pin. Signed publication/restart composition has executable
+integration proof; multiword teaching, fragment/response usability and final
+foundation closure remain open. Ordinary runtime construction still has no
+review verifier. No serialized ABI changes in this integration. Non-null
 journal receipts must decode under the current receipt ABI on activation;
 planned rows with no receipt retain their existing recovery semantics.
 

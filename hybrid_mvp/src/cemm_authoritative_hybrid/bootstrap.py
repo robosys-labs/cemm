@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Literal
 
 from .affordances import SemanticAffordanceIndex
-from .authority import AuthorityLinker, DesignationIndex
+from .authority import AuthorityLinker
 from .config import RuntimeConfig
 from .contributions import ContributionExpander
 from .coverage import CoverageVerifier
@@ -19,6 +19,7 @@ from .proposal import BootstrapProposer
 from .proposal_context import ProposalContextBuilder
 from .r3_effects import AdapterRegistry
 from .r3_kernel import R3Kernel
+from .r3_learning import AdmittedDesignationReader
 from .runtime import HybridRuntime, RuntimeOrientationOwner
 from .verifier import ExactProgramVerifier
 
@@ -61,16 +62,12 @@ def load_runtime(
     affordances = SemanticAffordanceIndex(authority, config)
     expander = ContributionExpander(affordances, config)
 
-    class _DesignationStore:
-        def build_index(self) -> DesignationIndex:
-            return authority.designations
-
+    designation_reader = AdmittedDesignationReader(authority, stores)
     grounder = Grounder(
         authority=authority,
         config=config,
         form_pack=form_pack,
         form_pack_hash=resolver.form_pack_hash,
-        designation_store=_DesignationStore(),
     )
     context_builder = ProposalContextBuilder(
         authority, affordances, config, form_pack=form_pack
@@ -86,6 +83,7 @@ def load_runtime(
         context_builder=context_builder,
         resource_refs=resource_refs,
         adapter_refs=adapter_registry.refs,
+        designation_reader=designation_reader,
     )
     verifier = ExactProgramVerifier(CoverageVerifier(config))
     r3 = R3Kernel(
@@ -94,6 +92,7 @@ def load_runtime(
         config=config,
         adapters=adapter_registry,
         resource_refs=resource_refs,
+        designation_reader=designation_reader,
     )
     return HybridRuntime(
         config,

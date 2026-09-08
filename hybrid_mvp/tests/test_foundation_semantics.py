@@ -221,7 +221,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+        "source_ast_sha256": "9d398a534c7f84634f122a4f647410996cc7346405fe97ab301419d4f1fb8945"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[nonconcept]": {
         "activation_phase": "R3",
@@ -229,7 +229,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+        "source_ast_sha256": "9d398a534c7f84634f122a4f647410996cc7346405fe97ab301419d4f1fb8945"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[same-target-languages]": {
         "activation_phase": "R3",
@@ -237,7 +237,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+        "source_ast_sha256": "9d398a534c7f84634f122a4f647410996cc7346405fe97ab301419d4f1fb8945"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[competing-targets]": {
         "activation_phase": "R3",
@@ -245,7 +245,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+        "source_ast_sha256": "9d398a534c7f84634f122a4f647410996cc7346405fe97ab301419d4f1fb8945"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[overflow]": {
         "activation_phase": "R3",
@@ -253,7 +253,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+        "source_ast_sha256": "9d398a534c7f84634f122a4f647410996cc7346405fe97ab301419d4f1fb8945"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[literal-question-prefix]": {
         "activation_phase": "R3",
@@ -261,7 +261,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+        "source_ast_sha256": "9d398a534c7f84634f122a4f647410996cc7346405fe97ab301419d4f1fb8945"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[teaching-only]": {
         "activation_phase": "R3",
@@ -269,7 +269,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+        "source_ast_sha256": "9d398a534c7f84634f122a4f647410996cc7346405fe97ab301419d4f1fb8945"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[inverse]": {
         "activation_phase": "R3",
@@ -277,7 +277,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+        "source_ast_sha256": "9d398a534c7f84634f122a4f647410996cc7346405fe97ab301419d4f1fb8945"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[mixed]": {
         "activation_phase": "R3",
@@ -285,7 +285,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+        "source_ast_sha256": "9d398a534c7f84634f122a4f647410996cc7346405fe97ab301419d4f1fb8945"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[negative]": {
         "activation_phase": "R3",
@@ -293,7 +293,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+        "source_ast_sha256": "9d398a534c7f84634f122a4f647410996cc7346405fe97ab301419d4f1fb8945"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[reported]": {
         "activation_phase": "R3",
@@ -301,7 +301,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+        "source_ast_sha256": "9d398a534c7f84634f122a4f647410996cc7346405fe97ab301419d4f1fb8945"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_authority_ambiguity_and_typed_constraints[conditional]": {
         "activation_phase": "R3",
@@ -309,7 +309,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "32d21e259f1455248022818b4ea12c367dcc06fea9f1e107385d194bc55be2e6"
+        "source_ast_sha256": "9d398a534c7f84634f122a4f647410996cc7346405fe97ab301419d4f1fb8945"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_public_does_not_launder_unsupported_evidence[generic-what]": {
         "activation_phase": "R3",
@@ -453,7 +453,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "fe07acaa1c72dad61339af31af8a42f50fa3c4babb44fa732026b85a2c8902d0"
+        "source_ast_sha256": "e3c7db89a1da9437823ab8dcdfbc427caf713c52e9df99d2c0482e14e5c31cc1"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_public_language_unspecified_and_response[other-language]": {
         "activation_phase": "R3",
@@ -461,7 +461,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "fe07acaa1c72dad61339af31af8a42f50fa3c4babb44fa732026b85a2c8902d0"
+        "source_ast_sha256": "e3c7db89a1da9437823ab8dcdfbc427caf713c52e9df99d2c0482e14e5c31cc1"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_public_language_unspecified_and_response[ambiguous]": {
         "activation_phase": "R3",
@@ -469,7 +469,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "fe07acaa1c72dad61339af31af8a42f50fa3c4babb44fa732026b85a2c8902d0"
+        "source_ast_sha256": "e3c7db89a1da9437823ab8dcdfbc427caf713c52e9df99d2c0482e14e5c31cc1"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_public_language_unspecified_and_response[synthetic-feature-transport]": {
         "activation_phase": "R3",
@@ -477,7 +477,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "fe07acaa1c72dad61339af31af8a42f50fa3c4babb44fa732026b85a2c8902d0"
+        "source_ast_sha256": "e3c7db89a1da9437823ab8dcdfbc427caf713c52e9df99d2c0482e14e5c31cc1"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_index_work_is_bounded_and_never_scans_world[small]": {
         "activation_phase": "R3",
@@ -485,7 +485,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "3282d4f86fa8a05c3c54b6e0030d1d27b5d1f309ff98b7f7be3e2001a69407c8"
+        "source_ast_sha256": "a3cb77f6ceb0c7188207c3e6018fb29182e137b13e03c127593f5fe96383e001"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_index_work_is_bounded_and_never_scans_world[grown]": {
         "activation_phase": "R3",
@@ -493,7 +493,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "3282d4f86fa8a05c3c54b6e0030d1d27b5d1f309ff98b7f7be3e2001a69407c8"
+        "source_ast_sha256": "a3cb77f6ceb0c7188207c3e6018fb29182e137b13e03c127593f5fe96383e001"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_unknown_identity_binds_source_content": {
         "activation_phase": "R3",
@@ -501,7 +501,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "6920feb41e07888de3b9f5af739911cd851862b3472e9e743ca00d90f0a2d974"
+        "source_ast_sha256": "e2afc59d827f85d237c71e538dd65d8060fab54321abba2284844d35186cdaec"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_mentioned_multiword_does_not_expand_constituent_predicates": {
         "activation_phase": "R3",
@@ -1388,7 +1388,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Membership-Pruning",
         "owner_ref": "recursive-composer",
-        "source_ast_sha256": "c212784bb4eb7f3f95e472fd1b1c81fbe6c2fe418cb10da0cc04d225f95742a6"
+        "source_ast_sha256": "2a7105d680214ab6a388ab8db4300c48dae7dad805c7eda094213465a8f9f0d3"
     },
     "tests/test_foundation_semantics.py::test_foundation_membership_composed_malformed_graphs_preserve_all_exact_guards": {
         "activation_phase": "R4",
@@ -1452,7 +1452,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Membership",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "3c94ed6bc6222c64587b1d04272834ded76c8853c519da101357b3aac7548330"
+        "source_ast_sha256": "50e2db06d26c6ecb592f07225e90ea8557f943a13e2f72f1d6efa5f037398e90"
     },
     "tests/test_foundation_semantics.py::test_foundation_membership_reviewed_alias_inherits_type_frame_without_pack_changes[unseen-multiword]": {
         "activation_phase": "R3",
@@ -1460,7 +1460,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Membership",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "3c94ed6bc6222c64587b1d04272834ded76c8853c519da101357b3aac7548330"
+        "source_ast_sha256": "50e2db06d26c6ecb592f07225e90ea8557f943a13e2f72f1d6efa5f037398e90"
     },
     "tests/test_foundation_semantics.py::test_foundation_membership_reviewed_alias_inherits_type_frame_without_pack_changes[spanish]": {
         "activation_phase": "R3",
@@ -1468,7 +1468,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Membership",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "3c94ed6bc6222c64587b1d04272834ded76c8853c519da101357b3aac7548330"
+        "source_ast_sha256": "50e2db06d26c6ecb592f07225e90ea8557f943a13e2f72f1d6efa5f037398e90"
     },
     "tests/test_foundation_semantics.py::test_foundation_membership_reviewed_alias_inherits_type_frame_without_pack_changes[spanish-unseen-multiword]": {
         "activation_phase": "R3",
@@ -1476,7 +1476,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Membership",
         "owner_ref": "decision-query-proof",
-        "source_ast_sha256": "3c94ed6bc6222c64587b1d04272834ded76c8853c519da101357b3aac7548330"
+        "source_ast_sha256": "50e2db06d26c6ecb592f07225e90ea8557f943a13e2f72f1d6efa5f037398e90"
     },
     "tests/test_foundation_semantics.py::test_foundation_membership_composed_gold_uses_world_membership": {
         "activation_phase": "R4",
@@ -2132,7 +2132,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-3",
         "owner_ref": "form-context",
-        "source_ast_sha256": "8a907bacf120df2adbd0ba11880deb4630b6500a086dd7777cafe0a38d47ae9e"
+        "source_ast_sha256": "a1f9d0625ef39ee67aa31d57d3a94283e15cd42a65bc5c01e92c0dd18e4621c8"
     },
     "tests/test_foundation_semantics.py::test_public_question_never_substitutes_registry_kind[what-cemm]": {
         "activation_phase": "R2",
@@ -2340,7 +2340,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-4-Lexical-Lookup",
         "owner_ref": "form-context",
-        "source_ast_sha256": "6508217ead27b59f6f6cf6fdb3f9e93c609e55dbc5acf0a59c43d11a557920e5"
+        "source_ast_sha256": "0564f64b2b94bddafc5ec9c6533b2356b416f55eeaba5a463f57fdf1b013bd36"
     },
     "tests/test_foundation_semantics.py::test_foundation_lexical_content_interrogative_assignment_uses_exact_evidence": {
         "activation_phase": "R2",
@@ -2782,6 +2782,49 @@ def test_foundation_scoped_event_query_contract_requests_clarification(linked_au
     assert contract.expected_response.epistemic_status_ref == "epistemic_status:partial"
 
 
+def _static_composition_context(authority, stores, pack, surface, *, facts=None):
+    """Direct component fixture, never an admitted runtime or learning proof.
+
+    Synthetic reviewed forms/kind domains test composition independently of
+    publication. No fixture authority enters RuntimeOrientationOwner or query.
+    """
+    from cemm_authoritative_hybrid.cycle import Orientation
+    from cemm_authoritative_hybrid.forms import EvidenceItem, EvidencePacket
+    from cemm_authoritative_hybrid.mode import StructuralModeProjector
+
+    if facts is not None:
+        base = authority
+        class StaticFormAuthority:
+            designations = DesignationIndex(facts)
+            def __getattr__(self, name):
+                return getattr(base, name)
+        authority = StaticFormAuthority()
+    config = RuntimeConfig.release()
+    resolver = FormResolver(pack, config)
+    evidence = EvidencePacket.create(items=(EvidenceItem.create(
+        source="text", content=surface, source_ref="text:static-component-fixture",
+        provenance_refs=(), adapter_receipt_ref=None,
+    ),), source_text=surface, form_pack_hash=resolver.form_pack_hash)
+    lattice = resolver.resolve_evidence(evidence)
+    projection = StructuralModeProjector().project(lattice)
+    orientation = Orientation.create(
+        session_ref="session:static-component", turn_ref="turn:static-component",
+        source_text=surface, mode=projection.mode, participant_frame="participant:user",
+        temporal_frame="time:now", participants=("participant:system", "participant:user"),
+        active_turn_ref="turn:static-component", event_refs=(), focus_refs=(), obligation_refs=(),
+        capability_summary=(), permission_summary=(), budgets={"input_tokens": config.max_input_tokens},
+        scanned_atom_count=0, index_probes=("static:designation-fixture",),
+        visited_refs=(projection.projection_ref,), revision_pin=stores.revision_pin(),
+    )
+    affordances = SemanticAffordanceIndex(authority, config)
+    grounding = Grounder(authority, config, form_pack=pack,
+        form_pack_hash=resolver.form_pack_hash).ground_lattice(lattice, orientation.revision_pin)
+    builder = ProposalContextBuilder(authority, affordances, config, form_pack=pack)
+    context = builder.build(orientation=orientation, evidence=evidence, form_lattice=lattice,
+        grounding_result=grounding, contributions=ContributionExpander(affordances, config).expand(grounding, lattice))
+    return builder, context
+
+
 def test_foundation_lexical_context_kind_domain_is_not_an_orientation_alternative_cap(
     tmp_path: Path,
 ) -> None:
@@ -2814,38 +2857,8 @@ def test_foundation_lexical_context_kind_domain_is_not_an_orientation_alternativ
         pack = json.loads(
             (ROOT / "data/languages/en/forms.json").read_text(encoding="utf-8")
         )
-        resolver = FormResolver(pack, config)
-        affordances = SemanticAffordanceIndex(authority, config)
-
-        class ReviewedIndex:
-            def build_index(self):
-                return authority.designations
-
-        builder = ProposalContextBuilder(
-            authority,
-            affordances,
-            config,
-            form_pack=pack,
-        )
-        runtime._owners["orientation"] = RuntimeOrientationOwner(
-            authority=authority,
-            stores=runtime.stores,
-            config=config,
-            form_resolver=resolver,
-            grounder=Grounder(
-                authority,
-                config,
-                form_pack=pack,
-                form_pack_hash=resolver.form_pack_hash,
-                designation_store=ReviewedIndex(),
-            ),
-            contribution_expander=ContributionExpander(affordances, config),
-            context_builder=builder,
-        )
-
-        _, context = runtime.orient(
-            "session:reviewed-kind-domain",
-            "What does mother mean?",
+        builder, context = _static_composition_context(
+            authority, runtime.stores, pack, "What does mother mean?"
         )
 
         assert len(builder._designation_target_kinds) > config.max_orientation_alternatives
@@ -4013,30 +4026,22 @@ def test_foundation_membership_reviewed_alias_inherits_type_frame_without_pack_c
         DesignationFact.create(surface="Alice", target_ref="entity:alice", language=language),
         DesignationFact.create(surface=alias, target_ref="concept:mother", language=language),
     )
-    class ReviewedIndex:
-        def build_index(self):
-            return DesignationIndex(facts)
     try:
-        resolver = FormResolver(pack, config)
-        affordances = SemanticAffordanceIndex(runtime.authority, config)
-        runtime._owners["orientation"] = RuntimeOrientationOwner(
-            authority=runtime.authority, stores=runtime.stores, config=config,
-            form_resolver=resolver,
-            grounder=Grounder(runtime.authority, config, form_pack=pack, form_pack_hash=resolver.form_pack_hash, designation_store=ReviewedIndex()),
-            contribution_expander=ContributionExpander(affordances, config),
-            context_builder=ProposalContextBuilder(runtime.authority, affordances, config, form_pack=pack),
-        )
         atoms = dict(runtime.authority.atoms)
-        _, context = runtime.orient("session:reviewed-nominal", surface)
+        _, context = _static_composition_context(runtime.authority, runtime.stores, pack, surface, facts=facts)
         predicate = next(row for row in context.application_frames if row.operator_ref == "op:type")
         assert context.designation(predicate.designation_slot_ref).designation_fact_ref == facts[1].designation_fact_ref
-        result = runtime.process("session:reviewed-nominal", surface)
-        assert result.verification.selected_meaning is not None
-        assert result.verification.selected_meaning.expression == _membership_expected()
-        assert result.evaluation.decision.action is DecisionAction.RETAIN_ATTRIBUTION
+        proposal = runtime.proposal_model.propose(context)
+        verification = ExactProgramVerifier().verify_candidates(proposal, context)
+        assert verification.selected_meaning is not None
+        assert verification.selected_meaning.expression == _membership_expected()
+        evaluation = R3EvaluationOwner(runtime.authority, runtime.stores, config).evaluate(
+            verification.selected_meaning, _matrix_situation(runtime.stores, SemanticMode.OBSERVE,
+                epistemic_scope_ref="epistemic_scope:observed"))
+        assert evaluation.decision.action is DecisionAction.RETAIN_ATTRIBUTION
         assert runtime.stores.world.revision == 0 and runtime.stores.r3_world_facts() == ()
         assert dict(runtime.authority.atoms) == atoms and pack_path.read_bytes() == before_pack
-        assert result.proposal.explored_states == 4 and not result.proposal.truncated
+        assert proposal.explored_states == 4 and not proposal.truncated
     finally:
         runtime.stores.close()
 
@@ -4444,26 +4449,14 @@ def test_foundation_membership_pruning_preserves_unresolved_frame_union():
 def test_foundation_membership_pruning_preserves_nonnominal_polysemy_scope(tmp_path):
     runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "polysemy.db")
     pack = json.loads((ROOT / "data/languages/en/forms.json").read_text(encoding="utf-8"))
-    config = RuntimeConfig.release()
     facts = (
         DesignationFact.create(surface="Alice", target_ref="entity:alice", language="en"),
         DesignationFact.create(surface="velnora", target_ref="concept:mother", language="en"),
         DesignationFact.create(surface="velnora", target_ref="value:on", language="en"),
     )
-    class ReviewedIndex:
-        def build_index(self):
-            return DesignationIndex(facts)
     try:
-        resolver = FormResolver(pack, config)
-        affordances = SemanticAffordanceIndex(runtime.authority, config)
-        runtime._owners["orientation"] = RuntimeOrientationOwner(
-            authority=runtime.authority, stores=runtime.stores, config=config,
-            form_resolver=resolver,
-            grounder=Grounder(runtime.authority, config, form_pack=pack, form_pack_hash=resolver.form_pack_hash, designation_store=ReviewedIndex()),
-            contribution_expander=ContributionExpander(affordances, config),
-            context_builder=ProposalContextBuilder(runtime.authority, affordances, config, form_pack=pack),
-        )
-        _, context = runtime.orient("session:polysemy", "Alice is not velnora.")
+        _, context = _static_composition_context(
+            runtime.authority, runtime.stores, pack, "Alice is not velnora.", facts=facts)
         assert {frame.operator_ref for frame in context.application_frames} == {"op:type", "op:state"}
         proposal = runtime.proposal_model.propose(context)
         app = SemanticApplication("application:independent-state", "op:state", "dim:power", (
@@ -4701,22 +4694,15 @@ def test_foundation_matrix_fresh_fragment_requires_clarification(tmp_path):
 
 
 def test_foundation_matrix_reviewed_alias_survives_restart_and_unseen_reversal(tmp_path):
-    # AUDIT: this direct seed is not authenticated review or acquisition; its
-    # reviewer-looking source string cannot authorize index admission. Preserve
-    # this diagnostic's positive restart/unseen-composition obligation through
-    # a successor using the real publication transaction once implemented.
-    # Do not make arbitrary stored designation facts trusted to pass this test.
+    from tests.test_foundation_designation_consumers import _publish_alias
+
     path = tmp_path / "alias.db"
     pack_path = ROOT / "data/languages/en/forms.json"
     pack_before = pack_path.read_bytes()
     runtime = load_runtime(ROOT, profile="development", store_path=path)
     atoms_before = dict(runtime.authority.atoms)
     try:
-        runtime.stores.world.commit((Fact(
-            fact_ref="fact:reviewed-velnora", operator="op:designation",
-            args={"predicate_ref": "label:lexical", "role:label_type": "label:lexical", "role:surface": "velnora", "role:target": "rel:likes"},
-            proof={"source": "review:foundation-existing-target-alias"},
-        ),), expected_revision=0)
+        receipt = _publish_alias(runtime, "velnora", "likes", "rel:likes")
     finally:
         runtime.stores.close()
 
@@ -4725,7 +4711,7 @@ def test_foundation_matrix_reviewed_alias_survives_restart_and_unseen_reversal(t
     try:
         assert dict(runtime.authority.atoms) == atoms_before
         assert pack_path.read_bytes() == pack_before
-        assert any(fact.fact_ref == "fact:reviewed-velnora" for fact in runtime.stores.r3_world_facts())
+        assert any(fact.fact_ref == receipt.committed_fact_refs[0] for fact in runtime.stores.r3_world_facts())
         _, context = runtime.orient("session:foundation-alias", "Bob velnora Alice.")
         assert any(frame.predicate_target_ref == "rel:likes" for frame in context.application_frames), (
             "a durable reviewed alias must inherit its target frame without regenerating the pack"
@@ -5063,7 +5049,7 @@ def test_foundation_lexical_exact_index_retrieves_admitted_target(linked_authori
 @pytest.mark.parametrize("case", ("other-language", "nonconcept", "same-target-languages", "competing-targets", "overflow", "literal-question-prefix", "teaching-only", "inverse", "mixed", "negative", "reported", "conditional"),
     ids=("other-language", "nonconcept", "same-target-languages", "competing-targets", "overflow", "literal-question-prefix", "teaching-only", "inverse", "mixed", "negative", "reported", "conditional"))
 def test_foundation_lexical_authority_ambiguity_and_typed_constraints(case, linked_authority):
-    from types import SimpleNamespace
+    from copy import copy
     literal = "?verbatim" if case == "literal-question-prefix" else "velnora"
     target = "event:learn_alias" if case == "nonconcept" else "concept:mother"
     facts = (DesignationFact.create(surface=literal, target_ref=target, language="es"),)
@@ -5075,9 +5061,10 @@ def test_foundation_lexical_authority_ambiguity_and_typed_constraints(case, link
         facts = tuple(DesignationFact.create(surface=literal, target_ref=target, language=f"language-{index}") for index in range(40))
     if case == "teaching-only":
         facts = ()
-    authority = SimpleNamespace(designations=DesignationIndex(facts), generation=linked_authority.generation,
-        content_hash=stable_ref("authority-content", [fact.designation_fact_ref for fact in facts]), atoms=linked_authority.atoms,
-        capabilities=linked_authority.capabilities, rules={})
+    authority = copy(linked_authority)
+    authority.designations = DesignationIndex(facts)
+    authority.content_hash = stable_ref("authority-content", [fact.designation_fact_ref for fact in facts])
+    authority.rules = {}
     stores = memory_stores(authority_generation=authority.generation)
     try:
         stores.world.commit((Fact("fact:untrusted-teaching", "op:designation", {"predicate_ref": "label:lexical", "role:label_type": "label:lexical", "role:surface": literal, "role:target": target}),), expected_revision=0)
@@ -5108,8 +5095,11 @@ def test_foundation_lexical_authority_ambiguity_and_typed_constraints(case, link
         if case not in {"mixed", "conditional", "inverse"}:
             assert "fact:untrusted-teaching" not in query.retrieval_refs
             assert authority.content_hash in query.retrieval_refs
-        if case in {"same-target-languages", "competing-targets", "overflow"}:
+        if case in {"same-target-languages", "competing-targets"}:
             assert set(query.retrieval_refs) - {authority.content_hash} == {fact.designation_fact_ref for fact in sorted(facts, key=lambda row: (row.language, row.target_ref, row.designation_fact_ref))[:16]}
+        if case == "overflow":
+            assert query.retrieval_refs == (authority.content_hash,)
+            assert "query:designation_retrieval_overflow" in result.contribution.blocker_refs
     finally:
         stores.close()
 
@@ -5176,12 +5166,9 @@ def test_foundation_lexical_public_language_unspecified_and_response(case, tmp_p
             pack["discourse"]["significa"] = pack["discourse"].pop("mean")
             resolver = FormResolver(pack, RuntimeConfig.release())
             affordances = SemanticAffordanceIndex(runtime.authority, RuntimeConfig.release())
-            class ReviewedIndex:
-                def build_index(self):
-                    return runtime.authority.designations
             runtime._owners["orientation"] = RuntimeOrientationOwner(
                 authority=runtime.authority, stores=runtime.stores, config=RuntimeConfig.release(),
-                form_resolver=resolver, grounder=Grounder(runtime.authority, RuntimeConfig.release(), form_pack=pack, form_pack_hash=resolver.form_pack_hash, designation_store=ReviewedIndex()),
+                form_resolver=resolver, grounder=Grounder(runtime.authority, RuntimeConfig.release(), form_pack=pack, form_pack_hash=resolver.form_pack_hash),
                 contribution_expander=ContributionExpander(affordances, RuntimeConfig.release()),
                 context_builder=ProposalContextBuilder(runtime.authority, affordances, RuntimeConfig.release(), form_pack=pack))
             surface = "Qué auxiliar luz velnora significa?"
@@ -5204,7 +5191,7 @@ def test_foundation_lexical_public_language_unspecified_and_response(case, tmp_p
 
 @pytest.mark.parametrize("growth", (0, 10000), ids=("small", "grown"))
 def test_foundation_lexical_index_work_is_bounded_and_never_scans_world(growth, linked_authority, monkeypatch):
-    from types import SimpleNamespace
+    from copy import copy
     from cemm_authoritative_hybrid.persistence import SemanticStores
     facts = tuple(DesignationFact.create(surface=f"unrelated-{index}", target_ref="concept:mother", language="en") for index in range(growth))
     matches = tuple(DesignationFact.create(surface="velnora", target_ref="concept:mother", language=f"l-{index:02}") for index in range(40))
@@ -5214,11 +5201,13 @@ def test_foundation_lexical_index_work_is_bounded_and_never_scans_world(growth, 
         def __len__(self):
             return len(matches)
         def __getitem__(self, selection):
-            assert selection == slice(None, 16)
-            visits.extend(range(16))
+            assert selection == slice(None, 17)
+            visits.extend(range(17))
             return matches[selection]
     index._exact_surface_all_languages["velnora"] = CountedRows()
-    authority = SimpleNamespace(designations=index, generation=linked_authority.generation, content_hash=stable_ref("authority-content", growth))
+    authority = copy(linked_authority)
+    authority.designations = index
+    authority.content_hash = stable_ref("authority-content", growth)
     stores = memory_stores(authority_generation=authority.generation)
     try:
         def forbidden(*args, **kwargs):
@@ -5226,21 +5215,24 @@ def test_foundation_lexical_index_work_is_bounded_and_never_scans_world(growth, 
         monkeypatch.setattr(SemanticStores, "r3_world_facts", forbidden)
         expression = _matrix_designation_query("velnora")
         result = QueryDecisionOwner(stores, RuntimeConfig.release(), authority).evaluate_full(expression, project_expression(expression), _matrix_situation(stores))
-        assert visits == list(range(16))
+        assert visits == list(range(17))  # max+1 sentinel, not a partial first sixteen.
         assert result.query_results[0].status is QueryStatus.PARTIAL
-        assert len(result.query_results[0].retrieval_refs) == 17  # 16 rows plus exact snapshot content ref.
+        assert result.query_results[0].retrieval_refs == (authority.content_hash,)
+        assert "query:designation_retrieval_overflow" in result.contribution.blocker_refs
     finally:
         stores.close()
 
 
 def test_foundation_lexical_unknown_identity_binds_source_content(linked_authority):
-    from types import SimpleNamespace
+    from copy import copy
     stores = memory_stores(authority_generation=linked_authority.generation)
     try:
         results = []
         expression = _matrix_designation_query("zorbulate")
         for content in ("authority-content:first", "authority-content:second"):
-            authority = SimpleNamespace(designations=DesignationIndex(()), generation=linked_authority.generation, content_hash=content)
+            authority = copy(linked_authority)
+            authority.designations = DesignationIndex(())
+            authority.content_hash = content
             result = QueryDecisionOwner(stores, RuntimeConfig.release(), authority).evaluate_full(expression, project_expression(expression), _matrix_situation(stores)).query_results[0]
             assert result.status is QueryStatus.UNKNOWN and result.proof is None and result.bindings == ()
             assert result.retrieval_refs == (content,)

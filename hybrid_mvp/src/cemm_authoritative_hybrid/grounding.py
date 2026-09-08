@@ -541,13 +541,11 @@ class Grounder:
         config: Any,
         form_pack: Mapping[str, Any] | None = None,
         form_pack_hash: str = "",
-        designation_store: Any = None,
     ) -> None:
         self._authority = authority
         self._config = config
         self._form_pack = dict(form_pack) if form_pack else {}
         self._form_pack_hash = form_pack_hash
-        self._designation_store = designation_store
         self._resolver = (
             FormResolver(self._form_pack, config) if self._form_pack else None
         )
@@ -564,15 +562,23 @@ class Grounder:
         self,
         lattice: FormLattice,
         revision_pin: RevisionPin,
+        *,
+        designation_batch: Any = None,
     ) -> GroundingResult:
         """Ground one exact existing lattice without resolver re-entry."""
         if not isinstance(lattice, FormLattice):
             raise TypeError("lattice must be FormLattice")
         _validate_revision_pin(revision_pin)
+        if designation_batch is not None:
+            if designation_batch.reader.authority is not self._authority:
+                raise ValueError("designation batch owner differs from grounder authority")
+            if designation_batch.pin != revision_pin:
+                raise ValueError("designation batch pin differs from grounding pin")
+            designation_batch._check()
         if len(lattice.units) > self._config.max_input_tokens:
             raise ValueError("form lattice source unit bound violated")
         word_units = tuple(unit for unit in lattice.units if unit.source_text.strip())
-        return self._ground_units(word_units, lattice, revision_pin)
+        return self._ground_units(word_units, lattice, revision_pin, designation_batch)
 
     def ground_text(self, text: str) -> GroundingResult:
         """Unadmitted transition point pending exact runtime lineage migration."""
@@ -595,10 +601,10 @@ class Grounder:
         units: tuple[Any, ...],
         lattice: FormLattice,
         revision_pin: RevisionPin,
+        designation_batch: Any,
     ) -> GroundingResult:
         designations: list[DesignationCandidate] = []
         unresolved: list[ReferenceRequirement] = []
-        max_designations = self._config.max_designations_per_span
         max_span_units = min(8, len(units))
         covered_units: set[str] = set()
 
@@ -616,27 +622,25 @@ class Grounder:
                 surface = source.strip()
                 if not surface:
                     continue
-                facts = self._lookup_designation(surface)
+                facts = self._lookup_designation(surface, designation_batch)
                 if not facts:
                     continue
                 unit_refs = tuple(row.unit_ref for row in span)
-                for fact in facts[:max_designations]:
+                for evidence in facts:
+                    if len(designations) >= GROUNDING_MAX_DESIGNATIONS:
+                        from .gaps import BudgetExhausted
+                        raise BudgetExhausted("grounding_designations", GROUNDING_MAX_DESIGNATIONS)
+                    fact = evidence.designation
                     designations.append(
                         DesignationCandidate(
                             unit_refs=unit_refs,
                             target_ref=fact.target_ref,
                             designation_fact_ref=fact.designation_fact_ref,
                             score=1.0,
-                            provenance_refs=(),
+                            provenance_refs=evidence.provenance_refs,
                         )
                     )
-                    if len(designations) >= GROUNDING_MAX_DESIGNATIONS:
-                        break
                 covered_units.update(unit_refs)
-                if len(designations) >= GROUNDING_MAX_DESIGNATIONS:
-                    break
-            if len(designations) >= GROUNDING_MAX_DESIGNATIONS:
-                break
 
         for unit in units:
             if unit.unit_ref in covered_units:
@@ -666,21 +670,20 @@ class Grounder:
             return unit.normalized_forms[0]
         return unit.source_text.strip().casefold()
 
-    def _lookup_designation(self, surface: str) -> tuple[Any, ...]:
-        """Look up canonical designation facts for a surface.
-
-        Checks the mutable designation store first (for reviewed learning),
-        then the authority's DesignationIndex.
-        """
-        # Check the mutable designation store (reviewed learning).
-        if self._designation_store is not None:
-            index = self._designation_store.build_index()
-            facts = index.facts_for_surface(surface, self._language)
-            if facts:
-                return facts
-        # Check the authority's static designation index.
+    def _lookup_designation(self, surface: str, designation_batch: Any) -> tuple[Any, ...]:
+        """Read a runtime batch, or immutable authority for static unit use."""
+        from .gaps import BudgetExhausted
+        from .r3_designations import DesignationEvidence
+        maximum = self._config.max_designations_per_span
+        if designation_batch is not None:
+            return designation_batch.for_surface(surface, self._language, maximum=maximum)
         if self._authority is not None:
-            return self._authority.designations.facts_for_surface(
-                surface, self._language
-            )
+            index = self._authority.designations
+            facts = index.bounded_facts("exact", surface, self._language, maximum=maximum)
+            if not facts:
+                facts = index.bounded_facts("folded", surface, self._language, maximum=maximum)
+            if len(facts) > maximum:
+                raise BudgetExhausted("admitted_designations", maximum)
+            return tuple(DesignationEvidence(fact, None, fact.designation_fact_ref,
+                (fact.designation_fact_ref, self._authority.generation, self._authority.content_hash)) for fact in facts)
         return ()

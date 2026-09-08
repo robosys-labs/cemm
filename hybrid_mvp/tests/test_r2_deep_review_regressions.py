@@ -30,7 +30,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Proof-Task-2",
         "owner_ref": "form-context",
-        "source_ast_sha256": "1fc6ca60c0956b9b4e9c511ba0b8d9714e486c813eae6da31a82ee8535f922d1",
+        "source_ast_sha256": "8d96d657866427ec58eb35260080c22db0d96b8a988188b4cabc5096c39db803",
     },
     "tests/test_r2_deep_review_regressions.py::test_literal_decoder_returns_exact_scalar_types": {
         "activation_phase": "R2",
@@ -188,7 +188,9 @@ def test_multi_unit_designation_retains_exact_fact_and_span():
     fact = DesignationFact.create(
         surface="mother in law", target_ref="rel:mother_in_law", language="en"
     )
-    authority = SimpleNamespace(designations=DesignationIndex((fact,)))
+    # Static component evidence, not runtime publication authority.
+    authority = SimpleNamespace(designations=DesignationIndex((fact,)),
+        generation="authority:test", content_hash="authority-content:multi-unit-fixture")
     config = RuntimeConfig.release()
     form_pack = {
         "language": "en",

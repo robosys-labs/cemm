@@ -80,9 +80,11 @@ def test_r3_composition_root_runs_each_orient_transform_once_and_continues_past_
         counts["form"] += 1
         return originals["form"](self, packet)
 
-    def ground(self, lattice, revision_pin):
+    def ground(self, lattice, revision_pin, *, designation_batch):
         counts["ground"] += 1
-        return originals["ground"](self, lattice, revision_pin)
+        assert designation_batch.active and designation_batch.pin == revision_pin
+        return originals["ground"](self, lattice, revision_pin,
+            designation_batch=designation_batch)
 
     def expand(self, grounding_result, form_lattice):
         counts["expand"] += 1
@@ -147,4 +149,4 @@ __cemm_test_inventory__ = {'tests/test_r3_lineage_successors.py::test_r3_effect_
                                                                                                                              'assertion_ref': 'assertion:r1-one-orient-transform-pass',
                                                                                                                              'diagnostic_role': 'phase',
                                                                                                                              'introduced_by_task': 'R3-Lineage-Closeout',
-                                                                                                                             'source_ast_sha256': '2fd87bb35f1fef86655bd2370556fb5dca1a886a72c97f4e2c0c2192790e6cae'}}
+                                                                                                                             'source_ast_sha256': '5d3821c9ffea8d7a5d20e991d8f9f480f067dfb5cde7ba93159d28a8ca439d29'}}

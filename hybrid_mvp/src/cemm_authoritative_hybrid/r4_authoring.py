@@ -777,16 +777,11 @@ def build_source_authoring_cache(
 
     resolver = FormResolver(form_pack, config)
 
-    class _DesignationStore:
-        def build_index(self):
-            return authority.designations
-
     grounder = Grounder(
         authority=authority,
         config=config,
         form_pack=form_pack,
         form_pack_hash=resolver.form_pack_hash,
-        designation_store=_DesignationStore(),
     )
     affordances = SemanticAffordanceIndex(authority, config)
     expander = ContributionExpander(affordances, config)

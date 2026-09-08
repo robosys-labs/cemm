@@ -34,7 +34,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "be9b42518c46c1fc5fbb81dacd8dd0b638a1dee48b47f5a3da189120677e91bb"
+        "source_ast_sha256": "39c549f3ca65ab5c45f630642be1154c0783a6e5b4aab681e1a871a8dc3cf9a1"
     },
     "tests/test_foundation_admitted_designations.py::test_designation_text_index_migration_preserves_existing_store_once": {
         "activation_phase": "R3",
@@ -944,10 +944,16 @@ def test_structured_designation_growth_is_excluded_by_sql_indexes(tmp_path, monk
                     {"role:surface": "language-collision", "role:target": "target:language-collision"},
                     proof={"alias_language": {"typed": [1]}}) for i in range(count))
                 stores.world.commit(rows, expected_revision=stores.world.revision)
-            queries, steps = [], []
+            queries, query_steps = [], []
             conn = stores._backend._conn
-            conn.set_trace_callback(queries.append)
-            conn.set_progress_handler(lambda: steps.append(1) or 0, 1)
+            def trace_query(sql):
+                queries.append(sql)
+                query_steps.append(0)
+            def record_step():
+                query_steps[-1] += 1
+                return 0
+            conn.set_trace_callback(trace_query)
+            conn.set_progress_handler(record_step, 1)
             with reader.batch(stores.revision_pin()) as batch:
                 assert batch.for_surface('{"typed":[1]}', "en") == ()
                 assert batch.exact_surface('{"typed":[1]}') == ()
@@ -958,12 +964,17 @@ def test_structured_designation_growth_is_excluded_by_sql_indexes(tmp_path, monk
                 assert stores.r3_alias_facts("language-collision", '{"typed":[1]}', maximum=8) == ()
             conn.set_progress_handler(None, 0)
             conn.set_trace_callback(None)
-            counts.append(len(steps))
+            designation_steps = [steps for sql, steps in zip(queries, query_steps)
+                if "FROM world_facts" in sql]
+            assert len(designation_steps) == 9
+            counts.append(sum(designation_steps))
             for sql in queries:
                 if "FROM world_facts" in sql:
                     detail = " ".join(row[3] for row in conn.execute("EXPLAIN QUERY PLAN " + sql))
                     assert "SEARCH" in detail and "text_v2" in detail and "TEMP" not in detail, detail
-        # First-use bookkeeping may decrease; unrelated-row growth must not add work.
+        # Measure indexed retrieval itself. First world commit inserts a fixed
+        # metadata revision key; that changes pin-read work, not index traversal.
+        # All nine actual designation queries retain their semantic/plan guards.
         assert all(after <= before for before, after in zip(counts, counts[1:])), counts
     finally:
         stores.close()

@@ -73,12 +73,6 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': '2947fa506b90779cb26aaa8113abce24f89f56c77dd6f85c977ab2309abec5be',
                                                                                   'supersedes_node_id': 'tests/test_cognitive_loop_e2e.py::TestStateIntervals::test_past_state_query'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_13d74d1095caaef5fe83': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:learning-distinctions-designation-commit-requires-reviewer-authorization',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '9b6984bf795777a9f0a2e69c58348cb51c8e87b6751466b30229f3cca2c8be62',
-                                                                                  'supersedes_node_id': 'tests/test_learning_distinctions.py::test_designation_commit_requires_reviewer_authorization'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_173c654f2b620a70fc62': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:cognitive-loop-e2e-test-greeting-and-operational-condition-greeting-produces-resolved-cycle',
                                                                                   'diagnostic_role': 'phase',
@@ -336,12 +330,6 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': '2bee27250bc256349d88920bd9fd6679d12a859d6ae4f884d890e4c2d9d12204',
                                                                                   'supersedes_node_id': 'tests/test_query_engine.py::test_meaning_description_is_composed_from_grounded_structure[does-expected2]'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_5e719e6f426bdf86ff51': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:learning-distinctions-designation-commit-requires-existing-target',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '3b033b48f756386a69272864e568394ef2d8357439b90048afcfc657e3dda0e8',
-                                                                                  'supersedes_node_id': 'tests/test_learning_distinctions.py::test_designation_commit_requires_existing_target'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_60b5af589ecd1e402709': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:learning-distinctions-lookup-does-not-create-designation',
                                                                                   'diagnostic_role': 'phase',
@@ -552,12 +540,6 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': 'a89a06b46ffd582adadd57a5b2591fe0eabbf87285b6e26ae4890e4cdd500a41',
                                                                                   'supersedes_node_id': 'tests/test_cognitive_loop_e2e.py::TestDemonstratives::test_that_demonstrative_produces_cycle'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_9d8d009810b28f59c51a': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:learning-distinctions-designation-commit-requires-cap-learn',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '5a44a914df7fd1aa0e5082ebf6d2896cc5fbc532362edec13496e0944a7cbd73',
-                                                                                  'supersedes_node_id': 'tests/test_learning_distinctions.py::test_designation_commit_requires_cap_learn'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_9eff2e971f959a40f142': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:six-phase-runtime-phase-receipts-have-named-phases-not-stage-numbers',
                                                                                   'diagnostic_role': 'phase',
@@ -594,12 +576,6 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': 'b2a4108e6de384335c72df73dfb459242c7e52d516fd70fd86aead9af687865e',
                                                                                   'supersedes_node_id': 'tests/test_response_meaning.py::TestResponseMeaningPrecedesLanguage::test_response_meaning_precedes_language'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_a78a19b54d0b1f247a4c': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:learning-distinctions-reviewed-alias-inherits-target-semantics',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '8df5a7b2edf9a930b288c698b695637506f3a10409e2b5654e050b550794c3de',
-                                                                                  'supersedes_node_id': 'tests/test_learning_distinctions.py::test_reviewed_alias_inherits_target_semantics'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_a85edba372926159baca': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-fulfilled-learning-allows-new-learning',
                                                                                   'diagnostic_role': 'phase',
@@ -1275,15 +1251,6 @@ def test_r3_successor_ffb56b3b17f5ce2d5a7f() -> None:
 def test_r3_successor_59d62df8f6399e561544() -> None:
     assert_successor_contract('learning', 'assertion:learning-distinctions-designation-commit-consumes-plan')
 
-def test_r3_successor_9d8d009810b28f59c51a() -> None:
-    assert_successor_contract('learning', 'assertion:learning-distinctions-designation-commit-requires-cap-learn')
-
-def test_r3_successor_5e719e6f426bdf86ff51() -> None:
-    assert_successor_contract('learning', 'assertion:learning-distinctions-designation-commit-requires-existing-target')
-
-def test_r3_successor_13d74d1095caaef5fe83() -> None:
-    assert_successor_contract('learning', 'assertion:learning-distinctions-designation-commit-requires-reviewer-authorization')
-
 def test_r3_successor_60b5af589ecd1e402709() -> None:
     assert_successor_contract('learning', 'assertion:learning-distinctions-lookup-does-not-create-designation')
 
@@ -1295,9 +1262,6 @@ def test_r3_successor_7e270e6990d7880d264d() -> None:
 
 def test_r3_successor_4d6ad497849e46c6dfea() -> None:
     assert_successor_contract('learning', 'assertion:learning-distinctions-one-pending-learning-obligation')
-
-def test_r3_successor_a78a19b54d0b1f247a4c() -> None:
-    assert_successor_contract('learning', 'assertion:learning-distinctions-reviewed-alias-inherits-target-semantics')
 
 def test_r3_successor_b7a1255e5e8232dfa402() -> None:
     assert_successor_contract('learning', 'assertion:learning-distinctions-untrusted-teaching-is-attributed-only')

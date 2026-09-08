@@ -128,6 +128,7 @@ class RuntimeOrientationOwner:
         mode_projector: StructuralModeProjector | None = None,
         resource_refs: tuple[str, ...] = (),
         adapter_refs: tuple[str, ...] = (),
+        designation_reader: Any = None,
     ) -> None:
         if type(stores) is not SemanticStores:
             raise TypeError("stores must be exact SemanticStores")
@@ -151,6 +152,13 @@ class RuntimeOrientationOwner:
         self._mode_projector = mode_projector or StructuralModeProjector()
         self._resource_refs = tuple(dict.fromkeys(resource_refs))
         self._adapter_refs = tuple(dict.fromkeys(adapter_refs))
+        from .r3_learning import AdmittedDesignationReader
+        self._designation_reader = (AdmittedDesignationReader(authority, stores)
+            if designation_reader is None else designation_reader)
+        if type(self._designation_reader) is not AdmittedDesignationReader:
+            raise TypeError("designation reader must be exact AdmittedDesignationReader")
+        if self._designation_reader.authority is not authority or self._designation_reader.stores is not stores:
+            raise ValueError("designation reader differs from orientation owner")
 
     def _text_evidence(self, session_ref: str, text: str) -> EvidencePacket:
         if type(text) is not str:
@@ -294,6 +302,13 @@ class RuntimeOrientationOwner:
         if evidence.form_pack_hash != self._form_resolver.form_pack_hash:
             raise ValueError("evidence form-pack hash differs from active resolver")
 
+        pin = self._stores.revision_pin()
+        with self._designation_reader.batch(pin) as designation_batch:
+            return self._orient_snapshot(session_ref, evidence, pin, designation_batch)
+
+    def _orient_snapshot(self, session_ref, evidence, pin, designation_batch):
+        """Capture ORIENT and both designation consumers in one pinned snapshot."""
+
         # The turn reservation is read-only.  It is durably finalized by EFFECT,
         # preserving the architecture rule that only EFFECT changes revisions.
         turn = begin_turn(self._stores, session_ref)
@@ -308,10 +323,8 @@ class RuntimeOrientationOwner:
             session_ref,
             maximum=self._config.max_orientation_alternatives,
         )
-        pin = self._stores.revision_pin()
-
         lattice = self._form_resolver.resolve_evidence(evidence)
-        grounding = self._grounder.ground_lattice(lattice, pin)
+        grounding = self._grounder.ground_lattice(lattice, pin, designation_batch=designation_batch)
         mode_projection = self._semantic_mode_projection(
             self._mode_projector.project(lattice),
             lattice,
@@ -391,6 +404,7 @@ class RuntimeOrientationOwner:
             form_lattice=lattice,
             grounding_result=grounding,
             contributions=contributions,
+            designation_batch=designation_batch,
         )
         permission_snapshot_ref = stable_ref(
             "permission_snapshot",

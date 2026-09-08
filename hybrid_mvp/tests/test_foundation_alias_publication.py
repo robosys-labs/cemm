@@ -14,7 +14,8 @@ from tests.test_foundation_learning_proposal import ROOT, _setup
 __cemm_test_inventory__ = {
     "tests/test_foundation_alias_publication.py::test_alias_publication_is_default_deny": {
         "activation_phase": "R3",
-        "assertion_ref": "assertion:alias-publication-is-default-deny",
+        "assertion_ref": "assertion:learning-distinctions-designation-commit-requires-reviewer-authorization",
+        "supersedes_node_id": "tests/test_learning_distinctions.py::test_designation_commit_requires_reviewer_authorization",
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
@@ -198,7 +199,8 @@ __cemm_test_inventory__ = {
     },
     "tests/test_foundation_alias_publication.py::test_alias_publication_rechecks_current_eligibility[capability]": {
         "activation_phase": "R3",
-        "assertion_ref": "assertion:alias-publication-rechecks-current-eligibility-capability",
+        "assertion_ref": "assertion:learning-distinctions-designation-commit-requires-cap-learn",
+        "supersedes_node_id": "tests/test_learning_distinctions.py::test_designation_commit_requires_cap_learn",
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
@@ -214,7 +216,8 @@ __cemm_test_inventory__ = {
     },
     "tests/test_foundation_alias_publication.py::test_alias_publication_rechecks_current_eligibility[target]": {
         "activation_phase": "R3",
-        "assertion_ref": "assertion:alias-publication-rechecks-current-eligibility-target",
+        "assertion_ref": "assertion:learning-distinctions-designation-commit-requires-existing-target",
+        "supersedes_node_id": "tests/test_learning_distinctions.py::test_designation_commit_requires_existing_target",
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
@@ -606,7 +609,8 @@ __cemm_test_inventory__ = {
     },
     "tests/test_foundation_alias_publication.py::test_alias_publication_signed_success_preserves_turn_and_lineage[memory]": {
         "activation_phase": "R3",
-        "assertion_ref": "assertion:alias-publication-signed-success-preserves-turn-and-lineage-memory",
+        "assertion_ref": "assertion:learning-distinctions-reviewed-alias-inherits-target-semantics",
+        "supersedes_node_id": "tests/test_learning_distinctions.py::test_reviewed_alias_inherits_target_semantics",
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",

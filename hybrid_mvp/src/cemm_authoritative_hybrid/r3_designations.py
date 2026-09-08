@@ -3,7 +3,7 @@
 Publication authenticates the grant. Reads reconstruct the committed lineage;
 they require neither its HMAC key nor a still-open publication window. These
 checks are not protection against an offline attacker fabricating a whole DB.
-No consumer is wired to this owner until the separate integration increment.
+Runtime grounding, designation composition and lexical query share this owner.
 """
 from collections import OrderedDict
 from contextlib import contextmanager

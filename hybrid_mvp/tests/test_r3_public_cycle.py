@@ -26,7 +26,7 @@ __cemm_test_inventory__ = {'tests/test_r3_public_cycle.py::test_simulate_cycle_e
                                                                                                                'contributes_to_rewrite_refs': ['rewrite_obligation:a5d394543db7da318941a99f'],
                                                                                                                'diagnostic_role': 'phase',
                                                                                                                'introduced_by_task': 'R3-Self-Close',
-                                                                                                               'source_ast_sha256': '6baa1e39a874ceca96101d0406676739d2de3ce17c12ae69149736afa6daaa27'}}
+                                                                                                               'source_ast_sha256': 'd42c1da3987dd9b2051af225e1a6dba02c071ded636f54b3bcd795df49794248'}}
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -50,13 +50,13 @@ def test_simulate_cycle_emits_no_effect_and_preserves_world_revision(tmp_path) -
 
 
 def test_unknown_surface_returns_typed_frontier_without_acceptance_or_mutation(
-    form_pack, form_pack_hash, linked_authority, designation_store,
+    form_pack, form_pack_hash, linked_authority,
 ) -> None:
     config = RuntimeConfig.release()
     resolver = FormResolver(form_pack, config)
     grounder = Grounder(
         authority=linked_authority, config=config, form_pack=form_pack,
-        form_pack_hash=form_pack_hash, designation_store=designation_store,
+        form_pack_hash=form_pack_hash,
     )
     lattice = resolver.resolve("zorbulate")
     pin = RevisionPin(linked_authority.generation, 0, 0, 0, 0, BootstrapProposer.model_identity)

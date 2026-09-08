@@ -1208,7 +1208,7 @@ def save_realizer_release_artifact(
 
 def _build_release_components(root: Path):
     """Build the shared authority, config, and runtime components for release training."""
-    from .authority import AuthorityLinker, DesignationIndex
+    from .authority import AuthorityLinker
     from .config import RuntimeConfig
     from .contributions import ContributionExpander
     from .affordances import SemanticAffordanceIndex
@@ -1236,16 +1236,11 @@ def _build_release_components(root: Path):
     verifier = ExactProgramVerifier(linked, rc, coverage_verifier)
     legal_action_index = LegalActionIndex(linked, rc)
 
-    class _StaticDesignationStore:
-        def build_index(self) -> DesignationIndex:
-            return linked.designations
-
     grounder = Grounder(
         authority=linked,
         config=rc,
         form_pack=form_pack,
         form_pack_hash=form_pack_hash,
-        designation_store=_StaticDesignationStore(),
     )
 
     return SimpleNamespace(

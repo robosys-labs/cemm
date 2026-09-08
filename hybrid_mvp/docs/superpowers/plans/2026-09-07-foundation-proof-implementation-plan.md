@@ -17,11 +17,12 @@ All paths below are relative to its `hybrid_mvp/` subtree.
 
 **Current execution pointer (September 8):** `4c574be` completes the narrow
 authenticated publication transaction, not the conversation or foundation.
-The bounded, proof-backed admitted-designation reader has passed its scoped
-implementation reviews; final regression evidence is recorded in its checkpoint
-below. The next increment integrates grounding, designation composition and
-lexical query through that reader.
-Restart/unseen reuse, fragment handling, compositional responses and the
+`f50e60c` completes the bounded, proof-backed admitted-designation reader and its
+scoped reviews/regression comparison. The current consumer increment integrates
+grounding, designation composition and lexical query through that reader, with
+signed-publication/restart and unseen-role-order proof. Full regression has no new
+failures after fixture migration; additional independent review remains pending.
+Fragment handling, compositional responses and the
 remaining Task 4/6 owners still need executable proof. Dated checkpoints below
 retain their original observations; their old “pending” statements are not
 instructions to repeat work completed by a later checkpoint.
@@ -692,12 +693,13 @@ and acquisition path. Implement and review these owners in order:
    realization then renders the typed response compositionally; release profiles
    remain fail-closed until R5 realization equivalence is independently proved.
 
-The currently seeded restart test is useful only as an admitted-world-fact/index
-seam probe. Its manually inserted `Fact` is not acquisition authorization and
-cannot satisfy steps 3–4. Likewise, manually constructing a pending obligation
+The original seeded restart test was only a world-fact/index seam probe; its
+manually inserted `Fact` was not acquisition authorization. The September 8
+consumer increment replaces that fixture with genuine query/directive/signed
+publication and restart. Likewise, manually constructing a pending obligation
 is a continuity seam probe, not evidence that an unknown public query creates a
-usable continuation. Keep those distinctions explicit so later work cannot
-recurse by substituting fixtures for the missing runtime owners.
+usable continuation. Keep component fixtures distinct from the complete public
+path so later work cannot substitute fixtures for runtime owners.
 
 ### Pending-record retrieval prerequisite (September 7)
 
@@ -1639,6 +1641,159 @@ increment. Next wire all three
 consumers—grounding, designation composition and lexical query—through this
 reader and prove actual restart/unseen composition. The early-ORIENT overflow
 response limitation and remaining foundation tasks below are still open.
+
+### Publication assertion consolidation — September 8
+
+At reader checkpoint `f50e60c`, the clean-worktree status check passed in 3.95
+seconds; both worktree and root were clean. Nothing was pushed. The checkpoint
+leaves 165 substantive R3 failures, not a green release.
+
+Four obsolete closeout wrappers are removed after main and independent audit
+compared their original bodies at `6b8fc23^` with exact current publication tests.
+Their frozen assertion identities now bind directly to the existing executable
+publication cases through normal `supersedes_node_id` metadata. The publication
+bodies, source AST hashes, activation phase, owner and introducing task are
+unchanged. No extra runner, duplicate test execution, validator or gate is added.
+The following newer duplicate labels are normalized to preserved frozen labels
+(all entries have the `assertion:` prefix):
+
+| Newer duplicate label | Preserved frozen label | Existing publication test suffix |
+|---|---|---|
+| `alias-publication-is-default-deny` | `learning-distinctions-designation-commit-requires-reviewer-authorization` | `is_default_deny` |
+| `alias-publication-rechecks-current-eligibility-capability` | `learning-distinctions-designation-commit-requires-cap-learn` | `rechecks_current_eligibility[capability]` |
+| `alias-publication-rechecks-current-eligibility-target` | `learning-distinctions-designation-commit-requires-existing-target` | `rechecks_current_eligibility[target]` |
+| `alias-publication-signed-success-preserves-turn-and-lineage-memory` | `learning-distinctions-reviewed-alias-inherits-target-semantics` | `signed_success_preserves_turn_and_lineage[memory]` |
+
+These are assertion-label consolidations, not retirement of semantic protections.
+The last ancestor proved exact surface/target binding and store visibility, not
+composition or affordance inheritance. That separate runtime integration remains
+required. All additional assertions in the publication tests remain executable.
+The four removed wrapper functions are `test_r3_successor_13d74d1095caaef5fe83`,
+`test_r3_successor_9d8d009810b28f59c51a`, `test_r3_successor_5e719e6f426bdf86ff51`
+and `test_r3_successor_a78a19b54d0b1f247a4c`, recoverable from `f50e60c`.
+The other 159 unmapped wrappers remain unproved, not implicitly credited.
+Final selection/lineage verification follows integration; historical inventory
+and admission records remain immutable.
+
+### Runtime designation integration — verified local checkpoint, review pending
+
+The initial authentic publication/reopen contrasts reproduced three distinct
+consumer failures: relation and bare-designation inputs had no selected meaning;
+lexical lookup selected the query but returned UNKNOWN. The candidate wiring uses
+one admitted reader, an explicit per-call batch shared by ORIENT grounding and
+context construction, and a separately pinned lexical-query batch. It removes
+the mutable-first index hook, without modifying authority or form-pack data.
+Main has inspected the production and fixture changes; full regression evidence
+is recorded below. Additional independent spec/quality reviewer dispatch was
+attempted but rejected by the session's agent-thread limit. The implementer's
+self-review is not an additional independent review. This limitation does not
+justify a release/admission claim.
+
+Three older composition-fixture functions (six cases) installed synthetic
+designation/kind views into public ORIENT. They now exercise grounding, affordance
+expansion, context construction, proposal/VERIFY and observation evaluation as
+explicit static component fixtures. Exact membership graphs, nominal/state
+polysemy, polarity, all kind-domain alternatives, four-state search, unchanged
+packs/atoms and no world writes remain checked. Main reproduced six interface
+failures before migration and passed all six afterward. These tests do not claim
+authenticated acquisition; the separate real-publication integration must prove
+that. Only their later source hashes change, not assertion identities or phases.
+
+The old "new designation" grounding fixture used `progenitor`, which is already
+seeded in `data/authority/conversation.json`. Its authentic successors must prove
+an initial unknown surface (`nuvemora`) before signed publication to the same
+existing `concept:mother` target. The original assertion names and independent
+form-pack/authority invariants remain; no authority record is removed to fake an
+unknown. This automated test fixture is separate from the approved demo-only
+English `velnora` → `rel:likes` mapping.
+
+Canonical inventory verification now selects all three authentic successors at
+R2 and later phases. The three obsolete grounding bodies and their now-unused
+`designation_store` fixture are removed; they remain recoverable from `f50e60c`.
+All surviving grounding and R3-wrapper function ASTs are unchanged. The frozen
+inventory and ledger are unchanged. Seven old bodies in total were removed,
+including the four assertion-specific publication wrappers above.
+
+Main's baseline-to-current authenticated selector audit passes all phases:
+G0 191 and R1 939 are unchanged; R2 stays 1329 through three exact replacements;
+R3 changes 2232 → 2246, R4 2570 → 2584 and R5 2695 → 2709 through 18 new
+consumer cases, three replacements and four removed duplicate wrappers. All gate
+topology and limits remain unchanged. Two sequential canonical regenerations
+produce config SHA-256
+`49b0ec2e40d4508c239d404c97599c513f4eb0c43e14effc8dd9385d65d84d95`
+and receipt SHA-256
+`4e3839a58cd22e8f7e1ab8bbd1ec787fb48ecc16e4fa31a06174f9bbd2f26fa9`
+(final regeneration after the two additional fixture migrations below).
+An initial canonical verification rejected missing literal parametrization IDs;
+the test registrations were corrected, not the inventory parser.
+
+Integration also exposed an over-specific performance measurement in the
+structured-index diagnostic. Main independently measured total SQL work
+1667/1707/1707 at 0/128/4096 added structured rows. Every one of the nine actual
+designation queries had identical work (124 VM operations total); the difference
+was fixed metadata work after the first world revision key was inserted. The
+existing test now measures those nine retrieval statements, retains all empty
+results and SEARCH/text-index/no-temporary-plan assertions, and still requires
+nonincreasing retrieval work. Its corrected case passes; no runtime bound, index
+guard or query validator was weakened.
+
+Newly isolated remaining composition gap: after a real UNKNOWN result for
+`What does luz nuvemora mean?`, `learn luz nuvemora means mother` grounds the
+learning event and mother concept but leaves the two alias words and `means`
+as unresolved designation units. PROPOSE explores 181 states without truncation
+and returns `proposal:no_complete_candidate`; VERIFY abstains with zero candidate
+receipts. No publication proposal or world write occurs. This is a remaining
+multiword learning-content composition obligation, not a reader failure or reason
+to raise search caps. Static multiword composition and single-word signed Unicode/
+language-specific publication do not establish this missing public directive path.
+
+Main also ran an independent diagnostic demonstration using the user's approved
+English `velnora` → existing `rel:likes` mapping in a fresh temporary SQLite store.
+The public unknown query produced UNKNOWN and a pending record; the public
+learning directive produced a proposal without a world write. A separate signed
+demo review committed exactly one fact. After closing/reopening the runtime,
+`Bob velnora Alice.` produced independently expected subject Bob/object Alice;
+`What does velnora mean?` was SUPPORTED; `VELNORA` preserved canonical literal
+`velnora` and target `rel:likes`. World revision remained one. The store was
+closed and removed, with no real authority mutation. All five cycles had no
+realization surface, as the current R3 path still has no authorized realizer.
+This is semantic learning/restart proof, not the usable conversation acceptance
+demo or completion of the response/focus obligations.
+
+The first full current R3 run produced 2083 passes/163 failures in 266.23 seconds.
+Besides the expected 159 unmapped wrappers, fragment and dirty-status checks,
+it exposed two later fixture-interface mismatches: the multi-unit static authority
+stub lacked generation/content provenance, and the one-pass ORIENT counter did
+not forward the explicit designation batch. Both were independently reproduced.
+The static fixture now declares its provenance; the counter forwards the batch
+and also checks its active pin. All existing assertions, identities and phases
+remain unchanged. The two corrected cases pass (0.62 seconds).
+
+The final authenticated R3 rerun produced **2085 passed / 161 failed / 2246**
+in **192.89 seconds**. Exact failure-set comparison leaves 159 deliberately
+unmapped historical wrappers, the fresh-fragment diagnostic, and the expected
+dirty-worktree status check. The old seeded-alias restart failure is resolved;
+there are no new failures against the reader checkpoint after the justified
+assertion substitutions and fixture migrations. This remains a non-green
+foundation checkpoint, not R3/R4/R5 admission. Four fresh-temporary post-VERIFY
+canaries also retain their expected NoEffect outcomes and zero world revision
+delta. Structural validation, all 503 records checked by the existing R3/R4
+metadata script, the complete authenticated inventory, zero-finding legacy
+hard-cut audit, source/script compilation and diff checks pass. The narrow
+metadata script count is not the total test count. Root checkout and real
+authority data remain untouched; no push, merge or corpus operation occurred.
+
+Next-owner evidence, not a proposed bypass: a fresh `that you learn` trace has
+empty focus/obligations, OBSERVE mode, an `event:learn_alias` frame requiring
+actor/target/surface, five explored states without truncation, and no complete
+candidate. It ends with a typed proposal gap and zero world writes before
+EVALUATE. The current R3 terminal contract correctly requires selected
+`VerifiedMeaning`. The clarification requirement remains valid, but do not invent
+a successful meaning/evaluation merely to satisfy the diagnostic's phase shape.
+Resolve incomplete-content representation and safe gap/response continuity at
+their existing owners, including the early-ORIENT overflow representation issue.
+The generic gap's `recommended_owner=training` is not root-cause evidence and
+does not authorize R5 or justify increasing epochs/search bounds.
 
 ## Task 6 — Repair measured search/retrieval bounds and confirm preservation
 

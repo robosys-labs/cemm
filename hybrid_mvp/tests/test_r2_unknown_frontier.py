@@ -35,7 +35,7 @@ __cemm_test_inventory__ = {
         ],
         "diagnostic_role": "phase",
         "introduced_by_task": "R2-Implementation",
-        "source_ast_sha256": "2ef94baea9ce3ec7be8afe81d3cd770e92ea0121bba6dc591c513c66a43651aa"
+        "source_ast_sha256": "c0274180910ecaa1c8a3aa03027d03050412e6b73c4190a26a2e70a6e15ab753"
     },
 }
 
@@ -47,7 +47,6 @@ def test_unknown_surface_abstains_or_emits_typed_unresolved_candidate(
     form_pack,
     form_pack_hash,
     linked_authority,
-    designation_store,
 ) -> None:
     """Unknown surface must not produce a settled grounded identity."""
     config = RuntimeConfig.release()
@@ -57,7 +56,6 @@ def test_unknown_surface_abstains_or_emits_typed_unresolved_candidate(
         config=config,
         form_pack=form_pack,
         form_pack_hash=form_pack_hash,
-        designation_store=designation_store,
     )
 
     # Build exact lineage: resolve forms, then ground the lattice

@@ -616,10 +616,17 @@ def _lexical_target_application(app: SemanticApplication) -> bool:
 
 
 class QueryDecisionOwner:
-    def __init__(self, stores: SemanticStores, config: RuntimeConfig, authority: Any) -> None:
+    def __init__(self, stores: SemanticStores, config: RuntimeConfig, authority: Any,
+                 *, designation_reader: Any = None) -> None:
         self._stores = stores
         self._config = config
         self._authority = authority
+        from .r3_learning import AdmittedDesignationReader
+        self._designation_reader = designation_reader
+        if designation_reader is not None and type(designation_reader) is not AdmittedDesignationReader:
+            raise TypeError("designation reader must be exact AdmittedDesignationReader")
+        if designation_reader is not None and (designation_reader.authority is not authority or designation_reader.stores is not stores):
+            raise ValueError("designation reader differs from query owner")
 
     def evaluate_full(self, expression: SemanticExpression, projection: ExpressionProjection,
                       situation: SituationContext) -> ModeEvaluation:
@@ -631,15 +638,27 @@ class QueryDecisionOwner:
         if lexical:
             app = expression.applications[0]
             roles = {row.role_ref: row.filler for row in app.roles}
-            rows, overflow = self._authority.designations.exact_facts_for_surface(
-                roles["role:surface"].value, self._config.max_orientation_alternatives)
+            from .gaps import BudgetExhausted
+            from .r3_learning import AdmittedDesignationReader
+            overflow = False
+            reader = self._designation_reader
+            if reader is None:
+                # Static nonlexical unit owners need not own a designation
+                # authority. Any lexical read still requires the exact reader.
+                reader = AdmittedDesignationReader(self._authority, self._stores)
+            with reader.batch(situation.revision_pin) as batch:
+                try:
+                    rows = batch.exact_surface(roles["role:surface"].value,
+                        maximum=self._config.max_orientation_alternatives)
+                except BudgetExhausted:
+                    rows, overflow = (), True
             base = tuple(_FactView(
-                fact_ref=row.designation_fact_ref, operator="op:designation", predicate_ref=app.predicate_ref,
-                roles=(("role:label_type", app.predicate_ref), ("role:surface", row.surface), ("role:target", row.target_ref)),
+                fact_ref=row.world_fact_ref or row.authority_designation_ref, operator="op:designation", predicate_ref=app.predicate_ref,
+                roles=(("role:label_type", app.predicate_ref), ("role:surface", row.designation.surface), ("role:target", row.designation.target_ref)),
                 stance="support", placement="reviewed",
-                source_refs=(row.designation_fact_ref, self._authority.generation, self._authority.content_hash),
+                source_refs=row.provenance_refs,
             ) for row in rows)
-            if overflow or len({(row.language, row.target_ref) for row in rows}) > 1:
+            if overflow or len({(row.designation.language, row.designation.target_ref) for row in rows}) > 1:
                 designation_blockers = ("query:designation_retrieval_overflow" if overflow else "query:designation_alternatives",)
             if expression.scope_operators or expression.expression_links:
                 designation_blockers += ("query:scoped_designation_unsupported",)
@@ -1297,10 +1316,11 @@ class SimulateDecisionOwner(_TransitionOwnerBase):
 class R3EvaluationOwner:
     """Evaluate one mode and finalize a Decision only after dependent refs exist."""
 
-    def __init__(self, authority: Any, stores: SemanticStores, config: RuntimeConfig) -> None:
+    def __init__(self, authority: Any, stores: SemanticStores, config: RuntimeConfig,
+                 *, designation_reader: Any = None) -> None:
         self._owners = {
             SemanticMode.OBSERVE: ObserveDecisionOwner(),
-            SemanticMode.QUERY: QueryDecisionOwner(stores, config, authority),
+            SemanticMode.QUERY: QueryDecisionOwner(stores, config, authority, designation_reader=designation_reader),
             SemanticMode.REQUEST: RequestDecisionOwner(authority, stores, config),
             SemanticMode.SIMULATE: SimulateDecisionOwner(authority, stores, config),
         }

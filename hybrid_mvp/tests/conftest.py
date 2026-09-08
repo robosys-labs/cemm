@@ -273,49 +273,11 @@ def form_resolver(form_pack):
     return FormResolver(form_pack, RuntimeConfig.release())
 
 
-@pytest.fixture
-def designation_store():
-    """A test-only mutable designation store with commit_reviewed.
-
-    Designations committed here are visible to the grounder via the authority's
-    DesignationIndex.  This simulates reviewed designation learning without
-    regenerating the language pack.
-    """
-    from cemm_authoritative_hybrid.authority import DesignationIndex
-
-    class _DesignationStore:
-        def __init__(self) -> None:
-            self._by_surface: dict[tuple[str, str], list[str]] = {}
-            self._by_target: dict[tuple[str, str], list[str]] = {}
-
-        def commit_reviewed(
-            self, surface: str, target: str, language: str = "en"
-        ) -> None:
-            key = (surface, language)
-            self._by_surface.setdefault(key, []).append(target)
-            self._by_target.setdefault((target, language), []).append(surface)
-
-        def build_index(self) -> DesignationIndex:
-            from cemm_authoritative_hybrid.authority import DesignationFact
-
-            return DesignationIndex(
-                tuple(
-                    DesignationFact.create(
-                        surface=surface,
-                        target_ref=target,
-                        language=language,
-                    )
-                    for (surface, language), targets in self._by_surface.items()
-                    for target in targets
-                )
-            )
-
-    return _DesignationStore()
 
 
 @pytest.fixture
-def grounder(linked_authority, form_pack, form_pack_hash, designation_store):
-    """A Grounder with the linked authority and test designation store."""
+def grounder(linked_authority, form_pack, form_pack_hash):
+    """A static-only Grounder with immutable linked authority evidence."""
     from cemm_authoritative_hybrid.grounding import Grounder
     from cemm_authoritative_hybrid.config import RuntimeConfig
 
@@ -324,7 +286,6 @@ def grounder(linked_authority, form_pack, form_pack_hash, designation_store):
         config=RuntimeConfig.release(),
         form_pack=form_pack,
         form_pack_hash=form_pack_hash,
-        designation_store=designation_store,
     )
 
 

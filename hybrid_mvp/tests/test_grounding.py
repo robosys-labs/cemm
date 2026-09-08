@@ -2,8 +2,9 @@
 
 These tests verify that the Grounder performs indexed exact-designation
 lookup, does not manufacture atoms for unknown surfaces, uses adapter-schema-
-pinned grounding for sensor evidence, and that adding a designation changes
-authority generation without changing the form pack hash.
+pinned grounding for sensor evidence. Authenticated runtime designation learning
+and unchanged authority/form-pack invariants have exact successors in
+test_foundation_designation_consumer_successors.py.
 """
 
 from __future__ import annotations
@@ -79,13 +80,6 @@ def test_linked_designation_fact_is_case_independent(
     assert embedded_candidate.designation_fact_ref == fact.designation_fact_ref
 
 
-def test_new_designation_uses_target_affordance_without_pack_regeneration(
-    grounder, designation_store, form_pack_hash, form_resolver, linked_authority
-):
-    designation_store.commit_reviewed("progenitor", "concept:mother")
-    result = _ground(grounder, form_resolver, "progenitor", linked_authority)
-    assert result.designations[0].target_ref == "concept:mother"
-    assert grounder.form_pack_hash == form_pack_hash
 
 
 def test_unknown_surface_is_typed_not_manufactured(grounder, form_resolver, linked_authority):
@@ -176,48 +170,8 @@ def test_form_pack_hash_matches_forms_json(grounder, form_pack_hash):
     assert grounder.form_pack_hash == form_pack_hash
 
 
-def test_adding_designation_does_not_change_form_pack_hash(
-    grounder, designation_store, form_pack_hash
-):
-    designation_store.commit_reviewed("progenitor", "concept:mother")
-    assert grounder.form_pack_hash == form_pack_hash
 
 
-def test_designation_store_addition_does_not_alter_authority_files(
-    grounder, designation_store, form_resolver, linked_authority, form_pack_hash
-):
-    """Designation store additions are runtime state, not authority file content.
-
-    The designation store allows committing reviewed designations at runtime
-    without regenerating the language pack or altering authority files.
-    This test verifies that:
-    - The form pack hash is independent of authority content hash
-    - Re-linking the same authority files produces the same hash/generation
-    - The new designation is visible through the designation store at runtime
-    """
-    from cemm_authoritative_hybrid.authority import AuthorityLinker
-
-    # Ground with the original authority to get a baseline
-    original_generation = linked_authority.generation
-    original_hash = linked_authority.content_hash
-
-    # Commit a new designation — this changes the designation store
-    designation_store.commit_reviewed("progenitor", "concept:mother")
-
-    # The form pack hash is independent of authority content
-    assert form_pack_hash != original_hash
-
-    # Re-link the authority — the designation store change does not
-    # alter the linked authority file content (designations are runtime
-    # state, not file content). The hash remains stable because the
-    # authority files themselves haven't changed.
-    re_linked = AuthorityLinker().link_path(ROOT / "data" / "authority" / "manifest.json")
-    assert re_linked.content_hash == original_hash
-    assert re_linked.generation == original_generation
-
-    # Verify the new designation is visible through the designation store
-    result = _ground(grounder, form_resolver, "progenitor", linked_authority)
-    assert result.designations[0].target_ref == "concept:mother"
 
 
 # ---------------------------------------------------------------------------

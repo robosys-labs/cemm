@@ -152,7 +152,7 @@ class R3Kernel:
 
     def __init__(self, *, authority: Any, stores: SemanticStores,
                  config: RuntimeConfig, adapters: AdapterRegistry | None = None,
-                 resource_refs: tuple[str, ...] = ()) -> None:
+                 resource_refs: tuple[str, ...] = (), designation_reader: Any = None) -> None:
         self._stores = stores
         self._adapters = adapters or AdapterRegistry()
         if type(resource_refs) is not tuple or any(type(ref) is not str or not ref for ref in resource_refs):
@@ -160,7 +160,7 @@ class R3Kernel:
         self._resource_refs = tuple(dict.fromkeys(resource_refs))
         self._situation_builder = SituationContextBuilder(authority)
         self._situation_verifier = SituationContextVerifier(authority)
-        self._evaluator = R3EvaluationOwner(authority, stores, config)
+        self._evaluator = R3EvaluationOwner(authority, stores, config, designation_reader=designation_reader)
         self._learning = LearningCoordinator(authority, stores, config)
         self._effects = R3EffectGateway(stores, self._adapters, config, authority=authority)
         self._response = ResponseBuilder()
