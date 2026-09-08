@@ -1427,10 +1427,23 @@ A direct post-doc run of governance/config/proposal modules passed 139 and faile
 two: the expected dirty-input status check and the later R5 documentation test
 `test_r5_active_docs_publish_truthful_foundation_boundary`, which still requires
 the retired phrase `canonical train partition only`. The latter is outside the
-R3 selector and its source/architecture were unchanged by this increment. Repair
-that stale later assertion against the current R4.1-admission plus explicit-data-
-authorization boundary; do not restore the superseded training instruction or
-weaken the remaining registry, lineage and unavailable-admission assertions.
+R3 selector and its source/architecture were unchanged by this increment.
+The subsequent test-only correction replaces that retired phrase with six
+whitespace-normalized checks of the current R4.1 freeze, fresh admission and
+explicit-data-authorization requirements, canonical train authorization/capability
+binding, sibling-data isolation and later activation ownership. All 21 other
+original assertions and every other test-function AST remain unchanged. Its node,
+assertion identity, phase and task metadata are retained; only its source hash
+changes. The architecture is not rewritten to revive superseded permissions.
+The proposal checkpoint's clean status test passed before this correction.
+The correction passed independent specification and quality review, the exact
+affected test and six related controls; six boundary-removal mutations were
+rejected. Main's combined governance/config/proposal run passed 140 with only
+the expected dirty-input status failure. Selectors/counts and gate config remain
+unchanged; the existing receipt regenerates twice identically to
+`f15098d2f50d7d6b6b87d21664fc4c0f3e8bc82417d94db0aa397f8bd4e3a972`.
+No runtime, architecture, authority or frozen-inventory change accompanies this
+test correction. Clean-checkpoint verification follows the local commit.
 
 **Remaining ordered work:** authenticated out-of-band reviewer publication using
 a distinct journal and fresh commit snapshot; atomic alias/original-obligation

@@ -979,7 +979,7 @@ __cemm_test_inventory__ = {
         "assertion_ref": "assertion:r5-active-docs-publish-truthful-foundation-boundary",
         "diagnostic_role": "phase",
         "introduced_by_task": "R5-Task-9",
-        "source_ast_sha256": "6854ac97c28b1334d8ef959322c67f7513e901b7da949543a43e9a6db9290d68"
+        "source_ast_sha256": "49fcc98dfcfe66aba39bbdeea8eb0cff4aaa73064c341bb480b9d8a0fbb71acd"
     }
 }
 
@@ -2389,7 +2389,38 @@ def test_r5_active_docs_publish_truthful_foundation_boundary() -> None:
     assert "source, owner and phase gates pass" in architecture
     assert "admission remains unavailable" in architecture
     assert "R5-Neural-Activation" in architecture
-    assert "canonical train partition only" in architecture
+    architecture_boundary = " ".join(architecture.split())
+    assert (
+        "Bulk R4.1 authoring, review/export, purpose allocation, realization-recipe "
+        "review, corpus expansion and source-package publication remain frozen."
+        in architecture_boundary
+    )
+    assert (
+        "R5 training, selection, calibration, frozen evaluation and realization "
+        "activation remain unavailable until fresh R4.1 admission."
+        in architecture_boundary
+    )
+    assert (
+        "No pilot training is authorized before that admission plus explicit "
+        "isolated R4.1-compliant data authorization."
+        in architecture_boundary
+    )
+    assert (
+        "Only after fresh R4.1 admission may release training open the "
+        "authenticated, authorization- and capability-bound canonical train partition."
+        in architecture_boundary
+    )
+    assert (
+        "The isolated consumer receives one immutable train snapshot and its "
+        "provenance; it receives no sibling class path, hash, ref, count, payload, "
+        "or manifest identity."
+        in architecture_boundary
+    )
+    assert (
+        "Selection, calibration, and frozen-test access remain owned by "
+        "`R5-Neural-Activation`."
+        in architecture_boundary
+    )
 
     assert "| R5 Test Disposition ABI | **1** |" in registry
     assert "| R5 Foundation Contract ABI | **1** |" in registry
