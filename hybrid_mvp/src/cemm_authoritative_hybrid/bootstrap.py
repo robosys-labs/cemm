@@ -17,11 +17,13 @@ from .grounding import Grounder
 from .persistence import open_stores
 from .proposal import BootstrapProposer
 from .proposal_context import ProposalContextBuilder
+from .programs import PROGRAM_ABI_VERSION
 from .r3_effects import AdapterRegistry
 from .r3_kernel import R3Kernel
 from .r3_learning import AdmittedDesignationReader
 from .runtime import HybridRuntime, RuntimeOrientationOwner
 from .verifier import ExactProgramVerifier
+from .role_schemas import ReviewedRoleSchemaIndex
 
 __all__ = ["load_runtime"]
 
@@ -41,7 +43,7 @@ def load_runtime(
     if profile not in {"development", "neural", "release"}:
         raise ValueError(f"unknown profile: {profile}")
     if profile != "development":
-        raise MissingOwner("program_abi_2_proposal_owner")
+        raise MissingOwner(f"program_abi_{PROGRAM_ABI_VERSION}_proposal_owner")
 
     project_root = Path(root)
     authority = AuthorityLinker().link_path(
@@ -59,6 +61,7 @@ def load_runtime(
     with form_pack_path.open(encoding="utf-8") as handle:
         form_pack = json.load(handle)
     resolver = FormResolver(form_pack, config)
+    role_schema_index = ReviewedRoleSchemaIndex.from_pack(form_pack, authority, config)
     affordances = SemanticAffordanceIndex(authority, config)
     expander = ContributionExpander(affordances, config)
 
@@ -70,7 +73,7 @@ def load_runtime(
         form_pack_hash=resolver.form_pack_hash,
     )
     context_builder = ProposalContextBuilder(
-        authority, affordances, config, form_pack=form_pack
+        authority, affordances, config, form_pack=form_pack, role_schema_index=role_schema_index
     )
     adapter_registry = adapters or AdapterRegistry()
     orienter = RuntimeOrientationOwner(
@@ -85,7 +88,10 @@ def load_runtime(
         adapter_refs=adapter_registry.refs,
         designation_reader=designation_reader,
     )
-    verifier = ExactProgramVerifier(CoverageVerifier(config))
+    verifier = ExactProgramVerifier(
+        CoverageVerifier(config, role_schema_index=role_schema_index), authority=authority,
+        role_schema_index=role_schema_index,
+    )
     r3 = R3Kernel(
         authority=authority,
         stores=stores,
@@ -93,6 +99,8 @@ def load_runtime(
         adapters=adapter_registry,
         resource_refs=resource_refs,
         designation_reader=designation_reader,
+        form_resolver=resolver,
+        role_schema_index=role_schema_index,
     )
     return HybridRuntime(
         config,

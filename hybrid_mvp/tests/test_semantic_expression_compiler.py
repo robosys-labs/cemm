@@ -41,6 +41,8 @@ def _context():
     contributions = {
         "contribution_slot:alice": SimpleNamespace(
             slot_ref="contribution_slot:alice",
+            source_unit_refs=("unit:alice",),
+            constraints=(),
             kind="anchor",
             target_ref="entity:alice",
             literal_value=None,
@@ -49,6 +51,8 @@ def _context():
         ),
         "contribution_slot:bob": SimpleNamespace(
             slot_ref="contribution_slot:bob",
+            source_unit_refs=("unit:bob",),
+            constraints=(),
             kind="anchor",
             target_ref="entity:bob",
             literal_value=None,
@@ -59,6 +63,8 @@ def _context():
     frames = {
         "application_frame_slot:love": SimpleNamespace(
             slot_ref="application_frame_slot:love",
+            predicate_kind="relation_type",
+            source_unit_refs=("unit:loves",),
             operator_ref="op:relation",
             predicate_target_ref="relation:love",
             required_roles=("role:subject", "role:object"),
@@ -72,6 +78,17 @@ def _context():
         context_ref="proposal_context:one",
         orientation_ref="orientation:one",
         revision_pin=_pin(),
+        # Semantic-only fixture: no character geometry or form evidence was
+        # supplied. Naming/locality proofs use real-context foundation tests.
+        contribution_slots=tuple(contributions.values()),
+        application_frames=tuple(frames.values()),
+        designation_slots=tuple(designations.values()),
+        reference_slots=(),
+        source_unit_refs=("unit:loves", "unit:alice", "unit:bob"),
+        source_unit_spans=(),
+        contributions_for_source=lambda ref: tuple(
+            row for row in contributions.values() if ref in row.source_unit_refs
+        ),
         designation=lambda ref: designations.get(ref),
         contribution=lambda ref: contributions.get(ref),
         frame=lambda ref: frames.get(ref),
@@ -202,6 +219,7 @@ def _designation_program(*, legacy_target_predicate: bool = False):
     )
     literal = SimpleNamespace(
         slot_ref="contribution_slot:cemm-surface",
+        source_unit_refs=(),
         kind="literal",
         target_ref=None,
         literal_value="CEMM",
@@ -214,6 +232,7 @@ def _designation_program(*, legacy_target_predicate: bool = False):
     )
     frame = SimpleNamespace(
         slot_ref="application_frame_slot:cemm-designation",
+        source_unit_refs=(),
         designation_slot_ref=designation.slot_ref,
         operator_ref="op:designation",
         predicate_target_ref=predicate_ref,
@@ -236,6 +255,17 @@ def _designation_program(*, legacy_target_predicate: bool = False):
         context_ref="proposal_context:designation",
         orientation_ref="orientation:designation",
         revision_pin=_pin(),
+        # Prelinked designation compiler fixture, not a form-proved naming
+        # construction. Its existing program carries no observed source units.
+        contribution_slots=(literal,),
+        application_frames=(frame,),
+        designation_slots=(designation,),
+        reference_slots=(),
+        source_unit_refs=(),
+        source_unit_spans=(),
+        contributions_for_source=lambda ref: tuple(
+            row for row in (literal,) if ref in row.source_unit_refs
+        ),
         designation=lambda ref: designation if ref == designation.slot_ref else None,
         contribution=lambda ref: literal if ref == literal.slot_ref else None,
         frame=lambda ref: frame if ref == frame.slot_ref else None,

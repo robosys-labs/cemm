@@ -98,13 +98,13 @@ __cemm_test_inventory__ = {
                                                                                                                          'diagnostic_role': 'owner',
                                                                                                                          'introduced_by_task': 'Foundation-Task-5',
                                                                                                                          'owner_ref': 'effect-learning-response',
-                                                                                                                         'source_ast_sha256': 'd4752791461d346e8a07ec3e544505899f72bb6ca88092e80a3a35d82ec24e35'},
+                                                                                                                         'source_ast_sha256': '066989da526f7abda7ed7d9ff58a0fec48cf8c827641d396a6ea19b227fd2ca1'},
  'tests/test_foundation_admitted_designations.py::test_reader_excludes_naked_fact_and_rejects_claimed_lineage[sqlite]': {'activation_phase': 'R3',
                                                                                                                          'assertion_ref': 'assertion:reader-excludes-naked-fact-and-rejects-claimed-lineage-sqlite',
                                                                                                                          'diagnostic_role': 'owner',
                                                                                                                          'introduced_by_task': 'Foundation-Task-5',
                                                                                                                          'owner_ref': 'effect-learning-response',
-                                                                                                                         'source_ast_sha256': 'd4752791461d346e8a07ec3e544505899f72bb6ca88092e80a3a35d82ec24e35'},
+                                                                                                                         'source_ast_sha256': '066989da526f7abda7ed7d9ff58a0fec48cf8c827641d396a6ea19b227fd2ca1'},
  'tests/test_foundation_admitted_designations.py::test_designation_index_detaches_structured_fact_inputs_and_outputs[memory]': {'activation_phase': 'R3',
                                                                                                                                 'assertion_ref': 'assertion:designation-index-detaches-structured-fact-inputs-and-outputs-memory',
                                                                                                                                 'diagnostic_role': 'owner',
@@ -134,109 +134,109 @@ __cemm_test_inventory__ = {
                                                                                                                               'diagnostic_role': 'owner',
                                                                                                                               'introduced_by_task': 'Foundation-Task-5',
                                                                                                                               'owner_ref': 'effect-learning-response',
-                                                                                                                              'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[memory-proposal]': {'activation_phase': 'R3',
                                                                                                                                'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-memory-proposal',
                                                                                                                                'diagnostic_role': 'owner',
                                                                                                                                'introduced_by_task': 'Foundation-Task-5',
                                                                                                                                'owner_ref': 'effect-learning-response',
-                                                                                                                               'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[memory-source]': {'activation_phase': 'R3',
                                                                                                                              'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-memory-source',
                                                                                                                              'diagnostic_role': 'owner',
                                                                                                                              'introduced_by_task': 'Foundation-Task-5',
                                                                                                                              'owner_ref': 'effect-learning-response',
-                                                                                                                             'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[memory-completed]': {'activation_phase': 'R3',
                                                                                                                                 'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-memory-completed',
                                                                                                                                 'diagnostic_role': 'owner',
                                                                                                                                 'introduced_by_task': 'Foundation-Task-5',
                                                                                                                                 'owner_ref': 'effect-learning-response',
-                                                                                                                                'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[memory-target]': {'activation_phase': 'R3',
                                                                                                                              'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-memory-target',
                                                                                                                              'diagnostic_role': 'owner',
                                                                                                                              'introduced_by_task': 'Foundation-Task-5',
                                                                                                                              'owner_ref': 'effect-learning-response',
-                                                                                                                             'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[memory-generation]': {'activation_phase': 'R3',
                                                                                                                                  'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-memory-generation',
                                                                                                                                  'diagnostic_role': 'owner',
                                                                                                                                  'introduced_by_task': 'Foundation-Task-5',
                                                                                                                                  'owner_ref': 'effect-learning-response',
-                                                                                                                                 'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[memory-future]': {'activation_phase': 'R3',
                                                                                                                              'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-memory-future',
                                                                                                                              'diagnostic_role': 'owner',
                                                                                                                              'introduced_by_task': 'Foundation-Task-5',
                                                                                                                              'owner_ref': 'effect-learning-response',
-                                                                                                                             'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[memory-partial]': {'activation_phase': 'R3',
                                                                                                                               'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-memory-partial',
                                                                                                                               'diagnostic_role': 'owner',
                                                                                                                               'introduced_by_task': 'Foundation-Task-5',
                                                                                                                               'owner_ref': 'effect-learning-response',
-                                                                                                                              'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[memory-receipt]': {'activation_phase': 'R3',
                                                                                                                               'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-memory-receipt',
                                                                                                                               'diagnostic_role': 'owner',
                                                                                                                               'introduced_by_task': 'Foundation-Task-5',
                                                                                                                               'owner_ref': 'effect-learning-response',
-                                                                                                                              'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[sqlite-journal]': {'activation_phase': 'R3',
                                                                                                                               'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-sqlite-journal',
                                                                                                                               'diagnostic_role': 'owner',
                                                                                                                               'introduced_by_task': 'Foundation-Task-5',
                                                                                                                               'owner_ref': 'effect-learning-response',
-                                                                                                                              'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[sqlite-proposal]': {'activation_phase': 'R3',
                                                                                                                                'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-sqlite-proposal',
                                                                                                                                'diagnostic_role': 'owner',
                                                                                                                                'introduced_by_task': 'Foundation-Task-5',
                                                                                                                                'owner_ref': 'effect-learning-response',
-                                                                                                                               'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[sqlite-source]': {'activation_phase': 'R3',
                                                                                                                              'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-sqlite-source',
                                                                                                                              'diagnostic_role': 'owner',
                                                                                                                              'introduced_by_task': 'Foundation-Task-5',
                                                                                                                              'owner_ref': 'effect-learning-response',
-                                                                                                                             'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[sqlite-completed]': {'activation_phase': 'R3',
                                                                                                                                 'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-sqlite-completed',
                                                                                                                                 'diagnostic_role': 'owner',
                                                                                                                                 'introduced_by_task': 'Foundation-Task-5',
                                                                                                                                 'owner_ref': 'effect-learning-response',
-                                                                                                                                'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[sqlite-target]': {'activation_phase': 'R3',
                                                                                                                              'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-sqlite-target',
                                                                                                                              'diagnostic_role': 'owner',
                                                                                                                              'introduced_by_task': 'Foundation-Task-5',
                                                                                                                              'owner_ref': 'effect-learning-response',
-                                                                                                                             'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[sqlite-generation]': {'activation_phase': 'R3',
                                                                                                                                  'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-sqlite-generation',
                                                                                                                                  'diagnostic_role': 'owner',
                                                                                                                                  'introduced_by_task': 'Foundation-Task-5',
                                                                                                                                  'owner_ref': 'effect-learning-response',
-                                                                                                                                 'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[sqlite-future]': {'activation_phase': 'R3',
                                                                                                                              'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-sqlite-future',
                                                                                                                              'diagnostic_role': 'owner',
                                                                                                                              'introduced_by_task': 'Foundation-Task-5',
                                                                                                                              'owner_ref': 'effect-learning-response',
-                                                                                                                             'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[sqlite-partial]': {'activation_phase': 'R3',
                                                                                                                               'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-sqlite-partial',
                                                                                                                               'diagnostic_role': 'owner',
                                                                                                                               'introduced_by_task': 'Foundation-Task-5',
                                                                                                                               'owner_ref': 'effect-learning-response',
-                                                                                                                              'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_rejects_broken_publication_evidence[sqlite-receipt]': {'activation_phase': 'R3',
                                                                                                                               'assertion_ref': 'assertion:admitted-reader-rejects-broken-publication-evidence-sqlite-receipt',
                                                                                                                               'diagnostic_role': 'owner',
                                                                                                                               'introduced_by_task': 'Foundation-Task-5',
                                                                                                                               'owner_ref': 'effect-learning-response',
-                                                                                                                              'source_ast_sha256': 'ed15e76ed3c452ac3d6a51503a9e8f0b623d3544035cb888055e798aa6f1a8c6'},
+                                                                                                                         'source_ast_sha256': '33106080fbc52d56e7b5120d064b7acc1f64dd28645157e972ab4e21d71c32b6'},
  'tests/test_foundation_admitted_designations.py::test_admitted_reader_unseen_signed_surface_and_language[memory]': {'activation_phase': 'R3',
                                                                                                                      'assertion_ref': 'assertion:admitted-reader-unseen-signed-surface-and-language-memory',
                                                                                                                      'diagnostic_role': 'owner',
@@ -347,6 +347,21 @@ def _reader(runtime, backend):
         memory_review_binding="trusted-process:test-publication" if backend == "memory" else None)
 
 
+def _physically_corrupt_fact_for_integrity_test(stores, backend, fact):
+    """Bypass the public immutability boundary to exercise read-side detection."""
+    if backend == "memory":
+        stores._backend.world._store_fact(fact)
+        return
+    row = persistence._fact_to_row(fact)
+    with stores._backend._conn:
+        stores._backend._conn.execute(
+            "UPDATE world_facts SET operator=:operator,args_json=:args_json,stance=:stance,"
+            "confidence=:confidence,derived=:derived,proof_json=:proof_json,payload_hash=:payload_hash "
+            "WHERE fact_ref=:fact_ref",
+            {**row, "payload_hash": persistence._payload_hash(persistence._fact_payload(fact))},
+        )
+
+
 @pytest.mark.parametrize("backend", ("memory", "sqlite"), ids=("memory", "sqlite"))
 def test_admitted_reader_retains_actual_publication_proof(tmp_path, monkeypatch, backend):
     runtime, source, proposal, pending, gateway, grant, secret = _publication(tmp_path, monkeypatch, backend)
@@ -410,8 +425,9 @@ def test_reader_excludes_naked_fact_and_rejects_claimed_lineage(tmp_path, monkey
         reader = _reader(runtime, backend)
         with reader.batch(stores.revision_pin()) as batch:
             assert batch.for_surface("fakeword", "en", maximum=8) == ()
-        stores.world.commit((replace(fact, proof={**fact.proof, "publication_key": "key:missing"}),),
-            expected_revision=stores.world.revision)
+        _physically_corrupt_fact_for_integrity_test(
+            stores, backend, replace(fact, proof={**fact.proof, "publication_key": "key:missing"})
+        )
         with reader.batch(stores.revision_pin()) as batch, pytest.raises(ValueError):
             batch.for_surface("velnora", "en", maximum=8)
     finally:
@@ -540,10 +556,16 @@ def test_admitted_reader_rejects_broken_publication_evidence(tmp_path, monkeypat
                     stores._backend._conn.execute("DELETE FROM obligations WHERE obligation_ref=?", (completed.obligation_ref,))
         elif case == "target":
             fact = stores.world.get(receipt.committed_fact_refs[0])
-            stores.world.commit((replace(fact, args={**fact.args, "role:target": "rel:knows"}),),
-                expected_revision=stores.world.revision)
+            _physically_corrupt_fact_for_integrity_test(
+                stores, backend, replace(fact, args={**fact.args, "role:target": "rel:knows"})
+            )
         elif case == "generation":
-            monkeypatch.setattr(runtime.authority, "generation", "authority:other")
+            # LinkedAuthority is an immutable generation snapshot.  Exercise
+            # the reader's mismatch boundary by corrupting only the store-side
+            # test backend pin; never mutate semantic authority in place.
+            monkeypatch.setattr(
+                stores._backend, "_authority_generation", "authority:other"
+            )
         else:
             data = terminal["entry"]
             if case == "future":
@@ -575,7 +597,9 @@ def test_admitted_reader_rejects_broken_publication_evidence(tmp_path, monkeypat
                     stores._backend._conn.execute("UPDATE r3_effect_journal SET entry_json=?,entry_hash=?,receipt_json=?,receipt_hash=? WHERE idempotency_key=?",
                         (json.dumps(terminal["entry"]), persistence._payload_hash(terminal["entry"]),
                          json.dumps(terminal["receipt"]), persistence._payload_hash(terminal["receipt"]), receipt.idempotency_key))
-        with pytest.raises((ValueError, PermissionError)), _reader(runtime, backend).batch(stores.revision_pin()) as batch:
+        with pytest.raises(
+            (ValueError, PermissionError, persistence.StaleRevisionError)
+        ), _reader(runtime, backend).batch(stores.revision_pin()) as batch:
             batch.for_surface("velnora", "en")
     finally:
         stores.close()

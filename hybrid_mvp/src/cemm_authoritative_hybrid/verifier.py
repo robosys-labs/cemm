@@ -1,8 +1,8 @@
 """Exact candidate-batch verification over one immutable Proposal Context.
 
 VERIFY consumes the complete ranked proposal once.  It independently replays
-Program ABI 2 pointers, validates Source Coverage ABI 2, compiles canonical
-Semantic Expression ABI 2, and checks the retained proof domains.  It never
+Program ABI 3 pointers, validates Source Coverage ABI 3, compiles canonical
+Semantic Expression ABI 3, and checks the retained proof domains.  It never
 opens authority data, repairs a candidate, or sums duplicate derivation scores.
 """
 
@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from itertools import islice
 from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping
 
+from .authority import LinkedAuthority
 from .canonical import stable_ref
 from .config import RuntimeConfig
 from .coverage import CoverageReceipt, CoverageVerifier
@@ -987,7 +988,7 @@ def _prefix_completion_is_valid(
             edges = ((args[2], declared),)
         elif kind == "project_variable":
             declared = args[0]
-            edges = ((args[2], declared),)
+            edges = ((args[2], declared),) if len(args) == 3 else ()
         if declared is not None:
             if declared in nodes:
                 return False
@@ -1094,6 +1095,9 @@ class LegalActionIndex:
         designations, applications, nodes, bound_roles, _ = _prefix_state(
             self._context, rows
         )
+        if (any(a.action_type == "project_variable" and len(a.arguments) == 2 for a in rows)
+            and action.action_type != "complete_program"):
+            return False
         app_count, action_count, node_count = _prefix_budget(rows)
         if action_count >= self._max_actions:
             return False
@@ -1162,6 +1166,14 @@ class LegalActionIndex:
         if action.action_type == "project_variable":
             if node_count >= self._max_nodes:
                 return False
+            if len(args) == 2:
+                slot = self._context.query_projection(args[1])
+                mode = self._context.mode_slot(rows[1].arguments[0])
+                return (slot is not None and mode is not None and mode.mode == "QUERY"
+                    and not nodes and designations == {slot.target_designation_slot_ref}
+                    and action.source_unit_refs == tuple(ref for ref in slot.source_unit_refs
+                        if ref in {source for binding in slot.bindings for source in binding.source_unit_refs}
+                        and ref not in slot.orthographic_source_unit_refs))
             variable = self._context.variable(args[1])
             return (
                 args[0] not in nodes
@@ -1182,7 +1194,8 @@ class LegalActionIndex:
                 and mode.mode in transition.compatible_modes
             )
         if action.action_type == "complete_program":
-            if not bool(applications) or not all(
+            projection = any(a.action_type == "project_variable" and len(a.arguments) == 2 for a in rows)
+            if not (bool(applications) or projection) or not all(
                 set(frame.required_roles) <= bound_roles.get(local_ref, set())
                 for local_ref, frame in applications.items()
             ):
@@ -1226,7 +1239,11 @@ class ActionMasker:
 
 
 def _replay_program(
-    program: SemanticSwitchProgram, context: ProposalContext
+    program: SemanticSwitchProgram,
+    context: ProposalContext,
+    *,
+    authority: LinkedAuthority | None = None,
+    role_schema_index: Any = None,
 ) -> tuple[VerificationError, ...]:
     errors: list[VerificationError] = []
 
@@ -1243,6 +1260,13 @@ def _replay_program(
             )
 
     actions = tuple(program.actions)
+    from .role_schemas import relation_query_errors, query_projection_errors, relation_declarative_errors, communicative_role_errors
+    for code in (*relation_query_errors(context, program, role_schema_index, authority=authority),
+        *query_projection_errors(context, program, role_schema_index, authority=authority),
+        *relation_declarative_errors(context, program, role_schema_index, authority=authority)):
+        report(code, "reviewed relation query correspondence failed")
+    for code in communicative_role_errors(context, program, role_schema_index, authority=authority):
+        report(code, "reviewed communicative source correspondence failed")
     if not actions:
         return (VerificationError("empty_program"),)
     if tuple(row.action_index for row in actions) != tuple(range(len(actions))):
@@ -1256,6 +1280,22 @@ def _replay_program(
     if any(row.action_type in {"complete_program", "abstain"} for row in actions[:-1]):
         report("nonfinal_terminal_action")
 
+    used_reported_references = tuple(
+        reference
+        for action in actions
+        if action.action_type == "bind_reference"
+        and (reference := context.reference(action.arguments[2])) is not None
+        and reference.resolution_kind == "reported_speaker_coreference"
+    )
+    if used_reported_references and authority is None:
+        report("reported_speaker_authority_missing")
+    elif (
+        used_reported_references
+        and authority is not None
+        and authority.generation != context.revision_pin.authority_generation
+    ):
+        report("reported_speaker_authority_generation_mismatch")
+
     children: dict[str, list[str]] = {}
     for row in actions:
         if row.action_type == "bind_nested_application":
@@ -1268,7 +1308,7 @@ def _replay_program(
         elif row.action_type == "attach_scope":
             scope_ref, _slot_ref, operand_ref = row.arguments
             children.setdefault(scope_ref, []).append(operand_ref)
-        elif row.action_type == "project_variable":
+        elif row.action_type == "project_variable" and len(row.arguments) == 3:
             binder_ref, _slot_ref, body_ref = row.arguments
             children.setdefault(binder_ref, []).append(body_ref)
 
@@ -1284,6 +1324,252 @@ def _replay_program(
             result.append(ref)
             pending.extend(reversed(children.get(ref, ())))
         return tuple(result)
+
+    def report_regions() -> tuple[tuple[str, int, int, int, int], ...]:
+        report_sources = tuple(
+            row.source_unit_refs
+            for row in context.contribution_slots
+            if row.kind == "discourse"
+            and ("discourse", "report") in row.constraints
+            and row.source_unit_refs
+        )
+        sentence_boundaries = tuple(
+            context.source_span(row.source_unit_refs)
+            for row in context.contribution_slots
+            if row.kind == "discourse"
+            and row.constraints == (("orthography", "sentence_boundary"),)
+        )
+        result: list[tuple[str, int, int, int, int]] = []
+        for source_refs in report_sources:
+            span = context.source_span(source_refs)
+            if span is None:
+                continue
+            clause_start = max(
+                (
+                    value[1]
+                    for value in sentence_boundaries
+                    if value is not None and value[1] <= span[0]
+                ),
+                default=0,
+            )
+            content_end = min(
+                (
+                    value[0]
+                    for value in sentence_boundaries
+                    if value is not None and value[0] >= span[1]
+                ),
+                default=max(end for _, _, end in context.source_unit_spans),
+            )
+            for frame in context.application_frames:
+                frame_span = context.source_span(frame.source_unit_refs)
+                if (
+                    "role:content" in frame.proposition_roles
+                    and "role:actor" in frame.required_roles
+                    and frame_span is not None
+                    and span[0] <= frame_span[0]
+                    and frame_span[1] <= span[1]
+                ):
+                    result.append(
+                        (frame.slot_ref, clause_start, span[0], span[1], content_end)
+                    )
+        return tuple(result)
+
+    regions = report_regions()
+    sentence_boundary_spans = tuple(
+        context.source_span(row.source_unit_refs)
+        for row in context.contribution_slots
+        if row.kind == "discourse"
+        and row.constraints == (("orthography", "sentence_boundary"),)
+    )
+    all_application_frames = {
+        action.arguments[0]: context.frame(action.arguments[1])
+        for action in actions
+        if action.action_type == "instantiate_operator"
+    }
+    local_refs_by_frame: dict[str, list[str]] = {}
+    reference_bindings: set[tuple[str, str, str]] = set()
+    nested_role_bindings: dict[tuple[str, str], list[str]] = {}
+    for action in actions:
+        if action.action_type == "instantiate_operator":
+            local_refs_by_frame.setdefault(action.arguments[1], []).append(
+                action.arguments[0]
+            )
+        elif action.action_type == "bind_reference":
+            reference_bindings.add(
+                (action.arguments[0], action.arguments[1], action.arguments[2])
+            )
+        elif (
+            action.action_type == "bind_nested_application"
+            and action.arguments[0] == "role"
+        ):
+            nested_role_bindings.setdefault(
+                (action.arguments[1], action.arguments[2]), []
+            ).append(action.arguments[3])
+
+    def subtree_is_report_content(
+        parent_frame_ref: str, child_ref: str
+    ) -> bool:
+        relevant = tuple(row for row in regions if row[0] == parent_frame_ref)
+        if not relevant:
+            return True
+        frames = tuple(
+            all_application_frames[ref]
+            for ref in descendants(child_ref)
+            if ref in all_application_frames
+        )
+        return bool(frames) and any(
+            all(
+                (span := context.source_span(frame.source_unit_refs)) is not None
+                and content_start <= span[0]
+                and span[1] <= content_end
+                for frame in frames
+            )
+            for _parent, _clause_start, _report_start, content_start, content_end in relevant
+        )
+
+    def controlled_reported_speaker(
+        frame: Any, reference: Any, parent_ref: str
+    ) -> bool:
+        if authority is None:
+            return False
+        parent = context.frame(parent_ref)
+        if parent is None:
+            return False
+        control = authority.reported_role_inheritance_control(
+            parent.predicate_target_ref,
+            "role:content",
+            frame.predicate_target_ref,
+            "role:actor",
+        )
+        source_control = authority.source_attribution_control(
+            parent.predicate_target_ref, "role:content"
+        )
+        if (
+            control is None
+            or source_control is None
+            or control.source_attribution_control_ref != source_control.control_ref
+        ):
+            return False
+        source_references = tuple(
+            row
+            for ref in reference.provenance_refs
+            if (row := context.reference(ref)) is not None
+            and row.source_unit_refs
+        )
+        if len(source_references) != 1:
+            return False
+        source = source_references[0]
+        if (
+            source.target_ref != reference.target_ref
+            or source.target_kind != reference.target_kind
+            or "role:actor" not in source.compatible_roles
+            or parent_ref not in source.provenance_refs
+            or reference.compatible_roles != ("role:actor",)
+            or reference.score_q != source.score_q
+            or reference.provenance_refs
+            != (source.slot_ref, parent_ref, frame.slot_ref, control.control_ref)
+        ):
+            return False
+        parent_locals = local_refs_by_frame.get(parent_ref, [])
+        child_locals = local_refs_by_frame.get(frame.slot_ref, [])
+        if len(parent_locals) != 1 or len(child_locals) != 1:
+            return False
+        parent_local = parent_locals[0]
+        child_local = child_locals[0]
+        if (
+            (parent_local, source_control.source_role_ref, source.slot_ref)
+            not in reference_bindings
+            or not any(
+                child_local in descendants(content_root)
+                for content_root in nested_role_bindings.get(
+                    (parent_local, source_control.content_role_ref), []
+                )
+            )
+        ):
+            return False
+        return not any(
+            row.slot_ref != reference.slot_ref
+            and row.source_unit_refs
+            and "role:actor" in row.compatible_roles
+            and frame.slot_ref in row.provenance_refs
+            for row in context.reference_slots
+        )
+
+    def reference_is_local(frame: Any, reference: Any) -> bool:
+        scoped = tuple(
+            ref for ref in reference.provenance_refs
+            if context.frame(ref) is not None
+        )
+        if scoped and frame.slot_ref not in scoped:
+            return False
+        span = context.source_span(reference.source_unit_refs)
+        if reference.source_unit_refs:
+            frame_span = context.source_span(frame.source_unit_refs)
+            if span is None or frame_span is None:
+                return not context.source_unit_spans
+            clause_start = max(
+                (
+                    value[1]
+                    for value in sentence_boundary_spans
+                    if value is not None and value[1] <= span[0]
+                ),
+                default=0,
+            )
+            clause_end = min(
+                (
+                    value[0]
+                    for value in sentence_boundary_spans
+                    if value is not None and value[0] >= span[1]
+                ),
+                default=max(end for _, _, end in context.source_unit_spans),
+            )
+            if not (
+                clause_start <= frame_span[0]
+                and frame_span[1] <= clause_end
+            ):
+                return False
+        for parent_ref, clause_start, report_start, content_start, content_end in regions:
+            if frame.slot_ref == parent_ref:
+                return span is not None and clause_start <= span[0] and span[1] <= report_start
+            frame_span = context.source_span(frame.source_unit_refs)
+            if (
+                frame_span is not None
+                and content_start <= frame_span[0]
+                and frame_span[1] <= content_end
+            ):
+                if reference.resolution_kind == "reported_speaker_coreference":
+                    return (
+                        not reference.source_unit_refs
+                        and parent_ref in reference.provenance_refs
+                        and frame.slot_ref in reference.provenance_refs
+                        and controlled_reported_speaker(frame, reference, parent_ref)
+                    )
+                return span is not None and content_start <= span[0] and span[1] <= content_end
+        return reference.resolution_kind != "reported_speaker_coreference"
+
+    def scope_is_local(slot: Any, operand_ref: str) -> bool:
+        span = context.source_span(slot.source_unit_refs)
+        if span is None:
+            return True
+        relevant = tuple(
+            row for row in regions if row[3] <= span[0] and span[1] <= row[4]
+        )
+        if not relevant:
+            return True
+        frames = tuple(
+            all_application_frames[ref]
+            for ref in descendants(operand_ref)
+            if ref in all_application_frames
+        )
+        return bool(frames) and any(
+            all(
+                (frame_span := context.source_span(frame.source_unit_refs)) is not None
+                and content_start <= frame_span[0]
+                and frame_span[1] <= content_end
+                for frame in frames
+            )
+            for _parent, _clause_start, _report_start, content_start, content_end in relevant
+        )
 
     selected_designations: set[str] = set()
     applications: dict[str, Any] = {}
@@ -1381,6 +1667,8 @@ def _replay_program(
                     report("unknown_reference_slot", action=action)
                 elif role_ref not in reference.compatible_roles:
                     report("reference_role_mismatch", action=action)
+                elif not reference_is_local(frame, reference):
+                    report("reference_source_locality", action=action)
             bound_roles[local_ref].add(role_ref)
         elif kind == "bind_nested_application":
             variant = args[0]
@@ -1397,6 +1685,10 @@ def _replay_program(
                     bound_roles[parent_ref].add(role_ref)
                 if child_ref not in nodes:
                     report("unknown_nested_child", action=action)
+                elif frame is not None and not subtree_is_report_content(
+                    frame.slot_ref, child_ref
+                ):
+                    report("reported_content_locality", action=action)
             else:
                 local_ref, slot_ref, *operands = args[1:]
                 slot = context.expression_link(slot_ref)
@@ -1412,8 +1704,11 @@ def _replay_program(
                     nodes.add(local_ref)
         elif kind == "attach_scope":
             local_ref, slot_ref, operand_ref = args
-            if context.scope(slot_ref) is None:
+            scope_slot = context.scope(slot_ref)
+            if scope_slot is None:
                 report("unknown_scope_slot", action=action)
+            elif not scope_is_local(scope_slot, operand_ref):
+                report("reported_scope_locality", action=action)
             if operand_ref not in nodes:
                 report("unknown_scope_operand", action=action)
             if local_ref in nodes:
@@ -1421,6 +1716,15 @@ def _replay_program(
             else:
                 nodes.add(local_ref)
         elif kind == "project_variable":
+            if len(args) == 2:
+                local_ref, slot_ref = args
+                if context.query_projection(slot_ref) is None:
+                    report("unknown_query_projection_slot", action=action)
+                if local_ref in nodes:
+                    report("duplicate_local_node", action=action)
+                else:
+                    nodes.add(local_ref)
+                continue
             local_ref, slot_ref, body_ref = args
             slot = context.variable(slot_ref)
             if slot is None:
@@ -1700,8 +2004,14 @@ def _reconstruct_expected_r1_expression(
 def _reconstruct_expected_expression(
     program: SemanticSwitchProgram,
     context: ProposalContext,
+    *,
+    authority: LinkedAuthority | None = None,
+    role_schema_index: Any = None,
 ) -> SemanticExpression | None:
     """Reconstruct the expected expression, trying R1 first then R2."""
+    from .role_schemas import relation_query_errors
+    if relation_query_errors(context, program, role_schema_index, authority=authority):
+        return None
     if any(
         action.action_type == "instantiate_operator"
         and (frame := context.frame(action.arguments[1])) is not None
@@ -1710,11 +2020,11 @@ def _reconstruct_expected_expression(
     ):
         # Nominal membership has one independent reconstruction owner,
         # including its predication and role-source geometry proof.
-        return _reconstruct_r2_expression(program, context)
+        return _reconstruct_r2_expression(program, context, authority=authority, role_schema_index=role_schema_index)
     expected = _reconstruct_expected_r1_expression(program, context)
     if expected is not None:
         return expected
-    return _reconstruct_r2_expression(program, context)
+    return _reconstruct_r2_expression(program, context, authority=authority, role_schema_index=role_schema_index)
 
 
 def _proof_errors(
@@ -1722,6 +2032,9 @@ def _proof_errors(
     context: ProposalContext,
     expression: SemanticExpression,
     proof: CompilationProof,
+    *,
+    authority: LinkedAuthority | None = None,
+    role_schema_index: Any = None,
 ) -> tuple[VerificationError, ...]:
     errors: list[VerificationError] = []
 
@@ -1734,7 +2047,9 @@ def _proof_errors(
             report("expression_identity_mismatch")
     except (TypeError, ValueError):
         report("expression_identity_mismatch")
-    expected_expression = _reconstruct_expected_expression(program, context)
+    expected_expression = _reconstruct_expected_expression(
+        program, context, authority=authority, role_schema_index=role_schema_index
+    )
     if expected_expression is None or expression != expected_expression:
         report("expression_semantics_mismatch")
     try:
@@ -1770,6 +2085,7 @@ def _proof_errors(
     scope_by_ref = {row.scope_ref: row for row in expression.scope_operators}
     link_by_ref = {row.link_ref: row for row in expression.expression_links}
     binder_by_ref = {row.binder_ref: row for row in expression.binders}
+    projection_by_ref = {row.projection_ref: row for row in expression.query_projections}
     node_targets: dict[str, str] = {}
 
     if len(proof.action_translations) == len(program.actions):
@@ -1875,6 +2191,22 @@ def _proof_errors(
                 elif expected_targets:
                     node_targets[local_ref] = expected_targets[0]
             elif action.action_type == "project_variable":
+                if len(action.arguments) == 2:
+                    local_ref, slot_ref = action.arguments
+                    expected_disposition = "translated"
+                    expected_targets = row.target_refs if len(row.target_refs) == 1 else ()
+                    target = projection_by_ref.get(row.target_refs[0] if len(row.target_refs) == 1 else "")
+                    slot = context.query_projection(slot_ref)
+                    designation = context.designation(slot.target_designation_slot_ref) if slot else None
+                    if (target is None or designation is None
+                        or target.requested_content != slot.requested_content
+                        or target.target_ref != designation.target_ref):
+                        expected_targets = ()
+                    elif expected_targets:
+                        node_targets[local_ref] = expected_targets[0]
+                    if row.disposition != expected_disposition or row.target_refs != expected_targets:
+                        report("action_translation_target_mismatch", action.action_ref)
+                    continue
                 local_ref, slot_ref, body_ref = action.arguments
                 expected_disposition = "translated"
                 expected_targets = row.target_refs if len(row.target_refs) == 1 else ()
@@ -1985,6 +2317,10 @@ def _proof_errors(
             scope = context.scope(action.arguments[1])
             if scope is not None:
                 expected_grounding.add(scope.value_ref)
+        elif action.action_type == "project_variable" and len(action.arguments) == 2:
+            projection = context.query_projection(action.arguments[1])
+            if projection is not None:
+                expected_grounding.update(projection.provenance_refs)
     if proof.grounding_refs != tuple(sorted(expected_grounding)):
         report("compilation_grounding_mismatch")
     return tuple(errors)
@@ -2026,14 +2362,16 @@ def _dedupe_errors(
 class ExactProgramVerifier:
     """Verify one complete proposal batch with bounded O(n) selection."""
 
-    __slots__ = ("_coverage", "_compiler", "_ambiguity_margin_q")
+    __slots__ = ("_coverage", "_compiler", "_authority", "_ambiguity_margin_q", "role_schema_index")
 
     def __init__(
         self,
         coverage_verifier: CoverageVerifier | Any | None = None,
         compiler: SemanticExpressionCompiler | Any | None = None,
         *,
+        authority: LinkedAuthority | None = None,
         ambiguity_margin_q: int = 0,
+        role_schema_index: Any = None,
     ) -> None:
         if (
             type(ambiguity_margin_q) is not int
@@ -2041,8 +2379,12 @@ class ExactProgramVerifier:
             or ambiguity_margin_q >= 2**63
         ):
             raise ValueError("ambiguity_margin_q must be a non-negative exact int")
-        self._coverage = coverage_verifier or CoverageVerifier()
-        self._compiler = compiler or SemanticExpressionCompiler()
+        self.role_schema_index = role_schema_index
+        self._coverage = coverage_verifier or CoverageVerifier(role_schema_index=role_schema_index)
+        self._compiler = compiler or SemanticExpressionCompiler(role_schema_index=role_schema_index)
+        if authority is not None and type(authority) is not LinkedAuthority:
+            raise TypeError("authority must be exact LinkedAuthority or None")
+        self._authority = authority
         if not callable(getattr(self._coverage, "verify", None)):
             raise ValueError("coverage_verifier must expose verify(context, program)")
         if not callable(getattr(self._compiler, "compile", None)):
@@ -2180,7 +2522,7 @@ class ExactProgramVerifier:
         errors: list[VerificationError] = list(
             _candidate_errors(candidate, candidate_index, proposal, context)
         )
-        errors.extend(_replay_program(program, context))
+        errors.extend(_replay_program(program, context, authority=self._authority, role_schema_index=self.role_schema_index))
         if proposal.truncated:
             errors.append(
                 VerificationError(
@@ -2226,7 +2568,10 @@ class ExactProgramVerifier:
             elif isinstance(result, CompilationSuccess):
                 expression = result.expression
                 proof = result.proof
-                proof_errors = _proof_errors(program, context, expression, proof)
+                proof_errors = _proof_errors(
+                    program, context, expression, proof, authority=self._authority,
+                    role_schema_index=self.role_schema_index,
+                )
                 errors.extend(proof_errors)
                 if any(
                     row.code in _UNRETAINABLE_COMPILATION_ERRORS for row in proof_errors

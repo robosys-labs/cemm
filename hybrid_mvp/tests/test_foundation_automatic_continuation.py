@@ -253,7 +253,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "fcb5336efd92c2674d0816d3ab0a285cc2fcf44a35e02b8ab203d16fdc57121e"
+        "source_ast_sha256": "00de60a365d215e3f3b2a438e33d67fa99d5b84b7638ac79df64a598a05a592a"
     },
     "tests/test_foundation_automatic_continuation.py::test_continuation_creation_respects_full_pending_snapshot[memory]": {
         "activation_phase": "R3",
@@ -277,7 +277,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "cf53d406649df682a2395605569e4e2ab8e2ca78e6c95d87d39de8b5aea1c082"
+        "source_ast_sha256": "0baed06d7add8f9e8111bef3c9d4752c1734c856dbab709270832751503ecfbe"
     },
     "tests/test_foundation_automatic_continuation.py::test_live_continuation_is_preserved_and_expired_history_replaced[sqlite]": {
         "activation_phase": "R3",
@@ -285,7 +285,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "cf53d406649df682a2395605569e4e2ab8e2ca78e6c95d87d39de8b5aea1c082"
+        "source_ast_sha256": "0baed06d7add8f9e8111bef3c9d4752c1734c856dbab709270832751503ecfbe"
     },
     "tests/test_foundation_automatic_continuation.py::test_pending_snapshot_race_blocks_terminal_continuation_write[memory]": {
         "activation_phase": "R3",
@@ -309,7 +309,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "990c66119168de35ef6d7bdf71bb68152fc24fe5216cff0f8bbfdc3ceabef074"
+        "source_ast_sha256": "8935353438d83d394afbafeedeaddc491f6af19e534a1b45c475c7efaa8fba35"
     },
     "tests/test_foundation_automatic_continuation.py::test_public_unknown_creates_exact_generic_continuation_and_retry[restart]": {
         "activation_phase": "R3",
@@ -317,7 +317,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "990c66119168de35ef6d7bdf71bb68152fc24fe5216cff0f8bbfdc3ceabef074"
+        "source_ast_sha256": "8935353438d83d394afbafeedeaddc491f6af19e534a1b45c475c7efaa8fba35"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[same-turn-duplicate-same-session-before-planning-memory]": {
         "activation_phase": "R3",
@@ -325,7 +325,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[same-turn-duplicate-same-session-before-planning-sqlite]": {
         "activation_phase": "R3",
@@ -333,7 +333,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[same-turn-duplicate-same-session-after-planning-memory]": {
         "activation_phase": "R3",
@@ -341,7 +341,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[same-turn-duplicate-same-session-after-planning-sqlite]": {
         "activation_phase": "R3",
@@ -349,7 +349,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[same-turn-duplicate-foreign-session-before-planning-memory]": {
         "activation_phase": "R3",
@@ -357,7 +357,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[same-turn-duplicate-foreign-session-before-planning-sqlite]": {
         "activation_phase": "R3",
@@ -365,7 +365,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[same-turn-duplicate-foreign-session-after-planning-memory]": {
         "activation_phase": "R3",
@@ -373,7 +373,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[same-turn-duplicate-foreign-session-after-planning-sqlite]": {
         "activation_phase": "R3",
@@ -381,7 +381,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[four-turn-rewind-same-session-before-planning-memory]": {
         "activation_phase": "R3",
@@ -389,7 +389,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[four-turn-rewind-same-session-before-planning-sqlite]": {
         "activation_phase": "R3",
@@ -397,7 +397,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[four-turn-rewind-same-session-after-planning-memory]": {
         "activation_phase": "R3",
@@ -405,7 +405,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[four-turn-rewind-same-session-after-planning-sqlite]": {
         "activation_phase": "R3",
@@ -413,7 +413,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[four-turn-rewind-foreign-session-before-planning-memory]": {
         "activation_phase": "R3",
@@ -421,7 +421,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[four-turn-rewind-foreign-session-before-planning-sqlite]": {
         "activation_phase": "R3",
@@ -429,7 +429,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[four-turn-rewind-foreign-session-after-planning-memory]": {
         "activation_phase": "R3",
@@ -437,7 +437,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_query_continuation_rechecks_source_session_reservation[four-turn-rewind-foreign-session-after-planning-sqlite]": {
         "activation_phase": "R3",
@@ -445,7 +445,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "8aebc4c7e784ea3b33008eda7f78162732baae08add55626597f2a74b2c53490"
+        "source_ast_sha256": "d7eb412fe855e1d60eb42b2084d9e3f223468c56c7fa6d981a43626f20d7adea"
     },
     "tests/test_foundation_automatic_continuation.py::test_sqlite_pending_snapshot_work_ignores_irrelevant_history[foreign-pending]": {
         "activation_phase": "R3",
@@ -786,7 +786,7 @@ def test_planned_query_survives_rollback_restart_and_exact_retry(tmp_path, monke
         assert runtime.stores.effects.revision == 1
         runtime.stores.close()
         runtime = load_runtime(ROOT, profile="development", store_path=tmp_path / "automatic.db")
-        receipt = R3EffectGateway(runtime.stores, AdapterRegistry()).execute(**captured)
+        receipt = R3EffectGateway(runtime.stores, AdapterRegistry(), authority=runtime.authority).execute(**captured)
         refs = runtime.stores.r3_obligation_snapshot("session:restart", maximum=1)["obligation_refs"]
         assert len(refs) == 1
         row = runtime.stores.obligations.get(refs[0])
@@ -795,7 +795,7 @@ def test_planned_query_survives_rollback_restart_and_exact_retry(tmp_path, monke
         assert runtime.stores.effects.revision == 2
         assert runtime.stores.obligations.revision == 1
         before = runtime.stores.revision_pin(), runtime.stores.obligations.revision
-        assert R3EffectGateway(runtime.stores, AdapterRegistry()).execute(**captured) == receipt
+        assert R3EffectGateway(runtime.stores, AdapterRegistry(), authority=runtime.authority).execute(**captured) == receipt
         assert (runtime.stores.revision_pin(), runtime.stores.obligations.revision) == before
         assert runtime.stores.world.revision == runtime.stores.episodes.revision == 0
     finally:
@@ -846,7 +846,7 @@ def test_live_continuation_is_preserved_and_expired_history_replaced(tmp_path, m
         assert runtime.stores.obligations.revision == 2
         assert runtime.stores.world.revision == runtime.stores.episodes.revision == 0
         before = runtime.stores.revision_pin(), runtime.stores.obligations.revision
-        assert R3EffectGateway(runtime.stores, AdapterRegistry()).execute(source.evaluation,
+        assert R3EffectGateway(runtime.stores, AdapterRegistry(), authority=runtime.authority).execute(source.evaluation,
             source.verification.selected_meaning, source.evaluation.situation) == source.effect_receipt
         assert (runtime.stores.revision_pin(), runtime.stores.obligations.revision) == before
         assert runtime.stores.r3_obligation_snapshot("session:lifecycle", maximum=1)["obligation_refs"] == refs
@@ -904,7 +904,7 @@ def test_public_unknown_creates_exact_generic_continuation_and_retry(tmp_path, r
             runtime.stores.close()
             runtime = load_runtime(ROOT, profile="development", store_path=path)
         before_retry = runtime.stores.revision_pin(), runtime.stores.obligations.revision
-        replay = R3EffectGateway(runtime.stores, AdapterRegistry()).execute(
+        replay = R3EffectGateway(runtime.stores, AdapterRegistry(), authority=runtime.authority).execute(
             source.evaluation, source.verification.selected_meaning, source.evaluation.situation)
         assert replay == receipt
         assert (runtime.stores.revision_pin(), runtime.stores.obligations.revision) == before_retry
@@ -995,7 +995,7 @@ def test_query_continuation_rechecks_source_session_reservation(tmp_path, monkey
             assert runtime.stores.r3_obligation_snapshot("session:reservation", maximum=1)["obligation_refs"] == []
             if stage == "planned":
                 with pytest.raises(ValueError, match="session|reservation"):
-                    R3EffectGateway(runtime.stores, AdapterRegistry()).execute(*captured["source"])
+                    R3EffectGateway(runtime.stores, AdapterRegistry(), authority=runtime.authority).execute(*captured["source"])
                 assert runtime.stores.revision_pin() == captured["pin"]
                 assert runtime.stores.r3_session_snapshot("session:reservation") == captured["session"]
                 key = R3EffectGateway._effect_key(captured["source"][0].decision.decision_ref, None, "no_effect:unknown")

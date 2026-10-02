@@ -93,6 +93,8 @@ def _context(*, with_transition=True):
     contributions = {
         "contribution_slot:actor": SimpleNamespace(
             slot_ref="contribution_slot:actor",
+            source_unit_refs=("unit:actor",),
+            constraints=(),
             kind="anchor",
             target_ref="entity:actor",
             literal_value=None,
@@ -103,6 +105,8 @@ def _context(*, with_transition=True):
     frames = {
         "application_frame_slot:event": SimpleNamespace(
             slot_ref="application_frame_slot:event",
+            predicate_kind="event_type",
+            source_unit_refs=("unit:act",),
             operator_ref="op:event",
             predicate_target_ref="event:act",
             required_roles=("role:subject",),
@@ -128,6 +132,17 @@ def _context(*, with_transition=True):
         context_ref="proposal_context:one",
         orientation_ref="orientation:one",
         revision_pin=_pin(),
+        # Semantic-only fixture: no character geometry or form evidence was
+        # supplied. Naming/locality proofs use real-context foundation tests.
+        contribution_slots=tuple(contributions.values()),
+        application_frames=tuple(frames.values()),
+        designation_slots=tuple(designations.values()),
+        reference_slots=(),
+        source_unit_refs=("unit:act", "unit:actor"),
+        source_unit_spans=(),
+        contributions_for_source=lambda ref: tuple(
+            row for row in contributions.values() if ref in row.source_unit_refs
+        ),
         designation=lambda ref: designations.get(ref),
         contribution=lambda ref: contributions.get(ref),
         frame=lambda ref: frames.get(ref),

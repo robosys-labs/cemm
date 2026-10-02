@@ -108,7 +108,7 @@ _ABI_VERSIONS = {
 _STRUCTURAL_SELECTOR_PREFIXES: Mapping[str, tuple[str, ...]] = {
     "context_slot": ("proposal_context:",),
     "mode_slot": ("mode_slot:",),
-    "local_node": ("application:", "expression_link:", "link:", "scope:", "binder:", "local_node:"),
+    "local_node": ("application:", "expression_link:", "link:", "scope:", "binder:", "projection:", "local_node:"),
     "role_ref": ("role:",),
     "reference_slot": ("reference_slot:",),
     "variant_tag": ("action_variant:",),
@@ -123,6 +123,7 @@ _GROUNDED_SELECTOR_PREFIXES: Mapping[str, tuple[str, ...]] = {
     "scope_slot": ("scope_slot:",),
     "expression_link_slot": ("expression_link_slot:",),
     "variable_slot": ("variable_slot:",),
+    "query_projection_slot": ("query_projection_slot:",),
     "transition_slot": ("transition_slot:",),
 }
 _SOURCE_SELECTOR_PREFIXES: Mapping[str, tuple[str, ...]] = {
@@ -134,7 +135,7 @@ _SAFE_SELECTOR_REF_RE = re.compile(
 )
 _CONTRIBUTION_KINDS = frozenset(ContributionKind.__args__)
 _ASSIGNMENT_KINDS = frozenset(
-    {"role", "predicate", "reference", "scope", "qualifier", "discourse", "connector", "residual"}
+    {"role", "predicate", "reference", "scope", "qualifier", "discourse", "connector", "residual", "projection"}
 )
 _SOURCE_ASSIGNMENT_COMPATIBILITY = frozenset(
     {
@@ -150,6 +151,10 @@ _SOURCE_ASSIGNMENT_COMPATIBILITY = frozenset(
         ("discourse", "discourse", "propose_transition"),
         ("open_variable", "role", "project_variable"),
         ("binder", "role", "project_variable"),
+        ("anchor", "projection", "project_variable"),
+        ("open_variable", "projection", "project_variable"),
+        ("binder", "projection", "project_variable"),
+        ("qualifier", "projection", "project_variable"),
     }
 )
 _ACTION_FIELD_SHAPES: Mapping[str, tuple[str, tuple[str, ...]]] = {
@@ -174,6 +179,8 @@ _ACTION_FIELD_SHAPES: Mapping[str, tuple[str, tuple[str, ...]]] = {
     "binder_local_ref": ("local_node", ("binder:",)),
     "variable_slot_ref": ("variable_slot", ("variable_slot:",)),
     "body_node_ref": ("local_node", ("application:", "expression_link:", "scope:", "binder:")),
+    "projection_local_ref": ("local_node", ("projection:",)),
+    "query_projection_slot_ref": ("query_projection_slot", ("query_projection_slot:",)),
     "transition_slot_ref": ("transition_slot", ("transition_slot:",)),
     "source_application_ref": ("local_node", ("application:",)),
 }
@@ -1149,7 +1156,7 @@ def validate_authenticated_r4_source_semantics(
     ):
         raise TypeError("proposal derivation contexts must be a mapping by source case")
     derivation_compiler = (
-        ReviewedDerivationCompiler()
+        ReviewedDerivationCompiler(authority)
         if proposal_contexts_by_case is not None
         else None
     )
@@ -1942,7 +1949,7 @@ class BlueprintAction:
         index = exact_int(action_index, "action_index", maximum=MAX_BLUEPRINT_ACTIONS - 1)
         action = exact_text(action_type, "action_type", maximum=64)
         if action not in SWITCH_ACTION_TYPES:
-            raise ValueError("unsupported Program ABI 2 action type")
+            raise ValueError("unsupported Program ABI 3 action type")
         if type(selector_handles) is not tuple or len(selector_handles) > MAX_SELECTORS_PER_ACTION:
             raise TypeError("selector_handles must be a bounded exact integer tuple")
         handles = tuple(exact_int(item, "selector handle", maximum=MAX_SELECTOR_BINDINGS - 1) for item in selector_handles)
@@ -1955,7 +1962,7 @@ class BlueprintAction:
             for variant in ACTION_ABI_SCHEMAS[action]
         )
         if len(handles) not in {length for lengths in repeated_lengths for length in lengths}:
-            raise ValueError("selector handle count does not match the Program ABI 2 action shape")
+            raise ValueError("selector handle count does not match the Program ABI 3 action shape")
         material = {
             "abi_version": PROPOSAL_SUPERVISION_ABI_VERSION,
             "action_index": index,
@@ -2036,7 +2043,7 @@ class DerivationBlueprint:
         if len(actions) < 3 or types[:2] != ("select_context", "select_mode") or types[-1] != "complete_program":
             raise ValueError("derive blueprint must select context/mode and end complete_program")
         if "abstain" in types or types.count("select_context") != 1 or types.count("select_mode") != 1 or types.count("complete_program") != 1:
-            raise ValueError("derive blueprint has an invalid Program ABI 2 terminal structure")
+            raise ValueError("derive blueprint has an invalid Program ABI 3 terminal structure")
         used_handles = {
             handle for action in canonical_actions for handle in action.selector_handles
         }
@@ -2049,7 +2056,7 @@ class DerivationBlueprint:
                 _matches_action_variant(canonical_bindings, action.selector_handles, variant)
                 for variant in ACTION_ABI_SCHEMAS[action.action_type]
             ):
-                raise ValueError("selector bindings do not match the Program ABI 2 action shape")
+                raise ValueError("selector bindings do not match the Program ABI 3 action shape")
         roots = exact_ref_tuple(root_local_refs, "root_local_refs", nonempty=True, maximum=8)
         declared: set[str] = set()
         for action in canonical_actions:
@@ -2068,7 +2075,7 @@ class DerivationBlueprint:
                     uses = tuple(item.value_ref for item in selectors[3:])
             elif action.action_type in {"attach_scope", "project_variable"}:
                 declarations = (selectors[0].value_ref,)
-                uses = (selectors[2].value_ref,)
+                uses = (selectors[2].value_ref,) if len(selectors) == 3 else ()
             elif action.action_type == "propose_transition":
                 uses = (selectors[1].value_ref,)
             if any(ref not in declared for ref in uses):
@@ -2133,10 +2140,23 @@ class DerivationBlueprint:
                     for row in target_bindings
                 )
             )
+            content_projection_via_source_units = (
+                assignment.assignment_kind == "projection"
+                and target_action.action_type == "project_variable"
+                and len(target_bindings) == 2
+                and target_bindings[1].selector_kind == "query_projection_slot"
+                and type(target_bindings[1]) is GroundedSelectorBinding
+                and target_bindings[1].source_selector_kind == "source_unit"
+            )
+            if target_action.action_type == "project_variable" and (
+                (len(target_bindings) == 2) != (assignment.assignment_kind == "projection")
+            ):
+                raise ValueError("projection action arity requires distinct non-role source ownership")
             if (
                 len(contribution_bindings) != 1
                 and not mode_discourse_via_source_units
                 and not variable_projection_via_source_units
+                and not content_projection_via_source_units
             ):
                 raise ValueError(
                     "source assignment contribution slot must resolve once through its target action"

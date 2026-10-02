@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .authority import LinkedAuthority
 from .expressions import SemanticExpression
 from .programs import ProgramAction, SemanticSwitchProgram, SourceAssignment
 from .proposal_context import ProposalContext
@@ -30,6 +31,14 @@ class DerivationCompilationError(ValueError):
 
 class ReviewedDerivationCompiler:
     """Compile one reviewed blueprint without invoking a runtime compiler."""
+
+    __slots__ = ("_authority", "role_schema_index")
+
+    def __init__(self, authority: LinkedAuthority | None = None, *, role_schema_index=None) -> None:
+        if authority is not None and type(authority) is not LinkedAuthority:
+            raise TypeError("authority must be exact LinkedAuthority or None")
+        self._authority = authority
+        self.role_schema_index = role_schema_index
 
     def compile(
         self,
@@ -202,7 +211,9 @@ class ReviewedDerivationCompiler:
             source_assignments=assignment_rows,
             revision_pin=context.revision_pin,
         )
-        expression = reconstruct_expected_expression(program, context)
+        expression = reconstruct_expected_expression(
+            program, context, authority=self._authority, role_schema_index=self.role_schema_index
+        )
         if (
             expression is None
             or expression.expression_ref != blueprint.expected_expression_ref
@@ -264,6 +275,7 @@ class ReviewedDerivationCompiler:
             "scope_slot": "scope",
             "expression_link_slot": "expression_link",
             "variable_slot": "variable",
+            "query_projection_slot": "query_projection",
             "transition_slot": "transition",
         }[selector.selector_kind]
         component = getattr(context, lookup_name)(selector.graph_component_ref)
@@ -349,6 +361,8 @@ class ReviewedDerivationCompiler:
         kind = getattr(component, "target_kind", None) or getattr(
             component, "predicate_kind", None
         )
+        if selector.selector_kind == "query_projection_slot":
+            kind = "query_projection"
         if kind is not None and selector.semantic_kind_ref != f"semantic_kind:{kind}":
             raise DerivationCompilationError(
                 "grounded selector semantic kind differs from context"

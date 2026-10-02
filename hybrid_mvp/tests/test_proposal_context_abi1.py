@@ -311,7 +311,7 @@ def _context_with_unresolved_designation(
 def test_proposal_context_abi2_is_content_addressed_and_round_trips_exactly() -> None:
     context = _context()
 
-    assert PROPOSAL_CONTEXT_ABI_VERSION == 2
+    assert PROPOSAL_CONTEXT_ABI_VERSION == 3
     assert context.context_ref.startswith("proposal_context:")
     assert ProposalContext.from_dict(context.as_dict()) == context
     assert not _contains_float(context.as_dict())
@@ -1386,7 +1386,7 @@ __cemm_test_inventory__ = {'tests/test_proposal_context_abi1.py::test_content_ad
                                                                                                                   'diagnostic_role': 'owner',
                                                                                                                   'introduced_by_task': 'R1-Task-7',
                                                                                                                   'owner_ref': 'program-verifier',
-                                                                                                                  'source_ast_sha256': '4c0cfa0c4b35ad1cf2f1866b0c182033e1490818b06c460bc34a3ad1147d12ef'},
+                                                                                                                  'source_ast_sha256': '733effc827349c2e2fcb57cb0e962193bab1897c0b47ff54fabcbf086d201a6f'},
  'tests/test_proposal_context_abi1.py::test_proposal_context_create_and_decode_hash_validate_and_index_once': {'activation_phase': 'R1',
                                                                                                                'assertion_ref': 'assertion:r1-proposal-context-single-validation-pass',
                                                                                                                'diagnostic_role': 'owner',

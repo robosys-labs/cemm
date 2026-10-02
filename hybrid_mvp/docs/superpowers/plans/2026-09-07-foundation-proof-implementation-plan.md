@@ -15,17 +15,57 @@ surface path. A development-only response reference is distinct from R5 output.
 validation runner. Worktree: `C:\dev\cemm\.worktrees\unresolved-designation-r4`.
 All paths below are relative to its `hybrid_mvp/` subtree.
 
-**Current execution pointer (September 8):** `4c574be` completes the narrow
+**Current execution pointer (October 1):** The uncommitted normalized-store and
+read-only description-builder checkpoints below are implemented, not public
+definition support. A fresh 103-case baseline passed the builder, Description
+ABI, normalized-store and R5 stop-boundary modules. The bounded October 1
+checkpoint under Task 7 owns the next work. Signed description proof linkage is
+implemented and reviewed, as is the bounded subject-person membership repair.
+The bounded relation-query role repair and its independent spec/quality reviews
+are complete. The description posting-focus repair passes fresh integration,
+independent spec review and code-quality review. Public description-request
+projection's canonical substrate is now implemented and independently reviewed
+under Semantic Expression ABI 3. Request-first Description/Proof Bundle ABI 2
+lineage is implemented and independently reviewed; genuine QueryResult ABI 3
+and evaluation linkage are implemented and independently reviewed. Signed
+Response Meaning ABI 4 and its exact source/effect sinks are implemented and
+independently reviewed. Task 7.2b candidate construction and exact derivation
+have passed both independent reviews. Bare content questions retain equal
+description/definition candidates without a settled meaning; this is not useful
+definition support. Task 7.4's bounded development-presentation component has
+passed both independent reviews and its isolated CLI demo runs. Task 7.4 remains
+open: the direct mixed participant/entity role repair documented below has now
+passed independent specification and quality reviews. Next are the existing
+conversation matrix's input evidence, mixed scope/embedding, reciprocal response
+selection and restart/continuation proof, not another substrate rewrite. The
+bounded unary-capability and single-variable relation/type diagnostic wording
+increment below has passed both independent reviews; it is not general query
+or conversation completion. The twelve index-less fixture failures require
+exact fixture migration.
+Normal learned realization remains unavailable; R4/R5 remain unadmitted.
+
+**Historical execution pointer (September 8):** `4c574be` completes the narrow
 authenticated publication transaction, not the conversation or foundation.
 `f50e60c` completes the bounded, proof-backed admitted-designation reader and its
-scoped reviews/regression comparison. The current consumer increment integrates
+scoped reviews/regression comparison. `5bbe7a4` integrates
 grounding, designation composition and lexical query through that reader, with
-signed-publication/restart and unseen-role-order proof. Full regression has no new
-failures after fixture migration; additional independent review remains pending.
+signed-publication/restart and unseen-role-order proof. Its full regression has
+no new failures after fixture migration. The current uncommitted naming-owner
+increment fixes exact label/target ownership and repeated-occurrence accounting;
+scoped spec, quality and integration reviews pass. The final authenticated R3
+comparison adds 48 passes and retains exactly the baseline failure set.
 Fragment handling, compositional responses and the
 remaining Task 4/6 owners still need executable proof. Dated checkpoints below
 retain their original observations; their old “pending” statements are not
 instructions to repeat work completed by a later checkpoint.
+
+The [September 8 individual failure audit](../progress/2026-09-08-individual-failure-audit.md)
+records all 159 remaining wrapper cases (139 assertion identities), the fragment
+and dirty-worktree failures, historical-body comparisons and fresh owner/public
+probes. It is diagnostic evidence, not successor approval or a new execution
+plan. In particular, query exhaustion, final budget status, reported-speech
+ownership and missing response/focus continuity remain open; a smaller wrapper
+failure count alone cannot establish their completion.
 
 ## Authority and initial evidence
 
@@ -1797,6 +1837,103 @@ does not authorize R5 or justify increasing epochs/search bounds.
 
 ## Task 6 — Repair measured search/retrieval bounds and confirm preservation
 
+### Approved diagnostic follow-through — naming-span owner first
+
+The user directed implementation after the deeper diagnosis at `5bbe7a4`.
+The immediate bounded repair unifies declaration and naming-directive label
+geometry inside the existing ProposalContextBuilder. A definition marker owns
+one contiguous label span and its adjacent naming-frame owner, if present.
+Previously designated words inside that literal remain literal evidence; they
+are not silently dropped. Structural punctuation/connectors/linkers delimit
+unquoted spans. Quoted or structurally ambiguous labels must not be partly
+learned; supporting them requires reviewed form evidence rather than core
+quote-spelling rules. No broad concatenation of unknown words across clauses.
+
+- [x] Add independent expression/geometry tests for multiword and known-word
+  labels, declaration/directive parity, source whitespace/Unicode, clause
+  isolation, quote fail-closed behavior and unseen naming-event synonyms.
+- [x] Observe RED, replace the two inconsistent span collectors with one bounded
+  structural source owner, and retain exact target/marker/role provenance.
+- [x] Prove genuine signed publication/restart of a multiword alias; do not
+  substitute mutable-index injection for acquisition.
+- [x] Review, refresh later-test metadata/selectors using existing owners, and
+  compare complete R3 failures against the known159 wrappers plus fragment.
+
+September 8 naming-owner evidence: 48 new cases cover complete literal meaning,
+declaration/directive mode, known noun/event mentions, Unicode/whitespace,
+signed multiword publication/restart and unseen naming-event alias reuse.
+Adversarial swaps retain each correct literal while exchanging grounded targets;
+compiler, independent reconstruction and coverage reject them. Removing marker
+evidence also denies targets rather than granting unrestricted compatibility.
+All 27 existing context-builder cases remain passing. Independent spec and
+quality review passed the scoped implementation after addressing their findings.
+
+The source owner no longer fabricates naming literals from a markerless
+cross-product. Generic punctuation is deliberately conservative: where an
+opening quote cannot be distinguished from a sentence delimiter, a
+punctuation-prefixed label is unsupported, not partially learned. The new clause
+isolation test uses an unambiguous reviewed conjunction and two grounded targets;
+it does not claim full punctuation/quotation support. No prior frozen assertion
+was weakened to make this limitation pass.
+
+Three occurrences of the same event exposed a separate silent truncation:
+global per-target contribution accounting dropped a later predicate while
+retaining its application frame. Builder and validator now agree on
+target/source-occurrence contribution counts and designation-occurrence frame
+counts. Four cached profiles per target, eight contributions per occurrence,
+and all existing global bounds remain unchanged. The new same-occurrence bound
+control and repeated-occurrence controls pass; this is not a search-cap increase.
+
+The first full comparison, before review hardening/fixture migration, was
+2094 passed / 192 failed out of 2286. Twenty-nine additional failures came from
+semantic-only compiler fixtures lacking slot collections required by the exact
+index. Seven helpers in six test files now expose their original slots and
+explicitly unavailable character geometry; 64 focused cases pass, and all 47
+test-function ASTs plus all six metadata ASTs are unchanged. Remaining initial
+extra failures included metadata/selector changes during that run. This
+intermediate run is superseded by the completed fresh comparison below.
+
+Final authenticated R3 verification: **2133 passed / 161 failed / 2294 total**
+in **202.22 seconds**. An exact failure-set check leaves only the same 159
+unmapped historical assertion wrappers, the fresh-fragment clarification case,
+and the dirty-governed-worktree status check. Relative to `5bbe7a4`, this is
+exactly 48 additional passes and no new failures. The worktree-status check
+remains pending until a clean local checkpoint; the other 160 failures are not
+resolved by a commit. The 159 wrappers are unproved assertion mappings, not
+evidence of 159 distinct runtime defects.
+
+Independent final integration review passed 112 naming/fixture cases and all
+27 context-builder cases. Main independently confirmed all 47 existing
+test-function ASTs and six metadata ASTs unchanged. Existing structure and
+metadata validation, the zero-finding hard-cut audit, source/script compilation
+and diff checks pass. The metadata script validates its 503-record subset; it
+does not represent the full regression count.
+
+The all-phase baseline audit verifies unchanged G0/R1/R2 selections
+(191/939/1329), and exactly 48 additions with no removals at R3/R4/R5
+(2294/2632/2757). All gate topology and numeric limits are unchanged. Two
+sequential canonical regenerations produced identical config SHA-256
+`1fa771ae6a7098193cce4da0a3afe9cbb7b6e7aad682188042b4bc1d496d64f2`
+and receipt SHA-256
+`e43af5d83e77c925324e7c53bb3f3d5dc26d147e87de8ec28eb539b8d1a320e6`.
+Frozen inventory SHA-256 remains
+`7c27b0ad80998fc1f10876c05d0238a2498d2fd3a116ace77c9505da11d0b4b8`.
+
+The approved isolated `velnora` -> `rel:likes` demo was rerun: unknown lookup,
+public learning proposal with no write, independent signed demo approval,
+exactly one committed fact, SQLite restart, correct Bob/Alice relation roles,
+supported lexical lookup and canonical uppercase-alias reuse. Every public
+cycle still has no authorized surface response. Four fresh-store post-VERIFY
+mode canaries retain their expected NoEffect receipts and zero world delta.
+These establish narrow semantic preservation, not usable conversation or
+R4/R5 admission. The temporary demo store was removed; real authority data and
+the root checkout remain unchanged. No push, merge or corpus operation occurred.
+
+This does not close incomplete-fragment responses, response realization/focus,
+complete multi-root settlement, occurrence/admission traversal or query
+projection. Those remain the next approved owners below and in Tasks4–5, not
+reasons to raise epochs, search caps, create new gates or reactivate R4/R5.
+
 Source-ownership investigation precedes search deduplication. The current
 `_situated_participant_references` can fill a reported event's omitted addressee
 from the current conversation, inventing whom a goodbye addressed. Speech-actor
@@ -1819,12 +1956,123 @@ authority and evidence references to independent VERIFY reconstruction, rather
 than hiding scope in provenance tuple positions. Keep this dependency explicit
 before reducing search duplication or claiming the two-sentence demo is faithful.
 
-- [ ] Reproduce program/meaning duplication with the audit's multi-root and
+September 9 implementation checkpoint: exact punctuation-clause and report
+content geometry now scopes every source-bound reference to actual frame
+identities. Embedded children receive no current situated participant. Explicit
+child actors win; a reviewed communicative child may inherit the exact reporting
+actor, while `Alice said leave` remains unsupported. Greeting and farewell have
+optional addressees, so reported forms omit an unspoken addressee and standalone
+forms still receive user/system participants. Content-local negation cannot scope
+the report, and an earlier sentence root cannot become its content. Compiler,
+composer, verifier and independent reconstruction enforce the boundary; forged
+content, scope, reference and control cases fail. Fifteen focused and 156 main-
+rerun surrounding cases pass, with no ABI, gate, cap, service or owner added.
+
+The exact two-root graph for `The server is offline. You said goodbye.` now
+exists and compiles with correct state, report, farewell, roles and roots. Public
+selection remains honestly rejected because the unchanged search bounds stop at
+48 candidates / 768 states. The R4 expected-contract compiler also invented a
+current-system greeting addressee that is absent from reviewed scenario 0079.
+That default was removed; the existing authentic comparison now passes with
+exact speaker control and no unsupported child role. The remaining multi-root
+limitation must not be hidden by weakening source ownership or raising caps.
+
+- [x] Reproduce program/meaning duplication with the audit's multi-root and
   conditional examples; canonicalize equivalent search states only when future
   legal continuations, scope and evidence ownership are preserved.
-- [ ] Replace relevant whole-store query reads with indexed predicates/arguments
+
+  September 9 independent closure: the public two-sentence report now explores
+  114 unique states without truncation, emits one program and one canonical
+  two-root expression, and reaches selected VERIFY. Replaying its context with
+  the retired action-history key exhausts 768 states and produces 80 complete
+  programs which all compile to that same expression. The semantic-state key
+  skips 62 equivalent histories before budget accounting. A conditional control
+  retains eight distinct expressions and remains ambiguous, proving that the
+  key does not collapse genuine future continuations. The full public cycle is
+  six-phase and stops only at the intentionally unadmitted R5 realization owner.
+  Fifty-one focused composer, reported-speech, compiler, proposer and independent
+  reconstruction cases pass; no ABI, cap, gate or owner changed.
+- [x] Replace relevant whole-store query reads with indexed predicates/arguments
   and revision-pinned retrieval. Test behavior with increasing irrelevant facts.
-- [ ] Keep configured caps and truncation honesty; measure real work, preserve
+
+  Before the repair, deeper independent query-owner probes reproduced correctness blockers as well
+  as scan cost: 256 preceding irrelevant facts hide a true match; truncation can
+  hide denial after support; a seven-rule chain silently returns UNKNOWN after
+  six rounds; reported-only premises can derive unscoped support; a revision-0
+  situation can read revision-1 facts and report support at its old pin. These
+  probes used isolated in-memory stores; 15 existing query controls still passed.
+  Those controls alone were not proof that the gaps were repaired.
+
+  The next repair must cover pinned reads, truthful incomplete-result handling
+  (including existing support that might have unseen opposition), and placement
+  preservation before claiming indexed query correctness. Reuse the existing
+  read snapshot and query/proof owners. Backward-close reviewed rule-head
+  dependencies, retain all conjunctive antecedents and intermediate entities,
+  then load bounded predicate/argument evidence and transitive persisted proof
+  premises. Missing/cyclic/overflowing proof dependencies fail closed. Physical
+  indexes belong to existing persistence and every atomic upsert/replacement;
+  they are not a second store or semantic ABI. Keep lexical lookup and the
+  separately shared state-precondition reader intact. Do not turn every partial
+  result into a decisive supported/unknown answer or broaden currently
+  unsupported scoped/proposition query semantics while optimizing retrieval.
+
+  September 8 implementation checkpoint: QUERY now opens one exact
+  `r3_read_snapshot`, retrieves through atomically maintained memory/SQLite
+  predicate and argument postings, backward-closes reviewed rule dependencies,
+  preserves premise placement and reviewed rule-source provenance, and loads
+  transitive proof premises by key. Support, opposition, relevant-rule overflow,
+  join overflow, six-round nonconvergence, missing/cyclic/malformed persisted
+  proof and saturated postings all fail closed. Memory, SQLite and restart cases
+  measure decoded rows and SQLite work with 10 versus 2,000 distractors. The
+  final combined query/budget/public-cycle regression is 98 passes; the exact
+  `decision-query-proof` owner gate also passes its 175 selected nodes. No
+  semantic ABI, owner, tier or numeric limit changed. Two frozen tests with
+  obsolete fabricated pins now have full-assertion, same-identity successors
+  using the actual store pin. Twelve audited historical query/inference wrappers
+  now have exact current-ABI successors rather than category smoke mappings.
+
+  Independent quality review found one additional generation-lineage defect:
+  the predecessor generic-acquisition coordinator could mutate the live rule
+  dictionary while QUERY retained a parent-generation store pin.
+  `LinkedAuthority.rules` is now immutable within one generation and QUERY
+  rejects generation drift before evidence reads. The predecessor publisher is
+  explicitly unavailable; future generic acquisition requires complete bundle
+  linking plus fresh authority/store activation. Static fresh-generation query
+  activation, stale rejection and in-place mutation denial are tested without
+  claiming that unresolved publisher exists. This adds no per-query scan.
+
+  Final integrity hardening closes three defects found after that green gate.
+  Rule clauses are now recursively immutable and expose an explicit JSON-safe
+  wire projection; the generation-keyed rule-head index is built at owner
+  activation, so the first ordinary query does not scan all rules. Persisted
+  derived-proof sources are reconstructed exactly from the reviewed rule and
+  validated parents, discarding forged persisted source claims. World facts
+  with any stance other than exact `support` or `deny` fail closed as
+  `BUDGET_EXHAUSTED`. Eight memory/SQLite reproductions moved RED to GREEN; the
+  combined query/budget/public suite passes 104 cases and the expanded
+  query/authority/learning suite passes 149. Source inventory authentication
+  reports 2,380 active R3 nodes and 2,994 collectable nodes. Generated selectors,
+  the living receipt and exact owner gate remain to be refreshed after the
+  source-ownership slice, avoiding redundant generated-artifact churn.
+
+  A second independent adversarial review then found two same-generation escape
+  paths: callers could replace the complete public rule mapping without changing
+  authority identity, and a malformed reviewed-rule stance could be derived
+  directly as opposition. `LinkedAuthority` now exposes read-only generation,
+  content and rule views backed by one atomic snapshot. `RuleRecord` construction
+  and defensive query clause parsing admit only exact `support` or `deny`.
+
+  Final re-review found a TOCTOU gap between the initial authority pin check and
+  a later cache refresh. QUERY now captures one immutable authority state, uses
+  one immutable cache bundle and passes evaluation-local rule/index maps through
+  retrieval and proof validation. The common cache hit is lock-free O(1); only
+  activation/generation misses build under a lock. Mid-cycle identity change
+  fails before return. Main independently reran 164 query/authority cases and
+  ten predecessor-learning/boundary cases successfully. The predecessor generic
+  acquisition commit path now fails before lowering or mutation because it has
+  no atomic store-reactivation owner. Generated selectors and the living receipt
+  remain stale until this source-ownership tranche is complete.
+- [x] Keep configured caps and truncation honesty; measure real work, preserve
   denied-effect and authority boundaries, run multilingual/unseen-synonym tests.
   The existing `BudgetExhausted` classifier does not establish runtime handling:
   `HybridRuntime.process_evidence` and CLI callers currently propagate ORIENT
@@ -1837,10 +2085,1474 @@ before reducing search duplication or claiming the two-sentence demo is faithful
   be caught and passed to it with missing artifacts. Repair that earliest-failure
   representation explicitly, preserving strict lineage and ABI ownership; never
   invent a successful orientation/proposal/verification to satisfy the validator.
-- [ ] Regenerate changed deterministic artifacts twice; require byte identity
+
+  September 9 ORIENT-budget checkpoint: Cycle Result ABI 4 adds one exact
+  single-phase terminal for a witnessed `BudgetExhausted` during ORIENT. It
+  binds the original EvidencePacket and performance GapReceipt to an unchanged
+  attempted revision pin, records the exact budget name/limit, invokes no later
+  owner and advances no session state. Other exceptions still propagate. ABI 3
+  is a hard-cut predecessor; no compatibility decoder, search-cap increase,
+  fallback designation, synthetic semantic artifact, gate or service was added.
+
+  The ABI-4 successor is now routed by the existing R3 phase selector; the
+  frozen ABI-3 predecessor is no longer active. Canonical selector and living
+  G0-receipt regeneration was byte-identical across two runs (config SHA-256
+  `803bc4e63f5a27e4071b724ff9e7e8e0db7e18b96fe41cd539df6a65747c7e2f`,
+  receipt SHA-256
+  `8be66b76fa494789650c2ea28d2aebb714b9ec089423f81c18d318468a9f786c`).
+  G0 remains exactly 191 active nodes; R3 has 2,431 active nodes, with 203 in
+  the exact phase group. This refresh changes selector membership and living
+  evidence only; it does not add a gate or alter gate topology. A fresh direct
+  run of that 203-node phase group reports 92 passes and 111 failures; every
+  remaining failure is an explicit still-unmapped historical assertion wrapper,
+  not an ABI-4 runtime regression.
+
+  Final preservation evidence covers signed Unicode and multilingual alias
+  publication/reopen, prior-generation rejection, permitted and denied operation
+  receipts, reviewed-alias restart plus unseen reversal, and the exact multi-root
+  report. All seven cases pass. Together with the measured memory/SQLite query
+  growth tests and the no-truncation multi-root/conditional audit, this closes
+  the configured-bound preservation item without raising a cap or adding a gate.
+- [x] Regenerate changed deterministic artifacts twice; require byte identity
   and preservation of every previously authorized realization contract.
 
+  After the query-lineage and generation-boundary successors, the existing
+  selector config and living inventory receipt were reconstructed twice
+  byte-identically (`ff43c393...e44` and `f2cc4a77...05a3`). The immutable
+  inventory and replay ledgers were not changed. This increment changes no form,
+  realization or model artifact, so it removes no authorized response surface.
+
+  The resulting R3 phase selection contains 200 exact nodes: 54 pass and the
+  remaining 146 failures are all still-unmapped historical wrapper assertions.
+  The earlier fragment failure is no longer in this phase failure set. This is a
+  sharper migration backlog, not evidence of 146 runtime defects and not license
+  to map wrappers to unrelated smoke tests.
+
+### Exact R4 boundary diagnosis — September 9
+
+The definition blocker was traced one owner deeper before adding production
+data. Description ABI 1 now has a strict transient codec candidate: its request
+requires the current R3 `QueryResult` identity namespace and binds the semantic
+target, complete answer-graph depth, persistent-fact budget and revision pin. Its
+result carries canonical `SemanticExpression` meaning, requires persistent
+`fact:` evidence refs rather than expression-local node refs, and rejects
+unresolved answers or answers
+where the requested target occurs only as a predicate, class, dimension, value,
+label type or scope. Claim/source/proof/definition refs remain generic bounded
+refs at this codec boundary. The pending indexed Stage-10 builder must verify
+every external ref's existence, type, lineage and exact semantic correspondence
+to the answer. This is not yet Stage-10 integration or activation.
+
+An initial implementation of a persistent `ReviewedDescriptionGraph` registry
+was rejected during independent review and removed. It accepted unlinked lineage
+strings and would have created a second semantic authority plane beside the
+existing application/claim store. The governing path remains: reviewed definition
+applications and claims are published through the existing semantic store, then
+Description ABI reads their bounded indexed neighbourhood through the existing
+QUERY owner. No new gate, capability, permission, persistent table, authority
+default or search-cap increase was added. Production definition facts, indexed
+neighbourhood retrieval, query projection/dispatch, Proof Bundle linkage and R5
+realization remain explicit pending work; the three metadata-only `defines` rows
+therefore continue to fail closed.
+
+The current `r4_phase_tests` selector contains 35 nodes. A fresh exact run after
+the foundation repairs reports **32 passes / 3 failures**. One earlier fourth
+failure was a stale August 14 wording assertion: its same node and assertion now
+validate the exact predecessor and approved-R4.1-target rows in the current ABI
+registry instead of requiring superseded prose. Its AST metadata was refreshed
+without changing assertion identity, phase or owner.
+
+The three remaining failures are intentional, unsatisfied rewrite obligations
+over `artifacts/r4/episodes.jsonl`. That 400-row August 12 artifact contains
+Semantic Expression ABI 1, Cycle Result ABI 3, Response Meaning ABI 2 and Effect
+Receipt ABI 1 records. Active decoders correctly reject it. Do not add a legacy
+decoder, regenerate the predecessor corpus, remove these nodes or call the R4
+phase green. R4.1 Tasks 14–15 must first add exact same-assertion successors over
+R4 Supervised Case ABI 1, legal Cycle Result ABI 4 terminal shapes and R4 Build
+Receipt ABI 5 provenance; only then may the predecessor tests be superseded.
+
+The earliest source-compilation blocker is separate and equally real. Of 210
+reviewed scenarios, 207 expand into 394 cases; three metadata-only `defines`
+rows (`designation_definition-0006`, `designation_definition-0010` and
+`realization_equivalence-0208`) stop with
+`definition_requires_semantic_content`. The stale predecessor corpus encoded
+their six surfaces as false registry-kind type claims. Preserve the rejection.
+Fresh R4.1 supervision requires actual reviewed definition graphs, or an explicit
+typed gap until the active Stage-10 Description ABI is implemented and proved.
+
+### Normalized semantic-application substrate checkpoint — September 9
+
+The deeper storage audit found the earliest remaining Stage-10 blocker below
+Description ABI itself. The hybrid store currently persists a flat
+`Fact(operator, args, stance, proof)` projection. That projection cannot retain
+the distinction between a grounded semantic reference and an equal-spelling
+literal, role versus qualifier ownership, an application-valued child edge,
+multiple independent claims over one application, or exact
+occurrence/source/proof/commit lineage. Building Description on that projection
+would certify reconstructed text-shaped data as canonical meaning and repeat the
+program/meaning category error.
+
+`SemanticExpression` node refs are also expression-local composition addresses
+(`application:0`, and so on), not persistent semantic identities. Description
+must not require its persistent evidence refs to equal those local addresses.
+The Stage-10 builder must instead reconstruct canonical answer meaning from
+content-addressed stored applications and verify an exact local-node-to-stored-
+application correspondence inside one pinned read. Until that correspondence is
+implemented, the transient codec may bound and authenticate the two collections
+but must not claim their identities are interchangeable.
+
+The next implementation checkpoint is deliberately below public definition
+publication:
+
+- [x] Add the existing conceptual application/binding/claim substrate to both
+  memory and SQLite persistence with content-addressed applications, explicit
+  role/qualifier rows, exact grounded/literal/application filler kinds,
+  independent active claims and append-only retraction lineage.
+- [x] Persist children first and reject variables, unresolved fillers, dangling
+  children and cycles. Reconstruct the same canonical meaning after SQLite
+  restart; never infer normalized rows from legacy `world_facts`, because filler
+  typing has already been lost there.
+- [x] Add bounded target and application-claim reads through the existing
+  `SemanticStores`/`R3StorePort` owner and caller-held `r3_read_snapshot`.
+  Every posting, claim and child traversal uses max-plus-one overflow detection;
+  no whole-store scan or new Description service/gate is permitted.
+- [x] Route only the already authenticated alias publication through the private
+  normalized preparation path while retaining its current `world_facts`
+  projection for unchanged R3 consumers. Prove one normalized designation and
+  claim, unchanged effect atomicity, restart reuse and no duplicate publication.
+- [x] Keep generic definition publication unavailable. Existing
+  `ReviewerAuthorization`, `ReviewedAcquisitionPlan`, alias grants and R4 class
+  authorization do not authorize arbitrary semantic graph writes. A later
+  publication artifact must bind exact graph bytes, target, reviewer signature,
+  store, parent/new linked authority generations, compatibility hash, revision
+  pin and the one effect transaction; no public raw application writer is
+  allowed.
+- [x] Implement the discrete read-only Stage-10 builder through the existing
+  `QueryDecisionOwner`: it reconstructs only a bounded, indexed, pin-matched
+  normalized-claim description after exact fact projection and generic lineage
+  verification. It has no public routing, authority mutation, generic writer or
+  realization behavior. Independent spec and quality review passed; the focused
+  Description ABI/normalized-store run passed 98 cases.
+- [ ] Implement Proof Bundle linkage, query/decision projection and exact R5
+  realization in that order. Only an authenticated full-bundle publication may
+  add production definitions for CEMM, mother or job.
+
+This is an additive generic persistence repair, not a Description table, new
+semantic operator, capability, service, search-cap increase or R4 admission.
+Legacy `world_facts` remains a temporary execution projection until its callers
+are migrated; it is never a source for reconstructing normalized meaning.
+
+Checkpoint evidence: the governed normalized-store module has 54 passing cases
+covering canonical identity, typed bindings, graph integrity, exact lineage,
+atomic alias dual-write, restart/tamper handling, retraction, backend parity and
+bounded indexed reads. The wider alias-authority/publication/admission/query/
+recovery boundary has 401 passing cases. Independent adversarial review rebuilt
+malformed schemas with wrong types and missing `CHECK`, `NOT NULL` and
+`WITHOUT ROWID` constraints; activation rejected each before mutation. A
+30-claim workload sharing one six-application closure required 15 SQLite
+`SELECT`s, below the governed bound of 20 and independent of claim count. The
+schema verification runs only at activation, and no public generic application
+writer exists. R3 source-only inventory validation includes all 54 new cases.
+
 ## Task 7 — Handoff to R4/R5 only on evidence
+
+### Bounded execution checkpoint — October 1
+
+The approved competition-readiness repair follows the existing foundation route,
+not a new master plan. Close one earliest-owner defect at a time; a component
+pass is not a public conversation pass. Do not repeat completed substrate work,
+reopen routine approvals, raise limits, train around missing representations or
+enable the historical marker-only realizer. After three unsuccessful hypotheses
+for one defect, record the exact blocking representation decision rather than
+adding another fallback.
+
+- [x] Link description evidence through Proof Bundle ABI 1 in the existing
+  query owner. One pinned, bounded read must retain each exact application,
+  claim, signed stance, fact, occurrence, source, decision, placement, proof and
+  commit transaction; bind the source QueryResult, description and answer
+  expression. Preserve denial-only evidence and same-application conflict
+  without treating the neutral description graph as positive world truth.
+  Canonical codecs are structural validation, not publication authority.
+  Prove memory/SQLite parity, restart, tamper and stale-pin rejection, lossless
+  budget terminals, no world mutation and indexed work bounded by current
+  description limits. No public dispatch, generic writer or release realization
+  activation belongs to this checkpoint.
+  October 1 evidence: independent spec and quality reviews passed; 187 focused
+  proof/builder/codec/normalized-store/authority cases passed. The 79 new proof
+  cases include exact nested wire types, denial/conflict, maximum 64-claim and
+  4,096-proof-occurrence serialization, and one SQLite target read (nine SELECTs
+  for one claim with either zero or 200 unrelated claims). No public routing,
+  production definition, world writer or phase admission is claimed.
+- [x] Reproduce the public definition/nominal-question contrast individually;
+  distinguish missing form/frame/answer projection from missing reviewed facts.
+  Record the earliest owner before selecting its repair; neither registry kind
+  nor metadata-only `definition_targets` is a definition.
+- [x] Repair only subject-person membership query source consumption. The
+  public `who is a mother?` path has the correct designation, type frame and
+  instance variable, but QUERY bypasses `_nominal_predication_evidence`, leaving
+  its copula/determiner unconsumed (zero candidates, four states). The same
+  declarative selects correctly. Reusing the helper with exact clause-local
+  person-interrogative evidence yields one independently verified membership
+  candidate without changing limits. Prove this through public tests, preserve
+  negation, feature-equivalent language evidence and unseen synonym affordances,
+  and keep content-interrogative descriptions and unlicensed question inversion
+  separate. A person cue in another clause must not authorize this extension.
+  October 1 evidence: 17 new independent controls and all 175 prior owner cases
+  passed; the refreshed exact owner union passed 192 cases. Spec and quality
+  reviews passed. Positive queries have one candidate/four states. The negative
+  subject-question remains explicitly unsupported: scope expansion requires a
+  direct nominal root after missing-role completion, but variable projection has
+  already wrapped that root. Preserve its critical polarity and fail closed;
+  this source-consumption repair does not establish scoped-query composition.
+- [x] Repair relation-query role ownership before counting verified queries as
+  useful answers. The initial public `who likes Bob?` RED probe
+  verified `likes(Bob, ?v0)` instead of `likes(?v0, Bob)`. The former role-order
+  matcher considered grounded designations but omitted the interrogative position;
+  its broad query-feature schemas could assign the remaining entity to subject.
+  Match complete typed construction evidence and independently preserve the
+  requested variable role. Do not patch this sentence or count graph validity as
+  intended-meaning correspondence. This defect is distinct from missing
+  definition projection and must retain an explicit RED until repaired.
+  The bounded repair uses one immutable activation-pinned reviewed role-schema
+  index shared by construction, coverage, compilation and independent VERIFY.
+  Match complete clause-local typed person-query/predicate/referent evidence,
+  retain exact frame-local variable/reference ownership, and rematch against that
+  trusted index rather than treating candidate witness hashes as authority.
+  Leading-subject and trailing-object relation questions are the first scope;
+  auxiliaries, unlicensed scope and mixed-clause forms remain critical blockers.
+  October 1 evidence: 102 independent relation controls passed, including
+  asymmetric facts, EN/ES role contrasts, unchanged-pack authorized alias reuse
+  after restart, canonical-rehashed forgeries at every exact sink, complete
+  polysemy sets and typed attempt/match exhaustion. Independent spec and quality
+  reviews passed. Their overlap probes exposed missing participant/deixis
+  ownership: form contributions and the activated index now share the original
+  primitive signature and identity owner. Both resolved and unresolved reference
+  requirements survive exact designation overlap; no default referent is made.
+  Standalone unresolved references retain their original critical residual and
+  unchanged assertion. Alternative linker/determiner readings are not made
+  globally mandatory references. Current relation schemas have no reviewed
+  lexical-overlap license; scoped rejection does not ban designation or lookup.
+  Independent two-predicate by two-referent probes retain four distinct meanings
+  and honest ambiguity. Positive unambiguous public role contrasts use at most
+  seven search states; numeric limits and authority generation are unchanged.
+  Fresh parent integration: 318 exact composition/reference-owner cases, 187
+  description/proof cases and 76 query/release-boundary cases passed in separate
+  bounded runs. These are not an aggregate release or replay-admission result.
+- [ ] Project authenticated answer meaning through the query/decision/response
+  owners, then prove the explicitly development-only compositional response
+  reference through the public runtime. Preserve the R5 release boundary.
+  Preserve an explicit requested description projection and its source-query
+  lineage. A type-membership graph, registry kind or manufactured QueryResult
+  cannot substitute for a definition request. The current response owner checks
+  the decision answer against exact query bindings; do not replace that answer
+  with an arbitrary description graph merely to obtain readable output. Missing
+  reviewed definition content remains distinct from missing projection support.
+  October 1 case-by-case follow-up: isolated public probes confirm that
+  `What is CEMM?`, `What is a mother?` and `Define mother.` produce no verified
+  descriptive request. Membership and lexical lookup have distinct working
+  graphs. For lookup, QueryStatus SUPPORTED / Decision ANSWER can coexist with
+  CycleStatus PARTIAL while R5 realization is unavailable; do not report the
+  cycle status as failed semantic lookup.
+
+  The independently reproduced builder defect is repaired: a valid normalized
+  `Alice`-instance / `mother`-class claim appears in mother's target posting, but
+  its class occurrence is metadata, not a description of mother. Before repair,
+  the builder raised its target-focus validator instead of returning MISSING,
+  and irrelevant support/deny postings could contaminate a focused answer with
+  false conflict. It now authenticates every bounded posting before reusing the
+  operator-aware nonmetadata focus criterion for answer assembly. The 10 new
+  memory/SQLite controls were RED (four failures) before repair and GREEN after;
+  the fresh parent six-module union passes 197 cases. Independent spec review
+  passes 286 adjacent cases; independent quality review passes the same 197-case
+  six-module union. Corruption,
+  stale pins, signed/nested evidence and raw posting overflow remain enforced.
+  No extra read, cap, ABI or authority change is introduced. This filter repair
+  is not definition support.
+
+  Representation decision approved by the user on October 1: the predecessor canonical
+  binder has only a variable and body, and canonical expressions require at least
+  one application. No existing reviewed description/definition/location frame
+  supplies the missing request. A public description therefore needs an explicit
+  identity-bearing canonical query projection, not a dummy persistent statement,
+  new `op:describe`, `rel:description` or reified definition store. Keep ordinary
+  role/binder questions unchanged. The approved migration is specified in section
+  8 of the foundation amendment and the finite sequence below; compiler, independent VERIFY, source
+  coverage and request/answer identity must agree before public activation.
+
+  The retired Description/Proof Bundle ABI 1 component bound a canonical
+  UNKNOWN source QueryResult without establishing that QUERY produced it.
+  A manufactured UNKNOWN for a supported proposition could satisfy that seam.
+  ABI 2 now rejects that seam and binds the canonical request/projection and
+  original QUERY situation before the pinned read. The existing query owner
+  still needs genuine final result ownership after answer/proof construction;
+  public dispatch must not manufacture an UNKNOWN or add a second query engine. Generic
+  neighbourhood reconstruction and its SUFFICIENT flag do not prove an
+  intensional definition; actual production definition content remains missing.
+- [ ] Close the existing foundation conversation matrix, then unblock fresh
+  R4.1 supervision and the conditional R5/R6 work using their existing contracts.
+
+Competition rules, benchmark comparisons and submission packaging are separate
+from foundation correctness. No competition result, R4/R5 admission, root
+adoption, merge or push is implied by this execution checkpoint.
+
+### Task 7 approved projection migration sequence — October 1
+
+This is the next increment of this plan, not a competing plan or another corpus
+pass. User approval covers the canonical request/proof-lineage representation;
+review each bounded implementation task spec-first and quality-second. Preserve
+all pre-existing dirty edits. Do not commit, push or admit a phase implicitly.
+
+- [x] **7.1 Canonical request substrate.** Owners:
+  `src/cemm_authoritative_hybrid/expressions.py`, `expression_projection.py`,
+  exact preservation/rejection in `expression_transform.py`, `proof_bundle.py`
+  and `r3_learning.py` if required; tests:
+  `tests/test_foundation_query_projection.py`. Add `QueryProjection` under
+  Semantic Expression ABI 3, with exactly these fields:
+
+  ```python
+  QueryProjection(
+      projection_ref="candidate:query",
+      requested_content="description",
+      target_ref="participant:system",
+  )
+  ```
+
+  The intended request-only expression is:
+
+  ```python
+  SemanticExpression.create(
+      applications=(),
+      root_refs=("candidate:query",),
+      query_projections=(request_node,),
+  )
+  ```
+
+  Write independent tests first and observe the missing-node assertion RED.
+  Prove local-ref alpha equivalence, target/content non-equivalence, zero
+  persistent applications, unchanged five operators, exact canonical wire and
+  hard-cut ABI 2 rejection. Empty, multiple, duplicate, dangling, unreachable,
+  excessive-depth and total-node cases reject. Immutable structural indexes
+  expose the exact target; generic transformations preserve the node or explicitly
+  reject unsupported use, never silently erase it. Run new and existing codec /
+  expression-projection tests with:
+
+  ```powershell
+  $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'
+  $env:PYTHONDONTWRITEBYTECODE='1'
+  $env:PYTHONPATH='src'
+  & C:/Python313/python.exe -m pytest -o addopts= -p no:cacheprovider tests/test_foundation_query_projection.py tests/test_semantic_expressions.py tests/test_r3_expression_projection.py -q
+  ```
+
+  The two prior modules exist; do not migrate frozen assertions. Compiler/public interpretation
+  and descriptive evaluation remain unavailable at this substrate checkpoint.
+  Observed evidence: initial 12 missing-node assertion failures, followed by
+  passing controls. Independent review reproduced wire aliasing in nested scope
+  and binder nodes; two further RED controls preceded detached-field serialization
+  repairs. All 17 new request cases pass. The fresh parent seven-module union
+  passes 157 cases, including existing codec/compiler/projection/mode and signed
+  description-proof controls. Spec review passes 46 codec/projection cases and
+  its independent binder-to-scope-to-request mutation probe. Fresh quality review
+  passes 172 focused cases with no actionable finding. No public compiler,
+  evaluation, definition policy, authority, world writer or normal realization
+  was activated. Existing numeric bounds are unchanged. The one nonfrozen ABI
+  expectation now checks ABI 3 and rejects ABI 1/2; its literal AST metadata was
+  refreshed, not any frozen assertion or inventory anchor.
+- [ ] **7.2 Exact construction and verification.** Existing owners:
+  `proposal_context.py`, `programs.py`, `recursive_composer/`,
+  `recursive_compiler.py`, `coverage.py`, `verifier_reconstruction.py`,
+  `verifier.py` and their deterministic reviewed form/schema owners. Extend a
+  structural projection derivation through the existing twelve switch-action
+  families rather than adding a persistent operator or phrase intent. Pin any
+  changed action/context/coverage ABI and reject predecessors. Independently
+  prove exact target and requested-content reconstruction, complete source
+  ownership, EN/ES typed evidence contrasts, unchanged-pack unseen synonym
+  reuse, competing interpretations and rehashed forgeries at every exact sink.
+  Do not reinstate the retired atom-kind or surface-only `define` cue. Keep
+  unreviewed construction forms critical and public request dispatch disabled
+  until the complete owner chain agrees.
+  Read-only October 1 construction audit identifies the earliest missing owner:
+  reviewed request-content authority. EN content-interrogative evidence and ES
+  generic query evidence do not establish description versus definition. The
+  old `definition_nominal_query` / `definition_participant_query` pack rows lack
+  `evidence_order` and are skipped by activated role schemas; their names are
+  not semantics. Body-bound VariableSlot and the minimum-application guards also
+  cannot represent the new leaf. The recommended bounded extension is a distinct
+  content-addressed QueryProjectionSlot, licensed by an explicit result variant
+  of the existing activated typed schema index, and a two-argument
+  `project_variable(projection_local_ref, query_projection_slot_ref)` variant.
+  Preserve the three-argument binder variant and all twelve action families.
+  Source geometry, selected designation alternative and requested content must
+  be independently rematched, not accepted because slot hashes agree. Bare
+  `What is X?` readings must not be selected from target kind or available facts;
+  preserve competing reviewed readings unless legitimate context resolves them.
+  `Define mother` remains unresolved without reviewed open-class request meaning
+  and an inheritable affordance; restoring the retired cue is not a repair.
+  Future pack/action changes must reconcile schema ABI/hash pins and give the
+  predecessor pack-hash containment assertion an honest preservation successor,
+  never a blind hash refresh or frozen-data rewrite. This audit activates nothing.
+  Execute this dependency in two bounded, independently reviewed components:
+  - [x] **7.2a Private construction substrate.** Extend the activated schema
+    index with an explicit query-projection result variant and closed transient
+    request/binder/optional-determiner/target ports, not new semantic roles.
+    Preserve persistent-role schemas. Add distinct content-addressed projection
+    matches and QueryProjectionSlot records plus strict Proposal Context ABI 3
+    serialization and immutable indexes. Use explicitly licensed in-memory
+    candidate packs for acceptance; checked-in request rows and public emission
+    stay disabled. Unknown, deictic, scoped and compound targets are not
+    implicitly licensed. Count every alternative under existing bounds.
+    Optional article consumption requires explicit typed article evidence;
+    generic determiner metadata also covers quantification and cannot license
+    dropping `all` or `every` from canonical request content.
+    October 1 closeout: 67 construction cases and 289 adjacent owner controls
+    pass in main's fresh 356-case run. Independent SPEC and QUALITY reviews pass.
+    Review exposed and drove test-first repairs for optional-article binding
+    subclasses and mutable projection-container subclasses; both constructors
+    reject before hashing/indexing. The unsupported decoder-only scalar cap was
+    removed without adding a validation layer or changing configured bounds.
+    Detached roundtrips, strict JSON/alias/cycle/collection protections and
+    activated-match rejection remain. Source-only R4 inventory passes. EN/ES
+    packs and frozen inventory/anchors/ledger are unchanged. Public projection
+    emission, Program/Coverage derivation, learned capability and admission are
+    not claimed by this private component.
+    Existing selector and living inventory receipt regeneration is byte-identical
+    across two runs: R4 has 3,414 active / 3,671 collectable nodes in 168 modules,
+    active set `active_test_nodes:1d54eca149c793840a83405e` and literal metadata
+    `literal_test_metadata:557bd9e369614a7e32c7f78d`. Admission roots and configured
+    limits are unchanged. Five fresh scoped governance/document/anchor checks
+    pass; this is source registration and documentation evidence, not admission.
+  - [x] **7.2b Exact derivation and candidate source integration.** Hard-cut
+    Program and Coverage to ABI 3, retain all twelve action families and the
+    three-argument binder variant, and add the two-argument projection variant
+    with exact non-role source ownership. Close composition, compilation,
+    independent reconstruction and all verification/proof sinks before enabling
+    candidate source rows. A generic content/copula row licenses description and
+    definition as separate equal-priority readings; no current context policy
+    chooses between them. Candidate ES content-interrogative metadata, preserved
+    unrelated pack fields, honest same-assertion successors and dependent R4
+    schema/action pins must agree. Direct participant deixis needs its own exact
+    resolved-reference selector; do not invent a designation. Definition requests
+    still require reviewed content/policy to be answered. No publication,
+    learned realization, root adoption or phase admission follows from this.
+    October 1 closeout: final parent replay passes 515 cases in seven bounded
+    owner modules. Independent SPEC passes 360 cases; final QUALITY passes three
+    focused runs of 246, 381 and 19 cases. These overlapping runs are not a full
+    regression or admission claim. Review exposed primitive/anchor port and
+    provenance substitution plus equality-based activation-owner substitution;
+    test-first repairs now authenticate complete contributions against the actual
+    activated LinkedAuthority, RuntimeConfig and cached affordance view. Normal
+    rematches use keyed reads, not an authority scan or per-match cache rebuild.
+    Original EN/ES unseen nominal aliases retain their expected type graph.
+    Source fixtures now keep designation proxies at Grounder only; composition
+    consumes the actual linked owner. Honest same-assertion ABI, membership and
+    pack-preservation successors retain frozen evidence. Removing public content
+    construction fails both independent required-content cases; the other three
+    unsupported controls remain unsupported. Frozen inventory, assertion anchors
+    and replay ledger are unchanged. Candidate rows are enabled; equal readings
+    remain ambiguous. Definition content/policy, participant projection, useful
+    public answers and learned realization are not completed by this component.
+    Source-only selector/living-receipt regeneration is byte-identical twice:
+    3,477 active / 3,734 collectable R4 nodes in 169 modules, active set
+    `active_test_nodes:4bebcb6b08ae6dfd87efa39d` and metadata
+    `literal_test_metadata:b519631a3440e6869f22fb57`. Existing numeric limits and
+    admission roots are unchanged. This is registration, not phase admission.
+- [x] **7.3 Request-first query and evidence component.** Owners: `descriptions.py`,
+  `proof_bundle.py`, `r3_artifacts.py`, `r3_cognition.py`, exact decision and
+  response linkage sinks. Migrate Description/Proof Bundle lineage before
+  enabling evaluation: bind canonical expression and projection first; read
+  once at the existing exact pin; authenticate all bounded postings; produce
+  the final genuine result only after answer/evidence construction. No source
+  UNKNOWN fixture, proof/result hash cycle, extra query engine, larger cap or
+  new persistence table is permitted. Ordinary query substitution equality
+  stays exact. Description answer linkage must be independently checked against
+  the request and signed bundle, never accepted as an arbitrary answer graph.
+  Memory/SQLite, restart, stale/tampered lineage, denial/conflict and overflow
+  must pass before public response integration. Definition requests stay
+  explicitly missing without reviewed definition content and sufficiency policy.
+  The codec/lineage substrate depends on 7.1, not on public construction; it may
+  close before 7.2, with public interpretation still unavailable. The selected
+  minimal lifecycle uses Description/Proof Bundle ABI 2, dedicated QueryResult
+  ABI 3 and Response Meaning ABI 4; the shared R3 artifact envelope, Decision
+  action/status vocabulary and state-query statuses are not expanded. Exact
+  request construction accepts the canonical source expression and original
+  QUERY situation, deriving expression/projection/content/target/situation refs,
+  budgets and original pin. Proof Bundle 2 owns that request through its
+  DescriptionResult and has no QueryResult back-reference. The final query
+  result distinguishes `result_kind="proposition"` from `"projection"` and
+  owns optional `description_proof`: ordinary proposition proofs/bindings remain
+  unchanged; projection results require the exact signed bundle, no ordinary
+  ProofGraph and no bindings. Completion maps sufficient/partial/conflict/
+  missing/budget-exhausted to supported/partial/conflict/unknown/budget-exhausted.
+  Projection support means authenticated requested information is available,
+  not that its neutral graph is affirmative world truth. Deny-only information
+  remains signed support for the information request, not a contradicted request.
+  Response Meaning 4 retains the identity-covered signed bundle; an answered
+  projection uses exact neutral answer content with attributed epistemic status,
+  while ordinary answers still require exact substitution equality. Every
+  original request/answer/situation pin and decision/effect linkage is checked
+  at create/decode and response sinks. Generic unsigned realization and normal
+  verified-focus publication must explicitly reject projection responses until
+  signed equivalence is implemented. No normal realization fallback is added.
+  - [x] **7.3a Request-first Description/Proof Bundle component.** Description
+    and Proof Bundle ABI 2 reject ABI 1 and the caller-supplied QueryResult seam.
+    The request derives expression, projection, target, content, original QUERY
+    situation and pin; the signed bundle has no final-result back-reference.
+    All bounded raw postings authenticate before focused answer reconstruction.
+    Activation and before/during-read authority identity checks reject drift
+    without rule scans; genuine generation rollover at a fresh pin remains valid.
+    Independent quality review reproduced a valid nine-root/25-application
+    exception. Reconstruction now returns empty typed BUDGET_EXHAUSTED after
+    authentication when existing root/application limits (8/24) or retained-root
+    single-parent structure cannot represent all evidence. Corruption still
+    rejects; no claim is dropped, cap raised or exception broadly swallowed.
+    Initial overflow controls: 12 failures/71 passes; final 83 lineage controls
+    pass. Fresh parent, final spec and final quality nine-module runs each pass
+    359 cases. Spec adds eight independent probes; quality adds ten. These
+    checks close the component only, not public requests or definition support.
+  - [x] **7.3b Genuine projection QueryResult and evaluation linkage.** Split
+    QueryResult ABI 3 from the unchanged shared artifact ABI 2. Integrate one
+    authenticated projection read into the existing QueryDecisionOwner, then
+    enforce exact request/result/decision/pin correspondence at EvaluationBundle
+    creation and decoding. Preserve ordinary query and learning behavior.
+    Implementation passed independent specification and quality review. TDD exposed 15 missing
+    boundaries, 15 accepted canonical crossbindings and three cyclic-wire stalls.
+    Bounded typed decoding replaces the raw JSON prewalk without an aggregate
+    cap; maximum 64-by-64 ordered proof content remains serializable. The initial
+    fresh parent union passes 439 cases (80 new plus 359 prior); two later
+    compound/unresolved no-read cases pass separately. The final new module has
+    82 cases. An existing nonfrozen three-case witness fixture now checks earlier
+    EvaluationBundle rejection with the same assertion identities and unchanged
+    store/journal guards; independent zero/multiple-query lower-sink controls
+    remain. Only its three later literal AST hashes were regenerated. Component
+    review found nested proof and evaluation ABI floats comparing equal to integer
+    versions. Twenty-one further RED controls preceded exact integer-version and
+    field-name guards at their existing codec owners; legitimate finite payload
+    floats and maximum ordered proof content remain valid. The final new module
+    has 104 cases. Fresh parent eleven-module replay passes 473 cases; final spec
+    passes 463 core cases, 130 ordinary query/learning cases and 24 independent
+    probes. Quality passes 401 cases across twelve modules and 23 independent
+    probes. Both reviews pass. The source-only selector/living-receipt generation
+    is byte-identical twice, with unchanged frozen anchors, limits and admission
+    roots. This closes the query/evaluation component, not public construction,
+    signed response or admission.
+  - [x] **7.3c Signed response linkage.** Migrate Response Meaning ABI 4 and all
+    dependent exact sinks; preserve ordinary substitution equality and prevent
+    unsigned projection realization/focus publication until equivalence exists.
+    Builder, R3Artifacts and the authenticated cycle terminal bind the actual
+    canonical evaluation/source/situation and effect receipt. Supported answers
+    preserve the exact neutral graph with attributed epistemic status and signed
+    claims; other terminals preserve the request. Original proof pins remain
+    distinct from legitimate journal-advanced output pins. ABI 3 is rejected;
+    source hashes alone cannot authenticate an omitted answer bundle, so actual
+    sinks enforce its presence. TDD reproduced the ordinary-substitution failure,
+    missing evidence, accepted no-effect final-pin substitution and exponential
+    shared-DAG decoding. Alias-free ABI 4 wire checks stop expansion before child
+    codecs; no duplicated bundle schema, aggregate cap or extra read is added.
+    The detached maximum of 64 claims by 64 ordered proof refs remains valid.
+    All 64 new cases and the implementer's 316-case union pass. Fresh parent
+    replay passes 720 cases across 21 modules. Its first 578.37-second run was
+    unexpectedly slow; duration-enabled reruns of the identical case set pass
+    80 cases in 9.42 seconds and 640 in 50.75 seconds. The outlier's cause remains
+    unestablished, not a fixed or ignored regression. Spec passes 383 cases and
+    31 independent controls; quality passes 122 cases and nine independent
+    controls. Both reviews pass. Their maximum-proof build/decode/artifact checks
+    measure approximately 0.13–0.14 / 0.05–0.06 / 0.16–0.17 seconds in this
+    environment, not a competition benchmark. Three parent SQLite restart/retry
+    probes preserve support, denial and missing-result receipts, response identity
+    and world revision. Only three later ABI expectation AST pins changed;
+    frozen inventory and assertion anchors remain unchanged. PARTIAL is a
+    structural contract control, not a current retrieval outcome. Existing
+    Proof Bundle 2 rejects ScopeOperator answers: nested roles/qualifiers survive,
+    but no positive scoped-description capability is claimed or flattened.
+    Unsigned realizers still reject projection responses. This closes the typed
+    query/evidence/response component, not public interpretation, definition
+    sufficiency, signed realization, migration activation or replay admission.
+- [ ] **7.4 Faithful development response and isolated demo.** Preserve the
+  existing R5 activation boundary and use only the approved development response
+  reference. Prove real public source interpretation, genuine query result,
+  exact decision/answer linkage, perspective and signed/uncertain response
+  content case by case. No empty or fabricated authorized surface may count as
+  a usable demo. Record normal learned realization as unavailable until fresh
+  R4.1/R5 admission. Complete the existing conversation matrix before data work.
+  October 1 user-approved clarification: report functional conversation,
+  semantic fidelity and learned contribution separately. Here, "signed" claim
+  evidence means retained `support` / `deny` stance and attribution; artifact
+  hashes and authenticated acquisition grants establish neither intelligence
+  nor intended-meaning correspondence. The development response reference is
+  not a substitute for R5. Do not reuse the old status/count-only encoder,
+  canned-sentence selection, surface-hash training targets or fixed epistemic
+  confidence. Existing conditional R5 obligations must contrast answer graphs
+  with identical status/count metadata, multiple legal interpretations,
+  unseen compositions/aliases and candidate-pointer permutations, with
+  trained/randomized/ablated semantic performance under unchanged constraints.
+  A special zero-logit branch that deliberately produces invalid wording does
+  not establish learned semantic realization. These are existing R5 evidence
+  obligations, not added hot-path gates, new corpus authority or permission for
+  pre-admission training. Bare content questions retain competing readings until
+  licensed context and settling resolve them; no default reading is added to
+  make the demo pass.
+  The bounded output audit selects controlled English and numbered evidence
+  citations for this development reference. Output-only grammatical records
+  select existing explicit designation facts, never arbitrary sorted aliases or
+  internal-ref spelling. Derive participant perspective from the actual
+  situation; retain every role, scope, link, qualifier and claim stance, or
+  report a typed output limitation. The current `Mary said Bob left` graph has
+  no tense scope: event-nominal wording must not invent past tense. Early gaps
+  have no ResponseMeaning and license only their actual condition/safe action.
+  No normal realization receipt, focus write or learned claim follows from this
+  reference. Missing public labels and definition content/sufficiency remain
+  separate authority work, not data to synthesize for the demo.
+  October 1 pre-repair development-reference execution finding: public `Bob likes you`
+  composed the reversed relation. The earliest divergent ORIENT
+  artifacts omit `role:object` from participant-reference defaults, while the
+  entity-only reviewed relation order does not constrain mixed participant/entity
+  evidence. Consequently the participant is forced into subject position and
+  the named entity remains unconstrained. Source-faithful presentation of that
+  graph is not intended-meaning correspondence. Repair the existing typed
+  reference/construction owner with independent subject/object contrasts before
+  claiming conversation completion; do not add a presenter phrase filter,
+  silently coerce participant kinds, or bless the reversed graph as gold.
+  Separately, public `I like Bob` lacks reviewed input inflection evidence;
+  output grammar cannot supply missing input grounding. These concrete source
+  gaps do not reopen the independently reviewed query-projection substrate.
+  Direct mixed-referent closeout: the existing activated role-schema index now
+  supplies one bounded clause-local relation match for named designations and
+  primitive participants. Actual `entity`/`participant` kinds are retained;
+  participant references include the object role and both sides receive the
+  same reviewed source ordering. Coverage, compilation, independent
+  reconstruction and verifier replay rematch the construction. Rehashed reversed
+  countergraphs fail; polysemous targets retain all exact alternatives. No
+  phrase branch, kind coercion, new schema family, ABI, gate or numeric cap was
+  introduced. The existing fifteen-schema index remains below its cap of sixteen.
+  Independent review caught and repaired two preservation defects before
+  launch: capability queries must not be checked as ordinary relation-type
+  constructions, and named-only negative/embedded role projection must retain
+  its original reviewed path. Mixed scoped/embedded inputs remain unsupported
+  rather than silently losing scope. English/Spanish direct controls and an
+  authenticated isolated alias publication/restart pass without pack regeneration.
+  Final bounded implementer union: 289 passed. Independent SPEC union: 425
+  passed. Independent QUALITY: 35 mixed and 102 relation-query controls passed,
+  plus ambiguous 2/4-alternative polysemy probes with no world writes. Fresh
+  parent integration: 184 passed. These overlapping runs are not an additive
+  total or full-regression proof; the twelve index-less fixtures remain open.
+  Two final source-registration generations are byte-identical: R4 has 3,554
+  active / 3,811 collectable nodes in 171 modules, active set
+  `active_test_nodes:50e8e10b1d8dd52052e93ee1`, metadata
+  `literal_test_metadata:c6c99a99741f997c6eca16a1`. Frozen test inventory, ledger
+  anchors and replay ledger retain their prior bytes. No phase is admitted.
+  A fresh thirty-cycle local development probe measured 31.68 ms activation,
+  51.67 ms median cycle plus diagnostic wording, 80.96 ms maximum and 40.85 MiB
+  peak process working set. Direct controls explored at most six search states
+  and left world revision zero. This is neither a competition-hardware benchmark
+  nor trained-model throughput or a baseline comparison.
+  Presentation component closeout: `development_reference.py`, the explicit
+  development-profile runtime method and opt-in CLI passed final SPEC and QUALITY.
+  The 42 literal controls retain graph roles, perspective, uncertainty, ordered
+  structure, signed claim attribution and actual source/effect linkage. Review
+  drove RED/GREEN repair of request wrappers that erased unknown/denied/failed
+  distinctions. Final implementer union: 191 passed; fresh parent boundary run:
+  45 passed; each independent review: 42 passed plus independent controls.
+  An isolated 13-turn CLI demo exits successfully with six meaningful surfaces
+  and seven explicit interpretation gaps; this is not conversation completion.
+  Default diagnostics, null normal realization receipt, focus and world state
+  remain unchanged. `--development-reference --demo --store <isolated-store>`
+  selects readable diagnostics; `--trace` retains their exact graph/provenance.
+  Two source-registration generations are byte-identical: R4 has 3,519 active /
+  3,776 collectable nodes in 170 modules, active set
+  `active_test_nodes:01cc716f5c80baed7c314460` and metadata
+  `literal_test_metadata:b3460b40625d007d3296a7ec`. Existing runtime-path test
+  selectors are reused; no new gate, limit, admission root or frozen evidence
+  changed. Full Task 7.4, source interpretation gaps and learned output remain open.
+
+Each task closes only with observed RED/GREEN and independent review. Reconcile
+deterministic dependent artifacts and literal source inventory through existing
+owners before calling the migration complete. Do not repeat the interrupted
+disk-full aggregate run as evidence; bounded owner runs remain the execution
+method until resource conditions permit the complete existing regression gate.
+
+### Public usability and competition-fit audit — October 1
+
+#### Ordinary-input execution increment — user approved continuation
+
+The fifteen-source public replay confirms that a running CLI is not sufficient
+conversation acceptance. `hello` is evaluated as an attributed observation and
+rendered as a claim about greetings, not a reciprocal greeting. Before this
+increment, `Can you respond?` and `Can you learn aliases?` produced supported
+capability answers but the output-only relation grammar required an object
+role that these unary capability applications do not have. `Who likes Bob?`,
+`Bob likes who?` and `Who is a mother?` retained exact query binders but had no
+complete output rule. Those bounded output gaps are now repaired and reviewed.
+`I like Bob` remains an input-morphology gap; ambiguous content questions and
+definition content remain separate earlier owners. No phrase-specific reply or
+silent default interpretation is approved.
+
+Execute through the existing Task 7.4 and development-only reference:
+
+- [x] Add failing public-cycle and actual interactive-CLI tests for unary
+  capability answers and single-variable relation/type queries. Specify exact
+  predicate/role/perspective, provenance, uncertainty and forbidden answers
+  independently. Include same-status changed-graph and tampered-structure controls.
+- [x] Repair only the output owner for these already verified meanings.
+  Capability grammar selects explicit reviewed designation records and consumes
+  the complete unary subject role. Query grammar retains binder identity and
+  exact queried role, without inventing personhood, existential facts or a
+  negative answer from UNKNOWN. Preserve lexical lookup, all prior response
+  surfaces and fail-closed unsupported scopes/qualifiers/roles. No semantic ABI,
+  phase, cap, gate, input pack, authority fact or admission changes belong here.
+- [x] Run SPEC then QUALITY review, real CLI replay and existing boundary tests;
+  refresh only living literal metadata/selectors deterministically. Keep normal
+  realization receipt/focus unavailable and all frozen evidence unchanged.
+- [x] Inspect input morphology and greeting/clarification semantics at their
+  earliest owners before further changes. A reciprocal greeting requires
+  response meaning, not an output filter on `hello`; definition support still
+  needs actual reviewed content. Track any missing contract explicitly rather
+  than inventing a new operator or masking the gap with a stock reply.
+
+The earliest-owner inspection found three distinct unfinished dependencies:
+
+1. `FormResolver._make_unit` emits case-folded/trimmed forms, not the declared
+   morphological alternatives. `Grounder._ground_units` looks up exact source
+   spans and does not consume those alternatives. Fixing only the suffix list,
+   output morphology or adding an English phrase branch cannot repair input
+   grounding. A bounded reversible form-to-designation derivation must retain
+   the original span, reviewed rule identity and designation provenance; test
+   inflected unseen aliases and multilingual contrasts before regeneration.
+2. Direct greetings enter generic observation admission. Unsupported state
+   admission becomes `RETAIN_ATTRIBUTION`; `_answer_expression` then preserves
+   the source for every non-ANSWER decision. No reciprocal-response goal or
+   authenticated response-selection derivation is present. The next semantic
+   response repair must distinguish a direct greeting from quoted, negated,
+   embedded and third-party greeting claims, preserve participant perspective,
+   and select the response graph before wording. A presenter-side "Hello"
+   filter would conceal this missing owner.
+3. Ambiguous description/definition requests lack a typed alternative-choice
+   continuation; actual definition content and sufficiency are also absent.
+   Asking a question without consuming its subsequent answer is not closure.
+   Preserve the working exact unknown-lookup obligation separately; neither
+   ontology kind nor a target's graph neighbourhood is a definition.
+
+The bounded output repair has 38 new executable controls. SPEC exposed that the
+CLI tests depended on outer `PYTHONPATH`; explicit copied child environments now
+prefix the absolute source directory and preserve inherited values. Both CLI
+cases failed before that test repair and passed without outer `PYTHONPATH` after
+it. The final files passed independent SPEC and QUALITY reviews. The parent's
+fresh no-outer-path run has 183 passes across query output, existing development
+reference, relation queries and the R5 realization boundary. QUALITY's overlapping
+expanded run has 221 passes, including mixed-referent preservation and public
+R5 profile selection; do not add overlapping totals. Ten prior public-cycle
+diagnostic dictionaries are exactly preserved by independent old/new replay.
+
+A separate nine-source actual CLI replay exits zero: both capability questions
+produce supported exact-subject answers; the three variable questions retain
+their queried roles and UNKNOWN status; unknown lookup and mixed participant
+roles remain correct. It also confirms the remaining failures: `hello` still
+retells an attributed greeting claim and `I like Bob` remains unresolved. No
+general conversation demo readiness is claimed. The independent governance and
+authority run has 32 passes; all 87 source modules compile in memory and the
+complete authority bundle links. Two canonical selector/living-receipt generations
+are byte-identical: R4 has 3,592 active / 3,849 collectable cases, 172 modules,
+`active_test_nodes:9ba6bff2d05ddfaa79be5ec8` and
+`literal_test_metadata:eb279547573446da060bcde2`. This refresh changes no gate,
+admission root, numeric bound or frozen inventory/assertion/ledger evidence.
+Normal realization/focus and phase admission remain unavailable; Task 7.4 stays
+open. Complete semantic response selection before presenting another CLI launch
+as a conversational demo.
+
+#### Communicative-act contract checkpoint — user approved October 1
+
+Fresh independent public replays identify an earlier prerequisite than output
+selection. `hello`, `hi`, `hey` and `greetings` share
+`expression:769c64ec5e720662df6820fb`, with user actor and system addressee.
+The literal quoted source `"hello"` produces that same graph and contested
+retention. `hello?` also shares it but retains QUERY force; negative and reported
+greetings retain their scope/embedding. Thus a predicate/participant/OBSERVE
+graph match cannot distinguish a performed greeting from a quoted mention.
+The generic punctuation evidence does not establish a quotation interpretation.
+Do not use source text as a downstream escape hatch or invent quotation scope.
+
+The parent additionally reproduced `hello Bob` and `hello Alice`: both bind the
+named person as actor rather than addressee. A reciprocal-reply rule cannot repair
+that earlier correspondence defect. Until reviewed source-local vocative evidence
+owns the named role, these examples cannot count as intended-meaning acceptance.
+Unsupported `I greeted you`, `Alice greets Bob`, `hello yesterday` and `hola`
+do not establish the missing past/inflection/multilingual distinctions merely
+by failing; tests must specify and prove the intended graph separately.
+
+The downstream independent audit confirms the absent contract:
+
+- OBSERVE creates a claim occurrence for every root. State-only admission then
+  yields CONTESTED / RETAIN_ATTRIBUTION for the greeting event.
+- Existing ACKNOWLEDGE requires claim and admission identities. It is not a
+  performed-communication consequence. ANSWER requires a supported/contradicted
+  query; a greeting must not manufacture a query to obtain a different graph.
+- `_answer_expression` changes source meaning only for ANSWER, and actual-source
+  response, artifact and cycle validators enforce that exact derivation.
+- Linked `cap:respond` is generic capability, not a reviewed reciprocal-response
+  policy. The sole reviewed goal is designation resolution; the existing family
+  inference rules do not authorize a response act.
+
+The user approved the following bounded extension. Foundation amendment section
+9 owns its semantic contract; this checkpoint remains unadmitted implementation
+work, not activation authority:
+
+1. Preserve source-bound communicative-force/mention evidence in the independently
+   verified situated-meaning envelope. A direct performed act, a quoted mention
+   and an attributed event claim are distinct. Derive it from reviewed semantic
+   frame/construction evidence and source coverage, never a surface-string branch.
+   Unsupported quotation must remain typed unresolved rather than lose its force.
+2. Give the existing EVALUATE owner a non-claim communicative consequence. Keep
+   source truth assessment separate from permission to respond; do not turn a
+   greeting into admitted world truth or weaken current claim/query matrices.
+3. Bind a finite reviewed response-selection derivation to the exact verified
+   source/root, situation, policy/generation, participants, revision and outgoing
+   expression. For a direct greeting addressed to the current system, the outgoing
+   graph uses existing `op:event` with the same semantic event identity, system
+   actor and original speaker addressee. Missing force, policy or capability blocks
+   selection; reports, quotation, negation, temporal scope, embedded/multiple roots
+   and other modes do not silently acquire this permission.
+4. Carry and independently reconstruct that derivation through Decision,
+   EvaluationBundle, ResponseMeaning, R3 artifact and cycle sinks before wording.
+   Existing NoEffect journaling stays read-only and idempotent; no world fact,
+   alias, adapter or external operation is created. Any serialized shape change
+   requires its strict versioned codec and dependent artifact/test migration;
+   update only the necessary target registry entries with the owning strict
+   migration and explicit unadmitted status.
+5. Authenticate a bounded policy index at activation and inspect only the bounded
+   selected forest/source witness during a cycle. Retain all current numeric caps,
+   phases, validation tiers and admitted-designation reader ownership. Diagnostic
+   output remains explicitly development-only, not learned intelligence or normal
+   verified focus. Extend the existing exact owner tests rather than a new gate.
+
+Implementation order under the approved representation contract:
+
+- [x] Independently specify direct/mentioned/reported/negated/query/third-party
+  contrasts, including exact actor/addressee roles, forbidden mutations and
+  response graphs, plus an authenticated unseen alias and restart case.
+- [x] Repair source quotation/force and local role evidence first, with failing
+  tests through actual ORIENT/PROPOSE/VERIFY and unchanged valid naming/lookup paths.
+- [x] Migrate only necessary strict situated/decision/response contracts and exact
+  derivation sinks, preserving ordinary queries, signed descriptions, learning and
+  operation responses; reject forged source, policy, participant, effect and pins.
+- [x] Add faithful diagnostic wording only after the outgoing graph is selected;
+  run independent SPEC then QUALITY review and a real isolated CLI replay.
+- [ ] Complete living evidence: deterministic metadata/selectors, remaining
+  fixture alignment and full regression; preserve all frozen
+  evidence and keep Task 7.4/R4/R5 admission explicitly open until their own proof.
+
+This is an approved extension within the existing foundation plan, not a new
+master, a claim of repair completion or permission to admit corpus/model data.
+The preceding investigation changed no runtime, form pack, authority, codec,
+test body or replay ledger. Implementation progress must be recorded separately.
+
+Concrete owner sequence for this extension:
+
+1. **C1 — quotation evidence containment.** The reviewed EN/ES form sources,
+   `FormResolver` and primitive/residual contribution owner must retain quotation
+   boundaries as critical unresolved evidence. Test actual public composition,
+   independent coverage rejection and unchanged unquoted naming, lexical lookup,
+   ordinary punctuation and reported content. This is containment, not a general
+   quotation interpreter or a reply fix; no serialized shape or bound changes.
+2. **C2 — reviewed semantic communication policy.** Extend the existing
+   manifest-owned semantic-affordance source and linker with a closed typed
+   communicative control collection. Controls bind reviewed event/frame identities,
+   actor/addressee roles, a direct-performed construction and reciprocal participant
+   substitution requiring `cap:respond`. Validate uniqueness, linked kinds, complete
+   signatures and generation at activation; expose one immutable target index.
+   Preserve all existing frame fields and attribution/inheritance controls. The
+   historical monolith splitter is not an active-bundle generator and must continue
+   refusing existing sources. Advance authority generation explicitly; existing
+   stores must not be silently repinned. Absence of a target control grants nothing.
+3. **C3 — exact source construction and situated force.** Rematch bounded exact
+   source spans/contributions and local roles through existing composition and
+   verification owners. Bind the selected source/root and original coverage to the
+   independently rebuilt situation. Direct performed communication is distinct from
+   a claim, query, report, mention and scoped/compound event; postfix addressee evidence
+   cannot become an actor. No surface lexical branch or extra role-schema capacity.
+   The actual selected program and candidate verification receipt must cross the
+   existing `_run_r3` seam: `VerifiedMeaning` retains only coverage/proof refs.
+   Retain bounded original evidence/context for performed acts, since the cycle
+   currently carries proposal/verification but not those source artifacts. Rebuild
+   typed form ownership and selected designation provenance at activated source
+   sinks; a self-hashed context is not authenticated evidence. Do not duplicate a
+   second program/proof in the situated envelope when the actual sink already owns
+   them. Use the final available generic construction row within the existing cap,
+   with optional prefix actor and postfix addressee; do not broaden relation rules.
+   The local source addressee may be an entity, but the situation's interlocutor
+   remains its reviewed participant. An explicit prefix actor is not performed
+   force. A direct act addressed to another entity remains non-claim but grants no
+   reciprocal response to the system.
+4. **C4 — non-claim consequence and outgoing expression.** Add the necessary strict
+   decision/response representation and actual-source sink checks. A reviewed reply
+   derives one outgoing event using the selected semantic identity and participant
+   substitution; it is neither a query answer nor admitted truth. Preserve exact
+   effect journal/source/policy/capability/pin evidence, reject forged lineage and
+   retain read-only idempotence. Extend diagnostic wording only after this selected
+   graph is authenticated. Ordinary signed queries, learning and denied operations
+   remain controls; alias acquisition plus restart tests use authenticated review.
+   Selection identity must precede its containing decision/evaluation/effect/
+   response identities to avoid a hash dependency cycle. Activate/authenticate
+   policy and source inputs explicitly at actual-source sinks; structural codecs
+   cannot infer that authority from serialized hashes. Missing authentication
+   inputs fail for communicative consequences rather than introduce a permissive
+   fallback. Read-only journaling retains exact source/evaluation evidence and
+   reserves the original pin; terminal retries preserve the original receipt/pins
+   without rebasing the selected response onto current state. These source-local
+   checks extend existing owners, not an entire second VERIFY run or store scan.
+   The admitted-designation reader requires the actual current read-snapshot pin;
+   an original pre-EFFECT pin cannot open that snapshot after journaling advances
+   revisions. Keep the semantic source pin immutable and the authenticated read
+   pin separate. Later sinks must reconstruct the exact selected designation
+   owner/provenance by keyed evidence and prove any admitted fact predates the
+   original source world revision, rather than rerun today's surface candidates
+   or rebase source identity. Terminal retries additionally bind the persisted
+   original request/receipt. This uses existing bounded read and publication
+   owners, not a historical store, ambient trusted flag or relaxed pin check.
+5. **C5 — independent review and living evidence.** Each bounded increment receives
+   SPEC then QUALITY review against fresh task-start snapshots. Regenerate existing
+   selectors/living source metadata twice; no frozen inventory, replay ledger,
+   admission root or numeric limit changes. Run the real isolated CLI and record
+   source correspondence, response selection and diagnostic wording separately.
+
+Each increment closes only after its owning evidence is observed. C1 and C2 are
+closed by the scoped checkpoints below; C3/C4 also pass independent reviews;
+C5 remains open. Passing C1 or linking C2
+cannot enable reciprocal replies or close Task 7.4.
+
+C1 implementation checkpoint (independent SPEC and QUALITY passed): the earliest-owner
+tests first exposed ignored boundaries, full-span designation consumption,
+stripped naming fragments and demoted/retyped residual metadata. The reviewed
+EN/ES sources and existing form/context owners now retain critical quotation
+evidence and reject boundary-crossing occurrences without prohibiting unquoted
+aliases. A fresh parent run of the quotation, naming/locality, reported-speech,
+reported-occurrence, development-reference and query-output modules passed 194
+tests (29 quotation controls and 165 existing controls). This is scoped evidence,
+not a full regression or communicative-response completion. An additional real
+isolated source replay selected bare `hello` and `hello!`, retained the nested
+reported greeting, abstained on single/double quoted greetings and preserved
+lexical/capability queries without advancing world revision. `hello Bob` still
+selects the incorrect actor graph: C3 must repair it before response selection.
+No serialized ABI, runtime limit, admission root or frozen ledger changed.
+
+Independent SPEC review found a further typographic-delimiter bypass in an exact
+static designation fixture: curly quotes and guillemets could become one consumed
+unit with the bare greeting graph. The same earliest owner now registers eight
+finite delimiters in both reviewed packs. The added tests failed first; the fresh
+parent seven-module replay then passed 206 tests (41 quotation controls). SPEC
+review passed after its own 206-test replay and additional multilingual consumed-
+boundary/naming probes. Every preexisting pack field is structurally identical
+after removing only the explicit delimiter additions. Independent QUALITY review
+also passed with a fresh 206-test replay and source-only inventory. C1 is closed
+as bounded containment; C2–C5 and Task 7.4 remain open. This evidence still neither
+authenticates alias acquisition nor selects a reciprocal response. Source-only
+R4 currently has 3,633 active / 3,890 collectable nodes in 173 modules, with
+`active_test_nodes:90e15a0c6f15815b5bd7a88e` and
+`literal_test_metadata:2c09826d46935fd40410724c`. These are source identities,
+not behavior or admission receipts; living selector reconciliation follows the
+final extension freeze. Existing authority/linker/frame/alias/affordance controls
+passed 204 tests before C2's explicit policy/generation migration.
+
+C2 is closed as independently reviewed activation-only policy. The registered frame owner
+now requires the typed control collection under
+`authority-v1-2026-10-01-communicative-controls`; all six prior frames and existing
+attribution/inheritance records are preserved, with one farewell frame and two
+controls appended. Failing tests exposed alternate-capability and entity-only
+role acceptance before the exact reciprocal-policy checks were added. A fresh
+parent replay passed 565 authority, source and query/diagnostic controls. Two
+stale relation-pack preservation tests now explicitly check the approved C1
+quotation additions before restoring their unchanged predecessor hashes; no
+protection was deleted. R4 source-only inventory passed with 3,686 active / 3,943
+collectable nodes in 174 modules and unchanged frozen anchors. The nine due
+rewrites remain for existing living-selector reconciliation after final freeze.
+Independent SPEC review passed after a fresh 329-test replay and exact snapshot,
+hash and source-inventory checks. Independent QUALITY review passed after a
+fresh 513-test replay and a valid-namespace control/atom collision rejection
+probe. Its minor test-specificity observation does not identify a production
+defect. C3–C5 and Task 7.4 remain open; linking alone selects no response.
+
+C3 starts with the source-local role construction before the coupled situated-
+force/response handoff. Its fresh mixed-role/query-construction baseline passed
+165 tests. An actual isolated replay still selects Bob as actor in `hello Bob`
+and `goodbye Bob`, and leaves `Alice hello Bob` ambiguous. ORIENT exposes each
+named referent for both actor and addressee, suppressing situated defaults;
+this is the earliest divergent owner. Restrict the exact local construction
+before generic reference production, then independently rematch its bindings
+at the existing exact sinks. The later force/selection increment remains
+unavailable until its actual-source handoff and strict sink checks agree.
+The role-only increment cannot authenticate default participant targets from
+the deduplicated, untyped `context_refs` order: a session or focus ref may alias
+a participant ref. It verifies local roles and default provenance without that
+ordering shortcut. C3's actual Orientation handoff must authenticate the default
+targets before performed force or response selection becomes available.
+
+C3a implementation is under independent review, not yet closed. The exact
+source graphs first failed for postfix/prefix/both-role cases; rehashed reversed
+roles, altered primitive ownership, duplicate construction owners and removed
+match hints also produced failing tests before their owner repairs. A fresh
+parent 14-module replay passed 566 source, role, quotation, naming, reported,
+query and diagnostic controls. A separate actual eight-source replay confirms
+`hello Bob` has user actor/Bob addressee, `Alice hello Bob` has Alice actor/Bob
+addressee, farewell retains its event identity, reported greeting remains nested,
+and quoted greeting remains unsupported. World revision stayed zero and normal
+realization stayed unadmitted in every case. Both packs preserve all 15 original
+rows and every other field after removing only the new closed construction.
+The three frozen governance hashes and C2 authority owners are unchanged.
+R4 source-only inventory passed with 3,745 active / 4,002 collectable nodes in
+175 modules, `active_test_nodes:c313d68bfa32d3d146b74cf4` and
+`literal_test_metadata:d3455727418125cce5dd1bd5`. The implementation's authenticated
+alias/restart test is separate from its explicitly static EN/ES geometry fixtures.
+One authorized projection-preservation test now checks each exact schema type
+on both sides; two relation-preservation tests explicitly validate and remove
+only the new row before their unchanged predecessor hashes. No test protection
+was retired. Actual participant authentication, performed source force, outgoing
+selection and downstream effect/response sinks remain C3b/C4 work. These scoped
+passes do not close Task 7.4, admit R4/R5 or prove a conversation-ready demo.
+Independent SPEC review then found a selected-evidence gap: a retained authentic
+predicate could coexist with a forged same-target/source/frame predicate, and
+the source assignment could select the forged one through all four exact sinks.
+The earlier passing totals do not cover that counterexample. C3a is reopened
+for a failing regression and exact authentication of the actually selected
+contribution; a valid alternative's existence is insufficient. Fresh review and
+verification of that repair are required before the source increment closes.
+The repaired refreeze adds independent selected-predicate/reference and malformed
+construction regressions. The fresh parent replay passed 580 tests; independent
+SPEC review passed 426 tests and reran the discovered counterexamples, snapshot
+preservation and frozen identities. QUALITY then ran 483 tests but found another
+selected-evidence bypass: changing an explicit reference action to `bind_role`
+and selecting a forged anchor with a compatible addressee port passed all four
+sinks. This differs from the earlier wrong-port control. C3a remains open;
+neither passing run covers this counterexample. The repair must authenticate
+every consumed explicit contribution against its owning activated constructor
+before action-specific pointer checks, not rely on the presence of a good
+alternative or add one superficial flag check. Preserve the closed contribution
+ABI and actual port compatibility; do not invent an addressee port for an anchor
+that has only a target port. Accurate communicative error details may replace
+the unrelated relation-query wording without changing error codes. Rerun SPEC
+then QUALITY on the new freeze before C3b. Current
+source-only identities are 3,759 active / 4,016 collectable nodes in 175 modules,
+`active_test_nodes:079cb3ef7134ba60677e68eb` and
+`literal_test_metadata:8ef9f625cecbc0d6849fcee7`. Earlier totals above are historical
+checkpoints, not the final freeze.
+
+C3a is now closed for source-local roles only. The consumed-contribution owner
+regenerates the selected explicit anchor/reference before either binding action,
+using the closed constructor or activated profile and its actual role ports.
+Seven malformed anchor cases failed before repair; the authentic participant
+anchor control passed throughout. Fresh parent verification passed 588 tests;
+independent SPEC passed 434 and final QUALITY passed 491, with no remaining
+scoped issue. Both reviewers independently rejected the original compatible-port
+case at all four sinks and verified the exact valid control. All 11 scoped
+hashes, predecessor pack fields, C2 authority and frozen governance identities
+matched. Current source-only R4 is 3,767 active / 4,024 collectable nodes in
+175 modules, `active_test_nodes:ac81944fe1975f0a161b03e2` and
+`literal_test_metadata:2b73dae815484eaf65545f63`. These overlapping runs are not
+additive or full-regression evidence. C3b/C4 source authentication and outgoing
+selection remain open; no performed force, reply or admission follows from C3a.
+
+C3b begins, after both C3a reviews, with the bounded selected-designation reader
+seam before situated-force wiring. One exact selected-evidence method belongs to
+the existing admitted reader: authenticate the selected designation identity and
+complete provenance at a current read snapshot, with the immutable original pin
+as chronology cap. Static facts use their existing keyed owner; admitted facts
+use keyed world-commit lineage and the existing publication-chain reconstruction
+against the original pin. Cache identity includes that original pin. Test actual
+post-journal reads, rejected future publication, altered provenance/identity,
+stale/closed batches, restart and the absence of surface-candidate enumeration.
+This helper alone grants no force or reply and changes no serialized ABI, store,
+search bound, publication policy or validation tier. Actual Orientation, packet,
+selected program/receipt/root and downstream consequence authentication remain
+the following coupled C3b/C4 work.
+
+The selected-reader regression run independently exposed one older integrity
+fixture failure in
+`test_runtime_consumers_ignore_naked_and_reject_corrupt_publication[velnora]`.
+The public `world.commit` at consumer test line 242 attempts to overwrite an
+immutable normalized claim-projection fact; persistence rejects it before the
+reader assertion. The parent reproduced the same failure with the task-start
+reader, explicitly without `authenticate_selected`. Keep public immutability
+unchanged. A separate fixture migration must preserve the read-side rejection
+assertions through explicit test-only physical corruption, rather than authorize
+an ordinary writer to corrupt publication evidence. The broader 365-pass/one-
+failure run is not an aggregate gate pass or a regression introduced by the
+selected-reader method.
+
+The selected-reader seam is now closed as a bounded prerequisite, not completed
+C3b/C4. The production delta is two codec imports and one 30-line batch method.
+Its 49 cases cover real publication/restart, original chronology, full provenance,
+cache separation and snapshot coherence; seven duplicate common argument-shape
+cases were removed. Two existing identity cases now borrow the other real
+evidence owner's designation instead of an unknown fabricated ID. Independent
+SPEC passed the final 49 cases and the earlier 177-case owner run; QUALITY passed
+177 cases on the final freeze with no scoped issue. Parent verification passed
+49 cases plus the two strengthened cases and an actual retained-source runtime
+probe after a read-only journal advance from effect revision 0 to 2. Authentication
+did not alter the store and the old-pin batch still rejected. Source-only R4 is
+3,816 active / 4,073 collectable nodes in 176 modules,
+`active_test_nodes:07ed29908e0c701f67cc858c` and
+`literal_test_metadata:ddf5ec5980f394108edc4293`. Frozen governance, C1/C2 and C3a
+owners remain unchanged. The consumer integrity fixture above has now passed
+independent SPEC and QUALITY review. Its two original cases and every prior
+assertion remain: the public writer rejects the normalized-fact overwrite with
+the original fact and pin unchanged, then explicit isolated physical corruption
+exercises the same committed-journal reader rejection and unchanged-pin check.
+Only the helper import, that function and its two literal AST hash pins changed.
+The exact HEAD preimage matched the recorded starting hash; the earlier temporary
+snapshot was unavailable. Parent verification passed the two targeted cases and
+the complete 18-case module; each reviewer independently passed both runs. The
+owner also passed 198 related and 134 communicative preservation cases. These
+overlapping totals are scoped evidence, not a full regression or admission pass.
+R4 source counts remain 3,816 / 4,073 in 176 modules; current literal metadata is
+`literal_test_metadata:458bb37e02996b5b10bef0ce`. Persistence and selected-reader
+owners are unchanged. Actual source/Orientation/model agreement, force,
+selection and reply sinks still require the following coupled implementation.
+
+The coupled C3b/C4 increment is closed by independent SPEC and QUALITY review
+of the frozen boundary repair recorded below. C5/full regression and admission
+remain open. It carries the
+actual selected program and verification receipt into the existing situated
+owner, distinguishes performed force from claims, and binds an outgoing graph
+through the existing evaluation, effect and response sinks. Required wire cuts
+also affect retained publication/evaluation journals. Reuse the existing
+generation activation check for an explicit fresh-store cutover rather than
+opening old journals and failing lazily, adding a store column, or accepting
+predecessor wire content. Preserve all reviewed semantic data and form-pack
+fields. No new gate, runtime phase, bound or corpus/model admission is authorized.
+
+The first two public reply cases passed during implementation, but are not a
+closure checkpoint. Parent probing then removed the retained communicative
+source while keeping the actual selected meaning, program, receipt and
+Orientation. The activated evaluator changed `RESPOND` to `RETAIN_ATTRIBUTION`
+with one claim and no store change. Missing source evidence must reject rather
+than silently erase performed-versus-claim correspondence. The implementer
+independently reproduced the failing test; complete activated primitive evidence
+and source-removal checks remain part of this same increment, not a new plan.
+
+Parent implementation-time replay used the real interactive CLI, explicit
+`--development-reference`, and isolated store
+`C:\Users\Son\AppData\Local\Temp\cemm-communication-cli-e76b85e49c104f20a00169b583580238`.
+Exit 0: `hello` produced `Response: greetings by me to you.`, `goodbye`
+produced `Response: farewell by me to you.`, `hello Bob` produced a denied
+diagnostic without a reciprocal reply, and `Alice hello` retained an unverified
+claim. On restart, `Can you respond?` and `Can you learn aliases?` retained
+their supported capability diagnostics. Bare `can you learn` remained unresolved;
+it is not the reviewed `learn aliases` capability designation. These are
+diagnostic observations, not learned or exact normal-realization evidence.
+The parent new-module run still found one invalid adversarial fixture rejected
+by the existing quotation/residual validator before its intended live-sink
+check. Repair that fixture without weakening containment. Independent review,
+living selectors and full conversation completion remain pending.
+
+The source-omission audit also reproduced simultaneous removal of the envelope
+and selected witnesses: the activated evaluator again retained one claim.
+Controlled event identity may require actual witnesses for classification, but
+cannot establish performed force. A second ownership check found that session
+phase and turn index belong to the original `SituationInputBundle`, not
+Orientation. A self-hashed situated phase cannot grant reply eligibility.
+The bounded repair passes that already-owned bundle separately to the existing
+pre-EFFECT evaluator/finalizer/gateway and reuses the existing situation verifier.
+Post-EFFECT sinks use the authenticated original journal evaluation and exact
+terminal receipt as their situated witness, before selecting a response. This
+adds no Cycle payload, historical store, gate, phase, atom scan or trust flag.
+The same increment remains open until these negative controls and independent
+reviews pass.
+
+Parent recheck after the lifecycle repair: the new communicative response module
+passed all 51 collected cases, exit 0. The independently repeated combined
+omission probe now rejects with `communicative source requires actual selected
+witnesses` and leaves the store pin unchanged. The generation cut preserves all
+frame/control contents; the manifest differs only in generation and frame-owner
+SHA. Both language packs, selected reader, persistence and all three frozen
+governance anchors remain unchanged. This is a scoped implementation checkpoint;
+SPEC/QUALITY and living-selector reconciliation still own closure.
+
+Independent SPEC review failed on three new probes despite the scoped green
+tests: (1) a kernel/evaluator constructed without the activated communicative
+owner silently classifies real selected `hello` as one claim and advances the
+journal/session; (2) source authentication accepts a rehashed receipt, coverage
+and proof pointing to a foreign Program; (3) the new standalone codecs normalize
+shared mutable wire containers instead of rejecting them before child decoding.
+The parent independently reproduced (1). Same-owner repair is limited to
+activated-authority denial when classification owners are absent, all three
+actual Program-ref comparisons, and genuine pure alias/cycle preflight. No
+trusted component bypass, new gate, enlarged limit or broader runtime rewrite
+is authorized. C3b/C4 remain open; repeat SPEC before QUALITY on the new freeze.
+
+The first three review repairs passed the parent 61-case replay, but the SPEC
+rereview found an incomplete ownership boundary: static finalization and direct
+gateway execution still accept omitted authority as well as omitted reply
+owners. The parent reproduced actual selected `hello` becoming one attributed
+claim, with session revision 0 to 1 and effect revision 0 to 2. World revision
+stayed zero; the journal mutation is nevertheless invalid. Live finalization
+and execution must require activated authority; pure artifact codecs remain
+authority-free and cannot authorize execution. Repair this existing boundary,
+not event-name force inference or another runtime gate. Preserve valid assertions
+in component fixtures that currently omit authority. Same-owner TDD repair and
+SPEC rereview remain pending; QUALITY has not started. A genuine linked October
+1 authority also accepted finalization and terminal retry of October 2 source
+artifacts. The owner recorded both RED cases; parent replay after the bounded
+generation check rejects both with unchanged pins. Match the original semantic
+generation, not today's model identity or response pin, and preserve legal
+same-generation terminal retries. Caller fixture migration supplies actual
+available authority without removing retry, continuation, learning or proof
+assertions. The two projection boundary tests require function-local matching
+stores and genuine linked authority; their shared pure description helpers stay
+unchanged.
+
+Performance checkpoint on an isolated development SQLite store: the eight-case
+parent public replay produced the expected bounded diagnostics and no world
+writes, but communicative cycles took 384–417 ms versus 38–55 ms for ordinary
+claim/query/capability cases. This is a local observation, not a benchmark. A
+profile counted 61 Source and 28 Selection codec decodes for one greeting;
+standalone decoding
+decoded nested children and then public construction decoded them again. The
+bounded repair separates private identity construction from public child
+validation so wire decoding validates each child once. Keep alias/cycle
+preflight, exact wire/hash equality, public canonical-child checks and all live
+source authentication. No memoized authorization or new gate is permitted.
+The parent replay after this decode-once repair passed 67 cases (the full
+66-case module plus detached maximum ordered proof), exit 0. The same eight
+public sources retained their actions and diagnostics with world revision zero;
+communicative cycles took 272–295 ms, about 29% lower mean time in these two
+single local runs. This does not establish a release resource benchmark.
+The owner freeze passed 179 reply/authority/frame, 70 ordinary preservation and
+168 signed-projection cases; overlapping totals are not a full-suite count.
+Twenty-five caller functions were narrowly migrated across ten fixture modules,
+preserving assertion identities. Current-equivalent wrong-type ABI values now
+test Evaluation 3 and Response 5; Evaluation predecessor 1 and 2 both reject.
+SPEC rereview passed the frozen increment. Independent QUALITY still requires
+repair: an absent Source is classified from a caller receipt marker without
+checking actual witness correspondence; a genuine unrelated ordinary receipt
+therefore converts selected `hello` into an attributed claim. Consistently
+rehashing the receipt without the marker also bypasses this guard. A second
+probe passes store A's owner to a gateway writing store B; rejection occurs
+only after B's journal and session revisions advance. The parent independently
+reproduced both defects in fresh isolated stores. Actual witness linkage and
+source-required classification must precede mode dispatch, independently of
+caller provenance markers; trusted-store correspondence must precede journal
+reservation. Neither predicate identity nor codec validity grants source force.
+Preserve scoped/compound claims, exact terminal retry and the decode-once
+repair. C3b/C4 remain open; repeat SPEC and QUALITY after the bounded repair.
+Living selectors, full regression and phase admission remain pending.
+The bounded QUALITY repair recorded eight intended RED failures, then passed
+all eight after shared witness authentication, an expression/Orientation-only
+source requirement and a pre-reservation exact store-handle check. The parent
+fresh replay passed 76 cases (74 communicative cases plus both maximum-size
+description/proof backends), exit 0; the separate A/B probe now rejects before
+writing with both pins unchanged. The owner reports 187 communication/authority/
+frame and 238 ordinary/projection cases; these overlap other runs and are not a
+full-suite count. Source data, language packs, bounds and phase gates are
+unchanged. Fresh SPEC passed the frozen repair: 77 strict-marker cases, six
+source-force/shape contrasts, four rehashed assignment/root attacks and a
+foreign-store dispatch probe with zero dispatch calls. QUALITY also passed:
+246 source/reply/role/reader/diagnostic cases and 219 signed/projection/retry
+cases, plus independent replays of both original attacks with unchanged pins.
+There are no remaining scoped findings. C3b/C4 are closed; C5, Task 7.4,
+full regression and phase admission remain open.
+The actual isolated CLI replay covered seven sources and a
+separate restart greeting, both processes exit 0. It distinguished reciprocal
+greeting from explicit, negated and compound claims; capability lookup,
+unresolved-word clarification and mixed participant perspective remained intact.
+The restarted store retained world revision zero. These surfaces are development
+diagnostics, not normal realization, verified focus or learned-model evidence.
+The living selector refresh first stopped without writing because owner
+bindings were missing for R1 `semantic-affordances` and R3
+`communicative-source`. Two bounded owner-selector bindings now use the existing
+source-compilation prerequisite; no admission dependency or normal-cycle gate
+was added. Existing owner/phase node lists and their test inputs were regenerated
+from source-only metadata. Review found that the initial new selector inputs
+omitted linked authority/language roots from their dependency closures. Both
+input sets now follow the established `data/authority/`, `data/languages/`,
+`src/`, `tests/conftest.py` and exact owner test-file convention. No gate or
+dependency was added for this receipt-currentness repair.
+Both generated files are byte-identical across two
+runs, with frozen anchors, numeric limits and admission roots unchanged. R4's
+current source inventory has 3,890 active / 4,147 collectable nodes across 177
+modules; metadata is `literal_test_metadata:be86f49b959d8c57aacc8939`.
+These counts are selectors, not passing-test evidence. Independent selector
+SPEC and QUALITY audits pass: all six phase contracts, exact G0 receipt,
+unchanged admission/dependency closures and both authority/language fingerprints.
+No scoped findings remain. The 25 individually identified fixture nodes and
+full regression remain C5 work; no phase admission or MVP-completion claim follows.
+
+The expanded audit separately exposes nine stale INITIAL fixture nodes: five
+advance another session after source capture but before initial reservation,
+and four modify an already EFFECTed query evaluation to request a new key at
+its original stale pin. Rebuild genuine incomplete-query variants before EFFECT
+or test stale-initial rejection alongside exact terminal retry after activity.
+Never repin historical meaning or weaken the reservation law. Four additional
+semantics fixtures concern raw authority/index mutation, text encoding and a
+predecessor orthography hash. They require individual inspection, not a full
+regression success claim. Subprocess import failures disappeared under the
+explicit source environment used by the CLI (`PYTHONPATH=src`).
+
+The user requested the mixed-referent repair, an interactive isolated demo and
+submission-fit review. The user confirmed that no ADTC entry was submitted and
+asked for better-fitting competitions. This does not authorize registration,
+external submission, publication, a borrowed model, training, or phase admission.
+
+Fresh public probes used the actual development composition root and a temporary
+SQLite store, not independently supplied graphs. Their observed boundaries are:
+
+| Source/control | Actual result before mixed-referent repair | Remaining owner |
+| --- | --- | --- |
+| `Bob likes you`; `Alice likes me` | Selected reversed relation, with readable but incorrect output | Reviewed source-local reference/construction binding and independent rematch |
+| `I like Bob` | No selected meaning | Reviewed input morphology/designation evidence; output grammar cannot ground input |
+| `who likes Bob?`; `Bob likes who?`; `Who is a mother?` | Selected QUERY, UNKNOWN in the empty store; no development wording because of `unsupported_binder` | Output-only variable/request grammar preserving the exact queried role, not invented answers |
+| `Can you learn aliases?` | Selected QUERY, SUPPORTED answer; `unsupported_complete_role_rule` | Complete output-only capability role grammar and explicit designation provenance |
+| `What does zorbulate mean?` | Selected unknown lookup; asks for the exact unknown expression's meaning | Retain this working unresolved path; no default identity creation |
+| `What is CEMM?`; `Define mother.` | Ambiguous description/definition readings; respectively unsupported directive interpretation | Reviewed request evidence/context, actual definition content and sufficiency; not ontology-kind answers |
+| `The server is offline. You said goodbye.`; `Mary said Bob left.` | Selected attributed graphs, readable controlled output | Independent source scope/tense contrasts remain necessary; the present graphs do not prove input tense coverage |
+| `turn lamp on` | Selected REQUEST, UNKNOWN precondition, no action completed | This is correct containment without a connected/authorized operation; never describe it as successful execution |
+
+The immediate finite finish line is source correspondence, complete wording of
+reachable typed query/capability responses, and the existing restart/continuation
+conversation proof. Fix the earliest owner of each independently specified case;
+do not repeat completed codecs, replace the brain, or expand corpus families to
+make a diagnostic pass. An unknown answer due to missing admitted facts is not
+the same defect as missing interpretation or missing response wording.
+
+There are two separate claims beyond that development finish line:
+
+1. **A reproducible functional prototype:** a pinned build, a bounded documented
+   use case, independent source-to-meaning controls, readable uncertainty, an
+   isolated interactive demo and measured offline resource usage. Component test
+   totals are not a competition benchmark or full-regression completion.
+2. **A learned Hybrid model:** fresh R4.1 admission, authorized independent gold,
+   then the existing conditional R5 training/generalization/weight-use evidence
+   and exact response equivalence. The bootstrap proposer and finite development
+   presentation must remain explicitly disclosed; neither is learned evidence.
+
+ADTC 2026 is not an available unchanged-runtime submission path. Its
+[official rules](https://adtc-2026.devpost.com/rules) close initial entry on
+August 25; October 17 is the live final round. Its
+[official template](https://github.com/Africa-Deep-Tech-Foundation/adtc-2026-submission-template)
+requires a pinned public GGUF weight download and exclusively `llama.cpp`.
+CEMM's current development root is a custom Python semantic runtime, and its
+neural/release profiles explicitly raise `MissingOwner`. Adding metadata or a
+GGUF-shaped file cannot make that runtime acceptable. Do not implement a fake
+adapter, relabel static computation as a trained model, or add a stock LLM
+without a separately reviewed product/competition decision. Alternative
+competition eligibility must be checked against primary current rules before
+choosing packaging or making readiness claims. This audit adds no runtime gate
+or new governing execution plan.
+
+The expanded source run also records 12 unresolved
+`tests/test_proposal_context_builder.py` fixtures. They omit the activated role
+index and fail at the terminal `licensed_query_projection_slots(index=None,
+context)` call with `TypeError: licensed projection slots require exact activated
+index/context`. A fresh parent replay of
+`test_builder_binds_exact_canonical_orientation_ref` confirms that earliest
+exception. The remaining affected intents cover orientation/cache lineage,
+identity/index construction, source bounds, structural/reference contributions,
+critical residuals and event signatures. Those independently valid assertions
+need exact activated-fixture migration, not deletion or a permissive None/index
+fallback. Their task-start baseline has not been demonstrated; neither the
+expanded 233-pass/12-fail run nor the scoped repair passes is a full-regression
+completion claim. Keep this fixture owner distinct from public interpretation
+and output-rule gaps.
+
+Alternative-competition research, checked October 1 against official pages:
+
+| Route | Current entry window | Material fit/eligibility limits |
+| --- | --- | --- |
+| [NASA Space Apps 2026](https://www.spaceappschallenge.org/?linkId=225077771) | Registration open; hackathon November 14–15 | Broad application format, no published compulsory LLM. Build a new official challenge/NASA-data solution during the weekend. [Published build-period restriction](https://www.spaceappschallenge.org/2026/local-events/santiago-dominican-republic/) means an already completed CEMM project cannot simply be submitted unchanged; confirm underlying-engine reuse and virtual event eligibility first. |
+| [SALTIS P.A.S](https://www.saltis-techinov.org/pas-challenge) | Applications October 1–14 | Teams at most five; every member 15–30 and a student or early-stage founder. A relevant deployed POC needs real-user evidence and climate impact; December 10 finale in Dakar. Nigerian participation, existing-engine reuse, costs and remote/travel arrangements are unconfirmed. |
+| [ARC Prize / ARC-AGI-2](https://www.kaggle.com/competitions/arc-prize-2026-arc-agi-2) | Entry October 26, 23:59 UTC; code November 2 | Custom offline notebook computation, not a compulsory GGUF runtime. A genuine grid-reasoning implementation and reproducible open-source release are substantial new scope. [Paper Prize](https://arcprize.org/competitions/2026/paper) also requires working benchmark code; a generic CEMM architecture paper alone is insufficient. Verify licensing and personal eligibility before entry. |
+
+Final interactive launch checkpoint: the actual Hybrid CLI passed a separate
+three-source stdin replay and exited zero: `Bob likes you` yielded
+`Unverified claim: Bob likes me.`, `Alice likes me` yielded
+`Unverified claim: Alice likes you.`, and the unknown lookup retained its exact
+literal and requested meaning without creating an atom. A visible PowerShell
+demo was then launched with `--interactive --development-reference` and a unique
+temporary store; the parent shell and exact Python child remained alive and the
+store was created. No legacy web runtime, new UI/server or production store was
+used. Post-documentation mixed-role/governance/R5-boundary replay: 38 passed;
+`git diff --check` passed and all three frozen hashes remained unchanged.
+The interactive launch is a development conversation, not R5 realization,
+full conversation-matrix completion or phase admission.
+
+These are candidates, not registrations or a change to CEMM's governing goals.
+For a near-term application demo, NASA is broader than an ARC benchmark rewrite;
+SALTIS is conditional on personal/cross-border eligibility. ARC better tests the
+research thesis but is not an efficient shortcut to finishing the current MVP.
+Choose one honest, bounded use case before adding competition-specific evidence
+or packaging; the source/response repairs above remain useful independently.
+
+Selector maintenance at this checkpoint reconciles existing literal R3/R4
+foundation owner groups with `validation_gates.json`, including previously
+omitted groups. Each selected diagnostic owner still runs one pytest process;
+admission roots, runtime limits, frozen inventory and replay ledger are unchanged.
+The living source-only inventory receipt is regenerated with the selectors, not
+used as a behavior/admission claim. Two canonical generations are byte-identical.
+The earlier checkpoint's source-only R4 set had 3,069 active nodes
+(`active_test_nodes:5ecde142cab0950691c8d1ea`) and 162 parsed test modules.
+After the 10 posting-focus controls, the fresh set has 3,079 active nodes
+(`active_test_nodes:29af403e9462797d92f39f31`), 3,336 collectable nodes and
+163 parsed modules. Literal metadata identity is
+`literal_test_metadata:3846a09ec46ae47226cb9266`; two selector/receipt
+generations remain byte-identical with unchanged limits and admission roots.
+The canonical living receipt, authority linking, compilation of 86 source
+modules and structural hard-cut checks pass. Frozen inventory, replay ledger,
+admission roots and runtime limits are unchanged.
+After the 17 canonical projection and 83 request-first lineage cases, source-only
+R4 has 3,179 active nodes (`active_test_nodes:4e28db9d5e64e21a32871667`),
+3,436 collectable nodes and 165 modules. Literal metadata is
+`literal_test_metadata:dd3f35dca4c4de9c2b48b46c`. Two selector/living-receipt
+generations are byte-identical; frozen anchors, limits and admission roots remain
+unchanged. Six fresh foundation/document-classification/anchor checks pass.
+This is source and component evidence, not a clean checkpoint or admission.
+After the genuine QueryResult/evaluation owner controls and strict-wire repair,
+source-only R4 has 3,283 active nodes (`active_test_nodes:e528f31f322e884510ceca7e`),
+3,540 collectable nodes and 166 modules. Literal metadata is
+`literal_test_metadata:738a6f9cfaeb6a93e0d2addb`. Two canonical selector/receipt
+generations agree byte for byte; all 86 source modules compile in memory,
+authority linking and structural hard-cut checks pass. The previously recorded
+dirty G0 admission rejection and stale historical R5 selector assertion remain
+separate open controls, not passes manufactured by this component repair.
+After signed-response integration, source-only R4 has 3,347 active nodes
+(`active_test_nodes:722ad38b928a62854978684a`), 3,604 collectable nodes and
+167 modules. Literal metadata is
+`literal_test_metadata:8d011d7a46ad33d56a0e253f`. Two canonical selector/living-
+receipt generations are byte-identical. Frozen inventory, assertion/ledger
+anchors, admission roots and runtime limits remain unchanged. All 86 source
+modules compile in memory; authority linking and structural hard-cut checks pass.
+This source/component checkpoint is not a clean commit, public demo or admission.
+
+The governed documentation run exposed three routing defects: the completed
+description child plan was unclassified, the exact historical expectation omitted
+the existing September 8 audit, and that audit lacked its status-neutral banner.
+Their original assertions now pass after owner/expectation corrections; no test
+body or frozen AST was changed. The fresh 108-case governance run has 107 passes
+and one dirty-input admission rejection. That remaining status-CLI check requires
+a clean validated checkpoint; it must not be weakened, removed or credited as a
+pass while these changes remain uncommitted. No aggregate gate is claimed.
+
+A separate fresh raw five-module run of query integrity, lineage, retrieval,
+R5 realization boundary and test inventory has 138 passes and one failure:
+`test_r5_real_overlay_is_exact_and_g0_through_r4_are_unchanged` compares current
+pre-R5 active sets with literal historical hashes. The failure occurs already
+at G0 (expected `active_test_nodes:b81f58a6ce47c11125f05581`, actual
+`active_test_nodes:5429985f0f1e8edc98f7efd7`). Its R5-owned phase-isolation
+obligation remains valid; historical set identity is not a current invariant
+after approved foundation additions. No test body, AST pin, frozen inventory or
+disposition was changed to turn this red into green. Before R5 closeout, replace
+the historical-set assumption with an independently controlled phase-isolation
+test that rejects R5 overlay effects on pre-R5 selection while preserving exact
+frozen inventory and the reviewed 17/25/1 partition. This is not a runtime focus
+regression or a release pass.
+
+After these checkpoint corrections, 11 selected document-routing, immutable
+anchor and canonical G0-evidence checks pass. Authority linking, in-memory
+compilation of all 86 source modules, structural hard-cut checks and scoped
+whitespace checks also pass. No aggregate runtime, competition demo or fresh
+phase admission is established by these bounded results.
+
+The October 1 attempt to execute the 2,968-node active R4 set
+(`active_test_nodes:9c8026ff8e4153ea2967340e`) was interrupted when C: had zero
+free bytes. Its failures are invalid environmental evidence, not a regression
+baseline or a passing gate. Space later recovered to approximately 18.6 GB;
+the cause was not established (that run's visible temporary files totalled only
+approximately 72 MB). Continue bounded owner runs and fresh verification rather
+than treating that interrupted aggregate run as implementation evidence.
 
 - [ ] Complete spec and quality review of code, active docs, data and tests.
 - [ ] Run existing authority, ABI, anti-bloat, semantic-operational, web and
@@ -1851,6 +3563,44 @@ before reducing search duplication or claiming the two-sentence demo is faithful
 - [ ] Resume data work only after the foundation semantic/response loop passes;
   an isolated learned pilot still needs explicit R4.1-compliant data authority.
   It must add measured generalization before the hybrid objective is complete.
+
+## October 2 publication checkpoint and R4/R5 closure boundary
+
+The user explicitly requested committing and pushing all accumulated hybrid
+changes. This is a work-in-progress publication, not merge, root adoption,
+corpus publication or replay admission. Fresh precommit verification passed
+189 communicative response/authority/frame and maximum-cardinality description
+proof cases in 30.59 seconds, source-only G0/R4/R5 inventory reconstruction,
+Python compilation and whitespace checks. These are bounded checks, not a full
+regression result. The 25 individually identified fixture nodes and the wider
+foundation acceptance obligations remain open.
+
+Direct artifact/source inspection confirms that `data/review/r4_1/` is absent,
+the checked-in R4 build receipt is predecessor ABI 3, and its derivation file
+has no records. The predecessor trainer still extracts selected-program labels.
+Its presence is not an eligible R4.1 consumer or proof of learned activation.
+The ledger's last R4 transition is red; no fresh R4.1/R5 admission is recorded.
+
+The finite closure order remains:
+
+1. Finish the existing foundation route: migrate the 25 fixtures without
+   weakening their valid assertions, resolve independently specified public
+   interpretation/response gaps, and obtain clean governed regression evidence.
+2. Resume the retained R4.1 route only after its foundation freeze is lifted:
+   independently reviewed expression/derivation and response supervision,
+   independent mutation truth, reviewed duplicate-risk membership and fixed
+   minima in every purpose, compact payloads, predecessor-consumer hard cut,
+   deterministic ABI-5 publication and exact clean R4 admission.
+3. Execute the conditional R5 route from that admitted data: actual learned
+   legal-action/pointer proposal and graph-conditioned realization, isolated
+   train/selection/calibration, reproduction, measured weight-use/generalization,
+   exact response equivalence and normal realization/focus, resource-bounded
+   activation canaries and current-source R5 admission. All 25 deferred R5
+   obligations need executable successors. Frozen-test consumption belongs to
+   R7, not R5. Development wording and bootstrap proposals cannot substitute.
+
+This checkpoint adds no runtime or admission gate, changes no phase status and
+does not authorize training or automatic review-source approval.
 
 ## Progress and stop discipline
 

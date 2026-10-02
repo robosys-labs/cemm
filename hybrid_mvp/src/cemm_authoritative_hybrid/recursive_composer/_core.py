@@ -1,4 +1,4 @@
-"""Bounded recursive Program ABI 2 composer.
+"""Bounded recursive Program ABI 3 composer.
 
 The bootstrap proposer is a deterministic construction oracle over one immutable
 ``ProposalContext``.  This module owns search only: it never opens authority,

@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Mapping
 
 from .canonical import sha256_governed_text, stable_ref
@@ -38,6 +39,9 @@ __all__ = [
     "RuleRecord",
     "DesignationLearningContract",
     "ReviewedSemanticFrame",
+    "SourceAttributionControl",
+    "ReportedRoleInheritanceControl",
+    "CommunicativeControl",
 ]
 
 FIXED_OPERATORS = frozenset({
@@ -81,6 +85,32 @@ class EventSignature:
         return frozenset(item.role for item in self.roles if item.required)
 
 
+class AuthorityLinkError(Exception):
+    """Raised when authority linking fails validation."""
+
+
+def _freeze_rule_value(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return MappingProxyType({
+            key: _freeze_rule_value(item) for key, item in value.items()
+        })
+    if isinstance(value, (tuple, list)):
+        return tuple(_freeze_rule_value(item) for item in value)
+    if isinstance(value, (set, frozenset)):
+        return frozenset(_freeze_rule_value(item) for item in value)
+    return value
+
+
+def _rule_wire_value(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {key: _rule_wire_value(item) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        return [_rule_wire_value(item) for item in value]
+    if isinstance(value, (set, frozenset)):
+        return sorted(_rule_wire_value(item) for item in value)
+    return value
+
+
 @dataclass(frozen=True)
 class RuleRecord:
     rule_ref: str
@@ -90,14 +120,28 @@ class RuleRecord:
     reviewed: bool = True
     source_ref: str | None = None
 
+    def __post_init__(self) -> None:
+        for clause in (*self.antecedent, *self.consequent):
+            if isinstance(clause, Mapping):
+                stance = clause.get("stance", "support")
+                if type(stance) is not str or stance not in {"support", "deny"}:
+                    raise AuthorityLinkError("rule clause stance must be support or deny")
+        object.__setattr__(self, "antecedent", tuple(
+            _freeze_rule_value(clause) for clause in self.antecedent
+        ))
+        object.__setattr__(self, "consequent", tuple(
+            _freeze_rule_value(clause) for clause in self.consequent
+        ))
 
-# ---------------------------------------------------------------------------
-# Exceptions
-# ---------------------------------------------------------------------------
-
-
-class AuthorityLinkError(Exception):
-    """Raised when authority linking fails validation."""
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "rule_ref": self.rule_ref,
+            "antecedent": _rule_wire_value(self.antecedent),
+            "consequent": _rule_wire_value(self.consequent),
+            "confidence": self.confidence,
+            "reviewed": self.reviewed,
+            "source_ref": self.source_ref,
+        }
 
 
 def _validate_role_ref(ref: Any) -> None:
@@ -181,6 +225,136 @@ class ReviewedSemanticFrame:
                 for ref in sequence:
                     _validate_role_ref(ref)
         return cls(**{**value, **{name: tuple(value[name]) for name in sequences}})
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class SourceAttributionControl:
+    """Reviewed source ownership for one proposition-taking frame role."""
+
+    control_ref: str
+    parent_frame_ref: str
+    parent_target_ref: str
+    content_role_ref: str
+    source_role_ref: str
+    placement: str
+
+    @classmethod
+    def from_dict(cls, value: Any) -> "SourceAttributionControl":
+        if type(value) is not dict or set(value) != {item.name for item in fields(cls)}:
+            raise AuthorityLinkError(
+                "source attribution control has missing or unknown fields"
+            )
+        for name in (
+            "control_ref", "parent_frame_ref", "parent_target_ref",
+            "content_role_ref", "source_role_ref",
+        ):
+            ref = value[name]
+            if (
+                type(ref) is not str or not 1 <= len(ref) <= 512
+                or ":" not in ref or any(char.isspace() for char in ref)
+                or any(not part for part in ref.split(":"))
+            ):
+                raise AuthorityLinkError(f"invalid source attribution {name}")
+        if not value["control_ref"].startswith("control:"):
+            raise AuthorityLinkError("source attribution identity must be a control ref")
+        if not value["parent_frame_ref"].startswith("frame:"):
+            raise AuthorityLinkError("source attribution parent must be a frame ref")
+        _validate_role_ref(value["content_role_ref"])
+        _validate_role_ref(value["source_role_ref"])
+        if value["placement"] != "reported":
+            raise AuthorityLinkError("unsupported source attribution placement")
+        return cls(**value)
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ReportedRoleInheritanceControl:
+    """Reviewed authorization to inherit one report-source role into a child."""
+
+    control_ref: str
+    source_attribution_control_ref: str
+    child_target_ref: str
+    child_role_ref: str
+    placement: str
+
+    @classmethod
+    def from_dict(cls, value: Any) -> "ReportedRoleInheritanceControl":
+        if type(value) is not dict or set(value) != {item.name for item in fields(cls)}:
+            raise AuthorityLinkError(
+                "reported role inheritance control has missing or unknown fields"
+            )
+        for name in (
+            "control_ref", "source_attribution_control_ref", "child_target_ref",
+            "child_role_ref",
+        ):
+            ref = value[name]
+            if (
+                type(ref) is not str or not 1 <= len(ref) <= 512
+                or ":" not in ref or any(char.isspace() for char in ref)
+                or any(not part for part in ref.split(":"))
+            ):
+                raise AuthorityLinkError(
+                    f"invalid reported role inheritance {name}"
+                )
+        if not value["control_ref"].startswith("control:"):
+            raise AuthorityLinkError(
+                "reported role inheritance identity must be a control ref"
+            )
+        if not value["source_attribution_control_ref"].startswith("control:"):
+            raise AuthorityLinkError(
+                "reported role inheritance source must be a control ref"
+            )
+        _validate_role_ref(value["child_role_ref"])
+        if value["placement"] != "reported":
+            raise AuthorityLinkError(
+                "unsupported reported role inheritance placement"
+            )
+        return cls(**value)
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class CommunicativeControl:
+    """Reviewed direct communication policy, not an effect or permission grant."""
+
+    control_ref: str
+    source_frame_ref: str
+    target_ref: str
+    actor_role_ref: str
+    addressee_role_ref: str
+    construction_kind: str = "direct_performed"
+    response_kind: str = "reciprocal_event"
+    required_capability_ref: str = "cap:respond"
+
+    @classmethod
+    def from_dict(cls, value: Any) -> "CommunicativeControl":
+        if type(value) is not dict or set(value) != {item.name for item in fields(cls)}:
+            raise AuthorityLinkError("communicative control has missing or unknown fields")
+        namespaces = {
+            "control_ref": "control:", "source_frame_ref": "frame:",
+            "target_ref": "event:", "actor_role_ref": "role:",
+            "addressee_role_ref": "role:", "required_capability_ref": "cap:",
+        }
+        for name, prefix in namespaces.items():
+            ref = value[name]
+            if (
+                type(ref) is not str or not 1 <= len(ref) <= 512
+                or not ref.startswith(prefix) or any(char.isspace() for char in ref)
+                or any(not part for part in ref.split(":"))
+            ):
+                raise AuthorityLinkError(f"invalid communicative control {name}")
+        if type(value["construction_kind"]) is not str or value["construction_kind"] != "direct_performed":
+            raise AuthorityLinkError("unsupported communicative construction")
+        if type(value["response_kind"]) is not str or value["response_kind"] != "reciprocal_event":
+            raise AuthorityLinkError("unsupported communicative response")
+        return cls(**value)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -509,13 +683,10 @@ class LinkedAuthority:
     """
 
     __slots__ = (
-        "content_hash",
         "model_compatibility_hash",
-        "generation",
         "designations",
         "atoms",
         "event_signatures",
-        "rules",
         "capabilities",
         "permissions",
         "adapters",
@@ -534,6 +705,10 @@ class LinkedAuthority:
         "_capability_grants",
         "_permission_grants",
         "_reviewed_frames_by_target",
+        "_source_attribution_by_parent_role",
+        "_reported_role_inheritance_by_signature",
+        "_rule_generation_state",
+        "_communicative_generation_state",
     )
 
     def __init__(
@@ -560,14 +735,21 @@ class LinkedAuthority:
         by_transition_signature: dict[tuple[str, str, str], dict[str, Any]],
         learning_contracts: tuple[DesignationLearningContract, ...] = (),
         reviewed_frames: tuple[ReviewedSemanticFrame, ...] = (),
+        source_attribution_controls: tuple[SourceAttributionControl, ...] = (),
+        reported_role_inheritance_controls: tuple[
+            ReportedRoleInheritanceControl, ...
+        ] = (),
+        communicative_controls: tuple[CommunicativeControl, ...] = (),
     ) -> None:
-        self.content_hash = content_hash
         self.model_compatibility_hash = model_compatibility_hash
-        self.generation = generation
+        self._rule_generation_state = (
+            generation,
+            content_hash,
+            MappingProxyType(dict(rules)),
+        )
         self.designations = designations
         self.atoms = atoms
         self.event_signatures = event_signatures
-        self.rules = rules
         self.capabilities = capabilities
         self.permissions = permissions
         self.adapters = adapters
@@ -599,10 +781,107 @@ class LinkedAuthority:
         self._reviewed_frames_by_target = {
             target: tuple(frames) for target, frames in frame_targets.items()
         }
+        self._source_attribution_by_parent_role = MappingProxyType({
+            (control.parent_target_ref, control.content_role_ref): control
+            for control in source_attribution_controls
+        })
+        source_controls = {
+            control.control_ref: control for control in source_attribution_controls
+        }
+        self._reported_role_inheritance_by_signature = MappingProxyType({
+            (
+                source_controls[control.source_attribution_control_ref].parent_target_ref,
+                source_controls[control.source_attribution_control_ref].content_role_ref,
+                control.child_target_ref,
+                control.child_role_ref,
+            ): control
+            for control in reported_role_inheritance_controls
+        })
+        self._communicative_generation_state = (
+            self._rule_generation_state,
+            MappingProxyType({control.target_ref: control for control in communicative_controls}),
+        )
+
+    @property
+    def generation(self) -> str:
+        return self._rule_generation_state[0]
+
+    @property
+    def content_hash(self) -> str:
+        return self._rule_generation_state[1]
+
+    @property
+    def rules(self) -> Mapping[str, RuleRecord]:
+        return self._rule_generation_state[2]
+
+    def rule_generation_snapshot(self) -> tuple[str, str, Mapping[str, RuleRecord]]:
+        return self._rule_generation_state
+
+    def _publish_rule_generation(
+        self,
+        *,
+        parent_generation: str,
+        new_generation: str,
+        new_content_hash: str,
+        rules: Mapping[str, RuleRecord],
+    ) -> None:
+        """Coordinator-internal atomic publication; not a semantic write API."""
+        if parent_generation != self.generation:
+            raise AuthorityLinkError("rule publication parent generation is stale")
+        if type(new_generation) is not str or not new_generation or new_generation == parent_generation:
+            raise AuthorityLinkError("rule publication must advance generation")
+        if (type(new_content_hash) is not str or not new_content_hash
+                or new_content_hash == self.content_hash):
+            raise AuthorityLinkError("rule publication must advance content hash")
+        if not isinstance(rules, Mapping) or any(
+            type(ref) is not str or not ref or type(rule) is not RuleRecord
+            or rule.rule_ref != ref
+            for ref, rule in rules.items()
+        ):
+            raise AuthorityLinkError("rule publication contains an invalid rule collection")
+        replacement = MappingProxyType(dict(rules))
+        self._rule_generation_state = (new_generation, new_content_hash, replacement)
 
     def reviewed_frames_for_target(self, target_ref: str) -> tuple[ReviewedSemanticFrame, ...]:
         """Exact activation-cached lookup; no filesystem or bundle scan."""
         return self._reviewed_frames_by_target.get(target_ref, ())
+
+    @property
+    def communicative_controls(self) -> Mapping[str, CommunicativeControl]:
+        """Immutable target index bound to the exact activated authority state."""
+        state, controls = self._communicative_generation_state
+        if state is not self._rule_generation_state:
+            raise AuthorityLinkError("communicative authority activation identity is stale")
+        return controls
+
+    def communicative_control_for_target(self, target_ref: str) -> CommunicativeControl | None:
+        """O(1) typed policy lookup; absent authority grants nothing."""
+        return self.communicative_controls.get(target_ref)
+
+    def source_attribution_control(
+        self, parent_target_ref: str, content_role_ref: str
+    ) -> SourceAttributionControl | None:
+        """Exact activation-cached source control; absent authority has no default."""
+        return self._source_attribution_by_parent_role.get(
+            (parent_target_ref, content_role_ref)
+        )
+
+    def reported_role_inheritance_control(
+        self,
+        parent_target_ref: str,
+        content_role_ref: str,
+        child_target_ref: str,
+        child_role_ref: str,
+    ) -> ReportedRoleInheritanceControl | None:
+        """Exact activation-cached report-role authorization; no structural default."""
+        return self._reported_role_inheritance_by_signature.get(
+            (
+                parent_target_ref,
+                content_role_ref,
+                child_target_ref,
+                child_role_ref,
+            )
+        )
 
     def capability_granted(self, actor_ref: str, capability_ref: str) -> bool:
         """Activation-indexed actor-specific capability authority."""
@@ -719,6 +998,11 @@ class AuthorityLinker:
         all_transitions: list[dict[str, Any]] = []
         all_learning_contracts: list[tuple[DesignationLearningContract, str]] = []
         all_frames: list[ReviewedSemanticFrame] = []
+        all_source_attribution_controls: list[SourceAttributionControl] = []
+        all_reported_role_inheritance_controls: list[
+            ReportedRoleInheritanceControl
+        ] = []
+        all_communicative_controls: list[CommunicativeControl] = []
         owner_names: set[str] = set()
         owner_paths: set[Path] = set()
 
@@ -760,14 +1044,45 @@ class AuthorityLinker:
                 raise AuthorityLinkError("owner source must be an object")
             if owner_data.get("owner") != owner_name:
                 raise AuthorityLinkError(f"owner name mismatch: {owner_name}")
+            if "description_graphs" in owner_data:
+                raise AuthorityLinkError(
+                    "parallel description_graphs authority is forbidden"
+                )
             if owner_name == "semantic_affordances" or "frames" in owner_data:
-                if set(owner_data) != {"owner", "generation", "frames"}:
+                if set(owner_data) != {
+                    "owner", "generation", "frames", "source_attribution_controls",
+                    "reported_role_inheritance_controls",
+                    "communicative_controls",
+                }:
                     raise AuthorityLinkError("reviewed frame owner has missing or unknown fields")
                 if owner_data["generation"] != generation:
                     raise AuthorityLinkError("reviewed frame owner generation mismatch")
                 if type(owner_data["frames"]) is not list:
                     raise AuthorityLinkError("reviewed frames must be a list")
                 all_frames.extend(ReviewedSemanticFrame.from_dict(row) for row in owner_data["frames"])
+                controls = owner_data["source_attribution_controls"]
+                if type(controls) is not list:
+                    raise AuthorityLinkError("source attribution controls must be a list")
+                all_source_attribution_controls.extend(
+                    SourceAttributionControl.from_dict(row) for row in controls
+                )
+                inheritance_controls = owner_data[
+                    "reported_role_inheritance_controls"
+                ]
+                if type(inheritance_controls) is not list:
+                    raise AuthorityLinkError(
+                        "reported role inheritance controls must be a list"
+                    )
+                all_reported_role_inheritance_controls.extend(
+                    ReportedRoleInheritanceControl.from_dict(row)
+                    for row in inheritance_controls
+                )
+                communication = owner_data["communicative_controls"]
+                if type(communication) is not list:
+                    raise AuthorityLinkError("communicative controls must be a list")
+                all_communicative_controls.extend(
+                    CommunicativeControl.from_dict(row) for row in communication
+                )
             contract_rows = owner_data.get("learning_contracts", [])
             if type(contract_rows) is not list:
                 raise AuthorityLinkError("learning_contracts must be a list")
@@ -775,7 +1090,6 @@ class AuthorityLinker:
                 (DesignationLearningContract.from_dict(row), owner_name)
                 for row in contract_rows
             )
-
             # Validate and collect atoms
             for atom_data in owner_data.get("atoms", []):
                 ref = atom_data["ref"]
@@ -829,6 +1143,23 @@ class AuthorityLinker:
         )
         reviewed_frames = self._validate_reviewed_frames(
             all_frames, all_atoms, all_event_signatures, all_operator_roles,
+        )
+        source_attribution_controls = self._validate_source_attribution_controls(
+            all_source_attribution_controls, reviewed_frames, all_atoms,
+            all_event_signatures,
+        )
+        reported_role_inheritance_controls = (
+            self._validate_reported_role_inheritance_controls(
+                all_reported_role_inheritance_controls,
+                source_attribution_controls,
+                all_atoms,
+                all_event_signatures,
+            )
+        )
+        communicative_controls = self._validate_communicative_controls(
+            all_communicative_controls, reviewed_frames,
+            source_attribution_controls, reported_role_inheritance_controls,
+            all_atoms, all_event_signatures,
         )
 
         # -- Validate designations (targets must exist) --------------------
@@ -1046,6 +1377,14 @@ class AuthorityLinker:
             ),
             "learning_contracts": [contract.to_dict() for contract in learning_contracts],
             "reviewed_frames": [frame.to_dict() for frame in reviewed_frames],
+            "communicative_controls": [control.to_dict() for control in communicative_controls],
+            "source_attribution_controls": [
+                control.to_dict() for control in source_attribution_controls
+            ],
+            "reported_role_inheritance_controls": [
+                control.to_dict()
+                for control in reported_role_inheritance_controls
+            ],
         }
         content_hash = stable_ref("authority-content", full_payload)
 
@@ -1064,6 +1403,7 @@ class AuthorityLinker:
             "value_dimensions": all_value_dimensions,
             "definition_targets": all_definition_targets,
             "reviewed_frames": [frame.to_dict() for frame in reviewed_frames],
+            "communicative_controls": [control.to_dict() for control in communicative_controls],
         }
         model_compatibility_hash = stable_ref("authority-compat", structural_payload)
 
@@ -1094,6 +1434,9 @@ class AuthorityLinker:
             by_transition_signature=by_transition_signature,
             learning_contracts=learning_contracts,
             reviewed_frames=reviewed_frames,
+            source_attribution_controls=source_attribution_controls,
+            reported_role_inheritance_controls=reported_role_inheritance_controls,
+            communicative_controls=communicative_controls,
         )
 
     @staticmethod
@@ -1147,6 +1490,251 @@ class AuthorityLinker:
                 raise AuthorityLinkError("overlapping reviewed frames for one target")
             covered.update(frame.contribution_kinds)
             by_ref[frame.frame_ref] = frame
+        return tuple(by_ref[ref] for ref in sorted(by_ref))
+
+    @staticmethod
+    def _validate_source_attribution_controls(
+        records: list[SourceAttributionControl],
+        frames: tuple[ReviewedSemanticFrame, ...],
+        atoms: dict[str, tuple[AtomRecord, str]],
+        signatures: list[dict[str, Any]],
+    ) -> tuple[SourceAttributionControl, ...]:
+        """Link source controls to one reviewed frame and exact event signature."""
+        frames_by_ref = {frame.frame_ref: frame for frame in frames}
+        signatures_by_event: dict[str, list[dict[str, Any]]] = {}
+        for signature in signatures:
+            signatures_by_event.setdefault(signature["event_type"], []).append(signature)
+        filler_kinds = {record.kind for record, _ in atoms.values()} | {
+            "literal", "application"
+        }
+        by_ref: dict[str, SourceAttributionControl] = {}
+        by_parent_role: set[tuple[str, str]] = set()
+        for control in records:
+            if control.control_ref in by_ref or control.control_ref in atoms:
+                raise AuthorityLinkError("duplicate source attribution control identity")
+            parent_role = (control.parent_target_ref, control.content_role_ref)
+            if parent_role in by_parent_role:
+                raise AuthorityLinkError("duplicate source attribution parent/content role")
+            frame = frames_by_ref.get(control.parent_frame_ref)
+            if (
+                frame is None
+                or frame.target_kind != "event_type"
+                or frame.target_ref != control.parent_target_ref
+            ):
+                raise AuthorityLinkError(
+                    "source attribution parent must match one reviewed event frame"
+                )
+            target = atoms.get(control.parent_target_ref)
+            if target is None or target[0].kind != "event_type" or target[0].reviewed is not True:
+                raise AuthorityLinkError(
+                    "source attribution parent target must be one reviewed event"
+                )
+            candidates = signatures_by_event.get(control.parent_target_ref, [])
+            if len(candidates) != 1:
+                raise AuthorityLinkError(
+                    "source attribution requires one linked event signature"
+                )
+            roles = {
+                role.role: role
+                for role in _validated_source_roles(
+                    candidates[0].get("roles"), filler_kinds
+                )
+            }
+            content = roles.get(control.content_role_ref)
+            source = roles.get(control.source_role_ref)
+            if (
+                content is None
+                or content.proposition_valued is not True
+                or "application" not in content.filler_kinds
+            ):
+                raise AuthorityLinkError(
+                    "source attribution content role must be proposition-valued"
+                )
+            if (
+                source is None
+                or source.required is not True
+                or source.proposition_valued is not False
+                or not source.filler_kinds
+                or not set(source.filler_kinds) <= {"entity", "participant"}
+            ):
+                raise AuthorityLinkError(
+                    "source attribution source role must be a required entity or participant"
+                )
+            if not {
+                control.content_role_ref, control.source_role_ref
+            } <= set(frame.role_candidates):
+                raise AuthorityLinkError(
+                    "source attribution roles must belong to the reviewed parent frame"
+                )
+            by_ref[control.control_ref] = control
+            by_parent_role.add(parent_role)
+        return tuple(by_ref[ref] for ref in sorted(by_ref))
+
+    @staticmethod
+    def _validate_reported_role_inheritance_controls(
+        records: list[ReportedRoleInheritanceControl],
+        source_controls: tuple[SourceAttributionControl, ...],
+        atoms: dict[str, tuple[AtomRecord, str]],
+        signatures: list[dict[str, Any]],
+    ) -> tuple[ReportedRoleInheritanceControl, ...]:
+        """Link exact report-source to child-role inheritance authority."""
+        source_by_ref = {control.control_ref: control for control in source_controls}
+        signatures_by_event: dict[str, list[dict[str, Any]]] = {}
+        for signature in signatures:
+            signatures_by_event.setdefault(signature["event_type"], []).append(signature)
+        filler_kinds = {record.kind for record, _ in atoms.values()} | {
+            "literal", "application"
+        }
+        by_ref: dict[str, ReportedRoleInheritanceControl] = {}
+        signatures_seen: set[tuple[str, str, str, str]] = set()
+        for control in records:
+            if (
+                control.control_ref in by_ref
+                or control.control_ref in atoms
+                or control.control_ref in source_by_ref
+            ):
+                raise AuthorityLinkError(
+                    "duplicate reported role inheritance control identity"
+                )
+            source = source_by_ref.get(control.source_attribution_control_ref)
+            if source is None or source.placement != control.placement:
+                raise AuthorityLinkError(
+                    "reported role inheritance requires one linked source control"
+                )
+            target = atoms.get(control.child_target_ref)
+            if (
+                target is None
+                or target[0].kind != "event_type"
+                or target[0].reviewed is not True
+            ):
+                raise AuthorityLinkError(
+                    "reported role inheritance child must be one reviewed event"
+                )
+            child_candidates = signatures_by_event.get(control.child_target_ref, [])
+            parent_candidates = signatures_by_event.get(source.parent_target_ref, [])
+            if len(child_candidates) != 1 or len(parent_candidates) != 1:
+                raise AuthorityLinkError(
+                    "reported role inheritance requires exact event signatures"
+                )
+            child_roles = {
+                role.role: role
+                for role in _validated_source_roles(
+                    child_candidates[0].get("roles"), filler_kinds
+                )
+            }
+            parent_roles = {
+                role.role: role
+                for role in _validated_source_roles(
+                    parent_candidates[0].get("roles"), filler_kinds
+                )
+            }
+            child_role = child_roles.get(control.child_role_ref)
+            source_role = parent_roles.get(source.source_role_ref)
+            if (
+                child_role is None
+                or child_role.required is not True
+                or child_role.proposition_valued is not False
+                or source_role is None
+                or source_role.proposition_valued is not False
+                or not set(source_role.filler_kinds) <= set(child_role.filler_kinds)
+            ):
+                raise AuthorityLinkError(
+                    "reported role inheritance roles are absent or incompatible"
+                )
+            key = (
+                source.parent_target_ref,
+                source.content_role_ref,
+                control.child_target_ref,
+                control.child_role_ref,
+            )
+            if key in signatures_seen:
+                raise AuthorityLinkError(
+                    "duplicate reported role inheritance signature"
+                )
+            signatures_seen.add(key)
+            by_ref[control.control_ref] = control
+        return tuple(by_ref[ref] for ref in sorted(by_ref))
+
+    @staticmethod
+    def _validate_communicative_controls(
+        records: list[CommunicativeControl],
+        frames: tuple[ReviewedSemanticFrame, ...],
+        source_controls: tuple[SourceAttributionControl, ...],
+        inheritance_controls: tuple[ReportedRoleInheritanceControl, ...],
+        atoms: dict[str, tuple[AtomRecord, str]],
+        signatures: list[dict[str, Any]],
+    ) -> tuple[CommunicativeControl, ...]:
+        """Link read-only reciprocal policy once; no normal-cycle scans."""
+        frames_by_ref = {frame.frame_ref: frame for frame in frames}
+        used_refs = set(atoms) | set(frames_by_ref) | {
+            control.control_ref for control in (*source_controls, *inheritance_controls)
+        }
+        signatures_by_event: dict[str, list[dict[str, Any]]] = {}
+        for signature in signatures:
+            signatures_by_event.setdefault(signature["event_type"], []).append(signature)
+        filler_kinds = {record.kind for record, _ in atoms.values()} | {"literal", "application"}
+        targets: set[str] = set()
+        by_ref: dict[str, CommunicativeControl] = {}
+        for control in records:
+            if control.control_ref in used_refs or control.target_ref in targets:
+                raise AuthorityLinkError("duplicate communicative control identity or target")
+            frame = frames_by_ref.get(control.source_frame_ref)
+            target = atoms.get(control.target_ref)
+            capability = atoms.get(control.required_capability_ref)
+            if (
+                frame is None or frame.target_kind != "event_type"
+                or frame.target_ref != control.target_ref
+                or "predicate" not in frame.contribution_kinds
+                or target is None or target[0].kind != "event_type"
+                or target[0].reviewed is not True
+            ):
+                raise AuthorityLinkError("communicative target requires one reviewed predicate event frame")
+            if capability is None or capability[0].kind != "capability" or capability[0].reviewed is not True:
+                raise AuthorityLinkError("communicative control requires one reviewed capability")
+            if control.required_capability_ref != "cap:respond":
+                raise AuthorityLinkError("reciprocal_event requires cap:respond")
+            if (control.actor_role_ref, control.addressee_role_ref) != ("role:actor", "role:addressee"):
+                raise AuthorityLinkError("communicative control requires exact actor and addressee roles")
+            candidates = signatures_by_event.get(control.target_ref, [])
+            if len(candidates) != 1:
+                raise AuthorityLinkError("communicative control requires one exact event signature")
+            signature = candidates[0]
+            if set(signature) - {
+                "event_type", "roles", "valid_session_phases", "required_capabilities",
+                "required_permissions", "adapter_ref", "effect_schema",
+            }:
+                raise AuthorityLinkError("communicative source signature has unknown fields")
+            for name in ("effect_schema", "required_permissions"):
+                value = signature.get(name, [])
+                if type(value) is not list or value:
+                    raise AuthorityLinkError("communicative source must have no effects or permissions")
+            if signature.get("adapter_ref") is not None:
+                raise AuthorityLinkError("communicative source must have no adapter")
+            capabilities = signature.get("required_capabilities", [])
+            if type(capabilities) is not list or capabilities not in ([], [control.required_capability_ref]):
+                raise AuthorityLinkError("communicative source capabilities contradict policy")
+            if "valid_session_phases" in signature:
+                phases = signature["valid_session_phases"]
+                if (
+                    type(phases) is not list or not 1 <= len(phases) <= 3
+                    or any(type(phase) is not str or phase not in {"opening", "active", "suspended"} for phase in phases)
+                    or len(set(phases)) != len(phases)
+                ):
+                    raise AuthorityLinkError("communicative source has invalid session phases")
+            roles = _validated_source_roles(signature.get("roles"), filler_kinds)
+            if tuple(role.role for role in roles) != (control.actor_role_ref, control.addressee_role_ref):
+                raise AuthorityLinkError("communicative source requires complete actor/addressee signature")
+            for role in roles:
+                if (
+                    role.proposition_valued or "participant" not in role.filler_kinds
+                    or not set(role.filler_kinds) <= {"participant", "entity"}
+                ):
+                    raise AuthorityLinkError("communicative source roles require entity or participant fillers")
+            if roles[0].required is not True:
+                raise AuthorityLinkError("communicative source actor must be required")
+            used_refs.add(control.control_ref)
+            targets.add(control.target_ref)
+            by_ref[control.control_ref] = control
         return tuple(by_ref[ref] for ref in sorted(by_ref))
 
     @staticmethod

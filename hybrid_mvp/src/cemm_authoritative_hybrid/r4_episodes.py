@@ -171,7 +171,7 @@ class PublicRuntimeEpisodeOwner:
         )
         cycle = runtime.process_evidence(session_ref, evidence, trace=True)
         if type(cycle) is not CycleResult:
-            raise TypeError("public runtime returned non-canonical CycleResult ABI 3")
+            raise TypeError("public runtime returned non-canonical CycleResult ABI 4")
         observations = tuple(
             item.adapter_receipt_ref
             for item in extra_items

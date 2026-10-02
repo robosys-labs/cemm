@@ -23,7 +23,7 @@ __cemm_test_inventory__ = {
         "introduced_by_task": "Foundation-Proof-Test-Routing-Repair"
     },
     "tests/test_foundation_successor_routing.py::test_registered_wrapper_without_audited_runner_remains_unproved": {
-        "source_ast_sha256": "70500f157a7c3bc4bb3513762e78ebbf38e6bf9ad5fc0b129f6e3d6633c49913",
+        "source_ast_sha256": "01d9ce86219772cb80c6515b38fae10a906ac7924b255242e8fd293240c0263d",
         "activation_phase": "R3",
         "assertion_ref": "assertion:foundation-successor-registered-wrapper-without-audited-runner-remains-unproved",
         "diagnostic_role": "phase",
@@ -89,8 +89,8 @@ def test_audited_assertion_with_wrong_category_is_rejected():
 
 
 def test_registered_wrapper_without_audited_runner_remains_unproved():
-    with pytest.raises(AssertionError, match="unmapped successor assertion.*focus.*focus-store-starts-empty"):
-        wrappers.test_r3_successor_4ae8e030ad8426ba19b5()
+    with pytest.raises(AssertionError, match="unmapped successor assertion.*focus.*mixed-verified-and-unverified"):
+        wrappers.test_r3_successor_03c11585efe153827572()
 
 
 @pytest.mark.parametrize("assertion_ref,runner_name", [

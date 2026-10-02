@@ -19,12 +19,12 @@ class ABIRegistry:
     """
 
     contribution: int = 1
-    switch_program: int = 2
-    coverage: int = 2
+    switch_program: int = 3
+    coverage: int = 3
     phase_receipt: int = 2
     gap_receipt: int = 1
     learning_plan: int = 3
-    response_meaning: int = 3
+    response_meaning: int = 5
     realization_receipt: int = 2
 
 

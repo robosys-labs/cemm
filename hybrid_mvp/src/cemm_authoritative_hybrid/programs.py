@@ -1,4 +1,4 @@
-"""Semantic Switch Program ABI 2: exact bounded derivation procedures.
+"""Semantic Switch Program ABI 3: exact bounded derivation procedures.
 
 A program records how a candidate meaning is constructed from one exact
 Proposal Context. It is never the canonical meaning itself and therefore never
@@ -17,7 +17,7 @@ from .config import RuntimeConfig
 from .contributions import ContributionKind
 from .persistence import RevisionPin
 
-PROGRAM_ABI_VERSION = 2
+PROGRAM_ABI_VERSION = 3
 
 SWITCH_ACTION_TYPES: tuple[str, ...] = (
     "select_context",
@@ -65,6 +65,7 @@ ACTION_ABI_SCHEMAS: Mapping[str, tuple[tuple[str, ...], ...]] = MappingProxyType
         "attach_scope": (("scope_local_ref", "scope_slot_ref", "operand_node_ref"),),
         "project_variable": (
             ("binder_local_ref", "variable_slot_ref", "body_node_ref"),
+            ("projection_local_ref", "query_projection_slot_ref"),
         ),
         "propose_transition": (("transition_slot_ref", "source_application_ref"),),
         "complete_program": ((),),
@@ -83,6 +84,7 @@ ACTION_ABI_HASH = stable_ref(
 )
 
 AssignmentKind = Literal[
+    "projection",
     "role",
     "predicate",
     "reference",
@@ -325,6 +327,8 @@ class SourceAssignment:
                 raise ValueError("consumed assignment cannot carry a residual kind")
             if assignment_kind in {"role", "reference", "qualifier"} and target_role_ref is None:
                 raise ValueError("role-bearing assignment requires target_role_ref")
+            if assignment_kind == "projection" and target_role_ref is not None:
+                raise ValueError("projection assignment cannot carry a persistent role")
         material = {
             "abi_version": PROGRAM_ABI_VERSION,
             "source_unit_ref": source_unit_ref,
@@ -443,7 +447,7 @@ def _validate_program_action_graph(
                     raise ValueError("expression link targets an undeclared operand")
         elif action.action_type == "attach_scope" and args[2] not in declared:
             raise ValueError("scope targets an undeclared operand")
-        elif action.action_type == "project_variable" and args[2] not in declared:
+        elif action.action_type == "project_variable" and len(args) == 3 and args[2] not in declared:
             raise ValueError("binder targets an undeclared body")
         elif action.action_type == "propose_transition" and args[1] not in declared:
             raise ValueError("transition targets an undeclared application")

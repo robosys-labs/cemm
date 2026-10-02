@@ -19,7 +19,7 @@ from .expressions import SemanticExpression, VerifiedMeaning
 from .persistence import RevisionPin
 from .situation import SituationContext
 
-DECISION_ABI_VERSION = 1
+DECISION_ABI_VERSION = 2
 _MAX_TEXT = 512
 _MAX_ROWS = 512
 
@@ -53,6 +53,7 @@ class DecisionStatus(Enum):
 
 
 class DecisionAction(Enum):
+    RESPOND = "respond"
     ANSWER = "answer"
     ACKNOWLEDGE = "acknowledge"
     ADMIT_CLAIM = "admit_claim"
@@ -151,6 +152,7 @@ class DecisionContribution:
     status: DecisionStatus
     action: DecisionAction
     answer_expression_ref: str | None = None
+    selection_ref: str | None = None
     bindings: tuple[tuple[str, str], ...] = ()
     claim_occurrence_refs: tuple[str, ...] = ()
     admission_decision_refs: tuple[str, ...] = ()
@@ -169,6 +171,7 @@ class DecisionContribution:
         if type(self.action) is not DecisionAction:
             raise TypeError("action must be exact DecisionAction")
         _optional_text(self.answer_expression_ref, "answer_expression_ref")
+        _optional_text(self.selection_ref, "selection_ref")
         _optional_text(self.effect_intent_ref, "effect_intent_ref")
         object.__setattr__(self, "bindings", _bindings(self.bindings))
         for name in _REF_FIELDS:
@@ -192,6 +195,15 @@ class DecisionContribution:
         has_transition = bool(self.transition_preview_refs)
         has_learning = bool(self.learning_draft_refs)
         has_effect = self.effect_intent_ref is not None
+
+        if action is DecisionAction.RESPOND:
+            self._require(status is DecisionStatus.PENDING and self.selection_ref is not None,
+                "RESPOND requires pending status and exact selection_ref")
+            self._forbid(has_claim or has_admission or has_query or has_transition or has_learning
+                or has_effect or self.answer_expression_ref is not None or bool(self.bindings),
+                "RESPOND carries unrelated consequences")
+            return
+        self._forbid(self.selection_ref is not None, "selection_ref requires RESPOND")
 
         if action is DecisionAction.ANSWER:
             self._require(
@@ -307,6 +319,7 @@ class Decision:
     status: DecisionStatus
     action: DecisionAction
     answer_expression_ref: str | None
+    selection_ref: str | None
     bindings: tuple[tuple[str, str], ...]
     claim_occurrence_refs: tuple[str, ...]
     admission_decision_refs: tuple[str, ...]
@@ -323,7 +336,7 @@ class Decision:
     _FIELDS = frozenset({
         "abi_version", "decision_ref", "verified_meaning_ref", "expression_ref",
         "program_ref", "situation", "mode", "status", "action",
-        "answer_expression_ref", "bindings", "claim_occurrence_refs",
+        "answer_expression_ref", "selection_ref", "bindings", "claim_occurrence_refs",
         "admission_decision_refs", "query_result_refs", "transition_preview_refs",
         "effect_intent_ref", "learning_draft_refs", "proof_refs", "source_refs",
         "blocker_refs", "policy_refs", "revision_pin",
@@ -352,6 +365,7 @@ class Decision:
             "status": contribution.status.value,
             "action": contribution.action.value,
             "answer_expression_ref": contribution.answer_expression_ref,
+            "selection_ref": contribution.selection_ref,
             "bindings": [list(row) for row in contribution.bindings],
             "claim_occurrence_refs": list(contribution.claim_occurrence_refs),
             "admission_decision_refs": list(contribution.admission_decision_refs),
@@ -406,6 +420,7 @@ class Decision:
             "status": contribution.status,
             "action": contribution.action,
             "answer_expression_ref": contribution.answer_expression_ref,
+            "selection_ref": contribution.selection_ref,
             "bindings": contribution.bindings,
             "claim_occurrence_refs": contribution.claim_occurrence_refs,
             "admission_decision_refs": contribution.admission_decision_refs,
@@ -434,6 +449,7 @@ class Decision:
             status=self.status,
             action=self.action,
             answer_expression_ref=self.answer_expression_ref,
+            selection_ref=self.selection_ref,
             bindings=self.bindings,
             claim_occurrence_refs=self.claim_occurrence_refs,
             admission_decision_refs=self.admission_decision_refs,
@@ -478,6 +494,7 @@ class Decision:
             status=DecisionStatus(value["status"]),
             action=DecisionAction(value["action"]),
             answer_expression_ref=value["answer_expression_ref"],
+            selection_ref=value["selection_ref"],
             bindings=_wire_bindings(value["bindings"]),
             claim_occurrence_refs=_wire_refs(value["claim_occurrence_refs"], "claim_occurrence_refs"),
             admission_decision_refs=_wire_refs(value["admission_decision_refs"], "admission_decision_refs"),
@@ -515,6 +532,7 @@ class Decision:
                 "status": contribution.status,
                 "action": contribution.action,
                 "answer_expression_ref": contribution.answer_expression_ref,
+                "selection_ref": contribution.selection_ref,
                 "bindings": contribution.bindings,
                 "claim_occurrence_refs": contribution.claim_occurrence_refs,
                 "admission_decision_refs": contribution.admission_decision_refs,

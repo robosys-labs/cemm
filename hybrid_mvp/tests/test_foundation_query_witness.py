@@ -27,7 +27,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "6aac6f5beceb2d07b3d9284f198171453aa85f4ec2ffe5a4a8e32a4a87460492"
+        "source_ast_sha256": "9d9f4760bf204b68db8d829f6008226ba91fc81c290e9385a0a57ed10b9a70ff"
     },
     "tests/test_foundation_query_witness.py::test_noneligible_no_effect_preserves_minimal_journal[known-query]": {
         "activation_phase": "R3",
@@ -35,7 +35,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "03d62db78833e76b890c88b84ca516e5d92bfe15b5f013250915aa01a0ac2c2b"
+        "source_ast_sha256": "f099c1d95db3739741ecaa6c436c626131d5ccb480bd9577b94baf740f48c39a"
     },
     "tests/test_foundation_query_witness.py::test_noneligible_no_effect_preserves_minimal_journal[nonquery]": {
         "activation_phase": "R3",
@@ -43,7 +43,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "03d62db78833e76b890c88b84ca516e5d92bfe15b5f013250915aa01a0ac2c2b"
+        "source_ast_sha256": "f099c1d95db3739741ecaa6c436c626131d5ccb480bd9577b94baf740f48c39a"
     },
     "tests/test_foundation_query_witness.py::test_unknown_query_witness_rejects_mismatched_result_lineage[expression]": {
         "activation_phase": "R3",
@@ -51,7 +51,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "e20bb10e5153b1fa7759b0c45b430561cb452ae59ee3b8870212950f14c4a307"
+        "source_ast_sha256": "b78fc87801f101f82ef1e7e21ae7d7737b206c2620935d60af7e5e7dc0438be2"
     },
     "tests/test_foundation_query_witness.py::test_unknown_query_witness_rejects_mismatched_result_lineage[revision]": {
         "activation_phase": "R3",
@@ -59,7 +59,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "e20bb10e5153b1fa7759b0c45b430561cb452ae59ee3b8870212950f14c4a307"
+        "source_ast_sha256": "b78fc87801f101f82ef1e7e21ae7d7737b206c2620935d60af7e5e7dc0438be2"
     },
     "tests/test_foundation_query_witness.py::test_unknown_query_witness_rejects_mismatched_result_lineage[decision-result]": {
         "activation_phase": "R3",
@@ -67,7 +67,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "e20bb10e5153b1fa7759b0c45b430561cb452ae59ee3b8870212950f14c4a307"
+        "source_ast_sha256": "b78fc87801f101f82ef1e7e21ae7d7737b206c2620935d60af7e5e7dc0438be2"
     },
     "tests/test_foundation_query_witness.py::test_incomplete_or_ambiguous_queries_do_not_persist_witness[partial-result]": {
         "activation_phase": "R3",
@@ -75,7 +75,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "a40572432344560096c6456ef3ac5b2ebeacc9a98384f9ecbd4d3ac41b0a9530"
+        "source_ast_sha256": "d39ce4d930b9037dff6d362cd1e395667b5996614c31ee558c7240f63e54e395"
     },
     "tests/test_foundation_query_witness.py::test_incomplete_or_ambiguous_queries_do_not_persist_witness[zero-results]": {
         "activation_phase": "R3",
@@ -83,7 +83,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "a40572432344560096c6456ef3ac5b2ebeacc9a98384f9ecbd4d3ac41b0a9530"
+        "source_ast_sha256": "d39ce4d930b9037dff6d362cd1e395667b5996614c31ee558c7240f63e54e395"
     },
     "tests/test_foundation_query_witness.py::test_incomplete_or_ambiguous_queries_do_not_persist_witness[multiple-results]": {
         "activation_phase": "R3",
@@ -91,7 +91,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "a40572432344560096c6456ef3ac5b2ebeacc9a98384f9ecbd4d3ac41b0a9530"
+        "source_ast_sha256": "d39ce4d930b9037dff6d362cd1e395667b5996614c31ee558c7240f63e54e395"
     },
     "tests/test_foundation_query_witness.py::test_incomplete_or_ambiguous_queries_do_not_persist_witness[partial-decision]": {
         "activation_phase": "R3",
@@ -99,7 +99,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "a40572432344560096c6456ef3ac5b2ebeacc9a98384f9ecbd4d3ac41b0a9530"
+        "source_ast_sha256": "d39ce4d930b9037dff6d362cd1e395667b5996614c31ee558c7240f63e54e395"
     }
 }
 
@@ -143,7 +143,7 @@ def test_unknown_query_witness_survives_restart_and_terminal_retry(tmp_path):
         assert stored == persisted
         assert EvaluationBundle.from_dict(thaw_json(stored.entry.request_payload)["query_evaluation"]) == evaluation
         before_retry = reopened.stores.revision_pin()
-        replay = R3EffectGateway(reopened.stores, AdapterRegistry()).execute(
+        replay = R3EffectGateway(reopened.stores, AdapterRegistry(), authority=reopened.authority).execute(
             evaluation, meaning, evaluation.situation,
         )
         assert replay == receipt
@@ -174,7 +174,7 @@ def test_noneligible_no_effect_preserves_minimal_journal(tmp_path, surface, mode
             "session_ref", "turn_ref", "turn_index", "session_phase_ref",
         }
         before_retry = runtime.stores.revision_pin()
-        assert R3EffectGateway(runtime.stores, AdapterRegistry()).execute(
+        assert R3EffectGateway(runtime.stores, AdapterRegistry(), authority=runtime.authority).execute(
             result.evaluation, result.verification.selected_meaning, result.evaluation.situation,
         ) == receipt
         assert runtime.stores.revision_pin() == before_retry
@@ -207,19 +207,19 @@ def test_unknown_query_witness_rejects_mismatched_result_lineage(tmp_path, misma
         contribution = DecisionContribution(**contribution_values)
         decision = Decision.create(meaning=result.verification.selected_meaning,
                                    situation=evaluation.situation, contribution=contribution)
-        altered = EvaluationBundle.create(
-            decision=decision, expression=evaluation.expression,
-            situation=evaluation.situation, revision_pin=evaluation.revision_pin,
-            mode_evaluation=ModeEvaluation(
-                contribution=contribution,
-                query_results=(changed,),
-            ),
-        )
         before = runtime.stores.revision_pin()
         stored = effect_journal_get(runtime.stores, result.effect_receipt.idempotency_key)
-        with pytest.raises(ValueError, match="query.*lineage"):
-            R3EffectGateway(runtime.stores, AdapterRegistry()).execute(
-                altered, result.verification.selected_meaning, evaluation.situation,
+        # The final artifact owner now rejects these exact crossbindings before
+        # an invalid evaluation can reach EFFECT. Zero/multiple ordinary-query
+        # negative controls below still exercise the lower sink independently.
+        with pytest.raises(ValueError, match="query.*(expression|pin|refs)"):
+            EvaluationBundle.create(
+                decision=decision, expression=evaluation.expression,
+                situation=evaluation.situation, revision_pin=evaluation.revision_pin,
+                mode_evaluation=ModeEvaluation(
+                    contribution=contribution,
+                    query_results=(changed,),
+                ),
             )
         assert runtime.stores.revision_pin() == before
         assert effect_journal_get(runtime.stores, result.effect_receipt.idempotency_key) == stored
@@ -256,7 +256,7 @@ def test_incomplete_or_ambiguous_queries_do_not_persist_witness(tmp_path, case):
             mode_evaluation=ModeEvaluation(contribution=contribution, query_results=queries),
         )
         before_world = runtime.stores.world.revision
-        receipt = R3EffectGateway(runtime.stores, AdapterRegistry()).execute(
+        receipt = R3EffectGateway(runtime.stores, AdapterRegistry(), authority=runtime.authority).execute(
             altered, result.verification.selected_meaning, evaluation.situation,
         )
         assert type(receipt) is NoEffectReceipt

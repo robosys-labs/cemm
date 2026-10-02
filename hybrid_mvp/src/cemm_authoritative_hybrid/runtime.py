@@ -25,6 +25,7 @@ from .cycle import (
 )
 from .forms import EvidenceItem, EvidencePacket, FormResolver
 from .gaps import (
+    BudgetExhausted,
     GapClassifier,
     GapKind,
     GapReceipt,
@@ -34,10 +35,10 @@ from .gaps import (
 )
 from .grounding import Grounder
 from .mode import ModeProjection, StructuralModeProjector
-from .persistence import SemanticStores
+from .persistence import RevisionPin, SemanticStores
 from .proposal import ProposalOwner, ProposalResult
 from .proposal_context import ProposalContext, ProposalContextBuilder
-from .r3_cycle import CycleFinalizer, CycleResult
+from .r3_cycle import CycleFinalizer, CycleResult, _proposal_budget_gap
 from .r3_effects import EffectReceipt, NoEffectReceipt
 from .r3_kernel import R3Artifacts, R3Owner
 from .r3_persistence import (
@@ -89,6 +90,22 @@ class OrientationOwner(Protocol):
     def orient(
         self, session_ref: str, text: str
     ) -> tuple[Orientation, ProposalContext]: ...
+
+    def orient_turn(
+        self,
+        session_ref: str,
+        evidence: EvidencePacket,
+        *,
+        revision_pin: RevisionPin,
+    ) -> OrientedTurn: ...
+
+    def evidence_packet(
+        self,
+        session_ref: str,
+        text: str,
+        *,
+        extra_items: tuple[EvidenceItem, ...] = (),
+    ) -> EvidencePacket: ...
 
 
 @runtime_checkable
@@ -254,25 +271,33 @@ class RuntimeOrientationOwner:
                 effect_designations.append(designation)
         if not effect_designations:
             return projection
-        designation_unit_refs = tuple(
-            dict.fromkeys(
-                source_ref
-                for designation in grounding.designations
-                for source_ref in designation.unit_refs
-            )
-        )
+        naming_sources = tuple(row.unit_refs for row in effect_designations
+            if {"role:surface", "role:target"} <= self._authority.by_event_signature(row.target_ref).required_roles)
+        definition_spans = self._context_builder.definition_label_spans(naming_sources, lattice)
+        unit_by_ref = {unit.unit_ref: unit for unit in lattice.units}
+        definition_spans = tuple(span for span in definition_spans
+            if ("discourse", "definition_marker") in unit_by_ref[span.marker_ref].features)
+        mentioned_sources = {ref for span in definition_spans for ref in span.source_refs}
+        mentioned_sources.update(unit.unit_ref for span in definition_spans for unit in lattice.units
+            if unit_by_ref[span.marker_ref].source_end <= unit.source_start and unit.source_end <= span.target_end)
+        effect_designations = [row for row in effect_designations if not mentioned_sources.intersection(row.unit_refs)]
+        if not effect_designations:
+            return projection
         # A bare designation is lexical evidence, not directive authority.  An
         # effect-capable event may project REQUEST only when the turn contains
         # additional grounded structure that can fill or qualify the event.
         # This keeps a standalone form such as ``learn`` observational while
         # still allowing composition such as ``turn the light on`` to request
         # an admitted effect.
-        if set(designation_unit_refs) == {
-            source_ref
-            for designation in effect_designations
-            for source_ref in designation.unit_refs
-        }:
-            return projection
+        effect_sources = {ref for row in effect_designations for ref in row.unit_refs}
+        designation_sources = {ref for row in grounding.designations for ref in row.unit_refs} - mentioned_sources
+        if designation_sources == effect_sources:
+            # A mentioned event is not directive force. Preserve the general
+            # bare-event rule, allowing an event-valued naming target only
+            # when the same local form geometry proves a separate label and
+            # its adjacent reviewed naming predicate.
+            if not any(span.naming_source_ref is not None for span in definition_spans):
+                return projection
         return ModeProjection.create(
             form_lattice_ref=lattice.lattice_ref,
             mode=SemanticMode.REQUEST,
@@ -291,7 +316,11 @@ class RuntimeOrientationOwner:
         )
 
     def orient_turn(
-        self, session_ref: str, evidence: EvidencePacket
+        self,
+        session_ref: str,
+        evidence: EvidencePacket,
+        *,
+        revision_pin: RevisionPin | None = None,
     ) -> OrientedTurn:
         if type(session_ref) is not str or not session_ref:
             raise TypeError("session_ref must be exact nonempty str")
@@ -302,7 +331,9 @@ class RuntimeOrientationOwner:
         if evidence.form_pack_hash != self._form_resolver.form_pack_hash:
             raise ValueError("evidence form-pack hash differs from active resolver")
 
-        pin = self._stores.revision_pin()
+        pin = self._stores.revision_pin() if revision_pin is None else revision_pin
+        if type(pin) is not RevisionPin:
+            raise TypeError("revision_pin must be exact RevisionPin")
         with self._designation_reader.batch(pin) as designation_batch:
             return self._orient_snapshot(session_ref, evidence, pin, designation_batch)
 
@@ -447,7 +478,11 @@ class RuntimeOrientationOwner:
     def orient(
         self, session_ref: str, text: str
     ) -> tuple[Orientation, ProposalContext]:
-        turn = self.orient_turn(session_ref, self._text_evidence(session_ref, text))
+        turn = self.orient_turn(
+            session_ref,
+            self._text_evidence(session_ref, text),
+            revision_pin=self._stores.revision_pin(),
+        )
         return turn.orientation, turn.context
 
     def text_evidence(self, session_ref: str, text: str) -> EvidencePacket:
@@ -477,7 +512,7 @@ class RuntimeOrientationOwner:
 
 
 class HybridRuntime:
-    """Execute exactly one canonical six-phase cognitive path."""
+    """Execute one canonical cognitive path with exact terminal phase material."""
 
     def __init__(
         self,
@@ -501,6 +536,7 @@ class HybridRuntime:
         self._stores = stores
         self._owners = dict(owners)
         self._profile = profile
+        self._development_reference_owner = None
         self._verify_owners()
 
     def _verify_owners(self) -> None:
@@ -543,11 +579,19 @@ class HybridRuntime:
         return self._owners["orientation"].orient(session_ref, text)
 
     def _orient_turn(
-        self, session_ref: str, evidence: EvidencePacket
+        self,
+        session_ref: str,
+        evidence: EvidencePacket,
+        *,
+        revision_pin: RevisionPin,
     ) -> OrientedTurn:
-        result = self._owners["orientation"].orient_turn(session_ref, evidence)
+        result = self._owners["orientation"].orient_turn(
+            session_ref, evidence, revision_pin=revision_pin
+        )
         if type(result) is not OrientedTurn:
             raise TypeError("ORIENT owner must return exact OrientedTurn")
+        if result.context.revision_pin != revision_pin:
+            raise ValueError("ORIENT owner returned a different revision pin")
         return result
 
     def create_evidence(
@@ -567,6 +611,22 @@ class HybridRuntime:
         evidence = self.create_evidence(session_ref, text)
         return self.process_evidence(session_ref, evidence, trace=trace)
 
+    def development_reference(self, cycle: CycleResult):
+        """Present a development diagnostic without changing the normal cycle."""
+        if self._profile != "development":
+            raise ValueError("development reference requires the development profile")
+        from .development_reference import DevelopmentPresentationOwner
+        reader = self._owners["orientation"]._designation_reader
+        owner = self._development_reference_owner
+        if owner is None:
+            owner = DevelopmentPresentationOwner(self._authority, self._config, reader,
+                communicative_owner=self._owners["r3"]._communicative_owner)
+            self._development_reference_owner = owner
+        elif (owner.authority is not self._authority or owner.config is not self._config
+                or owner.reader is not reader):
+            raise ValueError("development reference owner identity changed")
+        return owner.present(cycle)
+
     def process_evidence(
         self,
         session_ref: str,
@@ -574,8 +634,53 @@ class HybridRuntime:
         *,
         trace: bool = True,
     ) -> CycleResult:
+        attempted_pin = self._stores.revision_pin()
         started = time.perf_counter_ns()
-        turn = self._orient_turn(session_ref, evidence)
+        try:
+            turn = self._orient_turn(
+                session_ref, evidence, revision_pin=attempted_pin
+            )
+        except BudgetExhausted as exhausted:
+            orient_ns = time.perf_counter_ns() - started
+            final_pin = self._stores.revision_pin()
+            if final_pin != attempted_pin:
+                raise ValueError("ORIENT budget failure changed the revision pin")
+            gap = GapReceipt.create(
+                kind=GapKind.PERFORMANCE,
+                status="budget_exhausted",
+                source_refs=(evidence.packet_ref,),
+                blockers=(
+                    f"budget exhausted: {exhausted.budget_name}={exhausted.limit}",
+                ),
+                recommended_owner=RepairOwner.RUNTIME,
+                safe_response_action="bound_cycle",
+            )
+            material = _PhaseMaterial(
+                SemanticPhase.ORIENT,
+                (evidence.packet_ref,),
+                (gap.gap_ref,),
+                attempted_pin,
+                attempted_pin,
+                PhaseDisposition.FAILED,
+                ("orient:budget_exhausted",),
+                {exhausted.budget_name: exhausted.limit},
+            )
+            return CycleFinalizer.finalize(
+                input_ref=evidence.packet_ref,
+                status=CycleStatus.BUDGET_EXHAUSTED,
+                orientation=None,
+                proposal=None,
+                verification=None,
+                evaluation=None,
+                effect_receipt=None,
+                response_meaning=None,
+                realization_receipt=None,
+                gap_receipt=gap,
+                phase_material=(material,),
+                final_revision_pin=attempted_pin,
+                capture_trace=trace,
+                durations_ns=(orient_ns,),
+            )
         orientation, context = turn.orientation, turn.context
         orient_ns = time.perf_counter_ns() - started
 
@@ -682,11 +787,14 @@ class HybridRuntime:
         if situation_inputs is None:
             raise TypeError("R3 requires situation_inputs from OrientedTurn")
         started = time.perf_counter_ns()
+        from .communicative import selected_owned_inputs
+        program, receipt = selected_owned_inputs(proposal, verification, meaning)
         artifacts: R3Artifacts = self._owners["r3"].run(
             meaning=meaning,
             orientation=orientation,
             context=context,
             situation_inputs=situation_inputs,
+            program=program, receipt=receipt,
         )
         r3_ns = time.perf_counter_ns() - started
         evaluation = artifacts.evaluation
@@ -755,6 +863,7 @@ class HybridRuntime:
             final_revision_pin=artifacts.output_revision_pin,
             capture_trace=trace,
             durations_ns=(orient_ns, propose_ns, verify_ns, r3_ns, 0, 0),
+            communicative_owner=self._owners["r3"]._communicative_owner,
         )
 
     @staticmethod
@@ -763,10 +872,16 @@ class HybridRuntime:
     ) -> tuple[
         PhaseDisposition, tuple[str, ...], CycleStatus, GapReceipt | None
     ]:
+        budget_gap = _proposal_budget_gap(proposal, verification)
+        if budget_gap is not None:
+            disposition = (PhaseDisposition.ABSTAINED if verification.status == "abstained"
+                           else PhaseDisposition.REJECTED)
+            return disposition, budget_gap.blockers, CycleStatus.BUDGET_EXHAUSTED, budget_gap
         if verification.status == "selected":
             return PhaseDisposition.COMPLETED, (), CycleStatus.PARTIAL, None
         if verification.status == "abstained":
             code = proposal.abstention_code or "proposal:abstained"
+            incomplete = code == "proposal:no_complete_candidate"
             return (
                 PhaseDisposition.ABSTAINED,
                 (code,),
@@ -776,8 +891,19 @@ class HybridRuntime:
                     status="proposal_abstained",
                     source_refs=(proposal.proposal_ref, verification.batch_ref),
                     blockers=(code,),
-                    recommended_owner=RepairOwner.TRAINING,
-                    safe_response_action="request_proposal_review",
+                    # A bounded, non-truncated search that cannot complete the
+                    # observed graph is unresolved input, not evidence that a
+                    # model should guess. Preserve it as a runtime-owned
+                    # clarification response contract. Explicit proposer
+                    # abstentions retain the separate review frontier.
+                    recommended_owner=(
+                        RepairOwner.RUNTIME if incomplete else RepairOwner.TRAINING
+                    ),
+                    safe_response_action=(
+                        "request_clarification"
+                        if incomplete
+                        else "request_proposal_review"
+                    ),
                 ),
             )
         if verification.status == "rejected":

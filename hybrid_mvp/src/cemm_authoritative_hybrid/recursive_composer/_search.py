@@ -7,7 +7,7 @@ from itertools import islice
 from typing import Any
 
 from ..programs import ProgramAction, SemanticSwitchProgram, SourceAssignment
-from ..proposal_context import ProposalContext, ApplicationFrameSlot, nominal_predication_choice_index
+from ..proposal_context import ProposalContext, ApplicationFrameSlot, nominal_predication_choice_index, naming_binding_choice_index
 from ._core import (
     _ACTION_OVERHEAD,
     _CRITICAL_KINDS,
@@ -27,10 +27,84 @@ from ._core import (
     _unique,
     _used_sources,
 )
-from ._expand import iter_choices
+from ._expand import _typed_report_regions, iter_choices
+
+
+def _semantic_state_key(state: _State) -> tuple[Any, ...]:
+    """Identify one partial graph independently of construction order.
+
+    Program actions retain their execution order because later compilation and
+    source assignments refer to exact action identities. Search, however, must
+    not spend its bounded frontier on permutations of independent actions. Each
+    declared transient node is therefore alpha-renamed to the unique reviewed
+    slot that owns it, action indices are omitted, and exact evidence ownership,
+    topology, score, and provenance are retained.
+    """
+    node_owners: dict[str, tuple[str, str, str]] = {}
+    for action in state.prefix:
+        if action.action_type == "instantiate_operator":
+            node_owners[action.arguments[0]] = (
+                "node",
+                "application",
+                action.arguments[1],
+            )
+        elif action.action_type == "attach_scope":
+            node_owners[action.arguments[0]] = (
+                "node",
+                "scope",
+                action.arguments[1],
+            )
+        elif action.action_type == "project_variable":
+            node_owners[action.arguments[0]] = (
+                "node",
+                "projection" if len(action.arguments) == 2 else "variable",
+                action.arguments[1],
+            )
+        elif (
+            action.action_type == "bind_nested_application"
+            and action.arguments[0] == "link"
+        ):
+            node_owners[action.arguments[1]] = (
+                "node",
+                "link",
+                action.arguments[2],
+            )
+
+    def normalized_argument(value: str) -> tuple[str, ...]:
+        return node_owners.get(value, ("value", value))
+
+    action_keys: dict[str, tuple[Any, ...]] = {}
+    for action in state.prefix:
+        action_keys[action.action_ref] = (
+            action.action_type,
+            tuple(normalized_argument(value) for value in action.arguments),
+            action.source_unit_refs,
+        )
+
+    semantic_actions = tuple(sorted(action_keys.values()))
+    source_uses = tuple(
+        sorted(
+            (
+                row.source_unit_ref,
+                row.contribution_slot_ref,
+                row.assignment_kind,
+                action_keys[row.target_action_ref],
+                row.target_role_ref or "",
+                row.critical,
+            )
+            for row in state.source_uses
+        )
+    )
+    return (
+        semantic_actions,
+        source_uses,
+        tuple(sorted(state.provenance)),
+        state.score_q,
+    )
+
 
 class RecursiveComposer:
-    """Deterministic bounded best-first search over Program ABI 2 prefixes."""
+    """Deterministic bounded best-first search over Program ABI 3 prefixes."""
 
     __slots__ = (
         "_context",
@@ -46,6 +120,8 @@ class RecursiveComposer:
         "_truncated",
         "_nominal_binding_slots",
         "_nominal_scope_frames",
+        "_naming_binding_slots",
+        "_reported_regions",
     )
 
     def __init__(
@@ -83,6 +159,8 @@ class RecursiveComposer:
         self._explored = 0
         self._truncated = False
         self._nominal_binding_slots, self._nominal_scope_frames = nominal_predication_choice_index(context)
+        self._naming_binding_slots = naming_binding_choice_index(context)
+        self._reported_regions = _typed_report_regions(context)
 
     @property
     def explored(self) -> int:
@@ -104,10 +182,10 @@ class RecursiveComposer:
             return ()
 
         completed: dict[str, _CompletedProgram] = {}
-        seen: set[tuple[str, ...]] = set()
+        seen: set[tuple[Any, ...]] = set()
         while frontier and self._explored < self._max_explored:
             _, _, state = heappop(frontier)
-            signature = tuple(action.action_ref for action in state.prefix)
+            signature = _semantic_state_key(state)
             if signature in seen:
                 continue
             seen.add(signature)
@@ -321,7 +399,9 @@ class RecursiveComposer:
         )
 
     def _complete(self, state: _State) -> _CompletedProgram | None:
-        if not state.application_frames or self._missing_required_role_count(state):
+        projections = tuple(a for a in state.prefix
+            if a.action_type == "project_variable" and len(a.arguments) == 2)
+        if (not state.application_frames and not projections) or self._missing_required_role_count(state):
             return None
         used_designations = {
             frame.designation_slot_ref
@@ -329,6 +409,8 @@ class RecursiveComposer:
             if (frame := self._context.frame(frame_ref)) is not None
             and type(frame) is ApplicationFrameSlot
         }
+        used_designations.update(self._context.query_projection(a.arguments[1]).target_designation_slot_ref
+            for a in projections)
         if used_designations != set(state.selected_designations):
             return None
         if not _topology_is_valid(

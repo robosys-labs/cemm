@@ -936,6 +936,7 @@ def _wire_feature_pairs(
 # Feature category -> pack key mapping.  Each closed-class category in the
 # language pack contributes a feature ``(category, kind)`` to matching units.
 _FEATURE_CATEGORIES: tuple[tuple[str, str], ...] = (
+    ("orthography", "orthography"),
     ("participant", "participant_deixis"),
     ("binder", "binders"),
     ("query", "query_projection"),
@@ -1115,7 +1116,9 @@ class FormResolver:
         # interval checks after the raw source leaves the form-owner boundary.
         if source.isspace():
             features = (*features, ("orthography", "whitespace"))
-        elif source in self._punctuation:
+        elif source in self._punctuation and ("orthography", "quotation_boundary") not in features:
+            # Reviewed quotation evidence has no generic, ignorable alternate.
+            # Interpretation belongs to a later source owner, not tokenization.
             features = (*features, ("orthography", "punctuation"))
         normalized_forms: tuple[str, ...]
         if source.strip() and source != norm:

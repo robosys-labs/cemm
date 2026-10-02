@@ -93,8 +93,8 @@ def main() -> int:
     if '"r3": R3Owner' not in runtime or "contract:r5:realize_surface" not in runtime:
         raise ValueError("public runtime lacks the exact R3 owner/R5 boundary")
     cycle = _text("r3_cycle.py")
-    if "CYCLE_RESULT_ABI_VERSION = 3" not in cycle:
-        raise ValueError("R3 cycle owner does not declare ABI 3")
+    if "CYCLE_RESULT_ABI_VERSION = 4" not in cycle:
+        raise ValueError("R3 cycle owner does not declare ABI 4")
     if "realization_receipt" not in cycle or "contract:r5:realize_surface" not in cycle:
         raise ValueError("R3 cycle owner lacks the exact R5 boundary")
     expected = _text("r4_contracts.py")

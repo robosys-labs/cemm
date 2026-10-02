@@ -140,6 +140,35 @@ source .venv/bin/activate
 pip install -e '.[test]'
 ```
 
+## Development diagnostics — isolated state
+
+From `hybrid_mvp/`, in PowerShell:
+
+```powershell
+$demoStore = Join-Path ([IO.Path]::GetTempPath()) ("cemm-demo-" + [guid]::NewGuid().ToString("N") + ".db")
+$env:PYTHONPATH = "src"
+python -m cemm_authoritative_hybrid.cli --interactive --development-reference --store $demoStore
+```
+
+`--development-reference` is controlled diagnostic wording, not learned R5
+realization or an authorized response receipt. The isolated store contains no
+production authority changes. `/trace` includes exact meaning and provenance;
+`/new` starts a separate session; `/quit` ends the conversation.
+
+Independent role controls include `Bob likes you`, `Alice likes me` and
+`Bob likes Alice`. Capability questions `Can you respond?` and
+`Can you learn aliases?` produce supported answers with the exact subject.
+`Who likes Bob?`, `Bob likes who?` and `Who is a mother?` preserve the queried
+role; an empty store yields UNKNOWN, not an invented person or a negative fact.
+Unknown lookup: `What does zorbulate mean?`.
+
+This is not a general conversation demo. Direct greetings still yield attributed
+claim wording rather than a selected reciprocal response. Input inflections
+such as `I like Bob`, ambiguous description/definition requests, actual definition
+content and other unresolved owners remain open under the foundation plan.
+Neither an unresolved interpretation nor a missing output rule counts as a
+supported answer.
+
 ## Run tests
 
 During corrective replay, a plain `pytest` invocation is diagnostic only; it is

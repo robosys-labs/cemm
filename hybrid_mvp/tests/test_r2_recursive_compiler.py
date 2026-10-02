@@ -132,6 +132,8 @@ def _context(*, proposition_roles=(), derived_role_targets=()):
     contributions = {
         "contribution_slot:alice": SimpleNamespace(
             slot_ref="contribution_slot:alice",
+            source_unit_refs=("unit:alice",),
+            constraints=(),
             kind="anchor",
             target_ref="entity:alice",
             literal_value=None,
@@ -140,6 +142,8 @@ def _context(*, proposition_roles=(), derived_role_targets=()):
         ),
         "contribution_slot:bob": SimpleNamespace(
             slot_ref="contribution_slot:bob",
+            source_unit_refs=("unit:bob",),
+            constraints=(),
             kind="anchor",
             target_ref="entity:bob",
             literal_value=None,
@@ -150,6 +154,8 @@ def _context(*, proposition_roles=(), derived_role_targets=()):
     frames = {
         "application_frame_slot:love": SimpleNamespace(
             slot_ref="application_frame_slot:love",
+            predicate_kind="relation_type",
+            source_unit_refs=("unit:loves",),
             operator_ref="op:relation",
             predicate_target_ref="relation:love",
             required_roles=("role:subject", "role:object"),
@@ -159,6 +165,8 @@ def _context(*, proposition_roles=(), derived_role_targets=()):
         ),
         "application_frame_slot:think": SimpleNamespace(
             slot_ref="application_frame_slot:think",
+            predicate_kind="event_type",
+            source_unit_refs=("unit:loves",),
             operator_ref="op:event",
             predicate_target_ref="event:think",
             required_roles=("role:subject",),
@@ -190,6 +198,17 @@ def _context(*, proposition_roles=(), derived_role_targets=()):
         context_ref="proposal_context:one",
         orientation_ref="orientation:one",
         revision_pin=_pin(),
+        # Semantic-only fixture: no character geometry or form evidence was
+        # supplied. Naming/locality proofs use real-context foundation tests.
+        contribution_slots=tuple(contributions.values()),
+        application_frames=tuple(frames.values()),
+        designation_slots=tuple(designations.values()),
+        reference_slots=(),
+        source_unit_refs=("unit:loves", "unit:alice", "unit:bob"),
+        source_unit_spans=(),
+        contributions_for_source=lambda ref: tuple(
+            row for row in contributions.values() if ref in row.source_unit_refs
+        ),
         designation=lambda ref: designations.get(ref),
         contribution=lambda ref: contributions.get(ref),
         frame=lambda ref: frames.get(ref),

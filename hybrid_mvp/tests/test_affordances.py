@@ -28,7 +28,12 @@ def test_affordance_index_exposes_exact_authority_generation(
     indexed_generation = linked_authority.generation
     assert affordance_index.authority_generation == indexed_generation
 
-    linked_authority.generation = "authority:mutated-after-indexing"
+    linked_authority._publish_rule_generation(
+        parent_generation=linked_authority.generation,
+        new_generation="authority:mutated-after-indexing",
+        new_content_hash="authority-content:mutated-after-indexing",
+        rules=linked_authority.rules,
+    )
     assert affordance_index.authority_generation == indexed_generation
 
 
@@ -201,4 +206,4 @@ __cemm_test_inventory__ = {'tests/test_affordances.py::test_affordance_index_exp
                                                                                          'diagnostic_role': 'owner',
                                                                                          'introduced_by_task': 'R1-Task-9',
                                                                                          'owner_ref': 'runtime-path',
-                                                                                         'source_ast_sha256': '7a2a20412dd3a76532ac4ac8f6eaabcfa2cf77e92f87e6a410cc5d1a25320ae6'}}
+                                                                                         'source_ast_sha256': '9fc06a635e56d4399bd40bf421849cd1a9af034f9cec97832056e1f705c822a5'}}

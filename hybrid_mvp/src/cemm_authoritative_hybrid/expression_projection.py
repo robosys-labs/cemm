@@ -1,4 +1,4 @@
-"""Read-only structural projection over Semantic Expression ABI 2.
+"""Read-only structural projection over Semantic Expression ABI 3.
 
 The projection validates and indexes canonical expression structure for R3
 owners.  It never inspects source text, construction programs, or internal ref
@@ -17,6 +17,7 @@ from .expressions import (
     ExpressionLink,
     GroundedReference,
     LiteralValue,
+    QueryProjection,
     RoleBinding,
     ScopeOperator,
     SemanticApplication,
@@ -29,6 +30,8 @@ __all__ = ["ExpressionProjection", "project_expression"]
 
 
 def _children(node: object) -> tuple[str, ...]:
+    if type(node) is QueryProjection:
+        return ()
     if type(node) is SemanticApplication:
         refs: list[str] = []
         for binding in (*node.roles, *node.qualifiers):
@@ -52,6 +55,7 @@ class ExpressionProjection:
     root_refs: tuple[str, ...]
     node_by_ref: Mapping[str, object]
     applications: tuple[SemanticApplication, ...]
+    query_projections: tuple[QueryProjection, ...]
     applications_by_operator: Mapping[str, tuple[SemanticApplication, ...]]
     applications_by_predicate: Mapping[str, tuple[SemanticApplication, ...]]
     scopes_by_type: Mapping[str, tuple[ScopeOperator, ...]]
@@ -156,6 +160,7 @@ def project_expression(expression: SemanticExpression) -> ExpressionProjection:
         *expression.scope_operators,
         *expression.expression_links,
         *expression.binders,
+        *expression.query_projections,
     ]
     refs: list[str] = []
     for node in nodes:
@@ -167,6 +172,8 @@ def project_expression(expression: SemanticExpression) -> ExpressionProjection:
             refs.append(node.link_ref)
         elif type(node) is VariableBinder:
             refs.append(node.binder_ref)
+        elif type(node) is QueryProjection:
+            refs.append(node.projection_ref)
         else:
             raise TypeError("expression contains a non-canonical node")
     if len(refs) != len(set(refs)):
@@ -216,7 +223,7 @@ def project_expression(expression: SemanticExpression) -> ExpressionProjection:
             raise ValueError("expression contains duplicate variable binders")
         binder_by_variable[binder.variable_ref] = binder
 
-    grounded: list[str] = []
+    grounded: list[str] = [node.target_ref for node in expression.query_projections]
     literals: list[LiteralValue] = []
     unresolved: list[str] = []
     variables: list[str] = []
@@ -244,6 +251,7 @@ def project_expression(expression: SemanticExpression) -> ExpressionProjection:
         root_refs=expression.root_refs,
         node_by_ref=MappingProxyType(node_by_ref),
         applications=expression.applications,
+        query_projections=expression.query_projections,
         applications_by_operator=_group_applications(
             expression.applications, "operator"
         ),

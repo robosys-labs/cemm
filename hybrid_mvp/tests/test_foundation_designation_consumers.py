@@ -9,6 +9,7 @@ from cemm_authoritative_hybrid import persistence
 from cemm_authoritative_hybrid.r3_learning import AliasReviewVerifier
 from cemm_authoritative_hybrid.r3_effects import R3EffectGateway, AdapterRegistry
 from tests.test_foundation_alias_publication import _publication, _signed
+from tests.test_foundation_admitted_designations import _physically_corrupt_fact_for_integrity_test
 from tests.test_foundation_learning_proposal import ROOT
 from tests.test_foundation_semantics import _matrix_expression, _matrix_relation
 
@@ -43,7 +44,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "982370eadacbe9d04bcfade8963cb0e4fabc441642fdbbaf7894e1aea95cfcb1"
+        "source_ast_sha256": "6b85ae561fc352d146784f6e17af1359639c760b2aeeebcd0f8c47cac13e3fae"
     },
     "tests/test_foundation_designation_consumers.py::test_runtime_consumers_ignore_naked_and_reject_corrupt_publication[velnora]": {
         "activation_phase": "R3",
@@ -51,7 +52,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "982370eadacbe9d04bcfade8963cb0e4fabc441642fdbbaf7894e1aea95cfcb1"
+        "source_ast_sha256": "6b85ae561fc352d146784f6e17af1359639c760b2aeeebcd0f8c47cac13e3fae"
     },
     "tests/test_foundation_designation_consumers.py::test_orient_consumers_share_one_live_snapshot_and_reader_with_query": {
         "activation_phase": "R3",
@@ -239,7 +240,17 @@ def test_runtime_consumers_ignore_naked_and_reject_corrupt_publication(tmp_path,
         changed = (replace(fact, fact_ref="fact:naked", args={**fact.args, "role:surface": surface},
             proof={"source": "reviewer:trusted", "alias_language": "en"}) if surface == "fakeword" else
             replace(fact, proof={**fact.proof, "publication_key": "missing:publication"}))
-        runtime.stores.world.commit((changed,), expected_revision=runtime.stores.world.revision)
+        if surface == "fakeword":
+            runtime.stores.world.commit((changed,), expected_revision=runtime.stores.world.revision)
+        else:
+            original_pin = runtime.stores.revision_pin()
+            with pytest.raises(ValueError, match="immutable"):
+                runtime.stores.world.commit((changed,), expected_revision=runtime.stores.world.revision)
+            assert runtime.stores.revision_pin() == original_pin
+            assert runtime.stores.world.get(fact.fact_ref) == fact
+            # Isolated physical corruption is integrity-test setup, not a
+            # supported public mutation or authenticated review authority.
+            _physically_corrupt_fact_for_integrity_test(runtime.stores, "sqlite", changed)
         pin = runtime.stores.revision_pin()
         if surface == "fakeword":
             _, context = runtime.orient("session:naked", surface)

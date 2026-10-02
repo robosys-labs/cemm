@@ -19,8 +19,9 @@ Learning distinctions remain explicit (spec section 9):
 - **learning-event claim** reports an event about the speaker;
 - **trusted designation acquisition** may bind a new surface to an existing
   target under reviewed authorization;
-- **reviewed acquisition** may publish a new semantic identity or definition
-  graph and requires authority reactivation.
+- **reviewed acquisition** may eventually publish a new semantic identity or
+  definition graph, but this predecessor has no live publisher; complete bundle
+  linking and authority/store reactivation remain required.
 
 A pending designation-learning obligation is pinned to its source query,
 authority generation, target-kind contract, permission, provenance, and expiry.
@@ -38,11 +39,10 @@ import secrets
 from dataclasses import dataclass, field
 from typing import Any, Literal, Mapping
 
-from .authority import AuthorityLinkError, RuleRecord
 from .canonical import stable_ref
 from .config import RuntimeConfig
 from .persistence import SemanticStores
-from .query import GenericDefinitionLowerer, QueryEngine, QueryResult
+from .query import QueryEngine, QueryResult
 
 __all__ = [
     "LearningPlan",
@@ -325,10 +325,11 @@ def _is_internal_ref_spelling(surface: str) -> bool:
 class LearningCoordinator:
     """Coordinates typed designation learning and reviewed acquisition.
 
-    The coordinator manages pending learning plans and reviewed acquisitions.
-    Conversational wording cannot authorize writes — only reviewed
-    authorization can.  No public ``install_rules``, ``add_rule``, or
-    mutable-authority shortcut exists.
+    The coordinator retains predecessor learning plans and acquisition
+    proposals. Conversational wording cannot authorize writes, and reviewed
+    generic acquisition is explicitly unavailable until an external bundle
+    linker can reactivate authority and stores together. No public
+    ``install_rules``, ``add_rule``, or mutable-authority shortcut exists.
 
     One pending learning obligation may exist at a time.
     """
@@ -338,7 +339,6 @@ class LearningCoordinator:
         "_stores",
         "_config",
         "_query_engine",
-        "_lowerer",
         "_designations",
         "_pending_plan_ref",
         "_consumed_plan_refs",
@@ -359,7 +359,6 @@ class LearningCoordinator:
         self._stores = stores
         self._config = config
         self._query_engine = query_engine
-        self._lowerer = GenericDefinitionLowerer()
         self._designations = DesignationStore()
         self._pending_plan_ref: str | None = None
         self._consumed_plan_refs: set[str] = set()
@@ -544,10 +543,10 @@ class LearningCoordinator:
         """Plan a reviewed acquisition of new authority content.
 
         Accepts already-verified semantic programs under an independently
-        configured reviewer policy.  The plan invokes the side-effect-free
-        lowerer to preview the rules, but does NOT publish anything until
-        :meth:`review_and_commit_acquisition` is called with a valid
-        authorization.
+        configured reviewer policy.  This predecessor can preserve a proposal,
+        but no longer owns a live publication path.  A future publisher must
+        link the complete authority bundle and reactivate authority plus stores
+        together rather than mutating this process in place.
 
         Only one pending learning obligation may exist at a time.
         """
@@ -596,91 +595,11 @@ class LearningCoordinator:
         plan: ReviewedAcquisitionPlan,
         authorization: ReviewerAuthorization | None,
     ) -> AcquisitionReceipt:
-        """Review and commit a reviewed acquisition plan.
-
-        Invokes the side-effect-free lowerer, links the complete candidate
-        bundle, and atomically publishes a new authority generation.  One
-        invalid definition rejects the entire acquisition (atomic).
-        """
-        self._validate_authorization(plan, authorization)
-
-        # Check capability.
-        caps = self._authority.capabilities.get("participant:user", [])
-        if _CAP_LEARN not in caps:
-            raise LearningGap(
-                "missing_capability",
-                f"capability {_CAP_LEARN} not granted",
-            )
-
-        # Check not already consumed.
-        if plan.plan_ref in self._consumed_plan_refs:
-            raise LearningGap("plan_already_consumed", "plan was already committed")
-
-        # Check authority parent generation matches.
-        if plan.authority_parent_generation != self._authority.generation:
-            raise LearningGap(
-                "stale_authority_generation",
-                f"plan expects {plan.authority_parent_generation}, "
-                f"current is {self._authority.generation}",
-            )
-
-        # Retrieve the programs stored at plan time.
-        programs = self._pending_programs
-        if programs is None:
-            raise LearningGap(
-                "missing_programs",
-                "verified programs not available for acquisition",
-            )
-
-        # Invoke the side-effect-free lowerer to preview rules.
-        lowering = self._lowerer.preview(programs)
-
-        if not lowering.created_rule_refs:
-            raise AuthorityLinkError("lowering produced no rules")
-
-        # One invalid definition rejects the entire acquisition (atomic).
-        # Every program must produce exactly one rule; a program that the
-        # lowerer silently skips (e.g. fewer than 2 applications) is invalid.
-        if len(lowering.created_rule_refs) != len(programs):
-            raise AuthorityLinkError(
-                "one or more programs did not produce a rule; "
-                "entire acquisition rejected"
-            )
-
-        # Validate all rules: one invalid rejects the entire acquisition.
-        # A rule is invalid if it has empty antecedent or consequent.
-        for rule in lowering.rules:
-            if not rule.antecedent or not rule.consequent:
-                raise AuthorityLinkError(
-                    f"invalid rule {rule.rule_ref}: empty antecedent or consequent"
-                )
-
-        # Atomically publish a new authority generation.
-        # Rules are compatible additions — compatibility hash is preserved.
-        parent_gen = self._authority.generation
-        compat_hash = self._authority.model_compatibility_hash
-
-        for rule in lowering.rules:
-            self._authority.rules[rule.rule_ref] = rule
-
-        new_gen = stable_ref("authority:generation", {
-            "parent": parent_gen,
-            "rules": list(lowering.created_rule_refs),
-        })
-        self._authority.generation = new_gen
-
-        self._revision += 1
-        self._consumed_plan_refs.add(plan.plan_ref)
-        self._consumed_nonces.add(authorization.nonce)
-        self._pending_plan_ref = None
-        self._pending_programs = None
-
-        return AcquisitionReceipt(
-            parent_generation=parent_gen,
-            new_generation=new_gen,
-            authority_compatibility_hash=compat_hash,
-            created_rule_refs=lowering.created_rule_refs,
-            plan_ref=plan.plan_ref,
+        """Fail closed until a linked authority/store activation owner exists."""
+        raise LearningGap(
+            "reviewed_acquisition_publication_unavailable",
+            "generic acquisition requires complete bundle linking and fresh "
+            "authority/store activation",
         )
 
     # -- Internal helpers ----------------------------------------------------

@@ -703,6 +703,7 @@ def _proposal_recipe_suggestion(
 
 @dataclass(frozen=True)
 class SourceAuthoringCache:
+    authority: LinkedAuthority
     cases: tuple[ExpandedCase, ...]
     cases_by_ref: Mapping[str, ExpandedCase]
     form_lattices_by_case: Mapping[str, FormLattice]
@@ -713,6 +714,8 @@ class SourceAuthoringCache:
     operation_counts: Mapping[str, int]
 
     def __post_init__(self) -> None:
+        if type(self.authority) is not LinkedAuthority:
+            raise TypeError("source authoring authority must be exact LinkedAuthority")
         if type(self.cases) is not tuple or any(
             type(case) is not ExpandedCase for case in self.cases
         ):
@@ -908,6 +911,7 @@ def build_source_authoring_cache(
         )
         operations["proposal_recipe_normalizations"] += 1
     return SourceAuthoringCache(
+        authority=authority,
         cases=eligible,
         cases_by_ref=cases_by_ref,
         form_lattices_by_case=lattices,
@@ -1887,7 +1891,7 @@ def build_reviewed_proposal_authoring(
         recipes.append(row)
         designation_recipe_by_key[(purpose, decision)] = row
 
-    compiler = ReviewedDerivationCompiler()
+    compiler = ReviewedDerivationCompiler(source_cache.authority)
     proposals: list[AuthoringCandidate] = []
     proposal_targets_by_case: dict[str, ProposalTarget] = {}
     operations = dict(source_cache.operation_counts)

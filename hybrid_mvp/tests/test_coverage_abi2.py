@@ -612,7 +612,7 @@ def test_exact_context_program_coverage_is_content_addressed_and_round_trips():
 
     receipt = CoverageVerifier().verify(context, program)
 
-    assert receipt.abi_version == COVERAGE_ABI_VERSION == 2
+    assert receipt.abi_version == COVERAGE_ABI_VERSION == 3
     assert receipt.executable
     assert receipt.errors == ()
     assert receipt.assignments == program.source_assignments
@@ -1155,7 +1155,7 @@ __cemm_test_inventory__ = {'tests/test_coverage_abi2.py::test_action_source_geom
                                                                                                            'diagnostic_role': 'owner',
                                                                                                            'introduced_by_task': 'R1-Task-7',
                                                                                                            'owner_ref': 'program-verifier',
-                                                                                                           'source_ast_sha256': 'd1b2a06835f844d9539e2ff3a18d8422fc1ac3918497e25807a50c4a1cd4b1d0'},
+                                                                                                           'source_ast_sha256': 'de5048eb76997e56194fe5d62fa31580c334d39c2ddfb9f593421248f950361a'},
  'tests/test_coverage_abi2.py::test_exact_source_and_context_failures_are_retained[duplicate-source]': {'activation_phase': 'R1',
                                                                                                         'assertion_ref': 'assertion:r1-coverage-abi2-test-exact-source-and-context-failures-are-retained-duplicate-source',
                                                                                                         'diagnostic_role': 'owner',

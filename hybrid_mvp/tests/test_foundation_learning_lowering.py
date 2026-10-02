@@ -255,7 +255,7 @@ def test_materializer_rederives_source_authority_instead_of_trusting_draft(tmp_p
         else:
             app = _lower(runtime.authority, meaning.expression, situation).designation
             meaning = _matrix_meaning(_matrix_expression(app), situation.revision_pin)
-        evaluation = evaluator.finalize(meaning, situation, mode)
+        evaluation = evaluator.finalize(meaning, situation, mode, authority=runtime.authority)
         before = runtime.stores.revision_pin(), runtime.stores.obligations.revision
         with pytest.raises(ValueError):
             LearningCoordinator(runtime.authority, runtime.stores).materialize(evaluation, meaning, situation)
@@ -611,7 +611,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "bc15cb4442db78bf04e78bdf4033571e01e85499ac0c21cbc555007e10b89b1d"
+        "source_ast_sha256": "3bcf298d19787514d04eb4013d4e6b9abea49cbe76be985e943abd861f319dec"
     },
     "tests/test_foundation_learning_lowering.py::test_materializer_rederives_source_authority_instead_of_trusting_draft[policy]": {
         "activation_phase": "R3",
@@ -619,7 +619,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "bc15cb4442db78bf04e78bdf4033571e01e85499ac0c21cbc555007e10b89b1d"
+        "source_ast_sha256": "3bcf298d19787514d04eb4013d4e6b9abea49cbe76be985e943abd861f319dec"
     },
     "tests/test_foundation_learning_lowering.py::test_materializer_rederives_source_authority_instead_of_trusting_draft[direct-designation]": {
         "activation_phase": "R3",
@@ -627,7 +627,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "bc15cb4442db78bf04e78bdf4033571e01e85499ac0c21cbc555007e10b89b1d"
+        "source_ast_sha256": "3bcf298d19787514d04eb4013d4e6b9abea49cbe76be985e943abd861f319dec"
     },
     "tests/test_foundation_learning_lowering.py::test_pure_learning_lowering_uses_activation_grant_indexes_and_preserves_unicode": {
         "activation_phase": "R3",

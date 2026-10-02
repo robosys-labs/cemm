@@ -1,6 +1,6 @@
 {
   "abi_version": 1,
-  "generation": "authority-v1-2026-09-08-linked-frames",
+  "generation": "authority-v1-2026-10-02-communicative-source",
   "owners": [
     {
       "name": "kernel",
@@ -10,7 +10,7 @@
     {
       "name": "conversation",
       "path": "conversation.json",
-      "sha256": "06f19f800a6a10ee2cc04eb74522e322d75a7ed39a22e520ef478a282f67bb9a"
+      "sha256": "a5abd5396a7eea8ee5d63504868336d1c2b01ca6fdd0ad4b80234983ad396a5f"
     },
     {
       "name": "state_operations",
@@ -25,7 +25,7 @@
     {
       "name": "semantic_affordances",
       "path": "frames/semantic_affordances.json",
-      "sha256": "69f0670f76338737e99d435130dd24be853e42d94a7a2369650460c73af3bf13"
+      "sha256": "40337cb94487429a8ce54d7cfc235c156436347140e4712ee178d276293c9006"
     }
   ]
 }

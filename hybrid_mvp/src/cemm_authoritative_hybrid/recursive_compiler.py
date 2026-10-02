@@ -1,6 +1,6 @@
 """R2 recursive Semantic Expression compiler.
 
-Lowers every admitted R2 Program ABI 2 action into a canonical
+Lowers every admitted Program ABI 3 action into a canonical
 SemanticExpression forest.  Supports multiple applications, proposition
 role nesting, expression links, scope operators, variable binders and
 transition hints.
@@ -19,6 +19,7 @@ from .expressions import (
     ExpressionLink,
     ExpressionBounds,
     GroundedReference,
+    QueryProjection,
     LiteralValue,
     RoleBinding,
     ScopeOperator,
@@ -30,14 +31,14 @@ from .expressions import (
 )
 from .programs import PERSISTENT_OPERATORS
 from .literal_codec import decode_literal_slot
-from .proposal_context import UnresolvedDesignationFrame
+from .proposal_context import UnresolvedDesignationFrame, naming_binding_choice_index
 
 
 class _State:
     """Mutable accumulator for the recursive compilation pass."""
     __slots__ = (
         "role_bindings", "node_map", "action_targets", "grounding",
-        "scopes", "links", "binders", "unresolved", "var_counter",
+        "scopes", "links", "binders", "unresolved", "var_counter", "projections",
     )
 
     def __init__(self) -> None:
@@ -48,6 +49,7 @@ class _State:
         self.scopes: list[ScopeOperator] = []
         self.links: list[ExpressionLink] = []
         self.binders: list[VariableBinder] = []
+        self.projections: list[QueryProjection] = []
         self.unresolved: list[UnresolvedFiller] = []
         self.var_counter: int = 0
 
@@ -80,80 +82,6 @@ def _canonical_designation_frame(frame: Any) -> bool:
         == {"role:label_type", "role:surface", "role:target"}
         and derived.get("role:label_type") == frame.predicate_target_ref
     )
-
-
-def _node_kind(ref: str) -> str:
-    if ref.startswith("scope:"):
-        return "scope"
-    if ref.startswith("link:"):
-        return "link"
-    if ref.startswith("variable:"):
-        return "binder"
-    return "application"
-
-
-def _build_ref_map(
-    expression: SemanticExpression,
-    applications: list[SemanticApplication],
-    scopes: list[ScopeOperator],
-    links: list[ExpressionLink],
-    binders: list[VariableBinder],
-) -> dict[str, str]:
-    """Build a mapping from local refs to canonical expression refs.
-
-    The canonicalization renames all refs.  We match nodes by their
-    semantic content (operator+predicate for applications, operator_type
-    for scopes, link_type for links, variable for binders).
-    """
-    ref_map: dict[str, str] = {}
-
-    # Match applications by (operator, predicate_ref) in order of appearance.
-    used_canonical: set[str] = set()
-    for local_app in applications:
-        for canon_app in expression.applications:
-            if canon_app.application_ref in used_canonical:
-                continue
-            if (
-                local_app.operator == canon_app.operator
-                and local_app.predicate_ref == canon_app.predicate_ref
-            ):
-                ref_map[local_app.application_ref] = canon_app.application_ref
-                used_canonical.add(canon_app.application_ref)
-                break
-
-    # Match scopes by operator_type
-    used_scopes: set[str] = set()
-    for local_scope in scopes:
-        for canon_scope in expression.scope_operators:
-            if canon_scope.scope_ref in used_scopes:
-                continue
-            if local_scope.operator_type == canon_scope.operator_type:
-                ref_map[local_scope.scope_ref] = canon_scope.scope_ref
-                used_scopes.add(canon_scope.scope_ref)
-                break
-
-    # Match links by link_type
-    used_links: set[str] = set()
-    for local_link in links:
-        for canon_link in expression.expression_links:
-            if canon_link.link_ref in used_links:
-                continue
-            if local_link.link_type == canon_link.link_type:
-                ref_map[local_link.link_ref] = canon_link.link_ref
-                used_links.add(canon_link.link_ref)
-                break
-
-    # Match binders by variable_ref
-    used_binders: set[str] = set()
-    for local_binder in binders:
-        for canon_binder in expression.binders:
-            if canon_binder.binder_ref in used_binders:
-                continue
-            ref_map[local_binder.binder_ref] = canon_binder.binder_ref
-            used_binders.add(canon_binder.binder_ref)
-            break
-
-    return ref_map
 
 
 def _canonical_ref(ref_map: dict[str, str], local_ref: str) -> str:
@@ -222,6 +150,7 @@ def _collect_applications(program: Any, context: Any, st: _State) -> Compilation
 
 
 def _collect_role_bindings(program: Any, context: Any, st: _State) -> CompilationFailure | None:
+    naming_bindings = naming_binding_choice_index(context)
     for a in program.actions:
         if a.action_type not in {"bind_role", "bind_reference"}:
             continue
@@ -236,12 +165,17 @@ def _collect_role_bindings(program: Any, context: Any, st: _State) -> Compilatio
         all_roles = set(frame.required_roles) | set(frame.optional_roles)
         if role_ref not in all_roles:
             return _fail("frame_role_mismatch", "role is not licensed by the application frame", a.action_ref)
+        allowed_naming = naming_bindings.get((frame.slot_ref, role_ref))
+        if allowed_naming is not None and slot_ref not in allowed_naming:
+            return _fail("naming_role_owner_mismatch", "naming role must bind its exact local contribution", a.action_ref)
         if a.action_type == "bind_role":
             if type(frame) is UnresolvedDesignationFrame and (role_ref != "role:surface" or slot_ref != frame.literal_contribution_slot_ref):
                 return _fail("unresolved_designation_literal_pointer", "literal must be the exact frame-owned contribution", a.action_ref)
             slot = context.contribution(slot_ref)
             if slot is None:
                 return _fail("unknown_contribution_slot", "contribution pointer is not in context", a.action_ref)
+            if allowed_naming is not None and a.source_unit_refs != slot.source_unit_refs:
+                return _fail("naming_role_sources", "naming action must consume its exact owned sources", a.action_ref)
             if type(frame) is UnresolvedDesignationFrame and a.source_unit_refs != slot.source_unit_refs:
                 return _fail("unresolved_designation_literal_sources", "surface action must consume the exact literal", a.action_ref)
             if role_ref not in slot.output_ports:
@@ -261,6 +195,8 @@ def _collect_role_bindings(program: Any, context: Any, st: _State) -> Compilatio
             slot = context.reference(slot_ref)
             if slot is None:
                 return _fail("unknown_reference_slot", "reference pointer is not in context", a.action_ref)
+            if allowed_naming is not None and a.source_unit_refs != slot.source_unit_refs:
+                return _fail("naming_role_sources", "naming action must consume its exact owned sources", a.action_ref)
             if role_ref not in slot.compatible_roles:
                 return _fail("reference_role_mismatch", "reference slot is incompatible with the selected role", a.action_ref)
             filler = GroundedReference(slot.target_ref)
@@ -335,7 +271,7 @@ def _node_children(program: Any) -> dict[str, tuple[str, ...]]:
         elif action.action_type == "attach_scope":
             scope_ref, _slot_ref, operand_ref = action.arguments
             grouped.setdefault(scope_ref, []).append(operand_ref)
-        elif action.action_type == "project_variable":
+        elif action.action_type == "project_variable" and len(action.arguments) == 3:
             binder_ref, _slot_ref, body_ref = action.arguments
             grouped.setdefault(binder_ref, []).append(body_ref)
     return {key: tuple(value) for key, value in grouped.items()}
@@ -379,6 +315,19 @@ def _resolve_variable_application(
 def _collect_binders(program: Any, context: Any, st: _State) -> CompilationFailure | None:
     for a in program.actions:
         if a.action_type != "project_variable":
+            continue
+        if len(a.arguments) == 2:
+            local_ref, slot_ref = a.arguments
+            slot = context.query_projection(slot_ref)
+            if slot is None:
+                return _fail("unknown_query_projection_slot", "request pointer is not in context", a.action_ref)
+            target = context.designation(slot.target_designation_slot_ref)
+            if target is None:
+                return _fail("unknown_designation_slot", "request target is not grounded", a.action_ref)
+            st.projections.append(QueryProjection(local_ref, slot.requested_content, target.target_ref))
+            st.node_map[local_ref] = local_ref
+            st.action_targets[a.action_ref] = (local_ref,)
+            st.grounding.update(slot.provenance_refs)
             continue
         binder_ref, slot_ref, target_ref = a.arguments
         slot = context.variable(slot_ref)
@@ -464,9 +413,18 @@ def _build_applications(
 
 
 def compile_recursive(
-    program: Any, context: Any
+    program: Any, context: Any, *, role_schema_index: Any = None
 ) -> CompilationSuccess | CompilationFailure:
-    """Compile an R2 Program ABI 2 into a canonical SemanticExpression."""
+    """Compile a Program ABI 3 into a canonical SemanticExpression."""
+    from .role_schemas import relation_query_errors, query_projection_errors, relation_declarative_errors, communicative_role_errors
+    role_errors = (*relation_query_errors(context, program, role_schema_index),
+        *query_projection_errors(context, program, role_schema_index),
+        *relation_declarative_errors(context, program, role_schema_index))
+    if role_errors:
+        return _fail(role_errors[0], "reviewed relation query correspondence failed")
+    communicative_errors = communicative_role_errors(context, program, role_schema_index)
+    if communicative_errors:
+        return _fail(communicative_errors[0], "reviewed communicative source correspondence failed")
     if program.proposal_context_ref != context.context_ref:
         return _fail("proposal_context_mismatch", "program does not bind the supplied proposal context")
     if program.orientation_ref != context.orientation_ref:
@@ -477,13 +435,14 @@ def compile_recursive(
         return _fail("unknown_mode_slot", "mode slot is not in context")
     if program.actions[-1].action_type == "abstain":
         return _fail("abstain_program", "abstention has no semantic expression")
-    if sum(1 for a in program.actions if a.action_type == "instantiate_operator") < 1:
+    if not any(a.action_type == "instantiate_operator" or
+        a.action_type == "project_variable" and len(a.arguments) == 2 for a in program.actions):
         return _fail("action_shape_not_admitted", "program requires at least one application")
 
     st = _State()
     for pass_fn in (
         _collect_designations, _collect_applications, _collect_role_bindings,
-        _collect_nested_roles, _collect_scopes, _collect_links, _collect_binders,
+        _collect_scopes, _collect_nested_roles, _collect_links, _collect_binders,
     ):
         err = pass_fn(program, context, st)
         if err is not None:
@@ -498,20 +457,18 @@ def compile_recursive(
             return _fail("action_shape_not_admitted", f"root ref {root_ref} is not a known node")
 
     try:
-        expression = SemanticExpression.create(
+        expression, ref_map = SemanticExpression._create_with_ref_map(
             applications=applications,
             root_refs=program.root_refs,
             scope_operators=st.scopes,
             expression_links=st.links,
             binders=st.binders,
             unresolved_fillers=st.unresolved,
+            query_projections=st.projections,
             bounds=ExpressionBounds(),
         )
     except ValueError as exc:
         return _fail("expression_construction_error", str(exc))
-
-    # Build mapping from local refs to canonical expression refs
-    ref_map = _build_ref_map(expression, applications, st.scopes, st.links, st.binders)
 
     action_rows: list[TranslationRow] = []
     for a in program.actions:

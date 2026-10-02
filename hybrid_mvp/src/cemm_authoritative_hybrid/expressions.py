@@ -1,4 +1,4 @@
-"""Semantic Expression ABI 2: canonical derivation-independent meaning.
+"""Semantic Expression ABI 3: canonical derivation-independent meaning.
 
 Programs describe how meaning was constructed.  This module owns the bounded,
 immutable semantic forest produced by exact compilation.  Local node and
@@ -19,7 +19,7 @@ from .contributions import ContributionKind
 from .persistence import RevisionPin
 from .programs import PERSISTENT_OPERATORS
 
-SEMANTIC_EXPRESSION_ABI_VERSION = 2
+SEMANTIC_EXPRESSION_ABI_VERSION = 3
 _MAX_REF_CHARS = 256
 _MAX_LITERAL_CHARS = 4096
 _MAX_EXPECTED_KINDS = 16
@@ -79,6 +79,7 @@ __all__ = [
     "UnresolvedValue",
     "RoleBinding",
     "SemanticApplication",
+    "QueryProjection",
     "ScopeOperator",
     "ExpressionLink",
     "VariableBinder",
@@ -287,6 +288,29 @@ class SemanticApplication:
 
 
 @dataclass(frozen=True)
+class QueryProjection:
+    """A nonpersistent request for content about one exact semantic target.
+
+    This leaf expresses requested meaning only. It neither infers a target kind
+    nor authorizes query evaluation, answer evidence or world mutation.
+    """
+
+    projection_ref: str
+    requested_content: str
+    target_ref: str
+
+    def __post_init__(self) -> None:
+        if type(self.projection_ref) is not str or type(self.target_ref) is not str:
+            raise ValueError("query projection refs must be exact strings")
+        _required(self.projection_ref, "projection_ref")
+        if type(self.requested_content) is not str or self.requested_content not in {
+            "description", "definition"
+        }:
+            raise ValueError("requested_content must be description or definition")
+        _required(self.target_ref, "target_ref")
+
+
+@dataclass(frozen=True)
 class ScopeOperator:
     scope_ref: str
     operator_type: str
@@ -367,7 +391,7 @@ class UnresolvedFiller:
             raise ValueError("critical must be boolean")
 
 
-Node: TypeAlias = SemanticApplication | ScopeOperator | ExpressionLink | VariableBinder
+Node: TypeAlias = SemanticApplication | ScopeOperator | ExpressionLink | VariableBinder | QueryProjection
 
 
 def _filler_dict(filler: Filler) -> dict[str, Any]:
@@ -514,6 +538,18 @@ def _unresolved_from_dict(data: Mapping[str, Any]) -> UnresolvedFiller:
     )
 
 
+def _projection_from_dict(data: Mapping[str, Any]) -> QueryProjection:
+    _exact_fields(
+        data, frozenset({"projection_ref", "requested_content", "target_ref"}),
+        "query projection",
+    )
+    return QueryProjection(
+        _required(data["projection_ref"], "projection_ref"),
+        _required(data["requested_content"], "requested_content"),
+        _required(data["target_ref"], "target_ref"),
+    )
+
+
 @dataclass(frozen=True, init=False)
 class SemanticExpression:
     def __init__(self, *_args: Any, **_kwargs: Any) -> None:
@@ -526,6 +562,7 @@ class SemanticExpression:
     expression_links: tuple[ExpressionLink, ...] = ()
     binders: tuple[VariableBinder, ...] = ()
     unresolved_fillers: tuple[UnresolvedFiller, ...] = ()
+    query_projections: tuple[QueryProjection, ...] = ()
 
     @classmethod
     def _from_canonical(
@@ -543,6 +580,7 @@ class SemanticExpression:
                 "expression_links",
                 "binders",
                 "unresolved_fillers",
+                "query_projections",
             ),
             canonical,
             strict=True,
@@ -560,8 +598,42 @@ class SemanticExpression:
         expression_links: Iterable[ExpressionLink] = (),
         binders: Iterable[VariableBinder] = (),
         unresolved_fillers: Iterable[UnresolvedFiller] = (),
+        query_projections: Iterable[QueryProjection] = (),
         bounds: ExpressionBounds | None = None,
     ) -> "SemanticExpression":
+        expression, _ = cls._create_with_ref_map(
+            applications=applications,
+            root_refs=root_refs,
+            scope_operators=scope_operators,
+            expression_links=expression_links,
+            binders=binders,
+            unresolved_fillers=unresolved_fillers,
+            query_projections=query_projections,
+            bounds=bounds,
+        )
+        return expression
+
+    @classmethod
+    def _create_with_ref_map(
+        cls,
+        *,
+        applications: Iterable[SemanticApplication],
+        root_refs: Iterable[str],
+        scope_operators: Iterable[ScopeOperator] = (),
+        expression_links: Iterable[ExpressionLink] = (),
+        binders: Iterable[VariableBinder] = (),
+        unresolved_fillers: Iterable[UnresolvedFiller] = (),
+        query_projections: Iterable[QueryProjection] = (),
+        bounds: ExpressionBounds | None = None,
+    ) -> tuple["SemanticExpression", dict[str, str]]:
+        """Create canonical meaning and retain its exact local-ref translation.
+
+        Compilation proofs must identify the canonical node produced from each
+        local program node. Reconstructing that relation after canonicalization
+        from partial node attributes is ambiguous when sibling applications
+        share an operator and predicate, so the canonicalizer records it while
+        cloning the validated graph.
+        """
         limits = bounds or ExpressionBounds()
         raw = _RawExpression(
             _bounded_tuple(applications, limits.max_applications, "applications"),
@@ -572,10 +644,13 @@ class SemanticExpression:
             _bounded_tuple(
                 unresolved_fillers, limits.max_unresolved_fillers, "unresolved fillers"
             ),
+            _bounded_tuple(query_projections, 1, "query projections"),
         )
-        canonical = _canonicalize(raw, limits)
+        ref_map: dict[str, str] = {}
+        canonical = _canonicalize(raw, limits, ref_map=ref_map)
         material = _expression_material(*canonical)
-        return cls._from_canonical(stable_ref("expression", material), canonical)
+        expression = cls._from_canonical(stable_ref("expression", material), canonical)
+        return expression, ref_map
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -592,15 +667,38 @@ class SemanticExpression:
                 for app in self.applications
             ],
             "root_refs": list(self.root_refs),
-            "scope_operators": [vars(item) for item in self.scope_operators],
+            "scope_operators": [
+                {
+                    "scope_ref": item.scope_ref,
+                    "operator_type": item.operator_type,
+                    "value_ref": item.value_ref,
+                    "operand_ref": item.operand_ref,
+                }
+                for item in self.scope_operators
+            ],
             "expression_links": [
                 {**vars(item), "operand_refs": list(item.operand_refs)}
                 for item in self.expression_links
             ],
-            "binders": [vars(item) for item in self.binders],
+            "binders": [
+                {
+                    "binder_ref": item.binder_ref,
+                    "variable_ref": item.variable_ref,
+                    "body_ref": item.body_ref,
+                }
+                for item in self.binders
+            ],
             "unresolved_fillers": [
                 {**vars(item), "expected_kinds": list(item.expected_kinds)}
                 for item in self.unresolved_fillers
+            ],
+            "query_projections": [
+                {
+                    "projection_ref": item.projection_ref,
+                    "requested_content": item.requested_content,
+                    "target_ref": item.target_ref,
+                }
+                for item in self.query_projections
             ],
         }
 
@@ -618,6 +716,7 @@ class SemanticExpression:
                     "expression_links",
                     "binders",
                     "unresolved_fillers",
+                    "query_projections",
                 }
             ),
             "SemanticExpression",
@@ -653,6 +752,10 @@ class SemanticExpression:
                 _unresolved_from_dict(item)
                 for item in _wire_list(data["unresolved_fillers"], "unresolved_fillers")
             ),
+            query_projections=(
+                _projection_from_dict(item)
+                for item in _wire_list(data["query_projections"], "query_projections")
+            ),
         )
         if rebuilt.expression_ref != data["expression_ref"]:
             raise ValueError("expression_ref mismatch")
@@ -669,9 +772,12 @@ class _RawExpression:
     expression_links: tuple[ExpressionLink, ...]
     binders: tuple[VariableBinder, ...]
     unresolved_fillers: tuple[UnresolvedFiller, ...]
+    query_projections: tuple[QueryProjection, ...]
 
 
 def _node_edges(node: Node) -> tuple[str, ...]:
+    if isinstance(node, QueryProjection):
+        return ()
     if isinstance(node, SemanticApplication):
         return tuple(
             binding.filler.node_ref
@@ -685,8 +791,15 @@ def _node_edges(node: Node) -> tuple[str, ...]:
     return (node.body_ref,)
 
 
-def _canonicalize(raw: _RawExpression, bounds: ExpressionBounds) -> tuple[Any, ...]:
-    if not 1 <= len(raw.applications) <= bounds.max_applications:
+def _canonicalize(
+    raw: _RawExpression,
+    bounds: ExpressionBounds,
+    *,
+    ref_map: dict[str, str] | None = None,
+) -> tuple[Any, ...]:
+    if len(raw.applications) > bounds.max_applications or not (
+        raw.applications or raw.query_projections
+    ):
         raise ValueError("application bound violated")
     if not 1 <= len(raw.root_refs) <= bounds.max_roots:
         raise ValueError("root bound violated")
@@ -698,8 +811,15 @@ def _canonicalize(raw: _RawExpression, bounds: ExpressionBounds) -> tuple[Any, .
         raise ValueError("binder bound violated")
     if len(raw.unresolved_fillers) > bounds.max_unresolved_fillers:
         raise ValueError("unresolved filler bound violated")
+    if len(raw.query_projections) > 1:
+        raise ValueError("query projection bound violated")
+    for projection in raw.query_projections:
+        if type(projection) is not QueryProjection:
+            raise ValueError("query projections require exact QueryProjection values")
+        # Revalidate even a forged frozen leaf before deriving semantic identity.
+        QueryProjection(projection.projection_ref, projection.requested_content, projection.target_ref)
     all_nodes: tuple[Node, ...] = (
-        raw.applications + raw.scope_operators + raw.expression_links + raw.binders
+        raw.applications + raw.scope_operators + raw.expression_links + raw.binders + raw.query_projections
     )
     if len(all_nodes) > bounds.max_total_nodes:
         raise ValueError("total node bound violated")
@@ -711,6 +831,8 @@ def _canonicalize(raw: _RawExpression, bounds: ExpressionBounds) -> tuple[Any, .
         else node.link_ref
         if isinstance(node, ExpressionLink)
         else node.binder_ref
+        if isinstance(node, VariableBinder)
+        else node.projection_ref
         for node in all_nodes
     ]
     if len(refs) != len(set(refs)):
@@ -799,6 +921,8 @@ def _canonicalize(raw: _RawExpression, bounds: ExpressionBounds) -> tuple[Any, .
 
     def semantic(ref: str, env: tuple[str, ...]) -> Any:
         node = nodes[ref]
+        if isinstance(node, QueryProjection):
+            return ("projection", node.requested_content, node.target_ref)
         if isinstance(node, SemanticApplication):
 
             def fill(binding: RoleBinding) -> Any:
@@ -856,12 +980,14 @@ def _canonicalize(raw: _RawExpression, bounds: ExpressionBounds) -> tuple[Any, .
         "binder": 0,
         "variable": 0,
         "unresolved": 0,
+        "projection": 0,
     }
     out_apps: list[SemanticApplication] = []
     out_scopes: list[ScopeOperator] = []
     out_links: list[ExpressionLink] = []
     out_binders: list[VariableBinder] = []
     out_unresolved: list[UnresolvedFiller] = []
+    out_projections: list[QueryProjection] = []
 
     def allocate(kind: str) -> str:
         value = f"{kind}:{counters[kind]}"
@@ -870,8 +996,16 @@ def _canonicalize(raw: _RawExpression, bounds: ExpressionBounds) -> tuple[Any, .
 
     def clone(ref: str, env: Mapping[str, str]) -> str:
         node = nodes[ref]
+        if isinstance(node, QueryProjection):
+            new_ref = allocate("projection")
+            if ref_map is not None:
+                ref_map[ref] = new_ref
+            out_projections.append(QueryProjection(new_ref, node.requested_content, node.target_ref))
+            return new_ref
         if isinstance(node, SemanticApplication):
             new_ref = allocate("application")
+            if ref_map is not None:
+                ref_map[ref] = new_ref
 
             def clone_binding(binding: RoleBinding) -> RoleBinding:
                 filler = binding.filler
@@ -882,6 +1016,8 @@ def _canonicalize(raw: _RawExpression, bounds: ExpressionBounds) -> tuple[Any, .
                 elif isinstance(filler, UnresolvedValue):
                     item = unresolved[filler.unresolved_ref]
                     new_unresolved_ref = allocate("unresolved")
+                    if ref_map is not None:
+                        ref_map[filler.unresolved_ref] = new_unresolved_ref
                     out_unresolved.append(
                         UnresolvedFiller(
                             new_unresolved_ref,
@@ -913,6 +1049,8 @@ def _canonicalize(raw: _RawExpression, bounds: ExpressionBounds) -> tuple[Any, .
             return new_ref
         if isinstance(node, ScopeOperator):
             new_ref = allocate("scope")
+            if ref_map is not None:
+                ref_map[ref] = new_ref
             operand = clone(node.operand_ref, env)
             out_scopes.append(
                 ScopeOperator(new_ref, node.operator_type, node.value_ref, operand)
@@ -920,6 +1058,8 @@ def _canonicalize(raw: _RawExpression, bounds: ExpressionBounds) -> tuple[Any, .
             return new_ref
         if isinstance(node, ExpressionLink):
             new_ref = allocate("link")
+            if ref_map is not None:
+                ref_map[ref] = new_ref
             operands = list(node.operand_refs)
             if node.link_type in REVIEWED_COMMUTATIVE_LINK_TYPES:
                 operands.sort(
@@ -929,6 +1069,8 @@ def _canonicalize(raw: _RawExpression, bounds: ExpressionBounds) -> tuple[Any, .
             out_links.append(ExpressionLink(new_ref, node.link_type, cloned))
             return new_ref
         new_ref = allocate("binder")
+        if ref_map is not None:
+            ref_map[ref] = new_ref
         new_variable = f"?v{counters['variable']}"
         counters["variable"] += 1
         next_env = dict(env)
@@ -945,6 +1087,7 @@ def _canonicalize(raw: _RawExpression, bounds: ExpressionBounds) -> tuple[Any, .
         tuple(out_links),
         tuple(out_binders),
         tuple(out_unresolved),
+        tuple(out_projections),
     )
 
 
@@ -955,6 +1098,7 @@ def _expression_material(
     expression_links: tuple[ExpressionLink, ...],
     binders: tuple[VariableBinder, ...],
     unresolved_fillers: tuple[UnresolvedFiller, ...],
+    query_projections: tuple[QueryProjection, ...],
 ) -> dict[str, Any]:
     return {
         "abi_version": SEMANTIC_EXPRESSION_ABI_VERSION,
@@ -964,6 +1108,7 @@ def _expression_material(
         "expression_links": expression_links,
         "binders": binders,
         "unresolved_fillers": unresolved_fillers,
+        "query_projections": query_projections,
     }
 
 
@@ -1203,19 +1348,22 @@ class CompilationSuccess:
 
 
 class SemanticExpressionCompiler:
-    """Compile the bounded R2 Program ABI 2 into canonical meaning.
+    """Compile the bounded Program ABI 3 into canonical meaning.
 
     Delegates to the recursive compiler which supports multiple applications,
     proposition role nesting, expression links, scope operators, variable
-    binders and transition hints.
+    binders, nonpersistent query projections and transition hints.
     """
+
+    def __init__(self, *, role_schema_index: Any = None) -> None:
+        self.role_schema_index = role_schema_index
 
     def compile(
         self, program: Any, context: Any
     ) -> CompilationSuccess | CompilationFailure:
         from .recursive_compiler import compile_recursive
 
-        return compile_recursive(program, context)
+        return compile_recursive(program, context, role_schema_index=self.role_schema_index)
 
 
 @dataclass(frozen=True, init=False)
@@ -1289,6 +1437,7 @@ class VerifiedMeaning:
                 expression.expression_links,
                 expression.binders,
                 expression.unresolved_fillers,
+                expression.query_projections,
             ),
         )
         if expression.expression_ref != expected_expression_ref:

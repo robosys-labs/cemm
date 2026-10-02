@@ -25,22 +25,38 @@ DEMO_TURNS = (
 
 
 def _diagnostic(cycle: Any) -> dict[str, Any]:
-    """Return the exact cycle diagnostic; R1 authorizes no response surface."""
+    """Return exact semantic diagnostics, not an admitted R5 response surface."""
     return cycle.as_dict()
 
 
-def demo(runtime: Any, trace: bool = False) -> list[Any]:
+def _print_cycle(runtime: Any, cycle: Any, *, development_reference: bool, trace: bool) -> None:
+    if not development_reference:
+        print(json.dumps(_diagnostic(cycle), indent=2, sort_keys=True))
+        return
+    output = runtime.development_reference(cycle)
+    if output.surface is not None:
+        print("CEMM (development reference): " + output.surface)
+    else:
+        print("CEMM (development reference): No complete output rule. Review required.")
+        for limitation in output.limitations:
+            print("LIMITATION: " + limitation.kind)
+    if trace:
+        print(json.dumps(_diagnostic(cycle), indent=2, sort_keys=True))
+        print(json.dumps(output.as_dict(), indent=2, sort_keys=True))
+
+
+def demo(runtime: Any, trace: bool = False, *, development_reference: bool = False) -> list[Any]:
     rows = []
     session_ref = "session:demo"
     for text in DEMO_TURNS:
         cycle = runtime.process(session_ref, text, trace=trace)
         rows.append(cycle)
         print(f"USER: {text}")
-        print(json.dumps(_diagnostic(cycle), indent=2, sort_keys=True))
+        _print_cycle(runtime, cycle, development_reference=development_reference, trace=trace)
     return rows
 
 
-def interactive(runtime: Any, trace: bool = False) -> None:
+def interactive(runtime: Any, trace: bool = False, *, development_reference: bool = False) -> None:
     print("CEMM authoritative hybrid MVP. /new, /trace, /quit")
     tracing = trace
     session_index = 0
@@ -65,7 +81,7 @@ def interactive(runtime: Any, trace: bool = False) -> None:
         cycle = runtime.process(
             f"session:interactive:{session_index}", text, trace=tracing
         )
-        print(json.dumps(_diagnostic(cycle), indent=2, sort_keys=True))
+        _print_cycle(runtime, cycle, development_reference=development_reference, trace=tracing)
 
 
 def main() -> None:
@@ -75,12 +91,17 @@ def main() -> None:
     parser.add_argument("--demo", action="store_true")
     parser.add_argument("--interactive", action="store_true")
     parser.add_argument("--trace", action="store_true")
+    parser.add_argument("--store", default=None)
+    parser.add_argument("--development-reference", action="store_true")
     args = parser.parse_args()
-    runtime = load_runtime(args.root, profile=args.profile)
-    if args.demo:
-        demo(runtime, args.trace)
-    else:
-        interactive(runtime, args.trace)
+    runtime = load_runtime(args.root, profile=args.profile, store_path=args.store)
+    try:
+        if args.demo:
+            demo(runtime, args.trace, development_reference=args.development_reference)
+        else:
+            interactive(runtime, args.trace, development_reference=args.development_reference)
+    finally:
+        runtime.stores.close()
 
 
 if __name__ == "__main__":

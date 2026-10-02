@@ -63,7 +63,8 @@ REVIEW_POLICY_REF = "review_policy:r4_1"
 REVIEW_POLICY_SHA256 = "1" * 64
 REVIEWER_REFS = ("reviewer:human-1",)
 REVIEWED_BASE_REVISION = "a" * 40
-AUTHORITY_GENERATION = "authority-v1-2026-07-29"
+_CROSS_SOURCE_AUTHORITY = AuthorityLinker().link_path(ROOT / "data/authority/manifest.json")
+AUTHORITY_GENERATION = _CROSS_SOURCE_AUTHORITY.generation
 FORM_ABI_VERSION = 7
 FORM_PACK_SHA256 = "2" * 64
 INPUT_SET_REF = "worksheet_input_set:0123456789abcdef01234567"
@@ -1316,7 +1317,7 @@ def _bundle_ref(child_bytes: dict[str, bytes], scenario_bytes: bytes) -> str:
 
 @lru_cache(maxsize=1)
 def _cross_source_authority():
-    return AuthorityLinker().link_path(ROOT / "data/authority/manifest.json")
+    return _CROSS_SOURCE_AUTHORITY
 
 
 def _cross_source_rows(*, mixed: bool = False):
@@ -2946,6 +2947,10 @@ def test_sr2_source_assignments_are_complete_and_critical_residuals_are_not_exec
             ("discourse", "discourse", "propose_transition"),
             ("open_variable", "role", "project_variable"),
             ("binder", "role", "project_variable"),
+            ("anchor", "projection", "project_variable"),
+            ("open_variable", "projection", "project_variable"),
+            ("binder", "projection", "project_variable"),
+            ("qualifier", "projection", "project_variable"),
         }
     )
     entry = supervision_module.SourceAssignmentEntry.create(
@@ -3309,7 +3314,7 @@ __cemm_test_inventory__ = {'tests/test_r4_supervision_contracts.py::test_authent
                                                                                                                                 'diagnostic_role': 'owner',
                                                                                                                                 'introduced_by_task': 'R4.1-Source-Readiness-SR2',
                                                                                                                                 'owner_ref': 'mutation-partition',
-                                                                                                                                'source_ast_sha256': '8bfae109d748e158bf38b6f54ebce2c50cc9288eddc46ee7ea1be61f991edc42'},
+                                                                                                                                'source_ast_sha256': '168367fbce5847c7e918c20c6db04d356bcdd0cbb611d1c8f95de98ef0208192'},
  'tests/test_r4_supervision_contracts.py::test_sr2_proposal_relation_and_verification_rejection_are_exact_and_distinct': {'activation_phase': 'R4',
                                                                                                                           'assertion_ref': 'assertion:r4-sr2-proposal-relation-verification-rejection-distinct',
                                                                                                                           'diagnostic_role': 'owner',

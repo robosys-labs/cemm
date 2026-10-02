@@ -6,17 +6,20 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Protocol, runtime_checkable
 
 from .canonical import stable_ref
+from .communicative import CommunicativeOwner
 from .config import RuntimeConfig
 from .cycle import Orientation
 from .expressions import VerifiedMeaning
 from .persistence import RevisionPin, SemanticStores
 from .proposal_context import ProposalContext
+from .programs import SemanticSwitchProgram
+from .verifier import CandidateVerificationReceipt
 from .r3_artifacts import EvaluationBundle
 from .r3_cognition import R3EvaluationOwner
 from .r3_effects import AdapterRegistry, EffectReceipt, NoEffectReceipt, R3EffectGateway
 from .dialogue import DialogueObligation
 from .r3_learning import LearningCoordinator, LearningPlan
-from .r3_response import ResponseBuilder, ResponseMeaning
+from .r3_response import ResponseBuilder, ResponseMeaning, validate_response_linkage
 from .situation import (
     SituationContext, SituationContextBuilder, SituationContextVerifier,
     SituationInputBundle,
@@ -56,7 +59,8 @@ class R3Artifacts:
                obligation: DialogueObligation | None,
                response_meaning: ResponseMeaning,
                input_revision_pin: RevisionPin,
-               output_revision_pin: RevisionPin) -> "R3Artifacts":
+               output_revision_pin: RevisionPin,
+               communicative_owner=None, meaning=None, orientation=None, program=None, receipt=None) -> "R3Artifacts":
         if type(situation) is not SituationContext or type(evaluation) is not EvaluationBundle:
             raise TypeError("invalid R3 situation/evaluation")
         if type(effect) not in {EffectReceipt, NoEffectReceipt}:
@@ -67,6 +71,9 @@ class R3Artifacts:
             raise TypeError("obligation must be exact DialogueObligation or None")
         if type(response_meaning) is not ResponseMeaning:
             raise TypeError("response_meaning must be exact ResponseMeaning")
+        validate_response_linkage(response=response_meaning, evaluation=evaluation,
+            situation=situation, effect=effect, meaning=meaning, communicative_owner=communicative_owner,
+            orientation=orientation, program=program, receipt=receipt)
         if evaluation.decision.situation.situation_ref != situation.situation_ref:
             raise ValueError("R3 evaluation/situation mismatch")
         if response_meaning.decision_ref != evaluation.decision.decision_ref:
@@ -144,7 +151,9 @@ class R3Artifacts:
 class R3Owner(Protocol):
     def run(self, *, meaning: VerifiedMeaning, orientation: Orientation,
             context: ProposalContext,
-            situation_inputs: SituationInputBundle) -> R3Artifacts: ...
+            situation_inputs: SituationInputBundle,
+            program: SemanticSwitchProgram | None = None,
+            receipt: CandidateVerificationReceipt | None = None) -> R3Artifacts: ...
 
 
 class R3Kernel:
@@ -152,7 +161,8 @@ class R3Kernel:
 
     def __init__(self, *, authority: Any, stores: SemanticStores,
                  config: RuntimeConfig, adapters: AdapterRegistry | None = None,
-                 resource_refs: tuple[str, ...] = (), designation_reader: Any = None) -> None:
+                 resource_refs: tuple[str, ...] = (), designation_reader: Any = None,
+                 form_resolver=None, role_schema_index=None) -> None:
         self._stores = stores
         self._adapters = adapters or AdapterRegistry()
         if type(resource_refs) is not tuple or any(type(ref) is not str or not ref for ref in resource_refs):
@@ -160,36 +170,50 @@ class R3Kernel:
         self._resource_refs = tuple(dict.fromkeys(resource_refs))
         self._situation_builder = SituationContextBuilder(authority)
         self._situation_verifier = SituationContextVerifier(authority)
-        self._evaluator = R3EvaluationOwner(authority, stores, config, designation_reader=designation_reader)
+        self._communicative_owner = (CommunicativeOwner(authority, form_resolver, role_schema_index, designation_reader)
+            if form_resolver is not None else None)
+        self._evaluator = R3EvaluationOwner(authority, stores, config, designation_reader=designation_reader,
+            communicative_owner=self._communicative_owner)
         self._learning = LearningCoordinator(authority, stores, config)
         self._effects = R3EffectGateway(stores, self._adapters, config, authority=authority)
         self._response = ResponseBuilder()
 
     def run(self, *, meaning: VerifiedMeaning, orientation: Orientation,
             context: ProposalContext,
-            situation_inputs: SituationInputBundle) -> R3Artifacts:
+            situation_inputs: SituationInputBundle, program=None, receipt=None) -> R3Artifacts:
         if type(meaning) is not VerifiedMeaning:
             raise TypeError("R3Kernel requires exact VerifiedMeaning")
-        input_pin = self._stores.revision_pin()
-        if meaning.revision_pin != input_pin or context.revision_pin != input_pin:
-            raise ValueError("R3 input revision pin is stale")
+        input_pin = meaning.revision_pin
+        if context.revision_pin != input_pin or orientation.revision_pin != input_pin:
+            raise ValueError("R3 input revision pins differ")
         if type(situation_inputs) is not SituationInputBundle:
             raise TypeError("R3Kernel requires exact SituationInputBundle")
         situation = self._situation_builder.build(
-            orientation, context, **situation_inputs.as_kwargs()
+            orientation, context, communicative_source=(self._communicative_owner.source(
+                evidence=situation_inputs.evidence, context=context, meaning=meaning,
+                orientation=orientation, program=program, receipt=receipt) if self._communicative_owner else None),
+            **situation_inputs.as_kwargs()
         )
         situation = self._situation_verifier.verify(
-            situation, orientation, context, **situation_inputs.as_kwargs()
+            situation, orientation, context, communicative_source=situation.communicative_source,
+            **situation_inputs.as_kwargs()
         )
-        evaluation = self._evaluator.evaluate(meaning, situation)
+        if input_pin != self._stores.revision_pin() and situation.communicative_source is None:
+            raise ValueError("R3 input revision pin is stale")
+        # Retained communicative evidence can be reconstructed at its original
+        # pin. Only the existing journal owner distinguishes an exact terminal
+        # retry from a stale initial reservation; it never rebases that request.
+        source_inputs = dict(orientation=orientation, program=program, receipt=receipt)
+        evaluation = self._evaluator.evaluate(meaning, situation, situation_inputs=situation_inputs, **source_inputs)
         learning_plan, obligation = self._learning.materialize(
             evaluation, meaning, situation
         )
         effect = self._effects.execute(
             evaluation, meaning, situation, learning_plan=learning_plan,
             obligation=obligation,
+            communicative_owner=self._communicative_owner, situation_inputs=situation_inputs, **source_inputs,
         )
-        output_pin = self._stores.revision_pin()
+        output_pin = effect.output_revision_pin
         response = self._response.build(
             evaluation=evaluation,
             meaning=meaning,
@@ -197,6 +221,7 @@ class R3Kernel:
             effect=effect,
             learning_plan=learning_plan,
             obligation=obligation,
+            communicative_owner=self._communicative_owner, **source_inputs,
         )
         return R3Artifacts.create(
             situation=situation,
@@ -207,4 +232,5 @@ class R3Kernel:
             response_meaning=response,
             input_revision_pin=input_pin,
             output_revision_pin=output_pin,
+            communicative_owner=self._communicative_owner, meaning=meaning, **source_inputs,
         )

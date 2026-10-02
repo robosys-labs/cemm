@@ -119,7 +119,7 @@ def _candidate_identity_material(
 
 @dataclass(frozen=True, init=False)
 class RankedProgramCandidate:
-    """One exact, proposer-ordered Program ABI 2 candidate envelope."""
+    """One exact, proposer-ordered Program ABI 3 candidate envelope."""
 
     candidate_ref: str
     rank: int
@@ -466,7 +466,7 @@ class ProposalResult:
 
 
 # ---------------------------------------------------------------------------
-# BootstrapProposer — bounded deterministic Program ABI 2 producer
+# BootstrapProposer — bounded deterministic Program ABI 3 producer
 # ---------------------------------------------------------------------------
 
 
@@ -488,7 +488,7 @@ class BootstrapProposer:
 
     ORIENT has already resolved every form, designation, contribution and
     grounding choice in ``context``. This owner only enumerates bounded Program
-    ABI 2 derivations from those slots. Exact semantic acceptance belongs to
+    ABI 3 derivations from those slots. Exact semantic acceptance belongs to
     VERIFY and is intentionally not invoked here.
     """
 
@@ -528,7 +528,7 @@ class BootstrapProposer:
             return self._abstained(context, "proposal:critical_residual", 0)
         if not context.mode_slots:
             return self._abstained(context, "proposal:no_mode", 0)
-        if not context.application_frames:
+        if not context.application_frames and not context.query_projection_slots:
             return self._abstained(context, "proposal:no_application_frame", 0)
 
         from .recursive_composer import RecursiveComposer

@@ -1042,6 +1042,7 @@ class R3EffectGateway:
         *,
         learning_plan: LearningPlan | None = None,
         obligation: DialogueObligation | None = None,
+        communicative_owner=None, orientation=None, program=None, receipt=None, situation_inputs=None,
     ) -> EffectReceipt | NoEffectReceipt:
         if type(evaluation) is not EvaluationBundle or type(meaning) is not VerifiedMeaning or type(situation) is not SituationContext:
             raise TypeError("effect gateway requires exact R3 artifacts")
@@ -1049,6 +1050,13 @@ class R3EffectGateway:
             raise ValueError("effect gateway meaning lineage mismatch")
         if evaluation.decision.situation.situation_ref != situation.situation_ref:
             raise ValueError("effect gateway situation lineage mismatch")
+        from .communicative import CommunicativeOwner, authenticate_consequence, require_live_authority
+        if type(communicative_owner) is CommunicativeOwner and communicative_owner.reader.stores is not self._stores:
+            raise ValueError("communicative owner reader store differs from effect gateway store")
+        active_authority = require_live_authority(communicative_owner, self._authority, meaning.revision_pin)
+        source_inputs = dict(meaning=meaning, orientation=orientation, program=program, receipt=receipt,
+            evaluation=evaluation, selection=evaluation.response_selection, situation_inputs=situation_inputs)
+        authenticate_consequence(communicative_owner, authority=active_authority, situation=situation, **source_inputs)
         action = evaluation.decision.action
         if action is DecisionAction.ADMIT_CLAIM:
             if not situation.trusted_observation:
@@ -1078,7 +1086,10 @@ class R3EffectGateway:
                 DecisionStatus.UNKNOWN: NoEffectReason.UNKNOWN,
                 DecisionStatus.BUDGET_EXHAUSTED: NoEffectReason.UNKNOWN,
             }.get(evaluation.decision.status, NoEffectReason.READ_ONLY)
-        return self._persist_no_effect(evaluation, meaning, situation, reason)
+        effect = self._persist_no_effect(evaluation, meaning, situation, reason)
+        authenticate_consequence(communicative_owner, authority=active_authority,
+            situation=situation, effect=effect, **source_inputs)
+        return effect
 
     def _persist_learning_proposal(self, evaluation, meaning, situation, plan, obligation):
         from .r3_learning import LearningCoordinator, learning_proposal_request
@@ -1177,6 +1188,8 @@ class R3EffectGateway:
             "decision_ref": decision.decision_ref,
             **self._turn_payload(situation),
         }
+        if situation.communicative_source is not None:
+            request_payload["communicative_evaluation"] = evaluation.as_dict()
         if (
             situation.mode is SemanticMode.QUERY
             and decision.status is DecisionStatus.UNKNOWN
@@ -1204,6 +1217,7 @@ class R3EffectGateway:
             intent_ref=origin,
             decision_ref=decision.decision_ref,
             request_payload=request_payload,
+            input_revision_pin=situation.revision_pin,
         )
         if stored.entry.state.terminal:
             receipt = self._terminal_receipt(stored)

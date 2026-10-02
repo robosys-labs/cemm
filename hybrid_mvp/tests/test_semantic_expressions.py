@@ -447,11 +447,12 @@ def test_semantic_expression_abi2_rejects_abi1_wire_values() -> None:
     )
     payload = expression.as_dict()
 
-    assert SEMANTIC_EXPRESSION_ABI_VERSION == 2
-    assert payload["abi_version"] == 2
-    payload["abi_version"] = 1
-    with pytest.raises(ValueError, match="Semantic Expression ABI"):
-        SemanticExpression.from_dict(payload)
+    assert SEMANTIC_EXPRESSION_ABI_VERSION == 3
+    assert payload["abi_version"] == 3
+    for retired_abi in (1, 2):
+        payload["abi_version"] = retired_abi
+        with pytest.raises(ValueError, match="Semantic Expression ABI"):
+            SemanticExpression.from_dict(payload)
 
 
 def test_semantic_expression_rejects_legacy_designation_target_as_predicate() -> None:
@@ -761,7 +762,7 @@ __cemm_test_inventory__ = {'tests/test_semantic_expressions.py::test_alpha_renam
         "diagnostic_role": "owner",
         "introduced_by_task": "R2-Unresolved-Designation-Task-1",
         "owner_ref": "expression-compiler",
-        "source_ast_sha256": "b549d6a95735216e0ed44c0bb144222351ef8e7d1b5a4f24aecebb5d83229634"
+        "source_ast_sha256": "154d2adfd52a2ea59e761f31aaad4fe4a6d3718f002414feba74b663566e92ab"
     },
     "tests/test_semantic_expressions.py::test_semantic_expression_rejects_legacy_designation_target_as_predicate": {
         "activation_phase": "R2",

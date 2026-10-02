@@ -21,7 +21,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "R3-Complete",
         "owner_ref": "capability-effect",
-        "source_ast_sha256": "8a11fa057579688ee60acff6870d4cf3767e5e3b5860c04c7c4b4d5a5983c913"
+        "source_ast_sha256": "dab4a83cb1b7b09a82e6f3a1defea7ba67002a82777c5b2e22a9fe2a2b96ed2e"
     },
     "tests/test_r3_effect_receipts.py::test_committed_receipt_requires_advanced_effect_revision": {
         "activation_phase": "R3",
@@ -101,7 +101,7 @@ def test_atomic_effect_transaction_advances_world_and_effect_together(
         with monkeypatch.context() as fault:
             fault.setattr(persistence, "_r3_write_session_sqlite", fail_after_session_write)
             with pytest.raises(sqlite3.OperationalError, match="injected terminal transaction failure"):
-                R3EffectGateway(stores, AdapterRegistry({"adapter:state": adapter})).execute(
+                R3EffectGateway(stores, AdapterRegistry({"adapter:state": adapter}), authority=linked_authority).execute(
                     evaluation, meaning, situation
                 )
         assert len(adapter.requests) == 1
@@ -124,7 +124,7 @@ def test_atomic_effect_transaction_advances_world_and_effect_together(
         assert reopened.r3_world_facts() == before_facts
         assert reopened.r3_session_snapshot(situation.session_ref) == before_session
         assert effect_journal_get(reopened, key) == observed
-        gateway = R3EffectGateway(reopened, AdapterRegistry({"adapter:state": adapter}))
+        gateway = R3EffectGateway(reopened, AdapterRegistry({"adapter:state": adapter}), authority=linked_authority)
         receipt = gateway.execute(evaluation, meaning, situation)
         assert receipt.status is EffectStatus.COMMITTED
         assert len(adapter.requests) == 1  # reuse the durable observation, not the device

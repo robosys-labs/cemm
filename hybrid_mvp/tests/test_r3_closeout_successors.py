@@ -1,4 +1,22 @@
 """R3 behavioral successors for frozen predecessor assertion lineages."""
+from dataclasses import FrozenInstanceError
+
+import pytest
+
+from cemm_authoritative_hybrid.config import RuntimeConfig
+from cemm_authoritative_hybrid.cycle import OrientationProjector
+from cemm_authoritative_hybrid.dialogue import (
+    DialogueObligation,
+    DialogueObligationManager,
+    FocusStore,
+    GoalArbiter,
+    GoalSelection,
+    ObligationKind,
+    ReferenceConstraints,
+    ReferenceResolver,
+    VerifiedSemanticFocus,
+)
+from cemm_authoritative_hybrid.persistence import RevisionPin, memory_stores
 from tests.r3_successor_contracts import assert_successor_contract
 
 __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_successor_02c8a3b9911859bf0353': {'activation_phase': 'R3',
@@ -13,12 +31,6 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': '49c454edd4846189946025d8acfb26eb6384547238a1cdc4903f2feb9383c788',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_focus.py::test_mixed_verified_and_unverified'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_03f6705c78516c61d5fb': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:query-engine-query-memoization-returns-same-result',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'f077ae8b54d5935ec34d4acad7836562d1f9e4ee50f14cfb36ba2c218944a7e1',
-                                                                                  'supersedes_node_id': 'tests/test_query_engine.py::test_query_memoization_returns_same_result'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_061076ac8035b501bcbe': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:cognitive-loop-e2e-test-names-and-aliases-alias-query-preserves-semantic-refs',
                                                                                   'diagnostic_role': 'phase',
@@ -47,13 +59,13 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-goal-arbiter-prefers-obligation-over-goal',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '07bdecb94f784e35e1ea06b6bd34e7af931d74ad8e39adbdbab3f7f5f062ffdd',
+                                                                                  'source_ast_sha256': '0082fb4e3ad369bb5b8ca42e28b7949fa9caa924b8da834f3ac937cc29c162be',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_goal_arbiter_prefers_obligation_over_goal'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_0e8f1a78989177d083df': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:discourse-reference-that-resolves-most-recent-proposition',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '4248ab6913c2521692b56b165ddfd98b26ea8fb67439c8f505e23bd9e4fa1684',
+                                                                                  'source_ast_sha256': '8de9ab10a1978c3fa1ccf53dc176f2343b085d7c9e8770f6be71a1479ac5fdd6',
                                                                                   'supersedes_node_id': 'tests/test_discourse_reference.py::test_that_resolves_most_recent_proposition'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_117636df56c528015c99': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:cognitive-loop-e2e-test-cycle-result-artifacts-cycle-result-has-proposal',
@@ -85,29 +97,17 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': 'e8bbc27121e2e858a0503abca242fe01ee10c871c50f318163345922b9e8ab5c',
                                                                                   'supersedes_node_id': 'tests/test_query_engine.py::test_meaning_description_is_composed_from_grounded_structure[what-expected1]'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_1ca8392bbc811fda3616': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:inference-bounds-inference-exhaustion-is-explicit',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '8bc98636618046af3830ca446a6290f41444eaf49670163eeaa96ae76b4e3d70',
-                                                                                  'supersedes_node_id': 'tests/test_inference_bounds.py::test_inference_exhaustion_is_explicit'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_1cb3a69be7ea10a25d66': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:recursive-inference-recursive-inference-chains-multiple-hops',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '68d51082e7c2030a61a606fd2a3375dec2f773bae1457bd3e96edea8f9dd02ce',
-                                                                                  'supersedes_node_id': 'tests/test_recursive_inference.py::test_recursive_inference_chains_multiple_hops'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_1e4717dec0e04f377686': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-fulfill-marks-obligation-with-completion-receipt',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '2c67f5c8d3e13fdc0572e1b75548054ee4e429097190ee4f34b07ffd4229d40c',
+                                                                                  'source_ast_sha256': 'de381b336e9c487013ba11acf1162b7ad3d4933902d91addbe6e700a76bbd626',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_fulfill_marks_obligation_with_completion_receipt'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_1ebc6d8ac2f5ba9c3561': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:discourse-reference-that-resolves-prior-verified-proposition',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '68b63605a4d5035c1ed991770fc208c9ec391091499587aed50d0aaa4459c308',
+                                                                                  'source_ast_sha256': '5844d159b291239ca477980a6fed986a18d732afc0333a36e0cb930da2f0b094',
                                                                                   'supersedes_node_id': 'tests/test_discourse_reference.py::test_that_resolves_prior_verified_proposition'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_1f9c96bd25efd3eac759': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:cognitive-loop-e2e-test-incompatible-multi-anchor-incompatible-multi-anchor-produces-cycle',
@@ -115,17 +115,11 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': '2c502a7b9a10d27d1f4efcedd31d770bbbe1f21c5d3d18ebe65e06f8853df363',
                                                                                   'supersedes_node_id': 'tests/test_cognitive_loop_e2e.py::TestIncompatibleMultiAnchor::test_incompatible_multi_anchor_produces_cycle'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_2050e9fd20f68a19a91f': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:inference-bounds-inference-exhaustion-receipt-records-rounds',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '23675a057ee58337ac59bfa4afa8cc4c21fe63ea225662ec2701655d2bf305d1',
-                                                                                  'supersedes_node_id': 'tests/test_inference_bounds.py::test_inference_exhaustion_receipt_records_rounds'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_22e25b96ca44e4637599': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:discourse-reference-orientation-projector-uses-focus-store',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'eff00384adfaed821f187f8870d1d0ae6a64f8d7f18ccf108e49083ce500ea2f',
+                                                                                  'source_ast_sha256': '70c8b702b57a301c5e340f0ca50126a1112ccd818197e4fa0d7c26226d22afba',
                                                                                   'supersedes_node_id': 'tests/test_discourse_reference.py::test_orientation_projector_uses_focus_store'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_23ab4f6d79fd50bbf874': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:six-phase-runtime-second-cycle-increments-world-revision',
@@ -185,7 +179,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-focus-focus-store-recent-entries',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '95fabe8e531cf592a6d390a344131b773e470d8e662e764daedf26345aa40788',
+                                                                                  'source_ast_sha256': 'e95eefeb7b63c817f000d021b005622ef04f21e37e413fda3f2f4dddeccd1521',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_focus.py::test_focus_store_recent_entries'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_31ec79e7f8c1d6efaaf8': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:cognitive-loop-e2e-test-realization-failure-realization-failure-produces-gap-receipt',
@@ -215,7 +209,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-dialogue-obligation-accepts-typed-kinds',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '6ed0f868509695404eea7c48cc94676e8fe98983ec85cc41fc3a252c3c35b9cc',
+                                                                                  'source_ast_sha256': 'f7fec01fd0c94d5cb98cdd4e426edc8104425658d2e5e2767a7bcf744d7d4b12',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_dialogue_obligation_accepts_typed_kinds[evidence_request]'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_3d4560bbd2cba740ad1d': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:gap-matrix-every-cycle-status-is-reachable',
@@ -256,7 +250,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:discourse-reference-what-did-you-say-resolves-to-most-recent-system-speech',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '05d851a90e196588e0e919b67843c7df519b0104ea54bd945d143ddfdc230c05',
+                                                                                  'source_ast_sha256': 'd9f9e7996e4abec651fe6e2c8497a4d5e4f7315d592a21e62f5afeaac421a91c',
                                                                                   'supersedes_node_id': 'tests/test_discourse_reference.py::test_what_did_you_say_resolves_to_most_recent_system_speech'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_496f6e6d7dbfe89cf019': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:six-phase-runtime-injected-program-runs-through-six-phase-owners',
@@ -268,7 +262,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-focus-focus-store-starts-empty',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '2fe8b05792e23fec3d561bfd0be32e9824fa7097423f6e6817b4443524cbb250',
+                                                                                  'source_ast_sha256': '6d194798ab9ce5e7b5620500e8cff3e42ff7762bceeb85168b2db594db35d2d4',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_focus.py::test_focus_store_starts_empty'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_4b9d01eec01554c58a47': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:cognitive-loop-e2e-test-names-and-aliases-name-query-produces-response-meaning',
@@ -292,7 +286,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-goal-selection-is-frozen',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '0133b8c35c9f91dbd8fb2906ef294ec223c91e5a5d6aa8e557bca79c0b862674',
+                                                                                  'source_ast_sha256': '4d8430aa7618d4120c2b292d06790f831cc62809ff6ed63af374a7c557a5f7b1',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_goal_selection_is_frozen'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_512bcc3c6fba9795ed02': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:synonym-acquisition-acquisition-requires-reviewer-authorization',
@@ -358,19 +352,13 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:discourse-reference-resolution-bindings-contain-ref-to-resolved',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '3bcfdafc3c6d1307adfbbe2e635cf4dba8a0b933e6b76bec587339eebc2030b0',
+                                                                                  'source_ast_sha256': 'b582bbdbc5410606bff18fe1f6f55cdc26c2985d0c4d092e9c779816cdbef5e0',
                                                                                   'supersedes_node_id': 'tests/test_discourse_reference.py::test_resolution_bindings_contain_ref_to_resolved'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_677fb171a5df5a940bcf': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:recursive-inference-recursive-inference-proof-has-semantic-refs',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '1ffa4e61d167b219894fa13d00159050255fbf46bdbb6fa95251bf8ac65954bc',
-                                                                                  'supersedes_node_id': 'tests/test_recursive_inference.py::test_recursive_inference_proof_has_semantic_refs'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_6d677dc551ceca07cc5b': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:discourse-reference-person-constraint-filters-by-participant',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'ed79668f45a4eda53fef2352afa53d3521154e4c0be127019e7a6285165f96db',
+                                                                                  'source_ast_sha256': 'd0f48228843b27f202f04c56888139fbe40c719ee22821135cdada65345646ed',
                                                                                   'supersedes_node_id': 'tests/test_discourse_reference.py::test_person_constraint_filters_by_participant'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_6da536de8c4c1ceb8564': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:restart-e2e-test-restart-multiple-cycles-restart-preserves-revisions-across-multiple-cycles',
@@ -406,7 +394,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-dialogue-obligation-carries-source-query-and-contract',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '1fe559114f3b026734d9927caba8feebff87518b3832fa05fa8c2e198ff11798',
+                                                                                  'source_ast_sha256': '2b308a0f186bb980602f66cc16bb786164373fb952dccc77f11c191273b5de9f',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_dialogue_obligation_carries_source_query_and_contract'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_792373ec0692ff7b4f7d': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:cognitive-loop-e2e-test-learning-continuation-learning-continuation-produces-cycle',
@@ -490,7 +478,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:discourse-reference-unresolved-ref-returns-none',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '9b23ee6955596bfaba950ad57d9682431571ac97fe48b3f4e52c4c199b679895',
+                                                                                  'source_ast_sha256': '07e375615194fef185a8ba1da9ad359f6c637d10a0950ff6b02c74edb87b314e',
                                                                                   'supersedes_node_id': 'tests/test_discourse_reference.py::test_unresolved_ref_returns_none'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_8e5b08c7cdc04e85c277': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:r1-runtime-trace-observational',
@@ -502,7 +490,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-dialogue-obligation-accepts-typed-kinds',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'fdadcb8c95af84c4a5131a8315806a88b0918fe17d964f4d500c5d3ed21e4269',
+                                                                                  'source_ast_sha256': 'a03cdd172260bfaf346d57f3adbea77b34cbe9c56854b598cb95435f5ee4eb24',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_dialogue_obligation_accepts_typed_kinds[learning_answer]'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_9536463b82ad4c736e8a': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:cognitive-loop-e2e-test-modality-query-mode-cycle',
@@ -550,7 +538,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-goal-arbiter-ignores-satisfied-obligations',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'f7f052a281aedad6f1363fc430b50cabea00acd88c3001f0f4c17a45b9802e01',
+                                                                                  'source_ast_sha256': '5e01c1325f326cd93c1b3acdc5cb1c7fc1bad7d4545dca1d1cae84798a09319e',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_goal_arbiter_ignores_satisfied_obligations'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_a3c7e653cf515659a7a6': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:restart-e2e-test-restart-committed-effect-committed-effect-remains-journaled-after-restart',
@@ -562,7 +550,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:discourse-reference-kind-constraint-filters-by-kind',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '852fbf1f48df018666367890c8e6baa672cde1e4fa08da11f310a6f7121fbd53',
+                                                                                  'source_ast_sha256': 'd1d2d4e459251d4219b03870fd05cc9bdc8ee3be1ef530da922fa8df12d29405',
                                                                                   'supersedes_node_id': 'tests/test_discourse_reference.py::test_kind_constraint_filters_by_kind'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_a6877b3557b842cee518': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:cognitive-loop-e2e-test-what-did-you-say-what-did-you-say-produces-cycle',
@@ -580,19 +568,19 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-fulfilled-learning-allows-new-learning',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'd13da62d07dc72275c5eebf29d1164bb51b51aa996edb60e9c737c1d4e6d4bed',
+                                                                                  'source_ast_sha256': 'fbd7192675b284f8554336d40fc8c6557b9cc7917053cd8083b5c414acc6854e',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_fulfilled_learning_allows_new_learning'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_ac8ed838a7083c66f1e4': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:discourse-reference-recency-constraint-limits-candidates',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '75b913bcfff43d0b1dfafee3c41cc68890100a4919291a70506819308979fe4a',
+                                                                                  'source_ast_sha256': '3adf9bae650996cc6af61615d33bb69390074763e1beb9ce33bdd5192b553bfe',
                                                                                   'supersedes_node_id': 'tests/test_discourse_reference.py::test_recency_constraint_limits_candidates'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_acb0ed90038c0bce5e74': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:dialogue-focus-focus-store-accumulates-across-turns',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'e453a9e8582f270baffe2cb22775f99be8a6fb6ae729bde4bc1c7cbd25e8ba0d',
+                                                                                  'source_ast_sha256': '52a6f19cc759409f21a9ee7b987b65b9284fc379ca18dc772056fc62af468425',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_focus.py::test_focus_store_accumulates_across_turns'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_ae3ce54649dca81d1f24': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:synonym-acquisition-one-invalid-definition-rejects-entire-acquisition',
@@ -616,13 +604,13 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-non-learning-obligations-coexist',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '7b46ce47b5b177a823b8020650f1cee115fbfa413fd207daef07071fd3932c6c',
+                                                                                  'source_ast_sha256': 'adb876e9aebafcc752384c7f07fa6b40d19821e131a8b61628a371eb05cd9e25',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_non_learning_obligations_coexist'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_b48619272bc7c008bae8': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-fulfilling-non-learning-does-not-consume-learning',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'c920a2c12f31b1dea96539e5ebc97a57e5d3cafb32938e3c4657cdc29aa8dca1',
+                                                                                  'source_ast_sha256': '5baf03c84ff4b3d5686389bac4f2eb7db26880182d5c76e7ec6ae69e68d8832f',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_fulfilling_non_learning_does_not_consume_learning'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_b4d0d67b952a4c0d71fe': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:r1-slice-b-runtime-receipts-bind-orientation-content',
@@ -630,24 +618,12 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': '31cf98cb378d7832c85f5ececdf96ea012b184b92be8421d29774c01abd27a83',
                                                                                   'supersedes_node_id': 'tests/test_r1_runtime_path.py::test_r1_receipts_bind_exact_orientation_and_context_refs'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_b5d5258a6580209c1e4f': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:query-engine-query-result-has-retrieval-receipt',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'fc29b38559566f3336d3a549329b899ce85196059bcc0d8ad373962876ab6ce0',
-                                                                                  'supersedes_node_id': 'tests/test_query_engine.py::test_query_result_has_retrieval_receipt'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_b650ca7318ae30576ef7': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:gap-matrix-every-cycle-status-is-reachable',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': '27b99faf56a622554a6f18078ac7e8aa2267472228e5d6bb5bbc74a6017392f1',
                                                                                   'supersedes_node_id': 'tests/test_gap_matrix.py::test_every_cycle_status_is_reachable[CycleStatus.AMBIGUOUS]'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_b73425f4abf272047265': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:recursive-inference-recursive-inference-proof-tracks-rule-applications',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '7e701936cee49eba3a839fc78179ac3ef4a2b0bf8b5186e8397e9950c4415146',
-                                                                                  'supersedes_node_id': 'tests/test_recursive_inference.py::test_recursive_inference_proof_tracks_rule_applications'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_b767ac63d32d8299b00e': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:epistemic-admission-test-admission-is-policy-derived-admission-carries-policy-ref',
                                                                                   'diagnostic_role': 'phase',
@@ -664,7 +640,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-ui-intent-label-has-no-control-authority',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '8184a1936f6d6be777d56cdc1ce641d7b8de9360756f48ad1566e5db1119a4c8',
+                                                                                  'source_ast_sha256': '6d77633e7c70b11c12de180d8d7464e9714300c0ac5200557af222ff1512a3b0',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_ui_intent_label_has_no_control_authority'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_be0bc997b98fb4dd9ace': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:epistemic-admission-test-nested-placements-remain-attributed-nested-mode-is-attributed',
@@ -676,7 +652,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-dialogue-obligation-accepts-typed-kinds',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '25319e1f96108afceec93d5432cbda651aec267409afd14b29d2c5e4cabd849f',
+                                                                                  'source_ast_sha256': 'dbd75d72835850c275e8bd40d414ccf340696a88d838e70df027be4ba1737a92',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_dialogue_obligation_accepts_typed_kinds[operation_resolution]'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_be58b79b365d977533c9': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:learning-distinctions-meaning-lookup-does-not-mutate',
@@ -696,12 +672,6 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': 'e3e251bfcdea3fa1ef47289638459ab1a06a1c68f64202bd871b47ffebd00882',
                                                                                   'supersedes_node_id': 'tests/test_cognitive_loop_e2e.py::TestReorderedQuestions::test_reordered_question_same_cycle_structure'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_c29fdb6812129ace3e18': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:recursive-inference-recursive-inference-source-refs-include-programs',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '4214ada84f313301ccbf797dbc82d2e0e7573d7cea2f3d75ceb4a6622bc6b283',
-                                                                                  'supersedes_node_id': 'tests/test_recursive_inference.py::test_recursive_inference_source_refs_include_programs'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_c40d59f24966f4fa8bd1': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:cognitive-loop-e2e-test-attributed-speech-attributed-denial-under-contrast',
                                                                                   'diagnostic_role': 'phase',
@@ -712,20 +682,8 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-dialogue-obligation-is-frozen',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '16b561413209af3add67a2e21f6b12b82c31b0df02cb672e95e362ac460a8232',
+                                                                                  'source_ast_sha256': '2fae250c3d0b6e9889a39aa87bb1a59dba96b88f503332f3027901c717b1421b',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_dialogue_obligation_is_frozen'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_c90a4b6a2a33eb6673de': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:inference-bounds-inference-within-bounds-succeeds',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'b4806fb4b7691a822242e729c09470556fb9a2d3706c26d6ad1a147fcd11a197',
-                                                                                  'supersedes_node_id': 'tests/test_inference_bounds.py::test_inference_within_bounds_succeeds'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_ca9460a2cf8641c70a6b': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:gap-matrix-every-cycle-status-is-reachable',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '568a6b42e796b199b0acf616cc3dece0e5e7906eca3707ae126200ab05ac4ebd',
-                                                                                  'supersedes_node_id': 'tests/test_gap_matrix.py::test_every_cycle_status_is_reachable[CycleStatus.BUDGET_EXHAUSTED]'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_cb8ad9a437e9ab6f1679': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:r1-selected-stops-at-r3',
                                                                                   'diagnostic_role': 'phase',
@@ -750,17 +708,11 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': 'e35fd835f2a0253700139d931acd85304cb153d00181f40de1a73f50fc44e9ae',
                                                                                   'supersedes_node_id': 'tests/test_cognitive_loop_e2e.py::TestPolysemy::test_polysemous_surface_produces_cycle'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_d08e2ebdad820295a190': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:recursive-inference-recursive-inference-unknown-entity-is-unknown',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '47616e4a61ee853a35dd7a87fefed8420c7a30acf3dfa0091cb0d39ca5e2a2d2',
-                                                                                  'supersedes_node_id': 'tests/test_recursive_inference.py::test_recursive_inference_unknown_entity_is_unknown'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_d1c5dbf99de9415b8519': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-only-one-learning-obligation-may-exist',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'e89eac78d633a4f923a62c102e8f21d4c0af6d58a941fe33680754ba6c1610ac',
+                                                                                  'source_ast_sha256': 'b3446140faf3e353e2e2147ef407dcd33bbd64f341ef55c1b13aa6e8349093f2',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_only_one_learning_obligation_may_exist'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_d3129dc396cacffc2e8d': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:synonym-acquisition-reviewed-generic-definitions-publish-one-linked-generation',
@@ -790,7 +742,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-focus-focus-store-stores-verified-refs',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '6d4b9852fb3aaeb9218fa532f48ecace94b1b4f12ca5ba7f6b4013a83de3a297',
+                                                                                  'source_ast_sha256': '92c41e76cc6585d15af5f5191de82f56038d4f04f2eb33881aeb259927870588',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_focus.py::test_focus_store_stores_verified_refs'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_dcac0e8e494facbd9d3f': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:synonym-acquisition-acquisition-consumes-plan',
@@ -814,7 +766,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-goal-arbiter-idle-when-nothing-pending',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'c9dd59beb01d490b10a04f8dc4418aa36bfcd2bc1e0901c6d8c6d5a869d62f91',
+                                                                                  'source_ast_sha256': '9a57165f0874ec2bc0ef8d15238653a380eaf15fd1820977a711b33df3fdcabf',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_goal_arbiter_idle_when_nothing_pending'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_df4e7f0c6066c9fc02cf': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:epistemic-admission-test-admission-is-policy-derived-admission-cannot-be-requested-by-token',
@@ -832,13 +784,13 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-dialogue-obligation-accepts-typed-kinds',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '448a4780ca0eaef73b7ca856176331ac28bbbc26cd009d286b4428259d9d49e2',
+                                                                                  'source_ast_sha256': '2876cb846bc6b5a62d1668a7b9e891902807915f517fbc91f4442f8efed3ffe9',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_dialogue_obligation_accepts_typed_kinds[clarification]'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_e1d049d841566398e976': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:discourse-reference-alternatives-below-margin-are-preserved',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '0ab5ad150d621c3c3a767c04a1efe441876b27e3edd774e0b71ad5422c042ddd',
+                                                                                  'source_ast_sha256': '0264e0a93e2409161e31e094ec9d97cdc9d242778d3e163cbc9165e645a38da1',
                                                                                   'supersedes_node_id': 'tests/test_discourse_reference.py::test_alternatives_below_margin_are_preserved'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_e2effe1dca9264717301': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:cognitive-loop-e2e-test-cycle-result-artifacts-cycle-result-has-verification',
@@ -856,13 +808,13 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-focus-verified-semantic-focus-is-frozen',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'e86c720ff38f5f018857b6bfe36581b6d8aec8cd465e7ef71015efc5d81623da',
+                                                                                  'source_ast_sha256': 'ab56f8c0c8146c882c4cfd6bde936a16eb9946fbe3f33a5b1eb09814abe4a704',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_focus.py::test_verified_semantic_focus_is_frozen'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_e8164c03ba5a45f4c73a': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-pending-returns-unfulfilled-obligations',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '6e6a21207c4892e1c34951c886f905838e4e946e861f5e15756dc06283a5f728',
+                                                                                  'source_ast_sha256': '4b7928862005e02f982c36d840cd8bcf736e41c951a075bd0c227f629de243f6',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_pending_returns_unfulfilled_obligations'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_ea3d1eb00bf28f853d92': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:epistemic-admission-test-reported-speech-does-not-become-world-truth-reported-speech-placement-mode',
@@ -870,12 +822,6 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': '33c26e69b477ebe7ed93e916dee6153755839263682c65f96ed91adee5bd68ab',
                                                                                   'supersedes_node_id': 'tests/test_epistemic_admission.py::TestReportedSpeechDoesNotBecomeWorldTruth::test_reported_speech_placement_mode'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_ea9ed0001c37b54fc2f5': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:query-engine-unknown-is-not-false',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '68f052b6cab13bb025af6358bc4ac8d00967a264f0bfd074397eec40c9a74da7',
-                                                                                  'supersedes_node_id': 'tests/test_query_engine.py::test_unknown_is_not_false'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_ec8f7eda4b6dc2aa92fc': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:dialogue-focus-verified-output-enters-focus',
                                                                                   'diagnostic_role': 'phase',
@@ -892,7 +838,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:discourse-reference-person-first-filters-to-user',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'c83a767745de5f57cf240aac26e2b91876dda6c425e5fc5161ea1fb84c935df0',
+                                                                                  'source_ast_sha256': '6c6f31209971ea81e17c76b54acea3603c857b6724d1566a1de506d008ab2465',
                                                                                   'supersedes_node_id': 'tests/test_discourse_reference.py::test_person_first_filters_to_user'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_ef9d0b1bf1ba3fe1618e': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:query-engine-existential-witness-is-proof-local',
@@ -912,12 +858,6 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
                                                                                   'source_ast_sha256': 'e3f8b9189a4b35d1e8b51a0881da589fbe8f959917c28a405bd1fd3d9f5e4bd1',
                                                                                   'supersedes_node_id': 'tests/test_r1_cognitive_restart_successors.py::test_r1_cycle_result_after_reopen_contains_only_admitted_artifacts'},
- 'tests/test_r3_closeout_successors.py::test_r3_successor_f6804898c50e7ae897b2': {'activation_phase': 'R3',
-                                                                                  'assertion_ref': 'assertion:inference-bounds-inference-exhaustion-has-no-proof',
-                                                                                  'diagnostic_role': 'phase',
-                                                                                  'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': 'c77001fe6a2ab42671b5ad58b5585fc3c33854936c6389f5dd477ef3446c66b3',
-                                                                                  'supersedes_node_id': 'tests/test_inference_bounds.py::test_inference_exhaustion_has_no_proof'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_f82ead85935f7cb8640d': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:epistemic-admission-test-reported-speech-does-not-become-world-truth-reported-speech-admission-is-attributed',
                                                                                   'diagnostic_role': 'phase',
@@ -934,7 +874,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:dialogue-obligations-learning-obligation-alongside-non-learning',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '90f96dbf8f06a40565292ec7833c01d1d531d320dda8573f2df1f9486629da0e',
+                                                                                  'source_ast_sha256': '6748d62a3a7a366babb6a7550a1476081227b1e473fe0a4dc732554221be6947',
                                                                                   'supersedes_node_id': 'tests/test_dialogue_obligations.py::test_learning_obligation_alongside_non_learning'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_fdc717e6c26ffcec5598': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:r1-episode-verified-meaning-separation',
@@ -945,7 +885,7 @@ __cemm_test_inventory__ = {'tests/test_r3_closeout_successors.py::test_r3_succes
                                                                                   'assertion_ref': 'assertion:discourse-reference-what-did-you-say-does-not-resolve-user-speech',
                                                                                   'diagnostic_role': 'phase',
                                                                                   'introduced_by_task': 'R3-Closeout-Behavioral-Migration',
-                                                                                  'source_ast_sha256': '0740364e061b30253666c8390ed717e0d4e9fb04ea385751ae123f735db8dda6',
+                                                                                  'source_ast_sha256': 'c96e5cd724b653e28990cafd377ce3e016fa4bc87ee362e16476c8522990e6d2',
                                                                                   'supersedes_node_id': 'tests/test_discourse_reference.py::test_what_did_you_say_does_not_resolve_user_speech'},
  'tests/test_r3_closeout_successors.py::test_r3_successor_ffb56b3b17f5ce2d5a7f': {'activation_phase': 'R3',
                                                                                   'assertion_ref': 'assertion:learning-distinctions-conversational-wording-cannot-select-reviewer-policy',
@@ -1044,17 +984,81 @@ def test_r3_successor_7c8a7603e86ed244d114() -> None:
 def test_r3_successor_a6877b3557b842cee518() -> None:
     assert_successor_contract('cycle', 'assertion:cognitive-loop-e2e-test-what-did-you-say-what-did-you-say-produces-cycle')
 
+def _verified_focus(
+    suffix: str,
+    *,
+    session_ref: str = "session:focus",
+    participant_ref: str = "participant:system",
+    expression_refs: tuple[str, ...] | None = None,
+    entity_refs: tuple[str, ...] = (),
+    event_refs: tuple[str, ...] = (),
+) -> VerifiedSemanticFocus:
+    return VerifiedSemanticFocus.create(
+        expression_refs=(f"expression:{suffix}",) if expression_refs is None else expression_refs,
+        entity_refs=entity_refs,
+        event_refs=event_refs,
+        salience_proof_refs=(f"proof:trusted-fixture:{suffix}",),
+        participant_ref=participant_ref,
+        session_ref=session_ref,
+        turn_ref=f"turn:{suffix}",
+        revision_pin=RevisionPin(
+            "authority:test", 1, 2, 3, 4, "model:test"
+        ),
+    )
+
+
 def test_r3_successor_acb0ed90038c0bce5e74() -> None:
-    assert_successor_contract('focus', 'assertion:dialogue-focus-focus-store-accumulates-across-turns')
+    store = FocusStore()
+    first = _verified_focus("accumulated-first")
+    second = _verified_focus("accumulated-second")
+    store.add(first)
+    store.add(second)
+    assert store.entries == (first, second)
+    assert tuple(row.focus_ref for row in store.entries) == (
+        first.focus_ref,
+        second.focus_ref,
+    )
+    assert store.refs == frozenset(
+        {first.expression_refs[0], second.expression_refs[0]}
+    )
 
 def test_r3_successor_30cfc728a8ddc6af448e() -> None:
-    assert_successor_contract('focus', 'assertion:dialogue-focus-focus-store-recent-entries')
+    store = FocusStore()
+    first = _verified_focus("recent-first", session_ref="session:primary")
+    other = _verified_focus("recent-other", session_ref="session:other")
+    latest = _verified_focus("recent-latest", session_ref="session:primary")
+    for focus in (first, other, latest):
+        store.add(focus)
+    assert store.recent_entries(2) == (other, latest)
+    assert store.recent_entries(2, session_ref="session:primary") == (
+        first,
+        latest,
+    )
 
 def test_r3_successor_4ae8e030ad8426ba19b5() -> None:
-    assert_successor_contract('focus', 'assertion:dialogue-focus-focus-store-starts-empty')
+    store = FocusStore()
+    assert store.entries == ()
+    assert store.refs == frozenset()
+    assert "expression:absent" not in store.refs
 
 def test_r3_successor_dc84231f7f90a715b69f() -> None:
-    assert_successor_contract('focus', 'assertion:dialogue-focus-focus-store-stores-verified-refs')
+    store = FocusStore()
+    focus = _verified_focus(
+        "typed-refs",
+        expression_refs=("expression:one", "expression:two"),
+        entity_refs=("entity:door",),
+        event_refs=("event:greeting",),
+    )
+    store.add(focus)
+    assert store.refs == frozenset(
+        {
+            "expression:one",
+            "expression:two",
+            "entity:door",
+            "event:greeting",
+        }
+    )
+    assert "entity:absent" not in store.refs
 
 def test_r3_successor_03c11585efe153827572() -> None:
     assert_successor_contract('focus', 'assertion:dialogue-focus-mixed-verified-and-unverified')
@@ -1063,103 +1067,472 @@ def test_r3_successor_ec8f7eda4b6dc2aa92fc() -> None:
     assert_successor_contract('focus', 'assertion:dialogue-focus-verified-output-enters-focus')
 
 def test_r3_successor_e7a30b650ce6517f401a() -> None:
-    assert_successor_contract('focus', 'assertion:dialogue-focus-verified-semantic-focus-is-frozen')
+    focus = _verified_focus("frozen")
+    with pytest.raises(FrozenInstanceError):
+        focus.expression_refs = ("expression:changed",)
 
 def test_r3_successor_b248e4945e9a868ee84c() -> None:
     assert_successor_contract('focus', 'assertion:dialogue-focus-verified-user-proposition-enters-focus')
 
+
+def _dialogue_obligation(
+    kind: ObligationKind,
+    *,
+    suffix: str,
+    created_turn_index: int = 1,
+    expires_turn_index: int = 10,
+    completion_receipt_ref: str | None = None,
+) -> DialogueObligation:
+    return DialogueObligation.create(
+        kind=kind,
+        session_ref=f"session:{suffix}",
+        source_query_ref=f"query:{suffix}",
+        expected_answer_contract_ref=f"contract:answer:{suffix}",
+        created_turn_index=created_turn_index,
+        expires_turn_index=expires_turn_index,
+        source_decision_ref=f"decision:{suffix}",
+        completion_receipt_ref=completion_receipt_ref,
+        revision_pin=RevisionPin(
+            "authority:test", 1, 2, 3, 4, "model:test"
+        ),
+    )
+
+
 def test_r3_successor_e163cfcc344eddf14b3b() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-dialogue-obligation-accepts-typed-kinds')
+    obligation = _dialogue_obligation(
+        ObligationKind.CLARIFICATION, suffix="clarification"
+    )
+    round_tripped = DialogueObligation.from_dict(obligation.as_dict())
+    assert round_tripped.kind is ObligationKind.CLARIFICATION
 
 def test_r3_successor_3b4cfeb86fa0db77def5() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-dialogue-obligation-accepts-typed-kinds')
+    obligation = _dialogue_obligation(
+        ObligationKind.EVIDENCE_REQUEST, suffix="evidence"
+    )
+    round_tripped = DialogueObligation.from_dict(obligation.as_dict())
+    assert round_tripped.kind is ObligationKind.EVIDENCE_REQUEST
 
 def test_r3_successor_91f33f163e6a10e410b7() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-dialogue-obligation-accepts-typed-kinds')
+    obligation = _dialogue_obligation(
+        ObligationKind.LEARNING_ANSWER, suffix="learning"
+    )
+    round_tripped = DialogueObligation.from_dict(obligation.as_dict())
+    assert round_tripped.kind is ObligationKind.LEARNING_ANSWER
 
 def test_r3_successor_be210355a7860538c47c() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-dialogue-obligation-accepts-typed-kinds')
+    obligation = _dialogue_obligation(
+        ObligationKind.OPERATION_RESOLUTION, suffix="operation"
+    )
+    round_tripped = DialogueObligation.from_dict(obligation.as_dict())
+    assert round_tripped.kind is ObligationKind.OPERATION_RESOLUTION
 
 def test_r3_successor_765ec49d46eaedeb18e0() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-dialogue-obligation-carries-source-query-and-contract')
+    obligation = _dialogue_obligation(
+        ObligationKind.CLARIFICATION,
+        suffix="roundtrip",
+        expires_turn_index=7,
+    )
+    encoded = obligation.as_dict()
+    rebuilt = DialogueObligation.from_dict(encoded)
+    assert rebuilt == obligation
+    assert rebuilt.as_dict() == encoded
+    assert rebuilt.source_query_ref == "query:roundtrip"
+    assert rebuilt.expected_answer_contract_ref == "contract:answer:roundtrip"
+    assert rebuilt.expires_turn_index == 7
+    assert rebuilt.completion_receipt_ref is None
 
 def test_r3_successor_c7b1f7079a3fe5c96275() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-dialogue-obligation-is-frozen')
+    obligation = _dialogue_obligation(
+        ObligationKind.CLARIFICATION, suffix="frozen"
+    )
+    with pytest.raises(FrozenInstanceError):
+        obligation.kind = ObligationKind.EVIDENCE_REQUEST
 
 def test_r3_successor_1e4717dec0e04f377686() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-fulfill-marks-obligation-with-completion-receipt')
+    manager = DialogueObligationManager()
+    original = _dialogue_obligation(
+        ObligationKind.CLARIFICATION, suffix="fulfill"
+    )
+    manager.add(original)
+    completed = manager.fulfill(original.obligation_ref, "receipt:done")
+    assert manager.pending() == ()
+    assert manager.get(original.obligation_ref) == completed
+    assert completed.obligation_ref != original.obligation_ref
+    assert completed.completion_receipt_ref == "receipt:done"
+    with pytest.raises(FrozenInstanceError):
+        completed.completion_receipt_ref = "receipt:changed"
 
 def test_r3_successor_a85edba372926159baca() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-fulfilled-learning-allows-new-learning')
+    manager = DialogueObligationManager()
+    first = _dialogue_obligation(
+        ObligationKind.LEARNING_ANSWER, suffix="learn-first"
+    )
+    second = _dialogue_obligation(
+        ObligationKind.LEARNING_ANSWER, suffix="learn-second"
+    )
+    manager.add(first)
+    manager.fulfill(first.obligation_ref, "receipt:learned")
+    manager.add(second)
+    assert manager.has_learning_obligation()
+    assert manager.pending() == (second,)
 
 def test_r3_successor_b48619272bc7c008bae8() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-fulfilling-non-learning-does-not-consume-learning')
+    manager = DialogueObligationManager()
+    learning = _dialogue_obligation(
+        ObligationKind.LEARNING_ANSWER, suffix="learning-pending"
+    )
+    clarification = _dialogue_obligation(
+        ObligationKind.CLARIFICATION, suffix="clarification-completed"
+    )
+    manager.add(learning)
+    manager.add(clarification)
+    manager.fulfill(clarification.obligation_ref, "receipt:clarified")
+    assert manager.has_learning_obligation()
+    assert manager.pending() == (learning,)
+    assert manager.get(learning.obligation_ref) == learning
+    assert learning.completion_receipt_ref is None
 
 def test_r3_successor_decaeee068cfd77411c0() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-goal-arbiter-idle-when-nothing-pending')
+    selection = GoalArbiter().select(goals=(), obligations=())
+    assert selection.selected_goal_ref is None
+    assert selection.selected_obligation_ref is None
+    assert selection.ui_intent_label == "idle"
 
 def test_r3_successor_a35b386efc1b5d62d530() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-goal-arbiter-ignores-satisfied-obligations')
+    completed = _dialogue_obligation(
+        ObligationKind.CLARIFICATION,
+        suffix="completed",
+        completion_receipt_ref="receipt:completed",
+    )
+    selection = GoalArbiter().select(
+        goals=("goal:explore",), obligations=(completed,)
+    )
+    assert selection.selected_goal_ref == "goal:explore"
+    assert selection.selected_obligation_ref is None
+    assert selection.ui_intent_label == "goal:pursue"
 
 def test_r3_successor_0a59b0d3bb8df37b4930() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-goal-arbiter-prefers-obligation-over-goal')
+    pending = _dialogue_obligation(
+        ObligationKind.EVIDENCE_REQUEST, suffix="pending"
+    )
+    selection = GoalArbiter().select(
+        goals=("goal:explore",), obligations=(pending,)
+    )
+    assert selection.selected_goal_ref is None
+    assert selection.selected_obligation_ref == pending.obligation_ref
+    assert selection.ui_intent_label == "obligation:fulfill"
 
 def test_r3_successor_ce67b625850e1d0b8f06() -> None:
     assert_successor_contract('obligation', 'assertion:dialogue-obligations-goal-arbiter-selects-higher-priority-obligation')
 
 def test_r3_successor_4e18303fa2e5f85519e1() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-goal-selection-is-frozen')
+    selection = GoalSelection(
+        selected_goal_ref="goal:one",
+        selected_obligation_ref=None,
+        policy_ref=GoalArbiter.POLICY_REF,
+    )
+    assert selection.ui_intent_label == "goal:pursue"
+    with pytest.raises(FrozenInstanceError):
+        selection.ui_intent_label = "idle"
 
 def test_r3_successor_fd3d8d92c3cd8dbd7b9b() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-learning-obligation-alongside-non-learning')
+    manager = DialogueObligationManager()
+    learning = _dialogue_obligation(
+        ObligationKind.LEARNING_ANSWER, suffix="learning-coexists"
+    )
+    clarification = _dialogue_obligation(
+        ObligationKind.CLARIFICATION, suffix="clarification-coexists"
+    )
+    manager.add(learning)
+    manager.add(clarification)
+    assert manager.has_learning_obligation()
+    pending = manager.pending()
+    assert len(pending) == 2
+    assert set(pending) == {learning, clarification}
 
 def test_r3_successor_b3e455c6c3aafd588648() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-non-learning-obligations-coexist')
+    manager = DialogueObligationManager()
+    obligations = (
+        _dialogue_obligation(
+            ObligationKind.CLARIFICATION, suffix="coexist-clarification"
+        ),
+        _dialogue_obligation(
+            ObligationKind.EVIDENCE_REQUEST, suffix="coexist-evidence"
+        ),
+        _dialogue_obligation(
+            ObligationKind.OPERATION_RESOLUTION, suffix="coexist-operation"
+        ),
+    )
+    for obligation in obligations:
+        manager.add(obligation)
+    pending = manager.pending()
+    assert len(pending) == 3
+    assert set(pending) == set(obligations)
 
 def test_r3_successor_d1c5dbf99de9415b8519() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-only-one-learning-obligation-may-exist')
+    manager = DialogueObligationManager()
+    first = _dialogue_obligation(
+        ObligationKind.LEARNING_ANSWER, suffix="only-learning-first"
+    )
+    second = _dialogue_obligation(
+        ObligationKind.LEARNING_ANSWER, suffix="only-learning-second"
+    )
+    manager.add(first)
+    with pytest.raises(ValueError, match="only one learning obligation"):
+        manager.add(second)
+    assert manager.pending() == (first,)
 
 def test_r3_successor_e8164c03ba5a45f4c73a() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-pending-returns-unfulfilled-obligations')
+    manager = DialogueObligationManager()
+    first = _dialogue_obligation(
+        ObligationKind.CLARIFICATION,
+        suffix="pending-first",
+        expires_turn_index=8,
+    )
+    second = _dialogue_obligation(
+        ObligationKind.EVIDENCE_REQUEST,
+        suffix="pending-second",
+        expires_turn_index=9,
+    )
+    manager.add(second)
+    manager.add(first)
+    assert manager.pending() == (first, second)
+    assert all(
+        obligation.completion_receipt_ref is None
+        for obligation in manager.pending()
+    )
 
 def test_r3_successor_b84479b75b9548b571b7() -> None:
-    assert_successor_contract('obligation', 'assertion:dialogue-obligations-ui-intent-label-has-no-control-authority')
+    selection = GoalArbiter().select(goals=("goal:one",), obligations=())
+    assert selection.ui_intent_label == "goal:pursue"
+    assert selection.ui_intent_label != selection.selected_goal_ref
 
 def test_r3_successor_e1d049d841566398e976() -> None:
-    assert_successor_contract('reference', 'assertion:discourse-reference-alternatives-below-margin-are-preserved')
+    store = FocusStore()
+    older = _verified_focus("alternative-older")
+    latest = _verified_focus("alternative-latest")
+    store.add(older)
+    store.add(latest)
+    result = ReferenceResolver(store, object()).resolve(
+        "reference:content",
+        ReferenceConstraints("second", None, "content", 8, "session:focus"),
+        "turn:current",
+    )
+    assert result.selected_ref == latest.expression_refs[0]
+    assert result.alternative_refs == older.expression_refs
+    assert result.selected_ref not in result.alternative_refs
+    assert result.proof_refs == (latest.focus_ref,)
 
 def test_r3_successor_a5dea97d747501c03ddb() -> None:
-    assert_successor_contract('reference', 'assertion:discourse-reference-kind-constraint-filters-by-kind')
+    store = FocusStore()
+    row = _verified_focus(
+        "mixed-kind",
+        expression_refs=("expression:mixed",),
+        entity_refs=("entity:mixed",),
+    )
+    store.add(row)
+    result = ReferenceResolver(store, object()).resolve(
+        "reference:entity",
+        ReferenceConstraints(None, None, "entity", 8, "session:focus"),
+        "turn:current",
+    )
+    assert result.selected_ref == "entity:mixed"
+    assert result.alternative_refs == ()
+    assert "expression:mixed" not in (result.selected_ref, *result.alternative_refs)
+    assert result.proof_refs == (row.focus_ref,)
 
-def test_r3_successor_22e25b96ca44e4637599() -> None:
-    assert_successor_contract('reference', 'assertion:discourse-reference-orientation-projector-uses-focus-store')
+def test_r3_successor_22e25b96ca44e4637599(linked_authority) -> None:
+    stores = memory_stores(authority_generation=linked_authority.generation)
+    try:
+        focus = FocusStore()
+        focus.add(
+            _verified_focus(
+                "orientation",
+                expression_refs=("expression:orientation",),
+                entity_refs=("entity:orientation",),
+            )
+        )
+        orientation = OrientationProjector(
+            linked_authority,
+            stores,
+            RuntimeConfig.release(),
+            focus_store=focus,
+        ).project("session:orientation", "ignored surface")
+        assert orientation.focus_refs == (
+            "entity:orientation",
+            "expression:orientation",
+        )
+        assert "focus_store:refs" in orientation.index_probes
+        assert orientation.scanned_atom_count == 0
+    finally:
+        stores.close()
 
 def test_r3_successor_6d677dc551ceca07cc5b() -> None:
-    assert_successor_contract('reference', 'assertion:discourse-reference-person-constraint-filters-by-participant')
+    store = FocusStore()
+    system = _verified_focus("second-system")
+    user = _verified_focus(
+        "second-user", participant_ref="participant:user"
+    )
+    store.add(system)
+    store.add(user)
+    result = ReferenceResolver(store, object()).resolve(
+        "reference:second-person",
+        ReferenceConstraints("second", None, "content", 8, "session:focus"),
+        "turn:current",
+    )
+    assert result.selected_ref == system.expression_refs[0]
+    assert result.alternative_refs == ()
+    assert user.expression_refs[0] not in (
+        result.selected_ref,
+        *result.alternative_refs,
+    )
+    assert result.proof_refs == (system.focus_ref,)
 
 def test_r3_successor_ef3349ae724cbc5de2f5() -> None:
-    assert_successor_contract('reference', 'assertion:discourse-reference-person-first-filters-to-user')
+    store = FocusStore()
+    user = _verified_focus(
+        "first-user", participant_ref="participant:user"
+    )
+    system = _verified_focus("first-system")
+    store.add(user)
+    store.add(system)
+    result = ReferenceResolver(store, object()).resolve(
+        "reference:first-person",
+        ReferenceConstraints("first", None, "content", 8, "session:focus"),
+        "turn:current",
+    )
+    assert result.selected_ref == user.expression_refs[0]
+    assert result.alternative_refs == ()
+    assert system.expression_refs[0] not in (
+        result.selected_ref,
+        *result.alternative_refs,
+    )
+    assert result.proof_refs == (user.focus_ref,)
 
 def test_r3_successor_ac8ed838a7083c66f1e4() -> None:
-    assert_successor_contract('reference', 'assertion:discourse-reference-recency-constraint-limits-candidates')
+    store = FocusStore()
+    older = _verified_focus("recency-older")
+    newest = _verified_focus("recency-newest")
+    store.add(older)
+    store.add(newest)
+    result = ReferenceResolver(store, object()).resolve(
+        "reference:recent",
+        ReferenceConstraints(None, None, "content", 1, "session:focus"),
+        "turn:current",
+    )
+    assert result.selected_ref == newest.expression_refs[0]
+    assert result.alternative_refs == ()
+    assert older.expression_refs[0] not in (
+        result.selected_ref,
+        *result.alternative_refs,
+    )
+    assert result.proof_refs == (newest.focus_ref,)
 
 def test_r3_successor_6634463067f7cafa0051() -> None:
-    assert_successor_contract('reference', 'assertion:discourse-reference-resolution-bindings-contain-ref-to-resolved')
+    store = FocusStore()
+    prior = _verified_focus("typed-binding")
+    store.add(prior)
+    result = ReferenceResolver(store, object()).resolve(
+        "reference:demonstrative:1",
+        ReferenceConstraints("third", None, "proposition", 8, "session:focus"),
+        "turn:current",
+    )
+    assert (result.reference_ref, result.selected_ref) == (
+        "reference:demonstrative:1",
+        prior.expression_refs[0],
+    )
+    assert result.alternative_refs == ()
+    assert result.proof_refs == (prior.focus_ref,)
 
 def test_r3_successor_0e8f1a78989177d083df() -> None:
-    assert_successor_contract('reference', 'assertion:discourse-reference-that-resolves-most-recent-proposition')
+    store = FocusStore()
+    older = _verified_focus("prior-proposition-older")
+    latest = _verified_focus("prior-proposition-latest")
+    current = _verified_focus("prior-proposition-current")
+    for row in (older, latest, current):
+        store.add(row)
+    result = ReferenceResolver(store, object()).resolve(
+        "reference:proposition",
+        ReferenceConstraints("third", None, "proposition", 8, "session:focus"),
+        current.turn_ref,
+    )
+    assert result.selected_ref == latest.expression_refs[0]
+    assert result.alternative_refs == older.expression_refs
+    assert current.expression_refs[0] not in (
+        result.selected_ref,
+        *result.alternative_refs,
+    )
+    assert result.proof_refs == (latest.focus_ref,)
 
 def test_r3_successor_1ebc6d8ac2f5ba9c3561() -> None:
-    assert_successor_contract('reference', 'assertion:discourse-reference-that-resolves-prior-verified-proposition')
+    store = FocusStore()
+    prior = _verified_focus("verified-proposition")
+    store.add(prior)
+    result = ReferenceResolver(store, object()).resolve(
+        "reference:verified-proposition",
+        ReferenceConstraints("third", None, "proposition", 8, "session:focus"),
+        "turn:current",
+    )
+    assert (result.reference_ref, result.selected_ref) == (
+        "reference:verified-proposition",
+        prior.expression_refs[0],
+    )
+    assert result.proof_refs == (prior.focus_ref,)
 
 def test_r3_successor_8de40dd01498141881a5() -> None:
-    assert_successor_contract('reference', 'assertion:discourse-reference-unresolved-ref-returns-none')
+    result = ReferenceResolver(FocusStore(), object()).resolve(
+        "reference:unresolved",
+        ReferenceConstraints(None, None, "proposition", 8, "session:focus"),
+        "turn:current",
+    )
+    assert result.reference_ref == "reference:unresolved"
+    assert result.selected_ref is None
+    assert result.alternative_refs == ()
+    assert result.proof_refs == ()
 
 def test_r3_successor_fdf57c758cf49833fadd() -> None:
-    assert_successor_contract('reference', 'assertion:discourse-reference-what-did-you-say-does-not-resolve-user-speech')
+    store = FocusStore()
+    user = _verified_focus(
+        "negative-user", participant_ref="participant:user"
+    )
+    current = _verified_focus("negative-current")
+    store.add(user)
+    store.add(current)
+    result = ReferenceResolver(store, object()).resolve(
+        "reference:second-person-content",
+        ReferenceConstraints("second", None, "content", 2, "session:focus"),
+        current.turn_ref,
+    )
+    assert result.selected_ref is None
+    assert result.alternative_refs == ()
+    assert result.proof_refs == ()
+    assert user.expression_refs[0] not in (
+        result.selected_ref,
+        *result.alternative_refs,
+    )
 
 def test_r3_successor_4618c9de8b3438873934() -> None:
-    assert_successor_contract('reference', 'assertion:discourse-reference-what-did-you-say-resolves-to-most-recent-system-speech')
+    store = FocusStore()
+    older = _verified_focus("system-content-older")
+    latest = _verified_focus("system-content-latest")
+    user = _verified_focus(
+        "system-content-user", participant_ref="participant:user"
+    )
+    store.add(older)
+    store.add(latest)
+    store.add(user)
+    result = ReferenceResolver(store, object()).resolve(
+        "reference:second-person-content",
+        ReferenceConstraints("second", None, "content", 8, "session:focus"),
+        "turn:current",
+    )
+    assert result.selected_ref == latest.expression_refs[0]
+    assert result.alternative_refs == older.expression_refs
+    assert user.expression_refs[0] not in (
+        result.selected_ref,
+        *result.alternative_refs,
+    )
+    assert result.proof_refs == (latest.focus_ref,)
 
 def test_r3_successor_27ba73e12b88ad9fe2eb() -> None:
     assert_successor_contract('reference', 'assertion:discourse-reference-what-did-you-say-resolves-verified-system-speech')
@@ -1206,9 +1579,6 @@ def test_r3_successor_647fedb72fbbcfbf2a87() -> None:
 def test_r3_successor_b650ca7318ae30576ef7() -> None:
     assert_successor_contract('gap', 'assertion:gap-matrix-every-cycle-status-is-reachable')
 
-def test_r3_successor_ca9460a2cf8641c70a6b() -> None:
-    assert_successor_contract('gap', 'assertion:gap-matrix-every-cycle-status-is-reachable')
-
 def test_r3_successor_829c535a40e12927bf97() -> None:
     assert_successor_contract('gap', 'assertion:gap-matrix-every-cycle-status-is-reachable')
 
@@ -1232,18 +1602,6 @@ def test_r3_successor_087fa7741523c766b339() -> None:
 
 def test_r3_successor_06b6c58163e318ee4963() -> None:
     assert_successor_contract('gap', 'assertion:gap-matrix-every-cycle-status-is-reachable')
-
-def test_r3_successor_f6804898c50e7ae897b2() -> None:
-    assert_successor_contract('query', 'assertion:inference-bounds-inference-exhaustion-has-no-proof')
-
-def test_r3_successor_1ca8392bbc811fda3616() -> None:
-    assert_successor_contract('query', 'assertion:inference-bounds-inference-exhaustion-is-explicit')
-
-def test_r3_successor_2050e9fd20f68a19a91f() -> None:
-    assert_successor_contract('query', 'assertion:inference-bounds-inference-exhaustion-receipt-records-rounds')
-
-def test_r3_successor_c90a4b6a2a33eb6673de() -> None:
-    assert_successor_contract('query', 'assertion:inference-bounds-inference-within-bounds-succeeds')
 
 def test_r3_successor_ffb56b3b17f5ce2d5a7f() -> None:
     assert_successor_contract('learning', 'assertion:learning-distinctions-conversational-wording-cannot-select-reviewer-policy')
@@ -1284,17 +1642,8 @@ def test_r3_successor_1a25374d0e03ea86a7a7() -> None:
 def test_r3_successor_8d08917fa702cb9b2fed() -> None:
     assert_successor_contract('query', 'assertion:query-engine-observe-records-facts')
 
-def test_r3_successor_03f6705c78516c61d5fb() -> None:
-    assert_successor_contract('query', 'assertion:query-engine-query-memoization-returns-same-result')
-
-def test_r3_successor_b5d5258a6580209c1e4f() -> None:
-    assert_successor_contract('query', 'assertion:query-engine-query-result-has-retrieval-receipt')
-
 def test_r3_successor_de6989568e516bea8aed() -> None:
     assert_successor_contract('query', 'assertion:query-engine-semantic-description-never-reads-internal-ref-name')
-
-def test_r3_successor_ea9ed0001c37b54fc2f5() -> None:
-    assert_successor_contract('query', 'assertion:query-engine-unknown-is-not-false')
 
 def test_r3_successor_d4770b48f1d95b0a2161() -> None:
     assert_successor_contract('r3_runtime', 'assertion:restart-e2e-test-restart-memory-consistency-consecutive-cycles-preserve-revision-pins')
@@ -1367,21 +1716,6 @@ def test_r3_successor_8e5b08c7cdc04e85c277() -> None:
 
 def test_r3_successor_8bf5349ade7a922ffb28() -> None:
     assert_successor_contract('r3_runtime', 'assertion:six-phase-runtime-trace-off-still-resolves')
-
-def test_r3_successor_1cb3a69be7ea10a25d66() -> None:
-    assert_successor_contract('query', 'assertion:recursive-inference-recursive-inference-chains-multiple-hops')
-
-def test_r3_successor_677fb171a5df5a940bcf() -> None:
-    assert_successor_contract('query', 'assertion:recursive-inference-recursive-inference-proof-has-semantic-refs')
-
-def test_r3_successor_b73425f4abf272047265() -> None:
-    assert_successor_contract('query', 'assertion:recursive-inference-recursive-inference-proof-tracks-rule-applications')
-
-def test_r3_successor_c29fdb6812129ace3e18() -> None:
-    assert_successor_contract('query', 'assertion:recursive-inference-recursive-inference-source-refs-include-programs')
-
-def test_r3_successor_d08e2ebdad820295a190() -> None:
-    assert_successor_contract('query', 'assertion:recursive-inference-recursive-inference-unknown-entity-is-unknown')
 
 def test_r3_successor_e77fbfa5288e26050075() -> None:
     assert_successor_contract('query', 'assertion:recursive-inference-recursive-inference-with-unseen-synonym')

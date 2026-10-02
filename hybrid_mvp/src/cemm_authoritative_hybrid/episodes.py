@@ -766,7 +766,7 @@ def _serialize_derivation(candidate: Any) -> dict[str, Any]:
 
 
 def _serialize_coverage_receipt(receipt: Any) -> dict[str, Any]:
-    """Serialize the complete canonical Coverage Receipt ABI 2 value."""
+    """Serialize the complete canonical Coverage Receipt ABI 3 value."""
     if receipt is None:
         return {}
     if type(receipt) is not CoverageReceipt:

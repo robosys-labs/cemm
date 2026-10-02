@@ -2,7 +2,7 @@
 
 The module contains historical neural and safe-realizer experiments. Its
 current verifier checks bounded surface markers and leakage conditions; it does
-not reconstruct Program ABI 2 through VERIFY and does not establish canonical-
+not reconstruct a semantic program through VERIFY and does not establish canonical-
 expression equivalence. The R5 realization owner remains unadmitted.
 """
 
@@ -148,6 +148,8 @@ def _exact_response_meaning(value: object) -> ResponseMeaning:
         or rebuilt.response_meaning_ref != value.response_meaning_ref
     ):
         raise ValueError("response_meaning must be canonical ResponseMeaning")
+    if value.description_proof is not None or value.response_expression.query_projections:
+        raise ValueError("signed projection realization is not implemented")
     return value
 
 

@@ -1,6 +1,6 @@
 {
   "owner": "semantic_affordances",
-  "generation": "authority-v1-2026-09-08-linked-frames",
+  "generation": "authority-v1-2026-10-02-communicative-source",
   "frames": [
     {
       "frame_ref": "frame:event:greeting",
@@ -55,6 +55,63 @@
       "input_ports": ["role:subject", "role:object"],
       "output_ports": ["role:relation"],
       "role_candidates": ["role:subject", "role:object"]
+    },
+    {
+      "frame_ref": "frame:event:farewell",
+      "target_kind": "event_type",
+      "target_ref": "event:farewell",
+      "contribution_kinds": ["predicate", "anchor"],
+      "input_ports": ["role:actor", "role:addressee"],
+      "output_ports": ["role:event"],
+      "role_candidates": ["role:actor", "role:addressee"]
+    }
+  ],
+  "source_attribution_controls": [
+    {
+      "control_ref": "control:source_attribution:event_say",
+      "parent_frame_ref": "frame:event:say",
+      "parent_target_ref": "event:say",
+      "content_role_ref": "role:content",
+      "source_role_ref": "role:actor",
+      "placement": "reported"
+    }
+  ],
+  "reported_role_inheritance_controls": [
+    {
+      "control_ref": "control:reported_role_inheritance:event_say:event_greeting:actor",
+      "source_attribution_control_ref": "control:source_attribution:event_say",
+      "child_target_ref": "event:greeting",
+      "child_role_ref": "role:actor",
+      "placement": "reported"
+    },
+    {
+      "control_ref": "control:reported_role_inheritance:event_say:event_farewell:actor",
+      "source_attribution_control_ref": "control:source_attribution:event_say",
+      "child_target_ref": "event:farewell",
+      "child_role_ref": "role:actor",
+      "placement": "reported"
+    }
+  ],
+  "communicative_controls": [
+    {
+      "control_ref": "control:communicative:event_greeting",
+      "source_frame_ref": "frame:event:greeting",
+      "target_ref": "event:greeting",
+      "actor_role_ref": "role:actor",
+      "addressee_role_ref": "role:addressee",
+      "construction_kind": "direct_performed",
+      "response_kind": "reciprocal_event",
+      "required_capability_ref": "cap:respond"
+    },
+    {
+      "control_ref": "control:communicative:event_farewell",
+      "source_frame_ref": "frame:event:farewell",
+      "target_ref": "event:farewell",
+      "actor_role_ref": "role:actor",
+      "addressee_role_ref": "role:addressee",
+      "construction_kind": "direct_performed",
+      "response_kind": "reciprocal_event",
+      "required_capability_ref": "cap:respond"
     }
   ]
 }

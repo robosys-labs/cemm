@@ -172,3 +172,113 @@ and admission identities remain owned solely by `governance/replay_status.jsonl`
 
 Do not rewrite root contracts, backdate review decisions, admit data, merge,
 push, or remove other worktrees as a side effect of this amendment.
+
+## 8. Approved canonical query-projection migration — October 1
+
+The user approved a nonpersistent canonical query-projection component and
+request-first proof-lineage migration after the individually reproduced public
+description failures. This extends the existing foundation route; it does not
+authorize a sixth persistent operator, a second query engine, new production
+definition claims, corpus publication or R5 activation.
+
+Semantic Expression ABI 3 adds one immutable `QueryProjection` leaf with
+`projection_ref`, `requested_content` and `target_ref`. Requested content is the
+closed distinction `description` / `definition`, not a surface phrase or an
+ontology-kind inference. Its target must already be a grounded semantic identity;
+unknown designations retain their typed unresolved path. A request-only forest
+may contain zero applications, but must contain a reachable projection. At most
+one projection participates in the existing node, root and depth bounds. It
+cannot become a durable five-operator fact. Canonical normalization preserves
+target and requested content while alpha-normalizing local projection refs.
+ABI 2 expression wire content is a hard-cut predecessor, not an alternative
+runtime decoding path.
+
+Canonical structure alone is not public interpretation. Compiler, coverage and
+independent VERIFY must reconstruct the exact target and requested content from
+reviewed typed, clause-local evidence. Ordinary membership, role-variable and
+lexical queries remain distinct. Bare `What is X?` must retain context-sensitive
+alternatives; a word or interrogative never creates an ontology kind. Unsupported
+scoped, embedded or compound request evaluation remains explicit rather than
+being flattened or silently treated as a request-only forest.
+
+The query owner must bind the canonical request before its indexed pinned read.
+Description/Proof Bundle migration removes the manufactured UNKNOWN QueryResult
+as a precondition: the final genuine query result owns the reconstructed answer
+and signed evidence after the read. Identities must form an acyclic dependency
+graph, with no final-result back-reference inside its own proof. Exact request,
+target, answer correspondence, source/proof lineage and revision pins must agree
+at decision and response sinks. Codec reconstruction proves structural linkage,
+not that a caller has publication or effect authority.
+
+Descriptions preserve neutral answer content and signed claims separately.
+Support, denial and conflict must survive without conversion to affirmative
+world truth. A neighbourhood's completeness does not establish an intensional
+definition. Definition support needs actual reviewed definition content and a
+reviewed sufficiency contract; until those exist, the definition request is
+representable but honestly missing, not answered with registry kinds or members.
+
+Partial migration must remain explicitly unavailable for public activation,
+packaging and admission. Existing generators, dependent artifacts, exact owner
+tests and active documentation must be reconciled before a migration completion
+claim. The current foundation plan owns the finite implementation sequence and
+observed evidence; no new validation tier or normal-cycle gate is introduced.
+
+## 9. Approved communicative-act / response-selection extension — October 1
+
+The user approved the bounded representation extension after independent public
+replays proved that quoted `"hello"` and a direct greeting collapsed to the same
+canonical graph, and that `hello Bob` incorrectly assigned Bob as the actor.
+This approval extends the existing foundation execution route, not semantic
+truth admission, R4 corpus publication, R5 activation or repository-root adoption.
+
+Received communication, a mentioned expression and an attributed event claim
+must remain distinct. Source-bound communicative-force evidence belongs to the
+independently verified situated-meaning envelope. It is derived from reviewed
+semantic frame/construction evidence, exact source coverage and participants,
+never from a downstream word/phrase branch. No sixth persistent operator or
+greeting-specific kernel mode is authorized. Until quotation interpretation is
+available, quotation boundaries remain typed critical unresolved evidence;
+they must not disappear as noncritical punctuation. Existing exact naming
+literals and lexical questions retain their own reviewed ownership.
+
+The initial performed-act construction is bounded to a single unscoped direct
+communicative application. A source-local named addressee must not become the
+actor. Unsupported quotation, report/embedding, polarity or temporal scope,
+compound roots, other modes and unresolved evidence cannot acquire reciprocal
+response permission by flattening. A missing or ambiguous construction remains
+unavailable; the presence of an event identity alone is not performed force.
+
+EVALUATE requires a legitimate non-claim communicative consequence. Preserve
+the existing claim/admission and query matrices; neither admitting a world
+event nor manufacturing a supported query is an acceptable response mechanism.
+An identity-covered response-selection derivation binds the exact verified
+source/root, situation, reviewed policy and authority generation, participants,
+capability evidence, original revision and outgoing semantic expression. For a
+direct greeting addressed to the current system, the outgoing graph uses the
+same existing semantic event identity, with system actor and original speaker
+addressee. A reviewed semantic policy may license this role transformation;
+there is no policy or template per surface lexeme. New synonyms inherit that
+policy through their admitted target, without form-pack regeneration.
+The closed reciprocal-event policy requires the reviewed `cap:respond`; alias-
+learning capability cannot substitute for it. Both signature roles must accept
+the reviewed participants used by the transformation.
+
+The complete policy bundle is manifest-owned, linked, validated and indexed
+once at activation. Missing, stale, conflicting or malformed registered policy
+data must fail activation; absence of a policy/capability for a particular
+candidate blocks selection. Existing bounds are unchanged. Source force and
+selection evidence must be retained and independently reconstructed by actual
+situation/evaluation/response/artifact/cycle sinks. A codec hash alone is not
+authority, and arbitrary non-answer graph replacement remains forbidden.
+Necessary serialized shape changes require strict versioned codecs and exact
+dependent migrations; no old-wire compatibility fallback is authorized.
+
+Existing EFFECT journaling remains the only effect owner and may record the
+read-only non-claim consequence idempotently. No world fact, alias, external
+adapter call or verified focus is created by planning a response. Development
+wording may follow only after the outgoing graph is selected and authenticated;
+it remains diagnostic rather than learned-realization evidence. Preserve prior
+query, signed-description, learning, denied-operation and realization-stop
+behaviors. Independent source/response contrasts, forged-lineage rejection,
+authenticated unseen-alias/restart checks and deterministic living-artifact
+maintenance belong to the existing owner tests and gates, not a new tier.

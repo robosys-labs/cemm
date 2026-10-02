@@ -50,99 +50,71 @@ SCHEMA_PATHS = (
     ROOT / "schemas/r4_class_authorization.schema.json",
     ROOT / "schemas/r4_partition_config.schema.json",
 )
-__cemm_test_inventory__ = {
-    "tests/test_r4_partition_contracts.py::test_partition_contracts_are_factory_only_and_canonical": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-partition-contracts-factory-only-and-canonical",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "8f17ec138e67086741add95e21baccaefb46c21ff5433b0f357e7977d1c277fd",
-    },
-    "tests/test_r4_partition_contracts.py::test_component_identity_binds_source_and_partition_abi_not_assignment": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-component-identity-binds-source-and-partition-abi",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "f62b20c68a29369e2daeb8f09e94bffeb54d7e6805dea5b3cc83fd73af64ba82",
-    },
-    "tests/test_r4_partition_contracts.py::test_leakage_and_label_records_reject_noncanonical_members": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-leakage-and-label-records-reject-noncanonical-members",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "a02618a938ab890f7f3719a37d13f4042760cb97fee066f3dbf26c023906d176",
-    },
-    "tests/test_r4_partition_contracts.py::test_partition_evidence_reconstructs_global_coverage_and_rejects_tamper": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-partition-evidence-reconstructs-global-coverage",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "b4362bcb5fd3c966c6e64412e912ce4a8a351f5079a0f2b91a719e809a86214a",
-    },
-    "tests/test_r4_partition_contracts.py::test_split_manifest_is_exact_four_class_boundary": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-split-manifest-is-exact-four-class-boundary",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "1e80a82f5ab26b29dadfc50067726f9308ebaa27ceb40181eb65ba43f36cb2f3",
-    },
-    "tests/test_r4_partition_contracts.py::test_split_manifest_rejects_unsafe_paths_and_invalid_purpose_pairing": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-split-manifest-rejects-unsafe-paths-and-purpose-pairing",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "b586a5df5c1c1c6ef86cfa7e373a805066de4ab49427ec191b1f9dd8711c0486",
-    },
-    "tests/test_r4_partition_contracts.py::test_partition_sufficiency_is_non_vacuous_complete_and_reconstructible": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-partition-sufficiency-is-non-vacuous-and-complete",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "a2ebd4cfc1f85fceb3ef7b134d28f980485fee277df6f0e41614b9535f52570a",
-    },
-    "tests/test_r4_partition_contracts.py::test_class_capability_requires_independent_authorization_trust": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-class-capability-requires-independent-authorization-trust",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "a97cd4f6e872fab8a67410e6f9c138a0808139f9261f47e02f11e4e633c53307",
-    },
-    "tests/test_r4_partition_contracts.py::test_class_authorization_discloses_no_sibling_or_build_receipt_fields": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-class-authorization-discloses-no-sibling-identities",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "6a32d4210f6ee8b3035e810dc501c3a7d9d314f6d76b9444e19ebdc7712f2b25",
-    },
-    "tests/test_r4_partition_contracts.py::test_partition_config_binds_reviewed_integer_formulas_and_acyclic_basis": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-partition-config-binds-reviewed-integer-formulas",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "da7dea5ae66e7376b9eea44bc25040e3e302fc90fa22e00aaed3b483605fe712",
-    },
-    "tests/test_r4_partition_contracts.py::test_contract_decoders_reject_unknown_missing_nonfinite_and_noncanonical_json": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-contract-decoders-reject-untrusted-json-bytes",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "26502a9d10f1993251aa56f54f68b8a5de9023dafa24efaf8273f4df6ad81c06",
-    },
-    "tests/test_r4_partition_contracts.py::test_r4_partition_schemas_are_strict_draft_2020_12": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-partition-schemas-are-strict-draft-2020-12",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "9d56f7a983ba53a53d70c12e6f05d8be1777029db13e2cccf84c5f14fab7c471",
-    },
-    "tests/test_r4_partition_contracts.py::test_partition_abi_registry_declares_hard_cut_without_activation_claim": {
-        "activation_phase": "R4",
-        "assertion_ref": "assertion:r4-partition-abi-registry-declares-hard-cut-without-activation",
-        "diagnostic_role": "phase",
-        "introduced_by_task": "R4-Partition-Corrective-Task-3",
-        "source_ast_sha256": "e129f9f25948f28eeb049ad5670df68f4e2950db1fa67a4410940b373b45f34a",
-    },
-}
+__cemm_test_inventory__ = {'tests/test_r4_partition_contracts.py::test_partition_contracts_are_factory_only_and_canonical': {'activation_phase': 'R4',
+                                                                                                   'assertion_ref': 'assertion:r4-partition-contracts-factory-only-and-canonical',
+                                                                                                   'diagnostic_role': 'phase',
+                                                                                                   'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                                   'source_ast_sha256': '8f17ec138e67086741add95e21baccaefb46c21ff5433b0f357e7977d1c277fd'},
+ 'tests/test_r4_partition_contracts.py::test_component_identity_binds_source_and_partition_abi_not_assignment': {'activation_phase': 'R4',
+                                                                                                                 'assertion_ref': 'assertion:r4-component-identity-binds-source-and-partition-abi',
+                                                                                                                 'diagnostic_role': 'phase',
+                                                                                                                 'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                                                 'source_ast_sha256': 'f62b20c68a29369e2daeb8f09e94bffeb54d7e6805dea5b3cc83fd73af64ba82'},
+ 'tests/test_r4_partition_contracts.py::test_leakage_and_label_records_reject_noncanonical_members': {'activation_phase': 'R4',
+                                                                                                      'assertion_ref': 'assertion:r4-leakage-and-label-records-reject-noncanonical-members',
+                                                                                                      'diagnostic_role': 'phase',
+                                                                                                      'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                                      'source_ast_sha256': 'a02618a938ab890f7f3719a37d13f4042760cb97fee066f3dbf26c023906d176'},
+ 'tests/test_r4_partition_contracts.py::test_partition_evidence_reconstructs_global_coverage_and_rejects_tamper': {'activation_phase': 'R4',
+                                                                                                                   'assertion_ref': 'assertion:r4-partition-evidence-reconstructs-global-coverage',
+                                                                                                                   'diagnostic_role': 'phase',
+                                                                                                                   'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                                                   'source_ast_sha256': 'b4362bcb5fd3c966c6e64412e912ce4a8a351f5079a0f2b91a719e809a86214a'},
+ 'tests/test_r4_partition_contracts.py::test_split_manifest_is_exact_four_class_boundary': {'activation_phase': 'R4',
+                                                                                            'assertion_ref': 'assertion:r4-split-manifest-is-exact-four-class-boundary',
+                                                                                            'diagnostic_role': 'phase',
+                                                                                            'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                            'source_ast_sha256': '1e80a82f5ab26b29dadfc50067726f9308ebaa27ceb40181eb65ba43f36cb2f3'},
+ 'tests/test_r4_partition_contracts.py::test_split_manifest_rejects_unsafe_paths_and_invalid_purpose_pairing': {'activation_phase': 'R4',
+                                                                                                                'assertion_ref': 'assertion:r4-split-manifest-rejects-unsafe-paths-and-purpose-pairing',
+                                                                                                                'diagnostic_role': 'phase',
+                                                                                                                'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                                                'source_ast_sha256': 'b586a5df5c1c1c6ef86cfa7e373a805066de4ab49427ec191b1f9dd8711c0486'},
+ 'tests/test_r4_partition_contracts.py::test_partition_sufficiency_is_non_vacuous_complete_and_reconstructible': {'activation_phase': 'R4',
+                                                                                                                  'assertion_ref': 'assertion:r4-partition-sufficiency-is-non-vacuous-and-complete',
+                                                                                                                  'diagnostic_role': 'phase',
+                                                                                                                  'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                                                  'source_ast_sha256': 'a2ebd4cfc1f85fceb3ef7b134d28f980485fee277df6f0e41614b9535f52570a'},
+ 'tests/test_r4_partition_contracts.py::test_class_capability_requires_independent_authorization_trust': {'activation_phase': 'R4',
+                                                                                                          'assertion_ref': 'assertion:r4-class-capability-requires-independent-authorization-trust',
+                                                                                                          'diagnostic_role': 'phase',
+                                                                                                          'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                                          'source_ast_sha256': 'a97cd4f6e872fab8a67410e6f9c138a0808139f9261f47e02f11e4e633c53307'},
+ 'tests/test_r4_partition_contracts.py::test_class_authorization_discloses_no_sibling_or_build_receipt_fields': {'activation_phase': 'R4',
+                                                                                                                 'assertion_ref': 'assertion:r4-class-authorization-discloses-no-sibling-identities',
+                                                                                                                 'diagnostic_role': 'phase',
+                                                                                                                 'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                                                 'source_ast_sha256': '6a32d4210f6ee8b3035e810dc501c3a7d9d314f6d76b9444e19ebdc7712f2b25'},
+ 'tests/test_r4_partition_contracts.py::test_partition_config_binds_reviewed_integer_formulas_and_acyclic_basis': {'activation_phase': 'R4',
+                                                                                                                   'assertion_ref': 'assertion:r4-partition-config-binds-reviewed-integer-formulas',
+                                                                                                                   'diagnostic_role': 'phase',
+                                                                                                                   'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                                                   'source_ast_sha256': 'da7dea5ae66e7376b9eea44bc25040e3e302fc90fa22e00aaed3b483605fe712'},
+ 'tests/test_r4_partition_contracts.py::test_contract_decoders_reject_unknown_missing_nonfinite_and_noncanonical_json': {'activation_phase': 'R4',
+                                                                                                                         'assertion_ref': 'assertion:r4-contract-decoders-reject-untrusted-json-bytes',
+                                                                                                                         'diagnostic_role': 'phase',
+                                                                                                                         'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                                                         'source_ast_sha256': '26502a9d10f1993251aa56f54f68b8a5de9023dafa24efaf8273f4df6ad81c06'},
+ 'tests/test_r4_partition_contracts.py::test_r4_partition_schemas_are_strict_draft_2020_12': {'activation_phase': 'R4',
+                                                                                              'assertion_ref': 'assertion:r4-partition-schemas-are-strict-draft-2020-12',
+                                                                                              'diagnostic_role': 'phase',
+                                                                                              'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                              'source_ast_sha256': '9d56f7a983ba53a53d70c12e6f05d8be1777029db13e2cccf84c5f14fab7c471'},
+ 'tests/test_r4_partition_contracts.py::test_partition_abi_registry_declares_hard_cut_without_activation_claim': {'activation_phase': 'R4',
+                                                                                                                  'assertion_ref': 'assertion:r4-partition-abi-registry-declares-hard-cut-without-activation',
+                                                                                                                  'diagnostic_role': 'phase',
+                                                                                                                  'introduced_by_task': 'R4-Partition-Corrective-Task-3',
+                                                                                                                  'source_ast_sha256': '422826bf869ad54a15c4c76c0b4038f68847ba36a20889e92512d1d78950cb42'}}
 
 
 def _episode_refs() -> tuple[str, ...]:
@@ -794,16 +766,38 @@ def test_r4_partition_schemas_are_strict_draft_2020_12() -> None:
 
 def test_partition_abi_registry_declares_hard_cut_without_activation_claim() -> None:
     text = (ROOT / "docs/ABI_REGISTRY.md").read_text(encoding="utf-8")
-    required_rows = (
-        "| Partition Evidence ABI | **3** |",
-        "| R4 Split Manifest ABI | **1** |",
-        "| R4 Partition Sufficiency ABI | **1** |",
-        "| R4 Class Capability ABI | **1** |",
-        "| R4 Class Authorization ABI | **1** |",
-        "| Partition Config ABI | **1** |",
-        "| R4 Build Receipt ABI | **4** |",
+    rows = tuple(line for line in text.splitlines() if line.startswith("|"))
+
+    def registry_row(prefix: str) -> str:
+        matches = tuple(row for row in rows if row.startswith(prefix))
+        assert len(matches) == 1
+        return matches[0]
+
+    assert "## R3 implemented, R4 predecessor and approved R4.1 target allocation" in text
+    predecessor_statuses = {
+        "| Partition Evidence ABI | **3** |": "implemented predecessor; ineligible for R4.1",
+        "| R4 Split Manifest ABI | **1** |": "implemented predecessor; requires R4.1 replacement",
+        "| R4 Partition Sufficiency ABI | **1** |": "implemented predecessor; requires R4.1 replacement",
+        "| Partition Config ABI | **1** |": "implemented predecessor; ineligible for R4.1",
+        "| R4 Build Receipt ABI | **4** |": "implemented predecessor; requires fresh R4.1 admission",
+    }
+    for prefix, status in predecessor_statuses.items():
+        assert status in registry_row(prefix)
+
+    successor_prefixes = (
+        "| R4 Supervised Case ABI | **1** |",
+        "| R4 Split Manifest ABI | **2** |",
+        "| R4 Class Capability ABI | **2** |",
+        "| R4 Class Authorization ABI | **2** |",
+        "| R4 Build Receipt ABI | **5** |",
     )
-    assert all(row in text for row in required_rows)
+    assert all(
+        "approved R4.1 target; implementation pending" in registry_row(prefix)
+        for prefix in successor_prefixes
+    )
     assert "Partition Axis Manifest ABI 2 and Training Allowlist ABI 2 are retired" in text
-    assert "registered target; generation and activation remain pending" in text
+    assert (
+        "The registered target contracts do not claim that replacement\n"
+        "artifacts have been committed, admitted or activated."
+    ) in text
     assert "R4 Build Receipt ABI | **3**" not in text

@@ -7,7 +7,23 @@
     "split_punctuation": true,
     "split_contractions": true,
     "contractions": ["don't", "can't", "won't", "isn't", "aren't", "wasn't", "weren't", "hasn't", "haven't", "didn't", "doesn't", "wouldn't", "couldn't", "shouldn't"],
-    "punctuation": [".", ",", "!", "?", ";", ":", "'", "\"", "(", ")"]
+    "punctuation": [".", ",", "!", "?", ";", ":", "'", "\"", "(", ")", "“", "”", "‘", "’", "«", "»", "‹", "›"]
+  },
+  "orthography": {
+    "'": {"kind": "quotation_boundary"},
+    "\"": {"kind": "quotation_boundary"},
+    "“": {"kind": "quotation_boundary"},
+    "”": {"kind": "quotation_boundary"},
+    "‘": {"kind": "quotation_boundary"},
+    "’": {"kind": "quotation_boundary"},
+    "«": {"kind": "quotation_boundary"},
+    "»": {"kind": "quotation_boundary"},
+    "‹": {"kind": "quotation_boundary"},
+    "›": {"kind": "quotation_boundary"},
+    ".": {"kind": "sentence_boundary"},
+    "!": {"kind": "sentence_boundary"},
+    "?": {"kind": "sentence_boundary"},
+    ";": {"kind": "sentence_boundary"}
   },
   "morphology": {
     "plural_suffixes": ["s", "es", "ies"],
@@ -138,9 +154,9 @@
     "there": {"kind": "discourse_particle"}
   },
   "determiners": {
-    "the": {"kind": "determiner"},
-    "a": {"kind": "determiner"},
-    "an": {"kind": "determiner"},
+    "the": {"kind": "determiner", "construction_role": "query_target_article"},
+    "a": {"kind": "determiner", "construction_role": "query_target_article"},
+    "an": {"kind": "determiner", "construction_role": "query_target_article"},
     "some": {"kind": "determiner"},
     "any": {"kind": "determiner"},
     "all": {"kind": "determiner"},
@@ -195,6 +211,23 @@
     "sequence": {"link_type": "link:sequence", "commutative": false, "min_arity": 2, "max_arity": 4}
   },
   "application_role_orders": {
+    "communicative_actor_event_addressee": {
+      "construction": "communicative_event",
+      "evidence_order": [
+        {"kind": "referent", "role": "role:actor", "target_kinds": ["entity", "participant"], "cardinality": "optional"},
+        {"kind": "designation", "role": "role:event", "target_kind": "event_type"},
+        {"kind": "referent", "role": "role:addressee", "target_kinds": ["entity", "participant"], "cardinality": "optional"}
+      ]
+    },
+    "content_target_projection": {
+      "evidence_order": [
+        {"kind": "feature", "port": "request", "features": [["query", "query"], ["interrogative", "content"]]},
+        {"kind": "feature", "port": "binder", "features": [["binder", "copula"]]},
+        {"kind": "feature", "port": "determiner", "features": [["determiner", "determiner"], ["construction_role", "query_target_article"]], "cardinality": "optional"},
+        {"kind": "designation", "port": "target", "target_kinds": ["concept", "entity", "participant"]}
+      ],
+      "result": {"kind": "query_projection", "target_port": "target", "requested_contents": ["description", "definition"]}
+    },
     "effect_event_target_value": {
       "target_kinds": ["event_type", "entity", "state_value"],
       "roles": ["role:event", "role:target", "role:value"]
@@ -206,17 +239,32 @@
     },
     "relation_subject_predicate_object": {
       "target_kinds": ["entity", "relation_type", "entity"],
-      "roles": ["role:subject", "role:relation", "role:object"]
+      "roles": ["role:subject", "role:relation", "role:object"],
+      "evidence_order": [
+        {"kind": "referent", "target_kinds": ["entity", "participant"], "role": "role:subject"},
+        {"kind": "designation", "target_kind": "relation_type", "role": "role:relation"},
+        {"kind": "referent", "target_kinds": ["entity", "participant"], "role": "role:object"}
+      ]
     },
     "relation_subject_predicate_query_object": {
       "target_kinds": ["entity", "relation_type"],
       "roles": ["role:subject", "role:relation"],
-      "required_features": ["query"]
+      "required_features": ["query"],
+      "evidence_order": [
+        {"kind": "designation", "target_kind": "entity", "role": "role:subject"},
+        {"kind": "designation", "target_kind": "relation_type", "role": "role:relation"},
+        {"kind": "feature", "features": [["query", "query"], ["interrogative", "person"]], "role": "role:object"}
+      ]
     },
     "relation_predicate_subject_query_object": {
       "target_kinds": ["relation_type", "entity"],
-      "roles": ["role:relation", "role:subject"],
-      "required_features": ["query"]
+      "roles": ["role:relation", "role:object"],
+      "required_features": ["query"],
+      "evidence_order": [
+        {"kind": "feature", "features": [["query", "query"], ["interrogative", "person"]], "role": "role:subject"},
+        {"kind": "designation", "target_kind": "relation_type", "role": "role:relation"},
+        {"kind": "designation", "target_kind": "entity", "role": "role:object"}
+      ]
     },
     "relation_object_subject_predicate": {
       "target_kinds": ["entity", "entity", "relation_type"],

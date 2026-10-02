@@ -371,7 +371,7 @@ class AssertionRegistry:
             "query": _AssertionSpec(frozenset({"target"}), frozenset({"dimension", "relation", "role", "object", "expected_status"}), "query"),
             "event": _AssertionSpec(frozenset(), frozenset({"target", "event", "event_type", "actor", "addressee", "learner", "content", "roles"}), "event"),
             "reported": _AssertionSpec(frozenset({"speaker", "event"}), frozenset({"content", "roles"}), "attribution"),
-            "reported_speech": _AssertionSpec(frozenset({"speaker", "event"}), frozenset({"content", "content_subject", "content_object", "content_dimension", "content_value", "roles"}), "attribution"),
+            "reported_speech": _AssertionSpec(frozenset({"speaker", "event"}), frozenset({"content", "content_actor", "content_subject", "content_object", "content_dimension", "content_value", "roles"}), "attribution"),
             "quoted": _AssertionSpec(frozenset({"speaker", "content"}), frozenset({"event"}), "attribution"),
             "belief": _AssertionSpec(frozenset({"subject", "content"}), frozenset(), "attribution"),
             "desire": _AssertionSpec(frozenset({"subject", "content"}), frozenset(), "attribution"),
@@ -1066,6 +1066,27 @@ class _AuthorityView:
             value,
             "canonical designation surface",
             maximum=16_384,
+        )
+
+    def reported_role_inheritance_control(
+        self,
+        parent_target_ref: str,
+        content_role_ref: str,
+        child_target_ref: str,
+        child_role_ref: str,
+    ) -> Any | None:
+        lookup = getattr(
+            self.authority, "reported_role_inheritance_control", None
+        )
+        if not callable(lookup):
+            raise TypeError(
+                "linked authority lacks reported role inheritance lookup"
+            )
+        return lookup(
+            parent_target_ref,
+            content_role_ref,
+            child_target_ref,
+            child_role_ref,
         )
 
     def validate_state(self, dimension: str, value: str) -> None:
@@ -2313,34 +2334,17 @@ class ExpectedCycleContractCompiler:
             child_unresolved = ()
         elif getattr(self._authority.atoms[child_ref], "kind", None) == "event_type":
             child_supplied: dict[str, Any] = {}
-            child_signature = self._authority.event_signatures.get(child_ref)
-            speaker_kind = getattr(self._authority.atoms[speaker], "kind", None)
-            if child_signature is not None:
-                actor_spec = next(
-                    (row for row in child_signature.roles if row.role == "role:actor"),
-                    None,
+            content_actor = fields.get("content_actor")
+            if content_actor is not None:
+                child_supplied["role:actor"] = self._authority.require_ref(
+                    content_actor, "attributed content actor"
                 )
-                if (
-                    actor_spec is not None
-                    and (not actor_spec.filler_kinds or speaker_kind in actor_spec.filler_kinds)
-                ):
-                    child_supplied["role:actor"] = speaker
-                addressee_spec = next(
-                    (
-                        row
-                        for row in child_signature.roles
-                        if row.role == "role:addressee"
-                    ),
-                    None,
-                )
-                if (
-                    addressee_spec is not None
-                    and (
-                        not addressee_spec.filler_kinds
-                        or "participant" in addressee_spec.filler_kinds
-                    )
-                ):
-                    child_supplied["role:addressee"] = "participant:system"
+            elif self._authority.reported_role_inheritance_control(
+                parent_event, "role:content", child_ref, "role:actor"
+            ) is not None:
+                child_supplied["role:actor"] = speaker
+            # A report's source controls a child role only through the linked
+            # reviewed inheritance edge. It never proves an omitted addressee.
             child, child_unresolved = self._event_application(
                 child_ref,
                 child_supplied,
@@ -3349,7 +3353,7 @@ class ExpectedCycleContractCompiler:
                 ),
             )
         trusted = any(row in families for row in ("evidence",))
-        attributed = any(
+        attributed_family = any(
             row in families for row in ("attribution", "teaching", "learning_event")
         )
         if trusted:
@@ -3368,10 +3372,14 @@ class ExpectedCycleContractCompiler:
                     "epistemic_status:observed",
                 ),
             )
-        if attributed:
+        if attributed_family:
+            # The cycle decision describes the observed outer root. A report's
+            # source-attributed child is a separate ClaimOccurrence and cannot
+            # flatten the untrusted outer speech event into an ATTRIBUTED
+            # whole-cycle decision.
             return (
                 ExpectedDecisionContract(
-                    DecisionStatus.ATTRIBUTED,
+                    DecisionStatus.CONTESTED,
                     DecisionAction.RETAIN_ATTRIBUTION,
                 ),
                 ExpectedEffectContract(
@@ -3382,7 +3390,7 @@ class ExpectedCycleContractCompiler:
                     CycleStatus.PARTIAL,
                     "polarity:positive",
                     "modality:actual",
-                    "epistemic_status:attributed",
+                    "epistemic_status:contested",
                 ),
             )
         return (

@@ -59,7 +59,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "c2d0b50eb17d7f2bbbbc963849339930fb0bd8f71c58ad70bf0bf80830a50c09"
+        "source_ast_sha256": "667254ddad8ffcb1716f1a20833ce5740c384b92ef1bb201dc7610342ffe83e2"
     },
     "tests/test_foundation_continuation_artifacts.py::test_response_artifact_and_effect_reject_foreign_continuation[source]": {
         "activation_phase": "R3",
@@ -291,7 +291,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "ebc4cca66b754476b6f880304bc1c8631ffd71549e158df879664b925dbb90b1"
+        "source_ast_sha256": "0cceeeafb625e7e22ec6714be03f4b9afea46954d987289014f225d5a27c63d6"
     },
     "tests/test_foundation_continuation_artifacts.py::test_response_strictly_decodes_nested_plan[abi_version-2]": {
         "activation_phase": "R3",
@@ -424,7 +424,7 @@ def test_response_artifact_and_registry_hard_cut(continuation):
     effect = _receipt(meaning, situation, evaluation, plan, row)
     response = _response(meaning, situation, evaluation, plan, row, effect)
     artifacts = _artifacts(situation, evaluation, plan, row, effect, response)
-    assert response.abi_version == ABIRegistry().response_meaning == 3
+    assert response.abi_version == ABIRegistry().response_meaning == 5
     assert plan.abi_version == ABIRegistry().learning_plan == 3
     assert artifacts.abi_version == 2
     assert artifacts.obligation is response.obligation is row
@@ -438,7 +438,7 @@ def test_response_artifact_and_registry_hard_cut(continuation):
     # Diagnostic artifacts alone cannot enable publication or mutate any store.
     from cemm_authoritative_hybrid.r3_effects import R3EffectGateway, AdapterRegistry
     before = runtime.stores.revision_pin(), runtime.stores.obligations.revision
-    with pytest.raises(ValueError, match="requires linked authority"):
+    with pytest.raises(ValueError, match="requires activated authority"):
         R3EffectGateway(runtime.stores, AdapterRegistry()).execute(evaluation, meaning, situation,
             learning_plan=plan, obligation=row)
     assert (runtime.stores.revision_pin(), runtime.stores.obligations.revision) == before
@@ -593,7 +593,7 @@ def test_nonlearning_response_semantic_fields_are_preserved(tmp_path):
     runtime, source, pending = _setup(tmp_path)
     try:
         response = source.response_meaning
-        assert response.abi_version == 3
+        assert response.abi_version == 5
         assert response.learning_plan is response.obligation is None
         assert response.learning_plan_ref is response.obligation_ref is None
         assert response.response_expression == source.evaluation.expression

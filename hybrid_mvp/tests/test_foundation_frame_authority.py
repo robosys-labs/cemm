@@ -15,7 +15,7 @@ from cemm_authoritative_hybrid.config import RuntimeConfig
 ROOT = Path(__file__).resolve().parents[1]
 
 __cemm_test_inventory__ = {
-    "tests/test_foundation_frame_authority.py::test_active_manifest_preserves_all_six_reviewed_profiles": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-active-manifest-preserves-all-six-reviewed-profiles", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "3b1f220f2537d56e00079b5a91462cf10c5605e06e5c5e998d4da4d30e7da5df"},
+    "tests/test_foundation_frame_authority.py::test_active_manifest_preserves_all_six_reviewed_profiles": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-active-manifest-preserves-all-six-reviewed-profiles", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "4a22449e83c3b17a97d1cfedb4c127c1d19b42a7066c54097ef3cadb9c65faa8"},
     "tests/test_foundation_frame_authority.py::test_invalid_reviewed_frame_fails_before_activation[generation]": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-invalid-reviewed-frame-fails-before-activation-generation", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "c3e87ed7781b884098537a032089b8132f5805bd0e3636515222d482cf8b55cc"},
     "tests/test_foundation_frame_authority.py::test_invalid_reviewed_frame_fails_before_activation[owner-field]": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-invalid-reviewed-frame-fails-before-activation-owner-field", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "c3e87ed7781b884098537a032089b8132f5805bd0e3636515222d482cf8b55cc"},
     "tests/test_foundation_frame_authority.py::test_invalid_reviewed_frame_fails_before_activation[frames-type]": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-invalid-reviewed-frame-fails-before-activation-frames-type", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "c3e87ed7781b884098537a032089b8132f5805bd0e3636515222d482cf8b55cc"},
@@ -49,7 +49,7 @@ __cemm_test_inventory__ = {
     "tests/test_foundation_frame_authority.py::test_linked_frame_read_failures_never_become_defaults[json]": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-linked-frame-read-failures-never-become-defaults-json", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "07d468e8963b6c1e7fca09071e3d78d0013147241d91e5aebc80a5d4ed22f320"},
     "tests/test_foundation_frame_authority.py::test_frame_hashes_are_deterministic_and_structurally_sensitive": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-frame-hashes-are-deterministic-and-structurally-sensitive", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "50cf0e4ede44f226276df2782dc4b56227562ff18edc9638c8028728a158bc58"},
     "tests/test_foundation_frame_authority.py::test_frames_are_linked_snapshot_and_explicit_absence_uses_defaults": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-frames-are-linked-snapshot-and-explicit-absence-uses-defaults", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "ef1bd02eeeb794837070fc114fac3e64a12ac3be2873c53b14127ffeaaae6f3b"},
-    "tests/test_foundation_frame_authority.py::test_fresh_frame_generation_reopens_and_rejects_prior_store_without_mutation": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-fresh-frame-generation-reopens-and-rejects-prior-store-without-mutation", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "c388896a491da92301b16f464d2d7a34058b89b11b0670ba3117a25e9c9af48c"},
+    "tests/test_foundation_frame_authority.py::test_fresh_frame_generation_reopens_and_rejects_prior_store_without_mutation": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-fresh-frame-generation-reopens-and-rejects-prior-store-without-mutation", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "256f213a0e56db97c7190ddb0e0edde6080227d84e3d3e18a82c2f632a62bc56"},
     "tests/test_foundation_frame_authority.py::test_rejected_frame_generation_activation_closes_sqlite_connection": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-rejected-frame-generation-activation-closes-sqlite-connection", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "e48c006ca6184e382924907fda5b75a722abcb009d0c60bbe0b70202e812eae8"},
     "tests/test_foundation_frame_authority.py::test_reviewed_frame_source_role_schema_is_strict_before_activation[unknown-filler-kind]": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-reviewed-frame-source-role-schema-is-strict-before-activation-unknown-filler-kind", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "4d6df4b655ff557497aa2e14c7793518c50076f4c521f10af69377defe0fdcf6"},
     "tests/test_foundation_frame_authority.py::test_reviewed_frame_source_role_schema_is_strict_before_activation[string-filler-kinds]": {"activation_phase": "R1", "assertion_ref": "assertion:foundation-frame-reviewed-frame-source-role-schema-is-strict-before-activation-string-filler-kinds", "diagnostic_role": "owner", "introduced_by_task": "Foundation-Task-5", "owner_ref": "runtime-path", "source_ast_sha256": "4d6df4b655ff557497aa2e14c7793518c50076f4c521f10af69377defe0fdcf6"},
@@ -115,8 +115,15 @@ def test_active_manifest_preserves_all_six_reviewed_profiles():
     index = SemanticAffordanceIndex(authority, RuntimeConfig.release())
     source = json.loads(SOURCE.read_text("utf-8"))
     assert source["generation"] == authority.generation
-    assert len(source["frames"]) == 6
-    assert tuple((row["frame_ref"], row["target_ref"], row["target_kind"], tuple(row["contribution_kinds"]), tuple(row["input_ports"]), tuple(row["output_ports"])) for row in source["frames"]) == EXPECTED
+    assert len(source["frames"]) == 7
+    assert tuple((row["frame_ref"], row["target_ref"], row["target_kind"], tuple(row["contribution_kinds"]), tuple(row["input_ports"]), tuple(row["output_ports"])) for row in source["frames"][:6]) == EXPECTED
+    assert all(set(row) == {"frame_ref", "target_ref", "target_kind", "contribution_kinds", "input_ports", "output_ports", "role_candidates"} for row in source["frames"][:6])
+    assert source["frames"][6] == {
+        "frame_ref": "frame:event:farewell", "target_kind": "event_type",
+        "target_ref": "event:farewell", "contribution_kinds": ["predicate", "anchor"],
+        "input_ports": ["role:actor", "role:addressee"], "output_ports": ["role:event"],
+        "role_candidates": ["role:actor", "role:addressee"],
+    }
     assert all(row["role_candidates"] == row["input_ports"] for row in source["frames"])
     for row in source["frames"]:
         profiles = index.for_target(row["target_ref"])
@@ -244,7 +251,7 @@ def test_fresh_frame_generation_reopens_and_rejects_prior_store_without_mutation
     for _ in range(2):
         runtime = load_runtime(ROOT, profile="development", store_path=fresh_path)
         try:
-            assert runtime.authority.generation == "authority-v1-2026-09-08-linked-frames"
+            assert runtime.authority.generation == "authority-v1-2026-10-02-communicative-source"
             assert runtime.stores.revision_pin().authority_generation == runtime.authority.generation
             index = SemanticAffordanceIndex(runtime.authority, RuntimeConfig.release())
             for ref, target, kind, contributions, inputs, outputs in EXPECTED:

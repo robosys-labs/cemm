@@ -51,7 +51,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Effect-Currentness-Repair",
         "owner_ref": "capability-effect",
-        "source_ast_sha256": "7568be891c505b97c51bf0080a5a5dcc9d588f63e849d625aedd97734a2f7322",
+        "source_ast_sha256": "fa716c385041af7f4f47f3baa43f92ca708b7ae8c99ed11b7752c3cb1da93b15",
         "supersedes_node_id": "tests/test_transition_simulation.py::TestCommitAppendsHistory::test_commit_increments_revision",
     },
     "tests/test_foundation_effect_currentness.py::test_r3_effect_gateway_rejects_stale_new_request_but_replays_exact_receipt": {
@@ -60,7 +60,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Effect-Currentness-Repair",
         "owner_ref": "capability-effect",
-        "source_ast_sha256": "34072134b5eb58d9258c64146e50588aedf3999b89c60b1ae31333ed0d8a899b",
+        "source_ast_sha256": "798b3ee823ed3d1205b413250f8f8f758c1ffda8471344d7b08a95442d31ff37",
         "supersedes_node_id": "tests/test_transition_simulation.py::TestCommitAppendsHistory::test_commit_stale_revision_raises",
     },
     "tests/test_foundation_effect_currentness.py::test_r3_effect_gateway_persists_exact_proof_and_journal_history": {
@@ -69,7 +69,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Effect-Currentness-Repair",
         "owner_ref": "capability-effect",
-        "source_ast_sha256": "58af4921a48bc2afafbfdd81b59082a091c080b6a93496207967428ffcca1056",
+        "source_ast_sha256": "0a4224fb380a10d7d548e61ec56090182ef58252629184a134317c968fd1807c",
         "supersedes_node_id": "tests/test_transition_simulation.py::TestCommitAppendsHistory::test_commit_records_transition_proof",
     },
     "tests/test_foundation_effect_currentness.py::test_r3_effect_gateway_recovers_exact_pending_request_after_restart": {
@@ -78,7 +78,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Effect-Currentness-Repair",
         "owner_ref": "capability-effect",
-        "source_ast_sha256": "9e1642a91187219f06ba0a3f03b6c1d1090e566409c93b48f930043dd0091811",
+        "source_ast_sha256": "4aad6bcb1fb60e66f80b546d5b5c62bcf5572c8433c685aa53a9831b8b7e61e6",
     },
     "tests/test_foundation_effect_currentness.py::test_r3_effect_gateway_rejects_stale_new_trusted_admission": {
         "activation_phase": "R3",
@@ -86,7 +86,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Effect-Currentness-Repair",
         "owner_ref": "capability-effect",
-        "source_ast_sha256": "3c9a4c56c47bd74b3cfd9e5574d2b5a974ff361ea934eccee98e63a9cf2413dc",
+        "source_ast_sha256": "46694d7662c2472093e726adec63e3f88f32b5b3aa033b04b2d29d12919b9b6f",
     },
     "tests/test_foundation_effect_currentness.py::test_transition_preview_owner_exposes_no_direct_world_commit": {
         "activation_phase": "R3",
@@ -352,7 +352,7 @@ def test_r3_effect_gateway_atomically_advances_current_world_and_effect(
             )
             adapter = _LampAdapter()
             receipt = R3EffectGateway(
-                stores, AdapterRegistry({"adapter:state": adapter})
+                stores, AdapterRegistry({"adapter:state": adapter}), authority=linked_authority
             ).execute(evaluation, meaning, situation)
 
             assert type(receipt) is EffectReceipt
@@ -401,7 +401,7 @@ def test_r3_effect_gateway_rejects_stale_new_request_but_replays_exact_receipt(
             )
             adapter = _LampAdapter()
             gateway = R3EffectGateway(
-                stores, AdapterRegistry({"adapter:state": adapter})
+                stores, AdapterRegistry({"adapter:state": adapter}), authority=linked_authority
             )
 
             receipt = gateway.execute(first[2], first[1], first[0])
@@ -495,7 +495,7 @@ def test_r3_effect_gateway_persists_exact_proof_and_journal_history(
         )
         adapter = _LampAdapter()
         receipt = R3EffectGateway(
-            stores, AdapterRegistry({"adapter:state": adapter})
+            stores, AdapterRegistry({"adapter:state": adapter}), authority=linked_authority
         ).execute(evaluation, meaning, situation)
         fact = stores.world.get(receipt.committed_fact_refs[0])
         journal = effect_journal_get(stores, receipt.idempotency_key)
@@ -549,7 +549,7 @@ def test_r3_effect_gateway_rejects_stale_new_trusted_admission(
                 turn_ref=f"turn:admission:stale:{backend}",
                 app_ref=f"application:admission:stale:{backend}",
             )
-            gateway = R3EffectGateway(stores, AdapterRegistry())
+            gateway = R3EffectGateway(stores, AdapterRegistry(), authority=linked_authority)
             committed = gateway.execute(first[2], first[1], first[0])
             pin = stores.revision_pin()
             facts = stores.r3_world_facts()
@@ -581,7 +581,7 @@ def test_r3_effect_gateway_recovers_exact_pending_request_after_restart(
             stores, linked_authority, turn_ref="turn:pending-restart"
         )
         pending = R3EffectGateway(
-            stores, AdapterRegistry({"adapter:state": pending_adapter})
+            stores, AdapterRegistry({"adapter:state": pending_adapter}), authority=linked_authority
         ).execute(evaluation, meaning, situation)
         journal = effect_journal_get(stores, pending.idempotency_key)
         assert pending.status is EffectStatus.PENDING
@@ -600,7 +600,7 @@ def test_r3_effect_gateway_recovers_exact_pending_request_after_restart(
     recovering_adapter = _RecoveringLampAdapter()
     try:
         gateway = R3EffectGateway(
-            reopened, AdapterRegistry({"adapter:state": recovering_adapter})
+            reopened, AdapterRegistry({"adapter:state": recovering_adapter}), authority=linked_authority
         )
         committed = gateway.execute(evaluation, meaning, situation)
         assert committed.status is EffectStatus.COMMITTED

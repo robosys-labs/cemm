@@ -15,7 +15,7 @@ from enum import Enum
 from typing import Any, Mapping, Protocol, runtime_checkable
 
 from .canonical import stable_ref
-from .persistence import Fact, RevisionPin, SemanticStores
+from .persistence import Fact, NormalizedApplicationClaim, RevisionPin, SemanticStores
 from .r3_codec import (
     exact_fields,
     exact_int,
@@ -41,6 +41,8 @@ __all__ = [
     "session_snapshot",
     "focus_snapshot",
     "obligation_snapshot",
+    "active_application_claims_for_target",
+    "application_claims",
     "effect_journal_get",
     "effect_journal_begin",
     "effect_journal_transition",
@@ -335,6 +337,12 @@ class R3StorePort(Protocol):
     def r3_obligation_snapshot(
         self, session_ref: str, *, maximum: int
     ) -> Mapping[str, Any]: ...
+    def r3_active_application_claims_for_target(
+        self, target_ref: str, *, maximum: int, expected_pin: RevisionPin
+    ) -> tuple[NormalizedApplicationClaim, ...]: ...
+    def r3_application_claims(
+        self, application_refs: tuple[str, ...], *, maximum: int, expected_pin: RevisionPin
+    ) -> tuple[NormalizedApplicationClaim, ...]: ...
     def r3_effect_journal_get(
         self, idempotency_key: str
     ) -> Mapping[str, Any] | None: ...
@@ -379,6 +387,8 @@ _REQUIRED_PORT_METHODS = (
     "r3_begin_turn",
     "r3_focus_snapshot",
     "r3_obligation_snapshot",
+    "r3_active_application_claims_for_target",
+    "r3_application_claims",
     "r3_effect_journal_get",
     "r3_effect_journal_begin",
     "r3_effect_journal_transition",
@@ -460,6 +470,48 @@ def obligation_snapshot(
         ),
         kind="obligation",
     )
+
+
+def _normalized_claim_rows(value: object, context: str, maximum: int) -> tuple[NormalizedApplicationClaim, ...]:
+    if type(value) is not tuple or any(type(row) is not NormalizedApplicationClaim for row in value):
+        raise TypeError(f"{context} returned invalid normalized claims")
+    if len(value) > maximum:
+        raise ValueError(f"{context} exceeded its bound")
+    refs = tuple(row.claim_ref for row in value)
+    if len(refs) != len(set(refs)):
+        raise ValueError(f"{context} returned duplicate claims")
+    return value
+
+
+def active_application_claims_for_target(
+    stores: SemanticStores,
+    target_ref: str,
+    *,
+    maximum: int,
+    expected_pin: RevisionPin,
+) -> tuple[NormalizedApplicationClaim, ...]:
+    maximum = exact_int(maximum, "maximum", minimum=1, maximum=256)
+    rows = require_r3_store_port(stores).r3_active_application_claims_for_target(
+        exact_text(target_ref, "target_ref"), maximum=maximum, expected_pin=exact_pin(expected_pin)
+    )
+    return _normalized_claim_rows(rows, "r3_active_application_claims_for_target", maximum)
+
+
+def application_claims(
+    stores: SemanticStores,
+    application_refs: tuple[str, ...],
+    *,
+    maximum: int,
+    expected_pin: RevisionPin,
+) -> tuple[NormalizedApplicationClaim, ...]:
+    maximum = exact_int(maximum, "maximum", minimum=1, maximum=256)
+    refs = exact_refs(application_refs, "application_refs", maximum=256)
+    if not refs:
+        raise ValueError("application_refs must be nonempty")
+    rows = require_r3_store_port(stores).r3_application_claims(
+        refs, maximum=maximum, expected_pin=exact_pin(expected_pin)
+    )
+    return _normalized_claim_rows(rows, "r3_application_claims", maximum)
 
 
 def _stored(value: object, context: str) -> StoredEffectJournal:

@@ -14,7 +14,7 @@ from .canonical import stable_ref
 from .dialogue import DialogueObligation
 from .gaps import BudgetExhausted
 from .persistence import RevisionPin, SemanticStores
-from .r3_codec import exact_fields, exact_int, exact_text, thaw_json
+from .r3_codec import exact_fields, exact_int, exact_pin, exact_refs, exact_text, thaw_json
 from .r3_persistence import EffectJournalEntry, EffectJournalState, effect_journal_get
 
 
@@ -232,3 +232,33 @@ class _DesignationBatch:
                 return None
             return _admitted_fact(self.reader.stores, self.reader.authority, fact, self.reader.binding, self.pin)
         return self._cached("world_fact", fact_ref, None, 1, compute)
+
+    def authenticate_selected(self, designation_fact_ref, provenance_refs, source_pin) -> DesignationEvidence:
+        """Authenticate selected evidence in this snapshot, capped by its original pin."""
+        exact_text(designation_fact_ref, "selected designation fact ref")
+        exact_refs(provenance_refs, "selected designation provenance", nonempty=True)
+        exact_pin(source_pin)
+        _nonfuture(source_pin, self.pin)
+
+        def compute():
+            authority, stores = self.reader.authority, self.reader.stores
+            static = authority.designations.resolve_fact(designation_fact_ref)
+            if static is not None:
+                evidence = DesignationEvidence(static, None, static.designation_fact_ref,
+                    (static.designation_fact_ref, authority.generation, authority.content_hash))
+                if evidence.provenance_refs == provenance_refs:
+                    return evidence
+            # Canonical designation identity does not identify its evidence owner.
+            fact, revision, _transaction_ref = stores.r3_world_fact_lineage(
+                provenance_refs[0], expected_pin=self.pin)
+            if revision > source_pin.world_revision:
+                raise ValueError("selected designation world fact is newer than its source pin")
+            evidence = _admitted_fact(stores, authority, fact, self.reader.binding, current=source_pin)
+            if (evidence is None or evidence.designation.designation_fact_ref != designation_fact_ref
+                    or evidence.provenance_refs != provenance_refs):
+                raise ValueError("selected designation evidence does not match its publication")
+            return evidence
+
+        evidence = self._cached("selected", (designation_fact_ref, provenance_refs, source_pin), None, 1, compute)
+        self._check()
+        return evidence

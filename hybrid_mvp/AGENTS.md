@@ -112,11 +112,11 @@ is not implemented or activated until its owning replay admission succeeds:
 
 ```text
 Semantic Contribution ABI: 1
-Proposal Context ABI: 2 (unadmitted repair target)
-Semantic Switch Program ABI: 2
-Semantic Expression ABI: 2 (unadmitted repair target)
+Proposal Context ABI: 3 (reviewed unadmitted projection construction)
+Semantic Switch Program ABI: 3 (reviewed unadmitted projection derivation)
+Semantic Expression ABI: 3 (approved query-projection repair target; unadmitted)
 Compilation Proof ABI: 1
-Source Coverage ABI: 2
+Source Coverage ABI: 3 (reviewed unadmitted projection derivation)
 Proposal Result ABI: 2
 Verification Batch ABI: 2
 Verified Meaning ABI: 1
@@ -126,7 +126,12 @@ Learning Plan ABI: 3
 Generic Dialogue Obligation ABI: 1
 R3 Artifacts ABI: 2
 Effect / No-Effect Receipt ABI: 2
-Response Meaning ABI: 3
+Situation Context ABI: 2 (unadmitted communicative-source extension)
+Communicative Source ABI: 1 (unadmitted source-authentication envelope)
+Response Selection ABI: 1 (unadmitted reviewed outgoing derivation)
+Decision ABI: 2 (unadmitted non-claim response consequence)
+Evaluation Bundle ABI: 3 (dedicated extension; shared R3 ABI remains 2)
+Response Meaning ABI: 5 (unadmitted communicative extension preserving signed responses)
 Realization Receipt ABI: 2
 ```
 
@@ -211,11 +216,146 @@ generic question is retired; suppressing it is containment, not completion of
 definition/query projection or a useful response loop. Same-parser round-trip
 consistency still requires independent meaning contrasts.
 
+Description reconstruction retains neutral answer meaning and signed claim
+evidence separately. The read-only `describe_with_proof` owner authenticates
+Proof Bundle ABI 2 during its existing indexed pinned read; decoded bundles are
+structural artifacts, not admitted truth or publication permission. Preserve
+ordered per-claim proof sequences, persistent application correspondence,
+support/deny conflict, and immutable authority identity. Do not rescan authority,
+add a second query, or infer affirmative truth from an unpolarized description.
+Public description projection and response realization remain separate work.
+The user approved the October 1 canonical request/proof-lineage migration in
+foundation amendment section 8. Semantic Expression ABI 3 adds a nonpersistent
+`QueryProjection` leaf, not a sixth application operator or a world assertion.
+Preserve the explicit description/definition distinction, exact grounded target,
+one-request bound and independent source reconstruction. Unknown words do not
+become grounded targets through this extension. A component codec pass does not
+activate public interpretation or descriptive evaluation; unfinished owner paths
+remain unavailable. The existing Task 7 sequence owns implementation and evidence.
+Description ABI 2 derives its request from the exact pure query-projection
+expression and original QUERY situation, including content, target, budgets and
+pin. It rejects the retired QueryResult-bound ABI 1 seam. Proof Bundle 2 owns
+the request through its DescriptionResult without a final-query back-reference;
+codec identity still does not authenticate retrieved facts. Never manufacture
+UNKNOWN to route a supported proposition into description. Dedicated QueryResult
+ABI 3 now distinguishes proposition from projection results and carries the exact
+signed bundle after one guarded read; its unadmitted component has passed independent
+specification and quality review. ProofGraph and the shared R3 artifact envelope remain ABI 2. Evaluation
+creation/decoding bind the original request, situation, pin and exact answer.
+Response Meaning ABI 4 now retains the exact signed bundle. Builder, artifact
+and cycle sinks bind the actual evaluation, original source/situation and effect
+receipt. A supported projection returns neutral content with attributed status,
+not affirmative world truth; other terminals retain the request. Original proof
+pins are not repinned to journal-advanced response pins. The codec cannot infer
+an omitted bundle from a source hash alone; actual-source sinks enforce it.
+ABI 3 rejects. ABI 4 wire dictionaries/lists must be alias-free: serialized JSON
+cannot express shared mutable container identity. Reject aliases before child
+decoding without adding an aggregate proof-content cap. Detached 64-by-64 proof
+evidence remains valid. Unsigned diagnostic realization rejects projections;
+normal realization and verified-focus publication remain unavailable. The
+component has passed independent specification and quality review. Public
+candidate construction and exact derivation have passed independent specification
+and quality review. Bare content questions retain equal description/definition
+readings with no settled meaning; public answer usability and faithful signed
+surface realization remain pending. Definition
+requests stay MISSING without reviewed definition content and
+sufficiency policy; neighbourhood reconstruction is not a definition or members list.
+Target-index postings are retrieval candidates, not automatically descriptive
+content. Authenticate every bounded posting before applying the existing
+operator-aware nonmetadata target-focus criterion. Metadata-only and predicate-
+only mentions cannot contribute answers or conflicts for that target. Raw posting
+overflow still yields the typed budget terminal even if those postings are not
+descriptive; do not skip authentication or raise limits to obtain an answer.
+
+The October 1 checkpoint in the existing foundation plan owns repair sequencing.
+Close earliest-owner defects with independent contrasts before advancing; do not
+reopen completed substrate work, raise limits or create another governing plan.
+Subject-person membership and content-interrogative description are distinct.
+Relation questions must preserve which role is queried; a valid reversed graph
+is a regression, not useful query support.
+The reviewed role-schema index is activated once and independently rematched by
+existing exact owners. Keep primitive signatures and source identities shared
+with the form-contribution owner, including resolved and unresolved deixis.
+Current relation-query schemas must not swallow closed primitive evidence inside
+a designation without a reviewed overlap license. This is construction-local,
+not a global alias ban or a rule making every alternative form feature mandatory.
+Preserve standalone critical residuals, complete polysemy sets and typed budget
+terminals; do not fix role correspondence with phrase branches or higher limits.
+
 The foundation permits an explicitly development-only compositional response
 reference through existing semantic owners. It must preserve roles, scopes,
 perspective, provenance and uncertainty; it is neither learned output, a normal
 fallback nor a second semantic runtime. Normal verified focus still requires
 the existing exact realization-equivalence checks. No new phase or gate is added.
+The bounded `development_reference.py` component and explicit runtime/CLI opt-in
+have passed independent specification and quality review. Its transient diagnostic
+is not a realization receipt. The bounded direct mixed participant/entity role
+repair has passed independent specification and quality review. Its reviewed
+source-local construction retains actual semantic kinds and independently
+rematches exact bindings in coverage, compilation, reconstruction and verification.
+Named negative/embedded constructions remain preserved. The bounded unary
+capability and single-variable relation/type diagnostic grammars are implemented
+and independently reviewed; they retain exact queried roles, uncertainty and
+explicit designation provenance. Unsupported query structures still fail closed.
+Mixed scope/embedding, input inflections, reciprocal response selection and
+definition content remain separate gaps blocking full conversation completion.
+Never treat source-faithful wording of an incorrect graph as intended meaning.
+
+The user approved foundation amendment section 9's bounded communicative-act
+extension. Preserve verified source force/mention and local actor/addressee
+ownership before selecting a reply. Quotation without a reviewed interpretation
+is critical unresolved evidence, not ignorable punctuation. A non-claim
+communicative decision and reviewed generation-pinned response derivation may
+select an outgoing five-operator graph without world admission or external
+execution. Exact source, policy, capability, participant, effect and revision
+linkage must survive every sink; no phrase reply, arbitrary graph replacement,
+extra runtime phase, raised bound or learned-output claim is authorized. Partial
+owners stay unavailable; the existing foundation plan owns the implementation.
+
+The coupled source/reply implementation targets Communicative Source 1,
+Response Selection 1, Situation Context 2, Decision 2, dedicated Evaluation
+Bundle 3 and Response Meaning 5. Independent SPEC and QUALITY reviews pass
+for C3b/C4. Living selectors are regenerated twice identically; C5 fixture
+alignment and full regression remain incomplete. The
+extension is unadmitted. Response 5 preserves the independently reviewed signed-bundle
+contract of Response 4; the predecessor wire is rejected, not adapted.
+Source evidence and the original semantic pin remain immutable. Later sinks
+authenticate selected designation provenance through a current pinned read,
+never today's surface candidates. Missing retained source must reject rather
+than turn a performed act into a claim. Reciprocal replies require actual
+selected program/receipt, orientation, activated policy and the persisted exact
+no-effect request/receipt. Structural decoding is not that authorization.
+Live evaluation finalization and gateway execution require actual activated
+authority matching the original semantic generation, even when retained source
+and reply owners are absent. An omitted
+authority must never skip classification or authorize journal mutation.
+For controlled targets, actual selected witness linkage is required even when
+the source envelope is absent. A single bare controlled OBSERVE event requires
+that envelope independently of caller receipt provenance; this requirement
+grants no force. The effect gateway's store and the source owner's reader store
+must be the same trusted handle before any journal reservation.
+Before EFFECT, the separately supplied original `SituationInputBundle` owns
+session phase and turn index; the existing situation verifier reconstructs the
+full context. After EFFECT, authenticate the original journal evaluation and
+terminal receipt before consuming situated eligibility. No duplicate Cycle
+payload, historical store or self-hashed phase grants authority.
+The existing authority-generation activation check rejects predecessor stores
+under `authority-v1-2026-10-02-communicative-source`; no automatic repinning or
+store migration is authorized. This wire cut changes no semantic control,
+language pack, numeric bound, runtime phase or admission status. Diagnostic
+wording remains development-only, without a realization receipt or focus write.
+
+Claim stance (`support` / `deny`), content-addressed identity and authenticated
+publication permission are distinct from learned-model contribution. None proves
+intended meaning, truth or intelligence by itself. Development reference output
+is functional evidence, never learned-realization evidence. Preserve the R5
+contract for graph-conditioned surface-unit decoding: the old status/count
+encoder, canned-sentence selector, surface-hash targets and fixed epistemic-label
+confidence cannot become release owners. A zero-weight failure deliberately
+triggered by a special logit threshold is not proof of learned semantic use.
+Existing R5 weight-use and generalization obligations must measure semantic
+performance with exact constraints held constant; no new normal-cycle gate or
+pre-admission training is authorized.
 
 Bulk R4.1 authoring, review/export, purpose allocation, realization-recipe review,
 corpus expansion and source-package publication remain frozen. Historical review
@@ -230,6 +370,22 @@ capability, permission, provenance and transactional effect checks; new identity
 acquisition remains separate. Later external research is a bounded permissioned
 consumer of an exact unknown QueryResult, never grounding or automatic authority.
 This increment authorizes no network adapter or root adoption.
+
+Naming evidence is construction-local. A reviewed definition marker supplies an
+exact contiguous literal, retaining known words and repeated event words inside
+it. Only the adjacent naming predicate owns a directive; mentioned events do not
+supply directive force. Composition, compilation, coverage and independent
+reconstruction must reject foreign/missing literal owners and cross-clause
+targets. Missing marker evidence is denial, not markerless compatibility.
+Reviewed EN/ES straight/curly quotation and guillemet boundaries remain critical
+discourse residuals until a reviewed construction interprets them. A full-span
+designation cannot swallow those boundaries. Ambiguous quoted or punctuation-
+prefixed labels remain unsupported; boundary evidence alone does not authorize
+a literal. Do not strip punctuation to learn a fragment.
+Affordance profiles are bounded and cached per target; their applications and
+contributions are counted per source occurrence. Repeated use of one identity
+must not silently delete later occurrences. The numeric per-profile and global
+input, context, application and search caps remain unchanged.
 
 Continuation answers must bind the exact pending snapshot and the original
 gateway-persisted query evaluation, not only a query-ref string. Unknown-query
@@ -266,6 +422,28 @@ foundation implementation plan. Do not reopen that policy approval, silently
 renew a live continuation, or mistake lifecycle approval for alias-publication
 authority or repair completion.
 
+Nonlexical QUERY must use its exact situation pin, the existing physical
+predicate/argument indexes, placement-preserving reviewed-rule closure and keyed
+proof reconstruction. Any incomplete retrieval, rule selection, join, closure
+or proof read is `BUDGET_EXHAUSTED` with no answer or proof; never relabel it
+UNKNOWN or UNSUPPORTED. Keep these reads in the existing query and persistence
+owners, with current numeric limits and no normal-cycle whole-store scan. This
+repair does not replace clause-local speech/source ownership in composition.
+Linked authority rule collections are immutable within one generation. Reviewed
+generic rule publication is not active: the predecessor coordinator may retain
+a proposal but must fail before lowering or mutation. A future publisher must
+link a complete replacement bundle and reactivate authority plus stores under
+one new generation and full content hash; no public rule-install or live store-
+generation setter exists. A query captures one exact immutable authority state,
+uses its local cached index throughout the pinned store read, and rejects an
+identity change before returning. Do not restore in-place/whole-map rule mutation,
+mid-cycle cache refresh or a per-query full-rule integrity scan. Rule antecedent
+and consequent values are recursively immutable, not merely protected by an
+outer mapping. Persisted query evidence admits only the exact stances `support`
+and `deny`; malformed stances fail closed as budget/integrity failure. A derived
+proof's sources are rebuilt from its reviewed rule and recursively validated
+premises, never copied from untrusted persisted source fields.
+
 Reviewed semantic frames are explicit manifest-owned authority, not optional
 ambient files. Link and validate their generation, content and target/signature
 compatibility at activation; consume the linked target index during grounding.
@@ -281,6 +459,14 @@ not inherit a cached pass. Preserve frozen evidence and valid protections withou
 restoring retired paths. A directly inserted fact with a reviewer-looking source
 string is not authenticated alias acquisition. The foundation plan records the
 stale-test audit and approved scope correction; it does not add a runtime gate.
+
+New governed tests require executable literal metadata, not only valid AST hashes.
+Use one parametrization decorator per test with explicit literal, safe-ASCII
+`ids=` and valid assertion refs under `scripts/test_inventory_core.py`. Run the
+existing source-only inventory check before reporting registration complete.
+Refresh only approved later-source metadata; frozen inventory and assertion
+anchors remain immutable. Preserve valid case and assertion identities; repair
+invalid labels in new unadmitted tests without weakening the inventory validator.
 
 Pure transition previews are not write authority. Do not restore dormant direct
 commit helpers to satisfy historical tests. A new effectful request must retain

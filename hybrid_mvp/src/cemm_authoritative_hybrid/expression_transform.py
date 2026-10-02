@@ -79,6 +79,7 @@ def instantiate_bindings(
         expression_links=links,
         binders=binders,
         unresolved_fillers=expression.unresolved_fillers,
+        query_projections=expression.query_projections,
     )
 
 
@@ -104,4 +105,5 @@ def negate_expression(expression: SemanticExpression) -> SemanticExpression:
         expression_links=expression.expression_links,
         binders=expression.binders,
         unresolved_fillers=expression.unresolved_fillers,
+        query_projections=expression.query_projections,
     )

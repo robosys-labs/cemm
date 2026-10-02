@@ -97,7 +97,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "effect-learning-response",
-        "source_ast_sha256": "5649bd69e9e2482cda45efb82952fb8d893ec1cc6b133b6da44ee98f2d052b11",
+        "source_ast_sha256": "b82baa68e62e16bf10661e011dfbf23e0f4b890f48617acf6c276e700ba6e60e",
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_positive_directive_remains_eligible_with_bound_query": {
         "activation_phase": "R3",
@@ -114,7 +114,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "38aa80b23d580ccc4d6cbf0ccb3baf5fa734187a9e752b484eb02bcc87d05084"
+        "source_ast_sha256": "b15df9ad4f88f5ab614f65b1480ea623ca35e422a7e9bb9c0a39dec5a57a48ac"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_materialization_rechecks_bound_content[surface]": {
         "activation_phase": "R3",
@@ -122,7 +122,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "38aa80b23d580ccc4d6cbf0ccb3baf5fa734187a9e752b484eb02bcc87d05084"
+        "source_ast_sha256": "b15df9ad4f88f5ab614f65b1480ea623ca35e422a7e9bb9c0a39dec5a57a48ac"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_materialization_rechecks_bound_content[target]": {
         "activation_phase": "R3",
@@ -130,7 +130,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "38aa80b23d580ccc4d6cbf0ccb3baf5fa734187a9e752b484eb02bcc87d05084"
+        "source_ast_sha256": "b15df9ad4f88f5ab614f65b1480ea623ca35e422a7e9bb9c0a39dec5a57a48ac"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_materialization_rechecks_bound_content[target-kind]": {
         "activation_phase": "R3",
@@ -138,7 +138,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "38aa80b23d580ccc4d6cbf0ccb3baf5fa734187a9e752b484eb02bcc87d05084"
+        "source_ast_sha256": "b15df9ad4f88f5ab614f65b1480ea623ca35e422a7e9bb9c0a39dec5a57a48ac"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_materialization_rechecks_bound_content[answer-contract]": {
         "activation_phase": "R3",
@@ -146,7 +146,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "38aa80b23d580ccc4d6cbf0ccb3baf5fa734187a9e752b484eb02bcc87d05084"
+        "source_ast_sha256": "b15df9ad4f88f5ab614f65b1480ea623ca35e422a7e9bb9c0a39dec5a57a48ac"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_materialization_rechecks_bound_content[proof]": {
         "activation_phase": "R3",
@@ -154,7 +154,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "38aa80b23d580ccc4d6cbf0ccb3baf5fa734187a9e752b484eb02bcc87d05084"
+        "source_ast_sha256": "b15df9ad4f88f5ab614f65b1480ea623ca35e422a7e9bb9c0a39dec5a57a48ac"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_materialization_rechecks_bound_content[stale-snapshot]": {
         "activation_phase": "R3",
@@ -162,7 +162,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "38aa80b23d580ccc4d6cbf0ccb3baf5fa734187a9e752b484eb02bcc87d05084"
+        "source_ast_sha256": "b15df9ad4f88f5ab614f65b1480ea623ca35e422a7e9bb9c0a39dec5a57a48ac"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_invalid_answer_cannot_materialize[other-literal]": {
         "activation_phase": "R3",
@@ -298,7 +298,7 @@ __cemm_test_inventory__ = {
         "diagnostic_role": "owner",
         "introduced_by_task": "Foundation-Task-5",
         "owner_ref": "learning-response",
-        "source_ast_sha256": "38aa80b23d580ccc4d6cbf0ccb3baf5fa734187a9e752b484eb02bcc87d05084"
+        "source_ast_sha256": "b15df9ad4f88f5ab614f65b1480ea623ca35e422a7e9bb9c0a39dec5a57a48ac"
     },
     "tests/test_foundation_continuation_binding.py::test_continuation_storage_keeps_generic_identifier_bounds_separate[memory]": {
         "activation_phase": "R3",
@@ -544,7 +544,7 @@ def test_continuation_finalization_rejects_unbound_draft_ref(tmp_path):
         result = evaluator.evaluate_mode(meaning, situation)
         tampered = replace(result.contribution, learning_draft_refs=("learning_draft:tampered",))
         with pytest.raises(ValueError, match="Decision learning_draft_refs does not match included artifacts"):
-            evaluator.finalize(meaning, situation, result, tampered)
+            evaluator.finalize(meaning, situation, result, tampered, authority=runtime.authority)
     finally:
         runtime.stores.close()
 
@@ -580,7 +580,7 @@ def test_continuation_materialization_rechecks_bound_content(tmp_path, field):
             values[field] = ("entity",) if field == "expected_target_kinds" else () if field == "proof_refs" else "lookup" if field == "kind" else "forged"
             forged = LearningDraft.create(**values)
             mode = replace(mode, learning_drafts=(forged,), contribution=replace(mode.contribution, learning_draft_refs=(forged.learning_draft_ref,)))
-        evaluation = evaluator.finalize(meaning, situation, mode, mode.contribution)
+        evaluation = evaluator.finalize(meaning, situation, mode, mode.contribution, authority=runtime.authority)
         before = runtime.stores.revision_pin(), runtime.stores.obligations.revision
         with pytest.raises(ValueError):
             LearningCoordinator(runtime._authority, runtime.stores).materialize(evaluation, meaning, situation)

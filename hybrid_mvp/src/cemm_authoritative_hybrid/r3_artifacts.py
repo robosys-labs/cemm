@@ -14,12 +14,16 @@ from typing import Any, Iterable, Mapping
 
 from .canonical import stable_ref
 from .cycle import SemanticMode
-from .decision import Decision, DecisionContribution
+from .decision import Decision, DecisionAction, DecisionContribution, DecisionStatus
 from .expressions import SemanticExpression
 from .persistence import RevisionPin
+from .proof_bundle import ProofBundle, _require_exact_wire_json
+from .descriptions import DescriptionCompleteness
 from .situation import SituationContext
 
 R3_ARTIFACT_ABI_VERSION = 2
+EVALUATION_BUNDLE_ABI_VERSION = 3
+QUERY_RESULT_ABI_VERSION = 3
 _MAX_TEXT = 512
 _MAX_ROWS = 512
 _MAX_PAYLOAD_DEPTH = 8
@@ -27,6 +31,7 @@ _MAX_PAYLOAD_NODES = 4096
 
 __all__ = [
     "R3_ARTIFACT_ABI_VERSION",
+    "QUERY_RESULT_ABI_VERSION",
     "ProofNode",
     "ProofGraph",
     "QueryStatus",
@@ -142,6 +147,8 @@ def _wire_json(value: object) -> object:
 def _exact(data: object, fields: frozenset[str], name: str) -> dict[str, Any]:
     if type(data) is not dict:
         raise TypeError(f"{name} payload must be exact dict")
+    if any(type(key) is not str for key in data):
+        raise TypeError(f"{name} field names must be exact str")
     if frozenset(data) != fields:
         raise ValueError(f"{name} fields mismatch")
     return data
@@ -150,12 +157,16 @@ def _exact(data: object, fields: frozenset[str], name: str) -> dict[str, Any]:
 def _wire_refs(value: object, name: str, *, nonempty: bool = False) -> tuple[str, ...]:
     if type(value) is not list:
         raise TypeError(f"{name} must be exact list")
+    if len(value) > _MAX_ROWS:
+        raise ValueError(f"{name} exceeds row bound")
     return _refs(tuple(value), name, nonempty=nonempty)
 
 
 def _wire_pairs(value: object, name: str) -> tuple[tuple[str, str], ...]:
     if type(value) is not list:
         raise TypeError(f"{name} must be exact list")
+    if len(value) > _MAX_ROWS:
+        raise ValueError(f"{name} exceeds row bound")
     rows: list[tuple[str, str]] = []
     for row in value:
         if type(row) is not list or len(row) != 2:
@@ -226,6 +237,8 @@ class ProofNode:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ProofNode":
         row = _exact(data, cls._FIELDS, "ProofNode")
+        if type(row["abi_version"]) is not int or row["abi_version"] != R3_ARTIFACT_ABI_VERSION:
+            raise ValueError("ProofNode ABI mismatch")
         rebuilt = cls.create(
             conclusion_ref=row["conclusion_ref"],
             source_fact_refs=_wire_refs(row["source_fact_refs"], "source_fact_refs"),
@@ -326,6 +339,8 @@ class ProofGraph:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ProofGraph":
         row = _exact(data, cls._FIELDS, "ProofGraph")
+        if type(row["abi_version"]) is not int or row["abi_version"] != R3_ARTIFACT_ABI_VERSION:
+            raise ValueError("ProofGraph ABI mismatch")
         if type(row["nodes"]) is not list: raise TypeError("nodes must be exact list")
         rebuilt = cls.create(
             root_node_refs=_wire_refs(row["root_node_refs"], "root_node_refs", nonempty=True),
@@ -350,6 +365,15 @@ class QueryStatus(Enum):
     BUDGET_EXHAUSTED = "budget_exhausted"
 
 
+_DESCRIPTION_QUERY_STATUS = {
+    DescriptionCompleteness.SUFFICIENT: QueryStatus.SUPPORTED,
+    DescriptionCompleteness.PARTIAL: QueryStatus.PARTIAL,
+    DescriptionCompleteness.CONFLICT: QueryStatus.CONFLICT,
+    DescriptionCompleteness.MISSING: QueryStatus.UNKNOWN,
+    DescriptionCompleteness.BUDGET_EXHAUSTED: QueryStatus.BUDGET_EXHAUSTED,
+}
+
+
 @dataclass(frozen=True, init=False)
 class QueryResult:
     abi_version: int
@@ -361,10 +385,12 @@ class QueryResult:
     retrieval_refs: tuple[str, ...]
     rounds: int
     revision_pin: RevisionPin
+    result_kind: str
+    description_proof: ProofBundle | None
 
     _FIELDS = frozenset({
         "abi_version", "query_result_ref", "expression_ref", "status", "bindings",
-        "proof", "retrieval_refs", "rounds", "revision_pin",
+        "proof", "retrieval_refs", "rounds", "revision_pin", "result_kind", "description_proof",
     })
 
     def __init__(self, *_args: Any, **_kwargs: Any) -> None: raise TypeError("use QueryResult.create")
@@ -373,11 +399,31 @@ class QueryResult:
     def create(cls, *, expression_ref: str, status: QueryStatus,
                bindings: tuple[tuple[str, str], ...], proof: ProofGraph | None,
                retrieval_refs: tuple[str, ...], rounds: int,
-               revision_pin: RevisionPin) -> "QueryResult":
+               revision_pin: RevisionPin, result_kind: str = "proposition",
+               description_proof: ProofBundle | None = None) -> "QueryResult":
+        if cls is not QueryResult: raise TypeError("QueryResult factories require exact QueryResult")
+        if type(result_kind) is not str: raise TypeError("result_kind must be exact str")
+        if result_kind not in {"proposition", "projection"}: raise ValueError("invalid query result_kind")
         if type(status) is not QueryStatus: raise TypeError("status must be QueryStatus")
         if type(rounds) is not int or not 0 <= rounds <= 1024: raise ValueError("rounds out of bound")
         if proof is not None and type(proof) is not ProofGraph: raise TypeError("proof must be ProofGraph or None")
-        if status in {QueryStatus.SUPPORTED, QueryStatus.CONTRADICTED, QueryStatus.CONFLICT} and proof is None:
+        if result_kind == "projection":
+            if type(description_proof) is not ProofBundle:
+                raise TypeError("projection requires exact ProofBundle")
+            if ProofBundle.from_dict(description_proof.as_dict()) != description_proof:
+                raise ValueError("projection ProofBundle is non-canonical")
+            if proof is not None or bindings:
+                raise ValueError("projection cannot carry proposition proof or bindings")
+            request = description_proof.description.request
+            if expression_ref != request.source_expression_ref:
+                raise ValueError("projection source expression mismatch")
+            if revision_pin != description_proof.revision_pin or revision_pin != request.revision_pin:
+                raise ValueError("projection proof/request pin mismatch")
+            if status is not _DESCRIPTION_QUERY_STATUS[description_proof.description.completeness]:
+                raise ValueError("projection status differs from description completeness")
+        elif description_proof is not None:
+            raise ValueError("proposition forbids description proof")
+        if result_kind == "proposition" and status in {QueryStatus.SUPPORTED, QueryStatus.CONTRADICTED, QueryStatus.CONFLICT} and proof is None:
             raise ValueError("decisive query statuses require proof")
         if status in {QueryStatus.UNKNOWN, QueryStatus.BUDGET_EXHAUSTED} and bindings:
             raise ValueError("unknown/budget-exhausted query cannot carry bindings")
@@ -387,15 +433,17 @@ class QueryResult:
             "bindings": _pairs(bindings, "bindings"), "proof": proof,
             "retrieval_refs": _refs(retrieval_refs, "retrieval_refs"), "rounds": rounds,
             "revision_pin": _pin(revision_pin),
+            "result_kind": result_kind, "description_proof": description_proof,
         }
         material = {
-            "abi_version": R3_ARTIFACT_ABI_VERSION, "expression_ref": values["expression_ref"],
+            "abi_version": QUERY_RESULT_ABI_VERSION, "expression_ref": values["expression_ref"],
             "status": status.value, "bindings": [list(row) for row in values["bindings"]],
             "proof": proof.as_dict() if proof else None,
             "retrieval_refs": list(values["retrieval_refs"]), "rounds": rounds,
             "revision_pin": revision_pin.as_dict(),
+            "result_kind": result_kind, "description_proof": description_proof.as_dict() if description_proof else None,
         }
-        obj = object.__new__(cls); object.__setattr__(obj, "abi_version", R3_ARTIFACT_ABI_VERSION)
+        obj = object.__new__(cls); object.__setattr__(obj, "abi_version", QUERY_RESULT_ABI_VERSION)
         object.__setattr__(obj, "query_result_ref", stable_ref("r3_query_result", material))
         for name, item in values.items(): object.__setattr__(obj, name, item)
         return obj
@@ -408,17 +456,40 @@ class QueryResult:
             "proof": self.proof.as_dict() if self.proof else None,
             "retrieval_refs": list(self.retrieval_refs), "rounds": self.rounds,
             "revision_pin": self.revision_pin.as_dict(),
+            "result_kind": self.result_kind,
+            "description_proof": self.description_proof.as_dict() if self.description_proof else None,
         }
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "QueryResult":
         row = _exact(data, cls._FIELDS, "QueryResult")
+        if any(type(key) is not str for key in row):
+            raise TypeError("QueryResult wire field names must be exact str")
+        if type(row["abi_version"]) is not int or row["abi_version"] != QUERY_RESULT_ABI_VERSION:
+            raise ValueError("QueryResult ABI mismatch")
+        # Validate bounded typed fields first. Never prewalk arbitrary JSON:
+        # cyclic scalar substitutions must fail at their owning field, and an
+        # overlong row list must fail before copying or iterating its children.
+        _text(row["query_result_ref"], "query_result_ref")
+        _text(row["expression_ref"], "expression_ref")
+        status = QueryStatus(_text(row["status"], "status"))
+        kind = _text(row["result_kind"], "result_kind")
+        bindings = _wire_pairs(row["bindings"], "bindings")
+        retrieval_refs = _wire_refs(row["retrieval_refs"], "retrieval_refs")
+        pin = RevisionPin.from_dict(row["revision_pin"])
+        if row["proof"] is not None:
+            proof_row = _exact(row["proof"], ProofGraph._FIELDS, "ProofGraph")
+            if type(proof_row["nodes"]) is not list or len(proof_row["nodes"]) > _MAX_ROWS:
+                raise ValueError("proof nodes must be a bounded exact list")
+        proof = None if row["proof"] is None else ProofGraph.from_dict(row["proof"])
+        if proof is not None:
+            # Ordinary nested codecs retain their existing ABI; apply their
+            # bounded JSON type guard only after typed reconstruction succeeds.
+            _require_exact_wire_json(row["proof"])
         rebuilt = cls.create(
-            expression_ref=row["expression_ref"], status=QueryStatus(row["status"]),
-            bindings=_wire_pairs(row["bindings"], "bindings"),
-            proof=None if row["proof"] is None else ProofGraph.from_dict(row["proof"]),
-            retrieval_refs=_wire_refs(row["retrieval_refs"], "retrieval_refs"),
-            rounds=row["rounds"], revision_pin=RevisionPin.from_dict(row["revision_pin"]),
+            expression_ref=row["expression_ref"], status=status, bindings=bindings, proof=proof,
+            retrieval_refs=retrieval_refs, rounds=row["rounds"], revision_pin=pin,
+            result_kind=kind, description_proof=None if row["description_proof"] is None else ProofBundle.from_dict(row["description_proof"]),
         )
         if row["query_result_ref"] != rebuilt.query_result_ref or rebuilt.as_dict() != row:
             raise ValueError("non-canonical QueryResult")
@@ -793,6 +864,7 @@ class ModeEvaluation:
     capability_evaluations: tuple[CapabilityEvaluation,...]=()
     effect_intents: tuple[EffectIntent,...]=()
     learning_drafts: tuple[LearningDraft,...]=()
+    response_selection: Any | None = None
 
     def __post_init__(self)->None:
         if type(self.contribution) is not DecisionContribution: raise TypeError("contribution must be DecisionContribution")
@@ -804,22 +876,87 @@ class ModeEvaluation:
 
 @dataclass(frozen=True,init=False)
 class EvaluationBundle:
-    abi_version:int; evaluation_ref:str; decision:Decision; expression:SemanticExpression; situation:SituationContext; query_results:tuple[QueryResult,...]; claim_occurrences:tuple[ClaimOccurrence,...]; admission_decisions:tuple[AdmissionDecision,...]; state_deltas:tuple[StateDelta,...]; state_query_results:tuple[StateQueryResult,...]; transition_evaluations:tuple[TransitionEvaluation,...]; capability_evaluations:tuple[CapabilityEvaluation,...]; effect_intents:tuple[EffectIntent,...]; learning_drafts:tuple[LearningDraft,...]; revision_pin:RevisionPin
-    _FIELDS=frozenset({"abi_version","evaluation_ref","decision","expression","situation","query_results","claim_occurrences","admission_decisions","state_deltas","state_query_results","transition_evaluations","capability_evaluations","effect_intents","learning_drafts","revision_pin"})
+    abi_version:int; evaluation_ref:str; decision:Decision; expression:SemanticExpression; situation:SituationContext; query_results:tuple[QueryResult,...]; claim_occurrences:tuple[ClaimOccurrence,...]; admission_decisions:tuple[AdmissionDecision,...]; state_deltas:tuple[StateDelta,...]; state_query_results:tuple[StateQueryResult,...]; transition_evaluations:tuple[TransitionEvaluation,...]; capability_evaluations:tuple[CapabilityEvaluation,...]; effect_intents:tuple[EffectIntent,...]; learning_drafts:tuple[LearningDraft,...]; revision_pin:RevisionPin; response_selection:Any | None
+    _FIELDS=frozenset({"abi_version","evaluation_ref","decision","expression","situation","query_results","claim_occurrences","admission_decisions","state_deltas","state_query_results","transition_evaluations","capability_evaluations","effect_intents","learning_drafts","response_selection","revision_pin"})
     def __init__(self,*_args:Any,**_kwargs:Any)->None: raise TypeError("use EvaluationBundle.create")
+    @staticmethod
+    def _validate_queries(decision: Decision, expression: SemanticExpression,
+                          situation: SituationContext, mode: ModeEvaluation,
+                          revision_pin: RevisionPin) -> None:
+        """Bind included query evidence at the existing final artifact owner."""
+        queries = mode.query_results
+        if decision.query_result_refs != tuple(row.query_result_ref for row in queries):
+            raise ValueError("Decision query refs differ from included query results")
+        for query in queries:
+            if QueryResult.from_dict(query.as_dict()) != query:
+                raise ValueError("included query result is non-canonical")
+            if query.expression_ref != expression.expression_ref:
+                raise ValueError("query source expression mismatch")
+            if query.revision_pin != revision_pin:
+                raise ValueError("query revision pin mismatch")
+            if (query.result_kind == "projection") != bool(expression.query_projections):
+                raise ValueError("query result kind differs from source projection")
+        if not expression.query_projections:
+            # Ordinary query status may be overridden by a separately validated
+            # pending learning obligation. Do not impose a universal one-query
+            # or decision-status equality constraint on proposition artifacts.
+            return
+        if len(queries) != 1 or queries[0].result_kind != "projection":
+            raise ValueError("projection evaluation requires one exact projection query result")
+        query = queries[0]
+        bundle = query.description_proof
+        bundle.description.request.validate_source(expression, situation)
+        unrelated = (mode.claim_occurrences, mode.admission_decisions, mode.state_deltas,
+            mode.state_query_results, mode.transition_evaluations, mode.capability_evaluations,
+            mode.effect_intents, mode.learning_drafts)
+        if any(unrelated) or any((decision.claim_occurrence_refs, decision.admission_decision_refs,
+                decision.transition_preview_refs, decision.effect_intent_ref, decision.learning_draft_refs)):
+            raise ValueError("projection evaluation carries unrelated artifacts")
+        expected_action = (DecisionAction.ANSWER if query.status is QueryStatus.SUPPORTED else
+            DecisionAction.NO_OP if query.status is QueryStatus.BUDGET_EXHAUSTED else
+            DecisionAction.REQUEST_CLARIFICATION)
+        if decision.status is not DecisionStatus(query.status.value) or decision.action is not expected_action:
+            raise ValueError("projection decision status/action mismatch")
+        expected_answer = bundle.answer_expression_ref if query.status is QueryStatus.SUPPORTED else None
+        if decision.answer_expression_ref != expected_answer:
+            raise ValueError("projection answer does not match neutral description graph")
+        if decision.bindings:
+            raise ValueError("projection decision cannot carry bindings")
+        if decision.proof_refs != (bundle.proof_bundle_ref,):
+            raise ValueError("projection decision proof refs mismatch")
+        if decision.source_refs != bundle.description.source_refs:
+            raise ValueError("projection decision source refs mismatch")
     @classmethod
     def create(cls,*,decision:Decision,expression:SemanticExpression,situation:SituationContext,mode_evaluation:ModeEvaluation,revision_pin:RevisionPin)->"EvaluationBundle":
         if type(decision) is not Decision or type(expression) is not SemanticExpression or type(situation) is not SituationContext or type(mode_evaluation) is not ModeEvaluation: raise TypeError("invalid EvaluationBundle input")
         if decision.expression_ref!=expression.expression_ref or decision.situation.situation_ref!=situation.situation_ref: raise ValueError("EvaluationBundle lineage mismatch")
         if decision.revision_pin!=revision_pin or situation.revision_pin!=revision_pin: raise ValueError("EvaluationBundle revision mismatch")
-        values={"decision":decision,"expression":expression,"situation":situation,"query_results":mode_evaluation.query_results,"claim_occurrences":mode_evaluation.claim_occurrences,"admission_decisions":mode_evaluation.admission_decisions,"state_deltas":mode_evaluation.state_deltas,"state_query_results":mode_evaluation.state_query_results,"transition_evaluations":mode_evaluation.transition_evaluations,"capability_evaluations":mode_evaluation.capability_evaluations,"effect_intents":mode_evaluation.effect_intents,"learning_drafts":mode_evaluation.learning_drafts,"revision_pin":_pin(revision_pin)}
-        material={"abi_version":R3_ARTIFACT_ABI_VERSION,"decision":decision.as_dict(),"expression":expression.as_dict(),"situation":situation.as_dict(),"query_results":[x.as_dict() for x in values["query_results"]],"claim_occurrences":[x.as_dict() for x in values["claim_occurrences"]],"admission_decisions":[x.as_dict() for x in values["admission_decisions"]],"state_deltas":[x.as_dict() for x in values["state_deltas"]],"state_query_results":[x.as_dict() for x in values["state_query_results"]],"transition_evaluations":[x.as_dict() for x in values["transition_evaluations"]],"capability_evaluations":[x.as_dict() for x in values["capability_evaluations"]],"effect_intents":[x.as_dict() for x in values["effect_intents"]],"learning_drafts":[x.as_dict() for x in values["learning_drafts"]],"revision_pin":revision_pin.as_dict()}
-        obj=object.__new__(cls); object.__setattr__(obj,"abi_version",R3_ARTIFACT_ABI_VERSION); object.__setattr__(obj,"evaluation_ref",stable_ref("r3_evaluation",material)); [object.__setattr__(obj,k,v) for k,v in values.items()]; return obj
-    def as_dict(self)->dict[str,Any]: return {"abi_version":self.abi_version,"evaluation_ref":self.evaluation_ref,"decision":self.decision.as_dict(),"expression":self.expression.as_dict(),"situation":self.situation.as_dict(),"query_results":[x.as_dict() for x in self.query_results],"claim_occurrences":[x.as_dict() for x in self.claim_occurrences],"admission_decisions":[x.as_dict() for x in self.admission_decisions],"state_deltas":[x.as_dict() for x in self.state_deltas],"state_query_results":[x.as_dict() for x in self.state_query_results],"transition_evaluations":[x.as_dict() for x in self.transition_evaluations],"capability_evaluations":[x.as_dict() for x in self.capability_evaluations],"effect_intents":[x.as_dict() for x in self.effect_intents],"learning_drafts":[x.as_dict() for x in self.learning_drafts],"revision_pin":self.revision_pin.as_dict()}
+        cls._validate_queries(decision, expression, situation, mode_evaluation, revision_pin)
+        from .communicative import ResponseSelection
+        selection = mode_evaluation.response_selection
+        if selection is not None:
+            if (type(selection) is not ResponseSelection
+                    or ResponseSelection.from_dict(selection.as_dict()) != selection
+                    or selection.selection_ref != decision.selection_ref
+                    or selection.situation_ref != situation.situation_ref
+                    or selection.original_revision_pin != revision_pin
+                    or situation.communicative_source is None
+                    or selection.source_ref != situation.communicative_source.source_ref
+                    or decision.action is not DecisionAction.RESPOND):
+                raise ValueError("evaluation response selection lineage mismatch")
+        elif decision.selection_ref is not None:
+            raise ValueError("RESPOND evaluation requires exact selection")
+        values={"response_selection":selection,"decision":decision,"expression":expression,"situation":situation,"query_results":mode_evaluation.query_results,"claim_occurrences":mode_evaluation.claim_occurrences,"admission_decisions":mode_evaluation.admission_decisions,"state_deltas":mode_evaluation.state_deltas,"state_query_results":mode_evaluation.state_query_results,"transition_evaluations":mode_evaluation.transition_evaluations,"capability_evaluations":mode_evaluation.capability_evaluations,"effect_intents":mode_evaluation.effect_intents,"learning_drafts":mode_evaluation.learning_drafts,"revision_pin":_pin(revision_pin)}
+        material={"abi_version":EVALUATION_BUNDLE_ABI_VERSION,"response_selection":selection.as_dict() if selection else None,"decision":decision.as_dict(),"expression":expression.as_dict(),"situation":situation.as_dict(),"query_results":[x.as_dict() for x in values["query_results"]],"claim_occurrences":[x.as_dict() for x in values["claim_occurrences"]],"admission_decisions":[x.as_dict() for x in values["admission_decisions"]],"state_deltas":[x.as_dict() for x in values["state_deltas"]],"state_query_results":[x.as_dict() for x in values["state_query_results"]],"transition_evaluations":[x.as_dict() for x in values["transition_evaluations"]],"capability_evaluations":[x.as_dict() for x in values["capability_evaluations"]],"effect_intents":[x.as_dict() for x in values["effect_intents"]],"learning_drafts":[x.as_dict() for x in values["learning_drafts"]],"revision_pin":revision_pin.as_dict()}
+        obj=object.__new__(cls); object.__setattr__(obj,"abi_version",EVALUATION_BUNDLE_ABI_VERSION); object.__setattr__(obj,"evaluation_ref",stable_ref("r3_evaluation",material)); [object.__setattr__(obj,k,v) for k,v in values.items()]; return obj
+    def as_dict(self)->dict[str,Any]: return {"abi_version":self.abi_version,"evaluation_ref":self.evaluation_ref,"response_selection":self.response_selection.as_dict() if self.response_selection else None,"decision":self.decision.as_dict(),"expression":self.expression.as_dict(),"situation":self.situation.as_dict(),"query_results":[x.as_dict() for x in self.query_results],"claim_occurrences":[x.as_dict() for x in self.claim_occurrences],"admission_decisions":[x.as_dict() for x in self.admission_decisions],"state_deltas":[x.as_dict() for x in self.state_deltas],"state_query_results":[x.as_dict() for x in self.state_query_results],"transition_evaluations":[x.as_dict() for x in self.transition_evaluations],"capability_evaluations":[x.as_dict() for x in self.capability_evaluations],"effect_intents":[x.as_dict() for x in self.effect_intents],"learning_drafts":[x.as_dict() for x in self.learning_drafts],"revision_pin":self.revision_pin.as_dict()}
     @classmethod
     def from_dict(cls,data:Mapping[str,Any])->"EvaluationBundle":
         row=_exact(data,cls._FIELDS,"EvaluationBundle")
-        mode=ModeEvaluation(contribution=DecisionContribution(status=__import__("cemm_authoritative_hybrid.decision",fromlist=["DecisionStatus"]).DecisionStatus(row["decision"]["status"]),action=__import__("cemm_authoritative_hybrid.decision",fromlist=["DecisionAction"]).DecisionAction(row["decision"]["action"]),answer_expression_ref=row["decision"]["answer_expression_ref"],bindings=_wire_pairs(row["decision"]["bindings"],"bindings"),claim_occurrence_refs=_wire_refs(row["decision"]["claim_occurrence_refs"],"claim_occurrence_refs"),admission_decision_refs=_wire_refs(row["decision"]["admission_decision_refs"],"admission_decision_refs"),query_result_refs=_wire_refs(row["decision"]["query_result_refs"],"query_result_refs"),transition_preview_refs=_wire_refs(row["decision"]["transition_preview_refs"],"transition_preview_refs"),effect_intent_ref=row["decision"]["effect_intent_ref"],learning_draft_refs=_wire_refs(row["decision"]["learning_draft_refs"],"learning_draft_refs"),proof_refs=_wire_refs(row["decision"]["proof_refs"],"proof_refs"),source_refs=_wire_refs(row["decision"]["source_refs"],"source_refs"),blocker_refs=_wire_refs(row["decision"]["blocker_refs"],"blocker_refs"),policy_refs=_wire_refs(row["decision"]["policy_refs"],"policy_refs")),query_results=tuple(QueryResult.from_dict(x) for x in row["query_results"]),claim_occurrences=tuple(ClaimOccurrence.from_dict(x) for x in row["claim_occurrences"]),admission_decisions=tuple(AdmissionDecision.from_dict(x) for x in row["admission_decisions"]),state_deltas=tuple(StateDelta.from_dict(x) for x in row["state_deltas"]),state_query_results=tuple(StateQueryResult.from_dict(x) for x in row["state_query_results"]),transition_evaluations=tuple(TransitionEvaluation.from_dict(x) for x in row["transition_evaluations"]),capability_evaluations=tuple(CapabilityEvaluation.from_dict(x) for x in row["capability_evaluations"]),effect_intents=tuple(EffectIntent.from_dict(x) for x in row["effect_intents"]),learning_drafts=tuple(LearningDraft.from_dict(x) for x in row["learning_drafts"]))
+        if type(row["abi_version"]) is not int or row["abi_version"] != EVALUATION_BUNDLE_ABI_VERSION:
+            raise ValueError("EvaluationBundle ABI mismatch")
+        from .communicative import ResponseSelection
+        mode=ModeEvaluation(response_selection=None if row["response_selection"] is None else ResponseSelection.from_dict(row["response_selection"]),contribution=DecisionContribution(status=__import__("cemm_authoritative_hybrid.decision",fromlist=["DecisionStatus"]).DecisionStatus(row["decision"]["status"]),action=__import__("cemm_authoritative_hybrid.decision",fromlist=["DecisionAction"]).DecisionAction(row["decision"]["action"]),answer_expression_ref=row["decision"]["answer_expression_ref"],selection_ref=row["decision"]["selection_ref"],bindings=_wire_pairs(row["decision"]["bindings"],"bindings"),claim_occurrence_refs=_wire_refs(row["decision"]["claim_occurrence_refs"],"claim_occurrence_refs"),admission_decision_refs=_wire_refs(row["decision"]["admission_decision_refs"],"admission_decision_refs"),query_result_refs=_wire_refs(row["decision"]["query_result_refs"],"query_result_refs"),transition_preview_refs=_wire_refs(row["decision"]["transition_preview_refs"],"transition_preview_refs"),effect_intent_ref=row["decision"]["effect_intent_ref"],learning_draft_refs=_wire_refs(row["decision"]["learning_draft_refs"],"learning_draft_refs"),proof_refs=_wire_refs(row["decision"]["proof_refs"],"proof_refs"),source_refs=_wire_refs(row["decision"]["source_refs"],"source_refs"),blocker_refs=_wire_refs(row["decision"]["blocker_refs"],"blocker_refs"),policy_refs=_wire_refs(row["decision"]["policy_refs"],"policy_refs")),query_results=tuple(QueryResult.from_dict(x) for x in row["query_results"]),claim_occurrences=tuple(ClaimOccurrence.from_dict(x) for x in row["claim_occurrences"]),admission_decisions=tuple(AdmissionDecision.from_dict(x) for x in row["admission_decisions"]),state_deltas=tuple(StateDelta.from_dict(x) for x in row["state_deltas"]),state_query_results=tuple(StateQueryResult.from_dict(x) for x in row["state_query_results"]),transition_evaluations=tuple(TransitionEvaluation.from_dict(x) for x in row["transition_evaluations"]),capability_evaluations=tuple(CapabilityEvaluation.from_dict(x) for x in row["capability_evaluations"]),effect_intents=tuple(EffectIntent.from_dict(x) for x in row["effect_intents"]),learning_drafts=tuple(LearningDraft.from_dict(x) for x in row["learning_drafts"]))
         rebuilt=cls.create(decision=Decision.from_dict(row["decision"]),expression=SemanticExpression.from_dict(row["expression"]),situation=SituationContext.from_dict(row["situation"]),mode_evaluation=mode,revision_pin=RevisionPin.from_dict(row["revision_pin"]))
         if row["evaluation_ref"]!=rebuilt.evaluation_ref or rebuilt.as_dict()!=row: raise ValueError("non-canonical EvaluationBundle")
         return rebuilt

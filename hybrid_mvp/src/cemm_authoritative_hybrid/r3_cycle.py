@@ -1,10 +1,12 @@
-"""Cycle Result ABI 3 for the admitted R3 continuation.
+"""Cycle Result ABI 4 for the admitted R3 continuation.
 
 Cycle Result ABI 2 remains owned by :mod:`cycle` and continues to describe the
 R1/R2 ORIENT→PROPOSE→VERIFY boundary.  R3 introduces a new, explicit ABI rather
-than mutating ABI 2 at import time.  This module owns the six-phase result and
-finalizer used by the R3 runtime.  Surface realization remains unadmitted and
-is represented by the exact R5 later-owner gap.
+than mutating ABI 2 at import time.  This module owns the result and finalizer
+used by the R3 runtime.  In addition to the admitted three- and six-phase paths,
+ABI 4 represents exactly one read-only ORIENT budget failure without fabricating
+downstream artifacts.  Surface realization remains unadmitted and is represented
+by the exact R5 later-owner gap.
 """
 
 from __future__ import annotations
@@ -21,15 +23,15 @@ from .cycle import (
     SemanticPhase,
     _PhaseMaterial,
 )
-from .gaps import GapKind, GapReceipt
+from .gaps import GapKind, GapReceipt, RepairOwner
 from .persistence import RevisionPin
 from .proposal import ProposalResult
 from .r3_artifacts import EvaluationBundle
 from .r3_effects import EffectReceipt, EffectStatus, NoEffectReceipt
-from .r3_response import ResponseMeaning
+from .r3_response import ResponseMeaning, validate_response_structure, validate_response_linkage
 from .verifier import VerificationBatch
 
-CYCLE_RESULT_ABI_VERSION = 3
+CYCLE_RESULT_ABI_VERSION = 4
 
 __all__ = [
     "CYCLE_RESULT_ABI_VERSION",
@@ -191,8 +193,8 @@ def _validate_phase_chain(
     final_revision_pin: RevisionPin,
 ) -> None:
     _text(input_ref, "input_ref")
-    if type(phase_material) is not tuple or len(phase_material) not in {3, 6}:
-        raise ValueError("phase_material must contain exactly three or six phases")
+    if type(phase_material) is not tuple or len(phase_material) not in {1, 3, 6}:
+        raise ValueError("phase_material must contain exactly one, three or six phases")
     if any(type(row) is not _PhaseMaterial for row in phase_material):
         raise TypeError("phase_material rows must be exact _PhaseMaterial")
     expected = tuple(SemanticPhase)[: len(phase_material)]
@@ -211,6 +213,80 @@ def _validate_phase_chain(
         raise ValueError("final_revision_pin is non-canonical")
     if phase_material[-1].output_revision_pin != final_revision_pin:
         raise ValueError("final_revision_pin differs from terminal phase material")
+
+
+def _proposal_budget_gap(proposal: ProposalResult, verification: VerificationBatch) -> GapReceipt | None:
+    """Project witnessed search incompleteness, never merely a rejected candidate."""
+    if not proposal.truncated:
+        return None
+    if verification.status == "abstained":
+        if proposal.abstention_code != "proposal:budget_exhausted":
+            return None
+    elif verification.status == "rejected":
+        if not verification.candidate_receipts or not all(
+            any(error.code == "proposal_truncated" for error in row.verification_errors)
+            for row in verification.candidate_receipts
+        ):
+            return None
+    else:
+        return None
+    return GapReceipt.create(
+        kind=GapKind.PERFORMANCE, status="budget_exhausted",
+        source_refs=(proposal.proposal_ref, verification.batch_ref),
+        blockers=("proposal:budget_exhausted",),
+        rejected_candidate_refs=tuple(row.candidate_ref for row in verification.candidate_receipts),
+        recommended_owner=RepairOwner.RUNTIME, safe_response_action="bound_cycle",
+    )
+
+
+def _validate_orient_budget_terminal(
+    *,
+    input_ref: str,
+    status: CycleStatus,
+    refs: Mapping[str, str | None],
+    gap_receipt: GapReceipt | None,
+    phase_material: tuple[_PhaseMaterial, ...],
+) -> None:
+    """Validate the sole legal pre-Orientation Cycle Result shape."""
+    if status is not CycleStatus.BUDGET_EXHAUSTED:
+        raise ValueError("ORIENT failure requires budget-exhausted cycle status")
+    if any(
+        refs[name] is not None
+        for name in (
+            "orientation_ref",
+            "proposal_ref",
+            "verification_ref",
+            "evaluation_ref",
+            "effect_receipt_ref",
+            "response_meaning_ref",
+            "realization_receipt_ref",
+        )
+    ):
+        raise ValueError("ORIENT failure cannot contain downstream artifacts")
+    if gap_receipt is None:
+        raise ValueError("ORIENT failure requires an exact gap receipt")
+    row = phase_material[0]
+    budget_use = dict(row.budget_use)
+    if len(budget_use) != 1:
+        raise ValueError("ORIENT failure must identify exactly one exhausted budget")
+    budget_name, limit = next(iter(budget_use.items()))
+    expected_blocker = f"budget exhausted: {budget_name}={limit}"
+    if not (
+        row.input_refs == (input_ref,)
+        and row.output_refs == (gap_receipt.gap_ref,)
+        and row.input_revision_pin == row.output_revision_pin
+        and row.disposition is PhaseDisposition.FAILED
+        and row.rejection_codes == ("orient:budget_exhausted",)
+        and gap_receipt.kind is GapKind.PERFORMANCE
+        and gap_receipt.status == "budget_exhausted"
+        and gap_receipt.source_refs == (input_ref,)
+        and gap_receipt.blockers == (expected_blocker,)
+        and gap_receipt.missing_contract_refs == ()
+        and gap_receipt.rejected_candidate_refs == ()
+        and gap_receipt.recommended_owner is RepairOwner.RUNTIME
+        and gap_receipt.safe_response_action == "bound_cycle"
+    ):
+        raise ValueError("ORIENT budget failure lineage is not exact")
 
 
 def _validate_r2_terminal(
@@ -235,17 +311,22 @@ def _validate_r2_terminal(
     }
     if verify_row.disposition is not dispositions[verification.status]:
         raise ValueError("VERIFY disposition does not match VerificationBatch")
+    budget_gap = _proposal_budget_gap(proposal, verification)
     codes = {
         "selected": (),
         "abstained": (proposal.abstention_code,),
         "rejected": ("verification:rejected",),
         "ambiguous": ("verification:ambiguous",),
     }
-    if verify_row.rejection_codes != codes[verification.status]:
+    expected_codes = budget_gap.blockers if budget_gap is not None else codes[verification.status]
+    if verify_row.rejection_codes != expected_codes:
         raise ValueError("VERIFY rejection codes do not match VerificationBatch")
     if gap_receipt is None:
         raise ValueError("three-phase terminal cycle requires a gap receipt")
-    if verification.status == "selected":
+    if budget_gap is not None:
+        if status is not CycleStatus.BUDGET_EXHAUSTED or gap_receipt != budget_gap:
+            raise ValueError("truncated proposal requires exact budget-exhausted cycle and gap")
+    elif verification.status == "selected":
         meaning = verification.selected_meaning
         if meaning is None:
             raise ValueError("selected verification lacks VerifiedMeaning")
@@ -278,6 +359,10 @@ def _validate_r3_terminal(
     if verification.status != "selected" or verification.selected_meaning is None:
         raise ValueError("R3 continuation requires selected VerifiedMeaning")
     meaning = verification.selected_meaning
+    validate_response_structure(response=response_meaning, evaluation=evaluation,
+        situation=evaluation.situation, effect=effect_receipt, meaning=meaning)
+    if effect_receipt.output_revision_pin != final_revision_pin:
+        raise ValueError("effect receipt output pin differs from cycle final pin")
     if evaluation.decision.verified_meaning_ref != meaning.verified_meaning_ref:
         raise ValueError("evaluation does not bind the selected VerifiedMeaning")
     if evaluation.expression.expression_ref != meaning.expression.expression_ref:
@@ -357,6 +442,15 @@ def _validate(
         realization_receipt=realization_receipt,
         gap_receipt=gap_receipt,
     )
+    if len(phase_material) == 1:
+        _validate_orient_budget_terminal(
+            input_ref=input_ref,
+            status=status,
+            refs=refs,
+            gap_receipt=gap_receipt,
+            phase_material=phase_material,
+        )
+        return refs
     required = (
         (0, refs["orientation_ref"]),
         (1, refs["proposal_ref"]),
@@ -401,7 +495,7 @@ def _validate(
 
 @dataclass(frozen=True)
 class CycleResult:
-    """Canonical six-phase Cycle Result ABI 3."""
+    """Canonical Cycle Result ABI 4."""
 
     abi_version: int
     cycle_ref: str
@@ -442,7 +536,7 @@ class CycleResult:
             final_revision_pin=self.final_revision_pin,
         )
         expected = stable_ref(
-            "cycle_v3",
+            "cycle_v4",
             _identity(
                 input_ref=self.input_ref,
                 status=self.status,
@@ -552,7 +646,7 @@ class CycleResult:
 
 
 class CycleFinalizer:
-    """Create one canonical Cycle Result ABI 3 from complete phase material."""
+    """Create one canonical Cycle Result ABI 4 from complete phase material."""
 
     @classmethod
     def finalize(
@@ -572,9 +666,22 @@ class CycleFinalizer:
         final_revision_pin: RevisionPin,
         capture_trace: bool,
         durations_ns: tuple[int, ...],
+        communicative_owner=None,
     ) -> CycleResult:
         if cls is not CycleFinalizer:
             raise TypeError("CycleFinalizer requires exact class")
+        if evaluation is not None:
+            from .communicative import selected_owned_inputs
+            if proposal is None or verification is None or verification.selected_meaning is None:
+                raise ValueError("communicative finalization requires actual proposal/verification")
+            meaning = verification.selected_meaning
+            program, receipt = selected_owned_inputs(proposal, verification, meaning)
+            if (evaluation.situation.communicative_source is not None
+                    and evaluation.situation.communicative_source.evidence.packet_ref != input_ref):
+                raise ValueError("communicative finalizer evidence/input mismatch")
+            validate_response_linkage(response=response_meaning, evaluation=evaluation,
+                situation=evaluation.situation, effect=effect_receipt, meaning=meaning,
+                communicative_owner=communicative_owner, orientation=orientation, program=program, receipt=receipt)
         refs = _validate(
             input_ref=input_ref,
             status=status,
@@ -594,7 +701,7 @@ class CycleFinalizer:
         if any(type(value) is not int or value < 0 for value in durations_ns):
             raise ValueError("durations_ns must contain bounded nonnegative integers")
         cycle_ref = stable_ref(
-            "cycle_v3",
+            "cycle_v4",
             _identity(
                 input_ref=input_ref,
                 status=status,

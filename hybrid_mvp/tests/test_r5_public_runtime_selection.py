@@ -54,7 +54,7 @@ def _assert_selected_proposal_owner_is_not_admitted(monkeypatch) -> None:
         load_runtime(Path("does-not-exist"), profile="release")
 
     assert type(captured.value) is MissingOwner
-    assert captured.value.owner_name == "program_abi_2_proposal_owner"
+    assert captured.value.owner_name == "program_abi_3_proposal_owner"
 
 
 def test_selected_release_runtime_never_invokes_bootstrap_proposer(monkeypatch):

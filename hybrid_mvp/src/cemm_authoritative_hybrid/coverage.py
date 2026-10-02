@@ -1,4 +1,4 @@
-"""Source Coverage ABI 2: exact context-to-program assignment verification.
+"""Source Coverage ABI 3: exact context-to-program assignment verification.
 
 Coverage independently reconstructs source geometry, contribution type and
 residual criticality from the exact Proposal Context.  It validates only; it
@@ -15,11 +15,11 @@ from typing import Any, Iterable, Mapping
 from .canonical import stable_ref
 from .config import RuntimeConfig
 from .persistence import RevisionPin
-from .proposal_context import ProposalContext, UnresolvedDesignationFrame, _is_orthographic_evidence
+from .proposal_context import ProposalContext, UnresolvedDesignationFrame, _is_orthographic_evidence, naming_binding_choice_index
 from .programs import ProgramAction, SemanticSwitchProgram, SourceAssignment
 
 
-COVERAGE_ABI_VERSION = 2
+COVERAGE_ABI_VERSION = 3
 _RELEASE = RuntimeConfig.release()
 _MAX_UNITS = _RELEASE.max_input_tokens
 _MAX_ACTIONS = _RELEASE.max_applications * 8 + 16
@@ -65,6 +65,10 @@ _COMPATIBLE_ASSIGNMENTS = frozenset(
         ("discourse", "discourse", "propose_transition"),
         ("open_variable", "role", "project_variable"),
         ("binder", "role", "project_variable"),
+        ("open_variable", "projection", "project_variable"),
+        ("binder", "projection", "project_variable"),
+        ("qualifier", "projection", "project_variable"),
+        ("anchor", "projection", "project_variable"),
     }
 )
 _ROLE_ASSIGNMENT_KINDS = frozenset({"role", "reference", "qualifier"})
@@ -483,7 +487,7 @@ class CoverageReceipt:
             }
         )
         _exact(data, fields, "CoverageReceipt")
-        if type(data["abi_version"]) is not int or data["abi_version"] != 2:
+        if type(data["abi_version"]) is not int or data["abi_version"] != COVERAGE_ABI_VERSION:
             raise ValueError("unsupported Source Coverage ABI")
         pin = data["revision_pin"]
         if not isinstance(pin, Mapping):
@@ -526,10 +530,11 @@ class CoverageReceipt:
 
 
 class CoverageVerifier:
-    """Validate a Program ABI 2 candidate against its exact ProposalContext."""
+    """Validate a Program ABI 3 candidate against its exact ProposalContext."""
 
-    def __init__(self, config: Any | None = None) -> None:
+    def __init__(self, config: Any | None = None, *, role_schema_index: Any = None) -> None:
         self._limit = getattr(config or _RELEASE, "max_input_tokens", _MAX_UNITS)
+        self.role_schema_index = role_schema_index
 
     def verify(
         self, context: ProposalContext, program: SemanticSwitchProgram
@@ -559,6 +564,13 @@ class CoverageVerifier:
             else:
                 errors.append(overflow)
 
+        from .role_schemas import relation_query_errors, query_projection_errors, relation_declarative_errors, communicative_role_errors
+        for code in (*relation_query_errors(context, program, self.role_schema_index),
+            *query_projection_errors(context, program, self.role_schema_index),
+            *relation_declarative_errors(context, program, self.role_schema_index)):
+            report(code, detail="reviewed relation query correspondence failed")
+        for code in communicative_role_errors(context, program, self.role_schema_index):
+            report(code, detail="reviewed communicative source correspondence failed")
         context_ref = context.context_ref
         expected = context.source_unit_refs
         actual = tuple(program.source_unit_refs)
@@ -623,6 +635,7 @@ class CoverageVerifier:
         action_sources: dict[str, list[str]] = {}
         application_frame_by_local: dict[str, Any] = {}
         node_frame_by_local: dict[str, Any] = {}
+        naming_bindings = naming_binding_choice_index(context)
         for action in actions:
             args = action.arguments
             action_common = {"target_action_ref": action.action_ref}
@@ -677,6 +690,13 @@ class CoverageVerifier:
                         target_role_ref=args[1],
                         **action_common,
                     )
+                if frame is not None and contribution is not None:
+                    allowed_naming = naming_bindings.get((frame.slot_ref, args[1]))
+                    if allowed_naming is not None and (
+                        contribution.slot_ref not in allowed_naming
+                        or action.source_unit_refs != contribution.source_unit_refs
+                    ):
+                        report("naming_role_owner_mismatch", **action_common)
             elif action.action_type == "bind_reference":
                 frame = application_frame_by_local.get(args[0])
                 reference = reference_slot(args[2])
@@ -696,6 +716,13 @@ class CoverageVerifier:
                     report("unknown_reference_slot", **action_common)
                 elif args[1] not in reference.compatible_roles:
                     report("reference_role_incompatible", **action_common)
+                if frame is not None and reference is not None:
+                    allowed_naming = naming_bindings.get((frame.slot_ref, args[1]))
+                    if allowed_naming is not None and (
+                        reference.slot_ref not in allowed_naming
+                        or action.source_unit_refs != reference.source_unit_refs
+                    ):
+                        report("naming_role_owner_mismatch", **action_common)
             elif action.action_type == "bind_nested_application":
                 if args[0] == "role":
                     parent_frame = node_frame_by_local.get(args[1])
@@ -722,6 +749,14 @@ class CoverageVerifier:
                 if operand_frame is not None:
                     node_frame_by_local[args[0]] = operand_frame
             elif action.action_type == "project_variable":
+                if len(args) == 2:
+                    if context.query_projection(args[1]) is None:
+                        report("unknown_query_projection_slot", **action_common)
+                    for ref in action.source_unit_refs:
+                        action_sources.setdefault(ref, []).append(action.action_ref)
+                        if ref not in expected_set:
+                            report("unknown_action_source_unit", source_unit_ref=ref, **action_common)
+                    continue
                 variable = variable_slot(args[1])
                 body_frame = node_frame_by_local.get(args[2])
                 if variable is None:
@@ -1078,6 +1113,12 @@ class CoverageVerifier:
             else:
                 geometry(link, "expression_link_source_geometry_mismatch")
         elif kind == "project_variable":
+            if len(args) == 2:
+                # Exact port ownership and current activated rematch are checked
+                # independently above, not borrowed from a compiled expression.
+                if row.assignment_kind != "projection" or row.target_role_ref is not None:
+                    report("query_projection_port_assignment", **common)
+                return
             variable = variable_slot(args[1])
             if variable is None:
                 report("unknown_variable_slot", **common)

@@ -459,11 +459,11 @@ def generate_all() -> list[dict]:
                            content="event:farewell")],
           ["bob said goodbye", "bob says goodbye"])
     _next(cat, [_assertion("reported_speech", speaker="entity:alice", event="event:say",
-                           content="event:leave")],
-          ["alice said left", "alice says left"])
-    _next(cat, [_assertion("reported_speech", speaker="entity:bob", event="event:leave",
-                           content=None)],
-          ["bob said left", "bob says left"])
+                           content="event:leave", content_actor="entity:alice")],
+          ["alice said alice left", "alice says alice left"])
+    _next(cat, [_assertion("reported_speech", speaker="entity:bob", event="event:say",
+                           content="event:leave", content_actor="entity:bob")],
+          ["bob said bob left", "bob says bob left"])
     _next(cat, [_assertion("reported_speech", speaker="entity:carol", event="event:say",
                            content="event:greeting")],
           ["carol said hello", "carol says hello"])

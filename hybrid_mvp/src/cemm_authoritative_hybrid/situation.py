@@ -1,4 +1,4 @@
-"""Situation Context ABI 1.
+"""Situation Context ABI 2.
 
 A situation is the independently verified, revision-pinned context supplied to
 EVALUATE alongside one selected :class:`VerifiedMeaning`.  It records the
@@ -17,7 +17,7 @@ from .forms import EvidencePacket
 from .persistence import RevisionPin
 from .proposal_context import ProposalContext
 
-SITUATION_CONTEXT_ABI_VERSION = 1
+SITUATION_CONTEXT_ABI_VERSION = 2
 _MAX_REF_CHARS = 512
 _MAX_ITEMS = 512
 _EVIDENCE_KINDS = frozenset({"text", "sensor", "operation"})
@@ -215,6 +215,7 @@ class SituationContext:
     source_refs: tuple[str, ...]
     epistemic_scope_ref: str
     revision_pin: RevisionPin
+    communicative_source: Any | None
 
     _FIELDS = frozenset({
         "abi_version", "situation_ref", "orientation_ref", "proposal_context_ref",
@@ -226,7 +227,7 @@ class SituationContext:
         "resource_snapshot_ref", "resource_refs", "adapter_snapshot_ref",
         "adapter_refs", "evidence_kinds", "evidence_policy_refs",
         "adapter_receipt_refs", "trusted_observation", "source_refs",
-        "epistemic_scope_ref", "revision_pin",
+        "epistemic_scope_ref", "revision_pin", "communicative_source",
     })
 
     def __init__(self, *_args: Any, **_kwargs: Any) -> None:
@@ -241,6 +242,8 @@ class SituationContext:
             elif type(item) is tuple:
                 result[key] = list(item)
             elif type(item) is RevisionPin:
+                result[key] = item.as_dict()
+            elif key == "communicative_source" and item is not None:
                 result[key] = item.as_dict()
             else:
                 result[key] = item
@@ -290,6 +293,7 @@ class SituationContext:
         source_refs: tuple[str, ...],
         epistemic_scope_ref: str,
         revision_pin: RevisionPin,
+        communicative_source: Any | None = None,
     ) -> "SituationContext":
         if cls is not SituationContext:
             raise TypeError("SituationContext factories require exact class")
@@ -303,6 +307,7 @@ class SituationContext:
         if any(kind not in _EVIDENCE_KINDS for kind in evidence):
             raise ValueError("unsupported situation evidence kind")
         values = {
+            "communicative_source": communicative_source,
             "orientation_ref": _text(orientation_ref, "orientation_ref"),
             "proposal_context_ref": _text(proposal_context_ref, "proposal_context_ref"),
             "mode": mode,
@@ -336,6 +341,14 @@ class SituationContext:
             "revision_pin": _pin(revision_pin),
         }
         participants = values["participant_refs"]
+        if communicative_source is not None:
+            from .communicative import CommunicativeSource
+            if (type(communicative_source) is not CommunicativeSource
+                    or CommunicativeSource.from_dict(communicative_source.as_dict()) != communicative_source
+                    or communicative_source.context.context_ref != proposal_context_ref
+                    or communicative_source.context.orientation_ref != orientation_ref
+                    or communicative_source.original_revision_pin != revision_pin):
+                raise ValueError("situation communicative source lineage mismatch")
         if values["speaker_ref"] not in participants or values["addressee_ref"] not in participants:
             raise ValueError("speaker/addressee must be reviewed participants")
         if values["speaker_ref"] == values["addressee_ref"]:
@@ -367,6 +380,9 @@ class SituationContext:
         if type(value["mode"]) is not str or type(value["revision_pin"]) is not dict:
             raise TypeError("SituationContext nested wire types are invalid")
         rebuilt = cls.create(
+            communicative_source=(None if value["communicative_source"] is None else
+                __import__("cemm_authoritative_hybrid.communicative", fromlist=["CommunicativeSource"])
+                .CommunicativeSource.from_dict(value["communicative_source"])),
             orientation_ref=value["orientation_ref"],
             proposal_context_ref=value["proposal_context_ref"],
             mode=SemanticMode(value["mode"]),
@@ -428,6 +444,7 @@ class SituationContextBuilder:
         adapter_snapshot_ref: str,
         adapter_refs: tuple[str, ...],
         evidence_policy_refs: tuple[str, ...],
+        communicative_source: Any | None = None,
     ) -> SituationContext:
         if type(orientation) is not Orientation or type(context) is not ProposalContext:
             raise TypeError("situation builder requires exact R2 artifacts")
@@ -448,6 +465,9 @@ class SituationContextBuilder:
             if missing:
                 raise ValueError(f"situation participant absent from authority: {missing}")
         speaker = orientation.participant_frame
+        if speaker not in participants or (self._authority is not None
+                and self._authority.atoms[speaker].kind != "participant"):
+            raise ValueError("situation speaker must be an actual reviewed participant")
         candidates = tuple(ref for ref in participants if ref != speaker)
         if "participant:system" in candidates:
             addressee = "participant:system"
@@ -469,6 +489,7 @@ class SituationContextBuilder:
         trusted = bool(adapter_receipts) and not set(evidence_kinds).isdisjoint({"sensor", "operation"})
         source_refs = tuple(dict.fromkeys((evidence.packet_ref, *(item.item_ref for item in evidence.items))))
         return SituationContext.create(
+            communicative_source=communicative_source,
             orientation_ref=orientation.orientation_ref,
             proposal_context_ref=context.context_ref,
             mode=mode,
