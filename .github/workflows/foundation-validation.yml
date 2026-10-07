@@ -45,3 +45,6 @@ jobs:
         run: |
           cd hybrid_mvp
           pytest -q tests/test_foundation_*.py tests/test_r5_realization_boundary.py tests/test_r3_learning_response.py tests/test_r3_learning_transaction.py
+
+      - name: Observational public-path capability probe
+        run: python hybrid_mvp/scripts/foundation_probe.py
