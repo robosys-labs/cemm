@@ -48,6 +48,18 @@ def probe():
                         "semantic_output": json.loads(turn.semantic_surface)["kind"],
                         "discourse_action": None if response is None else response.discourse_action,
                         "applications": None if response is None else len(response.response_expression.applications),
+                        "decision_status": None if cycle.evaluation is None else cycle.evaluation.decision.status.value,
+                        "decision_action": None if cycle.evaluation is None else cycle.evaluation.decision.action.value,
+                        "blockers": [] if response is None else list(response.blocker_refs),
+                        "input_graph": [] if cycle.verification.selected_meaning is None else [
+                            {
+                                "op": app.operator,
+                                "predicate": app.predicate_ref,
+                                "roles": [[role.role_ref, repr(role.filler)[:120]]
+                                          for role in app.roles],
+                            }
+                            for app in cycle.verification.selected_meaning.expression.applications
+                        ],
                         "world_revision_delta": cycle.final_revision_pin.world_revision - before.world_revision,
                         "response_verified": turn.verify(),
                     })
