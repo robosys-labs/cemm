@@ -35,7 +35,7 @@ def reachable_modules() -> frozenset[str]:
         visited.add(module)
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         parts = module.split(".")
-        package_parts = parts if parts[-1] == "__init__" else parts[:-1]
+        package_parts = parts[:-1]  # __init__.py is represented as pkg.__init__
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
