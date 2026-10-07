@@ -20,15 +20,28 @@ jobs:
         with:
           python-version: '3.11'
           cache: pip
-      - name: Install canonical hybrid package
+      - name: Install canonical root package
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e './hybrid_mvp[test]'
-      - name: Syntax and import validation
+          python -m pip install -e '.[test]'
+      - name: Syntax, import and package cutover
         run: |
           python -m compileall -q hybrid_mvp/src/cemm_authoritative_hybrid
           python -c "import cemm_authoritative_hybrid.foundation"
+          python -m pip wheel --no-deps --wheel-dir /tmp/cemm-foundation-wheel .
+          python - <<'PY'
+          import glob
+          import zipfile
+          wheels = glob.glob("/tmp/cemm-foundation-wheel/*.whl")
+          assert len(wheels) == 1, wheels
+          with zipfile.ZipFile(wheels[0]) as z:
+              files = set(z.namelist())
+          assert "cemm_authoritative_hybrid/foundation.py" in files
+          assert "cemm_authoritative_hybrid/foundation_cli.py" in files
+          assert not any(p.startswith("cemm/") for p in files), "legacy root package in canonical wheel"
+          print("packaging hard cut: canonical hybrid only")
+          PY
       - name: Foundation end-to-end and R3 regression tests
         run: |
           cd hybrid_mvp
-          pytest -q tests/test_foundation_semantic_surface.py tests/test_r5_realization_boundary.py tests/test_r3_learning_response.py tests/test_r3_learning_transaction.py
+          pytest -q tests/test_foundation_semantic_surface.py tests/test_foundation_cli.py tests/test_r5_realization_boundary.py tests/test_r3_learning_response.py tests/test_r3_learning_transaction.py
