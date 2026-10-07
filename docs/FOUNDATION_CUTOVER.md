@@ -1,21 +1,21 @@
 # CEMM foundation cutover (in progress)
 
 **Branch:** `codex/cemm-foundation-end-to-end-20261008`.
-**Policy:** one canonical packaged cognitive runtime; historical source may
-remain in Git until its consumers have been inventoried.
+**Policy:** one canonical packaged cognitive runtime. Historical root execution
+and snapshots were pruned after preserving their original main commit on the
+archive branch.
 
 ## Installed package authority
 
 The root `pyproject.toml` now installs the **Hybrid MVP** Python package
 (`cemm_authoritative_hybrid`), not the superseded Stage 0–22 `cemm`
-package. The root `cemm` command now invokes the foundation CLI. The
-former root package remains in the checkout temporarily for migration, but
-must not appear in a built distribution.
+package. The root `cemm` command now invokes the foundation CLI. The former root package, root tests/tools, and snapshots have been removed
+from this branch. Their bytes remain accessible in Git history and the
+pre-foundation archive branch.
 
-Do not merge the branch until the canonical wheel test, public-path tests,
-dependency inventory and removal of legacy code are verified. Python import
-resolution from a source checkout may still find `./cemm`; treat this as
-a known transitional risk until the directory is retired.
+Do not merge as a general cognitive release until independent acquisition,
+semantic-domain transfer, and real graph-equivalent natural language are green.
+The active wheel and checkout no longer contain the old root `cemm/` package.
 
 ## Exact scope of this tranche
 
