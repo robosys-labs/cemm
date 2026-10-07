@@ -2,13 +2,9 @@ name: CEMM foundation validation
 on:
   push:
     branches:
+      - main
       - 'codex/cemm-foundation-*'
   pull_request:
-    paths:
-      - 'hybrid_mvp/src/**'
-      - 'hybrid_mvp/tests/test_foundation_*'
-      - '.github/workflows/foundation-validation.yml'
-      - 'pyproject.toml'
   workflow_dispatch:
 jobs:
   semantic-foundation:
