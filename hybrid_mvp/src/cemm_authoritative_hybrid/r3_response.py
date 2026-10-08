@@ -297,6 +297,8 @@ class ResponseBuilder:
             return "clarify"
         if decision_status is DecisionStatus.UNKNOWN:
             return "unknown"
+        if action is DecisionAction.REQUEST_CLARIFICATION:
+            return "clarify"
         if action is DecisionAction.REQUEST_EFFECT:
             return (
                 "report_effect"
