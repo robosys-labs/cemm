@@ -19,3 +19,4 @@ def test_single_foundation_entrypoint_never_reaches_unadmitted_models():
     assert "model" not in modules
     assert "realization" not in modules
     assert "training" not in modules
+    assert "learning" not in modules

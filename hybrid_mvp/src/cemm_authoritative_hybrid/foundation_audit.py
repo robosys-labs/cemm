@@ -15,6 +15,7 @@ PACKAGE = "cemm_authoritative_hybrid"
 ENTRYPOINTS = frozenset({"foundation", "foundation_cli"})
 INELIGIBLE_RUNTIME_MODULES = frozenset({
     "model", "training", "realization", "evaluation", "effects",
+    "learning",  # Retired mutable in-memory learning coordinator.
 })
 
 
