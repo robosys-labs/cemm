@@ -44,7 +44,7 @@ def test_distinct_verified_answers_cannot_collapse_into_first_match(tmp_path):
         assert result.verify()
         response = result.cycle.response_meaning
         assert response is not None
-        assert response.discourse_action != "answer"
+        assert response.discourse_action == "clarify"
         assert response.bindings == (), "scalar ABI cannot emit arbitrary one of two answers"
         assert "query:multiple_bindings" in response.blocker_refs
         assert runtime.stores.revision_pin().world_revision == before
