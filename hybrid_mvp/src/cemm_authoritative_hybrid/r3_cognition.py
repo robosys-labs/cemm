@@ -616,25 +616,29 @@ class _RecursiveQueryEvaluator:
         if scope.operator_type == "scope:modality":
             return _NodeResult(QueryStatus.PARTIAL, blockers=("query:modal_not_actual",))
         if scope.operator_type in {"scope:tense", "scope:aspect"}:
-            return self.evaluate(scope.operand_ref, allowed)
+            # An unqualified current fact does not prove a proposition at a
+            # different time or with a particular aspect. There is not yet
+            # an admitted time-indexed evidence evaluator for these scopes.
+            return _NodeResult(
+                QueryStatus.PARTIAL,
+                blockers=("scope:temporal_evaluation_not_admitted",),
+            )
         return _NodeResult(QueryStatus.PARTIAL, blockers=("scope:unsupported",))
 
     def _link(self, link: ExpressionLink, allowed: frozenset[str] | None) -> _NodeResult:
+        # The exact expression ABI can represent more relations than the
+        # admitted evaluator can prove. Shared operand truth does NOT establish
+        # cause, purpose, sequence, contrast, natural-language implication or
+        # unresolved coordination. Preserve the graph, report typed partial,
+        # and never substitute simple conjunction for an unlicensed link.
+        if link.link_type not in {"link:conjunction", "link:disjunction"}:
+            return _NodeResult(
+                QueryStatus.PARTIAL,
+                blockers=("link:semantics_not_admitted",),
+            )
         rows = tuple(self.evaluate(ref, allowed) for ref in link.operand_refs)
-        if link.link_type in {"link:disjunction"}:
+        if link.link_type == "link:disjunction":
             return _or(rows, self.config.max_inference_facts)
-        if link.link_type == "link:condition":
-            antecedent, consequent = rows
-            if antecedent.status is QueryStatus.SUPPORTED:
-                return consequent
-            if antecedent.status is QueryStatus.CONTRADICTED:
-                return _NodeResult(QueryStatus.SUPPORTED, support=antecedent.oppose)
-            if antecedent.status is QueryStatus.CONFLICT:
-                return _NodeResult(QueryStatus.CONFLICT, blockers=("query:condition_conflict",))
-            return _NodeResult(QueryStatus.UNKNOWN, blockers=("query:condition_antecedent_unknown",))
-        # Coordination, conjunction, cause, purpose, contrast and sequence all
-        # require every ordered operand to hold. Their distinct link identity is
-        # retained in the expression and proof lineage.
         return _and(rows, self.config.max_inference_facts)
 
 
