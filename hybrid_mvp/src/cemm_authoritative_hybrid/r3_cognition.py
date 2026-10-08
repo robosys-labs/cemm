@@ -29,7 +29,10 @@ from .expressions import (
     SemanticExpression,
     VariableBinder,
 )
-from .persistence import Fact, RevisionPin, SemanticStores
+from .persistence import (
+    Fact, RevisionPin, SemanticStores, StoreSnapshotBudgetExceeded,
+)
+from .r3_persistence import world_snapshot
 from .r3_artifacts import (
     AdmissionDecision,
     AdmissionStatus,
@@ -97,19 +100,20 @@ def _string_value(value: object) -> str:
     return str(value)
 
 
-def _world_facts(stores: SemanticStores) -> tuple[Fact, ...]:
-    method = getattr(stores, "r3_world_facts", None)
-    if not callable(method):
-        raise TypeError("SemanticStores lacks the public r3_world_facts API")
-    rows = method()
-    if type(rows) is not tuple or any(type(row) is not Fact for row in rows):
-        raise TypeError("r3_world_facts returned non-canonical facts")
-    return rows
+def _world_facts(
+    stores: SemanticStores, *, maximum: int = 256,
+) -> tuple[Fact, ...]:
+    # Never use the unbounded r3_world_facts() table materializer in cognition.
+    # The reference engine fails closed above this bound until a predicate- and
+    # role-indexed retrieval owner is admitted for production scale.
+    return world_snapshot(stores, maximum=maximum)
 
 
-def _fact_views(stores: SemanticStores) -> tuple[_FactView, ...]:
+def _fact_views(
+    stores: SemanticStores, *, maximum: int = 256,
+) -> tuple[_FactView, ...]:
     result: list[_FactView] = []
-    for fact in _world_facts(stores):
+    for fact in _world_facts(stores, maximum=maximum):
         args = dict(fact.args)
         predicate = str(args.pop("predicate_ref", fact.operator))
         proof = dict(fact.proof)
@@ -663,10 +667,36 @@ class QueryDecisionOwner:
                       situation: SituationContext) -> ModeEvaluation:
         if situation.mode is not SemanticMode.QUERY:
             raise ValueError("QueryDecisionOwner requires QUERY")
+        try:
+            world_facts = _fact_views(
+                self._stores, maximum=self._config.max_inference_facts,
+            )
+        except StoreSnapshotBudgetExceeded:
+            # Without complete retrieval we cannot honestly return UNKNOWN or
+            # a support result based on an arbitrary initial fact subset.
+            result = QueryResult.create(
+                expression_ref=expression.expression_ref,
+                status=QueryStatus.BUDGET_EXHAUSTED,
+                bindings=(),
+                proof=None,
+                retrieval_refs=(),
+                rounds=0,
+                revision_pin=situation.revision_pin,
+            )
+            return ModeEvaluation(
+                contribution=DecisionContribution(
+                    status=DecisionStatus.BUDGET_EXHAUSTED,
+                    action=DecisionAction.NO_OP,
+                    query_result_refs=(result.query_result_ref,),
+                    blocker_refs=("query:world_fact_budget_exceeded",),
+                    policy_refs=("policy:recursive_expression_query:v1",),
+                ),
+                query_results=(result,),
+            )
         base = tuple(
             dict.fromkeys(
                 (
-                    *_fact_views(self._stores),
+                    *world_facts,
                     *_authority_type_fact_views(
                         expression,
                         self._authority,

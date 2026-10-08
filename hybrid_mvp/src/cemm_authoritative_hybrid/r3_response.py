@@ -295,7 +295,9 @@ class ResponseBuilder:
             return "deny"
         if decision_status is DecisionStatus.CONFLICT:
             return "clarify"
-        if decision_status is DecisionStatus.UNKNOWN:
+        if decision_status in {
+            DecisionStatus.UNKNOWN, DecisionStatus.BUDGET_EXHAUSTED,
+        }:
             return "unknown"
         if action is DecisionAction.REQUEST_CLARIFICATION:
             return "clarify"

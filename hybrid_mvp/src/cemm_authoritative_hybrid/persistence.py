@@ -200,6 +200,10 @@ class StaleRevisionError(Exception):
     """Raised when a commit's expected_revision does not match the current revision."""
 
 
+class StoreSnapshotBudgetExceeded(ValueError):
+    """Bounded world retrieval exceeded its configured fact ceiling."""
+
+
 class StoreActivationError(Exception):
     """Raised when a store cannot be activated due to corruption."""
 
@@ -1457,7 +1461,9 @@ class SemanticStores:
                 for key in sorted(self._backend.world._facts)[: maximum + 1]
             )
         if len(values) > maximum:
-            raise ValueError("world snapshot exceeds its configured bound")
+            raise StoreSnapshotBudgetExceeded(
+                "world snapshot exceeds its configured bound"
+            )
         return values
 
     def r3_world_facts(self) -> tuple[Fact, ...]:
