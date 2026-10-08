@@ -14,6 +14,8 @@ import json
 import secrets
 from typing import Mapping
 
+from .canonical import stable_ref
+
 POLICY = "policy:reviewed_designation:v1"
 MAX_REVIEW_SECONDS = 3600
 
@@ -62,6 +64,15 @@ class ReviewApproval:
             c not in "0123456789abcdef" for c in self.signature
         ):
             raise ValueError("review signature must be lowercase SHA-256 hex")
+
+    @property
+    def approval_ref(self) -> str:
+        return stable_ref(
+            "review_approval", {
+                **self.signing_fields(),
+                "signature": self.signature,
+            },
+        )
 
     def signing_fields(self) -> dict[str, object]:
         return {
