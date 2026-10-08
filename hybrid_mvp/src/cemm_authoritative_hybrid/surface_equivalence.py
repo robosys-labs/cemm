@@ -73,6 +73,11 @@ class SemanticSurfaceOracle:
             return rejected("proposal_model_changed")
         if pin.world_revision != response.revision_pin.world_revision:
             return rejected("world_evidence_stale")
+        if pin != response.revision_pin:
+            # A session, effect or episode can change the situated meaning or
+            # proof status even with identical world facts. Never realize a
+            # response against another turn's execution revision.
+            return rejected("response_revision_stale")
         if not (
             response.mode.value == "QUERY"
             and response.discourse_action == "answer"

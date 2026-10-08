@@ -1228,6 +1228,26 @@ class SQLiteSemanticStore:
             )
 
     def revision_pin(self) -> RevisionPin:
+        # Another SQLite connection may have committed world/session/effect
+        # changes since these store facades were constructed. A cached pin
+        # makes proof, read-only equivalence and stale-effect authorization
+        # incorrectly treat old world evidence as current. Read all revision
+        # dimensions in ONE SQLite statement, then update local revisions.
+        rows = {
+            str(row[0]): int(row[1])
+            for row in self._conn.execute(
+                "SELECT key,value FROM metadata WHERE key IN ("
+                "'world_revision','session_revision','episode_revision',"
+                "'effect_revision','focus_revision','obligation_revision'"
+                ")"
+            ).fetchall()
+        }
+        self.world.revision = rows.get("world_revision", 0)
+        self.sessions.revision = rows.get("session_revision", 0)
+        self.episodes.revision = rows.get("episode_revision", 0)
+        self.effects.revision = rows.get("effect_revision", 0)
+        self.focus.revision = rows.get("focus_revision", 0)
+        self.obligations.revision = rows.get("obligation_revision", 0)
         return RevisionPin(
             authority_generation=self._authority_generation,
             world_revision=self.world.revision,
