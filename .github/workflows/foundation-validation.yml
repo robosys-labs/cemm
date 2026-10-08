@@ -51,3 +51,22 @@ jobs:
         run: python hybrid_mvp/scripts/foundation_probe.py
       - name: Observational learning-request probe (diagnostic only)
         run: python hybrid_mvp/scripts/learning_request_probe.py
+
+  hybrid-regression:
+    name: Full Hybrid MVP regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install canonical root package and full test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[test]'
+      - name: Run every active Hybrid MVP test
+        run: |
+          cd hybrid_mvp
+          pytest -q tests --disable-warnings --maxfail=10
