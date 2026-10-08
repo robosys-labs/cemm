@@ -175,6 +175,26 @@ class FoundationRuntime:
         result.verify()
         return result
 
+    def assess_english_surface(
+        self, source: FoundationTurn, candidate: str,
+    ):
+        """Read-only graph equivalence on eligible supported query answers.
+
+        This is a candidate checker, never a claim that the linguistic R5
+        generator is activated. R3 still records the unadmitted R5 gap.
+        """
+        from .surface_equivalence import SemanticSurfaceOracle
+        if type(source) is not FoundationTurn or not source.verify():
+            raise ValueError("surface assessment requires an exact proven turn")
+        response = source.cycle.response_meaning
+        if response is None:
+            raise ValueError("unresolved turn has no ResponseMeaning")
+        return SemanticSurfaceOracle(self._cognitive_runtime).assess(
+            response=response,
+            session_ref=source.cycle.orientation.session_ref,
+            candidate=candidate,
+        )
+
     def approve_reviewed_learning(
         self, source: FoundationTurn, approval: object, *, now: int,
     ):
