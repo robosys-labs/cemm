@@ -26,6 +26,7 @@ def test_retired_pre_program_abi2_generators_and_constructor_based_tests_are_abs
     for path in (
         "hybrid_mvp/tests/test_bootstrap_episode_generation.py",
         "hybrid_mvp/tests/test_dialogue_focus.py",
+        "hybrid_mvp/tests/test_dialogue_obligations.py",
         "hybrid_mvp/scripts/build_bootstrap_episodes.py",
     ):
         assert not (REPO / path).exists(), f"retired predecessor reintroduced: {path}"

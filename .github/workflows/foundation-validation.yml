@@ -69,4 +69,4 @@ jobs:
       - name: Run every active Hybrid MVP test
         run: |
           cd hybrid_mvp
-          pytest -q tests --disable-warnings --maxfail=10
+          pytest -q tests --disable-warnings --maxfail=25
