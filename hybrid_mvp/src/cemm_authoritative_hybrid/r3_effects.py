@@ -1032,6 +1032,12 @@ class R3EffectGateway:
             "obligation_ref": obligation.obligation_ref,
             "approval_ref": approval.approval_ref,
             "source_receipt_ref": source_receipt.receipt_ref,
+            # Persist the complete independently signed decision in the
+            # existing canonical effect journal for forensic verification;
+            # never persist the reviewer signing key.
+            "signed_review": {
+                **approval.signing_fields(), "signature": approval.signature,
+            },
         }
         planned = EffectJournalEntry.create(
             idempotency_key=effect_key, state=EffectJournalState.PLANNED,

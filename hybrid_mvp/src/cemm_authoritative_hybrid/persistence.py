@@ -1584,6 +1584,10 @@ class SemanticStores:
             or effect_receipt.idempotency_key != planned_journal.idempotency_key
             or planned_journal.intent_ref != plan.plan_ref
             or terminal_journal.intent_ref != plan.plan_ref
+            or dict(planned_journal.request_payload).get("signed_review")
+                != {**approval.signing_fields(), "signature": approval.signature}
+            or dict(terminal_journal.request_payload)
+                != dict(planned_journal.request_payload)
         ):
             raise ValueError("reviewed designation source/effect lineage mismatch")
         if expected_pin != self.revision_pin():

@@ -73,6 +73,11 @@ def test_real_request_review_commit_new_lexical_meaning_and_restart(tmp_path):
         assert effect.status is EffectStatus.COMMITTED
         assert effect.committed_fact_refs
         assert effect.operation_receipt_ref == approval.approval_ref
+        audit = runtime.stores.r3_effect_journal_get(effect.idempotency_key)
+        assert audit is not None
+        signed = audit["entry"]["request_payload"]["signed_review"]
+        assert signed == {**approval.signing_fields(), "signature": approval.signature}
+        assert "foundation-test-reviewer-key" not in str(audit)
         assert runtime.stores.revision_pin() == effect.output_revision_pin
         assert runtime.stores.obligations.get(response.obligation_ref)["resolved"] is True
         assert runtime.stores.r3_reviewed_designation_for_surface("yoz") == {
