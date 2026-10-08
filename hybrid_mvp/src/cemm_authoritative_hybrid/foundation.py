@@ -20,6 +20,7 @@ from .canonical import canonical_json, stable_ref
 from .cycle import SemanticPhase
 from .r3_cycle import CycleResult
 from .r3_response import ResponseMeaning
+from .reviewed_learning import ReviewerVerifier
 from .runtime import HybridRuntime
 
 SCHEMA = "cemm-foundation-semantic-surface-v1"
@@ -151,10 +152,18 @@ class FoundationRuntime:
     graph-equivalent natural-language owner is still required.
     """
 
-    def __init__(self, cognitive_runtime: HybridRuntime) -> None:
+    def __init__(
+        self, cognitive_runtime: HybridRuntime,
+        *, reviewer_verifier: ReviewerVerifier | None = None,
+    ) -> None:
         if type(cognitive_runtime) is not HybridRuntime:
             raise TypeError("foundation needs one canonical HybridRuntime")
+        if reviewer_verifier is not None and type(reviewer_verifier) is not ReviewerVerifier:
+            raise TypeError("reviewer verifier must be exact or None")
         self._cognitive_runtime = cognitive_runtime
+        # Trusted composition-root capability. Never accept a different
+        # verifier or key set from a caller at approval request time.
+        self.__reviewer_verifier = reviewer_verifier
 
     @property
     def stores(self):
@@ -167,8 +176,7 @@ class FoundationRuntime:
         return result
 
     def approve_reviewed_learning(
-        self, source: FoundationTurn, approval: object,
-        verifier: object, *, now: int,
+        self, source: FoundationTurn, approval: object, *, now: int,
     ):
         """Administrative approval of an *existing* R3 learning obligation.
 
@@ -177,6 +185,8 @@ class FoundationRuntime:
         and never creates a meaning, world fact or designation independently.
         """
         from .r3_effects import AdapterRegistry, NoEffectReceipt, R3EffectGateway
+        if self.__reviewer_verifier is None:
+            raise PermissionError("reviewer policy is not configured")
         if type(source) is not FoundationTurn or not source.verify():
             raise ValueError("reviewed learning requires an exact verified turn")
         receipt = source.cycle.effect_receipt
@@ -188,7 +198,7 @@ class FoundationRuntime:
             response=source.cycle.response_meaning,
             source_receipt=receipt,
             authority=self._cognitive_runtime.authority,
-            approval=approval, verifier=verifier, now=now,
+            approval=approval, verifier=self.__reviewer_verifier, now=now,
         )
 
     def close(self) -> None:
@@ -199,6 +209,7 @@ def load_foundation(
     root: str | Path,
     *,
     store_path: str | Path | None = None,
+    reviewer_verifier: ReviewerVerifier | None = None,
 ) -> FoundationRuntime:
     """Open the non-neural reference foundation with no external adapters.
 
@@ -206,4 +217,4 @@ def load_foundation(
     or service connectors are silently admitted.
     """
     core = load_runtime(root, profile="development", store_path=store_path)
-    return FoundationRuntime(core)
+    return FoundationRuntime(core, reviewer_verifier=reviewer_verifier)

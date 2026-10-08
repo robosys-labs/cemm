@@ -42,7 +42,9 @@ system. It must never be sent to a user, put into a prompt, surfaced through
 the app API, or embedded in the repository.
 
 `ReviewerVerifier` receives allowlisted reviewer keys through trusted
-server configuration. Verification establishes that a trusted signer approved
+server configuration **at foundation runtime construction**, never per
+approval call. A foundation started without a trusted verifier rejects every
+review-completion request. Verification establishes that a trusted signer approved
 **the exact learning effect**, not that the source sentence was true, nor
 that the human review interface was properly authenticated. Human identity,
 MFA, reviewer roles, key rotation and external audit are integration duties,
@@ -86,7 +88,9 @@ does not claim distributed multi-database or multi-region transactions.
 3. Authenticate the reviewer independently; render the complete canonical
    proposed surface/target, confidence/evidence and original semantic proof.
 4. Issue an approval with `ReviewerIssuer` in the trusted review backend.
-5. Pass that approval plus a separately configured `ReviewerVerifier` to
+5. Configure the trusted `ReviewerVerifier` once in `load_foundation(...,
+   reviewer_verifier=trusted_verifier)` from protected server configuration,
+   then pass ONLY the signed decision to
    `FoundationRuntime.approve_reviewed_learning(..., now=server_epoch)`.
 6. Check the resulting committed `EffectReceipt`, and execute the next
    language turn against the updated world revision.
