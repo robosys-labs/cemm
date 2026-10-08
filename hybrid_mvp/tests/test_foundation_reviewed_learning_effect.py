@@ -170,9 +170,10 @@ def test_session_turn_expiry_stops_pending_review_without_partial_write(tmp_path
         runtime.process(session, "hello")
         requested = runtime.process(session, "learn lumo means hello")
         response = requested.cycle.response_meaning
-        assert response.learning_plan.expires_at_turn == 3
+        assert response.learning_plan.expires_at_turn == 6
         approval = _approval(requested)
-        runtime.process(session, "hello")  # Now at turn 3, pending plan expired.
+        for _ in range(4):
+            runtime.process(session, "hello")  # Turn 6: pending plan expired.
         baseline = runtime.stores.revision_pin()
         with pytest.raises(PermissionError, match="expired"):
             runtime.approve_reviewed_learning(
@@ -249,5 +250,24 @@ def test_second_pending_learning_request_must_not_create_another_obligation(tmp_
         assert second_response is not None
         assert second_response.learning_plan is None
         assert "learning:pending_obligation_exists" in second_response.blocker_refs
+    finally:
+        runtime.close()
+
+
+def test_expired_learning_does_not_block_later_review_requests(tmp_path):
+    runtime = _runtime(tmp_path)
+    session = "session:expired-learning-followup"
+    try:
+        first = runtime.process(session, "learn lumo means hello")
+        plan = first.cycle.response_meaning.learning_plan
+        assert plan is not None and plan.expires_at_turn == 5
+        for _ in range(3):
+            runtime.process(session, "hello")
+        replacement = runtime.process(session, "learn zora means hello")
+        assert replacement.verify()
+        response = replacement.cycle.response_meaning
+        assert response is not None and response.learning_plan is not None
+        assert response.learning_plan.surface_literal == "zora"
+        assert response.learning_plan.plan_ref != plan.plan_ref
     finally:
         runtime.close()

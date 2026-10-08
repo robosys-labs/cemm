@@ -140,7 +140,7 @@ def test_learning_decision_materializes_exact_evaluated_draft(
     assert plan.expected_target_kinds == draft.expected_target_kinds
     assert plan.answer_contract_ref == draft.answer_contract_ref
     assert draft.learning_draft_ref in plan.provenance_refs
-    assert plan.expires_at_turn == situation.turn_index + 1
+    assert plan.expires_at_turn == situation.turn_index + 4
     assert obligation.plan_ref == plan.plan_ref
 
 

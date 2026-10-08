@@ -1849,12 +1849,16 @@ class SemanticStores:
             raise TypeError("session_ref must be exact nonempty str")
         if type(maximum) is not int or isinstance(maximum, bool) or maximum < 1:
             raise ValueError("maximum must be a positive exact int")
+        next_turn = int(self.r3_session_snapshot(session_ref)["turn_index"]) + 1
         refs: list[str] = []
         if isinstance(self._backend, SQLiteSemanticStore):
             rows = self._backend._conn.execute(
                 "SELECT obligation_ref FROM obligations WHERE session_ref=? "
-                "AND resolved=0 ORDER BY revision, obligation_ref LIMIT ?",
-                (session_ref, maximum + 1),
+                "AND resolved=0 AND ("
+                "json_extract(payload_json,'$.expires_at_turn') IS NULL OR "
+                "json_extract(payload_json,'$.expires_at_turn') > ?"
+                ") ORDER BY revision, obligation_ref LIMIT ?",
+                (session_ref, next_turn, maximum + 1),
             ).fetchall()
             refs = [str(row[0]) for row in rows]
         else:
@@ -1863,6 +1867,10 @@ class SemanticStores:
                 for ref, payload in self._backend.obligations._obligations.items()
                 if payload.get("session_ref") == session_ref
                 and not payload.get("resolved", False)
+                and (
+                    payload.get("expires_at_turn") is None
+                    or payload["expires_at_turn"] > next_turn
+                )
             )[: maximum + 1]
         if len(refs) > maximum:
             raise ValueError("obligation snapshot exceeds its configured bound")

@@ -1156,6 +1156,26 @@ class RequestDecisionOwner(_TransitionOwnerBase):
         )
         if app.operator != "op:designation" and not reviewed_naming_event:
             return None
+        # One *active* reviewer obligation per session. Older, expired rows
+        # are historical evidence, not outstanding work. The read-only
+        # situation snapshot is pinned before this decision.
+        for ref in situation.obligation_refs:
+            pending = self._stores.obligations.get(ref)
+            if (
+                isinstance(pending, Mapping)
+                and pending.get("kind") == "learning_answer"
+                and pending.get("resolved") is False
+                and type(pending.get("expires_at_turn")) is int
+                and pending["expires_at_turn"] > situation.turn_index
+            ):
+                return ModeEvaluation(
+                    contribution=DecisionContribution(
+                        status=DecisionStatus.PARTIAL,
+                        action=DecisionAction.REQUEST_CLARIFICATION,
+                        blocker_refs=("learning:pending_obligation_exists",),
+                        policy_refs=("policy:learning_directive_requires_review:v2",),
+                    )
+                )
         surface = _role_target(app, ("role:surface",))
         target = _role_target(
             app, ("role:target", "role:object", "role:meaning")
