@@ -671,6 +671,20 @@ class QueryDecisionOwner:
             tuple(evaluator.evaluate(ref) for ref in expression.root_refs),
             self._config.max_inference_facts,
         )
+        # The scalar QueryResult/ResponseMeaning ABI can emit one binding
+        # assignment, not an exhaustive set. Distinct supported bindings must
+        # never be silently collapsed to the first fact in traversal order.
+        # Treat this as an explicit incomplete query until a reviewed
+        # set-valued Answer ABI exists. Duplicate proofs for the SAME binding
+        # do not make a query ambiguous.
+        if (
+            root_result.status is QueryStatus.SUPPORTED
+            and len({solution.bindings for solution in root_result.support}) > 1
+        ):
+            root_result = _NodeResult(
+                status=QueryStatus.PARTIAL,
+                blockers=("query:multiple_bindings",),
+            )
         if truncated and root_result.status is QueryStatus.UNKNOWN:
             root_result = replace(root_result, status=QueryStatus.BUDGET_EXHAUSTED, truncated=True)
         chosen_solutions = root_result.support or root_result.oppose
