@@ -914,6 +914,179 @@ class R3EffectGateway:
             }.get(evaluation.decision.status, NoEffectReason.READ_ONLY)
         return self._persist_no_effect(evaluation, meaning, situation, reason)
 
+    def commit_reviewed_learning(
+        self, *, response: Any, source_receipt: NoEffectReceipt,
+        authority: Any, approval: Any, verifier: Any, now: int,
+    ) -> EffectReceipt:
+        """Commit one independently approved R3 learning obligation.
+
+        This is the sole effect owner for new reviewed designation facts.
+        It never infers a learning target from review text, elevates user
+        authority, or publishes a new semantic atom. The store atomically
+        consumes the pending obligation, nonce, world fact and effect journal.
+        """
+        import unicodedata
+        from .authority import LinkedAuthority
+        from .r3_response import ResponseMeaning
+        from .reviewed_learning import ReviewApproval, ReviewerVerifier
+        from .r3_persistence import EffectJournalEntry, EffectJournalState
+
+        if (
+            type(response) is not ResponseMeaning
+            or type(source_receipt) is not NoEffectReceipt
+            or type(authority) is not LinkedAuthority
+            or type(approval) is not ReviewApproval
+            or type(verifier) is not ReviewerVerifier
+        ):
+            raise TypeError("reviewed learning requires exact canonical owners")
+        verifier.verify(approval, now=now)
+        plan, obligation = response.learning_plan, response.obligation
+        if plan is None or obligation is None:
+            raise ValueError("source response is not a learning obligation")
+        if LearningPlan.from_dict(plan.as_dict()) != plan:
+            raise ValueError("reviewed learning plan is not canonical")
+        if DialogueObligation.from_dict(obligation.as_dict()) != obligation:
+            raise ValueError("reviewed learning obligation is not canonical")
+        if (
+            response.learning_plan_ref != plan.plan_ref
+            or response.obligation_ref != obligation.obligation_ref
+            or response.decision_ref != plan.decision_ref
+            or response.effect_outcome_ref != source_receipt.receipt_ref
+            or plan.plan_ref != approval.plan_ref
+            or approval.obligation_ref != obligation.obligation_ref
+            or approval.session_ref != obligation.session_ref
+            or approval.source_effect_ref != source_receipt.receipt_ref
+            or source_receipt.learning_plan_ref != plan.plan_ref
+            or source_receipt.obligation_ref != obligation.obligation_ref
+            or source_receipt.reason is not NoEffectReason.LEARNING_OBLIGATION_ONLY
+            or plan.revision_pin.authority_generation != authority.generation
+            or self._stores.revision_pin().authority_generation != authority.generation
+        ):
+            raise ValueError("reviewed learning binding or revision mismatch")
+        surface = plan.surface_literal
+        if (
+            type(surface) is not str or not 1 <= len(surface) <= 128
+            or surface != surface.strip()
+            or unicodedata.normalize("NFC", surface) != surface
+            or any(ord(character) < 32 for character in surface)
+            or surface.casefold().startswith((
+                "entity:", "concept:", "op:", "role:", "event:", "rel:",
+                "participant:", "state:", "dim:", "value:", "cap:",
+                "program:", "scope:", "literal:",
+            ))
+        ):
+            raise ValueError("unreviewable designation surface")
+        atom = authority.atoms.get(plan.target_ref)
+        if (
+            atom is None or atom.reviewed is not True
+            or atom.kind not in plan.expected_target_kinds
+        ):
+            raise ValueError("reviewed designation target is not an existing admissible atom")
+        if authority.designations.facts_for_surface(surface, "en"):
+            raise ValueError("reviewed designation conflicts with immutable authority")
+
+        pin = self._stores.revision_pin()
+        effect_key = stable_ref(
+            "reviewed_learning_effect_key", {"plan_ref": plan.plan_ref},
+        )
+        origin_ref = stable_ref(
+            "reviewed_learning_effect_origin",
+            {
+                "plan_ref": plan.plan_ref,
+                "source_receipt_ref": source_receipt.receipt_ref,
+            },
+        )
+        fact = Fact(
+            fact_ref=stable_ref(
+                "reviewed_alias_fact",
+                {
+                    "surface": surface,
+                    "target": plan.target_ref,
+                    "plan_ref": plan.plan_ref,
+                    "approval_ref": approval.approval_ref,
+                },
+            ),
+            operator="op:designation",
+            args={
+                "predicate_ref": "designation:reviewed_alias_v1",
+                "role:surface": surface,
+                "role:target": plan.target_ref,
+                "role:language": "en",
+            },
+            stance="support",
+            confidence=1.0,
+            derived=False,
+            proof={
+                "reviewed_alias_v1": True,
+                "reviewer_ref": approval.reviewer_ref,
+                "policy_ref": approval.policy_ref,
+                "approval_ref": approval.approval_ref,
+                "plan_ref": plan.plan_ref,
+                "source": source_receipt.receipt_ref,
+                "placement": "reviewed",
+            },
+        )
+        request = {
+            "kind": "reviewed_designation_commit",
+            "plan_ref": plan.plan_ref,
+            "obligation_ref": obligation.obligation_ref,
+            "approval_ref": approval.approval_ref,
+            "source_receipt_ref": source_receipt.receipt_ref,
+        }
+        planned = EffectJournalEntry.create(
+            idempotency_key=effect_key, state=EffectJournalState.PLANNED,
+            attempt_index=0, intent_ref=plan.plan_ref,
+            decision_ref=plan.decision_ref, request_payload=request,
+            observation_payload=None, outcome_ref=None, blocker_refs=(),
+            parent_journal_ref=None, effect_revision=pin.effect_revision + 1,
+        )
+        output_pin = _predicted_pin(pin, world=1, effects=2)
+        proof_refs = tuple(dict.fromkeys((
+            source_receipt.receipt_ref,
+            *plan.provenance_refs,
+            approval.approval_ref,
+        )))
+        effect = EffectReceipt.create(
+            status=EffectStatus.COMMITTED,
+            idempotency_key=effect_key,
+            journal_origin_ref=origin_ref,
+            journal_preterminal_ref=planned.journal_ref,
+            reconciliation_required=False,
+            decision_ref=plan.decision_ref,
+            verified_meaning_ref=plan.verified_meaning_ref,
+            expression_ref=plan.expression_ref,
+            situation_ref=plan.situation_ref,
+            program_ref=source_receipt.program_ref,
+            effect_intent_ref=plan.plan_ref,
+            actor_ref=approval.reviewer_ref,
+            event_type_ref="event:learn_alias",
+            transition_ref=None, adapter_ref=None, adapter_result_ref=None,
+            operation_receipt_ref=approval.approval_ref,
+            observed_delta_refs=(approval.approval_ref,),
+            committed_fact_refs=(fact.fact_ref,), proof_refs=proof_refs,
+            blocker_refs=(), input_revision_pin=pin, output_revision_pin=output_pin,
+        )
+        terminal = EffectJournalEntry.create(
+            idempotency_key=effect_key, state=EffectJournalState.COMMITTED,
+            attempt_index=0, intent_ref=plan.plan_ref,
+            decision_ref=plan.decision_ref, request_payload=request,
+            observation_payload={
+                "fact_ref": fact.fact_ref, "approval_ref": approval.approval_ref,
+            },
+            outcome_ref=effect.receipt_ref, blocker_refs=(),
+            parent_journal_ref=planned.journal_ref,
+            effect_revision=output_pin.effect_revision,
+        )
+        actual = self._stores.r3_commit_approved_alias(
+            plan=plan, obligation=obligation, source_receipt=source_receipt,
+            approval=approval, verifier=verifier, now=now, fact=fact,
+            effect_receipt=effect, planned_journal=planned,
+            terminal_journal=terminal, expected_pin=pin,
+        )
+        if actual != effect.output_revision_pin:
+            raise RuntimeError("approved learning effect revision mismatch")
+        return effect
+
     def _begin(
         self, *, key: str, intent_ref: str, decision_ref: str,
         request_payload: Mapping[str, Any]
