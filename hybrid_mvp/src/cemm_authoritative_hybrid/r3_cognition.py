@@ -505,7 +505,18 @@ def _and(results: tuple[_NodeResult, ...], maximum: int) -> _NodeResult:
     if any(row.status is QueryStatus.UNKNOWN for row in results):
         return _NodeResult(QueryStatus.UNKNOWN, blockers=("query:unknown_conjunct",))
     if any(row.status is QueryStatus.PARTIAL for row in results):
-        return _NodeResult(QueryStatus.PARTIAL, blockers=("query:partial_conjunct",))
+        # Preserve the earliest semantic owner's typed uncertainty. Replacing
+        # a temporal/causal failure with "partial_conjunct" makes the actual
+        # unsupported operation unobservable and invites phrase-level patches.
+        blockers = tuple(dict.fromkeys(
+            code
+            for row in results if row.status is QueryStatus.PARTIAL
+            for code in row.blockers
+        ))
+        return _NodeResult(
+            QueryStatus.PARTIAL,
+            blockers=blockers or ("query:partial_conjunct",),
+        )
     if any(row.status is QueryStatus.CONTRADICTED for row in results):
         oppose = tuple(solution for row in results for solution in row.oppose)[:maximum]
         return _NodeResult(QueryStatus.CONTRADICTED, oppose=oppose)
