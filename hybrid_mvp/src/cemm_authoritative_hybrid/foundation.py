@@ -14,6 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
+from collections.abc import Callable
+import time
 
 from .bootstrap import load_runtime
 from .canonical import canonical_json, stable_ref
@@ -155,6 +157,7 @@ class FoundationRuntime:
     def __init__(
         self, cognitive_runtime: HybridRuntime,
         *, reviewer_verifier: ReviewerVerifier | None = None,
+        review_clock: Callable[[], int] | None = None,
     ) -> None:
         if type(cognitive_runtime) is not HybridRuntime:
             raise TypeError("foundation needs one canonical HybridRuntime")
@@ -164,6 +167,11 @@ class FoundationRuntime:
         # Trusted composition-root capability. Never accept a different
         # verifier or key set from a caller at approval request time.
         self.__reviewer_verifier = reviewer_verifier
+        if review_clock is not None and not callable(review_clock):
+            raise TypeError("review clock must be a trusted callable")
+        # Both review policy AND the clock belong to the trusted composition
+        # root. An approval request must never supply or override its time.
+        self.__review_clock = review_clock or (lambda: int(time.time()))
 
     @property
     def stores(self):
@@ -196,7 +204,7 @@ class FoundationRuntime:
         )
 
     def approve_reviewed_learning(
-        self, source: FoundationTurn, approval: object, *, now: int,
+        self, source: FoundationTurn, approval: object,
     ):
         """Administrative approval of an *existing* R3 learning obligation.
 
@@ -207,6 +215,9 @@ class FoundationRuntime:
         from .r3_effects import AdapterRegistry, NoEffectReceipt, R3EffectGateway
         if self.__reviewer_verifier is None:
             raise PermissionError("reviewer policy is not configured")
+        now = self.__review_clock()
+        if type(now) is not int or now <= 0:
+            raise RuntimeError("trusted review clock returned an invalid time")
         if type(source) is not FoundationTurn or not source.verify():
             raise ValueError("reviewed learning requires an exact verified turn")
         receipt = source.cycle.effect_receipt
@@ -230,6 +241,7 @@ def load_foundation(
     *,
     store_path: str | Path | None = None,
     reviewer_verifier: ReviewerVerifier | None = None,
+    review_clock: Callable[[], int] | None = None,
 ) -> FoundationRuntime:
     """Open the non-neural reference foundation with no external adapters.
 
@@ -237,4 +249,6 @@ def load_foundation(
     or service connectors are silently admitted.
     """
     core = load_runtime(root, profile="development", store_path=store_path)
-    return FoundationRuntime(core, reviewer_verifier=reviewer_verifier)
+    return FoundationRuntime(
+        core, reviewer_verifier=reviewer_verifier, review_clock=review_clock,
+    )

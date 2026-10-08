@@ -45,10 +45,11 @@ def _approval(turn, *, reviewer=REVIEWER, key=KEY):
     )
 
 
-def _runtime(tmp_path):
+def _runtime(tmp_path, *, clock=None):
     return load_foundation(
         ROOT, store_path=tmp_path / "reviewed-learning",
         reviewer_verifier=ReviewerVerifier({REVIEWER: KEY}),
+        review_clock=clock or (lambda: NOW + 10),
     )
 
 
@@ -73,7 +74,7 @@ def test_real_request_review_commit_new_lexical_meaning_and_restart(tmp_path):
 
         approval = _approval(requested)
         effect = runtime.approve_reviewed_learning(
-            requested, approval, now=NOW + 10,
+            requested, approval,
         )
         assert effect.status is EffectStatus.COMMITTED
         assert effect.committed_fact_refs
@@ -97,7 +98,7 @@ def test_real_request_review_commit_new_lexical_meaning_and_restart(tmp_path):
         )
         with pytest.raises((ValueError, PermissionError)):
             runtime.approve_reviewed_learning(
-                requested, approval, now=NOW + 11,
+                requested, approval,
             )
     finally:
         runtime.close()
@@ -128,25 +129,28 @@ def test_forged_reviewer_or_changed_plan_cannot_write_or_resolve_obligation(tmp_
         )
         with pytest.raises(PermissionError):
             runtime.approve_reviewed_learning(
-                requested, bad_review, now=NOW + 5,
+                requested, bad_review,
             )
         untrusted_instance = load_foundation(
             ROOT, store_path=tmp_path / "reviewed-learning",
             reviewer_verifier=ReviewerVerifier({
                 REVIEWER: b"unrelated-deployment-signing-key-value-12345"
             }),
+            review_clock=lambda: NOW + 10,
         )
         try:
             with pytest.raises(PermissionError):
                 untrusted_instance.approve_reviewed_learning(
-                    requested, approval, now=NOW + 5,
+                    requested, approval,
                 )
         finally:
             untrusted_instance.close()
-        with pytest.raises(PermissionError):
-            runtime.approve_reviewed_learning(
-                requested, approval, now=NOW + 1000,
-            )
+        expired_instance = _runtime(tmp_path, clock=lambda: NOW + 1000)
+        try:
+            with pytest.raises(PermissionError):
+                expired_instance.approve_reviewed_learning(requested, approval)
+        finally:
+            expired_instance.close()
         assert runtime.stores.revision_pin() == baseline
         assert runtime.stores.obligations.get(response.obligation_ref)["resolved"] is False
         assert runtime.stores.r3_reviewed_designation_for_surface("luminous") is None
@@ -164,7 +168,7 @@ def test_unsigned_conversational_teaching_never_reaches_approval_effect(tmp_path
         assert runtime.stores.r3_reviewed_designation_for_surface("yoz") is None
         with pytest.raises(ValueError):
             runtime.approve_reviewed_learning(
-                fact, _approval_like_other_turn(runtime), now=NOW + 5,
+                fact, _approval_like_other_turn(runtime),
             )
     finally:
         runtime.close()
@@ -192,7 +196,6 @@ def test_session_turn_expiry_stops_pending_review_without_partial_write(tmp_path
         with pytest.raises(PermissionError, match="expired"):
             runtime.approve_reviewed_learning(
                 requested, approval,
-                now=NOW + 5,
             )
         assert runtime.stores.revision_pin() == baseline
         assert runtime.stores.r3_reviewed_designation_for_surface("lumo") is None
@@ -215,7 +218,6 @@ def test_signed_novel_entity_designation_transfers_to_evidence_query(tmp_path):
         assert response.learning_plan.target_ref == "entity:book"
         effect = runtime.approve_reviewed_learning(
             turn, _approval(turn),
-            now=NOW + 2,
         )
         assert effect.status is EffectStatus.COMMITTED
         fact = Fact(
@@ -303,7 +305,7 @@ def test_transaction_rollback_leaves_no_nonce_alias_or_effect(tmp_path):
         )
         with pytest.raises(sqlite3.DatabaseError, match="simulated atomic"):
             runtime.approve_reviewed_learning(
-                request, approval, now=NOW + 4,
+                request, approval,
             )
         conn.execute("DROP TRIGGER fail_reviewed_alias")
         assert runtime.stores.revision_pin() == before
@@ -317,7 +319,7 @@ def test_transaction_rollback_leaves_no_nonce_alias_or_effect(tmp_path):
 
         # A failed transaction does not burn the signed nonce or the plan.
         accepted = runtime.approve_reviewed_learning(
-            request, approval, now=NOW + 5,
+            request, approval,
         )
         assert accepted.status is EffectStatus.COMMITTED
     finally:
@@ -332,12 +334,12 @@ def test_two_open_store_connections_cannot_commit_one_review_twice(tmp_path):
         secondary = _runtime(tmp_path)
         try:
             accepted = primary.approve_reviewed_learning(
-                request, approval, now=NOW + 3,
+                request, approval,
             )
             assert accepted.status is EffectStatus.COMMITTED
             with pytest.raises((StaleRevisionError, ValueError)):
                 secondary.approve_reviewed_learning(
-                    request, approval, now=NOW + 4,
+                    request, approval,
                 )
         finally:
             secondary.close()
@@ -369,7 +371,6 @@ def test_signed_review_handoff_recovers_after_process_restart(tmp_path):
         assert recovered.verify()
         completed = second.approve_reviewed_learning(
             recovered, approval,
-            now=NOW + 5,
         )
         assert completed.status is EffectStatus.COMMITTED
         assert second.process(
@@ -417,8 +418,28 @@ def test_runtime_without_trusted_review_policy_fails_closed(tmp_path):
         assert turn.verify()
         with pytest.raises(PermissionError, match="not configured"):
             runtime.approve_reviewed_learning(
-                turn, _approval(turn), now=NOW + 10,
+                turn, _approval(turn),
             )
         assert runtime.stores.r3_reviewed_designation_for_surface("zempa") is None
+    finally:
+        runtime.close()
+
+
+def test_caller_cannot_override_review_clock(tmp_path):
+    runtime = _runtime(tmp_path, clock=lambda: NOW + 1000)
+    try:
+        requested = runtime.process(
+            "session:caller-clock-attack", "learn zelu means hello"
+        )
+        approval = _approval(requested)
+        before = runtime.stores.revision_pin()
+        with pytest.raises(TypeError):
+            runtime.approve_reviewed_learning(
+                requested, approval, now=NOW + 1,
+            )
+        with pytest.raises(PermissionError):
+            runtime.approve_reviewed_learning(requested, approval)
+        assert runtime.stores.revision_pin() == before
+        assert runtime.stores.r3_reviewed_designation_for_surface("zelu") is None
     finally:
         runtime.close()

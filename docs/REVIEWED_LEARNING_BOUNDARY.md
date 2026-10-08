@@ -90,15 +90,19 @@ does not claim distributed multi-database or multi-region transactions.
 4. Issue an approval with `ReviewerIssuer` in the trusted review backend.
 5. Configure the trusted `ReviewerVerifier` once in `load_foundation(...,
    reviewer_verifier=trusted_verifier)` from protected server configuration,
-   then pass ONLY the signed decision to
-   `FoundationRuntime.approve_reviewed_learning(..., now=server_epoch)`.
+   with a trusted server clock configured at startup. Then pass ONLY the
+   signed decision to `FoundationRuntime.approve_reviewed_learning(...)`;
+   the client never supplies a clock value.
 6. Check the resulting committed `EffectReceipt`, and execute the next
    language turn against the updated world revision.
 
 Never trust a caller-provided clock, reviewer name, policy, target, plan or
 nonce in place of verifying the signed payload and persisted source proof.
-The reference API accepts `now` for deterministic testing; a production
-service MUST supply time from its trusted server clock.
+The foundation reads its clock from trusted composition-root configuration,
+defaulting to the process wall clock. Tests may inject a deterministic clock
+only at initialization; no approval request may override it. Production
+deployment MUST protect reviewer verification keys, wall-clock integrity and
+the review endpoint as separate server-side security controls.
 
 ## Release qualification still required
 

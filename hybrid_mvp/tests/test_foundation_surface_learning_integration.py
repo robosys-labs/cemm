@@ -22,6 +22,7 @@ def _runtime(tmp_path):
     return load_foundation(
         ROOT, store_path=tmp_path / "semantic-roundtrip",
         reviewer_verifier=ReviewerVerifier({REVIEWER: KEY}),
+        review_clock=lambda: NOW + 10,
     )
 
 
@@ -40,7 +41,7 @@ def test_live_approved_alias_is_semantically_equivalent_on_different_answer_surf
             issued_at=NOW,
         )
         effect = foundation.approve_reviewed_learning(
-            request, signature, now=NOW + 1,
+            request, signature,
         )
         assert effect.status.value == "committed"
         install_reviewed_world_facts(
