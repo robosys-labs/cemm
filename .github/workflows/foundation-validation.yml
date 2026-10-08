@@ -49,3 +49,5 @@ jobs:
 
       - name: Observational public-path capability probe
         run: python hybrid_mvp/scripts/foundation_probe.py
+      - name: Observational learning-request probe (diagnostic only)
+        run: python hybrid_mvp/scripts/learning_request_probe.py
