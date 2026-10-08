@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 import sqlite3
 
-from cemm_authoritative_hybrid.foundation import load_foundation
+from cemm_authoritative_hybrid.foundation import FoundationTurn, load_foundation
 from cemm_authoritative_hybrid.canonical import stable_ref
 from cemm_authoritative_hybrid.persistence import StaleRevisionError
 from cemm_authoritative_hybrid.reviewed_learning import (
@@ -340,3 +340,36 @@ def test_two_open_store_connections_cannot_commit_one_review_twice(tmp_path):
         assert primary.stores.r3_reviewed_designation_for_surface("kiyo") is not None
     finally:
         primary.close()
+
+
+def test_signed_review_handoff_recovers_after_process_restart(tmp_path):
+    """A lost application process must not lose its pending learning proof."""
+    import json
+
+    first = _runtime(tmp_path)
+    try:
+        original = first.process(
+            "session:durable-review-handoff", "learn zuno means hello"
+        )
+        pending = json.dumps(original.to_wire(), sort_keys=True)
+        approval = _approval(original)
+        assert first.stores.obligations.get(
+            original.cycle.response_meaning.obligation_ref
+        )["resolved"] is False
+    finally:
+        first.close()
+
+    second = _runtime(tmp_path)
+    try:
+        recovered = FoundationTurn.from_wire(json.loads(pending))
+        assert recovered.verify()
+        completed = second.approve_reviewed_learning(
+            recovered, approval, ReviewerVerifier({REVIEWER: KEY}),
+            now=NOW + 5,
+        )
+        assert completed.status is EffectStatus.COMMITTED
+        assert second.process(
+            "session:durable-review-handoff", "zuno",
+        ).cycle.verification.status == "selected"
+    finally:
+        second.close()

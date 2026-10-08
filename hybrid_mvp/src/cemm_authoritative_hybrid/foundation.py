@@ -94,6 +94,35 @@ class FoundationTurn:
         surface = canonical_json(document)
         return cls(cycle, surface, stable_ref("foundation_surface", document))
 
+    def to_wire(self) -> dict[str, object]:
+        """Create a durable review handoff, with no credentials or secret."""
+        self.verify()
+        return {
+            "cycle": self.cycle.as_dict(),
+            "semantic_surface": self.semantic_surface,
+            "surface_ref": self.surface_ref,
+        }
+
+    @classmethod
+    def from_wire(cls, value: object) -> "FoundationTurn":
+        """Reconstruct exact proven R3 output after an application restart.
+
+        A stored reviewer handoff is not itself authorization: the effect
+        journal must still contain its original persisted NoEffect receipt,
+        and a separate reviewer signature must approve its exact lineage.
+        """
+        if type(value) is not dict or set(value) != {
+            "cycle", "semantic_surface", "surface_ref",
+        }:
+            raise ValueError("foundation review handoff fields mismatch")
+        cycle = CycleResult.from_dict(value["cycle"])
+        result = cls(
+            cycle=cycle, semantic_surface=value["semantic_surface"],
+            surface_ref=value["surface_ref"],
+        )
+        result.verify()
+        return result
+
     def verify(self) -> bool:
         """Reject altered output, stale cycle metadata and noncanonical wires."""
         expected = _document(self.cycle)
