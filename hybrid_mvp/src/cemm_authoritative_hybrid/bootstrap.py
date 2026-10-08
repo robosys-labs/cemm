@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Literal
 
 from .affordances import SemanticAffordanceIndex
-from .authority import AuthorityLinker, DesignationIndex
+from .authority import AuthorityLinker, DesignationIndex, DesignationFact
 from .config import RuntimeConfig
 from .contributions import ContributionExpander
 from .coverage import CoverageVerifier
@@ -62,7 +62,23 @@ def load_runtime(
     expander = ContributionExpander(affordances, config)
 
     class _DesignationStore:
+        """Lookup approved aliases through the revision-owned world index."""
+
+        def facts_for_surface(self, surface: str, language: str):
+            row = stores.r3_reviewed_designation_for_surface(surface, language)
+            if row is None:
+                return ()
+            if row["target_ref"] not in authority.atoms:
+                raise ValueError("approved designation lost its reviewed target")
+            return (DesignationFact.create(
+                surface=row["surface"],
+                target_ref=row["target_ref"],
+                language=row["language"],
+            ),)
+
         def build_index(self) -> DesignationIndex:
+            # Compatibility for fixture clients; the runtime reads the durable
+            # indexed method above and falls back to linked authority itself.
             return authority.designations
 
     grounder = Grounder(

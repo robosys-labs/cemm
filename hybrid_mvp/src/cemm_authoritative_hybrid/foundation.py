@@ -137,6 +137,31 @@ class FoundationRuntime:
         result.verify()
         return result
 
+    def approve_reviewed_learning(
+        self, source: FoundationTurn, approval: object,
+        verifier: object, *, now: int,
+    ):
+        """Administrative approval of an *existing* R3 learning obligation.
+
+        External authenticated reviewer services issue signatures. This
+        reference adapter delegates the actual mutation to R3EffectGateway
+        and never creates a meaning, world fact or designation independently.
+        """
+        from .r3_effects import AdapterRegistry, NoEffectReceipt, R3EffectGateway
+        if type(source) is not FoundationTurn or not source.verify():
+            raise ValueError("reviewed learning requires an exact verified turn")
+        receipt = source.cycle.effect_receipt
+        if type(receipt) is not NoEffectReceipt:
+            raise ValueError("source turn lacks a pending NoEffectReceipt")
+        return R3EffectGateway(
+            self.stores, AdapterRegistry(),
+        ).commit_reviewed_learning(
+            response=source.cycle.response_meaning,
+            source_receipt=receipt,
+            authority=self._cognitive_runtime.authority,
+            approval=approval, verifier=verifier, now=now,
+        )
+
     def close(self) -> None:
         self.stores.close()
 
