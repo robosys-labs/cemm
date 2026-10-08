@@ -597,7 +597,7 @@ def test_grounding_result_rejects_forged_refs_revision_and_created_authority() -
 
     forged_pin = result.as_dict()
     forged_pin["revision_pin"]["world_revision"] = True
-    with pytest.raises(TypeError, match="world_revision must be int"):
+    with pytest.raises(TypeError, match="world_revision must be (exact )?int"):
         grounding.GroundingResult.from_dict(forged_pin)
 
 

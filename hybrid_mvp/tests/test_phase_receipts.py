@@ -125,23 +125,27 @@ def test_kernel_cycle_result_resolved_status(cycle_fixture):
 def test_orientation_is_frozen_dataclass():
     import dataclasses
 
-    orientation = Orientation(
+    orientation = Orientation.create(
         session_ref="session:test",
         turn_ref="turn:test",
+        source_text="",
         mode=SemanticMode.OBSERVE,
         participant_frame="participant:user",
         temporal_frame="now",
-        authority_generation="authority:generation-1",
-        world_revision=0,
-        session_revision=0,
-        episode_revision=0,
-        effect_revision=0,
-        model_identity=None,
+        participants=(),
+        active_turn_ref="turn:test",
+        event_refs=(),
         focus_refs=(),
         obligation_refs=(),
         capability_summary=(),
         permission_summary=(),
         budgets={},
+        scanned_atom_count=0,
+        index_probes=(),
+        visited_refs=(),
+        revision_pin=RevisionPin(
+            "authority:generation-1", 0, 0, 0, 0, None
+        ),
     )
     assert dataclasses.is_dataclass(orientation)
     try:
@@ -559,7 +563,6 @@ def test_c1_effect_pin_changes_are_dimension_constrained_and_no_unchecked_builde
             "authority:other", pin.world_revision, pin.session_revision,
             pin.episode_revision, pin.effect_revision, pin.model_identity,
         ),
-        _c1_replace(pin, session_revision=pin.session_revision + 1),
         _c1_replace(pin, episode_revision=pin.episode_revision + 1),
         _c1_replace(pin, model_identity="model:other"),
         _c1_replace(pin, world_revision=pin.world_revision - 1),
@@ -570,6 +573,13 @@ def test_c1_effect_pin_changes_are_dimension_constrained_and_no_unchecked_builde
                 SemanticPhase.EFFECT, ("decision:c1",), ("effect:c1",),
                 pin, changed_pin, _c1_cycle.PhaseDisposition.COMMITTED, (), {},
             )
+    # Current R3 effects may legitimately advance the session revision.
+    allowed = _c1_cycle._PhaseMaterial(
+        SemanticPhase.EFFECT, ("decision:c1",), ("effect:c1",),
+        pin, _c1_replace(pin, session_revision=pin.session_revision + 1),
+        _c1_cycle.PhaseDisposition.COMMITTED, (), {},
+    )
+    assert allowed.output_revision_pin.session_revision == pin.session_revision + 1
     assert not hasattr(_c1_cycle.CycleResult, "_from_canonical")
 
 __cemm_test_inventory__ = {'tests/test_phase_receipts.py::test_c1_cycle_codec_prehash_bounds_and_later_owner_disable': {'activation_phase': 'R1',

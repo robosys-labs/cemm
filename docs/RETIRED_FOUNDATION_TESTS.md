@@ -22,3 +22,14 @@ with an explicit retirement record when a test is legitimately obsolete.
 
 The current full-suite job remains a hard fail when other active modules
 violate their contract.
+
+| `tests/test_g0_integration.py` | Enforces frozen pre-recovery G0 test-inventory selectors and source digests. New independent foundation tests and reviewed test retirements are intentionally excluded by those immutable G0 receipts; continuing to require their exact counts would reauthorize historical governance as the current interpreter. | Current `.github/workflows/foundation-validation.yml` active foundation and full active Hybrid regression gates; current public path source/ABI protections |
+| `tests/test_r1_cognitive_restart_successors.py` | Requires every successful cognition turn to stop after VERIFY with `MissingOwner(r3_owner)`, and no R3 evaluation/effect—contradicting the admitted R3 successor that is now the single canonical runtime. | `test_r3_public_cycle.py`, `test_foundation_semantic_surface.py`, `test_foundation_restart.py`, `test_foundation_reviewed_learning_effect.py` |
+
+Current test migrations (not retirements) retain their behavioral checks:
+- `test_form_grounding_lineage_abi1.py` accepts the stronger exact-integer error wording while still rejecting bool-for-integer forgery.
+- `test_lazy_package_imports.py` enumerates the new canonical foundation exports while retaining lazy import proof.
+- `test_gap_matrix.py` checks the current public `CycleStatus.from_gap_receipt` owner rather than the removed runtime helper.
+- `test_gap_receipts.py` uses the strict content-addressed factory instead of a forged direct constructor.
+- `test_phase_receipts.py` constructs Orientation through the canonical factory, rejects fixed/negative revision changes, and explicitly permits the R3 effect owner to advance session revisions.
+- `test_gap_owner_evaluation.py` recomputes owner correctness from the active classifier and independent typed examples, never a stale historical R5 evaluation snapshot.

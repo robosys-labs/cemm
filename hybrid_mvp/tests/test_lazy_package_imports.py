@@ -25,6 +25,8 @@ PUBLIC_EXPORTS = (
     "EvaluationBundle",
     "ExpectedCycleContract",
     "ExpectedDerivationContract",
+    "FoundationRuntime",
+    "FoundationTurn",
     "GapClassifier",
     "GapReceipt",
     "HybridRuntime",
@@ -49,6 +51,7 @@ PUBLIC_EXPORTS = (
     "SituationContext",
     "VerificationBatch",
     "VerifiedMeaning",
+    "load_foundation",
     "load_runtime",
     "open_stores",
 )

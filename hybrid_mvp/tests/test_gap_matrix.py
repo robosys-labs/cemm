@@ -245,9 +245,9 @@ def test_every_cycle_status_is_reachable(status, gap_classifier):
 
     kind, owner = _STATUS_FIXTURES[status]
     receipt = gap_classifier.classify(_fixture_exception(kind, owner))
-    from cemm_authoritative_hybrid.runtime import HybridRuntime
-
-    mapped = HybridRuntime._status_from_gap(receipt)
+    # The public enum owns the current closed status projection. The old
+    # HybridRuntime._status_from_gap helper was retired with the R1 runtime.
+    mapped = CycleStatus.from_gap_receipt(receipt)
     assert mapped == status, (
         f"status {status.value} not reachable from kind={kind}, owner={owner}; "
         f"got {mapped.value}"
