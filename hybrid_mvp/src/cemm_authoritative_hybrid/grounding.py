@@ -672,10 +672,16 @@ class Grounder:
         Checks the mutable designation store first (for reviewed learning),
         then the authority's DesignationIndex.
         """
-        # Check the mutable designation store (reviewed learning).
+        # Query the durable reviewed-knowledge index when provided. Legacy
+        # fixture stores exposing build_index are supported only for testing;
+        # neither path grants lexical authority from unreviewed utterances.
         if self._designation_store is not None:
-            index = self._designation_store.build_index()
-            facts = index.facts_for_surface(surface, self._language)
+            lookup = getattr(self._designation_store, "facts_for_surface", None)
+            if callable(lookup):
+                facts = lookup(surface, self._language)
+            else:
+                index = self._designation_store.build_index()
+                facts = index.facts_for_surface(surface, self._language)
             if facts:
                 return facts
         # Check the authority's static designation index.

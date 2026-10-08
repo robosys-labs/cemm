@@ -216,8 +216,7 @@ def test_storage_failure_is_storage_kind(gap_classifier):
 
 
 def test_gap_receipt_is_frozen_dataclass():
-    receipt = GapReceipt(
-        gap_ref="gap:test",
+    receipt = GapReceipt.create(
         kind=GapKind.IMPLEMENTATION,
         status="activation_failure",
         source_refs=("cycle:test",),

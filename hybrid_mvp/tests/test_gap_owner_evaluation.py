@@ -103,20 +103,14 @@ def test_every_gap_kind_has_an_owner(classifier):
         assert kind in seen_kinds, f"GapKind.{kind.value} has no test coverage"
 
 
-def test_gap_owner_evaluation_in_report():
-    """The evaluation report's per-gap-kind metrics confirm correct owners."""
-    from cemm_authoritative_hybrid.evaluation import EvaluationReport
-    from pathlib import Path
+def test_reviewed_owner_classification_uses_current_gap_owner_not_stale_report():
+    """Historic R5 evaluation receipts are not admission authority for R3.
 
-    report_path = Path(__file__).resolve().parents[1] / "artifacts" / "evaluation" / "CEMM_EVALUATION.json"
-    if not report_path.exists():
-        pytest.fail(
-            f"CEMM_EVALUATION.json not found at {report_path}. "
-            "Run: python scripts/evaluate_cemm.py"
-        )
-    report = EvaluationReport.from_json(report_path.read_text(encoding="utf-8"))
-    # Every gap kind in the report has owner_correct == True.
-    for kind, metrics in report.per_gap_kind_metrics.items():
-        assert metrics.get("owner_correct", False), (
-            f"Gap kind {kind} has incorrect owner"
-        )
+    Classification is recomputed from typed exceptions, with no dependency
+    on a frozen prior-model report that predates the canonical six-phase cut.
+    """
+    classifier = GapClassifier()
+    for factory, expected_kind, expected_owner in EXPECTED_OWNERS:
+        actual = classifier.classify(factory())
+        assert actual.kind is expected_kind
+        assert actual.recommended_owner is expected_owner

@@ -1,5 +1,0 @@
-{
-  "baseline_commit": "bcc77fdf1af7a735e173e873c9fd0585c5bbb80f",
-  "policy": "Counts are maximum tolerated legacy occurrences. Reductions are allowed; increases fail CI. v3.4.7 code and data have been removed; remaining budgets guard against re-introduction.",
-  "budgets": []
-}

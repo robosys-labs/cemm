@@ -7,8 +7,9 @@ from pathlib import Path
 from typing import Literal
 
 from .affordances import SemanticAffordanceIndex
-from .authority import AuthorityLinker, DesignationIndex
+from .authority import AuthorityLinker, DesignationIndex, DesignationFact
 from .config import RuntimeConfig
+from .canonical import stable_ref
 from .contributions import ContributionExpander
 from .coverage import CoverageVerifier
 from .forms import FormResolver
@@ -48,21 +49,49 @@ def load_runtime(
     )
     config = RuntimeConfig.release()
     proposer = BootstrapProposer(config)
-    stores = open_stores(
-        Path(store_path) if store_path is not None else project_root / "stores.db",
-        authority_generation=authority.generation,
-        model_identity=proposer.model_identity,
-    )
 
+    # Complete the form and authority link BEFORE any persistent session can
+    # be opened. A stable manifest generation label alone cannot guarantee
+    # that meaning, grounding or proposer contracts are compatible.
     form_pack_path = project_root / "data" / "languages" / "en" / "forms.json"
     with form_pack_path.open(encoding="utf-8") as handle:
         form_pack = json.load(handle)
     resolver = FormResolver(form_pack, config)
+    semantic_contract_ref = stable_ref(
+        "semantic_execution_contract",
+        {
+            "authority_content_ref": authority.content_hash,
+            "form_pack_sha256": resolver.form_pack_hash,
+            "proposal_model_identity": proposer.model_identity,
+        },
+    )
+    stores = open_stores(
+        Path(store_path) if store_path is not None else project_root / "stores.db",
+        authority_generation=authority.generation,
+        model_identity=proposer.model_identity,
+        semantic_contract_ref=semantic_contract_ref,
+    )
     affordances = SemanticAffordanceIndex(authority, config)
     expander = ContributionExpander(affordances, config)
 
     class _DesignationStore:
+        """Lookup approved aliases through the revision-owned world index."""
+
+        def facts_for_surface(self, surface: str, language: str):
+            row = stores.r3_reviewed_designation_for_surface(surface, language)
+            if row is None:
+                return ()
+            if row["target_ref"] not in authority.atoms:
+                raise ValueError("approved designation lost its reviewed target")
+            return (DesignationFact.create(
+                surface=row["surface"],
+                target_ref=row["target_ref"],
+                language=row["language"],
+            ),)
+
         def build_index(self) -> DesignationIndex:
+            # Compatibility for fixture clients; the runtime reads the durable
+            # indexed method above and falls back to linked authority itself.
             return authority.designations
 
     grounder = Grounder(

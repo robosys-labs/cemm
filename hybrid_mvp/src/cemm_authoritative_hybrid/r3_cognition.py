@@ -29,7 +29,10 @@ from .expressions import (
     SemanticExpression,
     VariableBinder,
 )
-from .persistence import Fact, RevisionPin, SemanticStores
+from .persistence import (
+    Fact, RevisionPin, SemanticStores, StoreSnapshotBudgetExceeded,
+)
+from .r3_persistence import world_snapshot
 from .r3_artifacts import (
     AdmissionDecision,
     AdmissionStatus,
@@ -97,19 +100,20 @@ def _string_value(value: object) -> str:
     return str(value)
 
 
-def _world_facts(stores: SemanticStores) -> tuple[Fact, ...]:
-    method = getattr(stores, "r3_world_facts", None)
-    if not callable(method):
-        raise TypeError("SemanticStores lacks the public r3_world_facts API")
-    rows = method()
-    if type(rows) is not tuple or any(type(row) is not Fact for row in rows):
-        raise TypeError("r3_world_facts returned non-canonical facts")
-    return rows
+def _world_facts(
+    stores: SemanticStores, *, maximum: int = 256,
+) -> tuple[Fact, ...]:
+    # Never use the unbounded r3_world_facts() table materializer in cognition.
+    # The reference engine fails closed above this bound until a predicate- and
+    # role-indexed retrieval owner is admitted for production scale.
+    return world_snapshot(stores, maximum=maximum)
 
 
-def _fact_views(stores: SemanticStores) -> tuple[_FactView, ...]:
+def _fact_views(
+    stores: SemanticStores, *, maximum: int = 256,
+) -> tuple[_FactView, ...]:
     result: list[_FactView] = []
-    for fact in _world_facts(stores):
+    for fact in _world_facts(stores, maximum=maximum):
         args = dict(fact.args)
         predicate = str(args.pop("predicate_ref", fact.operator))
         proof = dict(fact.proof)
@@ -505,7 +509,18 @@ def _and(results: tuple[_NodeResult, ...], maximum: int) -> _NodeResult:
     if any(row.status is QueryStatus.UNKNOWN for row in results):
         return _NodeResult(QueryStatus.UNKNOWN, blockers=("query:unknown_conjunct",))
     if any(row.status is QueryStatus.PARTIAL for row in results):
-        return _NodeResult(QueryStatus.PARTIAL, blockers=("query:partial_conjunct",))
+        # Preserve the earliest semantic owner's typed uncertainty. Replacing
+        # a temporal/causal failure with "partial_conjunct" makes the actual
+        # unsupported operation unobservable and invites phrase-level patches.
+        blockers = tuple(dict.fromkeys(
+            code
+            for row in results if row.status is QueryStatus.PARTIAL
+            for code in row.blockers
+        ))
+        return _NodeResult(
+            QueryStatus.PARTIAL,
+            blockers=blockers or ("query:partial_conjunct",),
+        )
     if any(row.status is QueryStatus.CONTRADICTED for row in results):
         oppose = tuple(solution for row in results for solution in row.oppose)[:maximum]
         return _NodeResult(QueryStatus.CONTRADICTED, oppose=oppose)
@@ -616,25 +631,29 @@ class _RecursiveQueryEvaluator:
         if scope.operator_type == "scope:modality":
             return _NodeResult(QueryStatus.PARTIAL, blockers=("query:modal_not_actual",))
         if scope.operator_type in {"scope:tense", "scope:aspect"}:
-            return self.evaluate(scope.operand_ref, allowed)
+            # An unqualified current fact does not prove a proposition at a
+            # different time or with a particular aspect. There is not yet
+            # an admitted time-indexed evidence evaluator for these scopes.
+            return _NodeResult(
+                QueryStatus.PARTIAL,
+                blockers=("scope:temporal_evaluation_not_admitted",),
+            )
         return _NodeResult(QueryStatus.PARTIAL, blockers=("scope:unsupported",))
 
     def _link(self, link: ExpressionLink, allowed: frozenset[str] | None) -> _NodeResult:
+        # The exact expression ABI can represent more relations than the
+        # admitted evaluator can prove. Shared operand truth does NOT establish
+        # cause, purpose, sequence, contrast, natural-language implication or
+        # unresolved coordination. Preserve the graph, report typed partial,
+        # and never substitute simple conjunction for an unlicensed link.
+        if link.link_type not in {"link:conjunction", "link:disjunction"}:
+            return _NodeResult(
+                QueryStatus.PARTIAL,
+                blockers=("link:semantics_not_admitted",),
+            )
         rows = tuple(self.evaluate(ref, allowed) for ref in link.operand_refs)
-        if link.link_type in {"link:disjunction"}:
+        if link.link_type == "link:disjunction":
             return _or(rows, self.config.max_inference_facts)
-        if link.link_type == "link:condition":
-            antecedent, consequent = rows
-            if antecedent.status is QueryStatus.SUPPORTED:
-                return consequent
-            if antecedent.status is QueryStatus.CONTRADICTED:
-                return _NodeResult(QueryStatus.SUPPORTED, support=antecedent.oppose)
-            if antecedent.status is QueryStatus.CONFLICT:
-                return _NodeResult(QueryStatus.CONFLICT, blockers=("query:condition_conflict",))
-            return _NodeResult(QueryStatus.UNKNOWN, blockers=("query:condition_antecedent_unknown",))
-        # Coordination, conjunction, cause, purpose, contrast and sequence all
-        # require every ordered operand to hold. Their distinct link identity is
-        # retained in the expression and proof lineage.
         return _and(rows, self.config.max_inference_facts)
 
 
@@ -648,10 +667,36 @@ class QueryDecisionOwner:
                       situation: SituationContext) -> ModeEvaluation:
         if situation.mode is not SemanticMode.QUERY:
             raise ValueError("QueryDecisionOwner requires QUERY")
+        try:
+            world_facts = _fact_views(
+                self._stores, maximum=self._config.max_inference_facts,
+            )
+        except StoreSnapshotBudgetExceeded:
+            # Without complete retrieval we cannot honestly return UNKNOWN or
+            # a support result based on an arbitrary initial fact subset.
+            result = QueryResult.create(
+                expression_ref=expression.expression_ref,
+                status=QueryStatus.BUDGET_EXHAUSTED,
+                bindings=(),
+                proof=None,
+                retrieval_refs=(),
+                rounds=0,
+                revision_pin=situation.revision_pin,
+            )
+            return ModeEvaluation(
+                contribution=DecisionContribution(
+                    status=DecisionStatus.BUDGET_EXHAUSTED,
+                    action=DecisionAction.NO_OP,
+                    query_result_refs=(result.query_result_ref,),
+                    blocker_refs=("query:world_fact_budget_exceeded",),
+                    policy_refs=("policy:recursive_expression_query:v1",),
+                ),
+                query_results=(result,),
+            )
         base = tuple(
             dict.fromkeys(
                 (
-                    *_fact_views(self._stores),
+                    *world_facts,
                     *_authority_type_fact_views(
                         expression,
                         self._authority,
@@ -671,6 +716,20 @@ class QueryDecisionOwner:
             tuple(evaluator.evaluate(ref) for ref in expression.root_refs),
             self._config.max_inference_facts,
         )
+        # The scalar QueryResult/ResponseMeaning ABI can emit one binding
+        # assignment, not an exhaustive set. Distinct supported bindings must
+        # never be silently collapsed to the first fact in traversal order.
+        # Treat this as an explicit incomplete query until a reviewed
+        # set-valued Answer ABI exists. Duplicate proofs for the SAME binding
+        # do not make a query ambiguous.
+        if (
+            root_result.status is QueryStatus.SUPPORTED
+            and len({solution.bindings for solution in root_result.support}) > 1
+        ):
+            root_result = _NodeResult(
+                status=QueryStatus.PARTIAL,
+                blockers=("query:multiple_bindings",),
+            )
         if truncated and root_result.status is QueryStatus.UNKNOWN:
             root_result = replace(root_result, status=QueryStatus.BUDGET_EXHAUSTED, truncated=True)
         chosen_solutions = root_result.support or root_result.oppose
@@ -1097,6 +1156,26 @@ class RequestDecisionOwner(_TransitionOwnerBase):
         )
         if app.operator != "op:designation" and not reviewed_naming_event:
             return None
+        # One *active* reviewer obligation per session. Older, expired rows
+        # are historical evidence, not outstanding work. The read-only
+        # situation snapshot is pinned before this decision.
+        for ref in situation.obligation_refs:
+            pending = self._stores.obligations.get(ref)
+            if (
+                isinstance(pending, Mapping)
+                and pending.get("kind") == "learning_answer"
+                and pending.get("resolved") is False
+                and type(pending.get("expires_at_turn")) is int
+                and pending["expires_at_turn"] > situation.turn_index
+            ):
+                return ModeEvaluation(
+                    contribution=DecisionContribution(
+                        status=DecisionStatus.PARTIAL,
+                        action=DecisionAction.REQUEST_CLARIFICATION,
+                        blocker_refs=("learning:pending_obligation_exists",),
+                        policy_refs=("policy:learning_directive_requires_review:v2",),
+                    )
+                )
         surface = _role_target(app, ("role:surface",))
         target = _role_target(
             app, ("role:target", "role:object", "role:meaning")

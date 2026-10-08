@@ -547,6 +547,47 @@ class HybridRuntime:
             session_ref, text, extra_items=extra_items
         )
 
+    def verify_surface_read_only(
+        self, session_ref: str, surface: str,
+    ) -> VerificationBatch:
+        """Reparse a candidate surface using THE existing cognitive owners.
+
+        This is the reference semantic-equivalence oracle's read-only boundary:
+        ORIENT -> PROPOSE -> VERIFY, never EVALUATE/EFFECT/REALIZE. It neither
+        invents meaning nor grants a candidate its own authority. Model output
+        is not trusted; only selected VerifiedMeaning can be compared.
+        """
+        if type(session_ref) is not str or not session_ref:
+            raise TypeError("session_ref must be a nonempty string")
+        if type(surface) is not str or not surface.strip():
+            raise ValueError("candidate surface must be nonempty text")
+        before = self._stores.revision_pin()
+        try:
+            turn = self._orient_turn(
+                session_ref, self.create_evidence(session_ref, surface),
+            )
+            context = turn.context
+            if turn.orientation.mode is not SemanticMode.OBSERVE:
+                # A question or requested effect cannot masquerade as the
+                # declarative answer to an earlier proof-bearing query.
+                raise ValueError("candidate realization must be an assertion")
+            if context.revision_pin != before:
+                raise ValueError("read-only reorientation pin mismatch")
+            proposal = self._owners["proposal"].propose(context)
+            if type(proposal) is not ProposalResult:
+                raise TypeError("PROPOSE returned a noncanonical batch")
+            verification = self._owners["verification"].verify_candidates(
+                proposal, context,
+            )
+            if type(verification) is not VerificationBatch:
+                raise TypeError("VERIFY returned a noncanonical batch")
+            return verification
+        finally:
+            if self._stores.revision_pin() != before:
+                raise RuntimeError(
+                    "semantic surface interpretation mutated durable state"
+                )
+
     def process(
         self, session_ref: str, text: str, *, trace: bool = True
     ) -> CycleResult:
