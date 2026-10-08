@@ -203,6 +203,24 @@ class FoundationRuntime:
             candidate=candidate,
         )
 
+    def generate_reference_english(self, source: FoundationTurn):
+        """Construct only the admitted relation fragment, then verify meaning.
+
+        This is an exact, proof-bound reference surface, not an R5 generative
+        release. Missing lexical evidence, unsupported grammar or failed
+        semantic equivalence results in a typed unadmitted output.
+        """
+        from .reference_generation import ReferenceRelationGenerator
+        if type(source) is not FoundationTurn or not source.verify():
+            raise ValueError("reference generation requires an exact verified turn")
+        response = source.cycle.response_meaning
+        if response is None:
+            raise ValueError("unresolved turn lacks response meaning")
+        return ReferenceRelationGenerator(self._cognitive_runtime).generate(
+            response=response,
+            session_ref=source.cycle.orientation.session_ref,
+        )
+
     def approve_reviewed_learning(
         self, source: FoundationTurn, approval: object,
     ):
