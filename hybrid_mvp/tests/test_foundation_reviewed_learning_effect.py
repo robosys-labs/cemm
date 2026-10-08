@@ -373,3 +373,32 @@ def test_signed_review_handoff_recovers_after_process_restart(tmp_path):
         ).cycle.verification.status == "selected"
     finally:
         second.close()
+
+
+def test_unapproved_world_designation_payload_never_enters_grounding(tmp_path):
+    """Even a forged 'reviewed' fact cannot bypass the approved alias index."""
+    runtime = _runtime(tmp_path)
+    try:
+        forged = Fact(
+            fact_ref="fact:forged-review-markers",
+            operator="op:designation",
+            args={
+                "predicate_ref": "designation:reviewed_alias_v1",
+                "role:surface": "forgedalias",
+                "role:target": "event:greeting",
+                "role:language": "en",
+            },
+            proof={
+                "reviewed_alias_v1": True,
+                "approval_ref": "review_approval:forged",
+                "plan_ref": "learning_plan:forged",
+                "placement": "reviewed",
+            },
+        )
+        install_reviewed_world_facts(runtime.stores, facts=(forged,))
+        assert runtime.stores.r3_reviewed_designation_for_surface("forgedalias") is None
+        ungrounded = runtime.process("session:forgery", "forgedalias")
+        assert ungrounded.verify()
+        assert ungrounded.cycle.verification.status != "selected"
+    finally:
+        runtime.close()
