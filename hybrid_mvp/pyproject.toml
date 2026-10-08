@@ -17,6 +17,7 @@ test = [
   "hypothesis>=6",
   "numpy>=2",
   "safetensors>=0.4",
+  "jsonschema>=4.23",
 ]
 
 [tool.setuptools.packages.find]
