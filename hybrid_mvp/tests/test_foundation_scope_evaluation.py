@@ -102,7 +102,10 @@ def test_unqualified_world_fact_does_not_prove_temporally_scoped_claim(scope, va
     assert "scope:temporal_evaluation_not_admitted" in result.contribution.blocker_refs
 
 
-@pytest.mark.parametrize("link", ["link:cause", "link:sequence", "link:purpose"])
+@pytest.mark.parametrize("link", [
+    "link:cause", "link:sequence", "link:purpose",
+    "link:contrast", "link:condition", "link:coordination",
+])
 def test_two_supported_facts_do_not_prove_nonlogical_link(link):
     a, b = app("app:a", "entity:alice"), app("app:b", "entity:bob")
     expression = SemanticExpression.create(
