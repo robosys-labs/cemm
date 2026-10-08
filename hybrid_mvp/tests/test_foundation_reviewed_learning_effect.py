@@ -11,8 +11,11 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+import sqlite3
 
 from cemm_authoritative_hybrid.foundation import load_foundation
+from cemm_authoritative_hybrid.canonical import stable_ref
+from cemm_authoritative_hybrid.persistence import StaleRevisionError
 from cemm_authoritative_hybrid.reviewed_learning import (
     ReviewerIssuer, ReviewerVerifier,
 )
@@ -276,3 +279,64 @@ def test_expired_learning_does_not_block_later_review_requests(tmp_path):
         assert response.learning_plan.plan_ref != plan.plan_ref
     finally:
         runtime.close()
+
+
+def test_transaction_rollback_leaves_no_nonce_alias_or_effect(tmp_path):
+    """A SQLite failure after nonce and index insertion must roll back ALL work."""
+    runtime = _runtime(tmp_path)
+    try:
+        request = runtime.process("session:rollback", "learn veza means hello")
+        response = request.cycle.response_meaning
+        assert response is not None and response.learning_plan is not None
+        approval = _approval(request)
+        verifier = ReviewerVerifier({REVIEWER: KEY})
+        before = runtime.stores.revision_pin()
+        conn = runtime.stores._backend._conn
+        conn.execute(
+            "CREATE TRIGGER fail_reviewed_alias BEFORE INSERT ON world_facts "
+            "BEGIN SELECT RAISE(ABORT, 'simulated atomic write failure'); END"
+        )
+        with pytest.raises(sqlite3.DatabaseError, match="simulated atomic"):
+            runtime.approve_reviewed_learning(
+                request, approval, verifier, now=NOW + 4,
+            )
+        conn.execute("DROP TRIGGER fail_reviewed_alias")
+        assert runtime.stores.revision_pin() == before
+        assert runtime.stores.obligations.get(response.obligation_ref)["resolved"] is False
+        assert runtime.stores.r3_reviewed_designation_for_surface("veza") is None
+        pending_effect_key = stable_ref(
+            "reviewed_learning_effect_key",
+            {"plan_ref": response.learning_plan.plan_ref},
+        )
+        assert runtime.stores.r3_effect_journal_get(pending_effect_key) is None
+
+        # A failed transaction does not burn the signed nonce or the plan.
+        accepted = runtime.approve_reviewed_learning(
+            request, approval, verifier, now=NOW + 5,
+        )
+        assert accepted.status is EffectStatus.COMMITTED
+    finally:
+        runtime.close()
+
+
+def test_two_open_store_connections_cannot_commit_one_review_twice(tmp_path):
+    primary = _runtime(tmp_path)
+    try:
+        request = primary.process("session:concurrent", "learn kiyo means hello")
+        approval = _approval(request)
+        verifier = ReviewerVerifier({REVIEWER: KEY})
+        secondary = _runtime(tmp_path)
+        try:
+            accepted = primary.approve_reviewed_learning(
+                request, approval, verifier, now=NOW + 3,
+            )
+            assert accepted.status is EffectStatus.COMMITTED
+            with pytest.raises((StaleRevisionError, ValueError)):
+                secondary.approve_reviewed_learning(
+                    request, approval, verifier, now=NOW + 4,
+                )
+        finally:
+            secondary.close()
+        assert primary.stores.r3_reviewed_designation_for_surface("kiyo") is not None
+    finally:
+        primary.close()
