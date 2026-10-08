@@ -29,6 +29,7 @@ A green CI/build or deterministic hash does not establish semantic coverage.
 | Temporal/aspect and causal/purpose/sequence links cannot be inferred from bare fact conjunction | `test_foundation_scope_evaluation.py` | Temporal inference and nonlogical relation semantics deliberately unavailable |
 | Query world retrieval respects configured budget, no unbounded table materialization, overflow fail closed | `test_foundation_bounded_retrieval.py` | Indexed predicate/role retrieval and million-fact scale remain unproven |
 | Two reviewed-rule inference, proof lineage and nonfabrication | `test_foundation_inference.py` | Verified structured input, not general linguistic understanding |
+| Newly reviewed entity and predicate synonyms inherit semantics without form-pack regeneration, reject stale authority generations and survive restart | `test_foundation_reviewed_snapshot_reuse.py` | Reviewed file-snapshot publication, not authenticated live conversational teaching |
 | Four typed R3 modes and explicit no-effect for QUERY/SIMULATE | `test_foundation_modes.py` | R3 post-VERIFY canaries, not complete surface-to-surface mode admission |
 | SQLite restart with revision preservation | `test_foundation_restart.py` | Not distributed concurrency/recovery certification |
 | Unreviewed lexical teaching/report cannot silently enter world truth | `test_foundation_epistemic_safety.py` | Does not yet establish authorized acquisition/attributed-query competence |
@@ -59,11 +60,12 @@ informational and cannot itself promote a capability.
 
 ## Release blockers, in dependency order
 
-1. **Reviewed acquisition and reactivation**: a reviewer-authorized
-   designation commit must atomically join the semantic data and persistent
-   world/authority generation, refresh grounding, survive restart, and be
-   provably reusable in an unseen compositional query. Ordinary text may not
-   self-authorize.
+1. **Live reviewer-authorized acquisition**: reviewed authority **snapshot**
+   publication, fresh-generation activation, novel entity/predicate designation
+   composition, and restart reuse are already proven. The remaining gap is an
+   authenticated request/review/commit transaction through a single authorized
+   publication owner, with approval policy, replay protection, crash recovery,
+   and a bound dialogue continuation. Ordinary chat may not self-authorize.
 2. **Independent semantic gold on compositional constructions**: support
    polarity, nested attribution, referent identity/coreference, quantified
    scope, temporally qualified facts, and proof-bearing causal/conditional
