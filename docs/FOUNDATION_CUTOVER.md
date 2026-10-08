@@ -24,8 +24,16 @@ The active wheel and checkout no longer contain the old root `cemm/` package.
   neural proposer.
 - The typed `ResponseMeaning` is externally returned in a reversible
   canonical JSON semantic protocol, with revision, decision and effect proof.
-- No natural-language equivalence is claimed. Existing R5 release activation
-  remains explicitly blocked.
+- An **exact reference-language equivalence check** now exists for simple,
+  positively supported binary-relation English clauses. A tiny role-driven
+  output constructor can emit that fragment only after the independent
+  read-only reparsing check proves identical semantics. This is NOT a
+  generalized generator and never opens neural R5 release activation.
+- Runtime store activation now pins exact semantic authority content, English
+  language-form version and proposer identity; incompatible old/unpinned
+  SQLite stores require reviewed migration.
+- Verified output must bind to an exact locally persisted R3 effect receipt,
+  not merely an unkeyed artifact hash.
 
 A clean **checkout** can run
 `cemm --root hybrid_mvp --store /tmp/cemm.sqlite3 --text hello`.
