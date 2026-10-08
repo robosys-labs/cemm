@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 dependencies = ["torch>=2.0"]
 
 [project.optional-dependencies]
-test = ["pytest>=8", "hypothesis>=6", "numpy>=2", "safetensors>=0.4"]
+test = ["pytest>=8", "hypothesis>=6", "numpy>=2", "safetensors>=0.4", "jsonschema>=4.23"]
 
 [project.scripts]
 cemm = "cemm_authoritative_hybrid.foundation_cli:main"
