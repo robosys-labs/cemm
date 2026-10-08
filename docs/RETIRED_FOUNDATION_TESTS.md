@@ -13,6 +13,9 @@ reintroduced by reviving an invalid compatibility API.**
 | `tests/test_dialogue_focus.py` | Calls forbidden direct `VerifiedSemanticFocus(...)` constructor with retired field names and expects removed `FocusStore.query()`; tests a predecessor session simulator, not canonical R3 persisted snapshots. | `test_foundation_restart.py`, `test_r3_learning_transaction.py`, R3 session/focus snapshot and receipt tests |
 | `tests/test_dialogue_obligations.py` | Assumes pre-R3 `DialogueObligation(...)` constructor and legacy free-form `DialogueObligationManager` semantics; exact R3 learning plans/obligations require content-addressed factories and EFFECT-owned persistence. | `test_r3_learning_transaction.py`, `test_foundation_reviewed_learning_effect.py` with pending one-active/expiry/approval/restart guards |
 
+| `tests/test_discourse_reference.py` | Uses obsolete direct `VerifiedSemanticFocus(...)` constructor and `ReferenceConstraints(scope=...)` fields removed by exact dialogue ABI. The current runtime does not yet prove equivalent discourse-reference resolution; this is a **capability debt**, not a green replacement. | R3 focus snapshots and pending independent discourse-reference gold (unadmitted) |
+| `tests/test_evaluation_metrics.py` | Imports nonexistent `evaluation.build_release_runtime` and asserts green proposal/realizer neural-release metrics even though release activation deliberately raises `MissingOwner`. It is an invalid historical release assertion, not a current foundation quality gate. | Current source-bound foundation acceptance, R5 red release gate and future independent evaluated R5 corpus |
+
 This is **not** license to remove every failing test. Future full-suite
 failures must be triaged by actual owner/ABI and admitted source behavior,
 with an explicit retirement record when a test is legitimately obsolete.
