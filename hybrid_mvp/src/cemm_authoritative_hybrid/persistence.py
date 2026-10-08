@@ -1083,9 +1083,19 @@ CREATE TABLE IF NOT EXISTS r3_reviewed_learning_nonces (
 class SQLiteSemanticStore:
     """The SQLite reference persistent backend."""
 
-    def __init__(self, conn: sqlite3.Connection, *, authority_generation: str, model_identity: str | None = None) -> None:
+    def __init__(
+        self, conn: sqlite3.Connection, *, authority_generation: str,
+        model_identity: str | None = None,
+        semantic_contract_ref: str | None = None,
+    ) -> None:
+        if semantic_contract_ref is not None and (
+            type(semantic_contract_ref) is not str
+            or not semantic_contract_ref.startswith("semantic_execution_contract:")
+        ):
+            raise ValueError("semantic_contract_ref must be a typed content identity")
         self._conn = conn
         self._authority_generation = authority_generation
+        self._semantic_contract_ref = semantic_contract_ref
         self._model_identity = model_identity
         self._closed = False
         self._init_schema()
@@ -1117,6 +1127,11 @@ class SQLiteSemanticStore:
                 "INSERT INTO metadata(key, value) VALUES('authority_generation', ?)",
                 (self._authority_generation,),
             )
+            if self._semantic_contract_ref is not None:
+                self._conn.execute(
+                    "INSERT INTO metadata(key, value) VALUES('semantic_contract_ref', ?)",
+                    (self._semantic_contract_ref,),
+                )
             self._conn.commit()
             return
         if int(row[0]) != _SCHEMA_VERSION:
@@ -1134,6 +1149,26 @@ class SQLiteSemanticStore:
                 f"authority generation mismatch: expected {self._authority_generation}, got {gen_row[0]}",
                 RecoveryReceipt(0, (), "reopen with the active authority generation"),
             )
+
+        # A generation label alone is not evidence of compatible meaning:
+        # reviewed authority data or the language pack can change while the
+        # manifest's generation string is accidentally left unchanged. The
+        # canonical foundation therefore also pins the exact linked semantic
+        # and form/proposer contract on the SQLite store. An older unpinned
+        # store is NOT silently upgraded (it requires reviewed migration).
+        if self._semantic_contract_ref is not None:
+            contract_row = self._conn.execute(
+                "SELECT value FROM metadata WHERE key='semantic_contract_ref'"
+            ).fetchone()
+            if contract_row is None or contract_row[0] != self._semantic_contract_ref:
+                raise StoreActivationError(
+                    "semantic execution contract mismatch or unpinned legacy store",
+                    RecoveryReceipt(
+                        0, (),
+                        "review and migrate from verified authority/form snapshot; "
+                        "never reuse this database with changed semantics",
+                    ),
+                )
 
         # Verify row hashes across all tables
         all_corrupt: list[str] = []
@@ -2432,6 +2467,7 @@ def open_stores(
     *,
     authority_generation: str,
     model_identity: str | None = None,
+    semantic_contract_ref: str | None = None,
 ) -> SemanticStores:
     """Open (or create) a SQLite-backed :class:`SemanticStores` at ``path``."""
     path = Path(path)
@@ -2442,11 +2478,16 @@ def open_stores(
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
     conn.execute("PRAGMA synchronous=NORMAL")
-    backend = SQLiteSemanticStore(
-        conn,
-        authority_generation=authority_generation,
-        model_identity=model_identity,
-    )
+    try:
+        backend = SQLiteSemanticStore(
+            conn,
+            authority_generation=authority_generation,
+            model_identity=model_identity,
+            semantic_contract_ref=semantic_contract_ref,
+        )
+    except Exception:
+        conn.close()
+        raise
     return SemanticStores(backend)
 
 

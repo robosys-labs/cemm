@@ -39,6 +39,7 @@ A green CI/build or deterministic hash does not establish semantic coverage.
 | Signed learned synonyms and original designations reparse into one proof-backed answer graph across restart | `test_foundation_surface_learning_integration.py` | The same parser can share systematic errors; independent gold remains mandatory |
 | Four typed R3 modes and explicit no-effect for QUERY/SIMULATE | `test_foundation_modes.py` | R3 post-VERIFY canaries, not complete surface-to-surface mode admission |
 | SQLite restart with revision preservation | `test_foundation_restart.py` | Not distributed concurrency/recovery certification |
+| Persistent semantic ABI fingerprint pins exact linked authority content, English form pack and proposal model | `test_foundation_contract_pinning.py` | Same-generation content drift and unpinned legacy stores fail closed; explicit migration remains required |
 | Unreviewed lexical teaching/report cannot silently enter world truth | `test_foundation_epistemic_safety.py` | Does not yet establish authorized acquisition/attributed-query competence |
 
 CI additionally enforces adjacent R2/R3 proposer, verifier, query, effect and
