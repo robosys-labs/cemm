@@ -19,8 +19,8 @@ from cemm_authoritative_hybrid.foundation import load_foundation
 UTTERANCES = (
     "hello",
     "What is your name?",
-    "Alice owns a book.",
-    "Who owns a book?",
+    "Alice owns the book.",
+    "Who owns the book?",
     "Mary said Bob left.",
     "yoz means hello",
     "What does yoz mean?",

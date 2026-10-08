@@ -1630,6 +1630,24 @@ class ProposalContextBuilder:
             ),
             self._config.max_orientation_alternatives,
         )
+        # Closed-class quantifiers must not be silently interpreted as
+        # grounded definite entities. Until quantified scope and variable
+        # binding are admitted, their source units remain critical residuals.
+        # This is about typed form evidence, NEVER surface-word matching.
+        unlicensed_quantifier_sources = frozenset(
+            unit.unit_ref
+            for unit in form_lattice.units
+            if any(
+                category == "determiner"
+                and value in {"indefinite", "universal"}
+                for category, value in unit.features
+            )
+        )
+        if unlicensed_quantifier_sources:
+            contribution_slots = tuple(
+                row for row in contribution_slots
+                if not unlicensed_quantifier_sources.intersection(row.source_unit_refs)
+            )
         variable_slots = _variable_slots(
             form_lattice,
             contribution_slots,
@@ -3920,7 +3938,10 @@ def _expanded_nominal_source_refs(
         unit
         for unit in form_lattice.units
         if unit.source_end <= start
-        and any(category == "determiner" for category, _ in unit.features)
+        and any(
+            category == "determiner" and value == "definite"
+            for category, value in unit.features
+        )
         and not form_lattice.source_text[unit.source_end:start].strip()
     )
     if not candidates:

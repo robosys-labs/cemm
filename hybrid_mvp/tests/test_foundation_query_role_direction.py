@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.mark.parametrize("utterance,relation,object_ref", [
-    ("Who owns a book?", "rel:owns", "entity:book"),
+    ("Who owns the book?", "rel:owns", "entity:book"),
     ("Who likes Bob?", "rel:likes", "entity:bob"),
     ("Who owns Alice?", "rel:owns", "entity:alice"),
 ])
@@ -48,7 +48,7 @@ def test_statement_role_order_not_reversed_by_query_repair(tmp_path):
         ROOT, profile="development", store_path=tmp_path / "statement.sqlite3"
     )
     try:
-        cycle = runtime.process("session:declarative-direction", "Alice owns a book.")
+        cycle = runtime.process("session:declarative-direction", "Alice owns the book.")
         assert cycle.verification.status == "selected"
         relation = next(
             app for app in cycle.verification.selected_meaning.expression.applications

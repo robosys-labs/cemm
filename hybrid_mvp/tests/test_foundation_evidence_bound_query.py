@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.mark.parametrize("text,predicate,object_ref", [
-    ("Who owns a book?", "rel:owns", "entity:book"),
+    ("Who owns the book?", "rel:owns", "entity:book"),
     ("Who likes Bob?", "rel:likes", "entity:bob"),
 ])
 def test_text_query_returns_exact_matching_subject_and_source_proof(
@@ -75,7 +75,7 @@ def test_unrelated_fact_is_not_a_query_answer(tmp_path):
         )
         install_reviewed_world_facts(runtime.stores, facts=(reviewed,))
         before = runtime.stores.revision_pin().world_revision
-        result = runtime.process("session:unrelated-query", "Who owns a book?")
+        result = runtime.process("session:unrelated-query", "Who owns the book?")
         assert result.verify()
         assert result.cycle.response_meaning is None or (
             result.cycle.response_meaning.discourse_action != "answer"

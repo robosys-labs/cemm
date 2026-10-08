@@ -31,10 +31,10 @@ Examples on the current authority/data baseline:
 - `hello`: verified semantic acknowledgment.
 - `What is your name?`: unknown (no reviewed self-name binding admitted).
 - `Alice owns a book.`: attributed/acknowledged, not asserted into world truth.
-- `Who owns a book?`: unknown **with an incorrect semantic interpretation**:
-  the verified graph currently binds `entity:book` to `role:subject` and the
-  query variable to `role:object`, reversing the asked roles. This is a P0
-  form-to-meaning defect, not simply absent world evidence.
+- `Who owns the book?`: now compiles a subject-variable query with `entity:book`
+  as its object; without reviewed world evidence the correct result is unknown.
+- `Who owns a book?`: quantifier semantics are not yet licensed; the kernel
+  must preserve this indefinite scope as a critical unresolved frontier.
 - `Mary said Bob left.`: ambiguous; nested attribution not fully resolved.
 - `yoz means hello`: no automatic authority publication (correct).
 - `What does yoz mean?`: unresolved without a reviewed acquisition.
@@ -47,24 +47,24 @@ Examples on the current authority/data baseline:
    the effect owner, refresh generation/revision-pinned grounding, demonstrate
    a new composition and query, reopen the store, and prove that the alias
    still resolves. An unreviewed user statement must never be enough.
-2. **P0 query-role repair:** the first interrogative query must bind the
-   variable to the actual grammatical role (e.g. subject for "Who owns a
-   book?"). Fix the earliest form/contribution/role-assembly owner using
-   general position and construction evidence, never a phrase-specific
-   handler; add swapped-role and negative controls. A verifier accepting a
-   structurally valid but incorrectly assigned graph is **not** semantic
-   correctness.
-3. **Independent compositional language semantics:** prove multiple previously
+2. **P0 query-role repair (implemented):** reviewed English role order now
+   correctly assigns post-verbal grounded objects in leading-WH relation queries;
+   independently authored graph and evidence-bound query tests are release gates.
+3. **Quantified semantic scope:** indefinite/universal determiners are
+   currently unadmitted and must remain fail-closed, not collapsed to one
+   canonical entity. Implement verified existential/universal binders before
+   promoting these constructions.
+4. **Independent compositional language semantics:** prove multiple previously
    unseen participant/relation/value combinations, temporal state, and nested
    reported propositions. The R4 corpus still shows broad structural gaps.
-4. **Real linguistic realization:** generate proposition-bearing answers with
+5. **Real linguistic realization:** generate proposition-bearing answers with
    exact dynamic slot alignment, then independently re-interpret and verify
    graph equivalence. Marker/template checks are not admissible.
-5. **Neural ABI recovery:** `NeuralSwitchProposer.propose(orientation)` and
+6. **Neural ABI recovery:** `NeuralSwitchProposer.propose(orientation)` and
    direct `ProposalResult(...)` are incompatible with the current
    `ProposalOwner.propose(context)` / `ProposalResult.create` contract.
    Those legacy sources remain ineligible for the active foundation.
-6. **Distribution and scale:** package the reviewed authority in a
+7. **Distribution and scale:** package the reviewed authority in a
    self-contained, reproducible release; verify concurrency, index behavior,
    crash recovery and benchmark policy before production exposure.
 

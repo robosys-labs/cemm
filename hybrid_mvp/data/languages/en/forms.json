@@ -389,25 +389,25 @@
   },
   "determiners": {
     "the": {
-      "kind": "determiner"
+      "kind": "definite"
     },
     "a": {
-      "kind": "determiner"
+      "kind": "indefinite"
     },
     "an": {
-      "kind": "determiner"
+      "kind": "indefinite"
     },
     "some": {
-      "kind": "determiner"
+      "kind": "indefinite"
     },
     "any": {
-      "kind": "determiner"
+      "kind": "indefinite"
     },
     "all": {
-      "kind": "determiner"
+      "kind": "universal"
     },
     "every": {
-      "kind": "determiner"
+      "kind": "universal"
     }
   },
   "linkers": {

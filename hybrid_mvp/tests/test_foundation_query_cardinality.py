@@ -40,7 +40,7 @@ def test_distinct_verified_answers_cannot_collapse_into_first_match(tmp_path):
             ),
         )
         before = runtime.stores.revision_pin().world_revision
-        result = runtime.process("session:two-owners", "Who owns a book?")
+        result = runtime.process("session:two-owners", "Who owns the book?")
         assert result.verify()
         response = result.cycle.response_meaning
         assert response is not None
@@ -62,7 +62,7 @@ def test_duplicate_evidence_for_one_binding_does_not_invent_ambiguity(tmp_path):
                 _ownership("entity:alice", "source:second"),
             ),
         )
-        result = runtime.process("session:single-owner", "Who owns a book?")
+        result = runtime.process("session:single-owner", "Who owns the book?")
         assert result.verify()
         response = result.cycle.response_meaning
         assert response is not None
