@@ -1063,6 +1063,20 @@ CREATE TABLE IF NOT EXISTS r3_effect_journal (
     receipt_hash TEXT,
     effect_revision INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS r3_reviewed_aliases (
+    surface_key TEXT NOT NULL,
+    language TEXT NOT NULL,
+    surface TEXT NOT NULL,
+    target_ref TEXT NOT NULL,
+    fact_ref TEXT NOT NULL UNIQUE,
+    plan_ref TEXT NOT NULL UNIQUE,
+    approval_ref TEXT NOT NULL,
+    PRIMARY KEY(surface_key, language)
+);
+CREATE TABLE IF NOT EXISTS r3_reviewed_learning_nonces (
+    nonce TEXT PRIMARY KEY,
+    plan_ref TEXT NOT NULL UNIQUE
+);
 """
 
 
@@ -1147,6 +1161,27 @@ class SQLiteSemanticStore:
             except StoreActivationError:
                 all_corrupt.append(f"r3_effect_journal:{row[0]}")
 
+        # Validate the reviewed designation materialized index against its
+        # canonical fact and immutable approval/plan lineage at every reopen.
+        for item in self._conn.execute(
+            "SELECT a.fact_ref,a.surface,a.target_ref,a.language,a.plan_ref,"
+            "a.approval_ref,f.args_json,f.proof_json "
+            "FROM r3_reviewed_aliases a LEFT JOIN world_facts f ON f.fact_ref=a.fact_ref"
+        ).fetchall():
+            try:
+                args = json.loads(item[6])
+                proof = json.loads(item[7])
+                if (
+                    args.get("role:surface") != item[1]
+                    or args.get("role:target") != item[2]
+                    or args.get("role:language") != item[3]
+                    or proof.get("reviewed_alias_v1") is not True
+                    or proof.get("approval_ref") != item[5]
+                    or proof.get("plan_ref") != item[4]
+                ):
+                    all_corrupt.append("r3_reviewed_alias:"+str(item[0]))
+            except (TypeError, ValueError):
+                all_corrupt.append("r3_reviewed_alias:"+str(item[0]))
         if all_corrupt:
             raise StoreActivationError(
                 f"corruption detected in {len(all_corrupt)} rows",
@@ -1444,6 +1479,253 @@ class SemanticStores:
     # ------------------------------------------------------------------
     # Canonical R3 persistence port
     # ------------------------------------------------------------------
+
+    def r3_reviewed_designation_for_surface(
+        self, surface: str, language: str = "en",
+    ) -> dict[str, str] | None:
+        """Indexed, evidence-bound learned designation lookup.
+
+        The authority index remains immutable. Only SQLite EFFECT-committed,
+        reviewed world aliases participate in grounding; unreviewed statements
+        and arbitrary world fact payloads never become designations.
+        """
+        if type(surface) is not str or not surface or len(surface) > 512:
+            raise ValueError("invalid designation surface")
+        if type(language) is not str or not language or len(language) > 64:
+            raise ValueError("invalid designation language")
+        if not isinstance(self._backend, SQLiteSemanticStore):
+            return None  # The reference in-memory backend cannot publish reviewed aliases.
+        row = self._backend._conn.execute(
+            "SELECT a.surface, a.target_ref, a.fact_ref, a.approval_ref, a.plan_ref, "
+            "f.args_json, f.proof_json FROM r3_reviewed_aliases AS a "
+            "JOIN world_facts AS f ON f.fact_ref=a.fact_ref "
+            "WHERE a.surface_key=? AND a.language=?",
+            (surface.casefold(), language),
+        ).fetchone()
+        if row is None:
+            return None
+        args = json.loads(row[5])
+        proof = json.loads(row[6])
+        if (
+            args.get("role:surface") != row[0]
+            or args.get("role:target") != row[1]
+            or args.get("role:language") != language
+            or proof.get("reviewed_alias_v1") is not True
+            or proof.get("approval_ref") != row[3]
+            or proof.get("plan_ref") != row[4]
+        ):
+            raise StoreActivationError(
+                "indexed reviewed designation disagrees with committed fact",
+                RecoveryReceipt(self.world.revision, (row[2],), "restore verified store"),
+            )
+        return {"surface": row[0], "target_ref": row[1], "language": language}
+
+    def r3_commit_approved_alias(
+        self, *, plan: Any, obligation: Any, source_receipt: Any,
+        approval: Any, verifier: Any, now: int, fact: Fact,
+        effect_receipt: Any, planned_journal: Any, terminal_journal: Any,
+        expected_pin: RevisionPin,
+    ) -> RevisionPin:
+        """One SQLite transaction for approved alias, obligation and effect.
+
+        Called only by the R3 effect owner after verifying the exact cognitive
+        provenance. Revalidates reviewer cryptography, current revisions,
+        original journal, session turn, and pending obligation under BEGIN
+        IMMEDIATE. A failed/replayed/stale operation leaves ALL stores intact.
+        """
+        from .reviewed_learning import ReviewApproval, ReviewerVerifier
+        from .r3_learning import LearningPlan, DialogueObligation
+        from .r3_effects import EffectReceipt, NoEffectReceipt, NoEffectReason
+        from .r3_persistence import (
+            EffectJournalEntry, EffectJournalState, StoredEffectJournal,
+        )
+        if not isinstance(self._backend, SQLiteSemanticStore):
+            raise RuntimeError("reviewed-learning atomic port requires SQLite")
+        if (
+            type(plan) is not LearningPlan
+            or type(obligation) is not DialogueObligation
+            or type(source_receipt) is not NoEffectReceipt
+            or type(approval) is not ReviewApproval
+            or type(verifier) is not ReviewerVerifier
+            or type(fact) is not Fact
+            or type(effect_receipt) is not EffectReceipt
+            or type(planned_journal) is not EffectJournalEntry
+            or type(terminal_journal) is not EffectJournalEntry
+            or type(expected_pin) is not RevisionPin
+        ):
+            raise TypeError("reviewed learning requires exact canonical owners")
+        verifier.verify(approval, now=now)
+        if (
+            plan.plan_ref != obligation.plan_ref
+            or obligation.obligation_ref != approval.obligation_ref
+            or plan.plan_ref != approval.plan_ref
+            or obligation.session_ref != approval.session_ref
+            or source_receipt.receipt_ref != approval.source_effect_ref
+            or source_receipt.reason is not NoEffectReason.LEARNING_OBLIGATION_ONLY
+            or source_receipt.learning_plan_ref != plan.plan_ref
+            or source_receipt.obligation_ref != obligation.obligation_ref
+            or plan.decision_ref != source_receipt.decision_ref
+            or plan.target_ref != fact.args.get("role:target")
+            or plan.surface_literal != fact.args.get("role:surface")
+            or fact.args.get("role:language") != "en"
+            or fact.proof.get("reviewed_alias_v1") is not True
+            or fact.proof.get("approval_ref") != approval.approval_ref
+            or fact.proof.get("plan_ref") != plan.plan_ref
+            or effect_receipt.status.value != "committed"
+            or effect_receipt.committed_fact_refs != (fact.fact_ref,)
+            or effect_receipt.output_revision_pin.world_revision != expected_pin.world_revision + 1
+            or effect_receipt.output_revision_pin.effect_revision != expected_pin.effect_revision + 2
+            or effect_receipt.input_revision_pin != expected_pin
+            or planned_journal.state is not EffectJournalState.PLANNED
+            or terminal_journal.state is not EffectJournalState.COMMITTED
+            or terminal_journal.parent_journal_ref != planned_journal.journal_ref
+            or terminal_journal.outcome_ref != effect_receipt.receipt_ref
+            or terminal_journal.idempotency_key != planned_journal.idempotency_key
+            or effect_receipt.idempotency_key != planned_journal.idempotency_key
+            or planned_journal.intent_ref != plan.plan_ref
+            or terminal_journal.intent_ref != plan.plan_ref
+        ):
+            raise ValueError("reviewed designation source/effect lineage mismatch")
+        if expected_pin != self.revision_pin():
+            raise StaleRevisionError("reviewed learning revision pin is stale")
+
+        conn = self._backend._conn
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            def current_revision(name: str) -> int:
+                row = conn.execute(
+                    "SELECT value FROM metadata WHERE key=?", (name+"_revision",),
+                ).fetchone()
+                return 0 if row is None else int(row[0])
+            if (
+                current_revision("world") != expected_pin.world_revision
+                or current_revision("effect") != expected_pin.effect_revision
+                or current_revision("session") != expected_pin.session_revision
+                or current_revision("obligation") != self.obligations.revision
+            ):
+                raise StaleRevisionError("concurrent reviewed learning revision changed")
+            if expected_pin.authority_generation != self._backend._authority_generation:
+                raise StaleRevisionError("reviewed learning authority generation changed")
+
+            existing = conn.execute(
+                "SELECT session_ref, payload_json, resolved FROM obligations "
+                "WHERE obligation_ref=?",
+                (obligation.obligation_ref,),
+            ).fetchone()
+            if existing is None or bool(existing[2]) or existing[0] != obligation.session_ref:
+                raise ValueError("pending learning obligation is missing, spent or mismatched")
+            pending = json.loads(existing[1])
+            if (
+                pending.get("plan_ref") != plan.plan_ref
+                or pending.get("obligation_ref") != obligation.obligation_ref
+                or pending.get("session_ref") != obligation.session_ref
+            ):
+                raise ValueError("pending learning obligation source mismatch")
+            session_row = conn.execute(
+                "SELECT payload_json FROM sessions WHERE session_ref=?",
+                (obligation.session_ref,),
+            ).fetchone()
+            if session_row is None:
+                raise ValueError("learning session is not persisted")
+            turn_index = int(json.loads(session_row[0])["turn_index"])
+            if turn_index >= plan.expires_at_turn:
+                raise PermissionError("reviewed learning plan expired in session")
+
+            original = self.r3_effect_journal_get(source_receipt.idempotency_key)
+            if original is None or (
+                original["entry"]["state"] != EffectJournalState.NO_EFFECT.value
+                or original["receipt"] is None
+                or original["receipt"].get("receipt_ref") != source_receipt.receipt_ref
+            ):
+                raise ValueError("learning request lacks original durable no-effect receipt")
+
+            # Enforce one consumer per plan and one use per reviewed nonce,
+            # including concurrent processes and process restarts.
+            conn.execute(
+                "INSERT INTO r3_reviewed_learning_nonces(nonce, plan_ref) VALUES(?, ?)",
+                (approval.nonce, plan.plan_ref),
+            )
+            conn.execute(
+                "INSERT INTO r3_reviewed_aliases("
+                "surface_key,language,surface,target_ref,fact_ref,plan_ref,approval_ref"
+                ") VALUES(?,?,?,?,?,?,?)",
+                (
+                    plan.surface_literal.casefold(), "en", plan.surface_literal,
+                    plan.target_ref, fact.fact_ref, plan.plan_ref, approval.approval_ref,
+                ),
+            )
+            new_world = expected_pin.world_revision + 1
+            new_effect = expected_pin.effect_revision + 2
+            new_obligation = self.obligations.revision + 1
+            fact_row = _fact_to_row(fact)
+            conn.execute(
+                "INSERT INTO world_facts(fact_ref,operator,args_json,stance,confidence,"
+                "derived,proof_json,payload_hash,revision) "
+                "VALUES(:fact_ref,:operator,:args_json,:stance,:confidence,"
+                ":derived,:proof_json,:payload_hash,:revision)",
+                {
+                    **fact_row, "payload_hash": _payload_hash(_fact_payload(fact)),
+                    "revision": new_world,
+                },
+            )
+            self._backend.world._save_revision(new_world)
+            _r3_insert_revision(
+                conn, store="world", parent_revision=expected_pin.world_revision,
+                new_revision=new_world, delta_hash=_payload_hash([_fact_payload(fact)]),
+            )
+            completed = dict(pending)
+            completed["resolved"] = True
+            completed["completion_receipt_ref"] = effect_receipt.receipt_ref
+            conn.execute(
+                "UPDATE obligations SET payload_json=?,payload_hash=?,resolved=1,revision=? "
+                "WHERE obligation_ref=? AND resolved=0",
+                (
+                    _r3_canonical_json(completed), _payload_hash(completed),
+                    new_obligation, obligation.obligation_ref,
+                ),
+            )
+            if conn.execute("SELECT changes()").fetchone()[0] != 1:
+                raise ValueError("pending obligation could not be resolved")
+            self._backend.obligations._save_revision(new_obligation)
+            _r3_insert_revision(
+                conn, store="obligations",
+                parent_revision=self.obligations.revision,
+                new_revision=new_obligation, delta_hash=_payload_hash(completed),
+            )
+            term = StoredEffectJournal(terminal_journal, effect_receipt.as_dict())
+            conn.execute(
+                "INSERT INTO r3_effect_journal(idempotency_key,entry_json,entry_hash,"
+                "receipt_json,receipt_hash,effect_revision) VALUES(?,?,?,?,?,?)",
+                (
+                    terminal_journal.idempotency_key,
+                    _r3_canonical_json(terminal_journal.as_dict()),
+                    _payload_hash(terminal_journal.as_dict()),
+                    _r3_canonical_json(effect_receipt.as_dict()),
+                    _payload_hash(effect_receipt.as_dict()), new_effect,
+                ),
+            )
+            _r3_insert_revision(
+                conn, store="effects", parent_revision=expected_pin.effect_revision,
+                new_revision=expected_pin.effect_revision+1,
+                delta_hash=_payload_hash({
+                    "entry": planned_journal.as_dict(), "receipt": None,
+                }),
+            )
+            _r3_insert_revision(
+                conn, store="effects", parent_revision=expected_pin.effect_revision+1,
+                new_revision=new_effect, delta_hash=_payload_hash(term.as_dict()),
+            )
+            self._backend.effects._save_revision(new_effect)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        self.world.revision = new_world
+        self.obligations.revision = new_obligation
+        self.effects.revision = new_effect
+        if self.revision_pin() != effect_receipt.output_revision_pin:
+            raise RuntimeError("reviewed learning committed with invalid revision pin")
+        return self.revision_pin()
 
     def r3_world_snapshot(self, *, maximum: int) -> tuple[Fact, ...]:
         if type(maximum) is not int or isinstance(maximum, bool) or maximum < 1:
