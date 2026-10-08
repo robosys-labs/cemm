@@ -183,6 +183,30 @@ class FoundationRuntime:
         result.verify()
         return result
 
+    def _require_persisted_evaluation(self, source: FoundationTurn) -> None:
+        """Bind candidate output to a durable R3 effect/decision receipt.
+
+        A content-addressed JSON cycle can be reconstructed offline; its
+        unkeyed hash alone is not evidence that THIS foundation executed it.
+        Only an exact receipt in this instance's validated persistent journal
+        can authorize surface checking or reference-language generation.
+        """
+        if type(source) is not FoundationTurn or not source.verify():
+            raise ValueError("surface output requires a canonical FoundationTurn")
+        effect = source.cycle.effect_receipt
+        response = source.cycle.response_meaning
+        if effect is None or response is None:
+            return  # The restricted realization owner will reject unsupported turns.
+        stored = self.stores.r3_effect_journal_get(effect.idempotency_key)
+        if (
+            stored is None
+            or stored.get("receipt") != effect.as_dict()
+            or stored.get("entry", {}).get("outcome_ref") != effect.receipt_ref
+            or stored.get("entry", {}).get("decision_ref") != response.decision_ref
+            or response.effect_outcome_ref != effect.receipt_ref
+        ):
+            raise ValueError("unverified or foreign source: no exact persisted R3 effect receipt")
+
     def assess_english_surface(
         self, source: FoundationTurn, candidate: str,
     ):
@@ -192,8 +216,7 @@ class FoundationRuntime:
         generator is activated. R3 still records the unadmitted R5 gap.
         """
         from .surface_equivalence import SemanticSurfaceOracle
-        if type(source) is not FoundationTurn or not source.verify():
-            raise ValueError("surface assessment requires an exact proven turn")
+        self._require_persisted_evaluation(source)
         response = source.cycle.response_meaning
         if response is None:
             raise ValueError("unresolved turn has no ResponseMeaning")
@@ -211,8 +234,7 @@ class FoundationRuntime:
         semantic equivalence results in a typed unadmitted output.
         """
         from .reference_generation import ReferenceRelationGenerator
-        if type(source) is not FoundationTurn or not source.verify():
-            raise ValueError("reference generation requires an exact verified turn")
+        self._require_persisted_evaluation(source)
         response = source.cycle.response_meaning
         if response is None:
             raise ValueError("unresolved turn lacks response meaning")

@@ -102,3 +102,37 @@ def test_unknown_or_nonanswer_meaning_cannot_authorize_response_surface(tmp_path
         assert foundation.stores.revision_pin() == old
     finally:
         foundation.close()
+
+
+def test_identical_revision_and_graph_from_foreign_database_cannot_pass(tmp_path):
+    """Unkeyed content hashes are not proof that this runtime executed a turn."""
+    source_runtime = load_foundation(ROOT, store_path=tmp_path / "one")
+    foreign_runtime = load_foundation(ROOT, store_path=tmp_path / "two")
+    try:
+        fact = reviewed("entity:alice", "entity:book", "fact:shared")
+        install_reviewed_world_facts(source_runtime.stores, facts=(fact,))
+        install_reviewed_world_facts(foreign_runtime.stores, facts=(fact,))
+        original = source_runtime.process(
+            "session:local-owner", "Who owns the book?",
+        )
+        unrelated = foreign_runtime.process(
+            "session:different-owner", "Who owns the book?",
+        )
+        assert original.verify() and unrelated.verify()
+        assert source_runtime.stores.revision_pin() == foreign_runtime.stores.revision_pin()
+        assert (
+            original.cycle.response_meaning.response_expression.expression_ref
+            == unrelated.cycle.response_meaning.response_expression.expression_ref
+        )
+        assert source_runtime.assess_english_surface(
+            original, "Alice owns the book.",
+        ).equivalent
+        with pytest.raises(ValueError, match="persisted R3 effect receipt"):
+            foreign_runtime.assess_english_surface(
+                original, "Alice owns the book.",
+            )
+        with pytest.raises(ValueError, match="persisted R3 effect receipt"):
+            foreign_runtime.generate_reference_english(original)
+    finally:
+        source_runtime.close()
+        foreign_runtime.close()
