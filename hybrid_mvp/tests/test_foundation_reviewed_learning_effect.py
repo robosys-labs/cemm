@@ -17,6 +17,8 @@ from cemm_authoritative_hybrid.reviewed_learning import (
     ReviewerIssuer, ReviewerVerifier,
 )
 from cemm_authoritative_hybrid.r3_effects import EffectStatus, NoEffectReason
+from cemm_authoritative_hybrid.persistence import Fact
+from cemm_authoritative_hybrid.r3_persistence import install_reviewed_world_facts
 
 ROOT = Path(__file__).resolve().parents[1]
 KEY = b"foundation-test-reviewer-key-keep-out-of-repository"
@@ -179,5 +181,73 @@ def test_session_turn_expiry_stops_pending_review_without_partial_write(tmp_path
             )
         assert runtime.stores.revision_pin() == baseline
         assert runtime.stores.r3_reviewed_designation_for_surface("lumo") is None
+    finally:
+        runtime.close()
+
+
+def test_signed_novel_entity_designation_transfers_to_evidence_query(tmp_path):
+    """No new parse rule, corpus rebuild or meaning owner for the novel word."""
+    runtime = _runtime(tmp_path)
+    session = "session:compositional-new-designation"
+    try:
+        unknown = runtime.process(session, "Who owns the tome?")
+        assert unknown.verify()
+        assert unknown.cycle.verification.status != "selected"
+        turn = runtime.process(session, "learn tome means book")
+        assert turn.verify()
+        response = turn.cycle.response_meaning
+        assert response is not None and response.learning_plan is not None
+        assert response.learning_plan.target_ref == "entity:book"
+        effect = runtime.approve_reviewed_learning(
+            turn, _approval(turn), ReviewerVerifier({REVIEWER: KEY}),
+            now=NOW + 2,
+        )
+        assert effect.status is EffectStatus.COMMITTED
+        fact = Fact(
+            fact_ref="fact:independent-reviewed-ownership",
+            operator="op:relation",
+            args={
+                "predicate_ref": "rel:owns",
+                "role:subject": "entity:alice",
+                "role:object": "entity:book",
+            },
+            proof={
+                "source": "source:independent-reviewed-ownership",
+                "placement": "observed",
+            },
+        )
+        install_reviewed_world_facts(runtime.stores, facts=(fact,))
+        verified = runtime.process(session, "Who owns the tome?")
+        assert verified.verify()
+        answer = verified.cycle.response_meaning
+        assert answer is not None and answer.discourse_action == "answer"
+        assert ("?v0", "entity:alice") in answer.bindings
+        assert "source:independent-reviewed-ownership" in answer.source_refs
+    finally:
+        runtime.close()
+
+    restarted = _runtime(tmp_path)
+    try:
+        followup = restarted.process(session, "Who owns the tome?")
+        assert followup.verify()
+        assert ("?v0", "entity:alice") in followup.cycle.response_meaning.bindings
+    finally:
+        restarted.close()
+
+
+def test_second_pending_learning_request_must_not_create_another_obligation(tmp_path):
+    runtime = _runtime(tmp_path)
+    session = "session:one-learning-obligation"
+    try:
+        original = runtime.process(session, "learn lumo means hello")
+        response = original.cycle.response_meaning
+        assert response is not None and response.learning_plan is not None
+        assert runtime.stores.obligations.get(response.obligation_ref)["resolved"] is False
+        second = runtime.process(session, "learn zora means hello")
+        assert second.verify()
+        second_response = second.cycle.response_meaning
+        assert second_response is not None
+        assert second_response.learning_plan is None
+        assert "learning:pending_obligation_exists" in second_response.blocker_refs
     finally:
         runtime.close()
