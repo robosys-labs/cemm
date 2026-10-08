@@ -36,6 +36,7 @@ A green CI/build or deterministic hash does not establish semantic coverage.
 | Signed review evidence survives restart, tampered/forged and replayed approvals fail, a forged world fact cannot enter the approved alias index | `test_foundation_reviewed_learning_effect.py` | Signed handoff source must be retained by an external review service; production key rotation and operator audit remain |
 | Independently reviewed new entity aliases transfer into evidence-backed text queries after approval and restart | `test_foundation_reviewed_learning_effect.py` | Exact reviewed target reuse, not autonomous ontology creation |
 | Read-only candidate English assertions are independently ORIENT/PROPOSE/VERIFY reparsed and compared by canonical answer expression with fresh evidence; wrong names, direction, scope and illocution fail closed | `test_foundation_surface_equivalence.py` | A bounded positive QUERY answer checker only; no text generation or general R5 realization |
+| A restricted grammar-owned reference generator constructs supported binary-relation answers from reviewed designation facts, then independently reparses and rejects mismatched candidates | `test_foundation_reference_generation.py` | Verified **one-clause** SVO fragment only; not neural R5 or general language competence |
 | Signed learned synonyms and original designations reparse into one proof-backed answer graph across restart | `test_foundation_surface_learning_integration.py` | The same parser can share systematic errors; independent gold remains mandatory |
 | Four typed R3 modes and explicit no-effect for QUERY/SIMULATE | `test_foundation_modes.py` | R3 post-VERIFY canaries, not complete surface-to-surface mode admission |
 | SQLite restart with revision preservation | `test_foundation_restart.py` | Not distributed concurrency/recovery certification |
@@ -99,13 +100,16 @@ shared-parser limitation and independent-evaluation requirements.
    scope, temporally qualified facts, and proof-bearing causal/conditional
    semantics rather than structurally valid but ineffective graph wrappers.
 3. **Real linguistic realization**: the reference foundation now *checks*
-   externally supplied positive factual candidate sentences by reparsing the
-   same exact canonical graph without effects; it does **not generate** them,
-   qualify scope-rich discourse, or constitute R5 admission. A learned
-   graph-conditioned generative owner, independently reviewed semantic gold,
-   situated qualifier alignment, attribution/temporal proof, and rigorous
-   differential verification remain release-blocking. Marker checks,
-   canned text or output-slot hashes are never acceptance.
+   supplied candidate sentences AND deterministically constructs a strictly
+   bounded single-clause SVO answer from approved role bindings and reviewed
+   designations. It refuses lexical gaps and verifies the proposed sentence
+   by read-only graph re-interpretation before release. It is NOT an R5
+   neural generator and cannot produce multi-clause, modal, quantified,
+   attributed, temporal or explanatory language. A learned graph-conditioned
+   generative owner, independent language understanding gold, context-aware
+   inflection/coreference and differential verification remain release gates.
+   Marker checks, phrase-specific canned text and output-slot hashes
+   are never acceptable substitutes.
 4. **Neural ABI repair**: the historical neural proposer still accepts an
    `Orientation`, not the canonical `ProposalContext`, and constructs
    `ProposalResult` with an invalid direct constructor. It remains outside

@@ -63,3 +63,31 @@ unadmitted `contract:r5:realize_surface` gap.
 Do not replace the R5 completion gate with this checker or with a fixed set
 of English templates. This is a testable dependency for future grounded
 generation, not a production generative feature.
+
+## Deterministic reference output — not R5
+
+A separate, deliberately bounded `ReferenceRelationGenerator` can now take
+a proof-supported R3 QUERY `ResponseMeaning` with exactly one fully grounded
+binary `op:relation` application. It selects a reviewed, unambiguous
+designation for each role and one licensed finite predicate form, composes a
+single English subject–predicate–object clause, and **withholds all user-visible
+text** unless `SemanticSurfaceOracle` successfully reparses the candidate
+into the exact original canonical expression at the unchanged revision pin.
+
+The reference generator owns NO world mutation, inference, authority, new
+vocabulary, dialogue or external adapter. Its one English clause pattern is
+a narrowly scoped grammatical production (not a phrase lookup table). No
+special-case response code for `Alice`, `book`, `owns` or `likes`
+exists; the lexical material must originate in reviewed authority designations.
+Definite articles are inserted only for single-word, uncapitalized reviewed
+common entity names; reviewed proper names are kept as written. Existing
+narrow English parsing rules decide final admissibility, never mere output
+plausibility. The result carries the original response/proof identities.
+
+The independent expected strings in `test_foundation_reference_generation.py`
+test different subjects, objects and relation predicates, refusal on unknown
+or multiply-bound queries, and refusal when another turn changes the
+response revision. Since this still relies on the same parser for surface
+equivalence, it must not be generalized beyond this known supported fragment.
+`CycleResult.realization_receipt` remains absent, and the R5 release
+activation gate stays deliberately closed.
