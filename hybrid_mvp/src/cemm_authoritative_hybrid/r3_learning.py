@@ -354,7 +354,7 @@ class LearningCoordinator:
                 *draft.proof_refs,
             ))),
             revision_pin=situation.revision_pin,
-            expires_at_turn=1,
+            expires_at_turn=situation.turn_index + 1,
         )
         obligation = DialogueObligation.create(plan=plan, session_ref=situation.session_ref)
         # Persistence is owned by EFFECT so obligation creation and its effect
