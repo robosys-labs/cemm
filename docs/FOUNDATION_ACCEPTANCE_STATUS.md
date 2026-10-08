@@ -35,6 +35,8 @@ A green CI/build or deterministic hash does not establish semantic coverage.
 | Atomic SQLite approval, nonce/plan single-use, effect receipt, world revision and obligation resolution | `test_foundation_reviewed_learning_effect.py` | SQLite reference backend; not yet certified for distributed transactions |
 | Signed review evidence survives restart, tampered/forged and replayed approvals fail, a forged world fact cannot enter the approved alias index | `test_foundation_reviewed_learning_effect.py` | Signed handoff source must be retained by an external review service; production key rotation and operator audit remain |
 | Independently reviewed new entity aliases transfer into evidence-backed text queries after approval and restart | `test_foundation_reviewed_learning_effect.py` | Exact reviewed target reuse, not autonomous ontology creation |
+| Read-only candidate English assertions are independently ORIENT/PROPOSE/VERIFY reparsed and compared by canonical answer expression with fresh evidence; wrong names, direction, scope and illocution fail closed | `test_foundation_surface_equivalence.py` | A bounded positive QUERY answer checker only; no text generation or general R5 realization |
+| Signed learned synonyms and original designations reparse into one proof-backed answer graph across restart | `test_foundation_surface_learning_integration.py` | The same parser can share systematic errors; independent gold remains mandatory |
 | Four typed R3 modes and explicit no-effect for QUERY/SIMULATE | `test_foundation_modes.py` | R3 post-VERIFY canaries, not complete surface-to-surface mode admission |
 | SQLite restart with revision preservation | `test_foundation_restart.py` | Not distributed concurrency/recovery certification |
 | Unreviewed lexical teaching/report cannot silently enter world truth | `test_foundation_epistemic_safety.py` | Does not yet establish authorized acquisition/attributed-query competence |
@@ -65,6 +67,21 @@ informational and cannot itself promote a capability.
   of existing `event:greeting`, usable in subsequent/restarted sessions.
 - `What is your name?`: unresolved without a reviewed, indexed name fact.
 
+## Reference surface content canary
+
+For a supported reviewed query `Who owns the book?` with one independently
+observed owner, the candidate `Alice owns the book.` reparses to the exact
+bound answer expression while world, session and effect revisions remain
+unchanged. `Bob owns the book.`, question-shaped substitutes, unlicensed
+indefinites, reversed roles, new predicates and compound unsupported clauses
+must be rejected. After approved lexical learning of `tome`, both
+`Alice owns the tome.` and `Alice owns the book.` reparse to the same
+canonical content. This is an exact **candidate verification** boundary,
+not learned surface generation.
+
+See `docs/SURFACE_EQUIVALENCE_BOUNDARY.md` for its restricted scope, the
+shared-parser limitation and independent-evaluation requirements.
+
 ## Release blockers, in dependency order
 
 1. **Reviewer-service production integration**: the library now supports
@@ -79,8 +96,13 @@ informational and cannot itself promote a capability.
    polarity, nested attribution, referent identity/coreference, quantified
    scope, temporally qualified facts, and proof-bearing causal/conditional
    semantics rather than structurally valid but ineffective graph wrappers.
-3. **Real linguistic realization**: generate from exact ResponseMeaning with
-   dynamic bindings and prove graph-equivalent round-trip. Marker checks,
+3. **Real linguistic realization**: the reference foundation now *checks*
+   externally supplied positive factual candidate sentences by reparsing the
+   same exact canonical graph without effects; it does **not generate** them,
+   qualify scope-rich discourse, or constitute R5 admission. A learned
+   graph-conditioned generative owner, independently reviewed semantic gold,
+   situated qualifier alignment, attribution/temporal proof, and rigorous
+   differential verification remain release-blocking. Marker checks,
    canned text or output-slot hashes are never acceptance.
 4. **Neural ABI repair**: the historical neural proposer still accepts an
    `Orientation`, not the canonical `ProposalContext`, and constructs
