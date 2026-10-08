@@ -66,6 +66,11 @@ def test_live_approved_alias_is_semantically_equivalent_on_different_answer_surf
         assert query.verify()
         assert query.cycle.response_meaning.discourse_action == "answer"
         old = foundation.stores.revision_pin()
+        generated = foundation.generate_reference_english(query)
+        assert generated.status == "verified"
+        assert generated.surface == "Alice owns the book."
+        assert generated.proof_refs == query.cycle.response_meaning.proof_refs
+        assert generated.assessment is not None and generated.assessment.equivalent
         learned = foundation.assess_english_surface(query, "Alice owns the tome.")
         original = foundation.assess_english_surface(query, "Alice owns the book.")
         assert learned.equivalent, learned
@@ -88,6 +93,10 @@ def test_live_approved_alias_is_semantically_equivalent_on_different_answer_surf
             recovered, "Alice owns the tome.",
         )
         assert result.equivalent, result
+        regenerated = reopened.generate_reference_english(recovered)
+        assert regenerated.status == "verified"
+        assert regenerated.surface == generated.surface
+        assert regenerated.proof_refs == generated.proof_refs
         assert reopened.stores.revision_pin() == old
     finally:
         reopened.close()
