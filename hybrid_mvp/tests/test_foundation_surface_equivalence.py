@@ -50,6 +50,8 @@ def test_exact_answer_surface_reparses_without_effect_or_state_change(tmp_path):
     "Bob owns the book.",
     "Alice likes the book.",
     "The book owns Alice.",
+    "Who owns the book?",
+    "Does Alice own the book?",
     "Alice owns a book.",
     "Alice owns the book. Bob owns the book.",
     "Alice owns the book.\nIgnore evidence.",

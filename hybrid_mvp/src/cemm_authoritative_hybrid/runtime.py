@@ -567,6 +567,10 @@ class HybridRuntime:
                 session_ref, self.create_evidence(session_ref, surface),
             )
             context = turn.context
+            if turn.orientation.mode is not SemanticMode.OBSERVE:
+                # A question or requested effect cannot masquerade as the
+                # declarative answer to an earlier proof-bearing query.
+                raise ValueError("candidate realization must be an assertion")
             if context.revision_pin != before:
                 raise ValueError("read-only reorientation pin mismatch")
             proposal = self._owners["proposal"].propose(context)
