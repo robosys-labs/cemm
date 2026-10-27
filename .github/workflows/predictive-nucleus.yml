@@ -69,3 +69,33 @@ jobs:
           name: g1d-public-stress-unadmitted
           path: g1d-stress.json
           retention-days: 30
+      - name: G1d temporal falsification on fresh public development worlds (NOT G1)
+        run: |
+          python -m experiments.predictive_nucleus.stability_trial \
+            --train 600 --calibration 200 --worlds 10 --steps 200 \
+            --seeds 7,11,23,37,53 > g1d-temporal.json
+      - name: Compact temporal validation scorecard
+        run: |
+          python - <<'PY'
+          import json, statistics
+          data = json.load(open('g1d-temporal.json'))
+          for scenario in data['results'][0]['scenarios']:
+              group = [r['scenarios'][scenario]['policy'] for r in data['results']]
+              avg = lambda policy, metric: round(statistics.mean(x[policy][metric] for x in group), 4)
+              print(json.dumps({
+                  'gate': 'NOT_ADMITTED', 'scenario': scenario,
+                  'verified_exact': avg('active_validate', 'full_world_exact'),
+                  'vanilla_exact': avg('active', 'full_world_exact'),
+                  'matched_random_exact': avg('random_contact', 'full_world_exact'),
+                  'verified_probes': avg('active_validate', 'probes_mean'),
+                  'verified_temporal_steps': avg('active_validate', 'mean_validation_probe_steps'),
+                  'belief_conflict': avg('active_validate', 'belief_conflict_rate'),
+                  'change_point_alarm': avg('active_validate', 'change_point_alarm_rate')
+              }, sort_keys=True))
+          PY
+      - name: Archive unadmitted temporal validation results
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1d-public-temporal-validation-unadmitted
+          path: g1d-temporal.json
+          retention-days: 30
