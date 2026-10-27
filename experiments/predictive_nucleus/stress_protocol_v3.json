@@ -1,0 +1,46 @@
+{
+  "schema_version": 3,
+  "id": "cemm-g1d-public-development-2026-10-27",
+  "status": "PUBLIC_DEVELOPMENT_ONLY_NOT_AN_INDEPENDENT_CHALLENGE",
+  "parent": "cemm-g1c-epistemic-probes-2026-10-27",
+  "frozen_g0_and_g1c_manifests_must_remain_unchanged": true,
+  "learning": {
+    "fit_split": "train",
+    "fit_seeds": [101, 103, 107, 109, 113],
+    "calibrate_split": "calibration",
+    "calibration_seeds": [307, 311, 313, 317, 331],
+    "model_seeds": [7, 11, 23, 37, 53],
+    "no_new_physics_training": true,
+    "no_retraining_after_stress_results": true
+  },
+  "stress_development": {
+    "world_seeds": [601, 607, 613, 617, 619],
+    "oracle_is_independent_from_reference_world_py": true,
+    "physics": ["reference", "bilateral_flip", "conditional_flip", "switch_orientation"],
+    "scenarios": {
+      "reference_clean": ["reference", 0.0, 0.0, 0.0],
+      "reference_partial": ["reference", 0.0, 0.65, 0.0],
+      "reference_noisy": ["reference", 0.08, 0.0, 0.08],
+      "reference_sensor_misspecified": ["reference", 0.20, 0.0, 0.01],
+      "bilateral_flip": ["bilateral_flip", 0.0, 0.0, 0.0],
+      "conditional_flip": ["conditional_flip", 0.0, 0.0, 0.0],
+      "switch_orientation": ["switch_orientation", 0.0, 0.0, 0.0]
+    },
+    "scenario_tuple_order": ["physics", "actual_bit_flip_rate", "missing_rate", "learner_supplied_instrument_error_rate"],
+    "all_sensors_precommitted_before_outcomes": true,
+    "starting_snapshot_verified_and_complete": true,
+    "allowed_action_kinds": ["contact", "set"],
+    "max_physical_probe_steps_per_world": 2,
+    "per_action_sensor_coverage": "action_participants_only",
+    "sensor_missingness_independent_of_outcome": true,
+    "error_model_conditional_independence_assumed": true,
+    "reference_distribution": "uniform_over_observed_binary_bits",
+    "anytime_e_process_alpha": 0.05,
+    "model_vs_sensor_fault_cause_not_known_to_learner": true
+  },
+  "controls": ["active_information_gain", "random_contact_same_realized_action_count", "random_from_identical_actions_same_realized_count", "no_probes"],
+  "report_each_model_seed": ["complete_world_exact", "both_role_directions_exact", "joint_nll", "bit_brier", "full_world_ece", "covered_accuracy", "alarm_rate", "mean_probe_actions", "mean_seen_bits", "per_case_regressions", "p95_plan_latency"],
+  "positive_claims_prohibited": ["G1_pass", "independent_blind_challenge", "generalization_to_language", "correctly_diagnosed_physics_from_single_bad_reading", "correct_false_alarm_rate_if_noise_is_misspecified"],
+  "remaining_blockers": ["independent_challenge_custody", "matched_parameter_and_compute_flat_recurrent", "retention_and_regression_inventory", "independently_verified_instrument_calibration", "unseen_structural_task_families"],
+  "decision": "KEEP_DIAGNOSTIC_G1_UNADMITTED"
+}

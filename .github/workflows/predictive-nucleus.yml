@@ -38,3 +38,34 @@ jobs:
           name: g1c-validation-not-a-gate
           path: g1c-validation.json
           retention-days: 30
+      - name: Public G1d physics/noise stress (NOT an acceptance gate)
+        run: |
+          python -m experiments.predictive_nucleus.stress_trial \
+            --train 600 --calibration 200 --worlds 10 --steps 200 \
+            --seeds 7,11,23,37,53 > g1d-stress.json
+      - name: Show compact G1d public diagnostic summary
+        run: |
+          python - <<'PY'
+          import json, statistics
+          report = json.load(open('g1d-stress.json'))
+          for scenario in report['results'][0]['scenarios']:
+              entries = [r['scenarios'][scenario]['policy'] for r in report['results']]
+              def avg(policy, key):
+                  return round(statistics.mean(v[policy][key] for v in entries), 4)
+              print(json.dumps({
+                  'scenario': scenario, 'gate': 'NOT_RUN',
+                  'active_exact': avg('active', 'full_world_exact'),
+                  'active_pair': avg('active', 'pair_both_exact'),
+                  'active_alarm_rate': avg('active', 'alarm_world_rate'),
+                  'active_probe_cost': avg('active', 'probes_mean'),
+                  'random_contact_equal_cost_exact': avg('random_contact_cost_matched', 'full_world_exact'),
+                  'random_any_equal_cost_exact': avg('random_any_cost_matched', 'full_world_exact'),
+                  'passive_exact': avg('passive', 'full_world_exact'),
+              }, sort_keys=True))
+          PY
+      - name: Archive G1d public diagnostic (not independent challenge)
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1d-public-stress-unadmitted
+          path: g1d-stress.json
+          retention-days: 30
