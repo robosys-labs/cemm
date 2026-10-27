@@ -48,7 +48,7 @@ class EvidenceBelief:
     it is NOT an oracle orientation or a true interpretation label.
     """
 
-    def __init__(self, kernel: ProbKernel, observation: dict):
+    def __init__(self, kernel: ProbKernel, observation: dict, *, sensor_error_rate: float = 0.0):
         measurements = observation["measurements"]
         ids = [m["id"] for m in measurements]
         if not (3 <= len(ids) <= 6 and len(ids) == len(set(ids))):
@@ -58,6 +58,12 @@ class EvidenceBelief:
         self.ids = tuple(sorted(ids))
         bits = tuple(next(m["bit"] for m in measurements if m["id"] == key) for key in self.ids)
         self.mass = {(0, bits): 0.5, (1, bits): 0.5}
+        # Initial full observation is a verified starting anchor. Later readings
+        # use a declared, independently calibrated symmetric sensor channel.
+        # This reliability is supplied instrument metadata, never user text.
+        if type(sensor_error_rate) not in (int, float) or not isfinite(sensor_error_rate) or not 0 <= sensor_error_rate < 0.5:
+            raise ValueError("sensor error probability must be in [0, 0.5)")
+        self.sensor_error_rate = float(sensor_error_rate)
         self.kernel = kernel
         self.t = observation["t"]
         self.pending: Forecast | None = None
@@ -144,8 +150,15 @@ class EvidenceBelief:
             raise ValueError("invalid hypothetical sensor coverage")
         by_outcome = defaultdict(lambda: [0.0, 0.0])
         for (h, bits), weight in predicted.items():
-            key = tuple(bits[self.ids.index(n)] for n in ids)
-            by_outcome[key][h] += weight
+            truth = tuple(bits[self.ids.index(n)] for n in ids)
+            # Probe value comes from future *sensor readings*, not inaccessible
+            # oracle state. Account for independent instrument bit errors.
+            readings = (truth,) if self.sensor_error_rate == 0 else product((0, 1), repeat=len(ids))
+            for seen in readings:
+                weight_seen = weight
+                for actual, observed in zip(truth, seen):
+                    weight_seen *= (1 - self.sensor_error_rate) if actual == observed else self.sensor_error_rate
+                by_outcome[seen][h] += weight_seen
         h_before = entropy(self.mechanism_masses(masses))
         h_after = 0.0
         for masses in by_outcome.values():
@@ -230,15 +243,26 @@ class EvidenceBelief:
                for m in records):
             raise ValueError("invalid observed entity/bit")
         evidence = {self.ids.index(m["id"]): m["bit"] for m in records}
-        remaining = {(h, bits): weight for (h, bits), weight in self.pending.states.items()
-                     if all(bits[i] == bit for i, bit in evidence.items())}
+        # Soft conditioning preserves possible worlds after an instrument
+        # error. At error_rate=0 this exactly matches the original hard filter.
+        remaining = {}
+        for key, weight in self.pending.states.items():
+            _, bits = key
+            emission = 1.0
+            for i, observed in evidence.items():
+                emission *= (1 - self.sensor_error_rate) if bits[i] == observed else self.sensor_error_rate
+            if weight * emission:
+                remaining[key] = weight * emission
         likelihood = sum(remaining.values())
         by_hypothesis = self.mechanism_masses(self.pending.states)
         matched_hypothesis = [sum(w for (z, _), w in remaining.items() if z == h) for h in (0, 1)]
         conditional = [matched_hypothesis[h] / by_hypothesis[h] if by_hypothesis[h] else 0.0
                        for h in (0, 1)]
         best = max(conditional)
-        if likelihood < 1e-15:
+        if not evidence:
+            status = "NO_NEW_EVIDENCE"
+            self.mass = self.pending.states
+        elif likelihood < 1e-15:
             status = "MODEL_MISMATCH_CANDIDATE"
             self.mass = self.pending.states
         else:
