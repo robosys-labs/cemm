@@ -1,0 +1,40 @@
+name: Predictive nucleus — isolated scientific invariants
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/predictive_nucleus/**'
+      - '.github/workflows/predictive-nucleus.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-and-invariants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+          cache-dependency-path: 'pyproject.toml'
+      - name: Install CPU-only learned-kernel dependency
+        run: python -m pip install 'torch==2.10.0' --index-url https://download.pytorch.org/whl/cpu
+      - name: Verify unchanged original frozen protocol
+        run: python -m experiments.predictive_nucleus.protocol verify
+      - name: Run isolated invariant tests
+        run: python -m unittest discover -s experiments/predictive_nucleus/tests -v
+      - name: Record unsealed evidence diagnostics (NOT a scientific gate)
+        run: |
+          python -m experiments.predictive_nucleus.probe_trial \
+            --train 1200 --calibration 250 --validation 100 --steps 300 \
+            --seeds 7,11,23,37,53 > g1c-validation.json
+      - name: Archive unadmitted diagnostics for independent review
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1c-validation-not-a-gate
+          path: g1c-validation.json
+          retention-days: 30
