@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import product
-from math import log2
+from math import isfinite, log2
 from typing import Protocol
 
 
@@ -125,7 +125,7 @@ class EvidenceBelief:
         predicted = defaultdict(float)
         for (h, state), weight in masses.items():
             for next_state, probability in self._transitions(state, h, normalized):
-                if probability < 0 or probability > 1:
+                if not isfinite(probability) or probability < 0 or probability > 1:
                     raise ValueError("invalid kernel probability")
                 predicted[(h, next_state)] += weight * probability
         total = sum(predicted.values())
