@@ -84,9 +84,14 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
     latencies = []
     for i in range(budget):
         t0 = time.perf_counter()
-        if policy == "active":
-            suggestion = belief.choose_probe(contacts, interventions=preparations,
-                                             cost=.02, sensor_ids="participants")
+        verification_action = False
+        if policy in ("active", "active_validate"):
+            if policy == "active_validate" and i > 0 and max(belief.mechanism_masses()) >= .85:
+                suggestion = belief.choose_validation_probe(contacts)
+                verification_action = suggestion["action"] is not None
+            else:
+                suggestion = belief.choose_probe(contacts, interventions=preparations,
+                                                 cost=.02, sensor_ids="participants")
             action = suggestion["action"]
             if action is None:
                 break
@@ -102,18 +107,24 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
         # Sensor coverage is fixed independently of bit outcomes, before action.
         planned = tuple(action["participants"])
         visible = choose_visibility(planned, rng, missing_rate)
+        reset_forecast = belief.preview_mechanism_reset(action, sensor_ids=planned) if policy == "active_validate" else None
         forecast = belief.commit_action(action)
         monitor.commit(forecast, source_id="lab-sensor", next_time=i + 1,
-                       intended_sensor_ids=planned)
+                       intended_sensor_ids=planned, alternative_forecast=reset_forecast)
         world = change(world, action)
         observed = sensor_reading(world, i + 1, visible, rng, actual_noise)
         checked = monitor.observe(observed, evidence_id=f"lab-{seed}-{i}", source_id="lab-sensor")
         update = belief.receive(observed, f"world-{seed}-{i}")
         steps.append({"action": action, "observed_likelihood": checked.observed_likelihood,
                       "observed_count": checked.observed_bits, "monitor_status": checked.status,
-                      "belief_status": update.status, "alarm": checked.alarm})
+                      "belief_status": update.status, "alarm": checked.alarm,
+                      "change_point_alarm": checked.change_point_alarm,
+                      "verification": verification_action})
     rows = evaluate_pair(belief, world, pair, last_alarm=any(x["alarm"] for x in steps))
     return {"probes": len(steps), "set_probes": sum(s["action"]["kind"] == "set" for s in steps),
+            "verification_probes": sum(s["verification"] for s in steps),
+            "belief_conflict": any(s["belief_status"] in ("CONFLICTING_EVIDENCE", "MODEL_MISMATCH_CANDIDATE") for s in steps),
+            "change_point_alarm": any(s["change_point_alarm"] for s in steps),
             "observed_bits": sum(s["observed_count"] for s in steps),
             "alarm": any(x["alarm"] for x in steps), "rows": rows,
             "probe_statuses": [s["monitor_status"] for s in steps],
@@ -139,6 +150,9 @@ def summarize(trials):
             "coverage": len(accepted) / len(rows),
             "exact_if_covered": statistics.mean(x["correct"] for x in accepted) if accepted else None,
             "alarm_world_rate": statistics.mean(t["alarm"] for t in trials),
+            "change_point_alarm_rate": statistics.mean(t["change_point_alarm"] for t in trials),
+            "belief_conflict_rate": statistics.mean(t["belief_conflict"] for t in trials),
+            "mean_validation_probe_steps": statistics.mean(t["verification_probes"] for t in trials),
             "probes_mean": statistics.mean(t["probes"] for t in trials),
             "intervention_mean": statistics.mean(t["set_probes"] for t in trials),
             "observed_bits_mean": statistics.mean(t["observed_bits"] for t in trials),

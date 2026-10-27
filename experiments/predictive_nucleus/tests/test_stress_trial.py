@@ -43,6 +43,17 @@ class StressPolicyTests(unittest.TestCase):
         self.assertEqual(len(results["rows"]), 2)
         self.assertTrue(all(isinstance(x["correct"], bool) for x in results["rows"]))
 
+    def test_temporal_validation_probes_are_matched_by_actual_cost(self):
+        switched = StressWorld(("A", "B", "C"), (1, 0, 0), 0, "switch_orientation")
+        tested = rollout(switched, self.kernel, scenario="switch_orientation",
+                         policy="active_validate", seed=71, budget=2)
+        random = rollout(switched, self.kernel, scenario="switch_orientation",
+                         policy="random_contact", seed=71, budget=tested["probes"])
+        self.assertEqual(tested["probes"], random["probes"])
+        self.assertGreaterEqual(tested["verification_probes"], 0)
+        self.assertEqual(len(tested["rows"]), 2)
+        self.assertEqual(switched.contact_count, 0)
+
     def test_probe_uses_its_own_sensor_geometry(self):
         first = {"t": 0, "measurements": [
             {"id": "A", "bit": 1}, {"id": "B", "bit": 0}, {"id": "C", "bit": 0}]}

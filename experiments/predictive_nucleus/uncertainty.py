@@ -225,6 +225,63 @@ class EvidenceBelief:
                 "orientation_entropy": prediction.mechanism_entropy,
                 "expected_info_gain_bits": prediction.expected_info_gain}
 
+    def preview_mechanism_reset(self, action: dict, sensor_ids=None) -> Forecast:
+        """Counterfactual alternative: same world belief, fresh anonymous mode.
+
+        Does not mutate episode state, accept a physical action, or claim that
+        a change occurred. This deliberately weak alternative tests persistence.
+        """
+        state_marginals = defaultdict(float)
+        for (_, bits), weight in self.mass.items():
+            state_marginals[bits] += weight
+        reset = {(h, bits): weight / 2 for bits, weight in state_marginals.items()
+                 for h in (0, 1)}
+        return self._preview_with_mass(action, sensor_ids, reset)
+
+    def choose_validation_probe(self, candidates: list[dict], *, min_disagreement: float = .02,
+                                sensor_ids="participants") -> dict:
+        """Falsify a confident fixed mechanism rather than seek missing roles.
+
+        The policy compares predicted sensor readings from a stationary mode
+        with readings from an explicitly *counterfactual* reset. It never
+        inspects evaluator physics, gold modes, or future sensor outcomes.
+        """
+        if self.pending is not None:
+            raise RuntimeError("cannot plan with undelivered feedback")
+        if not candidates or not (0 <= min_disagreement <= 1):
+            raise ValueError("invalid candidate inventory or separation threshold")
+
+        def outcome_mass(forecast, coverage):
+            d = defaultdict(float)
+            for (_, bits), mass in forecast.states.items():
+                true_bits = tuple(bits[self.ids.index(x)] for x in coverage)
+                observed = (true_bits,) if not self.sensor_error_rate else product((0, 1), repeat=len(coverage))
+                for reading in observed:
+                    likelihood = mass
+                    for truth, bit in zip(true_bits, reading):
+                        likelihood *= 1 - self.sensor_error_rate if truth == bit else self.sensor_error_rate
+                    d[reading] += likelihood
+            return d
+
+        candidates_with_scores = []
+        for index, action in enumerate(candidates):
+            if self._normalized_action(action)[0] != "contact":
+                raise ValueError("validation candidates must be physical contacts")
+            coverage = tuple(action["participants"]) if sensor_ids == "participants" else sensor_ids
+            if coverage is None:
+                coverage = self.ids
+            original = outcome_mass(self.preview(action, coverage), coverage)
+            reset = outcome_mass(self.preview_mechanism_reset(action, coverage), coverage)
+            tv = .5 * sum(abs(original.get(bits, 0) - reset.get(bits, 0))
+                            for bits in original.keys() | reset.keys())
+            candidates_with_scores.append((tv, -index, action))
+        score, _, best = max(candidates_with_scores)
+        if score < min_disagreement:
+            return {"action": None, "disagreement_tv": score,
+                    "reason": "NO_FALSIFIABLE_VALIDATION_PROBE"}
+        return {"action": best, "disagreement_tv": score,
+                "reason": "TEST_MECHANISM_PERSISTENCE"}
+
     def commit_action(self, action: dict) -> Forecast:
         outcome = self.preview(action)
         self.pending = outcome

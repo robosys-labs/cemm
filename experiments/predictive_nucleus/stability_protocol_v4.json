@@ -1,0 +1,25 @@
+{
+  "schema_version": 4,
+  "id": "cemm-g1d-temporal-falsification-development-2026-10-27",
+  "status": "OPEN_PUBLIC_DIAGNOSTIC_NOT_G1_ACCEPTANCE",
+  "trigger": "G1d v3 development revealed 2% accuracy and no generic monitor alarm on the switch-after-first-contact world",
+  "hypothesis": "A second contact selected to falsify a now-confident fixed-mechanism explanation can reveal temporal change that ordinary uncertainty-minimizing probing leaves unobserved",
+  "gates": {
+    "not_same_opened_v3_world_lineages": true,
+    "new_world_seeds": [701, 709, 719, 727, 733],
+    "model_seeds": [7, 11, 23, 37, 53],
+    "original_sealed_challenge_never_open": true,
+    "unseen_physics_family_claim_prohibited": true,
+    "max_physical_probes": 2,
+    "sensor_coverage": "action_participants_selected_before_result",
+    "reference_hypothesis": "same world-state belief, reset anonymous role mode to equal prior",
+    "validation_metric": "total_variation_between_stationary_and_reset_sensor_distributions",
+    "min_validation_divergence": 0.02,
+    "maximum_seed_retuning_after_outcomes": 0,
+    "explanation": "this is a post-v3 architecture revision on a new public development split, not external blinded confirmation"
+  },
+  "comparators": ["active_verify_temporal", "original_active_IG", "random_contact_equal_realized_cost", "random_any_equal_realized_cost", "no_probes"],
+  "strata": ["reference_clean", "reference_partial", "reference_noisy", "reference_sensor_misspecified", "bilateral_flip", "conditional_flip", "switch_orientation"],
+  "report": ["world_exact", "both_reverse_pair_exact", "coverage", "joint_nll", "brier", "ece", "mean_probe_steps", "mean_validation_steps", "belief_conflict_rate", "generic_e_alarm_rate", "change_point_e_alarm_rate", "cost_matched_wins_losses", "per_seed"],
+  "decision": "NOT_RUN_NO_G1_ADMISSION"
+}
