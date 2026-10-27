@@ -1,0 +1,68 @@
+{
+  "schema_version": 2,
+  "protocol_id": "cemm-g1c-epistemic-probes-2026-10-27",
+  "status": "EXPLORATORY_DIAGNOSTICS_ONLY_NO_CHALLENGE_OPENED",
+  "supersedes": "none; frozen G0 protocol.json and its original G1 challenge remain unchanged",
+  "baseline_commit": "544cfa103c750fffc9c14e9395a93240aae1c5c2",
+  "research_question": "Can an outcome-trained model retain multiple fixed-mechanism explanations, request a discriminating physical probe, update exactly once per observation and detect evidence unsupported by all hypotheses?",
+  "world": {
+    "version": "binary-contact-v1",
+    "observable_at_inference": ["initial full binary observation", "opaque stable IDs", "ordered physical action", "subsequent observation readings", "sensor time", "unique evidence ID"],
+    "evaluator_only": ["latent direction bit", "hidden world state", "whole-state future truth", "independent challenge case scores"],
+    "supplied_inductive_biases": ["two anonymous candidate role orientations", "object-shared learned two-party transition kernel", "two output bits per observed contact", "unacted entities retained", "bounded exact posterior over 2*2^n joint mechanism/state possibilities", "reliable sensors in diagnostic; fully visible after active probe"],
+    "learned": ["contact effect joint distribution", "set-intervention effects", "epistemic posterior conditioned only on actual subsequent sensor feedback"],
+    "never_supplied_to_learner": ["XOR", "source-role truth", "template meanings", "future states", "oracle hypothesis labels", "teacher transition table"]
+  },
+  "strata": {
+    "unidentifiable_before_probe": "alternative worlds with identical observable prefix but different next outcomes; score probability and abstention, not 95% impossible exact target",
+    "informative_probe": "probe yields reliably observed evidence separating mode predictions",
+    "uninformative_probe": "candidate actions cannot separate present hypotheses, despite possible latent ignorance",
+    "intervention_first": "one learned set action can prepare up to one subsequent contact probe, total at most 2 physical steps",
+    "partial_sensor": "missing readings are not negative evidence and cannot collapse alternatives",
+    "mismatch": "all learned hypotheses assign low likelihood to the reliable observation; return provisional model-mismatch diagnostic, not certified falsehood"
+  },
+  "selection": {
+    "train_world_seeds": [101, 103, 107, 109, 113],
+    "calibration_world_seeds": [307, 311, 313, 317, 331],
+    "development_validation_world_seeds": [211, 223, 227, 229, 233],
+    "frozen_original_challenge_world_seeds_must_not_run": [401, 409, 419, 421, 431, 503, 509, 521, 523, 541],
+    "new_independent_challenge": "MUST_BE_EXTERNALLY_AUTHORED_AND_CUSTODIED_BEFORE_ADMISSION",
+    "model_seeds": [7, 11, 23, 37, 53]
+  },
+  "budgets": {
+    "max_training_episodes": 10000,
+    "max_gradient_updates": 25000,
+    "model_parameters_max": 100000,
+    "max_entities": 6,
+    "max_joint_states": 128,
+    "max_probe_actions": 2,
+    "information_gain_min_bits": 0.0001,
+    "probe_information_cost_bits": 0.02,
+    "complete_world_confidence_threshold": 0.95,
+    "model_mismatch_per_mode_likelihood_threshold": 0.03,
+    "temperature_candidates": [0.5, 0.75, 1.0, 1.5, 2.0, 3.0]
+  },
+  "metrics": ["complete_world_exact", "role_pair_exact_both_directions", "full_world_joint_nll", "bit_brier", "full_world_ece10", "95_percent_selective_coverage_and_precision", "posterior_mode_entropy", "probe_expected_information_gain", "realized_probes_and_cost", "model_mismatch_flags", "duplicates_ignored", "oracle_verifiable_predictive_errors", "latency_p50_p95", "parameters", "source_loc", "rss_peak"],
+  "controls": ["no_probe", "random_probe_at_same_or_greater_action_budget", "random_untrained_kernel", "outcome_shuffled_same_architecture_and_compute", "no_change", "no_persistent_hypothesis_memory", "flat_recurrent_parameter_matched", "partial_observation", "role_reverse_pair"],
+  "provisional_acceptance_targets_on_independently_custodied_new_challenges_only": {
+    "seeds_required": 5,
+    "informative_post_probe_full_world_exact_min_each_seed": 0.95,
+    "role_pair_exact_min_each_seed": 0.95,
+    "expected_information_gain_advantage_over_random": true,
+    "calibrated_ece10_max": 0.05,
+    "selective_precision_min": 0.95,
+    "unsupported_high_confidence_assertions_max_rate": 0.05,
+    "uncertain_no_probe_cases_explicit_abstention": true,
+    "false_model_failure_diagnosis_max_rate": 0.05,
+    "compare_previous_baselines_and_all_case_regressions": true,
+    "status": "NOT_RUN"
+  },
+  "integrity": {
+    "no_sealed_challenge_opened": true,
+    "temperature_selected_only_on_calibration": true,
+    "model_selection_must_not_use_calibration_or_challenges": true,
+    "diagnostic_validation_results_are_not_independent_challenge_success": true,
+    "different_credible_latent_mechanisms_required_in_future_worlds": true,
+    "no_language_or_production_cutover": true
+  }
+}
