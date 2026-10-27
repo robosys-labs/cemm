@@ -25,6 +25,8 @@ class EvidenceJudgement:
     observed_bits: int
     missing_bits: int
     conditional_hypothesis_likelihood: tuple[float, float]
+    change_point_log_e_value: float | None = None
+    change_point_alarm: bool = False
 
 
 class PredictiveAdequacyMonitor:
@@ -54,6 +56,7 @@ class PredictiveAdequacyMonitor:
         self.alpha = alpha
         self.time = start_time
         self.log_e_value = 0.0
+        self.change_point_log_e_value = 0.0
         self.pending = None
         self.receipts: dict[str, EvidenceJudgement] = {}
         self._signatures: dict[str, tuple] = {}
@@ -61,7 +64,7 @@ class PredictiveAdequacyMonitor:
         self.history: list[EvidenceJudgement] = []
 
     def commit(self, forecast, *, source_id: str, next_time: int,
-               intended_sensor_ids: tuple[str, ...]):
+               intended_sensor_ids: tuple[str, ...], alternative_forecast=None):
         """Reserve sensor coverage BEFORE any outcome is observed."""
         if self.pending is not None:
             raise RuntimeError("must receive committed sensor event first")
@@ -83,7 +86,14 @@ class PredictiveAdequacyMonitor:
         if any(h not in (0, 1) or len(bits) != len(ids) or any(bit not in (0, 1) for bit in bits)
                for (h, bits) in forecast.states):
             raise ValueError("invalid joint state or latent alternative")
-        self.pending = (deepcopy(forecast), ids, source_id, next_time, selected)
+        if alternative_forecast is not None:
+            if tuple(alternative_forecast.state_probability) != ids:
+                raise ValueError("alternate prediction identity scope must match")
+            alt_total = fsum(alternative_forecast.states.values())
+            if abs(alt_total - 1) > 1e-6 or not all(isfinite(w) and 0 <= w <= 1 for w in alternative_forecast.states.values()):
+                raise ValueError("alternate predictive distribution invalid")
+        self.pending = (deepcopy(forecast), ids, source_id, next_time, selected,
+                        deepcopy(alternative_forecast))
 
     def observe(self, observation: dict, *, evidence_id: str, source_id: str) -> EvidenceJudgement:
         if not isinstance(evidence_id, str) or not evidence_id:
@@ -103,7 +113,7 @@ class PredictiveAdequacyMonitor:
             return self.receipts[evidence_id]
         if self.pending is None:
             raise RuntimeError("unsolicited observation without committed forecast")
-        forecast, ids, expected_source, next_time, coverage = self.pending
+        forecast, ids, expected_source, next_time, coverage, alternative = self.pending
         if source_id != expected_source or observation.get("t") != next_time:
             raise ValueError("sensor source/time does not match precommitment")
         if (source_id, next_time) in self._seen_sensor_event:
@@ -122,6 +132,22 @@ class PredictiveAdequacyMonitor:
             likelihoods[h] += conditional
         model_probability = fsum(likelihoods)
         reference = 0.5 ** len(observed)
+        if alternative is not None:
+            alt_likelihood = 0.0
+            for (_, bits), weight in alternative.states.items():
+                emission = weight
+                for m in observed:
+                    emission *= 1 - epsilon if bits[ids.index(m["id"])] == m["bit"] else epsilon
+                alt_likelihood += emission
+            if model_probability == 0:
+                ratio_log = float("inf") if alt_likelihood > 0 else 0.0
+            elif alt_likelihood == 0:
+                ratio_log = float("-inf")
+            else:
+                ratio_log = log(alt_likelihood) - log(model_probability)
+            self.change_point_log_e_value += ratio_log
+        else:
+            alt_likelihood = None
         if model_probability < 0 or model_probability > 1 + 1e-6:
             raise ValueError("non-probabilistic learned forecast")
         # With a purportedly perfect sensor, an impossible outcome produces
@@ -138,7 +164,10 @@ class PredictiveAdequacyMonitor:
             status = "OBSERVATION_COMPATIBLE"
         result = EvidenceJudgement(status, evidence_id, source_id, model_probability,
                                    reference, self.log_e_value, alarm, len(observed),
-                                   len(coverage) - len(observed), tuple(likelihoods))
+                                   len(coverage) - len(observed), tuple(likelihoods),
+                                   self.change_point_log_e_value if alternative is not None else None,
+                                   bool(alternative is not None and
+                                        self.change_point_log_e_value >= log(1.0 / self.alpha)))
         self.pending = None
         self.time = next_time
         self._seen_sensor_event.add((source_id, next_time))
