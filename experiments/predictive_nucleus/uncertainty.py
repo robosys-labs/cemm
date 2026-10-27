@@ -180,7 +180,13 @@ class EvidenceBelief:
             raise RuntimeError("action has not received sensor feedback")
         if not candidates:
             raise ValueError("no candidate actions")
-        scored = [(self.preview(c, sensor_ids).expected_info_gain, i, c)
+        # Experimental sensor geometry: an action may reveal only its chosen
+        # participant handles. Planner must not optimize oracle-wide coverage
+        # when the intended instrument observes a smaller physical scope.
+        def coverage(candidate):
+            return tuple(candidate["participants"]) if sensor_ids == "participants" else sensor_ids
+
+        scored = [(self.preview(c, coverage(c)).expected_info_gain, i, c)
                   for i, c in enumerate(candidates)]
         gain, _, action = max(scored, key=lambda x: (x[0], -x[1]))
         if gain > max(min_gain, cost):
@@ -191,7 +197,7 @@ class EvidenceBelief:
             if self._normalized_action(intervention)[0] != "set":
                 raise ValueError("preparation must be an explicit physical set intervention")
             setup = self.preview(intervention)
-            future_gain = max(self._preview_with_mass(c, sensor_ids, setup.states).expected_info_gain
+            future_gain = max(self._preview_with_mass(c, coverage(c), setup.states).expected_info_gain
                               for c in candidates)
             if future_gain > best[0]:
                 best = (future_gain, intervention)
