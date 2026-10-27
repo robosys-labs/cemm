@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "protocol_id": "cemm-predictive-nucleus-g0-2026-10-27",
+  "status": "PREREGISTERED_NOT_EVALUATED",
+  "provenance": {
+    "main_base_sha": "24d8b68a4c9b0c992362a1c2e542579b5f0c4280",
+    "roadmap_sha": "d75bbaa7c098e9f99c259e553ef3702320d5f15f",
+    "foundation_reference_sha": "ca4a592aacd6257bbfed601ea4143766ff4c1be9",
+    "issue": "https://github.com/robosys-labs/cemm/issues/22"
+  },
+  "hypothesis": "A shared predictive state model trained only on observed action outcomes can transfer directed roles to unseen entity assignments without importing simulator rules or a text parser.",
+  "world_contract": {
+    "version": "binary-contact-v1",
+    "entities": "3-6 same-kind stable opaque identities per episode",
+    "state": "one binary property per entity; initial complete observation, later observations may be partial and permuted",
+    "actions": "ordered pair contact (order itself observable), unary set intervention, observation-only",
+    "latent_mechanism": "a fixed hidden source-slot choice per episode; contact updates other slot by parity with source bit",
+    "time": "action executes between t and t+1; t+1 observation is never visible before prediction",
+    "supply": ["stable identity handles", "actions and intervention operands", "sensor visibility", "initial observations", "episode/reset markers", "external goal/reward only when introduced"],
+    "learn": ["directed update rule", "slot role interpretation", "persistent predictive memory", "compositional dynamics", "uncertainty about hidden mechanism"],
+    "oracle_only": ["hidden source slot", "full unobserved t+1 state", "simulator transition implementation", "held-out answers", "evaluator-defined structural family"],
+    "languages": "none in G0-G2"
+  },
+  "splits": {
+    "train": {"seeds": [101, 103, 107, 109, 113], "families": ["single_contact", "two_contacts"]},
+    "validation": {"seeds": [211, 223, 227, 229, 233], "families": ["single_contact", "two_contacts"]},
+    "calibration": {"seeds": [307, 311, 313, 317, 331], "families": ["single_contact", "two_contacts"]},
+    "in_family_challenge": {"seeds": [401, 409, 419, 421, 431], "families": ["single_contact", "two_contacts"]},
+    "ood_challenge": {"seeds": [503, 509, 521, 523, 541], "families": ["three_contact_chain", "fork", "cycle", "disjoint", "self_contact"]}
+  },
+  "model_seeds": [7, 11, 23, 37, 53],
+  "budgets": {
+    "max_train_episodes_per_seed": 10000,
+    "max_training_updates": 25000,
+    "max_train_wall_seconds_per_seed": 3600,
+    "max_model_parameters": 100000,
+    "max_candidate_expansions": 512,
+    "max_actions_per_episode": 12,
+    "n_agents_min": 3,
+    "n_agents_max": 6,
+    "test_worlds_per_seed_family": 100,
+    "report_sample_latency_percentiles": [50, 95],
+    "cpu_first": true
+  },
+  "metrics": [
+    "full_world_exact", "per_entity_nll", "per_entity_brier", "ece_10", "role_pair_exact",
+    "answered_coverage", "abstention_rate", "goal_success", "regret", "questions_per_decision",
+    "unanswerable_false_assertion_rate", "previously_correct_now_wrong", "previously_wrong_now_correct",
+    "latency_p50_ms", "latency_p95_ms", "train_examples", "train_steps", "parameters", "peak_rss_mb"
+  ],
+  "controls": ["no_change", "memorization", "flat_recurrent_parameter_matched", "shared_no_memory", "shared_no_intervention", "shuffle_entity_ids"],
+  "gate_g1": {
+    "min_seed_count": 5,
+    "min_in_family_full_world_exact_each_seed": 0.95,
+    "role_reversals_required": true,
+    "no_source_only_spurious_changes": true,
+    "must_beat_matched_baselines_on_ood": true,
+    "status": "NOT_RUN"
+  },
+  "evaluation_policy": {
+    "selection_may_use": ["train", "validation", "calibration"],
+    "never_fit_on": ["in_family_challenge", "ood_challenge"],
+    "no_post_challenge_tuning": true,
+    "no_pr_score_claim_from_smoke_fixture": true,
+    "independent_oracle_required": true,
+    "every_model_seed_reported": true,
+    "split_lineage": "split+master_seed+episode_index+world_contract_version; retain all bilingual twins together when G3 begins"
+  }
+}
