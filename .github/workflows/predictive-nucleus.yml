@@ -131,3 +131,35 @@ jobs:
           name: g1d-paired-guard-audit-unadmitted
           path: g1d-guard-audit.json
           retention-days: 30
+      - name: Paired observed-context audit (NOT G1)
+        run: |
+          python -m experiments.predictive_nucleus.context_trial \
+            --train 600 --calibration 200 --worlds 10 --steps 200 \
+            --seeds 7,11,23,37,53 > g1f-context-audit.json
+      - name: Show paired context coverage and risk
+        run: |
+          python - <<'PY'
+          import json, statistics
+          report = json.load(open('g1f-context-audit.json'))
+          for split in ('opened_v5', 'new_public_v6'):
+              for scenario in report['results'][0]['splits'][split]:
+                  cases = [r['splits'][split][scenario] for r in report['results']]
+                  mean = lambda values: round(statistics.mean(values), 4)
+                  print(json.dumps({
+                      'split': split, 'scenario': scenario, 'gate': 'NOT_ADMITTED',
+                      'map_exact': mean(c['unconditional_map_exact'] for c in cases),
+                      'base_coverage': mean(c['baseline_guard']['coverage'] for c in cases),
+                      'context_coverage': mean(c['context_guard']['coverage'] for c in cases),
+                      'base_wrong_per_query': mean(c['baseline_guard']['covered_wrong_per_query'] for c in cases),
+                      'context_wrong_per_query': mean(c['context_guard']['covered_wrong_per_query'] for c in cases),
+                      'correct_newly_abstained': sum(len(c['previously_covered_correct_now_abstained']) for c in cases),
+                      'wrong_newly_abstained': sum(len(c['previously_covered_wrong_now_abstained']) for c in cases),
+                      'probes_per_world': mean(c['mean_physical_probes'] for c in cases),
+                  }, sort_keys=True))
+          PY
+      - name: Archive unadmitted context diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1f-context-coverage-unadmitted
+          path: g1f-context-audit.json
+          retention-days: 30

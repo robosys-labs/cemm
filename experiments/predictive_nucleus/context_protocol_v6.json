@@ -1,0 +1,17 @@
+{
+  "schema_version": 6,
+  "id": "cemm-g1f-observed-context-coverage-development-2026-10-28",
+  "status": "PUBLIC_DEVELOPMENT_ONLY_NOT_A_G1_CHALLENGE",
+  "hypothesis": "An episode-local observed ordered state-action coverage guard can lower covered prediction error, at the cost of coverage, when the target input context differs from prior physically observed transitions.",
+  "comparison": "existing episode guard versus existing episode guard plus observed-context eligibility, using one identical physical trajectory and joint-MAP prediction",
+  "opened_v5_world_seeds": [811, 821, 823, 827, 829],
+  "new_public_world_seeds": [911, 919, 929, 937, 941],
+  "model_seeds": [7, 11, 23, 37, 53],
+  "canonical_budget": {"train": 600, "calibration": 200, "worlds_per_stratum": 10, "steps": 200, "max_physical_probes": 2},
+  "strata": ["reference_clean", "reference_partial", "reference_noisy", "reference_sensor_misspecified", "bilateral_flip", "conditional_flip", "switch_orientation"],
+  "context_contract": {"context_fields": ["action_kind", "ordered_observed_input_bits"], "min_completed_events": 1, "scope": "episode", "cross_entity_sharing": true, "input_source": "verified initial anchor or subsequent received sensor reading", "postcondition": "both action participants observed after actual contact", "affected_scope": "assumed action participants only", "unobserved_input": "abstain", "no_oracle_or_future_feedback": true},
+  "reports": ["unconditional_map_exact", "coverage", "covered_wrong_per_query", "error_given_coverage", "correct_abstained_per_query", "wrong_newly_abstained", "correct_newly_abstained", "reasons", "probe_and_sensor_cost", "per_seed", "case_traces", "context_latency"],
+  "limitations": ["public_simulator_families", "new_seeds_are_not_independent_blind_challenges", "five_optimizer_seeds_share_the_same_world_lineages", "observed_context_is_not_a_guarantee_of_transition_reliability", "cross_entity_transfer_and_local_effect_scope_are_supplied_assumptions", "noisy_readings_are_not_verified_state", "matched_flat_recurrent_control_missing"],
+  "original_sealed_challenge_never_open": true,
+  "decision": "G1_NOT_ADMITTED"
+}
