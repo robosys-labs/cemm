@@ -49,3 +49,21 @@ post-hoc run may have used a different host. The full diagnostic output is
 retained at [case6-posthoc-274b2cf.json](results/case6-posthoc-274b2cf.json),
 SHA-256 `8ac484d4c78956e6a76bf7bdf0496037bce7c967d94e601dc04a7440e3193fa6`.
 V2 remains incomplete and the opened cases are not a fresh held-out test.
+
+## Subsequent full-mass inspection
+
+[CI run 40711735519](https://github.com/robosys-labs/cemm/actions/runs/40711735519)
+replayed the selected forecast from the saved weights, without `gold_after`
+or accuracy scoring, and retained all eight raw masses. The same individual
+value `1.00000003851976` appeared; the joint mass was
+`1.0000000433514706`. Dividing all eight masses by that total produced a
+unit-sum vector with maximum absolute change `4.335147041345522e-08` and the
+same lexicographic MAP on this replay. These are arithmetic observations, not
+an approved scoring correction or evidence of model accuracy.
+
+The later run matched the prior replay's individual value but used a different
+Python patch and PyTorch configuration. The original failing forecast and
+host were not recorded, so it remains unknown whether this is the identical
+original fault. The exact output is retained at
+[case6-masses-0adc3a2.json](results/case6-masses-0adc3a2.json), SHA-256
+`a98d3a497a8dc5fec74fd3c6a3621f4176d1d6d0199478d3f23458e8a022c881`.

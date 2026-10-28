@@ -3,9 +3,10 @@
 This helper does not change historical scorers or learners. It accepts only
 small nonnegative mass drift, rescales the whole distribution, and returns a
 complete record of the transformation. It neither repairs a materially
-invalid forecast nor infers support that disappeared through underflow. The
-observed public case recorded one out-of-range value but not its complete
-distribution; its suitability for this helper has not been established.
+invalid forecast nor infers support that disappeared through underflow. A
+later post-hoc replay retained eight masses that satisfy the helper's bound;
+the original failed forecast and host remain unknown. This observation does
+not establish a general fix.
 """
 from __future__ import annotations
 

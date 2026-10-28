@@ -1,11 +1,49 @@
+import ast
+from hashlib import sha256
+from itertools import product
 import json
 import math
+from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 from experiments.predictive_nucleus.forecast_normalization import normalize_joint
 
 
 class ForecastNormalizationTests(unittest.TestCase):
+    def test_preserved_posthoc_case_vector_without_truth_or_scoring(self):
+        path = Path(__file__).resolve().parents[1] / "results" / "case6-masses-0adc3a2.json"
+        content = path.read_bytes()
+        self.assertEqual(sha256(content).hexdigest(),
+                         "a98d3a497a8dc5fec74fd3c6a3621f4176d1d6d0199478d3f23458e8a022c881")
+        evidence = json.loads(content)
+        self.assertEqual(evidence["status"], "POST_HOC_RAW_MASS_INSPECTION")
+        self.assertEqual((evidence["case"], evidence["step"], evidence["model"],
+                          evidence["id_arm"], evidence["target"], evidence["seed"]),
+                         (6, 4, "flat", "augmented", "masked", 37))
+        entries = evidence["analysis"]["raw_masses"]
+        self.assertEqual(len(entries), 8)
+        self.assertTrue(all(entry["probability_type"] == "float" for entry in entries))
+        raw = {ast.literal_eval(entry["world"]): float(entry["probability"]) for entry in entries}
+        self.assertEqual(set(raw), set(product((0, 1), repeat=3)))
+        self.assertEqual(raw[(1, 1, 1)], 1.00000003851976)
+        self.assertEqual(math.fsum(raw.values()), 1.0000000433514706)
+        # Exercise only the opt-in helper; there is no evaluator truth or
+        # historical scoring call in this regression.
+        with patch("experiments.predictive_nucleus.development_run.score_forecast",
+                   side_effect=AssertionError("historical scorer must not run")):
+            normalized, audit = normalize_joint(raw, n_ids=3)
+        candidate = evidence["analysis"]["normalization_candidate"]
+        self.assertEqual(audit["raw_total"], evidence["analysis"]["raw_sum"])
+        self.assertEqual(audit["raw_lexicographic_map"], [1, 1, 1])
+        self.assertEqual(audit["normalized_lexicographic_map"], [1, 1, 1])
+        self.assertFalse(audit["lexicographic_map_changed"])
+        self.assertEqual(audit["max_absolute_correction"], candidate["max_absolute_change"])
+        self.assertEqual({tuple(row["world"]): row["probability"] for row in candidate["masses"]},
+                         normalized)
+        self.assertTrue(all(0 < value <= 1 for value in normalized.values()))
+        self.assertEqual(math.fsum(normalized.values()), 1.0)
+
     def test_synthetic_overshoot_is_globally_rescaled_and_audited(self):
         # The recorded case-6 anomaly included this single value but not the
         # complete original distribution. These other values are synthetic.

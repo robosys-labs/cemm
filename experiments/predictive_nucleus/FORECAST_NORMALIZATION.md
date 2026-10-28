@@ -1,12 +1,13 @@
 # Proposed opt-in forecast normalization
 
-The locked v2 public study remains **incomplete**. Its post-hoc case-6
+The locked v2 public study remains **incomplete**. Its first post-hoc case-6
 inspection found one flat-model represented world with probability
-`1.00000003851976`, but did not retain that forecast's complete raw world
-distribution. The replay host and the original failure's host may differ.
-This observation supports a numerical-mass hypothesis; it does not establish
-the original failure's exact cause or demonstrate that the forecast satisfies
-the proposed normalizer's preconditions.
+`1.00000003851976`, but did not retain that forecast's full distribution. A
+[later post-hoc replay](results/case6-masses-0adc3a2.json) captured all eight
+world masses for that same reported context. Their accurately summed mass is
+`1.0000000433514706`, within this helper's tolerance. The original failed
+run did not record its offending forecast or host, so neither replay proves
+the original failure's exact cause or reconstructs its complete distribution.
 
 `forecast_normalization.normalize_joint` is a separate, opt-in helper. It is
 not connected to the v2 runner, existing models or historical scorers. For a
@@ -33,10 +34,13 @@ The helper does not promise unchanged MAP choices or calibration. It checks
 an in-process dictionary and cannot detect duplicate serialized keys that
 were already discarded before that dictionary was constructed.
 
-Tests use fabricated distributions, including one with the same *individual*
-overshoot as the observed anomaly; the remaining world masses in that test
-are synthetic. The tests do not reconstruct or score the actual case. Any
-study that applies this helper must first measure and retain the complete raw
-forecast, predeclare the transform and its diagnostics in a new frozen
-protocol, independently review the new runner, and preserve the v2 failure.
-No original score or historical protocol is changed by this standalone code.
+Tests include fabricated distributions and a regression against the complete
+vector retained from the later post-hoc replay. For that vector, the helper's
+largest per-world adjustment is approximately `4.34e-8`, and the
+lexicographic MAP remains unchanged. This checks a recorded vector without
+reading evaluator truth or computing a score; it does not establish a general
+repair or identify the original offender. A study applying the helper must
+retain the complete raw forecast, predeclare the transform and its diagnostics
+in a new frozen protocol, independently review the new runner, and preserve the
+v2 failure. No original score or historical protocol is changed by this
+standalone code.
