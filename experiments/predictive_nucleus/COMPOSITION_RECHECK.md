@@ -118,3 +118,25 @@ there is a tie: the structured model's selected MAP changed in 60 of the
 views, exclusively because the sorted-ID tie break changed. Observe actions
 remain abstentions for local memory. These are post-hoc properties of an
 opened fixture, not evidence of held-out generalization or a G1 pass.
+
+### Cross-host refit: not a bitwise reproduction
+
+[CI run 40690104111](https://github.com/robosys-labs/cemm/actions/runs/40690104111)
+used an AMD EPYC 9V74 and a different PyTorch configuration hash. Its training
+input and memory-table fingerprints and all five structured weight hashes
+matched the archive, but all five flat weight hashes differed. Exactly 960 of
+1,280 identity-view model scores per seed matched; the 320 differing scores
+are flat. This is a **separate refit**, not the archived flat model. The
+hardware and configuration both changed and deterministic algorithms were
+disabled, so the cause of the difference is not established. The largest
+individual flat probability difference in an identity-view forecast was
+0.125 (seed 11, rounded); identity-view MAP correctness happened to remain
+unchanged. The difference is not necessarily just numerical noise.
+
+The separate refit also yielded flat total variation above `1e-12` for every
+one of the 1,600 nonidentity views per seed (median 0.797–0.949); the other
+distributions remained at zero TV where answered. These results repeat the
+qualitative public-fixture observation, not an independent-world replication.
+The complete output is retained losslessly in
+[`relabel-4e95e59.json.xz`](results/relabel-4e95e59.json.xz), SHA-256
+`8f97af855bbc44e812bd16600447c8ef96cc805b04996d8803626124dcf4ac9c`.
