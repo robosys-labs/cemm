@@ -29,14 +29,23 @@ class FlatWorldGRU(nn.Module):
     def param_count(self):
         return sum(p.numel() for p in self.parameters())
 
-    def reset(self, anchor: dict, *, sensor_error_rate: float = 0.0):
-        self.ids = initial_ids(anchor)
+    def reset(self, anchor: dict, *, sensor_error_rate: float = 0.0,
+              sensor_metadata_mode: str = "legacy"):
+        ids = initial_ids(anchor)
         if type(sensor_error_rate) not in (float, int) or not isfinite(sensor_error_rate) or not 0 <= sensor_error_rate < .5:
             raise ValueError("invalid supplied sensor calibration")
+        if sensor_metadata_mode not in ("legacy", "neutral"):
+            raise ValueError("invalid sensor metadata mode")
+        observation = {"t": anchor["t"], "measurements": [dict(m) for m in anchor["measurements"]]}
+        hidden = torch.zeros(1, 7)
+        self.ids = ids
         self.sensor_error_rate = float(sensor_error_rate)
+        # Neutral mode removes the untrained nonzero input feature. It does
+        # not correct noisy observations or supply a calibrated sensor model.
+        self.sensor_metadata_mode = sensor_metadata_mode
         self.time = anchor["t"]
-        self.observation = {"t": anchor["t"], "measurements": [dict(m) for m in anchor["measurements"]]}
-        self.hidden = torch.zeros(1, 7)
+        self.observation = observation
+        self.hidden = hidden
         self.pending = None
 
     @torch.no_grad()
@@ -45,8 +54,9 @@ class FlatWorldGRU(nn.Module):
             raise RuntimeError("feedback required before prediction")
         if not isfinite(temperature) or temperature <= 0:
             raise ValueError("invalid temperature")
+        feature_rate = self.sensor_error_rate if self.sensor_metadata_mode == "legacy" else 0.0
         x = torch.tensor([event_features(self.ids, self.observation, action,
-                                         sensor_error_rate=self.sensor_error_rate)], dtype=torch.float32)
+                                         sensor_error_rate=feature_rate)], dtype=torch.float32)
         next_hidden = self.cell(x, self.hidden)
         probabilities = (self.head(next_hidden) / temperature).softmax(dim=-1).squeeze(0).tolist()
         world = {}

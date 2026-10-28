@@ -1,5 +1,8 @@
 # Predictive world nucleus — isolated research, G0 protocol
 
+> **Audit hold:** Read [the 2026-10-28 integrity audit](2026-10-28-AUDIT.md)
+> before interpreting historical metrics or alarm rates. G1 is not admitted.
+
 **Status: G0 implementation invariants runnable; no G1 learning or scientific result admitted.**
 Tracks [issue #22](https://github.com/robosys-labs/cemm/issues/22) and the
 [roadmap in draft PR #23](https://github.com/robosys-labs/cemm/pull/23).

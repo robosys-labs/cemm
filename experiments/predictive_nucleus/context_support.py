@@ -6,7 +6,9 @@ are shared across same-kind participants and preserve ordered action slots.
 """
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, defaultdict
+from collections.abc import Mapping
+from math import fsum, isfinite
 
 
 class ObservedContextSupport:
@@ -19,9 +21,11 @@ class ObservedContextSupport:
         readings = self._validate_measurements(measurements)
         self.ids = tuple(sorted(readings))
         self.time = verified_anchor["t"]
+        self._anchor_signature = (self.time, tuple(sorted(readings.items())))
         self._known = readings
         self._contexts = Counter()
         self._receipts = {}
+        self._action_history = []
         self.pending = None
 
     @staticmethod
@@ -67,6 +71,77 @@ class ObservedContextSupport:
         return {"supported": count > 0, "status": "OBSERVED_CONTEXT" if count else "UNTESTED_CONTEXT",
                 "observed_events": count}
 
+    def assess_posterior(self, action: dict, belief) -> dict:
+        """Measure current joint-belief mass whose input contexts were observed.
+
+        This is an opt-in diagnostic: it does not alter the v6 raw-reading
+        assessment, mutate belief, choose a threshold, or certify calibration.
+        A high fraction means only that the *model's* current distribution
+        places mass on contexts recorded from completed sensor events. It does
+        not establish that the belief, sensors, or transition law are correct.
+        """
+        if self.pending is not None:
+            raise RuntimeError("cannot assess before committed context feedback")
+        kind, participants, _ = self._action(action)
+        if kind != "contact":
+            raise ValueError("posterior context assessment requires a contact")
+        if getattr(belief, "pending", None) is not None:
+            raise RuntimeError("cannot assess before committed belief feedback")
+        belief_ids = getattr(belief, "ids", None)
+        if not isinstance(belief_ids, tuple) or belief_ids != self.ids:
+            raise ValueError("context and belief identity scope/order must match")
+        if type(getattr(belief, "t", None)) is not int or belief.t != self.time:
+            raise ValueError("context and belief time must match")
+        expected_history = (self._anchor_signature, *self._receipts.values())
+        history = getattr(belief, "observed_evidence", None)
+        if not isinstance(history, (list, tuple)) or tuple(history) != expected_history:
+            raise ValueError("context and belief sensor histories must match")
+        receipts = getattr(belief, "receipts", None)
+        payloads = getattr(belief, "receipt_payloads", None)
+        signature_for = getattr(belief, "receipt_forecast_signature", None)
+        if not isinstance(receipts, Mapping) or not isinstance(payloads, Mapping) or not callable(signature_for):
+            raise ValueError("belief lacks committed action provenance")
+        ids = tuple(receipts)
+        if tuple(payloads.get(key) for key in ids) != expected_history[1:]:
+            raise ValueError("context and belief receipt histories must match")
+        signatures = [signature_for(key) for key in ids]
+        if (any(not isinstance(s, tuple) or len(s) != 3 or s[0] != self.ids for s in signatures) or
+                tuple(s[1] for s in signatures) != tuple(self._action_history)):
+            raise ValueError("context and belief committed action histories must match")
+        masses = getattr(belief, "mass", None)
+        if not isinstance(masses, Mapping) or not masses:
+            raise ValueError("invalid joint belief distribution")
+        grouped = defaultdict(list)
+        weights = []
+        positions = tuple(self.ids.index(name) for name in participants)
+        for key, weight in masses.items():
+            if (not isinstance(key, tuple) or len(key) != 2 or
+                    type(key[0]) is not int or key[0] not in (0, 1) or
+                    not isinstance(key[1], tuple) or len(key[1]) != len(self.ids) or
+                    any(type(bit) is not int or bit not in (0, 1) for bit in key[1]) or
+                    type(weight) not in (int, float) or not 0 <= weight <= 1 or not isfinite(weight)):
+                raise ValueError("invalid joint belief distribution")
+            weights.append(weight)
+            if weight:
+                grouped[tuple(key[1][position] for position in positions)].append(weight)
+        total = fsum(weights)
+        if not isfinite(total) or abs(total - 1.0) > 1e-9:
+            raise ValueError("joint belief distribution must be normalized")
+        contexts = []
+        observed_weights, unobserved_weights = [], []
+        for bits, group in sorted(grouped.items()):
+            mass = fsum(group) / total
+            count = self._contexts[(kind, bits)]
+            contexts.append({"input_bits": list(bits), "posterior_mass": mass,
+                             "observed_events": count})
+            (observed_weights if count else unobserved_weights).append(mass)
+        observed_mass, unobserved_mass = fsum(observed_weights), fsum(unobserved_weights)
+        status = ("NO_OBSERVED_CONTEXT_MASS" if observed_mass == 0 else
+                  "ALL_OBSERVED_CONTEXT_MASS" if unobserved_mass == 0 else
+                  "PARTIAL_OBSERVED_CONTEXT_MASS")
+        return {"status": status, "observed_context_mass": observed_mass,
+                "unobserved_context_mass": unobserved_mass, "contexts": contexts}
+
     def commit_action(self, action: dict, *, intended_sensor_ids, next_time: int):
         if self.pending is not None:
             raise RuntimeError("previous feedback is still pending")
@@ -99,7 +174,7 @@ class ObservedContextSupport:
             return
         if self.pending is None:
             raise RuntimeError("no matching precommitted action")
-        kind, participants, _, coverage, expected_time, observed_context = self.pending
+        kind, participants, value, coverage, expected_time, observed_context = self.pending
         if type(observation.get("t")) is not int or observation["t"] != expected_time:
             raise ValueError("feedback time mismatch")
         if any(name not in coverage for name in readings):
@@ -114,4 +189,5 @@ class ObservedContextSupport:
         self._known.update(readings)
         self.time = expected_time
         self._receipts[evidence_id] = signature
+        self._action_history.append((kind, participants, value))
         self.pending = None

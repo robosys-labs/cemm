@@ -1,5 +1,9 @@
 # G1h: equal-update flat ablation
 
+> **Audit hold:** Sensor-error metadata is untrained, training and stress
+> sensor geometry differ, and historical joint log loss is clipped. See [the
+> integrity audit](2026-10-28-AUDIT.md).
+
 The wall-budgeted v7 flat reference obtained only 19–24 optimizer updates
 while the structured model received 200. That is a fairer wall-clock control
 than giving both 200 steps, but it does not reveal whether the flat model is

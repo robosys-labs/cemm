@@ -1,5 +1,9 @@
 # G1d-d — temporal validation / falsification before language
 
+> **Audit hold:** The historical evaluator's joint log loss is clipped and
+> its public sensor RNG does not validate a conditional false-alarm bound.
+> See [the integrity audit](2026-10-28-AUDIT.md).
+
 **Why this exists:** The public G1d v3 stress test exposed only **2%**
 complete-world accuracy and **zero generic model-mismatch alarms** when
 interaction orientation changed *after the first contact*. The active probe

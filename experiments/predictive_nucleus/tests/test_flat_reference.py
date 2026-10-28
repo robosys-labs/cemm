@@ -134,13 +134,18 @@ class FlatTorchTests(unittest.TestCase):
         self.assertIsNone(model.pending)
 
     def test_sensor_only_fit_and_disjoint_calibration_replay(self):
-        from experiments.predictive_nucleus.flat_reference import batch_episodes, calibrate_flat, fit_flat
+        from experiments.predictive_nucleus.flat_reference import FlatWorldGRU, batch_episodes, calibrate_flat, fit_flat
         train = [SensorOnlyProxy(make_episode("train", 101, i, "single_contact")) for i in range(3)]
         calibration = [SensorOnlyProxy(make_episode("calibration", 307, i, "single_contact")) for i in range(3)]
         batch = batch_episodes(train)
+        self.assertTrue(torch.count_nonzero(batch[0][:, :, -1]) == 0)
+        torch.manual_seed(7)
+        initial_column = FlatWorldGRU().cell.weight_ih[:, -1].detach().clone()
+        self.assertEqual(initial_column.numel(), 21)  # 3 GRU gates x 7 hidden units
         model, report = fit_flat(batch, seed=7, max_steps=2, wall_budget_seconds=10, fixed_steps=2)
         self.assertEqual(report["gradient_steps"], 2)
         self.assertTrue(math.isfinite(report["training_sensor_nll"]))
+        self.assertTrue(torch.equal(initial_column, model.cell.weight_ih[:, -1].detach()))
         replay, replay_report = fit_flat(batch, seed=7, max_steps=2, wall_budget_seconds=10, fixed_steps=2)
         self.assertEqual(replay_report["schedule"], "fixed_replay")
         self.assertTrue(all(torch.equal(value, replay.state_dict()[name])
@@ -148,6 +153,39 @@ class FlatTorchTests(unittest.TestCase):
         temperature, info = calibrate_flat(model, batch_episodes(calibration))
         self.assertIn(temperature, (.5, .75, 1., 1.5, 2., 3.))
         self.assertEqual(info["episodes"], 3)
+
+    def test_neutral_metadata_does_not_change_predictions_or_accept_invalid_rate(self):
+        from experiments.predictive_nucleus.flat_reference import FlatWorldGRU
+        torch.manual_seed(13)
+        model = FlatWorldGRU()
+        anchor = {"t": 0, "measurements": [{"id": "A", "bit": 1},
+                                           {"id": "B", "bit": 0}, {"id": "C", "bit": 1}]}
+        action = {"kind": "contact", "participants": ["A", "B"]}
+        model.reset(anchor, sensor_error_rate=.08, sensor_metadata_mode="neutral")
+        first, _ = model.preview(action)
+        model.commit(action)
+        model.receive({"t": 1, "measurements": [{"id": "A", "bit": 1}, {"id": "B", "bit": 1}]})
+        first_after_feedback, _ = model.preview(action)
+        model.reset(anchor, sensor_error_rate=.2, sensor_metadata_mode="neutral")
+        second, _ = model.preview(action)
+        self.assertEqual(first, second)
+        model.commit(action)
+        model.receive({"t": 1, "measurements": [{"id": "A", "bit": 1}, {"id": "B", "bit": 1}]})
+        second_after_feedback, _ = model.preview(action)
+        self.assertEqual(first_after_feedback, second_after_feedback)
+        model.reset(anchor, sensor_error_rate=0, sensor_metadata_mode="legacy")
+        legacy_zero, _ = model.preview(action)
+        self.assertEqual(first, legacy_zero)
+        model.reset(anchor, sensor_error_rate=.08)
+        default, _ = model.preview(action)
+        model.reset(anchor, sensor_error_rate=.08, sensor_metadata_mode="legacy")
+        legacy, _ = model.preview(action)
+        self.assertEqual(default, legacy)
+        with self.assertRaises(ValueError):
+            model.reset(anchor, sensor_error_rate=.5, sensor_metadata_mode="neutral")
+        with self.assertRaises(ValueError):
+            model.reset(anchor, sensor_error_rate=.08, sensor_metadata_mode="unknown")
+        self.assertEqual(model.preview(action)[0], legacy)
 
 
 if __name__ == "__main__":

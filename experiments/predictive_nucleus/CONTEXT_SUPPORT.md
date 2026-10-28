@@ -1,5 +1,8 @@
 # G1f: observed state-action context coverage
 
+> **Audit hold:** Raw-reading context support can differ from the input context
+> in the model posterior. See [the integrity audit](2026-10-28-AUDIT.md).
+
 **Status: public research diagnostic; G1 remains unadmitted.** The prior v5
 audit found confident bilateral failures where the target contact's ordered
 input state had never been physically observed. This tranche tests a general

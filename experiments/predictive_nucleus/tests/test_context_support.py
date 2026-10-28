@@ -7,12 +7,127 @@ from experiments.predictive_nucleus.context_trial import evaluate_kernel, frozen
 from experiments.predictive_nucleus.stress_trial import rollout
 from experiments.predictive_nucleus.stress_world import StressWorld
 from experiments.predictive_nucleus.tests.test_uncertainty import ToyKernel
+from experiments.predictive_nucleus.uncertainty import EvidenceBelief
 
 
 ANCHOR = {"t": 0, "measurements": [
     {"id": "A", "bit": 1}, {"id": "B", "bit": 0}, {"id": "C", "bit": 0}]}
 AB = {"kind": "contact", "participants": ["A", "B"]}
 AC = {"kind": "contact", "participants": ["A", "C"]}
+
+
+class IdentityKernel:
+    """Deterministic test fixture, not the learned or simulator kernel."""
+    def contact(self, a, b, hypothesis):
+        values = [0.0] * 4
+        values[2 * a + b] = 1.0
+        return tuple(values)
+
+    def intervention(self, previous, value):
+        return (float(1 - value), float(value))
+
+
+def feed_both(context, belief, action, observation, event):
+    coverage = tuple(action["participants"])
+    context.commit_action(action, intended_sensor_ids=coverage, next_time=observation["t"])
+    belief.commit_action(action)
+    belief.receive(observation, "belief-" + event)
+    context.receive(observation, "context-" + event)
+
+
+class PosteriorContextTests(unittest.TestCase):
+    def setUp(self):
+        self.anchor = {"t": 0, "measurements": [
+            {"id": "A", "bit": 0}, {"id": "B", "bit": 0}, {"id": "C", "bit": 1}]}
+        self.context = ObservedContextSupport(self.anchor)
+        self.belief = EvidenceBelief(IdentityKernel(), self.anchor, sensor_error_rate=.08)
+
+    def witness_zero_zero(self):
+        observation = {"t": 1, "measurements": [
+            {"id": "A", "bit": 0}, {"id": "B", "bit": 0}]}
+        feed_both(self.context, self.belief, AB, observation, "first")
+
+    def test_noisy_raw_reading_does_not_support_a_different_belief_context(self):
+        self.witness_zero_zero()
+        setting = {"kind": "set", "participants": ["C"], "value": 1}
+        feed_both(self.context, self.belief, setting,
+                  {"t": 2, "measurements": [{"id": "C", "bit": 0}]}, "noisy")
+        self.assertTrue(self.context.assess(AC)["supported"])  # historical v6 behavior
+        self.assertEqual(self.belief.assess(AC)["status"], "PREDICT_WITH_EVIDENCE")
+        self.assertEqual(self.belief.assess(AC)["max_full_world_probability"], 1.0)
+        assessed = self.context.assess_posterior(AC, self.belief)
+        self.assertEqual(assessed["status"], "NO_OBSERVED_CONTEXT_MASS")
+        self.assertEqual(assessed["observed_context_mass"], 0.0)
+        self.assertEqual(assessed["unobserved_context_mass"], 1.0)
+        self.assertEqual(assessed["contexts"], [{"input_bits": [0, 1],
+            "posterior_mass": 1.0, "observed_events": 0}])
+
+    def test_supported_and_unseen_ordered_contexts_are_separate(self):
+        self.witness_zero_zero()
+        observed = self.context.assess_posterior(AB, self.belief)
+        unseen = self.context.assess_posterior(AC, self.belief)
+        self.assertEqual(observed["status"], "ALL_OBSERVED_CONTEXT_MASS")
+        self.assertEqual(observed["observed_context_mass"], 1.0)
+        self.assertEqual(observed["contexts"][0]["observed_events"], 1)
+        self.assertEqual(unseen["status"], "NO_OBSERVED_CONTEXT_MASS")
+        self.assertEqual(unseen["unobserved_context_mass"], 1.0)
+
+    def test_joint_mass_is_grouped_across_modes_without_dropping_alternatives(self):
+        self.witness_zero_zero()
+        # Deliberately inject a test-only posterior to exercise grouped mass.
+        self.belief._mass = {(0, (0, 0, 1)): .10, (1, (0, 0, 1)): .15,
+                             (1, (0, 1, 1)): .75}
+        before = self.belief.mass.copy()
+        result = self.context.assess_posterior(AB, self.belief)
+        self.assertEqual(result["status"], "PARTIAL_OBSERVED_CONTEXT_MASS")
+        self.assertAlmostEqual(result["observed_context_mass"], .25)
+        self.assertAlmostEqual(result["unobserved_context_mass"], .75)
+        self.assertEqual(result["contexts"], [
+            {"input_bits": [0, 0], "posterior_mass": .25, "observed_events": 1},
+            {"input_bits": [0, 1], "posterior_mass": .75, "observed_events": 0}])
+        self.assertEqual(self.belief.mass, before)
+
+    def test_rejects_invalid_joint_mass_and_mismatched_identity_or_history(self):
+        for bad in ({}, {(0, (0, 0, 1)): .9}, {(2, (0, 0, 1)): 1.0},
+                    {(0, (0, 0)): 1.0}, {(0, (0, 0, 1)): float("nan")},
+                    {(0, (0, 0, 1)): -.1, (1, (0, 0, 1)): 1.1},
+                    {(True, (0, 0, 1)): 1.0}, {(0, (0, 0, True)): 1.0}):
+            self.belief._mass = bad  # deliberate corruption fixture
+            with self.assertRaises(ValueError):
+                self.context.assess_posterior(AB, self.belief)
+        self.belief = EvidenceBelief(IdentityKernel(), self.anchor)
+        self.belief.ids = ("B", "A", "C")
+        with self.assertRaisesRegex(ValueError, "identity scope"):
+            self.context.assess_posterior(AB, self.belief)
+        self.belief.ids = ("A", "B", "C")
+        self.belief.t = 1
+        with self.assertRaisesRegex(ValueError, "time"):
+            self.context.assess_posterior(AB, self.belief)
+        self.belief.t = 0
+        self.belief.observed_evidence = [(0, (("A", 1), ("B", 0), ("C", 1)))]
+        with self.assertRaisesRegex(ValueError, "sensor histories"):
+            self.context.assess_posterior(AB, self.belief)
+
+    def test_rejects_unfinished_events_and_noncontact_actions(self):
+        with self.assertRaisesRegex(ValueError, "requires a contact"):
+            self.context.assess_posterior({"kind": "observe", "participants": []}, self.belief)
+        self.belief.commit_action(AB)
+        with self.assertRaisesRegex(RuntimeError, "belief feedback"):
+            self.context.assess_posterior(AB, self.belief)
+        self.context.commit_action(AB, intended_sensor_ids=("A", "B"), next_time=1)
+        with self.assertRaisesRegex(RuntimeError, "context feedback"):
+            self.context.assess_posterior(AB, self.belief)
+
+    def test_identical_sensor_history_with_different_actions_is_rejected(self):
+        context_action = {"kind": "set", "participants": ["A"], "value": 0}
+        belief_action = {"kind": "set", "participants": ["A"], "value": 1}
+        observation = {"t": 1, "measurements": [{"id": "A", "bit": 0}]}
+        self.context.commit_action(context_action, intended_sensor_ids=("A",), next_time=1)
+        self.belief.commit_action(belief_action)
+        self.context.receive(observation, "context")
+        self.belief.receive(observation, "belief")
+        with self.assertRaisesRegex(ValueError, "committed action histories"):
+            self.context.assess_posterior(AB, self.belief)
 
 
 class ObservedContextTests(unittest.TestCase):
