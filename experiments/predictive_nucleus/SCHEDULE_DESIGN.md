@@ -45,6 +45,19 @@ designed fixture counts, not 32 independent challenge draws or accuracy
 results. All initial states and outcomes come from the evaluator's simulator;
 the fixture does not establish an independently authored oracle.
 
+The factorial repeats across blocks: after replacing opaque IDs by their
+public action positions and ignoring measurement order, blocks 0 and 2 each
+contain the same 28 unique observed histories, as do blocks 1 and 3. Thus
+blocks 0/1 versus 2/3 repeat all 56 normalized histories even though the ID
+inventories are disjoint. Four orientation-twin pairs per block are
+observationally identical. The raw flat-model tensors can still differ because
+opaque ID ordering changes. Across all four enumerated blocks, the structured
+model's ordered participant-only contact and set samples are identical case by
+case; the nonparticipant's initial bit accounts for the opposite-parity
+full-history difference. This is an enumeration of this small fixture, not a
+general rule that coincident traces imply dependent samples. Do not use these
+blocks as independent calibration or generalization evidence.
+
 Run the count with `python -m experiments.predictive_nucleus.schedule_fixture`.
 The [public replay smoke test](REPLAY_BOUNDARY.md) checks callback delivery
 order for this fixture; it is not a training or security boundary.

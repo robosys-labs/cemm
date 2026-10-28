@@ -44,8 +44,8 @@ state unchanged; later sensor glimpses can be partial and shuffled. Training
 receives only earlier sensor observations, the selected action and newly
 arrived observations. Neither oracle hidden role nor post-action truth can
 enter model features. Entire 3+ contact topology families are challenge-only.
-The next tranche must independently implement and test this contract before
-fitting a learner.
+This historical G0 contract remains a requirement for later independent
+evaluation; subsequent public diagnostics do not establish the G1 gate.
 
 ## Metric and provenance boundaries
 
@@ -53,7 +53,8 @@ fitting a learner.
 only complete truth and an independently generated model prediction file.
 Every predicted opaque entity must be present, including unchanged ones, and
 no new entity may appear. Measures complete-world exactness rather than a
-misleading mean bit accuracy; proper per-entity NLL/Brier/ECE; 2-direction
+misleading mean bit accuracy; per-entity Brier and ECE; legacy per-entity NLL
+clipped at `1e-12`; 2-direction
 role-pair conjunction; abstention coverage; and breakdowns by family and seed.
 An optional prior prediction file reports repaired/broken **case IDs**.
 A pair with only one correct direction receives zero credit. No oracle labels
@@ -61,8 +62,9 @@ are passed into a learner by this scorer. `score --previous previous.jsonl`
 also enumerates per-case repairs and regressions; a score by itself never admits
 a research gate. Each JSONL record has a unique `case_id`; oracle rows have
 `seed`, `family`, `truth` (complete opaque-ID -> bit map), and optional
-`pair_id`/`direction`; prediction rows have `p1` (same IDs -> calibrated
-probability of bit 1), or `abstain: true` with no `p1`.
+`pair_id`/`direction`; prediction rows have `p1` (same IDs -> supplied
+probability of bit 1), or `abstain: true` with no `p1`. This scorer does not
+establish calibration, and its clipped NLL is not uncapped log loss.
 
 The frozen manifest predeclares additional later metrics (external goal,
 question efficiency, unanswerable claims, latency, parameters, resource cost),
