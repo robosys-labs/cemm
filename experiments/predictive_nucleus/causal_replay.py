@@ -76,15 +76,18 @@ def _snapshot(view):
     return json.dumps(json.loads(turns[0])["observation"], sort_keys=True), tuple(turns), tuple(feedbacks)
 
 
-def _development_snapshot(view):
+def _development_snapshot(view, *, feedback_policy="participants"):
     """Validate an opt-in sensor-only history, not a source or event identity.
 
-    Contact/set readings may contain only action participants; observe
-    readings may contain any known anchor IDs. Sensor policy, sensor noise,
-    physical provenance and anchor completeness remain external assumptions.
+    The default permits only action participants on contact/set feedback and
+    any known IDs on observe feedback. The explicitly selected full policy
+    instead requires every anchor ID on every feedback. Sensor noise, physical
+    provenance and anchor completeness remain external assumptions.
     The sensor view synthesizes timestamps from sequence indexes; this checks
     logical ordering but cannot authenticate original source timestamps.
     """
+    if feedback_policy not in ("participants", "full"):
+        raise ValueError("invalid development feedback policy")
     if type(view) is not SensorEpisode:
         raise ValueError("expected a bounded development sensor view")
     if (type(view._observations) is not tuple or type(view._action_records) is not tuple or
@@ -133,7 +136,10 @@ def _development_snapshot(view):
         event_features(ids, observation, action)
         feedback = view.reveal_after_prediction(i)
         found = _observation(feedback, i + 1, ids)
-        if kind != "observe" and not set(found) <= set(action["participants"]):
+        if feedback_policy == "full":
+            if set(found) != set(ids):
+                raise ValueError("full feedback must measure every anchor identity")
+        elif kind != "observe" and not set(found) <= set(action["participants"]):
             raise ValueError("action feedback may contain only participants")
         turns.append(json.dumps(turn, sort_keys=True))
         feedbacks.append(json.dumps(feedback, sort_keys=True))
@@ -193,6 +199,26 @@ class DevelopmentHistory:
         return SensorEpisode(self._observations, self._action_records).reveal_after_prediction(index)
 
 
+@dataclass(frozen=True)
+class FullSensorHistory(DevelopmentHistory):
+    """Explicit full-feedback development record; never an authenticated source."""
+
+    def __post_init__(self):
+        _development_snapshot(SensorEpisode(self._observations, self._action_records),
+                              feedback_policy="full")
+
+    @classmethod
+    def from_sensor_view(cls, view):
+        _, turns, feedbacks = _development_snapshot(view, feedback_policy="full")
+        decoded_turns = [json.loads(row) for row in turns]
+        observations = [decoded_turns[0]["observation"]] + [json.loads(row) for row in feedbacks]
+        immutable_observations = tuple(tuple((m["id"], m["bit"]) for m in obs["measurements"])
+                                       for obs in observations)
+        immutable_actions = tuple((turn["action"]["kind"], tuple(turn["action"]["participants"]),
+                                   turn["action"].get("value")) for turn in decoded_turns)
+        return cls(immutable_observations, immutable_actions)
+
+
 class PublicReplay:
     """Single-use, cooperative, sequential two-consumer inference smoke driver.
 
@@ -217,6 +243,18 @@ class PublicReplay:
         instance = cls.__new__(cls)
         instance._anchor, instance._turns, instance._feedbacks = _development_snapshot(
             SensorEpisode(history._observations, history._action_records))
+        instance._guard = threading.Lock()
+        instance._state = "ready"
+        return instance
+
+    @classmethod
+    def from_full_sensor_history(cls, history):
+        """Explicit opt-in for complete feedback; default visibility is unchanged."""
+        if type(history) is not FullSensorHistory:
+            raise ValueError("expected full sensor history")
+        instance = cls.__new__(cls)
+        instance._anchor, instance._turns, instance._feedbacks = _development_snapshot(
+            SensorEpisode(history._observations, history._action_records), feedback_policy="full")
         instance._guard = threading.Lock()
         instance._state = "ready"
         return instance

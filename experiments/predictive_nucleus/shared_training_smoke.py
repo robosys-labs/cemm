@@ -119,6 +119,11 @@ def collect_shared_development(history):
     return _collect_replay(PublicReplay.from_development_history(history))
 
 
+def collect_shared_full_sensor(history):
+    """Explicitly collect an all-identities sensor history for both learners."""
+    return _collect_replay(PublicReplay.from_full_sensor_history(history))
+
+
 def _collect_replay(replay):
     flat, structured = _FlatCollector(), _StructuredCollector()
     replay.run(flat, structured)
