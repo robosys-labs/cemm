@@ -35,6 +35,14 @@ jobs:
           done
       - name: Run isolated invariant tests
         run: python -m unittest discover -s experiments/predictive_nucleus/tests -v
+      - name: Count participant-visibility feasibility (NOT a model evaluation)
+        run: python -m experiments.predictive_nucleus.geometry_diagnostic > geometry-feasibility.json
+      - name: Archive public geometry count
+        uses: actions/upload-artifact@v4
+        with:
+          name: participant-geometry-feasibility-not-a-gate
+          path: geometry-feasibility.json
+          retention-days: 30
       - name: Compare pre-audit and corrected models on the same host
         run: |
           git cat-file -e e8ff892d22ea2c63eba7de7bcccd444e39cfd0ff^{commit}
