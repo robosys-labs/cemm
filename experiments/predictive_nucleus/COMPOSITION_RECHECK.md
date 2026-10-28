@@ -90,3 +90,31 @@ back before total variation is measured, with MAP ties reported separately.
 It checks archived input, weight and identity-forecast fingerprints and labels
 the refit accordingly. This post-hoc test probes ID-slot sensitivity on opened
 cases; it neither tests new identifiers nor proves the cause of a model gap.
+
+### Recorded post-hoc identifier probe
+
+[CI run 40689592299](https://github.com/robosys-labs/cemm/actions/runs/40689592299)
+reproduced the archived training inputs, local table, all ten weight hashes,
+and all 6,400 identity-view scores on the same CPU model and PyTorch build.
+The full 41 MB JSON is retained losslessly as
+[`relabel-300fee0.json.xz`](results/relabel-300fee0.json.xz), SHA-256
+`724879f9f46b35ec11d04ab207653867695cd2b1e2ea948dc7c538319cf72fa7`.
+It includes per-case distributions, costs and environment; hashes are not
+model checkpoints. Deterministic algorithms were disabled, and matching on
+other hardware is not established.
+
+Each seed uses 64 cases, five steps and five nonidentity permutations: 1,600
+related transformed views, not independent cases. After mapping predictions
+back to physical IDs, the flat distribution changed by more than `1e-12` in
+all 1,600 views per seed. Median total variation was 0.797–0.949 across seeds
+(0 means identical, 1 is the maximum). The supplied-structure, no-change,
+and local-memory distributions had zero total variation on every answered
+view. This probes the combined input/output handling of arbitrary ID slots;
+it does not isolate an input feature or explain the accuracy gap.
+
+Exact zero distribution change does not guarantee the same single MAP when
+there is a tie: the structured model's selected MAP changed in 60 of the
+1,600 transformed views per seed, and local memory's in 96 of 1,280 answered
+views, exclusively because the sorted-ID tie break changed. Observe actions
+remain abstentions for local memory. These are post-hoc properties of an
+opened fixture, not evidence of held-out generalization or a G1 pass.
