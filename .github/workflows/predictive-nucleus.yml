@@ -96,6 +96,34 @@ jobs:
           name: public-composition-diagnostic-not-a-gate
           path: public-composition-diagnostic.json
           retention-days: 30
+      - name: Recheck archived forecasts with supplied persistence (POST HOC)
+        run: python -m experiments.predictive_nucleus.persistence_lift_audit > persistence-lift-audit.json
+      - name: Probe identifier renaming on opened public cases (POST HOC)
+        run: PYTHONHASHSEED=0 python -m experiments.predictive_nucleus.relabel_diagnostic > relabel-diagnostic.json
+      - name: Show identifier-renaming audit summary
+        run: |
+          python - <<'PY'
+          import json
+          from collections import Counter
+          report = json.load(open('relabel-diagnostic.json'))
+          print('archived models reproduced:', report['reproduces_archived_predictions_and_weights'])
+          for seed in report['seeds']:
+              counts = Counter()
+              for row in seed['rows']:
+                  for name, value in row['models'].items():
+                      if value.get('tv') is not None:
+                          counts[name + '_answered'] += 1
+                          counts[name + '_tv_above_tolerance'] += value['over_tolerance']
+              print('seed', seed['seed'], dict(counts))
+          PY
+      - name: Archive post-hoc public rechecks
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-hoc-public-rechecks-not-a-gate
+          path: |
+            persistence-lift-audit.json
+            relabel-diagnostic.json
+          retention-days: 30
       - name: Compare pre-audit and corrected models on the same host
         run: |
           git cat-file -e e8ff892d22ea2c63eba7de7bcccd444e39cfd0ff^{commit}
