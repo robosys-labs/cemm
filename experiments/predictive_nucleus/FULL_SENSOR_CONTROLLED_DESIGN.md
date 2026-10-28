@@ -80,8 +80,9 @@ not imply equal information or equal work.
 For each arm use seeds 7, 11, 23, 37 and 53; 200 full-batch Adam updates per
 learner, learning rate 0.02, one CPU thread, no calibration, and the existing
 PR43 structured and flat objectives. Fix optimizer settings, float types and
-software versions in the locked protocol. Run all arms, including failures;
-do not select a seed or tune on the opened evaluation cases. No-change,
+software versions in the locked protocol. A complete run requires every arm;
+on failure, stop and retain the failed attempt and uncompleted-work inventory
+rather than silently omitting cases. Do not select a seed or tune on the opened evaluation cases. No-change,
 local-event-with-persistence and literal-ID full-history memorization are
 controls, with exact-memory training and query coverage reported explicitly.
 The full-history control sees complete sensor targets in every arm; it is not

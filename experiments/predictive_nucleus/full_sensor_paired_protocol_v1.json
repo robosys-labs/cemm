@@ -1,0 +1,273 @@
+{
+  "protocol_id": "cemm-full-sensor-paired-public-development-v1",
+  "status": "OPEN_PUBLIC_DEVELOPMENT_NOT_G1",
+  "schema_version": 1,
+  "source_parent": "ae618a0dd6011e060697ead6666a33673b2eff08",
+  "source_file_sha256": {
+    "full_sensor_fixture.py": "4d99716a36e7a99781652263f35c89abd061ec403d16e9eddb16d572fb9f3cd1",
+    "full_sensor_evaluation.py": "e53645d33e0b18e8ec6d5d77105afdd176516b648fbfc1b0549dec0ecd629b45",
+    "factorial_training_data.py": "1865cc49017156abf1f50dc495ebbe5c27e7b4879026e7606b869b8f04653f88",
+    "causal_replay.py": "9dab38c80ed54e43598c2df32c88192e773a7d258e6736ec0e0439cb3e816a20",
+    "schedule_fixture.py": "d9bcaca815868880c2767bea011eb9a2e802fbf8a12a7e5deb11ff34b6eb4d2e",
+    "two_pair_fixture.py": "fb1e41ff1ac6e060d005bc20e5f9b804861aa19ce115ae4e3f2f27547a6d7602",
+    "world.py": "eb3e4c69b6b71e5af31f395e2e7033aad8caf807b4b8b299dd86d6e0faae9d65",
+    "flat_data.py": "70f5acd07f16a4d929f91a6eefde15a125b9c5930ac1557c81e55857782c2ff5",
+    "shared_training_smoke.py": "714505e2d410b1c097f7ababe0fd4838e88c27e07628b17dec1abd0494702ca2",
+    "latent_model.py": "0168e8a8fe0acf90f446c770cc8a7454f93693e0a2c43775428034de9a063f01",
+    "flat_reference.py": "9947575b94cad24d1c74ff03e36f42212cc5b215a64df4d443e89e80af1eeb79",
+    "development_run.py": "82a427246c89c03fe16e7dc5d55903c820feccd8efec0a7c39a4248a7562ff23",
+    "uncertainty.py": "425bc7deb80a4b4598ccee47d6b1b56a763020b7f025e8d1a3aec79878b5c2c2",
+    "sensor_controls.py": "810c822e6cae95a5a7d5f992877b57fad58f6abc1e8975cf820d8561414f1e9a",
+    "history_memory.py": "cfb73c3d665b26e76ea376e6fd2905f7c1669407960dcdb4d6e69f25736c3de6",
+    "role_history_memory.py": "671cfa17390a964d2908a96a52d50425a1dbc540bb0541318e0fd3527f435bfd",
+    "relabel_diagnostic.py": "0ad23daf00121489b607295327573b348c868809aee8a225ec659ea97839c4db",
+    "joint_score.py": "6986ebccf9a70215398da5372257f342d0684e19f4182e90240f1fe9d9660039",
+    "protocol.py": "05eac125862ba1aaaaeb7568711a0b4074ca0f6ee57722685b3b9ddb4cf3c56e",
+    "protocol.json": "622a0dfdf94d14b4f16461a0f20acce18bb880f094d5071e58cd1764bdc9c1e7",
+    "dev_composition_protocol_v2.json": "d1cfc5f96fd9e78cba587d730bafbad88464e9607b9a1ecc0b81152a6dc29af3",
+    "geometry_diagnostic.py": "92a2c72dc4a1c3aaaa1d765bdd5ba8b4c7ecc639cec05f736599f2aad63a4fc0"
+  },
+  "purpose": "Descriptively test direct loss masking and consistent ID augmentation on opened public fixtures, not architecture superiority or held-out transfer.",
+  "hypotheses": [
+    "Within an ID arm, full target supervision will improve flat complete-world contact/set MAP accuracy over masked targets.",
+    "Within a target mask, six-way ID augmentation will decrease ID-renaming joint-distribution sensitivity and improve flat complete-world contact/set MAP accuracy."
+  ],
+  "design": {
+    "arms": [
+      {
+        "id": "repeated_masked",
+        "id_arm": "repeated",
+        "target": "masked"
+      },
+      {
+        "id": "repeated_full",
+        "id_arm": "repeated",
+        "target": "full"
+      },
+      {
+        "id": "augmented_masked",
+        "id_arm": "augmented",
+        "target": "masked"
+      },
+      {
+        "id": "augmented_full",
+        "id_arm": "augmented",
+        "target": "full"
+      }
+    ],
+    "seed_order": [
+      7,
+      11,
+      23,
+      37,
+      53
+    ],
+    "fit_order": "seed ascending as declared, then arm in declared order, structured then flat",
+    "training_fixture": "full_sensor_fixture.make_full_training_history",
+    "training_blocks": [
+      0,
+      1
+    ],
+    "cases_per_block": 32,
+    "underlying_public_cases": 64,
+    "training_actions": [
+      "contact(A,B)",
+      "observe()",
+      "contact(B,A)",
+      "set(A,x)",
+      "set(A,y)"
+    ],
+    "sensor_policy": "Noiseless evaluator sensor reads every anchor ID after every action; old observations retain relative order, missing IDs appended sorted. Both model input histories are full in every arm.",
+    "masked_targets": "Preserve the original PR43 observed IDs for each post-action target after applying the same ID map; all other target coordinates -1, including padding. Full readings still appear in the next recurrent input.",
+    "repeated": "Six literal repetitions of each full history.",
+    "augmented": "All six lexicographic permutations of the sorted three anchor IDs, applied consistently to all observations and actions and mapped targets; inverse round trip required.",
+    "episode_order": "block then case then permutation index, all ascending",
+    "counts_per_arm": {
+      "episode_records": 384,
+      "actions": 1920,
+      "anchor_bits": 1152,
+      "full_feedback_bits": 5760,
+      "masked_target_bits": 3072,
+      "full_target_bits": 5760,
+      "contact_samples": 768,
+      "set_samples": 768,
+      "episode_groups": 384
+    },
+    "pre_fit_checks": [
+      "same full-history tensors and valid masks across loss-target arms of each ID arm",
+      "masked targets exactly equal mapped original visible IDs and -1 elsewhere",
+      "expected counts, action order, full ID inventory and disjoint evaluation IDs",
+      "all four structured tensors and episode grouping equal",
+      "flat initial parameter fingerprints equal within each seed across four arms",
+      "every full history renaming and inverse renaming round trips",
+      "finite tensors and valid 3-bit complete sensors"
+    ]
+  },
+  "fit": {
+    "neural_models": [
+      "structured",
+      "flat"
+    ],
+    "structured_fit_policy": "One separate structured fit per seed per arm, even though inputs match; record all costs.",
+    "structured_model": "latent_model.fit_kernel",
+    "structured_objective": "episode-level two-mode contact marginal negative log-likelihood plus 0.3 mean set cross-entropy",
+    "flat_model": "flat_reference.fit_flat",
+    "flat_objective": "mean event joint-world marginal sensor NLL, marginalizing masked and padded coordinates",
+    "training_steps": 200,
+    "batch": "full batch, deterministic declared episode order",
+    "optimizer": {
+      "name": "torch.optim.Adam",
+      "lr": 0.02,
+      "betas": [
+        0.9,
+        0.999
+      ],
+      "eps": 1e-08,
+      "weight_decay": 0.0,
+      "amsgrad": false,
+      "maximize": false,
+      "foreach": null,
+      "capturable": false,
+      "differentiable": false,
+      "fused": null,
+      "decoupled_weight_decay": false
+    },
+    "flat_fit_fixed_steps": 200,
+    "flat_wall_budget_seconds": 3600.0,
+    "flat_wall_budget_note": "fixed_steps controls termination; wall budget is only a recorded reference, not matched compute",
+    "initialization": "Each fit calls torch.manual_seed(seed); verify fresh flat initial state_dict fingerprints equal across arms. Do not select seeds or adapt training.",
+    "control_tables": "Fit EventMemory, literal HistoryMemory.fit_full_sensor and RoleHistoryMemory once per ID arm on its 384 full sensor histories; reuse across two target-mask arms and all seeds. Record separately the table costs, sizes, target counts and hashes. NoChange has no fit.",
+    "all_fits_before_any_scoring": true,
+    "on_nonfinite": "abort entire study and preserve failure report and completed checkpoints",
+    "completion_policy": "A successful complete result requires every seed/arm fit and case. On any fit failure abort immediately, mark unattempted work and preserve the failure report; never skip, retry selectively, or imply all arms finished."
+  },
+  "evaluation": {
+    "fixture": "full_sensor_evaluation.full_sensor_evaluation_view(two_pair_fixture.make_evaluator_episode(case, block=0))",
+    "block": 0,
+    "cases": 64,
+    "actions": [
+      "contact(A,B)",
+      "set(B,x)",
+      "observe()",
+      "contact(B,C)",
+      "set(C,y)"
+    ],
+    "sensor_policy": "Full noiseless feedback after every action; preserve original ordered visible readings, append missing IDs in sorted anchor-ID order.",
+    "permutation_policy": "Six lexicographic bijections of sorted anchor IDs applied consistently, with inverse round trip required.",
+    "counts_per_arm_seed": {
+      "views": 384,
+      "queries_all_actions": 1920,
+      "queries_contact_set": 1536,
+      "queries_observe": 384
+    },
+    "model_names": [
+      "structured",
+      "flat",
+      "no_change",
+      "local_memory_with_persistence",
+      "literal_history_memory",
+      "role_normalized_history_memory"
+    ],
+    "replay_order": "case outermost; for each case complete all seed/arm/permutation/model prediction and feedback replays before any evaluator truth read for that case",
+    "case_order": "case index 0 through 63",
+    "view_order": "lexicographic sorted-anchor-ID permutations",
+    "callbacks": "For each paired replay both predict callbacks finish before either receives feedback; callbacks get independent copies of identical realized records. All fitted models reset per episode; no query-time learning.",
+    "truth_policy": "Read evaluator post-action truth only after every seed, arm, permutation and model replay of the physical case finishes. Keep gold out of callbacks; this is cooperative in-process ordering, not isolation or custody.",
+    "structured_sensor_error_rate": 0.0,
+    "flat_sensor_metadata_mode": "neutral",
+    "flat_temperature": 1.0,
+    "calibration": "NONE",
+    "supplied_biases": [
+      "structured two-mode role symmetry, exact belief update and persistence",
+      "local memory persistence on nonparticipants",
+      "role-normalized memory first-action slot mapping and sensor-list-order normalization"
+    ],
+    "independence": "64 already opened deterministic cases with shared IDs, repeated views and repeated seeds; not independent worlds or an independently authored challenge."
+  },
+  "scoring": {
+    "worlds": "all eight binary tuples in sorted renamed ID order",
+    "map": "max represented probability; exact ties choose lexicographically smallest bit tuple in sorted renamed-ID order, then inverse-map world to physical IDs",
+    "joint_brier": "sum over all 8 worlds of (probability - truth indicator)^2; missing represented world has probability zero",
+    "joint_log_loss": "uncapped -log(represented true-world probability); represented zero is tagged infinite with null numeric field, never JSON NaN or Infinity",
+    "legacy_clipped_log_loss_floor": 1e-12,
+    "abstention": "Record explicit status/reason; no probability distribution or numeric proper score. Report coverage, accuracy among answered and correct/wrong per all queries.",
+    "primary": "A(seed,id_arm,target) = number of correct flat full-world MAP predictions on contact/set actions divided by 1536 total eligible views",
+    "interaction": "(A(augmented,full)-A(augmented,masked))-(A(repeated,full)-A(repeated,masked)) per seed",
+    "contrasts": [
+      "within-ID-arm full minus masked",
+      "within-target augmented minus repeated",
+      "interaction",
+      "paired previously-correct to wrong and previously-wrong to correct on same physical case, view, and step"
+    ],
+    "additional": [
+      "each action position and kind",
+      "observe separately",
+      "full distribution total variation after inverse ID mapping",
+      "MAP changes and exact tie flags",
+      "represented-zero counts and uncapped loss",
+      "structured feedback status after feedback is not prediction correctness",
+      "per-seed and every-case failure records"
+    ],
+    "inference": "No IID confidence intervals, no free-running trajectory claim, and no cross-architecture superiority claim."
+  },
+  "environment": {
+    "python": "3.13.x; record exact patch",
+    "pytorch": "2.10.0+cpu",
+    "device": "CPU only; reject CUDA, HIP, available MPS and XPU",
+    "threads": 1,
+    "threads_meaning": "PyTorch intra-op threads are set to one; record actual inter-op thread count separately without asserting it is one.",
+    "deterministic_algorithms": true,
+    "pythonhashseed": "0 required before process startup",
+    "float_dtype": "float32",
+    "index_and_target_dtype": "int64",
+    "valid_mask_dtype": "bool",
+    "record": [
+      "CPU model",
+      "platform",
+      "Python patch",
+      "torch version",
+      "torch config SHA-256",
+      "intra-op and inter-op thread counts",
+      "determinism flag",
+      "source parent and execution commit",
+      "clean tracked tree status",
+      "untracked-present status"
+    ],
+    "reproducibility": "Different hardware or software configurations are separate refits unless weights and forecasts match; deterministic flag does not guarantee cross-host bitwise equality."
+  },
+  "execution": {
+    "output_dir": "Explicit caller-chosen path outside tracked source must not exist; its parent must exist and be writable. Create it once after protocol/environment/lineage verification; never overwrite. All run results live there.",
+    "command": "PYTHONHASHSEED=0 python -m experiments.predictive_nucleus.factorial_run --output-dir <new-directory>",
+    "lineage": "Verify SHA-256 of this exact protocol and all source_file_sha256 entries before data preparation; verify source_parent is an ancestor of execution commit and tracked tree is clean. Independently review and commit the runner after this protocol commit and before the first study fit or score; record reviewed runner commit and source SHA-256, execution commit and untracked status. No audit metadata or evaluator state passed as explicit learner features.",
+    "order": [
+      "verify protocol, environment, lineage and that the output path is absent; then create the output directory",
+      "prepare all training/evaluation inputs and verify inventories before any fit",
+      "fit both learned models for all seeds and arms, recording checkpoints and costs",
+      "fit shared controls per ID arm and record costs",
+      "replay all seeds, arms, views and models per physical case before accessing that case truth",
+      "score, stream case records and build complete summaries",
+      "verify checkpoints and outputs, then write success marker"
+    ],
+    "fit_checkpoints": "Save each seed/arm/learned-model raw state_dict via torch.save to distinct file; record byte SHA-256 and independent semantic tensor fingerprint. Validate roundtrip using torch.load(weights_only=True), shape, dtype and exact tensor equality. These are checkpoints, not only fingerprints.",
+    "outputs": [
+      "run metadata: protocol hash, source/runner hashes, environment, inventories, input/target/table fingerprints, supplied biases and all cost measurements",
+      "all 40 learned model checkpoints and file SHA-256/semantic fingerprints",
+      "case JSONL: physical case index, realized full history, each seed/arm/view mapping, each action truth and every model status/reason/8-world distribution/MAP/proper scores/feedback diagnostics, after case replays",
+      "summary JSON: all seeds, denominators, paired contrasts/fixes/regressions, table coverage, timing and process-wide peak RSS",
+      "failure report plus completed checkpoint/log inventory on any abort; no primary summary or success marker for incomplete execution"
+    ],
+    "serialization": "Uncompressed JSON and case JSONL in UTF-8, sorted keys, allow_nan=False; one case per JSONL record. Represent infinite joint losses with explicit status plus null numeric field.",
+    "timing": "Record wall and process CPU seconds for data preparation, each learned fit, each shared control fit, every individual predict/receive callback and replay/scoring. Report p95 callback wall latency by model, action and callback kind using the nearest-rank value at one-indexed ceil(0.95*N), without interpolation. Record process-wide peak RSS and its platform-specific units; it is a high-water mark, not per-model memory. Report raw shared control fit costs and state clearly that those costs are shared across target masks and seeds, not per-arm matches.",
+    "failure": "A manifest, source, environment, input, timing, callback, checkpoint, missing prediction or nonfinite invariant failure stops the study and exits nonzero. Once the output directory has been created, best-effort emit failure status/phase/error/completed and missing arm/case inventory and retain available partial records and checkpoints; invalid or unwritable output paths cannot guarantee a report. Never emit complete primary summaries on an incomplete run. Do not drop a seed/arm/case or treat abstention as a failed score.",
+    "retention": "Preserve complete raw per-case outputs and checkpoints in a durable research artifact and retain hashes. Do not treat expiring CI artifacts or hashes alone as model checkpoints."
+  },
+  "limits": [
+    "Results describe already-opened public factorial cases and repeated views.",
+    "Masked targets remain visible in subsequent inputs; this is not withheld sensor exposure or isolated persistence learning.",
+    "Unequal target bits, objectives, model biases and measured compute forbid matched-compute or architecture-superiority claims.",
+    "Structured supplies role symmetry, persistent mechanisms and exact belief; local table supplies persistence; role-normalized table supplies first-action slots.",
+    "Post-hoc role-history memory fitting and evaluation-prefix coverage/equivariance were examined before this protocol; no evaluator truth or neural scores were examined in that check.",
+    "No independent oracle or challenge custody, sensor/event authentication, G1 promotion, language claim or 3x utility claim."
+  ],
+  "decision": "G1 HOLD / REVISE regardless of public diagnostic results; report all seeded outcomes, failures, paired regressions, costs and limitations."
+}
