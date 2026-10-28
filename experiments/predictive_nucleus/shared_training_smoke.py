@@ -106,8 +106,21 @@ def collect_shared(view):
     Local collectors never escape a failed replay. This cannot undo external
     callback effects or prevent another Python object reading the fixture.
     """
+    return _collect_replay(PublicReplay(view))
+
+
+def collect_shared_development(history):
+    """Collect a validated development history using the opt-in replay path.
+
+    This is sensor-only offline feature collection, not model prediction,
+    authenticated custody, a scientific split, or model evaluation. The caller
+    is responsible for specifying and validating the development history.
+    """
+    return _collect_replay(PublicReplay.from_development_history(history))
+
+
+def _collect_replay(replay):
     flat, structured = _FlatCollector(), _StructuredCollector()
-    replay = PublicReplay(view)
     replay.run(flat, structured)
     if (replay.state != "completed" or flat.pending is not None or structured.pending is not None or
             flat.history != structured.history):

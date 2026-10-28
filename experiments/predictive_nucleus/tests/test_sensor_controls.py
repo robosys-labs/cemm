@@ -3,7 +3,7 @@ from copy import deepcopy
 from dataclasses import FrozenInstanceError
 import unittest
 
-from experiments.predictive_nucleus.sensor_controls import EventMemory, NoChange
+from experiments.predictive_nucleus.sensor_controls import EventMemory, FullWorldEventMemory, NoChange
 
 
 def obs(time, **bits):
@@ -181,6 +181,123 @@ class SensorControlTests(unittest.TestCase):
         self.assertEqual(memory.rows, original)
         final_turn = {"observation": view.reveal_after_prediction(3), "action": contact(*view.learner_turn(0)["action"]["participants"])}
         self.assertEqual(set(persistence.preview(final_turn)), set(adapter.ids))
+
+    def test_full_world_event_memory_lifts_joint_outcomes_and_tracks_staleness(self):
+        first = SensorEpisode([obs(0, A=0, B=1, C=0), obs(1, A=1, B=1), obs(2, A=0)],
+                              [contact("A", "B"), set_action("A", 1)])
+        second = SensorEpisode([obs(0, A=0, B=1, C=1), obs(1, A=0, B=0)],
+                               [contact("A", "B")])
+        memory = EventMemory.fit([first, second])
+        rows = memory.rows
+        control = FullWorldEventMemory(memory)
+        anchor = obs(0, A=0, B=1, C=1)
+        control.start(anchor)
+        turn = {"observation": anchor, "action": contact("A", "B")}
+        preview = control.preview(turn)
+        self.assertEqual(preview["ids"], ("A", "B", "C"))
+        self.assertEqual(preview["worlds"], {(0, 0, 1): .5, (1, 1, 1): .5})
+        self.assertAlmostEqual(sum(preview["worlds"].values()), 1.0)
+        self.assertEqual(preview["carried_nonparticipants"], ("C",))
+        self.assertEqual(preview["stale_nonparticipants"], ())
+        self.assertEqual(preview["calibration"], "NOT_ESTABLISHED")
+        preview["worlds"][(0, 0, 1)] = 9
+        self.assertEqual(control.predict(turn)["worlds"], {(0, 0, 1): .5, (1, 1, 1): .5})
+        with self.assertRaises(RuntimeError):
+            control.predict(turn)
+        control.receive(obs(1, A=1, B=1))
+        next_turn = {"observation": obs(1, A=1, B=1), "action": set_action("A", 1)}
+        result = control.predict(next_turn)
+        self.assertEqual(result["worlds"], {(0, 1, 1): 1.0})
+        self.assertEqual(result["carried_nonparticipants"], ("B", "C"))
+        self.assertEqual(result["stale_nonparticipants"], ("C",))
+        control.receive(obs(2, A=0))
+        self.assertEqual(memory.rows, rows)
+
+        # Unsmoothed represented zero is not silently converted to finite NLL.
+        from experiments.predictive_nucleus.joint_score import joint_log_loss
+        score = joint_log_loss(result["worlds"].get((1, 1, 1), 0.0))
+        self.assertTrue(score["zero_probability"])
+        self.assertIsNone(score["uncapped_log_loss"])
+
+    def test_full_world_memory_abstains_and_keeps_sequential_feedback(self):
+        episode = SensorEpisode([obs(0, A=0, B=1, C=0), obs(1, A=1, B=0)], [contact("A", "B")])
+        memory = EventMemory.fit([episode])
+        control = FullWorldEventMemory(memory)
+        with self.assertRaises(RuntimeError):
+            control.preview({})
+        anchor = obs(0, A=0, B=1, C=0)
+        control.start(anchor)
+        unseen = {"observation": anchor, "action": contact("B", "A")}
+        result = control.predict(unseen)
+        self.assertEqual((result["status"], result["reason"], result["worlds"]),
+                         ("ABSTAIN", "UNSEEN_CONTEXT", None))
+        with self.assertRaises(RuntimeError):
+            control.start(anchor)
+        with self.assertRaises(ValueError):
+            control.receive(obs(True, A=1))
+        control.receive(obs(1, A=1))
+        missing = {"observation": obs(1, A=1), "action": contact("A", "B")}
+        self.assertEqual(control.predict(missing)["reason"], "INCOMPLETE_CONTEXT")
+        control.receive(obs(2))
+        observe = {"observation": obs(2), "action": {"kind": "observe", "participants": []}}
+        self.assertEqual(control.predict(observe)["reason"], "UNSUPPORTED_ACTION")
+        control.receive(obs(3))
+        with self.assertRaises(ValueError):
+            FullWorldEventMemory(object())
+
+    def test_full_world_event_memory_identity_mapping_and_atomic_invalid_turn(self):
+        episode = SensorEpisode([obs(0, A=0, B=1, C=0), obs(1, A=1, B=0)], [contact("A", "B")])
+        memory = EventMemory.fit([episode])
+        control = FullWorldEventMemory(memory)
+        anchor = obs(0, Z=1, X=0, Y=1)
+        control.start(anchor)
+        renamed = {"observation": anchor, "action": contact("X", "Y")}
+        self.assertEqual(control.preview(renamed)["ids"], ("X", "Y", "Z"))
+        self.assertEqual(control.preview(renamed)["worlds"], {(1, 0, 1): 1.0})
+        invalid = {"observation": anchor, "action": contact("X", "Z")}
+        invalid["action"]["participants"].append("Y")
+        with self.assertRaises(ValueError):
+            control.predict(invalid)
+        self.assertEqual(control.predict(renamed)["worlds"], {(1, 0, 1): 1.0})
+        control.receive(obs(1, X=1, Y=0))
+
+        # Action order is independent of the sorted output identity order.
+        reversed_slots = FullWorldEventMemory(memory)
+        other_anchor = obs(0, Z=0, X=1, Y=1)
+        reversed_slots.start(other_anchor)
+        result = reversed_slots.predict({"observation": other_anchor, "action": contact("Z", "X")})
+        self.assertEqual(result["ids"], ("X", "Y", "Z"))
+        self.assertEqual(result["worlds"], {(0, 1, 1): 1.0})
+
+    def test_full_world_control_replays_same_public_history_without_refitting(self):
+        from experiments.predictive_nucleus.causal_replay import PublicReplay
+        from experiments.predictive_nucleus.schedule_fixture import make_evaluator_episode, sensor_view
+
+        view = sensor_view(make_evaluator_episode(3))
+        # The repeated public fixture is solely a compatibility check.
+        memory = EventMemory.fit([view])
+        original_rows = memory.rows
+
+        class Recorder:
+            def __init__(self):
+                self.inputs, self.feedback = [], []
+
+            def start(self, anchor):
+                self.anchor = deepcopy(anchor)
+
+            def predict(self, turn):
+                self.inputs.append(deepcopy(turn))
+
+            def receive(self, observation):
+                self.feedback.append(deepcopy(observation))
+
+        baseline, observer = FullWorldEventMemory(memory), Recorder()
+        replay = PublicReplay(view)
+        replay.run(baseline, observer)
+        self.assertEqual(replay.state, "completed")
+        self.assertEqual(observer.inputs, [view.learner_turn(i) for i in range(4)])
+        self.assertEqual(observer.feedback, [view.reveal_after_prediction(i) for i in range(4)])
+        self.assertEqual(memory.rows, original_rows)
 
 
 if __name__ == "__main__":

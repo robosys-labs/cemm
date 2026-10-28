@@ -7,7 +7,9 @@ from unittest.mock import patch
 
 from experiments.predictive_nucleus.flat_data import sensor_episode
 from experiments.predictive_nucleus.schedule_fixture import make_evaluator_episode, sensor_view
-from experiments.predictive_nucleus.shared_training_smoke import _FlatCollector, _StructuredCollector, collect_shared
+from experiments.predictive_nucleus.shared_training_smoke import (
+    _FlatCollector, _StructuredCollector, collect_shared, collect_shared_development,
+)
 
 
 def fixture(case=0):
@@ -158,6 +160,97 @@ class SharedCollectionTests(unittest.TestCase):
                 run_fixture()
         self.assertTrue(torch.equal(torch.random.get_rng_state(), prior_rng))
         self.assertEqual(torch.get_num_threads(), prior_threads)
+
+
+class TwoPairCollectionTests(unittest.TestCase):
+    @staticmethod
+    def fixture(case=0):
+        from experiments.predictive_nucleus.two_pair_fixture import make_evaluator_episode, sensor_view
+        return sensor_view(make_evaluator_episode(case))
+
+    @staticmethod
+    def collect(view):
+        from experiments.predictive_nucleus.causal_replay import DevelopmentHistory
+        return collect_shared_development(DevelopmentHistory.from_sensor_view(view))
+
+    def test_all_public_two_pair_histories_produce_shared_samples(self):
+        for case in range(64):
+            view = self.fixture(case)
+            record = self.collect(view)
+            self.assertEqual(len(record.flat_rows), 5)
+            self.assertEqual((len(record.contacts), len(record.interventions)), (2, 2))
+            self.assertEqual(len(record.history), 11)  # anchor + five turns and feedbacks
+            self.assertEqual([(list(x), list(y)) for x, y in record.flat_rows], sensor_episode(view))
+            contacts, sets = [], []
+            for i in range(5):
+                turn, feedback = view.learner_turn(i), view.reveal_after_prediction(i)
+                before = {m['id']: m['bit'] for m in turn['observation']['measurements']}
+                after = {m['id']: m['bit'] for m in feedback['measurements']}
+                action, names = turn['action'], turn['action']['participants']
+                if action['kind'] == 'contact':
+                    self.assertTrue(all(n in before and n in after for n in names))
+                    contacts.append((before[names[0]], before[names[1]], after[names[0]], after[names[1]]))
+                elif action['kind'] == 'set':
+                    self.assertTrue(names[0] in before and names[0] in after)
+                    sets.append((before[names[0]], action['value'], after[names[0]]))
+                else:
+                    self.assertEqual(action, {'kind': 'observe', 'participants': []})
+                    bc = set(view.learner_turn(3)['action']['participants'])
+                    self.assertEqual(set(after), bc)
+                    self.assertEqual(sum(x >= 0 for x in record.flat_rows[i][1]), 2)
+            self.assertEqual(record.contacts, tuple(contacts))
+            self.assertEqual(record.interventions, tuple(sets))
+
+    def test_future_feedback_and_action_do_not_change_earlier_features(self):
+        original = self.fixture(9)
+        rows = self.collect(original).flat_rows
+        for time in range(1, 6):
+            observations = list(original._observations)
+            reading = list(observations[time])
+            reading[0] = (reading[0][0], 1 - reading[0][1])
+            observations[time] = tuple(reading)
+            altered = self.collect(replace(original, _observations=tuple(observations))).flat_rows
+            for earlier in range(time):
+                self.assertEqual(rows[earlier][0], altered[earlier][0])
+                if earlier + 1 < time:
+                    self.assertEqual(rows[earlier][1], altered[earlier][1])
+            self.assertNotEqual(rows[time - 1][1], altered[time - 1][1])
+        for time in (1, 4):
+            actions = list(original._action_records)
+            kind, members, value = actions[time]
+            actions[time] = (kind, members, 1 - value)
+            altered = self.collect(replace(original, _action_records=tuple(actions))).flat_rows
+            for earlier in range(time):
+                self.assertEqual(rows[earlier], altered[earlier])
+
+    def test_existing_collection_does_not_silently_accept_the_new_schedule(self):
+        view = self.fixture()
+        with self.assertRaises(ValueError):
+            collect_shared(view)
+        self.assertEqual(len(collect_shared(fixture()).flat_rows), 4)
+
+    @unittest.skipUnless(importlib.util.find_spec('torch'), 'PyTorch is not installed')
+    def test_actual_legacy_extractors_and_episode_grouping(self):
+        import torch
+        from experiments.predictive_nucleus.flat_reference import batch_episodes
+        from experiments.predictive_nucleus.latent_model import build_samples, sensor_only_samples
+        from experiments.predictive_nucleus.shared_training_smoke import tensorize
+        views = [self.fixture(case) for case in range(64)]
+        records = [self.collect(view) for view in views]
+        for view, record in zip(views, records):
+            contacts, interventions = sensor_only_samples(view)
+            self.assertEqual(record.contacts, tuple(contacts))
+            self.assertEqual(record.interventions, tuple(interventions))
+        batch, samples = tensorize(records)
+        legacy_batch, legacy_samples = batch_episodes(views), build_samples(views)
+        for actual, expected in zip(batch, legacy_batch):
+            self.assertTrue(torch.equal(actual, expected))
+        self.assertEqual(samples.episodes, 64)
+        for key in ('contact', 'episode_id', 'intervention'):
+            self.assertTrue(torch.equal(getattr(samples, key), getattr(legacy_samples, key)))
+        self.assertEqual(samples.episode_id.tolist(), [i for i in range(64) for _ in range(2)])
+        self.assertEqual(tuple(batch[0].shape[:2]), (5, 64))
+        self.assertTrue(bool((batch[2][2]).all()))  # observe is a real measured event
 
 
 if __name__ == "__main__":
