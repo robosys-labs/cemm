@@ -46,6 +46,8 @@ results. All initial states and outcomes come from the evaluator's simulator;
 the fixture does not establish an independently authored oracle.
 
 Run the count with `python -m experiments.predictive_nucleus.schedule_fixture`.
+The [public replay smoke test](REPLAY_BOUNDARY.md) checks callback delivery
+order for this fixture; it is not a training or security boundary.
 
 Both consumers can receive separate copies of the same realized sensor/action
 history. The offline view intentionally supports existing batch extractors and
@@ -77,8 +79,8 @@ effective training examples, compute or supplied inductive biases.
   counterexamples and withheld compositions in later controlled evaluation;
   do not infer performance from fixture coverage.
 
-The experimental Python tree has 6,213 physical lines across 50 Python files,
-including tests (5,858 lines before this tranche), above the roadmap's
+At PR #39 the experimental Python tree had 6,213 physical lines across 50
+Python files, including tests (5,858 lines before that tranche), above the roadmap's
 practical 2,000-line target. That is a deviation to track and rationalize;
 correctness and test coverage take priority over shrinking the count. The
 supplied analytic belief and local-effect
