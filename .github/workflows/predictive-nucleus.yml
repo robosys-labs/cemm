@@ -204,3 +204,29 @@ jobs:
           name: g1g-flat-recurrent-reference-unadmitted
           path: g1g-flat-reference.json
           retention-days: 30
+      - name: Replay the recorded flat optimizer schedule
+        run: |
+          python - <<'PY'
+          import json, subprocess, sys
+          original = json.load(open('g1g-flat-reference.json'))
+          steps = ','.join(str(r['flat_training']['gradient_steps']) for r in original['results'])
+          command = [sys.executable, '-m', 'experiments.predictive_nucleus.flat_trial',
+                     '--train', '600', '--calibration', '200', '--worlds', '10', '--steps', '200',
+                     '--seeds', '7,11,23,37,53', '--flat-steps', steps]
+          with open('g1g-flat-replay.json', 'w') as output:
+              subprocess.run(command, stdout=output, check=True)
+          replay = json.load(open('g1g-flat-replay.json'))
+          for prior, again in zip(original['results'], replay['results'], strict=True):
+              assert prior['model_seed'] == again['model_seed']
+              assert prior['flat_training']['gradient_steps'] == again['flat_training']['gradient_steps']
+              assert prior['flat_calibration'] == again['flat_calibration']
+              for split in prior['splits']:
+                  for scenario, old in prior['splits'][split].items():
+                      new = again['splits'][split][scenario]
+                      for key in ('structured', 'structured_context', 'flat',
+                                  'structured_pair_both_exact', 'flat_pair_both_exact',
+                                  'structured_correct_flat_wrong', 'flat_correct_structured_wrong',
+                                  'mean_physical_probes'):
+                          assert old[key] == new[key], (split, scenario, key)
+          print('Recorded optimizer schedules reproduce all paired scores; replay is not an independent challenge.')
+          PY
