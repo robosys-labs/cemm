@@ -31,3 +31,21 @@ scoring; it must record its environment and whether the failure reproduces.
 Any correction must preserve this opened failure and be explicitly documented
 as a revision. Do not silently rerun v2 or call the opened public cases a fresh
 held-out challenge.
+
+## Post-hoc inspection of saved forecasts
+
+[CI run 40709831687](https://github.com/robosys-labs/cemm/actions/runs/40709831687)
+loaded the 40 byte- and tensor-verified checkpoints, reconstructed and verified
+the six empirical control tables, and inspected 3,600 raw forecasts for case 6
+without calling `gold_after` or computing scores. One flat forecast for the
+augmented/masked arm, seed 37, final set action, assigned a world represented
+probability `1.00000003851976`, which the original strict scorer rejects.
+The flat model aggregates float32 softmax outputs into each world; numerical
+aggregation is a plausible explanation for this observed overshoot.
+
+This does **not** establish the exact original failure's cause: its offending
+forecast, full distribution and host configuration were not logged, and the
+post-hoc run may have used a different host. The full diagnostic output is
+retained at [case6-posthoc-274b2cf.json](results/case6-posthoc-274b2cf.json),
+SHA-256 `8ac484d4c78956e6a76bf7bdf0496037bce7c967d94e601dc04a7440e3193fa6`.
+V2 remains incomplete and the opened cases are not a fresh held-out test.
