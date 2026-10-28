@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
@@ -33,6 +35,39 @@ jobs:
           done
       - name: Run isolated invariant tests
         run: python -m unittest discover -s experiments/predictive_nucleus/tests -v
+      - name: Compare pre-audit and corrected models on the same host
+        run: |
+          git cat-file -e e8ff892d22ea2c63eba7de7bcccd444e39cfd0ff^{commit}
+          mkdir -p "$RUNNER_TEMP/cemm-pre-audit"
+          git archive e8ff892d22ea2c63eba7de7bcccd444e39cfd0ff experiments/predictive_nucleus | tar -x -C "$RUNNER_TEMP/cemm-pre-audit"
+          cp experiments/predictive_nucleus/audit_differential_runner.py "$RUNNER_TEMP/cemm-pre-audit/experiments/predictive_nucleus/"
+          (
+            cd "$RUNNER_TEMP/cemm-pre-audit"
+            PYTHONPATH="$RUNNER_TEMP/cemm-pre-audit" python -m experiments.predictive_nucleus.audit_differential_runner > "$RUNNER_TEMP/cemm-before.json"
+          )
+          PYTHONPATH="$GITHUB_WORKSPACE" python -m experiments.predictive_nucleus.audit_differential_runner > "$RUNNER_TEMP/cemm-after.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          before = json.loads((root / 'cemm-before.json').read_text())
+          after = json.loads((root / 'cemm-after.json').read_text())
+          if before != after:
+              for key in sorted(before.keys() | after.keys()):
+                  if before.get(key) != after.get(key):
+                      print('Differential mismatch:', key, before.get(key), after.get(key))
+              raise SystemExit('Same-host before/after fingerprints do not match')
+          with open('g1i-same-host-regression.json', 'w') as output:
+              json.dump(after, output, sort_keys=True)
+          print('Fixed-step training, sensor data, calibration and legacy trajectory fingerprints match on this host.')
+          print('CPU:', after['cpu_model'], 'PyTorch:', after['torch'], 'seeds:', [r['seed'] for r in after['models']])
+          PY
+      - name: Archive same-host regression fingerprints
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1i-same-host-regression
+          path: g1i-same-host-regression.json
+          retention-days: 30
       - name: Record unsealed evidence diagnostics (NOT a scientific gate)
         run: |
           python -m experiments.predictive_nucleus.probe_trial \
