@@ -1,9 +1,11 @@
 # Full-sensor paired development protocol
 
-The companion `full_sensor_paired_protocol_v1.json` is a candidate public
+The companion `full_sensor_paired_protocol_v2.json` is the revised public
 development protocol. It is not a G1 challenge and cannot support a claim of
-held-out generalization. Review and commit the exact protocol bytes and hash
-before the study's first neural fit or scored output. The independently
+held-out generalization. V1 was committed at `cd2f84ec9c16b2e2103503675dff06624cdae3c3`
+and remains unused: v2 adds the explicit no-unrecorded-warm-up timing rule.
+No proposed study fit or scored output was run under v1. Review and commit the
+exact v2 bytes and hash before the study's first neural fit or scored output. The independently
 reviewed runner must be committed after that protocol and before execution;
 its commit and source hash are recorded with the result. This document does
 not by itself freeze anything.
