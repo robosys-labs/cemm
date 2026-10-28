@@ -8,6 +8,7 @@ from pathlib import Path
 import statistics
 from time import perf_counter
 
+from .joint_score import summarize_joint_log_loss
 from .protocol import read_protocol, verify_protocol
 from .stability_trial import frozen_config
 from .stress_protocol import verify as verify_stress_protocol
@@ -70,6 +71,7 @@ def summarize_paired(cases):
                         "target_action": row.get("target_action"), "world_ids": row.get("world_ids"),
                         "predicted_world": row.get("joint_map_world"), "truth_world": row.get("truth_world"),
                         "confidence": row["joint_map_confidence"],
+                        "joint_log_score": row.get("joint_log_score"),
                         "initial_anchor": case["rollout"].get("initial_anchor"),
                         "probe_trace": case["rollout"].get("probe_trace", []),
                     })
@@ -89,6 +91,8 @@ def summarize_paired(cases):
         "unconditional_wrong_case_ids": [case for case, row in rows if not row["joint_map_correct"]],
         "map_ece10": ece,
         "joint_nll": statistics.mean(row["joint_nll"] for _, row in rows) if "joint_nll" in rows[0][1] else None,
+        "joint_log_score": summarize_joint_log_loss([row["joint_log_score"] for _, row in rows])
+                           if "joint_log_score" in rows[0][1] else None,
         "bit_brier": statistics.mean(row["bit_brier"] for _, row in rows) if "bit_brier" in rows[0][1] else None,
         "legacy": score("eligible"), "guard": score("guard_eligible"),
         "previously_covered_wrong_now_abstained": [case for case, r in rows if r["eligible"] and

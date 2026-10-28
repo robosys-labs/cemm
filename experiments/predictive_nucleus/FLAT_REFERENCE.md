@@ -1,5 +1,9 @@
 # G1g: flat recurrent reference
 
+> **Audit hold:** The nonzero sensor-error input is untrained, training sensor
+> geometry differs from stress probes, and historical joint log loss is
+> clipped. See [the integrity audit](2026-10-28-AUDIT.md).
+
 **Public development only; G1 is not admitted.** The roadmap requires a flat
 recurrent comparison before interpreting the shared nucleus as an architectural
 advantage. This reference sees sensor observations and ordered actions, not

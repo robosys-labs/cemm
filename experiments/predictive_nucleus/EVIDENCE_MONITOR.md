@@ -1,5 +1,9 @@
 # G1d-b — prequential predictive-adequacy monitor
 
+> **Audit hold:** The public harness does not establish independent sensor
+> randomness or authenticated physical-event identity. See [the integrity
+> audit](2026-10-28-AUDIT.md) before interpreting alarm rates.
+
 **Not G1 admission; not a certificate of new physical laws.**
 
 A two-hypothesis posterior alone cannot distinguish unexpectedly changed physics

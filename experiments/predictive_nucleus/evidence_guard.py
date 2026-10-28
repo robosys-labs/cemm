@@ -43,10 +43,13 @@ class EpisodeEvidenceGuard:
         """Consume each finished monitor/feedback step exactly once in order."""
         if monitor.pending is not None or monitor.time != self.time + 1 or not monitor.history:
             raise ValueError("guard requires the next completed sensor event")
-        _, time, readings = monitor.last_observation_signature
+        source, time, readings = monitor.last_observation_signature
         if (belief.t != time or belief.receipts.get(belief_result.evidence_id) != belief_result or
                 belief.receipt_payloads.get(belief_result.evidence_id) != (time, readings)):
             raise ValueError("monitor and belief must refer to the same sensor event")
+        if (belief.receipt_forecast_signature(belief_result.evidence_id) != monitor.last_forecast_signature or
+                belief.sensor_error_rate != monitor.source_error_rates[source]):
+            raise ValueError("monitor and belief must use the same committed forecast and sensor calibration")
         mixed = equally_weighted_log_e(monitor.log_e_value, monitor.change_point_log_e_value)
         if belief_result.status in ("CONFLICTING_EVIDENCE", "MODEL_MISMATCH_CANDIDATE"):
             self._conflicts.add(belief_result.status)

@@ -13,6 +13,8 @@ from math import fsum, isfinite, log
 from types import MappingProxyType
 from typing import Mapping
 
+from .uncertainty import forecast_signature
+
 
 @dataclass(frozen=True)
 class EvidenceJudgement:
@@ -59,9 +61,10 @@ class PredictiveAdequacyMonitor:
         self.time = start_time
         self.log_e_value = 0.0
         self.change_point_log_e_value = 0.0
-        self.pending = None
+        self._pending = None
         self.receipts: dict[str, EvidenceJudgement] = {}
         self._signatures: dict[str, tuple] = {}
+        self._receipt_forecasts: dict[str, tuple] = {}
         self._seen_sensor_event: set[tuple[str, int]] = set()
         self.history: list[EvidenceJudgement] = []
 
@@ -74,10 +77,21 @@ class PredictiveAdequacyMonitor:
         return self._alpha
 
     @property
+    def pending(self):
+        """Inspection copy: callers cannot mutate the committed forecast."""
+        return deepcopy(self._pending)
+
+    @property
     def last_observation_signature(self):
         if not self.history:
             return None
         return self._signatures[self.history[-1].evidence_id]
+
+    @property
+    def last_forecast_signature(self):
+        if not self.history:
+            return None
+        return self._receipt_forecasts[self.history[-1].evidence_id]
 
     @staticmethod
     def _validate_states(forecast, ids, message):
@@ -97,14 +111,15 @@ class PredictiveAdequacyMonitor:
     def commit(self, forecast, *, source_id: str, next_time: int,
                intended_sensor_ids: tuple[str, ...], alternative_forecast=None):
         """Reserve sensor coverage BEFORE any outcome is observed."""
-        if self.pending is not None:
+        if self._pending is not None:
             raise RuntimeError("must receive committed sensor event first")
         if source_id not in self.source_error_rates:
             raise ValueError("unreviewed sensor source")
         if next_time != self.time + 1 or type(next_time) is not int:
             raise ValueError("non-sequential future event")
         ids = tuple(forecast.state_probability)
-        if not (3 <= len(ids) <= 6 and len(set(ids)) == len(ids)):
+        if not (3 <= len(ids) <= 6 and len(set(ids)) == len(ids) and
+                all(isinstance(key, str) and key for key in ids)):
             raise ValueError("forecast identity scope invalid")
         selected = tuple(intended_sensor_ids)
         if not selected or len(set(selected)) != len(selected) or any(key not in ids for key in selected):
@@ -112,17 +127,23 @@ class PredictiveAdequacyMonitor:
         if (source_id, next_time) in self._seen_sensor_event:
             raise ValueError("repeated physical sensor event")
         self._validate_states(forecast, ids, "invalid joint predictive distribution")
+        # Ensure the eventual evidence receipt can carry an immutable binding
+        # before accepting the forecast, rather than failing after feedback.
+        forecast_signature(forecast)
         if alternative_forecast is not None:
             if tuple(alternative_forecast.state_probability) != ids:
                 raise ValueError("alternate prediction identity scope must match")
             self._validate_states(alternative_forecast, ids, "alternate predictive distribution invalid")
-        self.pending = (deepcopy(forecast), ids, source_id, next_time, selected,
-                        deepcopy(alternative_forecast))
+        self._pending = (deepcopy(forecast), ids, source_id, next_time, selected,
+                         deepcopy(alternative_forecast))
 
     def observe(self, observation: dict, *, evidence_id: str, source_id: str) -> EvidenceJudgement:
         if not isinstance(evidence_id, str) or not evidence_id:
             raise ValueError("nonempty evidence ID required")
-        observed = observation.get("measurements", [])
+        if (not isinstance(observation, dict) or type(observation.get("t")) is not int or
+                observation["t"] < 0 or not isinstance(observation.get("measurements"), list)):
+            raise ValueError("malformed observation envelope")
+        observed = observation["measurements"]
         if not isinstance(observed, list) or not all(isinstance(m, dict) and set(m) == {"id", "bit"}
                                                        and isinstance(m["id"], str)
                                                        and type(m["bit"]) is int and m["bit"] in (0, 1)
@@ -132,12 +153,12 @@ class PredictiveAdequacyMonitor:
         if evidence_id in self.receipts:
             if self._signatures[evidence_id] != signature:
                 raise ValueError("evidence ID was reused with different content")
-            if self.pending is not None:
+            if self._pending is not None:
                 raise RuntimeError("stale replay against pending future evidence")
             return self.receipts[evidence_id]
-        if self.pending is None:
+        if self._pending is None:
             raise RuntimeError("unsolicited observation without committed forecast")
-        forecast, ids, expected_source, next_time, coverage, alternative = self.pending
+        forecast, ids, expected_source, next_time, coverage, alternative = self._pending
         if source_id != expected_source or observation.get("t") != next_time:
             raise ValueError("sensor source/time does not match precommitment")
         if (source_id, next_time) in self._seen_sensor_event:
@@ -197,10 +218,11 @@ class PredictiveAdequacyMonitor:
                                    self.change_point_log_e_value if alternative is not None else None,
                                    bool(alternative is not None and
                                         self.change_point_log_e_value >= log(1.0 / self.alpha)))
-        self.pending = None
+        self._pending = None
         self.time = next_time
         self._seen_sensor_event.add((source_id, next_time))
         self.receipts[evidence_id] = result
         self._signatures[evidence_id] = signature
+        self._receipt_forecasts[evidence_id] = forecast_signature(forecast)
         self.history.append(result)
         return result

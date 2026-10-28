@@ -16,6 +16,7 @@ import time
 from .context_support import ObservedContextSupport
 from .evidence_guard import EpisodeEvidenceGuard
 from .evidence_monitor import PredictiveAdequacyMonitor
+from .joint_score import joint_log_loss, summarize_joint_log_loss
 from .stress_world import draw_world, change, choose_visibility, sensor_reading
 from .uncertainty import EvidenceBelief
 from .world import make_episode
@@ -88,6 +89,7 @@ def evaluate_pair(belief, world, pair, *, last_alarm=False, guard=None, context=
                      "structured_target_latency_ms": target_latency_ms,
                      "confidence": forecast.full_world_certainty,
                      "joint_nll": -math.log(max(probability, 1e-12)),
+                     "joint_log_score": joint_log_loss(probability),
                      "bit_brier": brier, "decision": decision["status"]})
     return rows
 
@@ -195,6 +197,7 @@ def summarize(trials):
             "pair_both_exact": statistics.mean(all(x["correct"] for x in t["rows"]) for t in trials),
             "bit_brier": statistics.mean(x["bit_brier"] for x in rows),
             "joint_nll": statistics.mean(x["joint_nll"] for x in rows),
+            "joint_log_score": summarize_joint_log_loss([x["joint_log_score"] for x in rows]),
             "full_world_ece10": ece,
             "coverage": len(accepted) / len(rows),
             "exact_if_covered": statistics.mean(x["correct"] for x in accepted) if accepted else None,

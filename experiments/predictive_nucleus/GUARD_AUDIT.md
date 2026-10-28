@@ -1,5 +1,8 @@
 # G1d-e: evidence persistence and paired selective-risk audit
 
+> **Audit hold:** Earlier joint log losses are clipped and public sensor RNG
+> does not validate the nominal bound. See [the integrity audit](2026-10-28-AUDIT.md).
+
 **Decision: G1 remains unadmitted.** This is an isolated development experiment,
 not a new world model, a physical-fault diagnosis, or an independent challenge.
 

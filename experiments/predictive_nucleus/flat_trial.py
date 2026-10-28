@@ -11,6 +11,7 @@ import statistics
 from time import perf_counter
 
 from .context_trial import frozen_config_v6
+from .joint_score import joint_log_loss, summarize_joint_log_loss
 from .protocol import read_protocol
 from .stress_trial import SCENARIOS, rollout
 from .stress_world import draw_world
@@ -71,6 +72,7 @@ def _score(rows, eligibility):
     wrong = sum(not r["correct"] for r in covered)
     return {"queries": len(rows), "joint_map_exact": statistics.mean(r["correct"] for r in rows),
             "joint_nll": statistics.mean(r["joint_nll"] for r in rows),
+            "joint_log_score": summarize_joint_log_loss([r["joint_log_score"] for r in rows]),
             "bit_brier": statistics.mean(r["bit_brier"] for r in rows), "joint_map_ece10": ece,
             "coverage": len(covered) / len(rows), "covered_wrong_per_query": wrong / len(rows),
             "error_given_coverage": wrong / len(covered) if covered else None}
@@ -128,9 +130,11 @@ def evaluate_models(kernel, flat, temperature, cfg, world_count,
                     brier = statistics.mean((p - actual) ** 2 for p, actual in zip(marginals, truth))
                     f = {"case_id": case_id + f":direction-{direction}", "correct": best == truth,
                          "confidence": confidence, "joint_nll": -math.log(max(p_truth, 1e-12)),
+                         "joint_log_score": joint_log_loss(p_truth),
                          "bit_brier": brier, "eligible": confidence >= .95}
                     s = {"case_id": f["case_id"], "correct": row["joint_map_correct"],
                          "confidence": row["joint_map_confidence"], "joint_nll": row["joint_nll"],
+                         "joint_log_score": row["joint_log_score"],
                          "bit_brier": row["bit_brier"], "eligible": row["guard_eligible"],
                          "context_eligible": row["context_eligible"]}
                     structured_latency.append(row["structured_target_latency_ms"])
@@ -147,6 +151,14 @@ def evaluate_models(kernel, flat, temperature, cfg, world_count,
                 "flat_pair_both_exact": statistics.mean(all(f["correct"] for _, f in pair) for pair in paired),
                 "structured_correct_case_ids": [s["case_id"] for pair in paired for s, _ in pair if s["correct"]],
                 "flat_correct_case_ids": [f["case_id"] for pair in paired for _, f in pair if f["correct"]],
+                "structured_zero_probability_case_ids": [s["case_id"] for pair in paired for s, _ in pair
+                                                         if s["joint_log_score"]["zero_probability"]],
+                "flat_zero_probability_case_ids": [f["case_id"] for pair in paired for _, f in pair
+                                                   if f["joint_log_score"]["zero_probability"]],
+                "structured_floor_applied_case_ids": [s["case_id"] for pair in paired for s, _ in pair
+                                                      if s["joint_log_score"]["floor_applied"]],
+                "flat_floor_applied_case_ids": [f["case_id"] for pair in paired for _, f in pair
+                                                if f["joint_log_score"]["floor_applied"]],
                 "public_trajectory_digests": trajectory_digests,
                 "structured_correct_flat_wrong": [s["case_id"] for pair in paired for s, f in pair
                                                   if s["correct"] and not f["correct"]],

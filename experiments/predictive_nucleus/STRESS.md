@@ -1,5 +1,9 @@
 # G1d-c: development stress without language
 
+> **Audit hold:** Joint log loss is clipped, sensor randomness derives from a
+> public handle, and physics strata use different initial worlds. See [the
+> integrity audit](2026-10-28-AUDIT.md).
+
 This tranche tests the same frozen G1c learned kernel and belief engine under
 sensor uncertainty and physics changes. It is **not an independently blinded
 challenge**: the worlds in stress_world.py are public, developer-authored
