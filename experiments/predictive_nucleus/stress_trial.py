@@ -13,11 +13,8 @@ import random
 import statistics
 import time
 
-import torch
-
-from .calibration import calibrate
+from .evidence_guard import EpisodeEvidenceGuard
 from .evidence_monitor import PredictiveAdequacyMonitor
-from .latent_model import build_samples, fit_kernel
 from .stress_world import draw_world, change, choose_visibility, sensor_reading
 from .uncertainty import EvidenceBelief
 from .world import make_episode
@@ -35,13 +32,24 @@ SCENARIOS = {
 
 
 def learning_data(split, count):
+    from .latent_model import build_samples
     seeds = {"train": (101, 103, 107, 109, 113),
              "calibration": (307, 311, 313, 317, 331)}[split]
     return build_samples([make_episode(split, seeds[i % 5], i,
                         ("single_contact", "two_contacts")[i % 2]) for i in range(count)])
 
 
-def evaluate_pair(belief, world, pair, *, last_alarm=False):
+def joint_map_world(forecast):
+    """MAP complete world and its *own* joint probability; ties are stable."""
+    worlds = defaultdict(float)
+    for (_, bits), mass in forecast.states.items():
+        worlds[bits] += mass
+    # Lexicographically smallest world breaks equal-probability ties.
+    bits = min(worlds, key=lambda state: (-worlds[state], state))
+    return bits, worlds[bits]
+
+
+def evaluate_pair(belief, world, pair, *, last_alarm=False, guard=None):
     """Evaluator reads hidden truth only after two read-only predictions."""
     rows = []
     for ids in (pair, tuple(reversed(pair))):
@@ -51,11 +59,16 @@ def evaluate_pair(belief, world, pair, *, last_alarm=False):
         next_world = change(world, action)
         truth = tuple(next_world.bits[next_world.ids.index(name)] for name in belief.ids)
         predicted = tuple(int(forecast.state_probability[name] >= .5) for name in belief.ids)
+        map_world, map_confidence = joint_map_world(forecast)
         probability = sum(mass for (_, bits), mass in forecast.states.items() if bits == truth)
         brier = statistics.mean((forecast.state_probability[name] - truth[i]) ** 2
                                 for i, name in enumerate(belief.ids))
         rows.append({"correct": truth == predicted,
                      "eligible": decision["status"] == "PREDICT_WITH_EVIDENCE" and not last_alarm,
+                     "joint_map_correct": truth == map_world,
+                     "joint_map_confidence": map_confidence,
+                     "guard_eligible": decision["status"] == "PREDICT_WITH_EVIDENCE" and
+                         (guard is None or not guard.blocked),
                      "confidence": forecast.full_world_certainty,
                      "joint_nll": -math.log(max(probability, 1e-12)),
                      "bit_brier": brier, "decision": decision["status"]})
@@ -74,6 +87,7 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
                                        for j, name in enumerate(world.ids)]}
     belief = EvidenceBelief(kernel, first, sensor_error_rate=assumed_noise)
     monitor = PredictiveAdequacyMonitor({"lab-sensor": assumed_noise}, alpha=.05)
+    guard = EpisodeEvidenceGuard(alpha=.05)
     contacts = [{"kind": "contact", "participants": [a, b]}
                 for a in world.ids for b in world.ids if a != b]
     preparations = [{"kind": "set", "participants": [world.ids[0]], "value": bit}
@@ -82,6 +96,7 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
     pair = tuple(target_rng.choice(contacts)["participants"])
     steps = []
     latencies = []
+    guard_latencies = []
     for i in range(budget):
         t0 = time.perf_counter()
         verification_action = False
@@ -115,18 +130,24 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
         observed = sensor_reading(world, i + 1, visible, rng, actual_noise)
         checked = monitor.observe(observed, evidence_id=f"lab-{seed}-{i}", source_id="lab-sensor")
         update = belief.receive(observed, f"world-{seed}-{i}")
+        guard_start = time.perf_counter()
+        guard.record(monitor, belief, update)
+        guard_latencies.append((time.perf_counter() - guard_start) * 1000)
         steps.append({"action": action, "observed_likelihood": checked.observed_likelihood,
                       "observed_count": checked.observed_bits, "monitor_status": checked.status,
                       "belief_status": update.status, "alarm": checked.alarm,
                       "change_point_alarm": checked.change_point_alarm,
                       "verification": verification_action})
-    rows = evaluate_pair(belief, world, pair, last_alarm=any(x["alarm"] for x in steps))
+    rows = evaluate_pair(belief, world, pair, last_alarm=any(x["alarm"] for x in steps), guard=guard)
     return {"probes": len(steps), "set_probes": sum(s["action"]["kind"] == "set" for s in steps),
             "verification_probes": sum(s["verification"] for s in steps),
             "belief_conflict": any(s["belief_status"] in ("CONFLICTING_EVIDENCE", "MODEL_MISMATCH_CANDIDATE") for s in steps),
             "change_point_alarm": any(s["change_point_alarm"] for s in steps),
             "observed_bits": sum(s["observed_count"] for s in steps),
             "alarm": any(x["alarm"] for x in steps), "rows": rows,
+            "guard_conflicts": sorted(guard.conflicts),
+            "guard_portfolio_alarm": guard.portfolio_alarm,
+            "guard_record_latency_ms": guard_latencies,
             "probe_statuses": [s["monitor_status"] for s in steps],
             "latency_ms": latencies}
 
@@ -161,6 +182,8 @@ def summarize(trials):
 
 def experiment(model_seed: int, train_count: int, calib_count: int,
                n: int, steps: int, scenarios=tuple(SCENARIOS)):
+    from .calibration import calibrate
+    from .latent_model import fit_kernel
     train, calib = learning_data("train", train_count), learning_data("calibration", calib_count)
     model, train_report = fit_kernel(train, model_seed, steps=steps)
     kernel, calibration = calibrate(model, calib)
@@ -202,6 +225,7 @@ def experiment(model_seed: int, train_count: int, calib_count: int,
 
 
 def main():
+    import torch
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--train", type=int, default=600)
     parser.add_argument("--calibration", type=int, default=200)

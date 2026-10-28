@@ -10,11 +10,8 @@ import json
 from pathlib import Path
 from time import perf_counter
 
-import torch
 from .stress_trial import SCENARIOS, rollout, summarize, learning_data
 from .stress_world import draw_world
-from .latent_model import fit_kernel
-from .calibration import calibrate
 
 HERE = Path(__file__).resolve().parent
 
@@ -35,6 +32,8 @@ def frozen_config():
 
 
 def evaluate(seed, train_count, calib_count, world_count, steps, cfg):
+    from .latent_model import fit_kernel
+    from .calibration import calibrate
     train = learning_data("train", train_count)
     calibration = learning_data("calibration", calib_count)
     model, fit = fit_kernel(train, seed, steps=steps)
@@ -91,6 +90,7 @@ def evaluate(seed, train_count, calib_count, world_count, steps, cfg):
 
 
 def main():
+    import torch
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--train", type=int, default=600)
     p.add_argument("--calibration", type=int, default=200)

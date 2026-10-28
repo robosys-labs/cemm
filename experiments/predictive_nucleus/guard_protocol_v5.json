@@ -1,0 +1,17 @@
+{
+  "schema_version": 5,
+  "id": "cemm-g1d-e-paired-evidence-guard-development-2026-10-28",
+  "status": "PUBLIC_DEVELOPMENT_ONLY_NOT_A_G1_CHALLENGE",
+  "hypothesis": "Keeping observed conflicts visible for an episode and using a fixed mixture of forecast-evidence processes changes selective error and coverage at zero additional physical probe cost.",
+  "comparison": "same learned kernel, identical actions, observations, posterior and joint-MAP target prediction; compare legacy versus episode-guard eligibility on the same trajectory",
+  "opened_v4_world_seeds": [701, 709, 719, 727, 733],
+  "new_public_world_seeds": [811, 821, 823, 827, 829],
+  "model_seeds": [7, 11, 23, 37, 53],
+  "canonical_budget": {"train": 600, "calibration": 200, "worlds_per_stratum": 10, "steps": 200, "max_physical_probes": 2},
+  "strata": ["reference_clean", "reference_partial", "reference_noisy", "reference_sensor_misspecified", "bilateral_flip", "conditional_flip", "switch_orientation"],
+  "guard": {"mixture_weights": [0.5, 0.5], "alpha": 0.05, "latch_conflicts_for_episode": true},
+  "reports": ["unconditional_map_exact", "coverage", "covered_wrong_per_query", "error_given_coverage", "correct_abstained_per_query", "previously_covered_correct_now_abstained", "previously_covered_wrong_now_abstained", "newly_covered_correct", "newly_covered_wrong", "portfolio_alarm", "belief_conflict", "probes", "per_model_seed", "case_ids"],
+  "limitations": ["public_simulator_families", "new_seeds_are_not_independent_blind_challenges", "five_optimizer_seeds_share_the_same_world_lineages", "heuristic_conflict_blocking_has_no_nominal_alpha_guarantee", "sensor_misspecification_invalidates_nominal_e_process_bound", "guard_does_not_improve_unguarded_prediction_or_establish_cause", "matched_flat_recurrent_control_missing"],
+  "original_sealed_challenge_never_open": true,
+  "decision": "G1_NOT_ADMITTED"
+}
