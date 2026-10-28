@@ -163,3 +163,44 @@ jobs:
           name: g1f-context-coverage-unadmitted
           path: g1f-context-audit.json
           retention-days: 30
+      - name: Matched-parameter flat GRU public reference (NOT G1)
+        run: |
+          python -m experiments.predictive_nucleus.flat_trial \
+            --train 600 --calibration 200 --worlds 10 --steps 200 \
+            --seeds 7,11,23,37,53 > g1g-flat-reference.json
+      - name: Show flat comparison and measured fit costs
+        run: |
+          python - <<'PY'
+          import json, statistics
+          report = json.load(open('g1g-flat-reference.json'))
+          for r in report['results']:
+              print(json.dumps({
+                  'seed': r['model_seed'], 'gate': 'NOT_ADMITTED',
+                  'structured_parameters': r['structured_training']['parameters'],
+                  'flat_parameters': r['flat_training']['parameters'],
+                  'structured_steps': r['structured_training']['gradient_steps'],
+                  'flat_steps': r['flat_training']['gradient_steps'],
+                  'structured_fit_seconds': r['structured_fit_seconds'],
+                  'flat_fit_seconds': r['flat_training']['fit_seconds'],
+                  'flat_budget_overshoot_seconds': r['flat_training']['overshoot_seconds'],
+              }, sort_keys=True))
+          for scenario in report['results'][0]['splits']['new_public_v7']:
+              cases = [r['splits']['new_public_v7'][scenario] for r in report['results']]
+              mean = lambda values: round(statistics.mean(values), 4)
+              print(json.dumps({
+                  'scenario': scenario, 'split': 'new_public_v7', 'gate': 'NOT_ADMITTED',
+                  'structured_map_exact': mean(c['structured']['joint_map_exact'] for c in cases),
+                  'flat_map_exact': mean(c['flat']['joint_map_exact'] for c in cases),
+                  'structured_joint_nll': mean(c['structured']['joint_nll'] for c in cases),
+                  'flat_joint_nll': mean(c['flat']['joint_nll'] for c in cases),
+                  'structured_coverage': mean(c['structured']['coverage'] for c in cases),
+                  'flat_coverage': mean(c['flat']['coverage'] for c in cases),
+                  'same_probes_per_world': mean(c['mean_physical_probes'] for c in cases),
+              }, sort_keys=True))
+          PY
+      - name: Archive unadmitted flat reference
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1g-flat-recurrent-reference-unadmitted
+          path: g1g-flat-reference.json
+          retention-days: 30
