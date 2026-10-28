@@ -67,6 +67,14 @@ jobs:
           name: shared-training-wiring-not-a-gate
           path: shared-training-smoke.json
           retention-days: 30
+      - name: Count public two-pair coverage (NOT a model evaluation)
+        run: python -m experiments.predictive_nucleus.two_pair_fixture > two-pair-coverage.json
+      - name: Archive public two-pair coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: two-pair-coverage-not-a-gate
+          path: two-pair-coverage.json
+          retention-days: 30
       - name: Compare pre-audit and corrected models on the same host
         run: |
           git cat-file -e e8ff892d22ea2c63eba7de7bcccd444e39cfd0ff^{commit}

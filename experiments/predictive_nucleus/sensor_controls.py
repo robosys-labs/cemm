@@ -7,10 +7,13 @@ outcomes*, not complete-world probabilities. Its table is fitted offline from
 supplied histories, then frozen; it never learns from query feedback. Neither
 control authenticates histories, establishes independent custody, or accesses
 simulator gold. Unseen or incomplete lookup contexts explicitly abstain.
+The full-anchor wrapper lifts local outcomes by assuming all nonparticipants
+persist at their last readings; it does not establish that assumption.
 """
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from copy import deepcopy
 from dataclasses import dataclass
 
 from .flat_data import event_features, initial_ids, readings
@@ -202,3 +205,58 @@ class EventMemory:
                 return {"status": "PREDICTED", "reason": None,
                         "probabilities": {outcome: count / total for outcome, count in outcomes}}
         return {"status": "ABSTAIN", "reason": "UNSEEN_CONTEXT", "probabilities": None}
+
+
+class FullWorldEventMemory:
+    """Lift local empirical outcomes with an explicit persistence assumption.
+
+    The output is a joint distribution only over the IDs supplied in the
+    anchor. Participant outcomes come from a frozen relative-slot event table;
+    nonparticipants retain their latest actual reading, even when it is stale.
+    Neither anchor completeness, persistence nor a sensor model is established
+    by this control. Rates are unsmoothed and calibration is not established.
+    """
+
+    def __init__(self, memory):
+        if type(memory) is not EventMemory:
+            raise ValueError("expected a frozen event table")
+        self._memory = memory
+        self._persistence = NoChange()
+
+    def start(self, anchor):
+        self._persistence.start(anchor)
+
+    def _forecast(self, turn):
+        latest = self._persistence.preview(turn)
+        ids = tuple(latest)
+        local = self._memory.predict(ids, turn)
+        seen = readings(turn["observation"])
+        participants = turn["action"]["participants"]
+        carried = tuple(name for name in ids if name not in participants)
+        stale = tuple(name for name in carried if name not in seen)
+        result = {"status": local["status"], "reason": local["reason"],
+                  "ids": ids, "worlds": None, "carried_nonparticipants": carried,
+                  "stale_nonparticipants": stale, "calibration": "NOT_ESTABLISHED"}
+        if local["status"] == "PREDICTED":
+            worlds = {}
+            for outcome, probability in local["probabilities"].items():
+                proposed = latest.copy()
+                proposed.update(zip(participants, outcome))
+                worlds[tuple(proposed[name] for name in ids)] = probability
+            result["worlds"] = worlds
+        return result
+
+    def preview(self, turn):
+        """Return a fresh forecast without advancing the feedback sequence."""
+        return self._forecast(deepcopy(turn))
+
+    def predict(self, turn):
+        """Commit a forecast or abstention before accepting feedback."""
+        snapshot = deepcopy(turn)
+        result = self._forecast(snapshot)
+        self._persistence.predict(snapshot)
+        return result
+
+    def receive(self, feedback):
+        """Update last readings only; never fit the frozen event table."""
+        self._persistence.receive(feedback)
