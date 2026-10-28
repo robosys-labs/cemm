@@ -99,3 +99,35 @@ jobs:
           name: g1d-public-temporal-validation-unadmitted
           path: g1d-temporal.json
           retention-days: 30
+      - name: Paired evidence guard public audit (NOT G1)
+        run: |
+          python -m experiments.predictive_nucleus.guard_trial \
+            --train 600 --calibration 200 --worlds 10 --steps 200 \
+            --seeds 7,11,23,37,53 > g1d-guard-audit.json
+      - name: Show paired risk and coverage per public stratum
+        run: |
+          python - <<'PY'
+          import json, statistics
+          report = json.load(open('g1d-guard-audit.json'))
+          for split in ('opened_v4', 'fresh_public_v5'):
+              for scenario in report['results'][0]['splits'][split]:
+                  cases = [r['splits'][split][scenario] for r in report['results']]
+                  mean = lambda values: round(statistics.mean(values), 4)
+                  print(json.dumps({
+                      'split': split, 'scenario': scenario, 'gate': 'NOT_ADMITTED',
+                      'map_exact': mean(c['unconditional_map_exact'] for c in cases),
+                      'legacy_coverage': mean(c['legacy']['coverage'] for c in cases),
+                      'guard_coverage': mean(c['guard']['coverage'] for c in cases),
+                      'legacy_wrong_per_query': mean(c['legacy']['covered_wrong_per_query'] for c in cases),
+                      'guard_wrong_per_query': mean(c['guard']['covered_wrong_per_query'] for c in cases),
+                      'guard_correct_abstained_per_query': mean(c['guard']['correct_abstained_per_query'] for c in cases),
+                      'probes_per_world': mean(c['mean_physical_probes'] for c in cases),
+                      'newly_covered_wrong': sum(len(c['newly_covered_wrong']) for c in cases),
+                  }, sort_keys=True))
+          PY
+      - name: Archive paired unadmitted guard audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1d-paired-guard-audit-unadmitted
+          path: g1d-guard-audit.json
+          retention-days: 30

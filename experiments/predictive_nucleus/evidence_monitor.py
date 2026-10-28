@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from copy import deepcopy
 from math import fsum, isfinite, log
+from types import MappingProxyType
 from typing import Mapping
 
 
@@ -52,8 +53,9 @@ class PredictiveAdequacyMonitor:
             for source, error in source_error_rates.items()
         ):
             raise ValueError("source-specific sensor calibration required")
-        self.source_error_rates = dict(source_error_rates)
-        self.alpha = alpha
+        # The calibration and threshold are part of the pre-outcome contract.
+        self._source_error_rates = MappingProxyType(dict(source_error_rates))
+        self._alpha = alpha
         self.time = start_time
         self.log_e_value = 0.0
         self.change_point_log_e_value = 0.0
@@ -62,6 +64,35 @@ class PredictiveAdequacyMonitor:
         self._signatures: dict[str, tuple] = {}
         self._seen_sensor_event: set[tuple[str, int]] = set()
         self.history: list[EvidenceJudgement] = []
+
+    @property
+    def source_error_rates(self):
+        return self._source_error_rates
+
+    @property
+    def alpha(self):
+        return self._alpha
+
+    @property
+    def last_observation_signature(self):
+        if not self.history:
+            return None
+        return self._signatures[self.history[-1].evidence_id]
+
+    @staticmethod
+    def _validate_states(forecast, ids, message):
+        try:
+            states = forecast.states
+            if not states or any(
+                type(h) is not int or h not in (0, 1) or
+                not isinstance(bits, tuple) or len(bits) != len(ids) or
+                any(type(bit) is not int or bit not in (0, 1) for bit in bits) or
+                type(weight) not in (int, float) or not isfinite(weight) or not 0 <= weight <= 1
+                for (h, bits), weight in states.items()
+            ) or abs(fsum(states.values()) - 1) > 1e-6:
+                raise ValueError(message)
+        except (AttributeError, TypeError, OverflowError, ValueError) as exc:
+            raise ValueError(message) from exc
 
     def commit(self, forecast, *, source_id: str, next_time: int,
                intended_sensor_ids: tuple[str, ...], alternative_forecast=None):
@@ -80,18 +111,11 @@ class PredictiveAdequacyMonitor:
             raise ValueError("invalid precommitted coverage")
         if (source_id, next_time) in self._seen_sensor_event:
             raise ValueError("repeated physical sensor event")
-        total = fsum(forecast.states.values())
-        if abs(total - 1) > 1e-6 or not all(isfinite(w) and 0 <= w <= 1 for w in forecast.states.values()):
-            raise ValueError("invalid joint predictive distribution")
-        if any(h not in (0, 1) or len(bits) != len(ids) or any(bit not in (0, 1) for bit in bits)
-               for (h, bits) in forecast.states):
-            raise ValueError("invalid joint state or latent alternative")
+        self._validate_states(forecast, ids, "invalid joint predictive distribution")
         if alternative_forecast is not None:
             if tuple(alternative_forecast.state_probability) != ids:
                 raise ValueError("alternate prediction identity scope must match")
-            alt_total = fsum(alternative_forecast.states.values())
-            if abs(alt_total - 1) > 1e-6 or not all(isfinite(w) and 0 <= w <= 1 for w in alternative_forecast.states.values()):
-                raise ValueError("alternate predictive distribution invalid")
+            self._validate_states(alternative_forecast, ids, "alternate predictive distribution invalid")
         self.pending = (deepcopy(forecast), ids, source_id, next_time, selected,
                         deepcopy(alternative_forecast))
 
@@ -145,7 +169,12 @@ class PredictiveAdequacyMonitor:
                 ratio_log = float("-inf")
             else:
                 ratio_log = log(alt_likelihood) - log(model_probability)
-            self.change_point_log_e_value += ratio_log
+            # A zero e-value is absorbing. In particular, do not turn
+            # -inf + inf into NaN when a later outcome is impossible under p.
+            # The latter has null probability zero; the generic process still
+            # flags it. An already infinite e-value also remains infinite.
+            if isfinite(self.change_point_log_e_value):
+                self.change_point_log_e_value += ratio_log
         else:
             alt_likelihood = None
         if model_probability < 0 or model_probability > 1 + 1e-6:
