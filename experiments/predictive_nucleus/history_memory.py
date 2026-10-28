@@ -11,7 +11,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 import json
 
-from .causal_replay import DevelopmentHistory, _development_snapshot
+from .causal_replay import DevelopmentHistory, FullSensorHistory, _development_snapshot
 from .flat_data import initial_ids
 from .schedule_fixture import SensorEpisode
 from .sensor_controls import _observation, _turn
@@ -37,9 +37,10 @@ class HistoryMemory:
     episode_count: int
     total_events: int
     complete_targets: int
+    feedback_policy: str = "participants"
 
     def __post_init__(self):
-        if (type(self._rows) is not tuple or
+        if (self.feedback_policy not in ("participants", "full") or type(self._rows) is not tuple or
                 any(type(n) is not int or n < 0 for n in
                     (self.episode_count, self.total_events, self.complete_targets)) or
                 not self.episode_count <= self.total_events <= 12 * self.episode_count or
@@ -70,7 +71,10 @@ class HistoryMemory:
                     if 2 + 2 * i < len(entries):
                         feedback = entries[2 + 2 * i]
                         measured = _observation(feedback, time=i + 1, ids=ids)
-                        if action["kind"] != "observe" and not set(measured) <= set(action["participants"]):
+                        if self.feedback_policy == "full" and set(measured) != set(ids):
+                            raise ValueError("incomplete full feedback")
+                        if (self.feedback_policy == "participants" and action["kind"] != "observe" and
+                                not set(measured) <= set(action["participants"])):
                             raise ValueError("invalid history feedback")
                         previous = key[2 + 2 * i]
             except (TypeError, KeyError, IndexError, ValueError) as exc:
@@ -96,13 +100,23 @@ class HistoryMemory:
         Split membership and provenance are the caller's responsibility. A
         complete feedback is a complete *sensor reading*, not assured truth.
         """
+        return cls._fit(histories, "participants")
+
+    @classmethod
+    def fit_full_sensor(cls, histories):
+        """Fit explicitly complete feedback without fabricating missing bits."""
+        return cls._fit(histories, "full")
+
+    @classmethod
+    def _fit(cls, histories, policy):
         counts = defaultdict(Counter)
         episodes = total = complete = 0
         for history in histories:
-            if type(history) is not DevelopmentHistory:
+            expected_type = FullSensorHistory if policy == "full" else DevelopmentHistory
+            if type(history) is not expected_type:
                 raise ValueError("expected immutable development history")
             anchor, turns, feedbacks = _development_snapshot(
-                SensorEpisode(history._observations, history._action_records))
+                SensorEpisode(history._observations, history._action_records), feedback_policy=policy)
             ids = initial_ids(json.loads(anchor))
             prefix = [_encode(json.loads(anchor))]
             for turn, feedback in zip(turns, feedbacks, strict=True):
@@ -118,7 +132,7 @@ class HistoryMemory:
             episodes += 1
         # Nested tuples avoid caller mutation of the stored counts.
         rows = tuple((key, tuple(sorted(outcomes.items()))) for key, outcomes in sorted(counts.items()))
-        return cls(rows, episodes, total, complete)
+        return cls(rows, episodes, total, complete, policy)
 
     def new_predictor(self):
         return HistoryMemoryPredictor(self)
@@ -131,6 +145,7 @@ class HistoryMemoryPredictor:
         if type(memory) is not HistoryMemory:
             raise ValueError("expected fitted history memory")
         self._table = dict(memory._rows)
+        self._feedback_policy = memory.feedback_policy
         self._prefix = None
         self._pending = None
 
@@ -167,7 +182,9 @@ class HistoryMemoryPredictor:
             raise RuntimeError("prediction required before feedback")
         seen = _observation(feedback, time=self._time + 1, ids=self._ids)
         kind, participants = self._pending
-        if kind != "observe" and not set(seen) <= set(participants):
+        if self._feedback_policy == "full" and set(seen) != set(self._ids):
+            raise ValueError("full feedback must measure every anchor identity")
+        if self._feedback_policy == "participants" and kind != "observe" and not set(seen) <= set(participants):
             raise ValueError("action feedback may contain only participants")
         self._previous = _encode(feedback)
         self._prefix.append(self._previous)
