@@ -85,11 +85,14 @@ def _development_snapshot(view):
     The sensor view synthesizes timestamps from sequence indexes; this checks
     logical ordering but cannot authenticate original source timestamps.
     """
-    if type(view) is not SensorEpisode or not 1 <= len(view.actions) <= 12:
+    if type(view) is not SensorEpisode:
         raise ValueError("expected a bounded development sensor view")
     if (type(view._observations) is not tuple or type(view._action_records) is not tuple or
             len(view._observations) != len(view._action_records) + 1):
         raise ValueError("misaligned development sensor view")
+    action_count = len(view._action_records)
+    if not 1 <= action_count <= 12:
+        raise ValueError("expected a bounded development sensor view")
     for observation in view._observations:
         if type(observation) is not tuple:
             raise ValueError("invalid raw development observation")
@@ -108,7 +111,7 @@ def _development_snapshot(view):
                 (record[0] != "set" and record[2] is not None)):
             raise ValueError("invalid raw development action")
     turns, feedbacks, previous, ids = [], [], None, None
-    for i in range(len(view.actions)):
+    for i in range(action_count):
         turn = view.learner_turn(i)
         if type(turn) is not dict or set(turn) != {"observation", "action"}:
             raise ValueError("invalid input")

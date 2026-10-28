@@ -93,6 +93,8 @@ class GeneralReplayTests(unittest.TestCase):
             DevelopmentHistory.from_sensor_view(replace(source, _observations=source._observations[:-1]))
         with self.assertRaisesRegex(ValueError, "misaligned"):
             DevelopmentHistory.from_sensor_view(replace(source, _observations=source._observations + ((),)))
+        with self.assertRaisesRegex(ValueError, "misaligned"):
+            DevelopmentHistory.from_sensor_view(replace(source, _action_records=None))
         raw_observations = list(source._observations)
         raw_observations[0] = list(raw_observations[0])
         with self.assertRaisesRegex(ValueError, "raw development observation"):

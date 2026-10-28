@@ -53,6 +53,6 @@ Before G1 admission, separately review and freeze split lineage, sensor and
 event provenance, controls and compute; evaluate the independent challenge
 and held-out compositions under the roadmap. Existing G0–V8 locks are intact.
 
-This tranche has 8,589 Python physical lines across 61 files including tests,
+This tranche has 8,594 Python physical lines across 61 files including tests,
 above the roadmap's practical 2,000-line target. Any later consolidation
 must retain the independent correctness checks and historical replay evidence.
