@@ -37,6 +37,12 @@ retains A and B; after each set it retains A. This is a **loss-mask
 intervention**, not a participant-only sensor intervention: later flat inputs
 still contain the complete delivered feedback. Full targets are actual
 noiseless sensor readings, never imputed hidden bits or evaluator gold.
+Thus a bit omitted from one event's loss is still present in the following
+event's input, except after the final action. This design measures the effect
+of direct loss masking *conditional on full delivered histories*; it does not
+withhold those readings from the recurrent model or isolate persistence
+learning. Full and masked training NLLs describe different marginal events
+and are not directly comparable as measures of model quality.
 
 ## Fixed public data and budgets for review
 
@@ -83,6 +89,25 @@ an equal-objective learner and may abstain on unseen IDs or prefixes. The
 opened evaluation has disjoint IDs, so its coverage may be zero; complete
 training observations alone do not make it a strong memorization control.
 
+An optional role-normalized full-history baseline assigns anonymous slots
+from the ordered operands of the first action, when it is a two-entity contact,
+and the sole remaining entity. Unsupported first actions abstain. It uses
+neither future actions nor outcomes to choose slots. Its keys
+deliberately discard sensor measurement-list order while retaining the full
+chronological action/feedback prefix, operand order and measured bits; this
+is a supplied normalization choice. Report its coverage, abstentions and
+scores separately from the literal-ID control. Exact prefix matching can
+still abstain on new trajectories, so normalization does not by itself
+establish stronger generalization.
+
+As a post-hoc development check, an empirical role-normalized memory table
+was fitted on the 64 opened training histories and queried on the opened
+evaluation histories to inspect prefix coverage and ID equivariance. Its
+coverage was 64/64 at the first contact and 0/64 at each subsequent action.
+No evaluator truth was read and no correctness scores or neural-model fits
+were produced. These exploratory checks precede the proposed study and must
+not be represented as outputs of a frozen protocol.
+
 Before fitting, verify that a given seed's initial flat weight fingerprint is
 identical across all four arms and that the ordered structured sample tensors
 and episode grouping are equal across arms. Fail on a mismatch. This does
@@ -95,6 +120,10 @@ same host where feasible, record CPU, software and determinism settings, and
 retain weights or sufficient checkpoints in addition to fingerprints. Report
 differences across hosts as separate refits unless weight and prediction
 identity is verified; do not assume bitwise reproducibility.
+Define execution and measurement order before locking, including warm-up and
+preprocessing in declared timing categories. Process-wide peak RSS is a
+high-water mark, not per-model memory; matching updates or a single host's
+wall time do not establish matched FLOPs.
 
 ## Opened evaluation and interpretation
 
@@ -103,8 +132,9 @@ one of the six bijections applied consistently per case; this yields 384
 related views and 1,920 action queries per model and seed. The proposed
 evaluation must measure all three IDs after each action using the actual
 evaluator sensor, retaining the original PR43 reading order and appending
-previously unobserved IDs. Its full-feedback fixture does not yet exist and
-must be implemented and reviewed before use. Full-feedback scores cannot be
+previously unobserved IDs. A development full-feedback fixture now exists;
+its review, committed code lineage and hashes are required before use.
+Full-feedback scores cannot be
 directly compared with PR43's partial-feedback scores, because the histories
 and information differ. Use the same realized evaluation histories for all
 models and finish fitting all arms and controls before any evaluation score.
@@ -124,7 +154,9 @@ scalar `A(a,m)` as flat-model correct complete-world MAP forecasts divided by
 Report observe separately. Report coverage and abstentions alongside this
 per-query value; an abstention is not a zero-probability forecast. Report
 every seed separately, and show both within-ID-arm target-mask contrasts and
-within-mask ID-augmentation contrasts. The interaction is
+within-mask ID-augmentation contrasts, including paired previously-correct
+to wrong and previously-wrong to correct counts on the same case, action and
+ID view. The interaction is
 `[A(augmented,full) - A(augmented,masked)] -
 [A(repeated,full) - A(repeated,masked)]`. Report structured and control
 results separately without treating their objectives, biases or compute as
@@ -139,3 +171,21 @@ An independently authored and independently held challenge, genuinely
 withheld composition families, matched resource comparisons and provenance
 remain prerequisites for G1. New block numbers, hashes or deterministic
 seeds in this public generator do not create independence or blind custody.
+Complete feedback also simplifies the partially observed setting in the
+roadmap; success on these cases does not establish performance when sensor
+readings are missing, stale or noisy.
+
+## Decisions required before freezing
+
+This is a proposal, not an executable protocol. Before the proposed study's
+fits or scored outputs, independently review and lock the full-feedback evaluation
+fixture and sensor order; source commit and fixture/code hashes; optimizer
+defaults, data types, software versions, thread and determinism settings;
+arm order, failure/abort policy, and primary contrasts with their hypotheses
+and interpretation. Record all seeds and all results, including failed arms;
+do not choose a winner or tune on these opened cases. Define retention and
+loading of actual model checkpoints, input/target fingerprints, per-case
+distributions, abstentions and scoring records, plus an exact reproduction
+command. The protocol manifest must be committed and hash-locked before the
+first fit or scored output. If a defect is found after results, preserve the
+original and document a new revision rather than silently changing it.
