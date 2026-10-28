@@ -1,0 +1,56 @@
+name: Public case-6 post-hoc forecast diagnostic
+
+on:
+  pull_request:
+    types: [synchronize]
+    paths:
+      - '.github/workflows/case6-posthoc-diagnostic.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  inspect-raw-forecasts:
+    # Exactly one launch immediately after the reviewed diagnostic commit.
+    if: github.event.pull_request.number == 47 && github.event.action == 'synchronize' && github.event.before == 'fabb40ea69c8af76dfcb0d809126849afb2be995'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+          cache-dependency-path: 'pyproject.toml'
+      - name: Install CPU-only PyTorch
+        run: python -m pip install 'torch==2.10.0' --index-url https://download.pytorch.org/whl/cpu
+      - name: Require the reviewed diagnostic and synthetic tests
+        run: |
+          printf '%s  %s\n' \
+            fd632e8a4be925fd4f97651d16d8715e2a54c45a4022e855ac6d761a27bfd4ce experiments/predictive_nucleus/diagnose_failed_case6.py \
+            df581d2716425b23c79f6fc1a06e051543a24a0662717338f2d88df3ffe3f2e3 experiments/predictive_nucleus/tests/test_diagnose_failed_case6.py | sha256sum -c
+          python -m unittest experiments.predictive_nucleus.tests.test_diagnose_failed_case6 -v
+      - name: Retrieve incomplete run checkpoints
+        uses: actions/download-artifact@v4
+        with:
+          name: full-sensor-paired-public-development
+          path: ${{ runner.temp }}/cemm-incomplete
+          github-token: ${{ github.token }}
+          run-id: 40707878378
+      - name: Inspect raw case-6 forecasts without scoring
+        timeout-minutes: 8
+        run: |
+          PYTHONHASHSEED=0 python -m experiments.predictive_nucleus.diagnose_failed_case6 --failed-output "$RUNNER_TEMP/cemm-incomplete" > "$RUNNER_TEMP/case6-diagnostic.pending.json"
+          mv "$RUNNER_TEMP/case6-diagnostic.pending.json" "$RUNNER_TEMP/case6-diagnostic.json"
+      - name: Preserve post-hoc diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 3
+        with:
+          name: case6-posthoc-forecast-diagnostic
+          path: ${{ runner.temp }}/case6-diagnostic.json
+          if-no-files-found: warn
+          retention-days: 30
