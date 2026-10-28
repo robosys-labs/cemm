@@ -13,6 +13,7 @@ import random
 import statistics
 import time
 
+from .context_support import ObservedContextSupport
 from .evidence_guard import EpisodeEvidenceGuard
 from .evidence_monitor import PredictiveAdequacyMonitor
 from .stress_world import draw_world, change, choose_visibility, sensor_reading
@@ -49,13 +50,17 @@ def joint_map_world(forecast):
     return bits, worlds[bits]
 
 
-def evaluate_pair(belief, world, pair, *, last_alarm=False, guard=None):
+def evaluate_pair(belief, world, pair, *, last_alarm=False, guard=None, context=None):
     """Evaluator reads hidden truth only after two read-only predictions."""
     rows = []
     for ids in (pair, tuple(reversed(pair))):
         action = {"kind": "contact", "participants": list(ids)}
         decision = belief.assess(action)
         forecast = belief.preview(action)
+        support_started = time.perf_counter()
+        support = context.assess(action) if context is not None else {
+            "supported": False, "status": "CONTEXT_UNAVAILABLE", "observed_events": 0}
+        support_latency_ms = (time.perf_counter() - support_started) * 1000
         next_world = change(world, action)
         truth = tuple(next_world.bits[next_world.ids.index(name)] for name in belief.ids)
         predicted = tuple(int(forecast.state_probability[name] >= .5) for name in belief.ids)
@@ -73,6 +78,11 @@ def evaluate_pair(belief, world, pair, *, last_alarm=False, guard=None):
                      "truth_world": list(truth),
                      "guard_eligible": decision["status"] == "PREDICT_WITH_EVIDENCE" and
                          (guard is None or not guard.blocked),
+                     "context_eligible": decision["status"] == "PREDICT_WITH_EVIDENCE" and
+                         (guard is None or not guard.blocked) and support["supported"],
+                     "context_status": support["status"],
+                     "context_observed_events": support["observed_events"],
+                     "context_assess_latency_ms": support_latency_ms,
                      "confidence": forecast.full_world_certainty,
                      "joint_nll": -math.log(max(probability, 1e-12)),
                      "bit_brier": brier, "decision": decision["status"]})
@@ -92,6 +102,7 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
     belief = EvidenceBelief(kernel, first, sensor_error_rate=assumed_noise)
     monitor = PredictiveAdequacyMonitor({"lab-sensor": assumed_noise}, alpha=.05)
     guard = EpisodeEvidenceGuard(alpha=.05)
+    context = ObservedContextSupport(first)
     contacts = [{"kind": "contact", "participants": [a, b]}
                 for a in world.ids for b in world.ids if a != b]
     preparations = [{"kind": "set", "participants": [world.ids[0]], "value": bit}
@@ -101,6 +112,7 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
     steps = []
     latencies = []
     guard_latencies = []
+    context_latencies = []
     for i in range(budget):
         t0 = time.perf_counter()
         verification_action = False
@@ -127,6 +139,9 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
         planned = tuple(action["participants"])
         visible = choose_visibility(planned, rng, missing_rate)
         reset_forecast = belief.preview_mechanism_reset(action, sensor_ids=planned) if policy == "active_validate" else None
+        context_start = time.perf_counter()
+        context.commit_action(action, intended_sensor_ids=planned, next_time=i + 1)
+        context_elapsed = time.perf_counter() - context_start
         forecast = belief.commit_action(action)
         monitor.commit(forecast, source_id="lab-sensor", next_time=i + 1,
                        intended_sensor_ids=planned, alternative_forecast=reset_forecast)
@@ -134,6 +149,9 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
         observed = sensor_reading(world, i + 1, visible, rng, actual_noise)
         checked = monitor.observe(observed, evidence_id=f"lab-{seed}-{i}", source_id="lab-sensor")
         update = belief.receive(observed, f"world-{seed}-{i}")
+        context_start = time.perf_counter()
+        context.receive(observed, f"context-{seed}-{i}")
+        context_latencies.append((context_elapsed + time.perf_counter() - context_start) * 1000)
         guard_start = time.perf_counter()
         guard.record(monitor, belief, update)
         guard_latencies.append((time.perf_counter() - guard_start) * 1000)
@@ -143,7 +161,7 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
                       "change_point_alarm": checked.change_point_alarm,
                       "observation": observed, "guard_blocked": guard.blocked,
                       "verification": verification_action})
-    rows = evaluate_pair(belief, world, pair, last_alarm=any(x["alarm"] for x in steps), guard=guard)
+    rows = evaluate_pair(belief, world, pair, last_alarm=any(x["alarm"] for x in steps), guard=guard, context=context)
     return {"probes": len(steps), "set_probes": sum(s["action"]["kind"] == "set" for s in steps),
             "verification_probes": sum(s["verification"] for s in steps),
             "belief_conflict": any(s["belief_status"] in ("CONFLICTING_EVIDENCE", "MODEL_MISMATCH_CANDIDATE") for s in steps),
@@ -153,6 +171,7 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
             "guard_conflicts": sorted(guard.conflicts),
             "guard_portfolio_alarm": guard.portfolio_alarm,
             "guard_record_latency_ms": guard_latencies,
+            "context_update_latency_ms": context_latencies,
             "initial_anchor": first, "probe_trace": steps,
             "probe_statuses": [s["monitor_status"] for s in steps],
             "latency_ms": latencies}
