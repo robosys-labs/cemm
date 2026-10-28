@@ -5,6 +5,8 @@ specific prediction failures in already-public fixtures, not establish
 independent generalization or an architectural advantage. The G1 roadmap
 still requires matched-example and compute controls, reviewed provenance and
 an independently authored and held challenge. No G0 challenge is opened.
+The [recorded results](DEVELOPMENT_COMPOSITION_RESULTS.md) retain the per-case
+artifact and distinguish predeclared scoring from post-run descriptions.
 
 The v2 [development protocol](dev_composition_protocol_v2.json) and its
 SHA-256 lock were committed before fitting or scoring. V1 remains in history
