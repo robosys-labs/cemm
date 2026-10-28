@@ -17,7 +17,11 @@ from .shared_training_smoke import CollectedEpisode, collect_shared_full_sensor
 
 @dataclass(frozen=True)
 class PreparedEpisode:
-    """Only the full sensor history and two loss-label views reach learners."""
+    """Full sensor records and label views with mapping metadata for audit.
+
+    A caller must pass only the intended records to each learner. This
+    in-process container does not enforce that boundary or hide metadata.
+    """
     history: FullSensorHistory
     full: CollectedEpisode
     masked: CollectedEpisode
