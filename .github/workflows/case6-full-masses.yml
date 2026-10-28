@@ -1,0 +1,56 @@
+name: Public case-6 post-hoc full mass inspection
+
+on:
+  pull_request:
+    types: [synchronize]
+    paths:
+      - '.github/workflows/case6-full-masses.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  inspect-raw-masses:
+    # Only the reviewed inspector's immediate successor launches this check.
+    if: github.event.pull_request.number == 47 && github.event.action == 'synchronize' && github.event.before == '8800dd3277868acf73e583a677419dd167d2379e'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+          cache-dependency-path: 'pyproject.toml'
+      - name: Install CPU-only PyTorch
+        run: python -m pip install 'torch==2.10.0' --index-url https://download.pytorch.org/whl/cpu
+      - name: Require the reviewed inspector and synthetic tests
+        run: |
+          printf '%s  %s\n' \
+            f2c7d8fcbccbc7322a97539dc93a56ef06b744a1d383bbf396bbc6ead52e3bef experiments/predictive_nucleus/inspect_case6_masses.py \
+            e27200f63a0e7838a0696889313d5a09168f6d9b5ad3464c1e219c306bd29279 experiments/predictive_nucleus/tests/test_inspect_case6_masses.py | sha256sum -c
+          python -m unittest experiments.predictive_nucleus.tests.test_inspect_case6_masses -v
+      - name: Retrieve incomplete run checkpoints
+        uses: actions/download-artifact@v4
+        with:
+          name: full-sensor-paired-public-development
+          path: ${{ runner.temp }}/cemm-incomplete
+          github-token: ${{ github.token }}
+          run-id: 40707878378
+      - name: Inspect raw case-6 masses without scoring
+        timeout-minutes: 8
+        run: |
+          PYTHONHASHSEED=0 python -m experiments.predictive_nucleus.inspect_case6_masses --failed-output "$RUNNER_TEMP/cemm-incomplete" > "$RUNNER_TEMP/case6-masses.pending.json"
+          mv "$RUNNER_TEMP/case6-masses.pending.json" "$RUNNER_TEMP/case6-masses.json"
+      - name: Preserve post-hoc mass inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 3
+        with:
+          name: case6-posthoc-full-masses
+          path: ${{ runner.temp }}/case6-masses.json
+          if-no-files-found: warn
+          retention-days: 30
