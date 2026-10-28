@@ -75,6 +75,27 @@ jobs:
           name: two-pair-coverage-not-a-gate
           path: two-pair-coverage.json
           retention-days: 30
+      - name: Run preregistered public composition diagnostic (NOT G1)
+        run: PYTHONHASHSEED=0 python -m experiments.predictive_nucleus.development_run > public-composition-diagnostic.json
+      - name: Show per-seed public diagnostic counts
+        run: |
+          python - <<'PY'
+          import json
+          report = json.load(open('public-composition-diagnostic.json'))
+          for result in report['results']:
+              for step in result['summaries_by_step']:
+                  print(json.dumps({'gate': 'NOT_RUN', 'seed': result['model_seed'],
+                      'step': step['step'], 'action': step['action_kind'],
+                      'models': {name: {'queries': score['queries'], 'answered': score['answered'],
+                                        'correct': score['correct']}
+                                 for name, score in step['models'].items()}}, sort_keys=True))
+          PY
+      - name: Archive complete public composition diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-composition-diagnostic-not-a-gate
+          path: public-composition-diagnostic.json
+          retention-days: 30
       - name: Compare pre-audit and corrected models on the same host
         run: |
           git cat-file -e e8ff892d22ea2c63eba7de7bcccd444e39cfd0ff^{commit}

@@ -35,8 +35,18 @@ ambiguous; an exact predictor with no prior orientation evidence can obtain
 at most `1/4 + (3/4)*(1/2) = 62.5%` on that first-contact distribution.
 This is a **mathematical diagnostic**, not a measured G1 score.
 
-Therefore the frozen G1 target of >=95% complete-world accuracy **cannot be
-asserted on all first-contact cases**, regardless of network size or compute.
+The 62.5% calculation additionally assumes that orientation remains fair
+conditional on *all* learner-visible inputs, including IDs. The public legacy
+generator can reveal orientation through enumerable IDs, so this idealized
+bound is not established for an unrestricted predictor on its actual generated
+episodes. The public two-pair fixture has a separate, finite ambiguity: two
+orientation-twin pairs have identical complete sensor histories. Neither fact
+establishes independent challenge performance.
+
+Under those idealized assumptions the >=95% exact target cannot be achieved
+on that first-contact distribution, regardless of network size or compute.
+The frozen manifest does not specify that all gate cases are first contacts,
+so this calculation alone does not determine its aggregate gate outcome.
 Do not fit a model to the sealed challenges until the research protocol
 predeclares one of the following without lowering the target:
 
