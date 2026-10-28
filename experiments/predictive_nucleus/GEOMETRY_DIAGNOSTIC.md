@@ -29,6 +29,10 @@ different extractor, memory model, action schedule or sensor process could
 learn. The result is a count of a public development fixture, not a challenge
 score or a claim about general model capability.
 
+The follow-on [public schedule feasibility design](SCHEDULE_DESIGN.md)
+tests a four-action curriculum that provides complete immediate pairs; it
+does not replace an independently reviewed experiment or challenge.
+
 Reproduce the fixed public sample count with:
 
 ```sh

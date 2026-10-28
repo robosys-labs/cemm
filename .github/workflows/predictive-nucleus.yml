@@ -43,6 +43,14 @@ jobs:
           name: participant-geometry-feasibility-not-a-gate
           path: geometry-feasibility.json
           retention-days: 30
+      - name: Count public schedule feasibility (NOT a model evaluation)
+        run: python -m experiments.predictive_nucleus.schedule_fixture > schedule-feasibility.json
+      - name: Archive public schedule count
+        uses: actions/upload-artifact@v4
+        with:
+          name: schedule-feasibility-not-a-gate
+          path: schedule-feasibility.json
+          retention-days: 30
       - name: Compare pre-audit and corrected models on the same host
         run: |
           git cat-file -e e8ff892d22ea2c63eba7de7bcccd444e39cfd0ff^{commit}
