@@ -67,6 +67,10 @@ def evaluate_pair(belief, world, pair, *, last_alarm=False, guard=None):
                      "eligible": decision["status"] == "PREDICT_WITH_EVIDENCE" and not last_alarm,
                      "joint_map_correct": truth == map_world,
                      "joint_map_confidence": map_confidence,
+                     "target_action": action,
+                     "world_ids": list(belief.ids),
+                     "joint_map_world": list(map_world),
+                     "truth_world": list(truth),
                      "guard_eligible": decision["status"] == "PREDICT_WITH_EVIDENCE" and
                          (guard is None or not guard.blocked),
                      "confidence": forecast.full_world_certainty,
@@ -137,6 +141,7 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
                       "observed_count": checked.observed_bits, "monitor_status": checked.status,
                       "belief_status": update.status, "alarm": checked.alarm,
                       "change_point_alarm": checked.change_point_alarm,
+                      "observation": observed, "guard_blocked": guard.blocked,
                       "verification": verification_action})
     rows = evaluate_pair(belief, world, pair, last_alarm=any(x["alarm"] for x in steps), guard=guard)
     return {"probes": len(steps), "set_probes": sum(s["action"]["kind"] == "set" for s in steps),
@@ -148,6 +153,7 @@ def rollout(initial_world, kernel, *, scenario, policy, seed, budget=2):
             "guard_conflicts": sorted(guard.conflicts),
             "guard_portfolio_alarm": guard.portfolio_alarm,
             "guard_record_latency_ms": guard_latencies,
+            "initial_anchor": first, "probe_trace": steps,
             "probe_statuses": [s["monitor_status"] for s in steps],
             "latency_ms": latencies}
 

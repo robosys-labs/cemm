@@ -61,16 +61,32 @@ def summarize_paired(cases):
     def score(key):
         covered = [row for _, row in rows if row[key]]
         wrong = sum(not row["joint_map_correct"] for row in covered)
+        wrong_cases = []
+        for case in cases:
+            for direction, row in enumerate(case["rollout"]["rows"]):
+                if row[key] and not row["joint_map_correct"]:
+                    wrong_cases.append({
+                        "case_id": case["case_id"] + f":direction-{direction}",
+                        "target_action": row.get("target_action"), "world_ids": row.get("world_ids"),
+                        "predicted_world": row.get("joint_map_world"), "truth_world": row.get("truth_world"),
+                        "confidence": row["joint_map_confidence"],
+                        "initial_anchor": case["rollout"].get("initial_anchor"),
+                        "probe_trace": case["rollout"].get("probe_trace", []),
+                    })
         return {
             "coverage": len(covered) / n,
             "covered_wrong_per_query": wrong / n,
             "error_given_coverage": wrong / len(covered) if covered else None,
             "correct_abstained_per_query": sum(row["joint_map_correct"] and not row[key]
                                                 for _, row in rows) / n,
+            "covered_wrong_cases": wrong_cases,
+            "correct_abstained_case_ids": [case for case, row in rows
+                                           if row["joint_map_correct"] and not row[key]],
         }
     return {
         "worlds": len(cases), "target_queries": n,
         "unconditional_map_exact": statistics.mean(row["joint_map_correct"] for _, row in rows),
+        "unconditional_wrong_case_ids": [case for case, row in rows if not row["joint_map_correct"]],
         "map_ece10": ece,
         "joint_nll": statistics.mean(row["joint_nll"] for _, row in rows) if "joint_nll" in rows[0][1] else None,
         "bit_brier": statistics.mean(row["bit_brier"] for _, row in rows) if "bit_brier" in rows[0][1] else None,

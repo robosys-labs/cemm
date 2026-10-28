@@ -127,6 +127,8 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(out["previously_covered_wrong_now_abstained"], ["world:direction-0"])
         self.assertEqual(out["newly_covered_wrong"], ["world:direction-1"])
         self.assertEqual(out["guard"]["covered_wrong_per_query"], .5)
+        self.assertEqual(out["guard"]["covered_wrong_cases"][0]["case_id"], "world:direction-1")
+        self.assertEqual(out["unconditional_wrong_case_ids"], ["world:direction-0", "world:direction-1"])
         self.assertEqual(out["mean_physical_probes"], 2)
 
     def test_locked_new_protocol_and_small_public_fixture_run(self):

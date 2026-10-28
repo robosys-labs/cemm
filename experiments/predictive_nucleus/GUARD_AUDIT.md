@@ -33,7 +33,10 @@ among covered queries, correct answers abstained per all queries, raw exactness,
 joint NLL, Brier, joint-MAP ECE, sensor/probe costs and guard-record latency are
 reported per scenario and optimizer seed. The paired answers are two role orders
 for each world; five optimizer runs reuse the same worlds and are not independent
-world samples.
+world samples. After the first audit revealed persistent covered errors, the
+report was extended to include the initial anchor, observed probe trace, target
+action, predicted world and evaluator-only truth for each covered wrong case.
+This post-result instrumentation does not change the policy or world seeds.
 
 ## Statistical and measurement limits
 
