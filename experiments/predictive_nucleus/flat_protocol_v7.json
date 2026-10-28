@@ -1,0 +1,18 @@
+{
+  "schema_version": 7,
+  "id": "cemm-g1g-flat-recurrent-reference-development-2026-10-28",
+  "status": "PUBLIC_DEVELOPMENT_ONLY_NOT_A_G1_CHALLENGE",
+  "hypothesis": "A small flat recurrent model supplied only the same sensor-visible episodes and physical probe history is a necessary parameter- and CPU-budget comparison for the shared predictive nucleus.",
+  "comparison": "structured learned contact kernel plus belief versus flat GRU under the same reference training episodes, calibration episodes, observed probe trajectory, target actions and evaluator-only truth",
+  "opened_v6_world_seeds": [911, 919, 929, 937, 941],
+  "new_public_world_seeds": [1051, 1061, 1063, 1069, 1087],
+  "model_seeds": [7, 11, 23, 37, 53],
+  "canonical_budget": {"train": 600, "calibration": 200, "worlds_per_stratum": 10, "structured_steps": 200, "flat_max_steps": 200, "max_physical_probes": 2, "cpu_threads": 1},
+  "flat_architecture": {"input_width": 36, "hidden_units": 7, "joint_output_states": 64, "parameters_expected": 1457, "structured_parameters_expected": 1446, "missing_target": "marginalized", "entity_slot_order": "sorted_opaque_handles", "sensor_error_rate": "same supplied metadata; training observes only zero-error reference sensors"},
+  "training": {"optimizer": "Adam", "learning_rate": 0.02, "flat_wall_limit": "measured structured fit time on same CPU; stop before estimated next step exceeds budget", "max_flat_gradient_steps": 200, "exact_steps_recorded_for_replay": true, "calibration_temperatures": [0.5, 0.75, 1.0, 1.5, 2.0, 3.0], "calibration_split_only": true},
+  "strata": ["reference_clean", "reference_partial", "reference_noisy", "reference_sensor_misspecified", "bilateral_flip", "conditional_flip", "switch_orientation"],
+  "reports": ["parameters", "fit_wall_time", "gradient_steps", "observed_sensor_events_and_bits", "calibration_cost", "joint_map_exact", "role_pair_exact", "joint_nll", "brier", "ece", "coverage_and_covered_errors", "paired_case_ids", "probe_count", "prediction_latency", "hardware"],
+  "limitations": ["wall_time_is_an_approximate_not_exact_compute_match", "structured_uses_analytic_joint_belief_not_counted_as_trainable_parameters", "models_train_on_same_episodes_but_use_different_sensor_only_objectives", "flat_replays_structured_selected_probes_not_its_own_probe_policy", "public_developer_authored_families", "model_seeds_share_world_lineages", "independent_custodial_challenge_missing"],
+  "original_sealed_challenge_never_open": true,
+  "decision": "G1_NOT_ADMITTED"
+}

@@ -55,8 +55,10 @@ def evaluate_pair(belief, world, pair, *, last_alarm=False, guard=None, context=
     rows = []
     for ids in (pair, tuple(reversed(pair))):
         action = {"kind": "contact", "participants": list(ids)}
+        target_start = time.perf_counter()
         decision = belief.assess(action)
         forecast = belief.preview(action)
+        target_latency_ms = (time.perf_counter() - target_start) * 1000
         support_started = time.perf_counter()
         support = context.assess(action) if context is not None else {
             "supported": False, "status": "CONTEXT_UNAVAILABLE", "observed_events": 0}
@@ -83,6 +85,7 @@ def evaluate_pair(belief, world, pair, *, last_alarm=False, guard=None, context=
                      "context_status": support["status"],
                      "context_observed_events": support["observed_events"],
                      "context_assess_latency_ms": support_latency_ms,
+                     "structured_target_latency_ms": target_latency_ms,
                      "confidence": forecast.full_world_certainty,
                      "joint_nll": -math.log(max(probability, 1e-12)),
                      "bit_brier": brier, "decision": decision["status"]})
