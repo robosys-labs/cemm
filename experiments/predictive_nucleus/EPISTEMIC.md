@@ -21,10 +21,13 @@ URL could not be fetched in the connected environment; checkpoint lessons were
 cross-checked against the linked research issue and available project history.
 
 The original frozen G0 world includes a **per-episode latent contact orientation**:
-same observations and actions can lead to different future complete states. In
-fair first-contact binary states, deterministic exact accuracy has a 62.5%
-Bayes ceiling. Declaring those unknowable cases "model errors" is scientifically
-wrong; silently picking one orientation is equally wrong.
+same sensor readings and actions can lead to different future complete states.
+For fair first-contact binary states and an orientation that remains fair
+conditional on every learner-visible input, deterministic exact accuracy has a
+62.5% ceiling. The public legacy generator's enumerable IDs can reveal the
+orientation, so this idealized bound is not established for an unrestricted
+predictor on its actual episodes. See [the later audit](2026-10-28-AUDIT.md).
+Do not infer a G1 gate outcome from the idealized calculation.
 
 ## What is supplied / what is actually learned
 
@@ -66,7 +69,7 @@ receipt is counted once; conflicting reuse of an evidence ID is rejected.
 The model cannot *prove* predictive failure from one noisy or false reading:
 only independent reliable measurements, counterfactual tests and external
 oracle evaluation can confirm a true mismatch. "Wrong confident" is scored
-as a model error by the **independent evaluator**, never inferred from the
+as a model error by an evaluator using separately supplied truth, never inferred from the
 learner's own self-agreement.
 
 The probe planner maximizes expected information gain **over observed future
@@ -80,11 +83,14 @@ steps; a no-value probe is correctly omitted.
 
 The original G0 manifest and lock are untouched. The versioned
 epistemic_protocol_v2.json has a distinct SHA-256 lock. This protocol freezes
-train/calibration/diagnostic seed roles, two-step budget, proper scores,
+train/calibration/diagnostic seed roles, two-step budget, intended scoring,
 abstention/mismatch strata, negative controls, and proposed independent gate
 thresholds **before any external challenge**. The original G1 challenge is
 not repurposed. A fresh, independently authored/custodied challenge is still
 required before G1 admission.
+
+The executed historical probe scorer clips log loss; it does not report
+uncapped log loss. See [the integrity audit](2026-10-28-AUDIT.md).
 
 ## Reproduce observed-only diagnostic
 

@@ -43,11 +43,14 @@ remain a limitation; report interventions separately. Query bit-visibility
 may still differ under random dropouts; observed bits are reported.
 
 Reported for each model seed and scenario: exact complete-world accuracy,
-both directions correct, proper joint NLL, Brier, ECE, answered coverage and
+both directions correct, legacy clipped joint NLL, Brier, ECE, answered coverage and
 precision, statistical alarm rates, average probe cost, sensor bits received,
 p95 planning time and case IDs where active wins/loses to cost-matched random
 contact probes. The e-process acts on **real committed probe observations**,
 never the two hypothetical scored target outcomes.
+
+The corrected paths separately report represented-probability uncapped log
+loss and zero/floor counts. The historical NLL is clipped at `1e-12`.
 
 Nominal 5% false-alarm bounds apply only under correctly specified conditional
 forecasts, calibrated independent sensor errors and pre-outcome sensor selection;

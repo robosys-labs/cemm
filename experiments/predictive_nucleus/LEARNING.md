@@ -17,7 +17,7 @@ parameters are trained from BCE on **actually revealed next-observation bits**;
 never from hidden post-state or `World.hidden_source_slot`. A test replaces
 `gold_after`/`states` with raising accessors during training.
 
-The independent evaluator, after prediction, compares full-world states for
+The evaluator, after prediction, compares separately supplied full-world states for
 *all* entities, including those not revealed to the learner. A separate
 persistence control uses its own observed-only memory, not the model's guesses.
 No training on validation/calibration/challenge, no roles or event glosses from
