@@ -51,6 +51,22 @@ jobs:
           name: schedule-feasibility-not-a-gate
           path: schedule-feasibility.json
           retention-days: 30
+      - name: Audit public fixture trace overlap (NOT an independence test)
+        run: python -m experiments.predictive_nucleus.fixture_overlap > fixture-overlap.json
+      - name: Archive fixture trace-overlap inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: fixture-trace-overlap-not-a-gate
+          path: fixture-overlap.json
+          retention-days: 30
+      - name: Check one-step shared-history wiring (NOT a comparison)
+        run: PYTHONHASHSEED=0 python -m experiments.predictive_nucleus.shared_training_smoke > shared-training-smoke.json
+      - name: Archive public training wiring report
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-training-wiring-not-a-gate
+          path: shared-training-smoke.json
+          retention-days: 30
       - name: Compare pre-audit and corrected models on the same host
         run: |
           git cat-file -e e8ff892d22ea2c63eba7de7bcccd444e39cfd0ff^{commit}
