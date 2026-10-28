@@ -81,14 +81,16 @@ def _p95(values):
     return values[int(.95 * (len(values) - 1))] if values else None
 
 
-def evaluate_models(kernel, flat, temperature, cfg, world_count):
+def evaluate_models(kernel, flat, temperature, cfg, world_count,
+                    split_names=("opened_v6", "new_public_v7")):
     results = {}
-    for split, seeds in (("opened_v6", cfg["opened_v6_world_seeds"]),
-                         ("new_public_v7", cfg["new_public_world_seeds"])):
+    for split, seeds in ((split_names[0], cfg["opened_v6_world_seeds"]),
+                         (split_names[1], cfg["new_public_world_seeds"])):
         results[split] = {}
         for scenario in cfg["strata"]:
             structured, flat_rows, paired = [], [], []
             costs = []
+            trajectory_digests = []
             replay_latency, flat_latency, structured_latency = [], [], []
             for index in range(world_count):
                 seed = seeds[index % len(seeds)]
@@ -96,6 +98,14 @@ def evaluate_models(kernel, flat, temperature, cfg, world_count):
                 case_id = f"{split}:{scenario}:{seed}:{index}"
                 trial = rollout(world, kernel, scenario=scenario, policy="active_validate",
                                 seed=int(world.ids[0], 16), budget=2)
+                public_trace = {"anchor": trial["initial_anchor"],
+                                "probes": [{"action": p["action"], "observation": p["observation"]}
+                                           for p in trial["probe_trace"]],
+                                "targets": [row["target_action"] for row in trial["rows"]],
+                                "supplied_sensor_error": SCENARIOS[scenario][-1]}
+                digest = hashlib.sha256(json.dumps(public_trace, sort_keys=True,
+                                                    separators=(",", ":")).encode()).hexdigest()
+                trajectory_digests.append({"case_id": case_id, "sha256": digest})
                 costs.append(trial["probes"])
                 started = perf_counter()
                 replay_observed(flat, trial["initial_anchor"], trial["probe_trace"],
@@ -135,6 +145,9 @@ def evaluate_models(kernel, flat, temperature, cfg, world_count):
                 "flat": _score(flat_rows, "eligible"),
                 "structured_pair_both_exact": statistics.mean(all(s["correct"] for s, _ in pair) for pair in paired),
                 "flat_pair_both_exact": statistics.mean(all(f["correct"] for _, f in pair) for pair in paired),
+                "structured_correct_case_ids": [s["case_id"] for pair in paired for s, _ in pair if s["correct"]],
+                "flat_correct_case_ids": [f["case_id"] for pair in paired for _, f in pair if f["correct"]],
+                "public_trajectory_digests": trajectory_digests,
                 "structured_correct_flat_wrong": [s["case_id"] for pair in paired for s, f in pair
                                                   if s["correct"] and not f["correct"]],
                 "flat_correct_structured_wrong": [s["case_id"] for pair in paired for s, f in pair

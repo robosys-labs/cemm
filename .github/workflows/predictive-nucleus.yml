@@ -226,7 +226,51 @@ jobs:
                       for key in ('structured', 'structured_context', 'flat',
                                   'structured_pair_both_exact', 'flat_pair_both_exact',
                                   'structured_correct_flat_wrong', 'flat_correct_structured_wrong',
+                                  'structured_correct_case_ids', 'flat_correct_case_ids', 'public_trajectory_digests',
                                   'mean_physical_probes'):
                           assert old[key] == new[key], (split, scenario, key)
           print('Recorded optimizer schedules reproduce all paired scores; replay is not an independent challenge.')
           PY
+      - name: Equal-update flat ablation (NOT G1)
+        run: |
+          python -m experiments.predictive_nucleus.flat_updates_trial \
+            --train 600 --calibration 200 --worlds 10 --steps 200 \
+            --seeds 7,11,23,37,53 > g1h-flat-updates.json
+      - name: Show equal-update tradeoffs on new public worlds
+        run: |
+          python - <<'PY'
+          import json, statistics
+          report = json.load(open('g1h-flat-updates.json'))
+          for r in report['results']:
+              print(json.dumps({
+                  'seed': r['model_seed'], 'gate': 'NOT_ADMITTED',
+                  'structured_steps': r['structured_training']['gradient_steps'],
+                  'wall_flat_steps': r['wall_flat_training']['gradient_steps'],
+                  'equal_flat_steps': r['equal_flat_training']['gradient_steps'],
+                  'structured_fit_seconds': r['structured_fit_seconds'],
+                  'wall_flat_fit_seconds': r['wall_flat_training']['fit_seconds'],
+                  'equal_flat_fit_seconds': r['equal_flat_training']['fit_seconds'],
+                  'equal_to_structured_time_ratio': r['equal_flat_to_structured_fit_time_ratio'],
+              }, sort_keys=True))
+          for scenario in report['results'][0]['splits']['new_public_v8']:
+              cases = [r['splits']['new_public_v8'][scenario] for r in report['results']]
+              mean = lambda vals: round(statistics.mean(vals), 4)
+              print(json.dumps({
+                  'split': 'new_public_v8', 'scenario': scenario, 'gate': 'NOT_ADMITTED',
+                  'structured_exact': mean(c['structured']['joint_map_exact'] for c in cases),
+                  'wall_flat_exact': mean(c['wall_flat']['joint_map_exact'] for c in cases),
+                  'equal_flat_exact': mean(c['equal_update_flat']['joint_map_exact'] for c in cases),
+                  'structured_nll': mean(c['structured']['joint_nll'] for c in cases),
+                  'wall_flat_nll': mean(c['wall_flat']['joint_nll'] for c in cases),
+                  'equal_flat_nll': mean(c['equal_update_flat']['joint_nll'] for c in cases),
+                  'equal_repairs': sum(len(c['equal_update_repairs']) for c in cases),
+                  'equal_regressions': sum(len(c['equal_update_regressions']) for c in cases),
+                  'probes_per_world': mean(c['mean_physical_probes'] for c in cases),
+              }, sort_keys=True))
+          PY
+      - name: Archive unadmitted equal-update ablation
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1h-flat-equal-update-unadmitted
+          path: g1h-flat-updates.json
+          retention-days: 30

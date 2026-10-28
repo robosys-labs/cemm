@@ -1,0 +1,17 @@
+{
+  "schema_version": 8,
+  "id": "cemm-g1h-flat-equal-update-ablation-2026-10-28",
+  "status": "PUBLIC_DEVELOPMENT_ONLY_NOT_A_G1_CHALLENGE",
+  "hypothesis": "Compare the wall-capped flat GRU with the same initialized flat architecture trained for the structured model's full optimizer-update count, and measure accuracy, calibration and the additional compute cost.",
+  "comparison": "same generated training and calibration episodes, same seeds, same structured-selected actions and actually received observations; evaluate wall-capped and equal-update flat models on byte-identical public trajectories",
+  "opened_v7_world_seeds": [1051, 1061, 1063, 1069, 1087],
+  "new_public_world_seeds": [1103, 1109, 1117, 1123, 1129],
+  "model_seeds": [7, 11, 23, 37, 53],
+  "canonical_budget": {"train": 600, "calibration": 200, "worlds_per_stratum": 10, "structured_steps": 200, "equal_flat_steps": 200, "max_physical_probes": 2, "cpu_threads": 1},
+  "strata": ["reference_clean", "reference_partial", "reference_noisy", "reference_sensor_misspecified", "bilateral_flip", "conditional_flip", "switch_orientation"],
+  "integrity": {"same_initial_flat_seed": true, "same_raw_sensor_episodes": true, "disjoint_sensor_calibration": true, "physical_trajectory_digests_must_match": true, "no_evaluator_truth_to_learner": true, "no_training_on_v7_or_v8": true},
+  "reports": ["optimizer_steps", "fit_wall_seconds", "compute_ratio", "parameters", "joint_map_exact", "joint_nll", "brier", "ece", "coverage", "covered_errors", "paired_repairs_and_regressions", "trajectory_hashes", "per_model_seed"],
+  "limitations": ["equal_optimizer_updates_are_not_equal_flops", "wall_capped_schedule_varies_with_timing", "different_sensor_only_objectives_and_inductive_biases", "flat_replays_structured_probes", "new_seeds_share_public_developer_authored_families", "model_seeds_share_world_lineages", "independent_challenge_and_sensor_validation_missing"],
+  "original_sealed_challenge_never_open": true,
+  "decision": "G1_NOT_ADMITTED"
+}
