@@ -1,0 +1,12 @@
+{
+  "forecast_status": {
+    "answered=true": "PREDICTED",
+    "answered=false": "ABSTAIN"
+  },
+  "abstention_reason": "unseen_empirical_context",
+  "abstention_encoding": "An unanswered row has NO distribution or proper score. Ignore its all-null log placeholder.",
+  "log_null_status": "negative_infinity for answered rows only",
+  "finite_log_underflow": "Finite log value remains numeric even if exponentiating yields zero.",
+  "case_view_index": "episode = 6*case + lexicographic permutation index",
+  "fit_phase_is_not_study_completion": true
+}

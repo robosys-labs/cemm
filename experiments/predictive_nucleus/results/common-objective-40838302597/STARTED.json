@@ -1,0 +1,38 @@
+{
+  "data_sha256": {
+    "informative_same_pair": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e",
+    "informative_second_pair": "a10748428184b1834275efb2e82da1da566356193c77af25cdac1e44be40a3ca",
+    "uninformative_same_pair": "fe89cf2a609fa36d6ad4cb65048b56934fdc4f62cda86455e49f3cc3dfbecd1d",
+    "uninformative_second_pair": "4f52d492c03c60eac8416ba7a7a4328f78b0eb731a0b9980e67c4c3499ee783c"
+  },
+  "environment": {
+    "cpu_model": "AMD EPYC 7763 64-Core Processor",
+    "default_dtype": "torch.float32",
+    "deterministic_algorithms": true,
+    "deterministic_warn_only": false,
+    "interop_threads": 1,
+    "intraop_threads": 1,
+    "peak_rss": 351164,
+    "peak_rss_unit": "KiB",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "python": "3.13.17",
+    "torch": "2.10.0+cpu",
+    "torch_config_sha256": "4096ae2ff210db4a4da17fe7e5ef17c7715c4e4dc5d4175a9357b83bf820075a"
+  },
+  "lineage": {
+    "complete_history": true,
+    "execution_commit": "a86addbb098aecd04520f4777435e68717a432de",
+    "protocol_commit": "2eeae6323d8123da5ded40a56e77ef68e6aac5ac",
+    "runner_commit": "fd64a5b1a9efc460086cfe21c4f62fe631135298",
+    "runner_sha256": "143a29e7fee901a009674ef271e779c126300e6496f7c26d79fe222540772213",
+    "source_commit": "3bbce83121386501ae39567b48fc9aa62325de79",
+    "tracked_tree_clean": true,
+    "untracked_present": false
+  },
+  "reviewed_runner_commit": "afadbbe9d67a081c5bc535804d94d763a673037a",
+  "run_id": "40838302597",
+  "source_sha256": {
+    "comparison_run.py": "272430eaf332a9b823774f0a42821f39ceca3d9252e81ddc0c4bf56631a1a7aa",
+    "comparison_scoring.py": "95865f228ccb06345deda847570efa1aaea8e72828f64645d00d19a360b6a473"
+  }
+}

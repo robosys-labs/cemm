@@ -1,0 +1,3240 @@
+{
+  "status": "COMPLETE_OPEN_PUBLIC_DIAGNOSTIC_NOT_G1",
+  "run_id": "40838302597",
+  "gate_g1": "HOLD_REVISE",
+  "protocol_sha256": "15732afe065f19f3b412a7638e386373eb586ddaa273104e2de63c14a782b1f3",
+  "report_sha256": "581172fcfd257127772ea9962544bae1071bc43ce683fca225128e9de5f5d078",
+  "environment": {
+    "cpu_model": "AMD EPYC 7763 64-Core Processor",
+    "default_dtype": "torch.float32",
+    "deterministic_algorithms": true,
+    "deterministic_warn_only": false,
+    "interop_threads": 1,
+    "intraop_threads": 1,
+    "numpy": "2.3.5",
+    "peak_rss": 483204,
+    "peak_rss_unit": "KiB",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "python": "3.13.17",
+    "torch": "2.10.0+cpu",
+    "torch_config_sha256": "4096ae2ff210db4a4da17fe7e5ef17c7715c4e4dc5d4175a9357b83bf820075a"
+  },
+  "wall_seconds": 589.1370970070001,
+  "cpu_seconds": 588.660202852,
+  "neural_forecast_count": 2949120,
+  "paired_records": 10560,
+  "informative_second_pair": [
+    {
+      "condition": "informative",
+      "fixture": "second_pair",
+      "model": "flat",
+      "query_accuracy_mean": 0.6197916666666666,
+      "query_accuracy_worst_seed": 0.5924479166666666,
+      "query_brier_per_seed": [
+        0.47778598701239233,
+        0.4616284292958435,
+        0.5171826215708858,
+        0.4824676783482089,
+        0.4776930004018711
+      ],
+      "query_correct_counts": [
+        1002,
+        910,
+        955,
+        940,
+        953
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.8101047315793419,
+        0.765192238472706,
+        0.928211524341851,
+        0.8556400573242696,
+        0.8245200332932493
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "cpu_budget",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "informative",
+      "fixture": "second_pair",
+      "model": "flat_supplied_persistence",
+      "query_accuracy_mean": 0.604296875,
+      "query_accuracy_worst_seed": 0.5924479166666666,
+      "query_brier_per_seed": [
+        0.4183495252400362,
+        0.40835594432126415,
+        0.40765491206536036,
+        0.42032976923105064,
+        0.4296026533015927
+      ],
+      "query_correct_counts": [
+        931,
+        914,
+        945,
+        941,
+        910
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.6311005874620681,
+        0.6284528016712678,
+        0.6267271315692474,
+        0.6563330549585963,
+        0.6767271241523165
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "cpu_budget",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "informative",
+      "fixture": "second_pair",
+      "model": "kernel_learned_persistence",
+      "query_accuracy_mean": 1.0,
+      "query_accuracy_worst_seed": 1.0,
+      "query_brier_per_seed": [
+        0.0009110035037061976,
+        0.0038864813041760726,
+        0.0007229614533339479,
+        0.0014109814975382152,
+        0.0006542655370690686
+      ],
+      "query_correct_counts": [
+        1536,
+        1536,
+        1536,
+        1536,
+        1536
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.025322921361252703,
+        0.05177555938663675,
+        0.02285564558122083,
+        0.030982592397166858,
+        0.021538343047953285
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "cpu_budget",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "informative",
+      "fixture": "second_pair",
+      "model": "kernel_memory_reset",
+      "query_accuracy_mean": 0.625,
+      "query_accuracy_worst_seed": 0.625,
+      "query_brier_per_seed": [
+        0.37685063933601287,
+        0.37697889162530224,
+        0.37831553864805817,
+        0.37974934666228316,
+        0.3769688246113974
+      ],
+      "query_correct_counts": [
+        960,
+        960,
+        960,
+        960,
+        960
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.5514507604720374,
+        0.5580180664579275,
+        0.5526975838508729,
+        0.5543940653364379,
+        0.5468420281792288
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "cpu_budget",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "informative",
+      "fixture": "second_pair",
+      "model": "kernel_supplied_persistence",
+      "query_accuracy_mean": 1.0,
+      "query_accuracy_worst_seed": 1.0,
+      "query_brier_per_seed": [
+        3.669908496081731e-05,
+        5.050460786423794e-05,
+        2.456300371254938e-05,
+        5.001803596260679e-05,
+        3.658930402113125e-05
+      ],
+      "query_correct_counts": [
+        1536,
+        1536,
+        1536,
+        1536,
+        1536
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.004495799139586354,
+        0.005317374235233374,
+        0.0037675973379287034,
+        0.005119602503891455,
+        0.004514037550603637
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "cpu_budget",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "informative",
+      "fixture": "second_pair",
+      "model": "kernel_untied_roles",
+      "query_accuracy_mean": 1.0,
+      "query_accuracy_worst_seed": 1.0,
+      "query_brier_per_seed": [
+        0.0009746500457785227,
+        0.0036979308020554497,
+        0.0004928202806244326,
+        0.00120302519453046,
+        0.0020814614892089175
+      ],
+      "query_correct_counts": [
+        1536,
+        1536,
+        1536,
+        1536,
+        1536
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.024201393080948982,
+        0.05024079956024365,
+        0.01874999209405316,
+        0.028933040704955493,
+        0.03676874751741984
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "cpu_budget",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "informative",
+      "fixture": "second_pair",
+      "model": "flat",
+      "query_accuracy_mean": 0.613671875,
+      "query_accuracy_worst_seed": 0.6061197916666666,
+      "query_brier_per_seed": [
+        0.49035494815511077,
+        0.4710274023217531,
+        0.5310253957187919,
+        0.49394373363018734,
+        0.4894585967115506
+      ],
+      "query_correct_counts": [
+        972,
+        936,
+        938,
+        931,
+        936
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.8512806644848161,
+        0.7970433174688739,
+        0.9744450636988189,
+        0.8876471457681309,
+        0.8549121427473046
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "informative",
+      "fixture": "second_pair",
+      "model": "flat_supplied_persistence",
+      "query_accuracy_mean": 0.6022135416666667,
+      "query_accuracy_worst_seed": 0.5963541666666666,
+      "query_brier_per_seed": [
+        0.43295238486707993,
+        0.40661402490808757,
+        0.41521555388014963,
+        0.4541350796132435,
+        0.4554270420106327
+      ],
+      "query_correct_counts": [
+        916,
+        938,
+        918,
+        921,
+        932
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.6455941898633105,
+        0.617314661509888,
+        0.6216618983981982,
+        0.7044023206909077,
+        0.7370131121222894
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "informative",
+      "fixture": "second_pair",
+      "model": "kernel_learned_persistence",
+      "query_accuracy_mean": 1.0,
+      "query_accuracy_worst_seed": 1.0,
+      "query_brier_per_seed": [
+        6.144442074124586e-06,
+        8.87872043085075e-06,
+        3.857447657293807e-06,
+        4.857040785760658e-06,
+        5.712058199984493e-06
+      ],
+      "query_correct_counts": [
+        1536,
+        1536,
+        1536,
+        1536,
+        1536
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.0020889071864019977,
+        0.002516224123826265,
+        0.0016644011347831233,
+        0.0018221733020600463,
+        0.002007275902761584
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "informative",
+      "fixture": "second_pair",
+      "model": "kernel_memory_reset",
+      "query_accuracy_mean": 0.625,
+      "query_accuracy_worst_seed": 0.625,
+      "query_brier_per_seed": [
+        0.37501822642017135,
+        0.3750184081430105,
+        0.37503833254100954,
+        0.3750243078255056,
+        0.37502204045406157
+      ],
+      "query_correct_counts": [
+        960,
+        960,
+        960,
+        960,
+        960
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.5214133283396035,
+        0.5216705598132473,
+        0.5211146992411263,
+        0.5211639753023916,
+        0.5211170537097893
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "informative",
+      "fixture": "second_pair",
+      "model": "kernel_supplied_persistence",
+      "query_accuracy_mean": 1.0,
+      "query_accuracy_worst_seed": 1.0,
+      "query_brier_per_seed": [
+        2.8347050461813295e-06,
+        3.2571523243540845e-06,
+        1.9917146187320434e-06,
+        2.8557483225527536e-06,
+        3.311830273952654e-06
+      ],
+      "query_correct_counts": [
+        1536,
+        1536,
+        1536,
+        1536,
+        1536
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.0012945107441602267,
+        0.001396041825023387,
+        0.0011023919378910856,
+        0.0012712501939597886,
+        0.001407421844125138
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "informative",
+      "fixture": "second_pair",
+      "model": "kernel_untied_roles",
+      "query_accuracy_mean": 1.0,
+      "query_accuracy_worst_seed": 1.0,
+      "query_brier_per_seed": [
+        5.817944454042147e-06,
+        7.268486961385656e-06,
+        3.561041919634735e-06,
+        5.779967063343494e-06,
+        9.36735192759904e-06
+      ],
+      "query_correct_counts": [
+        1536,
+        1536,
+        1536,
+        1536,
+        1536
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.0019707561231583934,
+        0.0022641020804641167,
+        0.0015928309774816813,
+        0.0020222341295680923,
+        0.0025445814588616264
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    }
+  ],
+  "uninformative_second_pair": [
+    {
+      "condition": "uninformative",
+      "fixture": "second_pair",
+      "model": "flat",
+      "query_accuracy_mean": 0.5807291666666667,
+      "query_accuracy_worst_seed": 0.5638020833333334,
+      "query_brier_per_seed": [
+        0.543858185972978,
+        0.4819364645621751,
+        0.4887165529478516,
+        0.5103245407944645,
+        0.5280124549669644
+      ],
+      "query_correct_counts": [
+        866,
+        918,
+        899,
+        886,
+        891
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.9140247537253129,
+        0.8040349230396019,
+        0.7872408808235883,
+        0.8501189134356272,
+        0.9120559709498327
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "cpu_budget",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "uninformative",
+      "fixture": "second_pair",
+      "model": "flat_supplied_persistence",
+      "query_accuracy_mean": 0.625,
+      "query_accuracy_worst_seed": 0.625,
+      "query_brier_per_seed": [
+        0.415647952997462,
+        0.4064955166735322,
+        0.39680158325155485,
+        0.4058208892554263,
+        0.3982947704289052
+      ],
+      "query_correct_counts": [
+        960,
+        960,
+        960,
+        960,
+        960
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.6583096578940416,
+        0.6261047694159114,
+        0.6085767709508001,
+        0.6327824894254785,
+        0.6203514972684993
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "cpu_budget",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "uninformative",
+      "fixture": "second_pair",
+      "model": "kernel_learned_persistence",
+      "query_accuracy_mean": 0.625,
+      "query_accuracy_worst_seed": 0.625,
+      "query_brier_per_seed": [
+        0.4005429638414806,
+        0.3892727154137194,
+        0.3841457313331949,
+        0.37788061695959846,
+        0.37781084266759324
+      ],
+      "query_correct_counts": [
+        960,
+        960,
+        960,
+        960,
+        960
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.6314306695595204,
+        0.5947443729970917,
+        0.5932169769761094,
+        0.5476399229744516,
+        0.5515035933463479
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "cpu_budget",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "uninformative",
+      "fixture": "second_pair",
+      "model": "kernel_memory_reset",
+      "query_accuracy_mean": 0.625,
+      "query_accuracy_worst_seed": 0.625,
+      "query_brier_per_seed": [
+        0.40054296384147986,
+        0.3892727154137192,
+        0.3817853783460345,
+        0.37788061695959846,
+        0.37781084266759324
+      ],
+      "query_correct_counts": [
+        960,
+        960,
+        960,
+        960,
+        960
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.631430669559519,
+        0.5947443729970914,
+        0.5836087143639427,
+        0.5476399229744514,
+        0.5515035933463482
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "cpu_budget",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "uninformative",
+      "fixture": "second_pair",
+      "model": "kernel_supplied_persistence",
+      "query_accuracy_mean": 0.625,
+      "query_accuracy_worst_seed": 0.625,
+      "query_brier_per_seed": [
+        0.37615915780374004,
+        0.3756418726225747,
+        0.3754646261446603,
+        0.3753222404083753,
+        0.3750705895009869
+      ],
+      "query_correct_counts": [
+        960,
+        960,
+        960,
+        960,
+        960
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.5421370863637424,
+        0.5305281235290207,
+        0.5323693297621058,
+        0.5232323501896475,
+        0.5247494190917581
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "cpu_budget",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "uninformative",
+      "fixture": "second_pair",
+      "model": "kernel_untied_roles",
+      "query_accuracy_mean": 0.625,
+      "query_accuracy_worst_seed": 0.625,
+      "query_brier_per_seed": [
+        0.38742624074522425,
+        0.38336074217009747,
+        0.3820492213567661,
+        0.38397166541833155,
+        0.3807767127304804
+      ],
+      "query_correct_counts": [
+        960,
+        960,
+        960,
+        960,
+        960
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.5835517765920426,
+        0.5732711313342591,
+        0.574582006989492,
+        0.5833572765668011,
+        0.5737561620156083
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "cpu_budget",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "uninformative",
+      "fixture": "second_pair",
+      "model": "flat",
+      "query_accuracy_mean": 0.5736979166666667,
+      "query_accuracy_worst_seed": 0.55859375,
+      "query_brier_per_seed": [
+        0.5553686222041091,
+        0.49535997109685764,
+        0.5028003473608902,
+        0.5200674338203971,
+        0.5436476930232544
+      ],
+      "query_correct_counts": [
+        858,
+        916,
+        870,
+        890,
+        872
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.9371522406726905,
+        0.8404841038627217,
+        0.8204143267967844,
+        0.8825077572553646,
+        0.9573711777708621
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "uninformative",
+      "fixture": "second_pair",
+      "model": "flat_supplied_persistence",
+      "query_accuracy_mean": 0.625,
+      "query_accuracy_worst_seed": 0.625,
+      "query_brier_per_seed": [
+        0.4104200816361443,
+        0.39447520883897313,
+        0.3903667751115498,
+        0.3997851856151371,
+        0.39311419547372983
+      ],
+      "query_correct_counts": [
+        960,
+        960,
+        960,
+        960,
+        960
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.6394961983704373,
+        0.5942356486464008,
+        0.5833068224836722,
+        0.6094688682835718,
+        0.5970171983882814
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "uninformative",
+      "fixture": "second_pair",
+      "model": "kernel_learned_persistence",
+      "query_accuracy_mean": 0.625,
+      "query_accuracy_worst_seed": 0.625,
+      "query_brier_per_seed": [
+        0.375032414196437,
+        0.3750702598664358,
+        0.37500615376309154,
+        0.37502107881966146,
+        0.3750064462232121
+      ],
+      "query_correct_counts": [
+        960,
+        960,
+        960,
+        960,
+        960
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.5216534893831245,
+        0.5219575877297725,
+        0.521518831967572,
+        0.5210211501662315,
+        0.5212592791356397
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "uninformative",
+      "fixture": "second_pair",
+      "model": "kernel_memory_reset",
+      "query_accuracy_mean": 0.625,
+      "query_accuracy_worst_seed": 0.625,
+      "query_brier_per_seed": [
+        0.375032414196437,
+        0.3750702598664358,
+        0.37500615376309154,
+        0.37502107881966146,
+        0.3750064462232121
+      ],
+      "query_correct_counts": [
+        960,
+        960,
+        960,
+        960,
+        960
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.5216534893831245,
+        0.5219575877297725,
+        0.521518831967572,
+        0.5210211501662315,
+        0.5212592791356397
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "uninformative",
+      "fixture": "second_pair",
+      "model": "kernel_supplied_persistence",
+      "query_accuracy_mean": 0.625,
+      "query_accuracy_worst_seed": 0.625,
+      "query_brier_per_seed": [
+        0.3750312329205879,
+        0.37506807245287327,
+        0.3750053144603567,
+        0.37502050412441035,
+        0.37500545860822826
+      ],
+      "query_correct_counts": [
+        960,
+        960,
+        960,
+        960,
+        960
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.521042177603891,
+        0.5209614074060025,
+        0.5210612153509885,
+        0.5205757096522418,
+        0.5206363787937067
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    },
+    {
+      "condition": "uninformative",
+      "fixture": "second_pair",
+      "model": "kernel_untied_roles",
+      "query_accuracy_mean": 0.625,
+      "query_accuracy_worst_seed": 0.625,
+      "query_brier_per_seed": [
+        0.3750157113709336,
+        0.3750298748962501,
+        0.3750053261444659,
+        0.37500439898946475,
+        0.37503526009256277
+      ],
+      "query_correct_counts": [
+        960,
+        960,
+        960,
+        960,
+        960
+      ],
+      "query_denominator_per_seed": 1536,
+      "query_nll_per_seed": [
+        0.5219202453390465,
+        0.5215043387463366,
+        0.5216192463444806,
+        0.5214315666856247,
+        0.5216049137186684
+      ],
+      "query_nll_status": [
+        "finite",
+        "finite",
+        "finite",
+        "finite",
+        "finite"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ]
+    }
+  ],
+  "controls_second_pair": [
+    {
+      "condition": "uninformative",
+      "control": "no_change",
+      "fixture": "second_pair",
+      "all_steps": {
+        "abstained": 0,
+        "accuracy_among_answered": 0.625,
+        "answered": 12288,
+        "correct": 7680,
+        "correct_per_query": 0.625,
+        "coverage": 1.0,
+        "ece_10": 0.375,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 5,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 0.625,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 12288
+          }
+        ],
+        "infinite_nll_count": 4608,
+        "mean_brier": 0.75,
+        "mean_nll": null,
+        "nll_status": "infinite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 12288,
+        "tied_forecasts": 0,
+        "unchanged_bit_errors": 0,
+        "unchanged_bits_answered": 32256,
+        "underflow_world_count": 0,
+        "wrong": 4608
+      },
+      "reverse_role_pairs": {
+        "both_answered": 768,
+        "both_correct": 192,
+        "id_note": "[case_pair_index, view]; cases are 2*index and 2*index+1",
+        "pairs": 768
+      },
+      "renaming": {
+        "comparisons": 10240,
+        "map_changed": 0,
+        "max_tv": 0.0,
+        "median_tv": 0.0,
+        "over_tolerance": 0,
+        "status_changed": 0
+      },
+      "query": {
+        "abstained": 0,
+        "accuracy_among_answered": 0.5,
+        "ambiguous_subset": {
+          "abstained": 0,
+          "accuracy_among_answered": 0.3333333333333333,
+          "answered": 1152,
+          "correct": 384,
+          "correct_per_query": 0.3333333333333333,
+          "coverage": 1.0,
+          "ece_10": 0.6666666666666667,
+          "ece_bins": [
+            {
+              "accuracy": null,
+              "bin": 0,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 1,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 2,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 3,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 4,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 5,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 6,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 7,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 8,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": 0.3333333333333333,
+              "bin": 9,
+              "confidence": 1.0,
+              "count": 1152
+            }
+          ],
+          "infinite_nll_count": 768,
+          "mean_brier": 1.3333333333333333,
+          "mean_nll": null,
+          "nll_status": "infinite",
+          "normalization_map_changed": 0,
+          "normalization_maximizers_changed": 0,
+          "queries": 1152,
+          "tied_forecasts": 0,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits_answered": 2688,
+          "underflow_world_count": 0,
+          "wrong": 768
+        },
+        "answered": 1536,
+        "correct": 768,
+        "correct_per_query": 0.5,
+        "coverage": 1.0,
+        "ece_10": 0.5,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 5,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 0.5,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 1536
+          }
+        ],
+        "infinite_nll_count": 768,
+        "mean_brier": 1.0,
+        "mean_nll": null,
+        "nll_status": "infinite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 1536,
+        "step": 6,
+        "tied_forecasts": 0,
+        "unchanged_bit_errors": 0,
+        "unchanged_bits_answered": 3840,
+        "underflow_world_count": 0,
+        "wrong": 768
+      }
+    },
+    {
+      "condition": "uninformative",
+      "control": "prefix",
+      "fixture": "second_pair",
+      "all_steps": {
+        "abstained": 7680,
+        "accuracy_among_answered": 1.0,
+        "answered": 4608,
+        "correct": 4608,
+        "correct_per_query": 0.375,
+        "coverage": 0.375,
+        "ece_10": 0.0,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 5,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 1.0,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 4608
+          }
+        ],
+        "infinite_nll_count": 0,
+        "mean_brier": 0.0,
+        "mean_nll": 0.0,
+        "nll_status": "finite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 12288,
+        "tied_forecasts": 0,
+        "unchanged_bit_errors": 0,
+        "unchanged_bits_answered": 12288,
+        "underflow_world_count": 0,
+        "wrong": 0
+      },
+      "reverse_role_pairs": {
+        "both_answered": 0,
+        "both_correct": 0,
+        "id_note": "[case_pair_index, view]; cases are 2*index and 2*index+1",
+        "pairs": 768
+      },
+      "renaming": {
+        "comparisons": 3840,
+        "map_changed": 0,
+        "max_tv": 0.0,
+        "median_tv": 0.0,
+        "over_tolerance": 0,
+        "status_changed": 0
+      },
+      "query": {
+        "abstained": 1536,
+        "accuracy_among_answered": null,
+        "ambiguous_subset": {
+          "abstained": 1152,
+          "accuracy_among_answered": null,
+          "answered": 0,
+          "correct": 0,
+          "correct_per_query": 0.0,
+          "coverage": 0.0,
+          "ece_10": null,
+          "ece_bins": [
+            {
+              "accuracy": null,
+              "bin": 0,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 1,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 2,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 3,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 4,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 5,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 6,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 7,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 8,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 9,
+              "confidence": null,
+              "count": 0
+            }
+          ],
+          "infinite_nll_count": 0,
+          "mean_brier": null,
+          "mean_nll": null,
+          "nll_status": "no_answers",
+          "normalization_map_changed": 0,
+          "normalization_maximizers_changed": 0,
+          "queries": 1152,
+          "tied_forecasts": 0,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits_answered": 0,
+          "underflow_world_count": 0,
+          "wrong": 0
+        },
+        "answered": 0,
+        "correct": 0,
+        "correct_per_query": 0.0,
+        "coverage": 0.0,
+        "ece_10": null,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 5,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 9,
+            "confidence": null,
+            "count": 0
+          }
+        ],
+        "infinite_nll_count": 0,
+        "mean_brier": null,
+        "mean_nll": null,
+        "nll_status": "no_answers",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 1536,
+        "step": 6,
+        "tied_forecasts": 0,
+        "unchanged_bit_errors": 0,
+        "unchanged_bits_answered": 0,
+        "underflow_world_count": 0,
+        "wrong": 0
+      }
+    },
+    {
+      "condition": "uninformative",
+      "control": "local",
+      "fixture": "second_pair",
+      "all_steps": {
+        "abstained": 0,
+        "accuracy_among_answered": 0.953125,
+        "answered": 12288,
+        "correct": 11712,
+        "correct_per_query": 0.953125,
+        "coverage": 1.0,
+        "ece_10": 0.0,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 0.5,
+            "bin": 5,
+            "confidence": 0.5,
+            "count": 1152
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 1.0,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 11136
+          }
+        ],
+        "infinite_nll_count": 0,
+        "mean_brier": 0.046875,
+        "mean_nll": 0.06498254817749487,
+        "nll_status": "finite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 12288,
+        "tied_forecasts": 1152,
+        "unchanged_bit_errors": 192,
+        "unchanged_bits_answered": 32256,
+        "underflow_world_count": 0,
+        "wrong": 576
+      },
+      "reverse_role_pairs": {
+        "both_answered": 768,
+        "both_correct": 192,
+        "id_note": "[case_pair_index, view]; cases are 2*index and 2*index+1",
+        "pairs": 768
+      },
+      "renaming": {
+        "comparisons": 10240,
+        "map_changed": 192,
+        "max_tv": 0.0,
+        "median_tv": 0.0,
+        "over_tolerance": 0,
+        "status_changed": 0
+      },
+      "query": {
+        "abstained": 0,
+        "accuracy_among_answered": 0.625,
+        "ambiguous_subset": {
+          "abstained": 0,
+          "accuracy_among_answered": 0.5,
+          "answered": 1152,
+          "correct": 576,
+          "correct_per_query": 0.5,
+          "coverage": 1.0,
+          "ece_10": 0.0,
+          "ece_bins": [
+            {
+              "accuracy": null,
+              "bin": 0,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 1,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 2,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 3,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 4,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": 0.5,
+              "bin": 5,
+              "confidence": 0.5,
+              "count": 1152
+            },
+            {
+              "accuracy": null,
+              "bin": 6,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 7,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 8,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 9,
+              "confidence": null,
+              "count": 0
+            }
+          ],
+          "infinite_nll_count": 0,
+          "mean_brier": 0.5,
+          "mean_nll": 0.6931471805599453,
+          "nll_status": "finite",
+          "normalization_map_changed": 0,
+          "normalization_maximizers_changed": 0,
+          "queries": 1152,
+          "tied_forecasts": 1152,
+          "unchanged_bit_errors": 192,
+          "unchanged_bits_answered": 2688,
+          "underflow_world_count": 0,
+          "wrong": 576
+        },
+        "answered": 1536,
+        "correct": 960,
+        "correct_per_query": 0.625,
+        "coverage": 1.0,
+        "ece_10": 0.0,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 0.5,
+            "bin": 5,
+            "confidence": 0.5,
+            "count": 1152
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 1.0,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 384
+          }
+        ],
+        "infinite_nll_count": 0,
+        "mean_brier": 0.375,
+        "mean_nll": 0.5198603854199589,
+        "nll_status": "finite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 1536,
+        "step": 6,
+        "tied_forecasts": 1152,
+        "unchanged_bit_errors": 192,
+        "unchanged_bits_answered": 3840,
+        "underflow_world_count": 0,
+        "wrong": 576
+      }
+    },
+    {
+      "condition": "uninformative",
+      "control": "contact",
+      "fixture": "second_pair",
+      "all_steps": {
+        "abstained": 0,
+        "accuracy_among_answered": 0.953125,
+        "answered": 12288,
+        "correct": 11712,
+        "correct_per_query": 0.953125,
+        "coverage": 1.0,
+        "ece_10": 0.0,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 0.5,
+            "bin": 5,
+            "confidence": 0.5,
+            "count": 1152
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 1.0,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 11136
+          }
+        ],
+        "infinite_nll_count": 0,
+        "mean_brier": 0.046875,
+        "mean_nll": 0.06498254817749487,
+        "nll_status": "finite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 12288,
+        "tied_forecasts": 1152,
+        "unchanged_bit_errors": 192,
+        "unchanged_bits_answered": 32256,
+        "underflow_world_count": 0,
+        "wrong": 576
+      },
+      "reverse_role_pairs": {
+        "both_answered": 768,
+        "both_correct": 192,
+        "id_note": "[case_pair_index, view]; cases are 2*index and 2*index+1",
+        "pairs": 768
+      },
+      "renaming": {
+        "comparisons": 10240,
+        "map_changed": 192,
+        "max_tv": 0.0,
+        "median_tv": 0.0,
+        "over_tolerance": 0,
+        "status_changed": 0
+      },
+      "query": {
+        "abstained": 0,
+        "accuracy_among_answered": 0.625,
+        "ambiguous_subset": {
+          "abstained": 0,
+          "accuracy_among_answered": 0.5,
+          "answered": 1152,
+          "correct": 576,
+          "correct_per_query": 0.5,
+          "coverage": 1.0,
+          "ece_10": 0.0,
+          "ece_bins": [
+            {
+              "accuracy": null,
+              "bin": 0,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 1,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 2,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 3,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 4,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": 0.5,
+              "bin": 5,
+              "confidence": 0.5,
+              "count": 1152
+            },
+            {
+              "accuracy": null,
+              "bin": 6,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 7,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 8,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 9,
+              "confidence": null,
+              "count": 0
+            }
+          ],
+          "infinite_nll_count": 0,
+          "mean_brier": 0.5,
+          "mean_nll": 0.6931471805599453,
+          "nll_status": "finite",
+          "normalization_map_changed": 0,
+          "normalization_maximizers_changed": 0,
+          "queries": 1152,
+          "tied_forecasts": 1152,
+          "unchanged_bit_errors": 192,
+          "unchanged_bits_answered": 2688,
+          "underflow_world_count": 0,
+          "wrong": 576
+        },
+        "answered": 1536,
+        "correct": 960,
+        "correct_per_query": 0.625,
+        "coverage": 1.0,
+        "ece_10": 0.0,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 0.5,
+            "bin": 5,
+            "confidence": 0.5,
+            "count": 1152
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 1.0,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 384
+          }
+        ],
+        "infinite_nll_count": 0,
+        "mean_brier": 0.375,
+        "mean_nll": 0.5198603854199589,
+        "nll_status": "finite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 1536,
+        "step": 6,
+        "tied_forecasts": 1152,
+        "unchanged_bit_errors": 192,
+        "unchanged_bits_answered": 3840,
+        "underflow_world_count": 0,
+        "wrong": 576
+      }
+    },
+    {
+      "condition": "informative",
+      "control": "no_change",
+      "fixture": "second_pair",
+      "all_steps": {
+        "abstained": 0,
+        "accuracy_among_answered": 0.5,
+        "answered": 12288,
+        "correct": 6144,
+        "correct_per_query": 0.5,
+        "coverage": 1.0,
+        "ece_10": 0.5,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 5,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 0.5,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 12288
+          }
+        ],
+        "infinite_nll_count": 6144,
+        "mean_brier": 1.0,
+        "mean_nll": null,
+        "nll_status": "infinite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 12288,
+        "tied_forecasts": 0,
+        "unchanged_bit_errors": 0,
+        "unchanged_bits_answered": 30720,
+        "underflow_world_count": 0,
+        "wrong": 6144
+      },
+      "reverse_role_pairs": {
+        "both_answered": 768,
+        "both_correct": 192,
+        "id_note": "[case_pair_index, view]; cases are 2*index and 2*index+1",
+        "pairs": 768
+      },
+      "renaming": {
+        "comparisons": 10240,
+        "map_changed": 0,
+        "max_tv": 0.0,
+        "median_tv": 0.0,
+        "over_tolerance": 0,
+        "status_changed": 0
+      },
+      "query": {
+        "abstained": 0,
+        "accuracy_among_answered": 0.5,
+        "ambiguous_subset": {
+          "abstained": 0,
+          "accuracy_among_answered": null,
+          "answered": 0,
+          "correct": 0,
+          "correct_per_query": null,
+          "coverage": null,
+          "ece_10": null,
+          "ece_bins": [
+            {
+              "accuracy": null,
+              "bin": 0,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 1,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 2,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 3,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 4,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 5,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 6,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 7,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 8,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 9,
+              "confidence": null,
+              "count": 0
+            }
+          ],
+          "infinite_nll_count": 0,
+          "mean_brier": null,
+          "mean_nll": null,
+          "nll_status": "no_answers",
+          "normalization_map_changed": 0,
+          "normalization_maximizers_changed": 0,
+          "queries": 0,
+          "tied_forecasts": 0,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits_answered": 0,
+          "underflow_world_count": 0,
+          "wrong": 0
+        },
+        "answered": 1536,
+        "correct": 768,
+        "correct_per_query": 0.5,
+        "coverage": 1.0,
+        "ece_10": 0.5,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 5,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 0.5,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 1536
+          }
+        ],
+        "infinite_nll_count": 768,
+        "mean_brier": 1.0,
+        "mean_nll": null,
+        "nll_status": "infinite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 1536,
+        "step": 6,
+        "tied_forecasts": 0,
+        "unchanged_bit_errors": 0,
+        "unchanged_bits_answered": 3840,
+        "underflow_world_count": 0,
+        "wrong": 768
+      }
+    },
+    {
+      "condition": "informative",
+      "control": "prefix",
+      "fixture": "second_pair",
+      "all_steps": {
+        "abstained": 7680,
+        "accuracy_among_answered": 0.8333333333333334,
+        "answered": 4608,
+        "correct": 3840,
+        "correct_per_query": 0.3125,
+        "coverage": 0.375,
+        "ece_10": 0.0,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 0.5,
+            "bin": 5,
+            "confidence": 0.5,
+            "count": 1536
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 1.0,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 3072
+          }
+        ],
+        "infinite_nll_count": 0,
+        "mean_brier": 0.16666666666666666,
+        "mean_nll": 0.23104906018664842,
+        "nll_status": "finite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 12288,
+        "tied_forecasts": 1536,
+        "unchanged_bit_errors": 768,
+        "unchanged_bits_answered": 10752,
+        "underflow_world_count": 0,
+        "wrong": 768
+      },
+      "reverse_role_pairs": {
+        "both_answered": 0,
+        "both_correct": 0,
+        "id_note": "[case_pair_index, view]; cases are 2*index and 2*index+1",
+        "pairs": 768
+      },
+      "renaming": {
+        "comparisons": 3840,
+        "map_changed": 768,
+        "max_tv": 0.0,
+        "median_tv": 0.0,
+        "over_tolerance": 0,
+        "status_changed": 0
+      },
+      "query": {
+        "abstained": 1536,
+        "accuracy_among_answered": null,
+        "ambiguous_subset": {
+          "abstained": 0,
+          "accuracy_among_answered": null,
+          "answered": 0,
+          "correct": 0,
+          "correct_per_query": null,
+          "coverage": null,
+          "ece_10": null,
+          "ece_bins": [
+            {
+              "accuracy": null,
+              "bin": 0,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 1,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 2,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 3,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 4,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 5,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 6,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 7,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 8,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 9,
+              "confidence": null,
+              "count": 0
+            }
+          ],
+          "infinite_nll_count": 0,
+          "mean_brier": null,
+          "mean_nll": null,
+          "nll_status": "no_answers",
+          "normalization_map_changed": 0,
+          "normalization_maximizers_changed": 0,
+          "queries": 0,
+          "tied_forecasts": 0,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits_answered": 0,
+          "underflow_world_count": 0,
+          "wrong": 0
+        },
+        "answered": 0,
+        "correct": 0,
+        "correct_per_query": 0.0,
+        "coverage": 0.0,
+        "ece_10": null,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 5,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 9,
+            "confidence": null,
+            "count": 0
+          }
+        ],
+        "infinite_nll_count": 0,
+        "mean_brier": null,
+        "mean_nll": null,
+        "nll_status": "no_answers",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 1536,
+        "step": 6,
+        "tied_forecasts": 0,
+        "unchanged_bit_errors": 0,
+        "unchanged_bits_answered": 0,
+        "underflow_world_count": 0,
+        "wrong": 0
+      }
+    },
+    {
+      "condition": "informative",
+      "control": "local",
+      "fixture": "second_pair",
+      "all_steps": {
+        "abstained": 0,
+        "accuracy_among_answered": 0.890625,
+        "answered": 12288,
+        "correct": 10944,
+        "correct_per_query": 0.890625,
+        "coverage": 1.0,
+        "ece_10": 0.0,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 0.5,
+            "bin": 5,
+            "confidence": 0.5,
+            "count": 2688
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 1.0,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 9600
+          }
+        ],
+        "infinite_nll_count": 0,
+        "mean_brier": 0.109375,
+        "mean_nll": 0.15162594574748803,
+        "nll_status": "finite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 12288,
+        "tied_forecasts": 2688,
+        "unchanged_bit_errors": 960,
+        "unchanged_bits_answered": 30720,
+        "underflow_world_count": 0,
+        "wrong": 1344
+      },
+      "reverse_role_pairs": {
+        "both_answered": 768,
+        "both_correct": 192,
+        "id_note": "[case_pair_index, view]; cases are 2*index and 2*index+1",
+        "pairs": 768
+      },
+      "renaming": {
+        "comparisons": 10240,
+        "map_changed": 960,
+        "max_tv": 0.0,
+        "median_tv": 0.0,
+        "over_tolerance": 0,
+        "status_changed": 0
+      },
+      "query": {
+        "abstained": 0,
+        "accuracy_among_answered": 0.625,
+        "ambiguous_subset": {
+          "abstained": 0,
+          "accuracy_among_answered": null,
+          "answered": 0,
+          "correct": 0,
+          "correct_per_query": null,
+          "coverage": null,
+          "ece_10": null,
+          "ece_bins": [
+            {
+              "accuracy": null,
+              "bin": 0,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 1,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 2,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 3,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 4,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 5,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 6,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 7,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 8,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 9,
+              "confidence": null,
+              "count": 0
+            }
+          ],
+          "infinite_nll_count": 0,
+          "mean_brier": null,
+          "mean_nll": null,
+          "nll_status": "no_answers",
+          "normalization_map_changed": 0,
+          "normalization_maximizers_changed": 0,
+          "queries": 0,
+          "tied_forecasts": 0,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits_answered": 0,
+          "underflow_world_count": 0,
+          "wrong": 0
+        },
+        "answered": 1536,
+        "correct": 960,
+        "correct_per_query": 0.625,
+        "coverage": 1.0,
+        "ece_10": 0.0,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 0.5,
+            "bin": 5,
+            "confidence": 0.5,
+            "count": 1152
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 1.0,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 384
+          }
+        ],
+        "infinite_nll_count": 0,
+        "mean_brier": 0.375,
+        "mean_nll": 0.5198603854199589,
+        "nll_status": "finite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 1536,
+        "step": 6,
+        "tied_forecasts": 1152,
+        "unchanged_bit_errors": 192,
+        "unchanged_bits_answered": 3840,
+        "underflow_world_count": 0,
+        "wrong": 576
+      }
+    },
+    {
+      "condition": "informative",
+      "control": "contact",
+      "fixture": "second_pair",
+      "all_steps": {
+        "abstained": 0,
+        "accuracy_among_answered": 0.9375,
+        "answered": 12288,
+        "correct": 11520,
+        "correct_per_query": 0.9375,
+        "coverage": 1.0,
+        "ece_10": 0.0,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 0.5,
+            "bin": 5,
+            "confidence": 0.5,
+            "count": 1536
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 1.0,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 10752
+          }
+        ],
+        "infinite_nll_count": 0,
+        "mean_brier": 0.0625,
+        "mean_nll": 0.08664339756999316,
+        "nll_status": "finite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 12288,
+        "tied_forecasts": 1536,
+        "unchanged_bit_errors": 768,
+        "unchanged_bits_answered": 30720,
+        "underflow_world_count": 0,
+        "wrong": 768
+      },
+      "reverse_role_pairs": {
+        "both_answered": 768,
+        "both_correct": 768,
+        "id_note": "[case_pair_index, view]; cases are 2*index and 2*index+1",
+        "pairs": 768
+      },
+      "renaming": {
+        "comparisons": 10240,
+        "map_changed": 768,
+        "max_tv": 0.0,
+        "median_tv": 0.0,
+        "over_tolerance": 0,
+        "status_changed": 0
+      },
+      "query": {
+        "abstained": 0,
+        "accuracy_among_answered": 1.0,
+        "ambiguous_subset": {
+          "abstained": 0,
+          "accuracy_among_answered": null,
+          "answered": 0,
+          "correct": 0,
+          "correct_per_query": null,
+          "coverage": null,
+          "ece_10": null,
+          "ece_bins": [
+            {
+              "accuracy": null,
+              "bin": 0,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 1,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 2,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 3,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 4,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 5,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 6,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 7,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 8,
+              "confidence": null,
+              "count": 0
+            },
+            {
+              "accuracy": null,
+              "bin": 9,
+              "confidence": null,
+              "count": 0
+            }
+          ],
+          "infinite_nll_count": 0,
+          "mean_brier": null,
+          "mean_nll": null,
+          "nll_status": "no_answers",
+          "normalization_map_changed": 0,
+          "normalization_maximizers_changed": 0,
+          "queries": 0,
+          "tied_forecasts": 0,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits_answered": 0,
+          "underflow_world_count": 0,
+          "wrong": 0
+        },
+        "answered": 1536,
+        "correct": 1536,
+        "correct_per_query": 1.0,
+        "coverage": 1.0,
+        "ece_10": 0.0,
+        "ece_bins": [
+          {
+            "accuracy": null,
+            "bin": 0,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 1,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 2,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 3,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 4,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 5,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 6,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 7,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": null,
+            "bin": 8,
+            "confidence": null,
+            "count": 0
+          },
+          {
+            "accuracy": 1.0,
+            "bin": 9,
+            "confidence": 1.0,
+            "count": 1536
+          }
+        ],
+        "infinite_nll_count": 0,
+        "mean_brier": 0.0,
+        "mean_nll": 0.0,
+        "nll_status": "finite",
+        "normalization_map_changed": 0,
+        "normalization_maximizers_changed": 0,
+        "queries": 1536,
+        "step": 6,
+        "tied_forecasts": 0,
+        "unchanged_bit_errors": 0,
+        "unchanged_bits_answered": 3840,
+        "underflow_world_count": 0,
+        "wrong": 0
+      }
+    }
+  ]
+}
