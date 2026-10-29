@@ -1,5 +1,7 @@
 {
-  "version": "active-inference-v2",
+  "version": "active-inference-v3",
+  "evidence_version": "active-evidence-v1",
+  "code_commit": "44193776aabd3f10186d5ebcba1fe6df4aaafc61",
   "tracking_issue": 22,
   "repair_pr": 56,
   "gate_g1": "NOT_ADMITTED",
@@ -17,16 +19,27 @@
   "completed_automated_repairs": [
     "exact_zero_neural_path_accounting",
     "observed_context_empirical_recovery",
-    "streaming_endpoint_integration"
+    "streaming_endpoint_integration",
+    "joint_log_evidence_adequacy_with_latched_episode_alarm",
+    "direct_observed_contact_context_support",
+    "action_coverage_configuration_bound_forecast_receipts",
+    "transactional_diagnostic_commit_and_terminal_error_evidence"
   ],
+  "diagnostic_scope": {
+    "advisory_only": true,
+    "calibration_established": false,
+    "sensor_source_authenticated": false,
+    "dropout_independence_verified": false,
+    "posterior_context_support_integrated": false,
+    "alternate_change_point_monitor_integrated": false,
+    "learned_probe_selection_integrated": false,
+    "alpha": 0.05,
+    "heuristic_surprise_probability": 0.03
+  },
   "pending_engineering_in_order": [
     {
       "stage": "G1",
-      "work": "Integrate earlier evidence adequacy/support diagnostics with this active model/filter path; preserve prediction/observation and unsupported/conflicting distinctions."
-    },
-    {
-      "stage": "G1",
-      "work": "Cover the original 3–6-entity and self-contact contract with one train/predict/observe/checkpoint/evaluate interface and retained strong controls."
+      "work": "Cover the original 3\u20136-entity and self-contact contract with one train/predict/observe/checkpoint/evaluate interface and retained strong controls."
     },
     {
       "stage": "G1",
@@ -34,32 +47,46 @@
     },
     {
       "stage": "G2",
-      "work": "Automatically test 1–2 to 3–5 interaction transfer over declared graph families, coherent alternatives, repeated actions and untouched entities."
+      "work": "Automatically test 1\u20132 to 3\u20135 interaction transfer over declared graph families, coherent alternatives, repeated actions and untouched entities."
     },
     {
       "stage": "G3",
       "work": "Learn bilingual grounding into the same predictive state without gold programs."
     },
     {
-      "stage": "G4–G5",
+      "stage": "G4\u2013G5",
       "work": "Implement learned communication, durable acquisition, correction, restart and retention in dependency order."
     },
     {
-      "stage": "G6–G8",
+      "stage": "G6\u2013G8",
       "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
     }
   ],
   "external_issue_55": "Independent scientific validation remains pending; it is not the sole remaining implementation dependency.",
   "line_counts": {
-    "new_runtime_source": 238,
-    "new_tests": 348,
-    "retained_research_total": 18815,
+    "new_runtime_source_net": 225,
+    "new_tests_net": 377,
+    "active_source_files_excluding_frozen_dependencies": 463,
+    "retained_research_total": 19417,
     "inclusive_size_goal_met": false
   },
+  "verification": {
+    "record": "results/active-evidence-validation-v3.json",
+    "local_tests_discovered": 457,
+    "local_tests_passed": 457,
+    "local_tests_skipped": 0,
+    "historical_manifest_locks_passed": 16,
+    "frozen_input_preflight": "passed",
+    "new_scientific_evaluation": false
+  },
   "limits": [
-    "No neural training or new scientific evaluation in this repair.",
+    "No research model retraining or new scientific evaluation in this diagnostics tranche.",
     "Positive-probability path growth remains bounded, not pruned or solved.",
     "Fully supported but contradictory empirical feedback remains an explicit error.",
-    "Active command is repository-backed, not a replacement of the frozen standalone v1 bundle."
-  ]
+    "Active command is repository-backed, not a replacement of the frozen standalone v1 bundle.",
+    "The evidence statistic is conditional on forecast and sensor assumptions; an alarm does not identify its cause.",
+    "Observed contact-context counts are episode evidence, not posterior support or calibrated reliability."
+  ],
+  "local_verified_code_commit": "be65e4424ac34f4db67fc8895a2dea86f9de77c8",
+  "diagnostics_pr": 57
 }
