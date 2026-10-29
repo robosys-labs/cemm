@@ -1,0 +1,65 @@
+{
+  "version": "active-inference-v2",
+  "tracking_issue": 22,
+  "repair_pr": 56,
+  "gate_g1": "NOT_ADMITTED",
+  "independent_validation": "PENDING_SEPARATE_FROM_ENGINEERING",
+  "production_cutover": false,
+  "active_entrypoint": "experiments.predictive_nucleus.active_participant",
+  "current_domain": {
+    "entities": 3,
+    "state": "binary",
+    "visible_sensor_noise": false,
+    "self_contact": false,
+    "default_live_path_limit": 64,
+    "full_initial_anchor": true
+  },
+  "completed_automated_repairs": [
+    "exact_zero_neural_path_accounting",
+    "observed_context_empirical_recovery",
+    "streaming_endpoint_integration"
+  ],
+  "pending_engineering_in_order": [
+    {
+      "stage": "G1",
+      "work": "Integrate earlier evidence adequacy/support diagnostics with this active model/filter path; preserve prediction/observation and unsupported/conflicting distinctions."
+    },
+    {
+      "stage": "G1",
+      "work": "Cover the original 3–6-entity and self-contact contract with one train/predict/observe/checkpoint/evaluate interface and retained strong controls."
+    },
+    {
+      "stage": "G1",
+      "work": "Version information-aware automated acceptance before new scores: explicit prediction points, answerability, coverage, probability scores and comparable budgets."
+    },
+    {
+      "stage": "G2",
+      "work": "Automatically test 1–2 to 3–5 interaction transfer over declared graph families, coherent alternatives, repeated actions and untouched entities."
+    },
+    {
+      "stage": "G3",
+      "work": "Learn bilingual grounding into the same predictive state without gold programs."
+    },
+    {
+      "stage": "G4–G5",
+      "work": "Implement learned communication, durable acquisition, correction, restart and retention in dependency order."
+    },
+    {
+      "stage": "G6–G8",
+      "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
+    }
+  ],
+  "external_issue_55": "Independent scientific validation remains pending; it is not the sole remaining implementation dependency.",
+  "line_counts": {
+    "new_runtime_source": 238,
+    "new_tests": 348,
+    "retained_research_total": 18815,
+    "inclusive_size_goal_met": false
+  },
+  "limits": [
+    "No neural training or new scientific evaluation in this repair.",
+    "Positive-probability path growth remains bounded, not pruned or solved.",
+    "Fully supported but contradictory empirical feedback remains an explicit error.",
+    "Active command is repository-backed, not a replacement of the frozen standalone v1 bundle."
+  ]
+}
