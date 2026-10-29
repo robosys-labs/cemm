@@ -1,0 +1,438 @@
+{
+  "checks": [
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "flat",
+      "seed": 7
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "flat",
+      "seed": 7
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "flat",
+      "seed": 11
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "flat",
+      "seed": 11
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "flat",
+      "seed": 23
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "flat",
+      "seed": 23
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "flat",
+      "seed": 37
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "flat",
+      "seed": 37
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "flat",
+      "seed": 53
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "flat",
+      "seed": 53
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "flat_supplied_persistence",
+      "seed": 7
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "flat_supplied_persistence",
+      "seed": 7
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "flat_supplied_persistence",
+      "seed": 11
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "flat_supplied_persistence",
+      "seed": 11
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "flat_supplied_persistence",
+      "seed": 23
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "flat_supplied_persistence",
+      "seed": 23
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "flat_supplied_persistence",
+      "seed": 37
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "flat_supplied_persistence",
+      "seed": 37
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "flat_supplied_persistence",
+      "seed": 53
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "flat_supplied_persistence",
+      "seed": 53
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_learned_persistence",
+      "seed": 7
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_learned_persistence",
+      "seed": 7
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_learned_persistence",
+      "seed": 11
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_learned_persistence",
+      "seed": 11
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_learned_persistence",
+      "seed": 23
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_learned_persistence",
+      "seed": 23
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_learned_persistence",
+      "seed": 37
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_learned_persistence",
+      "seed": 37
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_learned_persistence",
+      "seed": 53
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_learned_persistence",
+      "seed": 53
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_memory_reset",
+      "seed": 7
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_memory_reset",
+      "seed": 7
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_memory_reset",
+      "seed": 11
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_memory_reset",
+      "seed": 11
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_memory_reset",
+      "seed": 23
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_memory_reset",
+      "seed": 23
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_memory_reset",
+      "seed": 37
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_memory_reset",
+      "seed": 37
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_memory_reset",
+      "seed": 53
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_memory_reset",
+      "seed": 53
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_supplied_persistence",
+      "seed": 7
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_supplied_persistence",
+      "seed": 7
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_supplied_persistence",
+      "seed": 11
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_supplied_persistence",
+      "seed": 11
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_supplied_persistence",
+      "seed": 23
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_supplied_persistence",
+      "seed": 23
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_supplied_persistence",
+      "seed": 37
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_supplied_persistence",
+      "seed": 37
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_supplied_persistence",
+      "seed": 53
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_supplied_persistence",
+      "seed": 53
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_untied_roles",
+      "seed": 7
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_untied_roles",
+      "seed": 7
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_untied_roles",
+      "seed": 11
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_untied_roles",
+      "seed": 11
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_untied_roles",
+      "seed": 23
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_untied_roles",
+      "seed": 23
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_untied_roles",
+      "seed": 37
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_untied_roles",
+      "seed": 37
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "kernel_untied_roles",
+      "seed": 53
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "kernel_untied_roles",
+      "seed": 53
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "prefix",
+      "seed": null
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "prefix",
+      "seed": null
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "local",
+      "seed": null
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "local",
+      "seed": null
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "contact",
+      "seed": null
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "contact",
+      "seed": null
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "first_contact",
+      "seed": null
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "first_contact",
+      "seed": null
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": false,
+      "participant": "no_change",
+      "seed": null
+    },
+    {
+      "identical_forecasts": 4,
+      "masked": true,
+      "participant": "no_change",
+      "seed": null
+    }
+  ],
+  "environment": {
+    "numpy": "2.3.5",
+    "torch": "2.10.0+cpu"
+  },
+  "forecast_vectors_compared": 280,
+  "independent_review": false,
+  "manifest_sha256": "2373c2d366c4f8a855dbb7498e5d6a88bc55b9078a00400eb51db86ca115a1a8",
+  "python_physical_lines": 671,
+  "score_computed": false,
+  "source_commit": "0d48f779215296120577b850d4c9ee329082e59f",
+  "status": "EXPORTED_INFERENCE_PARITY_ONLY",
+  "study_run": false,
+  "verified_neural_checkpoints": 30,
+  "verified_table_files": 3
+}
