@@ -1,13 +1,14 @@
-# Active nucleus: one observed-history learning and inference path
+# Active nucleus: observed-history learning, inference and acceptance
 
-Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22); v5 draft
-[#59](https://github.com/robosys-labs/cemm/pull/59), stacked on [draft #58](https://github.com/robosys-labs/cemm/pull/58).
-Published v5 source: `94c059a0fd4fdb78ad5f442419053ac99e41c124`.
-Locally verified code: `5a857ab0879cb1e67ca01a1de888eafbabace5d0`, tree
-`adb0ec97aac6e3f28d5e24f5909d8c9ae2e470ec`. Publication preserves that exact tree;
-Git commit metadata differs.
-Decision: KEEP the common observed-history learning path, wider flat control and
-native learned-state artifacts. Prospective scientific acceptance remains next.
+Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22); acceptance draft
+[#60](https://github.com/robosys-labs/cemm/pull/60),
+stacked on [draft #59](https://github.com/robosys-labs/cemm/pull/59).
+Acceptance source: `642265d231cc1e4d606dea5e0f892e56693b3fdc`.
+Locally verified code: `956078ffc509b945bd86b2393d8453ee5bdb81bc`, tree
+`61a6f214941ad71c44e5a0f8ea93e2952b6bcaa2`.
+Decision: KEEP the prospective acceptance contract, observed-only collector and
+complete-world scorer. Fresh prospective data, oracle lineage and a frozen
+comparison contract are the next engineering work.
 **G1 remains NOT ADMITTED. Engineering does not wait solely on issue #55.**
 
 ## Active versus frozen paths
@@ -18,9 +19,11 @@ class/configuration, declared domain, resource limits, weight/table fingerprints
 and current training, checkpoint and adaptation provenance. Forecast receipts
 bind this identity. `active-learning-v1` supplies Python training, replay and
 evaluation APIs; `cemm-active-checkpoint-v1` stores registered learned state.
-The eight active source files reuse the frozen streaming transport, verified
-bundle loader and learned modules. Frozen sources, protocols, checkpoints,
-studies and standalone v1 exports remain unchanged.
+Those eight active source files are unchanged by the acceptance tranche.
+`active-acceptance-v1` adds three source files around the existing Session and
+native artifacts, for eleven active files in total. They reuse the frozen
+streaming transport, verified bundle loader and learned modules. Historical
+sources, protocols, checkpoints, studies and standalone v1 exports remain unchanged.
 
 The native artifact route starts a fresh streaming episode from a separately
 saved and hash-verified checkpoint:
@@ -188,10 +191,77 @@ likelihood. A failed filter update is marked uncommitted. Overall observed NLL
 is present only when every planned observed event was scored; answered-only NLL
 is explicitly conditional. Strict JSON distinguishes these cases.
 
-This evaluator has **no hidden gold**. It does not measure complete-world
+This delivered-event evaluator has **no hidden gold**. It does not measure complete-world
 accuracy on unobserved bits, trajectory correctness, role-pair success,
 calibration, scientific independence or G1 acceptance. Its engineering scope
 must not be promoted to the roadmap's outcome gate.
+
+## Prospective acceptance contract, collector and scorer
+
+`ACCEPTANCE.md` documents the implemented APIs, commands and artifact formats.
+The new `acceptance_protocol_v1.json` freezes the scoring/recording contract,
+not a complete scientific study. The original protocol and its target remain
+unchanged. Inference stays `active-inference-v5`, learning stays
+`active-learning-v1`, and the native checkpoint format is unchanged.
+
+`acceptance_contract.py` validates exact input, plan and evaluator-only oracle
+inventories. A plan commits every participant/seed checkpoint hash, observed
+input and oracle digests, oracle-source and information-law identities, and the
+fifteen inference/acceptance source files. It names each case's family,
+partition, declared duplicate-risk lineage and optional reversed-role pair.
+Declared lineage tokens cannot cross train/selection/calibration/evaluation
+partitions, and held-out families cannot appear in the declared development
+family inventory. These checks do not establish the completeness of external
+lineage declarations. Prospective plans require all five original model seeds;
+synthetic invariant plans can use fewer and remain explicitly synthetic.
+
+`acceptance_runner.collect` and its CLI take observed histories and a
+hash-verified native checkpoint, with no gold or oracle argument. Each episode
+uses the existing Session with three to six entities, a complete anchor,
+noiseless visible readings and the 128-action limit. Every action is a required
+prediction point. Receipt-checked forecasts are copied before their feedback;
+the collector checks frozen weights/tables, configuration and current/native
+metadata throughout the run. It records per-forecast timings, path diagnostics,
+actual parameter/table size, runtime identity and process costs. Equal recorded
+ceilings or parameters do not establish matched consumed compute.
+
+Collection retains valid prefixes and ordinary episode failures and proceeds
+to other declared episodes without retrying the failed one. Forecast freezing
+is **in memory**; the CLI writes the trace after collection. It does not provide
+crash-durable per-forecast journaling or an OS isolation boundary. Identity
+mutation invalidates collection. Sensor provenance, predictable/outcome-ignorable
+dropout and independently held gold remain external assumptions or requirements.
+
+`acceptance_scoring.evaluate` and its CLI join the frozen traces to separate
+complete-world truth only for scoring. Joins check source commitments, native
+specification/state/control/provenance, forecast receipts and raw-versus-normalized
+log consistency. Missing or extra input/gold cases are rejected. Missing trials,
+episodes or later forecasts become `UNPRODUCED` and retain every planned
+denominator; empirical `ABSTAIN` remains distinct and has no invented score.
+
+Answerability is singleton **declared complete oracle support** under the
+delivered prefix/current action/selected coverage. Consistent information keys
+cannot receive conflicting support. The software does not prove that the
+alternatives are exhaustive, infer a uniform prior from support size, calculate
+a Bayes floor from it, or condition a submitted forecast on oracle support.
+
+Reports include all-planned complete-world MAP accuracy, answerable/ambiguous
+strata, joint NLL/Brier, unchanged-coordinate errors, explicit coverage, fixed
+ten-bin joint-MAP ECE diagnostics, per-seed/family breakdowns and reference-arm
+repair/regression IDs. Exact-zero truth probability gives infinite uncapped NLL;
+finite log underflow is preserved. Full proper-score means require distributions
+at every planned point; supported-only means are explicitly conditional. Reused
+checkpoints and physical lineages remain visible rather than counted as new
+independent fits or worlds. Latency summaries cover the reported prediction
+region, not end-to-end service performance.
+
+Whole-trajectory exactness is an AND of all required forecasts **with delivered
+feedback**, and role-pair success requires both explicitly reversed trajectories
+to be correct. Neither is a free-running rollout or a hidden-trajectory
+likelihood. A failure during final feedback does not erase its valid forecast;
+forecast correctness and execution completion remain separate. The per-seed
+comparison to 0.95 is numeric reporting only, with `admission_decision: false`.
+Every report retains `gate_g1: NOT_ADMITTED`.
 
 ## Domain and self-contact contract
 
@@ -314,7 +384,42 @@ remain terminal; the no-change control continues its existing last-reading updat
 while reporting and latching the contradiction. The active CLI preserves these
 diagnostics in strict-JSON `ERROR` responses and exits with code 2.
 
-## Current v5 learning integration verification
+## Current acceptance integration verification
+
+The clean code commit `956078ffc509b945bd86b2393d8453ee5bdb81bc` passed
+**590 tests in 54.477 seconds, zero skips**. The **44 new tests** comprise
+13 artifact-contract, 10 collector, 17 scoring and four integration checks;
+the focused set passed in 6.752 seconds. The original protocol, all 16 historical
+manifest locks, the new acceptance-contract lock and frozen-input preflight
+passed: 19 standalone checks. Preflight ran with a clean tracked tree, no
+untracked files and study execution disabled. The published source tree exactly
+matches the clean locally verified code tree. Full evidence is recorded in
+`results/active-acceptance-validation-v1.json`; final-head CI status is recorded
+on [the acceptance PR](https://github.com/robosys-labs/cemm/pull/60).
+
+Synthetic checks exercise dynamic geometry, causal information keys, missing
+and incomplete inventories, role-pair and trajectory conjunctions, source and
+lineage drift, ambiguity, exact zeros, finite underflow, conditional means,
+native checkpoint collection and actual command-line scoring. Integration
+reproduced three malformed traces that previously passed: a frozen predictor
+specification inconsistent with its checkpoint, inconsistent raw/normalized log
+vectors and an oversized normalization correction. All three are now rejected.
+The valid terminal-contradiction forecast and future unproduced denominator are
+retained, and changing evaluator-only targets cannot change collected forecasts.
+
+No research fitting or new scientific performance comparison ran. Closed studies,
+historical results and all learned modules remain unchanged; learned parameter
+delta is **zero**. This tranche adds **892 runtime lines** and **940 test lines**.
+The eleven active files total **2,685 physical Python lines excluding frozen
+dependencies**, and retained research Python totals **24,540 lines**. The
+inclusive 2,000-line goal remains **unmet**. No historical evidence was removed
+to improve the size figure, and suite timing is not a compute/latency benchmark.
+
+## Earlier v5 learning integration verification
+
+Published v5 code `94c059a0fd4fdb78ad5f442419053ac99e41c124` matches the
+locally verified `5a857ab0879cb1e67ca01a1de888eafbabace5d0` tree
+`adb0ec97aac6e3f28d5e24f5909d8c9ae2e470ec`.
 
 The clean local code commit `5a857ab0879cb1e67ca01a1de888eafbabace5d0` passed
 **546 tests in 52.151 seconds, zero skips**, including **48 new tests**: 18 learning,
@@ -474,24 +579,28 @@ line goal. No historical evidence was removed to improve a size figure.
 
 ## Remaining engineering, excluding manual sign-off
 
-`active_status.json` records the common expanded-domain training, prediction,
-observation, native checkpoint and delivered-event evaluation APIs as implemented.
-The next bounded tranche is a **prospective information-aware acceptance contract
-and evaluator**, using this common path. It must freeze exact prediction points,
-answerability under delivered observations, coverage/abstention rules, complete
-worlds and whole-trajectory outcomes, proper probability scores, paired role
-reversals, unchanged-entity errors, all required seeds, and failure/regression
-denominators before any new substantive fit or research score. The current
-delivered-event evaluator supplies none of the hidden-gold acceptance machinery.
+`active_status.json` records the common training/inference/native-checkpoint path
+and the prospective acceptance contract, collector and scorer as implemented.
+The next bounded engineering work is the **fresh prospective data and comparison
+contract**: a delivered-observation curriculum whose earlier effects remain
+relevant, fresh held-out family inventories, complete conditional oracle support,
+split/source/information-law lineage and all required seed/checkpoint plans.
+Freeze these assets before substantive fits or research scores, using the
+implemented collector/scorer rather than another competing inference harness.
 
-Fresh held-out trajectory families, split/oracle lineage and checkpoint freezes
-must accompany that contract. Retain the strongest applicable empirical controls
-and separately report fixed exposure, capacity and actual compute; equal ceilings
-or identical histories alone do not match them. A later controlled comparison
-must include calibration and ambiguity strata, preserve every failure, and satisfy
-the independent authorship/custody requirement for any G1 admission claim. The
-opened common-objective and sensor-transfer studies remain closed. Another
-same-author fixture or fresh seed does not become independent validation.
+Predeclare the interpretation of scientific denominators, calibration criteria,
+material effect size/statistical test, and concrete exposure/capacity/actual-compute
+comparisons. Retain the strongest applicable empirical abstractions and disclose
+their eligible targets and training support. Equal ceilings or identical
+histories alone do not match information or cost. Preserve every planned failure
+and regression. Fresh asset construction and matching remain implementation
+work; external sign-off is not the sole blocker.
+
+Separately accountable authorship/custody, external oracle completeness review
+and evaluator-controlled isolation remain required for admission. A later
+controlled comparison must satisfy those requirements under its frozen new
+contract. The opened common-objective and sensor-transfer studies stay closed.
+Another same-author fixture or fresh seed does not become independent validation.
 
 Keep the roadmap's G1 target and held-out families. Do not reinterpret historical
 final-query results as whole-trajectory success or pool easy resets to manufacture

@@ -1,0 +1,641 @@
+{
+  "acceptance_contract": {
+    "artifact_maximum_bytes": 67108864,
+    "geometry": {
+      "actions_per_episode": 128,
+      "binary_state": true,
+      "candidate_expansions": 512,
+      "complete_initial_anchor": true,
+      "entity_counts": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "live_paths": 64,
+      "noiseless_visible_bits": true,
+      "self_contact_uses_one_physical_coordinate": true
+    },
+    "hash_semantics": "Plan input/oracle commitments use canonical compact JSON content digests; CLI expected digests and checkpoint commitments bind exact file bytes.",
+    "lock": "snapshots/active_acceptance_protocol_v1.sha256",
+    "lock_sha256": "d74c31e8bd1963c615f298405e82ad238326bc7b169dd62216a1edcb6a34c9ea",
+    "native_checkpoint_scope": "Frozen registered learned state for fresh episodes; no optimizer or live-session resume.",
+    "original_protocol_sha256": "622a0dfdf94d14b4f16461a0f20acce18bb880f094d5071e58cd1764bdc9c1e7",
+    "original_protocol_unchanged": true,
+    "path": "acceptance_protocol_v1.json",
+    "plan_software_sha256": {
+      "acceptance_contract.py": "e502cee5c68f44cc3d592d8536de9989b1eff1be5a7949b0eb16465570836368",
+      "acceptance_runner.py": "0983b8ee08296601110060f5c773dda9775879a0542bd7a3aa603e780bd791a0",
+      "acceptance_scoring.py": "8dbd524c196027cb6d841ce3c724615b32143b5ea85f9e35f312911e0c6f605c",
+      "active_checkpoint.py": "34de339e769785bb1f2d4b974ec6a947688387d72463413aa142068f2a3752f4",
+      "active_evidence.py": "997bca8a4320bdb94752714441f0929d6ff377edbab1c609bff041415f7c75b7",
+      "active_participant.py": "7721cea95f8ce48b62abea7637e177a7dafd8143c9903f5112f4e55acf73e6b2",
+      "active_paths.py": "1486f3fe98ffbe650fd6410d038c3e6c83b23f4d569606ced8da647443c9a6ee",
+      "comparison_scoring.py": "95865f228ccb06345deda847570efa1aaea8e72828f64645d00d19a360b6a473",
+      "context_support.py": "4396e3d6fd6ae4242e1ec497ebc3dd983af1c30dc256be84e9c52b11b3d190e5",
+      "domain_contract.py": "65716833bea1f3f8b242c7bb5eaa985c4eb277ed96cc6cc184f65cf2baf61a03",
+      "domain_flat.py": "dfbc52aadf1c27405bba71cc34887e452da94f0d2df737b3a637af11d751031a",
+      "domain_kernel.py": "c2ce94522acfe931134a6bf8d90a0f2874fed0fa6a72e81e3ec8f9cc14f29eb3",
+      "external_participant.py": "802b0a93dedbcbae34006e1c0eb6959107a09c9e25686cd88e61f1777d8ade1e",
+      "joint_objective.py": "c00551ac3f0cff682b2dcd415929d8e8b7279f7fe92494fd07a2411a29ad1f4f",
+      "masked_replay.py": "fb79da609986721172b85737ef18150c465ea255b38ca176d945cc132dae69fa"
+    },
+    "prediction_points": "Every declared action before its own feedback; no post-outcome exclusion.",
+    "prospective_model_seeds": [
+      7,
+      11,
+      23,
+      37,
+      53
+    ],
+    "sha256": "eaa97303d16472579b63600780c1a1b83618a649c291cdb6cdca2cb2b4062345",
+    "source_commitments": "12 active inference dependencies plus 3 acceptance modules; oracle source and information-law identities are separately declared.",
+    "synthetic_smaller_seed_inventory_allowed": true
+  },
+  "acceptance_pr": 60,
+  "base_commit": "ef73f3326438a6eda44d7401bb3263d7b1ba35e4",
+  "base_pr": 59,
+  "base_tree_sha": "3d6e86a878e7b86b55a379b93748d4625df3ee74",
+  "changed_paths_relative_to_base": [
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/ACCEPTANCE.md"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/acceptance_contract.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/acceptance_protocol_v1.json"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/acceptance_runner.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/acceptance_scoring.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/snapshots/active_acceptance_protocol_v1.sha256"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/tests/test_acceptance_contract.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/tests/test_acceptance_integration.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/tests/test_acceptance_runner.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/tests/test_acceptance_scoring.py"
+    }
+  ],
+  "check_inventory": {
+    "checks_completed": 19,
+    "checks_passed": 19,
+    "frozen_input_preflight_passed": true,
+    "historical_manifest_locks_passed": 16,
+    "new_acceptance_manifest_locks_passed": 1,
+    "original_protocol_passed": true
+  },
+  "checkpoint_format": "cemm-active-checkpoint-v1",
+  "checks": [
+    {
+      "exit_code": 0,
+      "name": "protocol",
+      "scope": "original_protocol_verification",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 166,
+      "stdout_sha256": "cadb9f2c91b7b2fdd3d13d2032b2b3e90b7d734e1ad8591fdc14857d8c03dcbf"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/active_acceptance_protocol_v1.sha256",
+      "lock_sha256": "d74c31e8bd1963c615f298405e82ad238326bc7b169dd62216a1edcb6a34c9ea",
+      "name": "active_acceptance_protocol_v1.sha256",
+      "scope": "new_acceptance_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 32,
+      "stdout_sha256": "8782d0cb9051a1a75dae12269dafad60f0b26e6fb321b5b54a428fcaa6c98175"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/common_objective_comparison_protocol_v1.sha256",
+      "lock_sha256": "846ebfb907a1cc44a177148dc1c46f0471264634187f6dd9d24ff2ec7a327116",
+      "name": "common_objective_comparison_protocol_v1.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 49,
+      "stdout_sha256": "b4b63f70070e7521854456d5542c1ef838a244627040564fc5f21757b473fdff"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/context_protocol_v6.sha256",
+      "lock_sha256": "2395ea02bb2ccf4571eaffaa67132bea685261b16f133ecbd377ecb9ca5b9fda",
+      "name": "context_protocol_v6.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 29,
+      "stdout_sha256": "a100cb3dbd128d6ebf98462cec21d47c65ad8e5c8306515bd440f970d137f671"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/dev_composition_protocol_v1.sha256",
+      "lock_sha256": "dec5db7c1224fa885b0005b21d87160afa84f35fe7d610f02963d803d4454385",
+      "name": "dev_composition_protocol_v1.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 37,
+      "stdout_sha256": "866ea5e323577f4fcb7a10cee9bab5c996b4041e018de74aba3b250f6129747a"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/dev_composition_protocol_v2.sha256",
+      "lock_sha256": "c89203ff0538471169280d559864991cb633f2f0545e16281b8c06ca74267338",
+      "name": "dev_composition_protocol_v2.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 37,
+      "stdout_sha256": "e520bde1c0102976391c1e58c82bb365310b34ce662ad51838854709d68b4c54"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/epistemic_protocol_v2.sha256",
+      "lock_sha256": "f8736a61ca2851a393190c29502f89dfbf372d7bb0b1187f5595ac0e0baf5da0",
+      "name": "epistemic_protocol_v2.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 31,
+      "stdout_sha256": "41e4cbeffade25e1c1324cb24b700ffb56098dfd58cbceadd0f30b8bba5b0818"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/flat_protocol_v7.sha256",
+      "lock_sha256": "6abce45fb6685cf51384003ed834275a7d5ed3491852e50604122648f389880e",
+      "name": "flat_protocol_v7.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 26,
+      "stdout_sha256": "03142ee36dde53addf56564b58080e0a65224991b64d2d8491ee7e0e6a9d4b89"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/flat_updates_protocol_v8.sha256",
+      "lock_sha256": "962db643b8d893bfa6e95859cd1ca54454627aec858ef7d5c6f1672d3af65f76",
+      "name": "flat_updates_protocol_v8.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 34,
+      "stdout_sha256": "5bc6a4ca8e18e80756062a1c970f1c4be58fc8ed245ca27ca119d7a5277063cd"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/full_sensor_paired_protocol_v1.sha256",
+      "lock_sha256": "f17998f523f3761b35e29dad202e4bf75f88dd82c030c4c71bfce67a6b5655bc",
+      "name": "full_sensor_paired_protocol_v1.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 40,
+      "stdout_sha256": "2c37478a0efa419119e11bf8c0e2ddb4a817a526c900986872a34698cfa7f673"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/full_sensor_paired_protocol_v2.sha256",
+      "lock_sha256": "daa9838b102c0774046a0a87a385085203b64500589b7514e01a437bb7834a4e",
+      "name": "full_sensor_paired_protocol_v2.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 40,
+      "stdout_sha256": "20d58e94276f3b07f4d31a05116626e7cacd2c68d9b46f743b9d15af701734e5"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/full_sensor_posthoc_replay_protocol_v1.sha256",
+      "lock_sha256": "5d2b3d43a48b41327dd1a2db43cdae2ea5a79c7c8e968194617e23a15ccced24",
+      "name": "full_sensor_posthoc_replay_protocol_v1.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 48,
+      "stdout_sha256": "3c4323fd21fd8b5df62a7f8203f0fd861cae980b3157af0899106fa6d6b75b8b"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/guard_protocol_v5.sha256",
+      "lock_sha256": "103f0912c8eaa9c0dab508ecd4fa31b2ef8f66b24d682567162f9988dc7282d3",
+      "name": "guard_protocol_v5.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 27,
+      "stdout_sha256": "381222436fb3982c1dcf66922910fe5b2baa13e419e8cb52936b48b36bd28f1f"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/protocol.sha256",
+      "lock_sha256": "6a247890f660ede95cb4116dd4bb32ab805daaef3d3fac81009ccc457631eda2",
+      "name": "protocol.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 18,
+      "stdout_sha256": "e332deacf6e334113cb845110487bd7d4b54eec436b058825ef9170bf96f5ef9"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/sensor_transfer_implementation_v1.sha256",
+      "lock_sha256": "e91a72e19e9d34715add07c90ec72c87a17075e2d02e192557f7ecf5a74ae645",
+      "name": "sensor_transfer_implementation_v1.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 43,
+      "stdout_sha256": "08cacf858ab86721821c9fdba914def2f1efd16f7735c53232c3a0bd40b11d12"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/sensor_transfer_protocol_v1.sha256",
+      "lock_sha256": "ded5d67fabb6d0f155f35da6807eefb7be1e5010563292f7dbac48a5a6ade4ac",
+      "name": "sensor_transfer_protocol_v1.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 37,
+      "stdout_sha256": "a1acbf9cf4dbe0f3885ded6ca33080ba7814cdaf70d452343e9b1ad2263deb38"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/stability_protocol_v4.sha256",
+      "lock_sha256": "5a6cdeeac7910c6276b26da63c80c199fa8d7aac20456eba4439e74f983fb6cc",
+      "name": "stability_protocol_v4.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 31,
+      "stdout_sha256": "5c1bce0851dfc8be0b3e472aa75d82d8ae4f4e6e169fa3bc908a2edda3d80376"
+    },
+    {
+      "exit_code": 0,
+      "lock_file": "snapshots/stress_protocol_v3.sha256",
+      "lock_sha256": "a0088f8ac9daeb9e6d8e232aa72fa6ec14791c08f2342ec38a5eedc3d932a5d6",
+      "name": "stress_protocol_v3.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 28,
+      "stdout_sha256": "6e98dab1c6d926f10b1635782728bfa92b33fd595476c8c8be977d50ca49983e"
+    },
+    {
+      "exit_code": 0,
+      "name": "preflight",
+      "scope": "frozen_input_preflight_only",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 26431,
+      "stdout_sha256": "4b5f9dba6b0c1698ff94149b91ce55bce28ff7ad6e417bf05d69728ed194f40a"
+    }
+  ],
+  "ci_reference": "https://github.com/robosys-labs/cemm/pull/60/checks",
+  "ci_scope": "This record pins local clean-commit verification. Consult the pull request for actual final-head remote checks; local success does not imply CI completion.",
+  "closed_public_study_rerun": false,
+  "code_commit": "642265d231cc1e4d606dea5e0f892e56693b3fdc",
+  "complete_local_suite": {
+    "command": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONHASHSEED=0 /tmp/cemm-active-venv/bin/python -m unittest discover -s experiments/predictive_nucleus/tests -v",
+    "exit_code": 0,
+    "log_scope": "Complete final source commit in a clean checkout; includes historical implementation tests, not scientific reruns.",
+    "output_sha256": "1c7c03b0764bf81caa96f912359d07fceddf274907a0bd5c5970b1bd710e58a9",
+    "seconds": 54.477,
+    "tests_discovered": 590,
+    "tests_passed": 590,
+    "tests_skipped": 0
+  },
+  "environment_preflight": {
+    "cli_numpy_requirement": "2.3.5",
+    "cli_python_requirement": "3.13",
+    "cli_torch_requirement": "2.10.0+cpu",
+    "cpu_model": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "default_dtype": "torch.float32",
+    "deterministic_algorithms": true,
+    "deterministic_warn_only": false,
+    "interop_threads": 1,
+    "intraop_threads": 1,
+    "model_tensor_dtype": "CPU torch.float64 for the native learned predictors; torch default dtype is a separate environment field.",
+    "peak_rss": 313692,
+    "peak_rss_unit": "KiB",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "python": "3.13.16",
+    "scope": "Environment reported by the standalone frozen-input preflight; not per-model benchmark measurements.",
+    "torch": "2.10.0+cpu",
+    "torch_config_sha256": "4f3cd65dc58472ed223329fa5ab743d0a360e777accb4001b511fc418c78128b"
+  },
+  "evidence_version": "active-evidence-v2",
+  "focused_local_suite": {
+    "exit_code": 0,
+    "output_sha256": "ebee6ea1186f24f9293a5f2da424f898e55dd7b63662d8fa4de4dc21c7ffe4bf",
+    "scope": "All new contract, collector, scorer and integration invariant tests.",
+    "seconds": 6.752,
+    "test_modules": [
+      "experiments.predictive_nucleus.tests.test_acceptance_contract",
+      "experiments.predictive_nucleus.tests.test_acceptance_runner",
+      "experiments.predictive_nucleus.tests.test_acceptance_scoring",
+      "experiments.predictive_nucleus.tests.test_acceptance_integration"
+    ],
+    "tests_discovered": 44,
+    "tests_passed": 44,
+    "tests_skipped": 0
+  },
+  "gate_g1": "NOT_ADMITTED",
+  "historical_results_rescored": false,
+  "independent_validation": false,
+  "inference_and_learning_source_changes": false,
+  "inference_version": "active-inference-v5",
+  "learned_parameter_delta": 0,
+  "learning_version": "active-learning-v1",
+  "line_counts": {
+    "active_files": {
+      "acceptance_contract.py": 423,
+      "acceptance_runner.py": 175,
+      "acceptance_scoring.py": 294,
+      "active_checkpoint.py": 291,
+      "active_evidence.py": 156,
+      "active_learning.py": 346,
+      "active_participant.py": 225,
+      "active_paths.py": 255,
+      "domain_contract.py": 297,
+      "domain_flat.py": 74,
+      "domain_kernel.py": 149
+    },
+    "active_source_files_excluding_frozen_dependencies": 2685,
+    "inclusive_size_goal_met": false,
+    "learned_parameter_delta": 0,
+    "new_runtime_source_net": 892,
+    "new_tests_net": 940,
+    "retained_research_python": 24540
+  },
+  "local_verified_code_commit": "956078ffc509b945bd86b2393d8453ee5bdb81bc",
+  "local_verified_tree_sha": "61a6f214941ad71c44e5a0f8ea93e2952b6bcaa2",
+  "metric_scope": {
+    "answerability": "Singleton declared complete support under preforecast delivered information.",
+    "calibration": "Fixed 10-bin joint-MAP diagnostic only; calibration not established.",
+    "execution_failure_separate_from_forecast_correctness": true,
+    "latency": "Nearest-rank prediction-region wall/CPU summaries; not end-to-end service latency.",
+    "original_0_95_target": "Numeric per-seed comparison only; admission_decision is false.",
+    "primary": "All-planned complete-world MAP accuracy, reported per participant/seed/family.",
+    "proper_score_means": "Overall mean only when every planned point has a distribution; supported-only mean explicitly conditional.",
+    "role_pairs": "Both explicitly reversed entire trajectories correct.",
+    "sample_independence": "Repeated ID views, checkpoint reuse and seed labels are not independent physical-world samples.",
+    "trajectory": "AND over every required forecast with delivered feedback, not free-running rollout or hidden-trajectory likelihood."
+  },
+  "new_scientific_comparison": false,
+  "new_tests": {
+    "by_file": {
+      "tests/test_acceptance_contract.py": {
+        "count": 13,
+        "sha256": "b7a33f8bf467f5bc5743ee09694b654d84f13a3c27857f3f84185934e052ad6b",
+        "tests": [
+          "AcceptanceContractTests.test_new_contract_lock_and_original_protocol_remain_separate",
+          "AcceptanceContractTests.test_dynamic_geometry_aliases_and_session_horizon",
+          "AcceptanceContractTests.test_input_rejects_hidden_fields_bad_coordinates_and_nonbinary_types",
+          "AcceptanceContractTests.test_information_key_excludes_future_outcomes_and_names_but_binds_current_coverage",
+          "AcceptanceContractTests.test_prospective_requires_all_five_exact_seeds_and_every_arm_checkpoint",
+          "AcceptanceContractTests.test_plan_rejects_cross_partition_lineage_and_developed_heldout_family",
+          "AcceptanceContractTests.test_plan_freezes_exact_collector_scorer_and_inference_sources",
+          "AcceptanceContractTests.test_pair_requires_two_directions_and_actual_reversed_contacts",
+          "AcceptanceContractTests.test_plan_and_gold_inventory_hashes_and_extra_fields_are_strict",
+          "AcceptanceContractTests.test_oracle_rejects_false_support_and_inconsistent_visible_truth",
+          "AcceptanceContractTests.test_identical_preforecast_information_cannot_get_outcome_selected_support",
+          "AcceptanceContractTests.test_missing_trials_keep_every_planned_point_and_never_admit_gate",
+          "AcceptanceContractTests.test_json_hash_duplicate_nonfinite_size_and_no_overwrite_checks"
+        ]
+      },
+      "tests/test_acceptance_integration.py": {
+        "count": 4,
+        "sha256": "7e268599b3bd3546ca2aa222c65003c0c408004c883c112369ecfaceea7ec39f",
+        "tests": [
+          "AcceptanceIntegrationTests.test_native_trace_scores_complete_role_pairs_and_missing_seed_stays_planned",
+          "AcceptanceIntegrationTests.test_hidden_oracle_targets_cannot_change_recorded_predictions",
+          "AcceptanceIntegrationTests.test_real_terminal_contradiction_retains_score_and_future_denominator",
+          "AcceptanceIntegrationTests.test_native_trace_receipt_identity_and_failure_accounting_are_checked"
+        ]
+      },
+      "tests/test_acceptance_runner.py": {
+        "count": 10,
+        "sha256": "15de57806eaa71167d31eb8980111cde6153de4babe4e6b2400c513322f7f194",
+        "tests": [
+          "AcceptanceRunnerTests.test_all_neural_arms_and_domains_equal_the_common_observed_replay",
+          "AcceptanceRunnerTests.test_forecast_is_copied_before_feedback_reuses_the_response_object",
+          "AcceptanceRunnerTests.test_feedback_contradiction_retains_prefix_and_offending_forecast_then_continues_other_episode",
+          "AcceptanceRunnerTests.test_real_expansion_limit_preserves_committed_prefix_and_does_not_retry",
+          "AcceptanceRunnerTests.test_start_and_end_failures_are_local_and_preserve_planned_episode_order",
+          "AcceptanceRunnerTests.test_empirical_abstention_and_no_change_remain_distinct_native_controls",
+          "AcceptanceRunnerTests.test_gold_fields_are_rejected_before_checkpoint_loading_and_receipts_before_feedback",
+          "AcceptanceRunnerTests.test_weight_configuration_and_current_metadata_mutation_on_error_invalidate_entire_trace",
+          "AcceptanceRunnerTests.test_table_effective_policy_and_no_change_metadata_mutation_on_error_are_rejected",
+          "AcceptanceRunnerTests.test_actual_cli_loads_only_hashed_native_inputs_and_does_not_overwrite"
+        ]
+      },
+      "tests/test_acceptance_scoring.py": {
+        "count": 17,
+        "sha256": "b464276b353bd2f1dee48260563f46e4675343884308867c4793386b65b80783",
+        "tests": [
+          "AcceptanceScoringTests.test_uniform_and_point_mass_scores_use_every_joint_world_at_each_size",
+          "AcceptanceScoringTests.test_joint_correlations_cannot_be_replaced_with_products_of_bit_marginals",
+          "AcceptanceScoringTests.test_declared_information_support_never_conditions_or_repairs_the_forecast",
+          "AcceptanceScoringTests.test_proper_scores_favor_the_declared_nonuniform_law_in_expectation",
+          "AcceptanceScoringTests.test_finite_underflow_and_exact_zero_keep_distinct_uncapped_losses",
+          "AcceptanceScoringTests.test_missing_distributions_retain_denominators_without_inventing_probability_scores",
+          "AcceptanceScoringTests.test_valid_prefix_and_offending_forecast_survive_an_unproduced_tail",
+          "AcceptanceScoringTests.test_whole_trajectory_exactness_is_and_not_final_step_or_mean_event_accuracy",
+          "AcceptanceScoringTests.test_explicit_role_pairs_require_both_entire_trajectories_and_ignore_row_order",
+          "AcceptanceScoringTests.test_exact_ties_and_ece_bins_use_joint_map_confidence",
+          "AcceptanceScoringTests.test_unchanged_bit_errors_use_physical_coordinates_and_report_unanswered_opportunities",
+          "AcceptanceScoringTests.test_seed_family_strata_preserve_worst_seed_and_do_not_drop_unavailable_seed_scores",
+          "AcceptanceScoringTests.test_entity_action_partition_subsets_and_nearest_rank_forecast_costs",
+          "AcceptanceScoringTests.test_reference_comparison_keeps_exact_regression_and_recovery_identifiers",
+          "AcceptanceScoringTests.test_invalid_distributions_and_duplicate_points_do_not_receive_scores",
+          "AcceptanceScoringTests.test_validated_missing_trial_retains_all_planned_rows_and_source_identity",
+          "AcceptanceScoringTests.test_cli_hashes_all_artifacts_and_never_overwrites_output_or_accepts_unpaired_trace_hashes"
+        ]
+      }
+    },
+    "count": 44
+  },
+  "next_engineering_work": [
+    "Fresh prospective observed curricula with carried effects and held-out trajectory-family inventories.",
+    "Complete conditional oracle assets, split/source/information-law lineage and all required seed/checkpoint plans frozen before research fits or scores.",
+    "Strong empirical controls with support/eligible-target accounting and a concrete matching/statistical comparison contract.",
+    "Subsequent roadmap G2 workloads with genuine carried dependencies; independent custody remains a separate scientific requirement, not the sole engineering blocker."
+  ],
+  "preflight": {
+    "data_sha256": {
+      "informative_same_pair": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e",
+      "informative_second_pair": "a10748428184b1834275efb2e82da1da566356193c77af25cdac1e44be40a3ca",
+      "uninformative_same_pair": "fe89cf2a609fa36d6ad4cb65048b56934fdc4f62cda86455e49f3cc3dfbecd1d",
+      "uninformative_second_pair": "4f52d492c03c60eac8416ba7a7a4328f78b0eb731a0b9980e67c4c3499ee783c"
+    },
+    "fit_plan_rows_enumerated": 120,
+    "fits_executed": 0,
+    "lineage": {
+      "complete_history": true,
+      "execution_commit": "956078ffc509b945bd86b2393d8453ee5bdb81bc",
+      "protocol_commit": "2eeae6323d8123da5ded40a56e77ef68e6aac5ac",
+      "runner_commit": "fd64a5b1a9efc460086cfe21c4f62fe631135298",
+      "runner_sha256": "143a29e7fee901a009674ef271e779c126300e6496f7c26d79fe222540772213",
+      "source_commit": "3bbce83121386501ae39567b48fc9aa62325de79",
+      "tracked_tree_clean": true,
+      "untracked_present": false
+    },
+    "protocol_sha256": "15732afe065f19f3b412a7638e386373eb586ddaa273104e2de63c14a782b1f3",
+    "scope": "Frozen historical plan/data/source/checkout verification only; its enumerated fit plan was not executed.",
+    "scores_executed": 0,
+    "status": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
+    "stdout_sha256": "4b5f9dba6b0c1698ff94149b91ce55bce28ff7ad6e417bf05d69728ed194f40a",
+    "study_execution_enabled": false
+  },
+  "prior_verification": {
+    "code_commit": "94c059a0fd4fdb78ad5f442419053ac99e41c124",
+    "new_tests": 48,
+    "record": "results/active-learning-validation-v5.json",
+    "record_sha256": "0afe42e906f4f7263ed32202a3cccda7d041d0bf20a0301098955ff51c855cc8",
+    "scope": "Historical v5 learning/checkpoint verification retained unchanged; it is not newly claimed scientific evidence.",
+    "tests_passed": 546
+  },
+  "production_cutover": false,
+  "proof_scope": {
+    "collection_durability": "Forecasts are frozen in memory before feedback; the CLI writes the aggregate trace after collection.",
+    "collector": [
+      "Native shared and flat variants across supported entity counts match the common observed replay on covered synthetic histories.",
+      "Receipts, action/coverage/coordinate order and native identity are checked before feedback.",
+      "Forecast copies survive response-object reuse, feedback contradictions and later missing outputs.",
+      "Actual expansion-limit failures retain committed prefix and do not retry; other declared episodes continue.",
+      "Weight, configuration, metadata, empirical table/policy and no-change identity mutation invalidate collection.",
+      "Actual collector CLI loads hash-verified observed inputs/checkpoints and refuses output overwrite."
+    ],
+    "crash_durable_per_forecast_journal": false,
+    "independent_custody_proved": false,
+    "integration": [
+      "Native receipt-bearing traces score against explicit role pairs; missing seed output stays planned.",
+      "Changing only hidden evaluator targets cannot alter the recorded forecasts or trace identity.",
+      "A real terminal contradiction keeps its valid infinite-loss forecast and future unproduced denominator.",
+      "Forecast receipt, native identity, raw/normalized mass consistency and failure horizon checks reject malformed traces."
+    ],
+    "oracle_validation": "Exact input/plan/gold inventories, delivered-bit consistency, actual truth within declared support and equal support for equal causal information keys.",
+    "oracle_validation_limit": "These are consistency checks, not proof that the declared conditional support is complete or independently authored.",
+    "os_isolation_enforced": false,
+    "scorer": [
+      "Full-world joint NLL and Brier, including correlations that marginal products cannot represent.",
+      "Declared information support never renormalizes a submitted forecast or implies uniform probabilities or Bayes floors.",
+      "Finite underflow differs from exact-zero infinite loss; strict JSON preserves explicit nonfinite score tags.",
+      "Missing and abstained distributions remain in all-planned denominators without invented proper scores.",
+      "Whole-trajectory and explicit role-pair conjunctions do not collapse to final-step or mean accuracy.",
+      "Joint-MAP ties, diagnostic ECE bins, unchanged-coordinate opportunities and seed/family strata are retained.",
+      "Reference comparisons retain exact regression/recovery identifiers; unavailable seed scores are not silently dropped.",
+      "Actual scorer CLI verifies all artifact hashes and refuses overwrite and unpaired trace/hash inventories."
+    ],
+    "synthetic_only": true,
+    "test_inventory_method": "AST inventory of committed test methods plus retained passing focused and full-suite logs; no tests executed while writing this record."
+  },
+  "publication_identity_note": "The uploaded GitHub source tree was verified equal to the clean locally tested tree; Git commit metadata differs.",
+  "publication_tree_matches_local_verified_code": true,
+  "published_tree_sha": "61a6f214941ad71c44e5a0f8ea93e2952b6bcaa2",
+  "reproduced_malformed_variants_rejected": 3,
+  "research_model_training_run": false,
+  "retained_input_record_sha256": {
+    "cemm-acceptance-focused-tests.log": "ebee6ea1186f24f9293a5f2da424f898e55dd7b63662d8fa4de4dc21c7ffe4bf",
+    "cemm-acceptance-v1-code-metadata.json": "120233119d9f5d36eb7df0ea7e40efad334a5179a9678ca41886e966daebbb41",
+    "cemm-acceptance-v1-suite.json": "1912ab915cbec996309517b4f7d241f0966df4430f391a428dcabe9ba518d5ae",
+    "cemm-acceptance-v1-tests.log": "1c7c03b0764bf81caa96f912359d07fceddf274907a0bd5c5970b1bd710e58a9",
+    "checks/checks.json": "10c530bd052a617b5eba33e4424056fe100543f04796418d4acbb76a469c93b0",
+    "checks/preflight.stdout": "4b5f9dba6b0c1698ff94149b91ce55bce28ff7ad6e417bf05d69728ed194f40a"
+  },
+  "review_repairs": [
+    {
+      "problem": "Source hashes were recorded without a prospective software inventory.",
+      "resolution": "Plan exact software hashes, collector source and Session inference sources must agree."
+    },
+    {
+      "problem": "A frozen predictor specification could disagree with its native checkpoint metadata.",
+      "reproduced_malformed_variant_rejected": true,
+      "resolution": "Validate exact specification/state/control/current provenance and loaded metadata coherence."
+    },
+    {
+      "problem": "A receipt-correct trace could contain inconsistent raw and normalized log vectors.",
+      "reproduced_malformed_variant_rejected": true,
+      "resolution": "Check raw minus retained correction against normalized coordinates while preserving exact negative infinity."
+    },
+    {
+      "problem": "An oversized normalization correction could be accepted as a valid forecast record.",
+      "reproduced_malformed_variant_rejected": true,
+      "resolution": "Enforce the original correction tolerance and normalized log-mass contract."
+    }
+  ],
+  "saved_research_checkpoint_evaluation_run": false,
+  "scientific_admission": false,
+  "scoring_version": "active-acceptance-scoring-v1",
+  "source_sha256": {
+    "acceptance_contract.py": "e502cee5c68f44cc3d592d8536de9989b1eff1be5a7949b0eb16465570836368",
+    "acceptance_runner.py": "0983b8ee08296601110060f5c773dda9775879a0542bd7a3aa603e780bd791a0",
+    "acceptance_scoring.py": "8dbd524c196027cb6d841ce3c724615b32143b5ea85f9e35f312911e0c6f605c",
+    "active_checkpoint.py": "34de339e769785bb1f2d4b974ec6a947688387d72463413aa142068f2a3752f4",
+    "active_evidence.py": "997bca8a4320bdb94752714441f0929d6ff377edbab1c609bff041415f7c75b7",
+    "active_learning.py": "291b66461f5576431c10d03e56ca90d7ede0f6cfb9e4a29cd244113cf281292b",
+    "active_participant.py": "7721cea95f8ce48b62abea7637e177a7dafd8143c9903f5112f4e55acf73e6b2",
+    "active_paths.py": "1486f3fe98ffbe650fd6410d038c3e6c83b23f4d569606ced8da647443c9a6ee",
+    "comparison_scoring.py": "95865f228ccb06345deda847570efa1aaea8e72828f64645d00d19a360b6a473",
+    "context_support.py": "4396e3d6fd6ae4242e1ec497ebc3dd983af1c30dc256be84e9c52b11b3d190e5",
+    "domain_contract.py": "65716833bea1f3f8b242c7bb5eaa985c4eb277ed96cc6cc184f65cf2baf61a03",
+    "domain_flat.py": "dfbc52aadf1c27405bba71cc34887e452da94f0d2df737b3a637af11d751031a",
+    "domain_kernel.py": "c2ce94522acfe931134a6bf8d90a0f2874fed0fa6a72e81e3ec8f9cc14f29eb3",
+    "external_participant.py": "802b0a93dedbcbae34006e1c0eb6959107a09c9e25686cd88e61f1777d8ade1e",
+    "joint_objective.py": "c00551ac3f0cff682b2dcd415929d8e8b7279f7fe92494fd07a2411a29ad1f4f",
+    "masked_replay.py": "fb79da609986721172b85737ef18150c465ea255b38ca176d945cc132dae69fa"
+  },
+  "status": "ACCEPTANCE_ENGINEERING_INVARIANTS_NOT_SCIENTIFIC_EVALUATION",
+  "trace_version": "active-acceptance-trace-v1",
+  "tracking_issue": 22,
+  "unchanged_prior_inference_learning_source_hashes": {
+    "active_checkpoint.py": true,
+    "active_evidence.py": true,
+    "active_learning.py": true,
+    "active_participant.py": true,
+    "active_paths.py": true,
+    "comparison_scoring.py": true,
+    "context_support.py": true,
+    "domain_contract.py": true,
+    "domain_flat.py": true,
+    "domain_kernel.py": true,
+    "external_participant.py": true,
+    "joint_objective.py": true,
+    "masked_replay.py": true
+  },
+  "unverified_assumptions_and_limits": [
+    "Complete conditional oracle support and causal information-law declarations.",
+    "Predictable sensor selection and outcome-ignorable dropout; physical sensor/event authentication.",
+    "Independent challenge authorship, custody and evaluator-controlled participant isolation.",
+    "Undisclosed duplicate-risk lineage and actual train/selection/calibration/evaluation separation beyond declared tokens.",
+    "Scientific denominator interpretation, calibration thresholds, material effect size and statistical test.",
+    "Capacity, usable-target exposure and consumed-compute matching; default flat1512 versus kernel470/584/972 remains unmatched.",
+    "Learned entity-count transfer, learned self-contact semantics and G1 admission.",
+    "Crash-durable per-forecast retention and recovery after process termination or invalid frozen identity."
+  ],
+  "version": "active-acceptance-v1"
+}
