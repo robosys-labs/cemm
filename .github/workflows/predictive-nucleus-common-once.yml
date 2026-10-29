@@ -1,0 +1,140 @@
+name: Frozen common-objective decision run — one attempt
+on:
+  pull_request:
+    types: [synchronize]
+    paths:
+      - '.github/workflows/predictive-nucleus-common-once.yml'
+permissions:
+  contents: read
+jobs:
+  frozen-public-comparison:
+    if: >-
+      github.event.pull_request.number == 52 &&
+      github.event.before == 'afadbbe9d67a081c5bc535804d94d763a673037a' &&
+      github.run_attempt == 1 &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+      CEMM_REVIEWED_RUNNER: afadbbe9d67a081c5bc535804d94d763a673037a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install pinned CPU numerical dependencies
+        run: |
+          python -m pip install 'torch==2.10.0' --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install 'numpy==2.3.5'
+      - name: Verify reviewed runner and unchanged protocol before execution
+        run: |
+          cd experiments/predictive_nucleus
+          sha256sum -c <<'HASHES'
+          272430eaf332a9b823774f0a42821f39ceca3d9252e81ddc0c4bf56631a1a7aa  comparison_run.py
+          95865f228ccb06345deda847570efa1aaea8e72828f64645d00d19a360b6a473  comparison_scoring.py
+          44303079706434d6d8ddc6c9b2af27d908889bf37366774df2f04fd0ae4ae927  tests/test_comparison_run.py
+          15732afe065f19f3b412a7638e386373eb586ddaa273104e2de63c14a782b1f3  common_objective_comparison_protocol_v1.json
+          HASHES
+      - name: Execute exactly once without retry or selection
+        timeout-minutes: 27
+        run: |
+          set -euo pipefail
+          python -m experiments.predictive_nucleus.comparison_run \
+            --output-dir "$RUNNER_TEMP/common-objective-output" \
+            | tee "$RUNNER_TEMP/common-objective-console.log"
+      - name: Summarize and durably retain complete or partial evidence
+        if: always()
+        run: |
+          set -euo pipefail
+          export RESULT_PATH="experiments/predictive_nucleus/results/common-objective-$GITHUB_RUN_ID"
+          mkdir -p "$RESULT_PATH"
+          python - <<'PY'
+          from pathlib import Path
+          import gzip, hashlib, json, os, shutil
+          root = Path(os.environ['RUNNER_TEMP']) / 'common-objective-output'
+          root.mkdir(exist_ok=True)
+          dest = Path(os.environ['RESULT_PATH'])
+          schema = {'forecast_status': {'answered=true': 'PREDICTED', 'answered=false': 'ABSTAIN'},
+              'abstention_reason': 'unseen_empirical_context',
+              'abstention_encoding': 'An unanswered row has NO distribution or proper score. Ignore its all-null log placeholder.',
+              'log_null_status': 'negative_infinity for answered rows only',
+              'finite_log_underflow': 'Finite log value remains numeric even if exponentiating yields zero.',
+              'case_view_index': 'episode = 6*case + lexicographic permutation index',
+              'fit_phase_is_not_study_completion': True}
+          (root / 'RECORD_SCHEMA.json').write_text(json.dumps(schema, indent=2) + '\n')
+          summary = {'status': 'INCOMPLETE', 'run_id': os.environ['GITHUB_RUN_ID'], 'gate_g1': 'HOLD_REVISE'}
+          report_path = root / 'report.json'
+          if report_path.exists() and (root / 'COMPLETE').exists():
+              raw = report_path.read_bytes()
+              assert hashlib.sha256(raw).hexdigest() == (root / 'COMPLETE').read_text().strip()
+              report = json.loads(raw)
+              assert len(report['fits']['fits']) == 120 and len(report['results']) == 256
+              assert report['paired_records'] == 10560 and report['neural_forecast_count'] == 2949120
+              summary.update({key: report[key] for key in ('status', 'protocol_sha256', 'provenance',
+                  'environment', 'wall_seconds', 'cpu_seconds', 'decision_table', 'paired_records',
+                  'neural_forecast_count')})
+              summary['report_sha256'] = hashlib.sha256(raw).hexdigest()
+              summary['controls'] = [{key: row[key] for key in ('condition', 'control', 'fixture', 'all_steps',
+                  'reverse_role_pairs', 'renaming')} | {'query': row['steps'][6]} for row in report['results']
+                  if row['type'] == 'control']
+              for row in summary['controls']:
+                  row['reverse_role_pairs'].pop('both_correct_ids', None)
+              summary['fit_costs'] = [{'task': x['task'], **x['fit']} for x in report['fits']['fits']]
+              selected = []
+              with gzip.open(root / 'paired.jsonl.gz', 'rt') as stream:
+                  for line in stream:
+                      row = json.loads(line)
+                      if row['step'] != 6 or row['after'][1] != 'informative' or row['after'][3] != 'second_pair':
+                          continue
+                      if row['kind'] == 'arm_vs_reference' and row['before'][-1] == 'kernel_learned_persistence':
+                          for field in ('correct_to_wrong', 'wrong_to_correct', 'correct_to_abstained', 'abstained_to_correct'):
+                              row[field + '_count'] = len(row.pop(field))
+                          selected.append(row)
+              summary['selected_query_pairs'] = selected
+          else:
+              for name in ('FAILED.json', 'fits/FAILED.json'):
+                  if (root / name).exists():
+                      summary[name] = json.loads((root / name).read_text())
+          if summary['status'] == 'COMPLETE_OPEN_PUBLIC_DIAGNOSTIC_NOT_G1':
+              headline = {key: summary[key] for key in ('status', 'run_id', 'gate_g1', 'protocol_sha256',
+                  'report_sha256', 'environment', 'wall_seconds', 'cpu_seconds', 'neural_forecast_count', 'paired_records')}
+              headline['informative_second_pair'] = [row for row in summary['decision_table']
+                  if row['condition'] == 'informative' and row['fixture'] == 'second_pair']
+              headline['uninformative_second_pair'] = [row for row in summary['decision_table']
+                  if row['condition'] == 'uninformative' and row['fixture'] == 'second_pair']
+              headline['controls_second_pair'] = [row for row in summary['controls'] if row['fixture'] == 'second_pair']
+              (dest / 'headline.json').write_text(json.dumps(headline, indent=2, allow_nan=False) + '\n')
+          (dest / 'decision.json').write_text(json.dumps(summary, indent=2, allow_nan=False) + '\n')
+          for name in ('COMPLETE', 'FAILED.json', 'STARTED.json', 'RECORD_SCHEMA.json'):
+              if (root / name).exists():
+                  shutil.copyfile(root / name, dest / name)
+          print(json.dumps({'status': summary['status'], 'retention_path': str(dest)}))
+          PY
+          tar -czf "$RUNNER_TEMP/common-objective-bundle.tar.gz" -C "$RUNNER_TEMP" common-objective-output
+          split -d -b 40M "$RUNNER_TEMP/common-objective-bundle.tar.gz" "$RESULT_PATH/bundle.tar.gz.part-"
+          sha256sum "$RUNNER_TEMP/common-objective-bundle.tar.gz" > "$RESULT_PATH/ARCHIVE_SHA256.txt"
+          (cd "$RESULT_PATH" && sha256sum bundle.tar.gz.part-* > PARTS_SHA256.txt)
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$RESULT_PATH"
+          git commit -m "research: retain frozen common-objective run $GITHUB_RUN_ID (no model changes)"
+          git push origin "HEAD:refs/heads/research-results/common-objective-$GITHUB_RUN_ID"
+          echo "RETAINED_BRANCH=research-results/common-objective-$GITHUB_RUN_ID"
+      - name: Upload secondary recovery artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: common-objective-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/common-objective-output
+            ${{ runner.temp }}/common-objective-console.log
+          if-no-files-found: warn
+          retention-days: 30
