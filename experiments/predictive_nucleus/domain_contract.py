@@ -10,7 +10,6 @@ from itertools import product
 import json
 import math
 
-import numpy as np
 import torch
 
 from .comparison_scoring import log_record, require
@@ -65,13 +64,21 @@ def validate_reading(reading, mask, batch_size, entities):
             bool((reading[~mask] == -1).all()), 'hidden values must be -1; visible values binary')
 
 
-def normalize(raw, answered):
-    """Frozen normalization arithmetic with an explicitly expanded world width."""
+def safe_logsumexp(values, dim):
+    """Exact zero support with zero derivative, avoiding logsumexp(all -inf)."""
+    empty = torch.isneginf(values).all(dim, keepdim=True)
+    safe = values.masked_fill(empty, 0.)
+    return safe.logsumexp(dim).masked_fill(empty.squeeze(dim), -torch.inf)
+
+
+def normalize_tensor(raw, answered):
+    """Original tolerances and arithmetic, retaining the full autograd graph."""
     require(isinstance(raw, torch.Tensor) and raw.dtype == torch.float64 and raw.device.type == 'cpu'
             and raw.ndim == 2 and raw.shape[1] in (8, 16, 32, 64), 'expected CPU float64 world matrix')
-    mask = np.asarray(answered)
-    require(mask.dtype == np.bool_ and mask.shape == (len(raw),), 'invalid answered mask')
-    active = raw[torch.from_numpy(mask)]
+    mask = torch.as_tensor(answered)
+    require(mask.device.type == 'cpu' and mask.dtype == torch.bool and
+            mask.shape == (len(raw),), 'invalid answered mask')
+    active = raw[mask]
     require(not bool((torch.isnan(active) | torch.isposinf(active)).any()), 'invalid log values')
     total = active.logsumexp(-1)
     require(bool(torch.isfinite(total).all()) and bool((total.abs() <= 1e-10).all()),
@@ -82,10 +89,16 @@ def normalize(raw, answered):
             (probabilities <= 1)).all()) and bool(((probabilities.sum(-1) - 1).abs() <= 1e-12).all()),
             'invalid normalized probabilities')
     result = torch.full_like(raw, -torch.inf)
-    result[torch.from_numpy(mask)] = normalized
-    correction = np.zeros(len(raw), dtype=np.float64)
-    correction[mask] = total.numpy()
-    return result.numpy(), correction
+    result[mask] = normalized
+    correction = torch.zeros(len(raw), dtype=torch.float64)
+    correction[mask] = total
+    return result, correction
+
+
+def normalize(raw, answered):
+    """Explicit detached NumPy boundary for the existing inference transport."""
+    result, correction = normalize_tensor(raw, answered)
+    return result.detach().numpy(), correction.detach().numpy()
 
 
 def persistence_support(pre, action, worlds):

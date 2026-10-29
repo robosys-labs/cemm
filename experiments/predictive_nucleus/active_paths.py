@@ -5,6 +5,7 @@ re-entry uses only an observed sufficient context, never guessed hidden history.
 The active domain is 3-6 binary entities; legacy predictors remain three-ID only.
 """
 import math
+from functools import wraps
 
 import numpy as np
 import torch
@@ -16,6 +17,16 @@ WORLDS = frozen.WORLDS
 require = scores.require
 
 
+def _gradient_mode(method):
+    @wraps(method)
+    def call(self, *args, **kwargs):
+        require(not self.differentiable or not torch.is_inference_mode_enabled(),
+                'differentiable filtering cannot run inside inference mode')
+        with torch.set_grad_enabled(self.differentiable):
+            return method(self, *args, **kwargs)
+    return call
+
+
 def capabilities(predictor):
     counts = getattr(predictor, 'supported_entities', (3,))
     aliases = getattr(predictor, 'supports_self_contact', False)
@@ -23,6 +34,16 @@ def capabilities(predictor):
             all(type(n) is int and 3 <= n <= 6 for n in counts) and
             len(set(counts)) == len(counts) and type(aliases) is bool, 'invalid predictor domain')
     return tuple(counts), aliases
+
+
+def empirical_control(memory, control=None):
+    """A fitted table's context abstraction is part of its predictor contract."""
+    expected = getattr(memory, 'control_name', memory.mode)
+    allowed = (memory.mode, 'first_contact') if memory.mode == 'contact' else (memory.mode,)
+    require(expected in allowed and (control is None or control in allowed), 'invalid empirical control')
+    require(not hasattr(memory, 'control_name') or control in (None, expected),
+            'control differs from fitted empirical policy')
+    return expected if control is None else control
 
 
 def _domain(predictor, anchor, limit, expansion_limit):
@@ -59,7 +80,9 @@ class NeuralPaths:
     Distinct recurrent histories are NEVER merged. Packed owners allow unequal
     path counts/masks across episodes without padding or artificial hypotheses.
     """
-    def __init__(self, model, anchor, limit=64, expansion_limit=512):
+    def __init__(self, model, anchor, limit=64, expansion_limit=512, *, differentiable=False):
+        require(type(differentiable) is bool, 'differentiable must be a boolean')
+        self.differentiable = differentiable
         self.entities, self.aliases = _domain(model, anchor, limit, expansion_limit)
         self.expansion_limit = expansion_limit
         self.model, self.limit, self.n = model, limit, len(anchor)
@@ -69,7 +92,7 @@ class NeuralPaths:
         self.worlds = torch.tensor(scores.binary_worlds(self.entities), dtype=torch.float64)
         self.ready, self.diagnostic = True, {}
 
-    @torch.inference_mode()
+    @_gradient_mode
     def predict(self, action):
         require(self.ready, 'feedback required before another prediction')
         scores.validate_action(action, self.n, self.entities, allow_self=self.aliases)
@@ -79,14 +102,13 @@ class NeuralPaths:
                 'candidate expansion bound exceeded before prediction; no pruning')
         raw, pending = self.model.predict(self.bits.clone(), action[self.owner].clone(), self.state.clone())
         require(raw.shape == (len(self.owner), len(self.worlds)), 'predictor joint world shape mismatch')
-        normalized, correction = scores.normalize(raw, np.ones(len(raw), dtype=bool))
-        conditional = torch.from_numpy(normalized)
+        conditional, correction = scores.normalize_tensor(raw, np.ones(len(raw), dtype=bool))
         weighted = self.weight[:, None] + conditional
-        result = torch.stack([block.logsumexp(0) for block in weighted.split(counts.tolist())])
+        result = torch.stack([scores.safe_logsumexp(block, 0) for block in weighted.split(counts.tolist())])
         diagnostic = {'live_paths': counts.tolist(),
                       'candidate_expansions': expansions.tolist(), 'expansion_limit': self.expansion_limit,
                       'stored_paths_total': len(self.owner),
-                      'max_abs_conditional_log_correction': float(np.abs(correction).max())}
+                      'max_abs_conditional_log_correction': float(correction.detach().abs().max())}
         acts = action[self.owner]
         aliases = (acts[:, 0] == 0) & (acts[:, 1] == acts[:, 2])
         retained_mass = getattr(self.model, 'alias_log_mass', None)
@@ -105,7 +127,7 @@ class NeuralPaths:
         self.diagnostic = diagnostic
         return result, np.ones(self.n, dtype=bool)
 
-    @torch.inference_mode()
+    @_gradient_mode
     def receive(self, reading, mask):
         require(not self.ready, 'prediction required before feedback')
         scores.validate_reading(reading, mask, self.n, self.entities)
@@ -130,6 +152,7 @@ class NeuralPaths:
                            'visible_log_likelihood': evidence.tolist(),
                            'missing_bits': (~mask).sum(-1).tolist()}
         del self.pending, self.conditional
+        return evidence
 
 
 class EmpiricalPaths(frozen.EmpiricalPaths):

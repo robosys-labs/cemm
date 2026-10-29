@@ -319,7 +319,7 @@ class RepairTests(unittest.TestCase):
         s = Session(model=JointKernel(persistence=True))
         start = s.handle({'op': 'start', 'episode': 'x', 'ids': ['a', 'b', 'c'],
                          'observation': dict(zip('abc', ANCHOR))})
-        self.assertEqual(start['implementation']['version'], 'active-inference-v4')
+        self.assertEqual(start['implementation']['version'], 'active-inference-v5')
         for step in range(10):
             p = s.handle({'op': 'predict', 'episode': 'x', 'step': step,
                           'action': {'kind': 'observe', 'participants': []}})

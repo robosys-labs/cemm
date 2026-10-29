@@ -93,7 +93,7 @@ class ActiveDomainTests(unittest.TestCase):
     def session(self, n, **kwargs):
         session = api.Session(**kwargs)
         result = session.handle(start(n))
-        self.assertEqual(result['implementation']['version'], 'active-inference-v4')
+        self.assertEqual(result['implementation']['version'], 'active-inference-v5')
         self.assertEqual(result['evidence_contract']['version'], 'active-evidence-v2')
         self.assertEqual(tuple(result['ids']), ids(n))
         self.assertEqual(len(result['world_order']), 2 ** n)

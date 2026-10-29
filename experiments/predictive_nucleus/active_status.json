@@ -1,7 +1,7 @@
 {
-  "version": "active-inference-v4",
+  "version": "active-inference-v5",
   "evidence_version": "active-evidence-v2",
-  "code_commit": "2b281cd7f1ba0de4a7985cacc4bbf272783d01ed",
+  "code_commit": "94c059a0fd4fdb78ad5f442419053ac99e41c124",
   "tracking_issue": 22,
   "repair_pr": 56,
   "gate_g1": "NOT_ADMITTED",
@@ -16,7 +16,6 @@
       6
     ],
     "predictor_capability_check_required": true,
-    "explicit_kernel_or_table_adaptation_required": true,
     "legacy_unadapted_entity_counts": [
       3
     ],
@@ -26,11 +25,28 @@
     "state": "binary",
     "visible_sensor_noise": false,
     "full_initial_anchor": true,
-    "self_contact_representation": "supplied_per_mode_alias_conditioning",
+    "self_contact_representation": {
+      "shared_kernel": "supplied_per_mode_alias_conditioning",
+      "flat": "one_physical_output_coordinate",
+      "empirical": "observed_counts_with_explicit_size_and_alias_contexts"
+    },
     "self_contact_generalization_established": false,
     "default_live_path_limit": 64,
     "candidate_expansion_limit": 512,
-    "action_limit": 128
+    "action_limit": 128,
+    "explicit_adaptation_required_for_legacy_kernel_or_table_expansion": true,
+    "native_predictors": [
+      "DomainKernel",
+      "DomainFlatGRU",
+      "DomainMemory",
+      "no_change"
+    ],
+    "native_flat_entity_counts": [
+      3,
+      4,
+      5,
+      6
+    ]
   },
   "completed_automated_repairs": [
     "exact_zero_neural_path_accounting",
@@ -45,7 +61,16 @@
     "per_mode_alias_conditioning_with_retained_mass_receipt",
     "candidate_expansion_bound_before_prediction",
     "predictor_configuration_and_capability_bound_identity",
-    "dimension_aware_uniform_reference_surprise_heuristic"
+    "dimension_aware_uniform_reference_surprise_heuristic",
+    "common_differentiable_masked_joint_event_objective",
+    "torch_normalization_and_zero_support_gradients_through_live_histories",
+    "fresh_expanded_domain_flat_and_supplied_persistence_variants",
+    "shared_delivered_history_fitting_with_observed_only_empirical_eligibility",
+    "fitted_empirical_history_policy_preserved_across_default_calls",
+    "strict_native_learned_state_artifacts_and_streaming_checkpoint_cli",
+    "current_training_identity_separate_from_immutable_checkpoint_origin",
+    "stale_checkpoint_identity_invalidated_after_training_or_mutating_interruption",
+    "delivered_event_evaluation_with_retained_prefixes_and_exact_contradiction_scores"
   ],
   "diagnostic_scope": {
     "advisory_only": true,
@@ -61,11 +86,11 @@
   "pending_engineering_in_order": [
     {
       "stage": "G1",
-      "work": "Complete a common expanded-domain train/predict/observe/checkpoint/evaluate path, including differentiable masked-observation training and comparable flat/empirical controls. Current inference/adaptation support does not establish learned transfer."
+      "work": "Implement and freeze prospective information-aware acceptance and the evaluator before substantive fits or new research scores: exact prediction points, answerability, complete worlds and trajectories, probability scores, coverage/abstention, role pairs, unchanged entities, per-family/per-seed regressions and failure denominators."
     },
     {
       "stage": "G1",
-      "work": "Version information-aware automated acceptance before new scores: prediction points, answerability, coverage, full-world trajectories, probability scores, held-out family lineage, all required seeds and comparable budgets."
+      "work": "Freeze fresh held-out families, split/oracle lineage, checkpoints and all required seeds; retain strong empirical controls and predeclare exposure, capacity and actual compute comparisons. Run calibrated controlled comparisons only under that new contract. Independent authorship/custody remains required for admission; closed fixtures stay closed."
     },
     {
       "stage": "G2",
@@ -76,60 +101,196 @@
       "work": "Learn bilingual grounding into the same predictive state without gold programs."
     },
     {
-      "stage": "G4\u2013G5",
+      "stage": "G4–G5",
       "work": "Implement learned communication, durable acquisition, correction, restart and retention in dependency order."
     },
     {
-      "stage": "G6\u2013G8",
+      "stage": "G6–G8",
       "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
     }
   ],
   "external_issue_55": "Independent scientific validation remains pending; it is not the sole remaining implementation dependency.",
   "line_counts": {
     "active_files": {
-      "active_paths.py": 232,
-      "active_participant.py": 205,
+      "active_paths.py": 255,
+      "active_participant.py": 225,
       "active_evidence.py": 156,
-      "domain_contract.py": 284,
-      "domain_kernel.py": 149
+      "domain_contract.py": 297,
+      "domain_kernel.py": 149,
+      "domain_flat.py": 74,
+      "active_learning.py": 346,
+      "active_checkpoint.py": 291
     },
-    "active_source_files_excluding_frozen_dependencies": 1026,
-    "new_runtime_source_net": 563,
-    "new_tests_net": 834,
-    "retained_research_python": 20814,
+    "active_source_files_excluding_frozen_dependencies": 1793,
+    "new_runtime_source_net": 767,
+    "new_tests_net": 1127,
+    "retained_research_python": 22708,
     "inclusive_size_goal_met": false
   },
   "verification": {
-    "record": "results/active-domain-validation-v4.json",
-    "local_tests_discovered": 498,
-    "local_tests_passed": 498,
+    "record": "results/active-learning-validation-v5.json",
+    "local_tests_discovered": 546,
+    "local_tests_passed": 546,
     "local_tests_skipped": 0,
-    "new_tests": 41,
+    "local_suite_seconds": 52.151,
+    "new_tests": 48,
+    "new_test_breakdown": {
+      "learning": 18,
+      "checkpoint": 11,
+      "flat": 9,
+      "active_contract": 10
+    },
     "historical_manifest_locks_passed": 16,
     "original_protocol": "passed",
     "frozen_input_preflight": "passed",
+    "synthetic_fit_and_gradient_wiring": true,
+    "native_cli_synthetic_flat_and_no_change": "passed",
     "new_scientific_evaluation": false,
+    "local_verified_tree_sha": "adb0ec97aac6e3f28d5e24f5909d8c9ae2e470ec",
     "publication_tree_matches_local_verified_code": true,
-    "published_tree_sha": "57136a701a2ad9dba0325c9e8725324a3417347d"
+    "published_tree_sha": "adb0ec97aac6e3f28d5e24f5909d8c9ae2e470ec",
+    "remote_ci": {
+      "reference": "https://github.com/robosys-labs/cemm/pull/59/checks",
+      "scope": "Final documentation head; live status is recorded on the pull request."
+    },
+    "ci_reference": "https://github.com/robosys-labs/cemm/pull/59/checks"
   },
   "limits": [
-    "No research-model retraining or new scientific evaluation in this domain tranche.",
-    "Self-contact is supplied per-mode alias conditioning; tiny retained mass can normalize to a confident forecast.",
-    "Legacy flat checkpoints remain three-entity-only; no matched wider-domain comparison has run.",
-    "Positive-mass paths are neither pruned nor merged; missing observations can exhaust the 512-candidate expansion budget.",
-    "Empirical adaptation preserves counts and abstains on new size/alias contexts without observed support.",
+    "Only synthetic fitting and implementation invariants ran; no historical research model was retrained or newly scored, closed study rerun, or scientific result changed.",
+    "Shared-kernel self-contact remains supplied per-mode alias conditioning; tiny retained mass can normalize to a confident forecast.",
+    "The fresh flat model has 1512 default parameters versus 470/584/972 shared arms; neither capacity nor consumed compute is matched.",
+    "Legacy flat checkpoints remain three-entity-only and cannot be converted to the new flat architecture.",
+    "Positive-mass paths are neither pruned nor merged; missing observations can exhaust the default 64-live-path or 512-candidate budgets.",
+    "Empirical fitting counts fewer eligible targets when readings/history are incomplete; hidden values and unsupported counts are never synthesized.",
+    "The current evaluator reports delivered-observation likelihood and coverage, not hidden complete-world truth, trajectory acceptance or calibrated scientific performance.",
+    "Native checkpoints restore learned state for fresh episodes only; they do not resume optimizers, live filters or pending forecasts. Declared provenance is unauthenticated.",
+    "Interrupted fitting does not roll back mutated weights; it invalidates stale checkpoint identity and marks current provenance interrupted.",
+    "If final fingerprinting also fails after a training interruption, current-state hashes are explicitly unavailable; the original failure is preserved.",
     "The active command remains repository-backed; frozen standalone v1 exports and scientific evidence are unchanged.",
     "Evidence remains conditional, uncalibrated and advisory; observed context counts are not posterior support or learned reliability.",
-    "The inference-only masked path does not constitute a coherent differentiable training/evaluation stack."
+    "The active-file subtotal excludes frozen dependencies and does not meet the inclusive 2000-line goal."
   ],
-  "local_verified_code_commit": "9132fa626d15c197b49f4d77d0971ed54ba1ef8d",
+  "local_verified_code_commit": "5a857ab0879cb1e67ca01a1de888eafbabace5d0",
   "diagnostics_pr": 57,
   "domain_pr": 58,
   "remaining_capability_gaps": {
-    "coherent_active_training_checkpoint_evaluation_path": "PENDING",
-    "expanded_domain_matched_flat_baseline": "PENDING",
+    "coherent_active_training_checkpoint_evaluation_path": "IMPLEMENTED_FOR_DELIVERED_OBSERVATIONS",
+    "expanded_domain_flat_implementation": "IMPLEMENTED_FRESH_ARCHITECTURE",
+    "expanded_domain_matched_flat_baseline": "PENDING_CAPACITY_AND_COMPUTE_COMPARISON",
+    "prospective_information_aware_scientific_acceptance_runner": "PENDING",
+    "fresh_independently_held_challenge": "PENDING",
+    "calibrated_expanded_domain_comparison": "PENDING",
     "expanded_domain_scientific_evaluation": false,
     "novel_entity_count_transfer_established": false,
     "learned_self_contact_established": false
-  }
+  },
+  "learning_version": "active-learning-v1",
+  "checkpoint_format": "cemm-active-checkpoint-v1",
+  "learning_pr": 59,
+  "publication_status": "PUBLISHED_DRAFT",
+  "current_learning": {
+    "api_module": "experiments.predictive_nucleus.active_learning",
+    "entrypoints": [
+      "ObservedBatch",
+      "replay",
+      "fit",
+      "fit_empirical",
+      "evaluate"
+    ],
+    "training_and_evaluation_cli": false,
+    "neural_objective": "mean_joint_negative_log_likelihood_of_each_event_with_any_delivered_reading",
+    "all_missing_event": "zero_immediate_loss_but_hidden_dynamics_and_later_gradients_continue",
+    "loss_reduction": "equal_weight_per_observed_event_across_all_batches",
+    "partial_targets": "joint_marginal_over_compatible_complete_worlds",
+    "empirical_eligibility": "complete_observed_before_after_worlds_and_sufficient_delivered_history",
+    "empirical_skips_reported": true,
+    "same_delivered_histories_imply_equal_usable_target_counts": false,
+    "training_and_evaluation_input_fields_separate": true,
+    "train_evaluation_split_disjointness_enforced": false,
+    "training_settings_and_source_recorded": true,
+    "optimizer_resume": false,
+    "interrupted_weight_mutation_rolls_back": false,
+    "verification_scope": "synthetic_wiring_likelihood_gradient_and_causal_invariants_only",
+    "interruption_cleanup_precedes_fallible_current_hash": true,
+    "unavailable_current_state_hash": null
+  },
+  "native_checkpoint": {
+    "format": "cemm-active-checkpoint-v1",
+    "encoding": "strict_plain_json",
+    "cli_flag": "--checkpoint",
+    "explicit_expected_sha256_required": true,
+    "matching_local_inference_sources_required": true,
+    "registered_constructors_only": true,
+    "fresh_episodes_only": true,
+    "optimizer_resume": false,
+    "live_session_resume": false,
+    "overwrite_allowed": false,
+    "provenance_authenticated": false,
+    "maximum_bytes": 16777216,
+    "maximum_registered_hidden_width": 256,
+    "legacy_origin_separate_from_current_state": true,
+    "fitted_empirical_control_policy_bound": true
+  },
+  "evaluation_scope": {
+    "delivered_observation_likelihood_and_coverage": true,
+    "hidden_gold_available": false,
+    "scientific_acceptance_runner": false,
+    "complete_world_accuracy_on_unobserved_bits": false,
+    "whole_trajectory_gate": false,
+    "calibration_established": false,
+    "valid_prefixes_and_feedback_failure_forecast_retained": true,
+    "planned_denominators_retained_on_failure": true,
+    "infinite_contradiction_nll_preserved": true,
+    "unsupported_distribution_and_likelihood_are_absent": true,
+    "conditional_answered_only_nll_separately_labeled": true
+  },
+  "comparison_scope": {
+    "native_flat_implemented": true,
+    "default_parameter_counts": {
+      "kernel_supplied_persistence": 470,
+      "kernel_learned_background": 584,
+      "kernel_untied_roles": 972,
+      "kernel_memory_reset": 584,
+      "flat": 1512,
+      "flat_supplied_persistence": 1512
+    },
+    "matched_capacity": false,
+    "matched_consumed_compute": false,
+    "new_scientific_comparison": false,
+    "legacy_flat_weights_convertible": false
+  },
+  "verification_history": [
+    {
+      "version": "active-inference-v4",
+      "code_commit": "2b281cd7f1ba0de4a7985cacc4bbf272783d01ed",
+      "local_verified_code_commit": "9132fa626d15c197b49f4d77d0971ed54ba1ef8d",
+      "verification": {
+        "record": "results/active-domain-validation-v4.json",
+        "local_tests_discovered": 498,
+        "local_tests_passed": 498,
+        "local_tests_skipped": 0,
+        "new_tests": 41,
+        "historical_manifest_locks_passed": 16,
+        "original_protocol": "passed",
+        "frozen_input_preflight": "passed",
+        "new_scientific_evaluation": false,
+        "publication_tree_matches_local_verified_code": true,
+        "published_tree_sha": "57136a701a2ad9dba0325c9e8725324a3417347d"
+      },
+      "line_counts": {
+        "active_files": {
+          "active_paths.py": 232,
+          "active_participant.py": 205,
+          "active_evidence.py": 156,
+          "domain_contract.py": 284,
+          "domain_kernel.py": 149
+        },
+        "active_source_files_excluding_frozen_dependencies": 1026,
+        "new_runtime_source_net": 563,
+        "new_tests_net": 834,
+        "retained_research_python": 20814,
+        "inclusive_size_goal_met": false
+      }
+    }
+  ]
 }
