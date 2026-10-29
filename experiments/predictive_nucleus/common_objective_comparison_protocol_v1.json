@@ -1,0 +1,159 @@
+{
+  "protocol_id": "cemm-common-objective-open-comparison-v1",
+  "status": "FROZEN_PUBLIC_DIAGNOSTIC_NOT_RUN",
+  "gate_g1": "HOLD_REVISE",
+  "source_commit": "3bbce83121386501ae39567b48fc9aa62325de79",
+  "source_sha256": {
+    "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "joint_objective.py": "c00551ac3f0cff682b2dcd415929d8e8b7279f7fe92494fd07a2411a29ad1f4f",
+    "informative_curriculum.py": "5fbb22e4a26e30d2bcbc609db976000ab0fc30ff96ee106a9caff7bafa13aada",
+    "comparison_data.py": "6ffbf3599636053ca944317dce4e211f39a0963b888395cce6a660f7794d1fa0",
+    "empirical_joint.py": "d93175b6c0b30a485e54f6417b98108a8e2cff06bc972f78e2c451490f4832dc",
+    "schedule_fixture.py": "d9bcaca815868880c2767bea011eb9a2e802fbf8a12a7e5deb11ff34b6eb4d2e",
+    "world.py": "eb3e4c69b6b71e5af31f395e2e7033aad8caf807b4b8b299dd86d6e0faae9d65",
+    "protocol.py": "05eac125862ba1aaaaeb7568711a0b4074ca0f6ee57722685b3b9ddb4cf3c56e",
+    "protocol.json": "622a0dfdf94d14b4f16461a0f20acce18bb880f094d5071e58cd1764bdc9c1e7",
+    "tests/test_joint_objective.py": "df60161ccb0149885792470e5af2d82ea427f95b96f95106ba884832a14d621e",
+    "tests/test_comparison_data.py": "80bc3d10ac83caae5fff6c82a2a6e0ba068698768c4673b012b72e695d2c70dc"
+  },
+  "prior_information": "V1 wiring, all historical studies, current-state shortcut, v2 finite-fixture bounds and key coverage are opened. No v2 substantive model fit or empirical prediction score has been read. This is predeclared public development, not independent preregistered challenge evidence.",
+  "hypotheses": [
+    "After all bits are reset, informative history can improve final-contact predictions over the information-limited condition; it need not improve pooled all-step accuracy.",
+    "Compare persistent versus reset memory at identical parameters and initialization; report whether errors remain despite informative evidence.",
+    "Compare learned and supplied persistence in both families, and tied versus untied mode hypotheses; differences also change capacity and do not isolate architectural superiority.",
+    "Strong measured-outcome controls can expose memorization/local abstraction explanations for apparent composition transfer."
+  ],
+  "data": {
+    "generator": "comparison_data.histories",
+    "case_order": "0..255, then six lexicographic permutations of sorted anchor IDs",
+    "conditions": [
+      "uninformative",
+      "informative"
+    ],
+    "training": "same_pair only, separately per condition",
+    "evaluation": [
+      "same_pair",
+      "second_pair"
+    ],
+    "same_pair_interpretation": "training resubstitution, never held-out",
+    "second_pair_interpretation": "opened chronological composition; exact prefix overlap for steps 0..2 only, all local and contact-abstraction keys overlap training",
+    "views_per_dataset": 1536,
+    "physical_factorial_cases": 256,
+    "correlated_views_per_case": 6,
+    "actions_per_history": 8,
+    "measured_bits_including_anchor": 27,
+    "event_targets_per_update": 12288,
+    "input_sha256": {
+      "informative_same_pair": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e",
+      "informative_second_pair": "a10748428184b1834275efb2e82da1da566356193c77af25cdac1e44be40a3ca",
+      "uninformative_same_pair": "fe89cf2a609fa36d6ad4cb65048b56934fdc4f62cda86455e49f3cc3dfbecd1d",
+      "uninformative_second_pair": "4f52d492c03c60eac8416ba7a7a4328f78b0eb731a0b9980e67c4c3499ee783c"
+    },
+    "sensor_contract": "Full noiseless readings. Feed the same observed/action tensors to every model/control in a condition. No hidden mode or future target in a predict call. The complete offline array is evaluator-inspectable, not a security boundary.",
+    "query_step": 6,
+    "orientation_twin": "case XOR 16",
+    "reverse_role_pair": "case XOR 1",
+    "bounds": "Informative query history ceiling 1.0, current-only 0.625; uninformative both 0.625. Informative step 2 ceiling 0.5. All other steps 1.0. All-step ceilings 0.9375 and 0.953125 respectively. These are not G1 targets.",
+    "audit_sha256": "96a87b8b09fb87b8d0099d83a1cc52ab07878e22ed07dc8ed408a71eaf973b43"
+  },
+  "models": [
+    {
+      "id": "kernel_supplied_persistence",
+      "parameters": 470
+    },
+    {
+      "id": "kernel_learned_persistence",
+      "parameters": 584
+    },
+    {
+      "id": "kernel_untied_roles",
+      "parameters": 972
+    },
+    {
+      "id": "kernel_memory_reset",
+      "parameters": 584
+    },
+    {
+      "id": "flat",
+      "parameters": 648
+    },
+    {
+      "id": "flat_supplied_persistence",
+      "parameters": 648
+    }
+  ],
+  "factory": "informative_curriculum.model_factories; exact defaults, no width search or parameter selection",
+  "controls": [
+    "no_change",
+    "prefix",
+    "local",
+    "contact"
+  ],
+  "control_fit": "SensorMemory fits once on each training condition only. no_change is a point mass on the current measured full state. prefix/local/contact preserve measured frequencies and zero support; unknown keys abstain with no fallback. Save full tables and digests. Contact-history abstraction is supplied, not learned physics or a general nucleus.",
+  "seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "fit": {
+    "regimes": [
+      {
+        "id": "fixed_exposure",
+        "updates": 128,
+        "cpu_seconds": 60.0,
+        "completion": "All 128 updates required; an early CPU stop makes the study incomplete."
+      },
+      {
+        "id": "cpu_budget",
+        "updates": 100000,
+        "cpu_seconds": 2.0,
+        "completion": "At least one update required; report last-step overshoot and whether the update guard rather than CPU bound was reached."
+      }
+    ],
+    "total_neural_fits": 120,
+    "optimizer": "Pinned joint_objective.fit Adam defaults in PyTorch 2.10.0+cpu; lr=0.02, betas=(0.9,0.999), eps=1e-8, weight_decay=0, amsgrad=False. No minibatches, calibration, early-stopping selection, scheduling, weight decay, clipping or restarts.",
+    "loss": "Unchanged joint_objective.full_world_nll: mean joint complete-state negative log likelihood, equal weight to all 12,288 events, all eight worlds, full backpropagation through the within-episode state. Float64.",
+    "order": "Regime order as listed, condition order as listed, seed order as listed. Within each cell, rotate listed model order left by (regime_index + condition_index + seed_index) modulo 6.",
+    "initialization": "torch.manual_seed(seed) immediately before each factory call. Retain initial state_dict; same model/seed must have identical initial tensor fingerprints across conditions and regimes. Equal initial seeds do not imply equal architectures.",
+    "compute": "Record actual process CPU and wall seconds, setup costs, updates, events processed, last-step duration and overshoot. Equal exposure is not equal compute; equal CPU ceilings are not equal consumed CPU/FLOPs. No concurrent neural fits.",
+    "checkpoints": "Save initial and final CPU state_dict for all 120 fits, byte hashes, semantic tensor fingerprints and per-fit training metadata immediately. Verify strict weights_only restoration and fingerprint equality. No missing fit may be dropped or replaced.",
+    "before_scores": "Complete all fits and control tables before any evaluation summary or model selection. Fit, checkpoint, replay and score phases are separately recorded."
+  },
+  "environment": {
+    "python": "3.13.x; record exact patch",
+    "torch": "2.10.0+cpu",
+    "dtype": "float64",
+    "device": "CPU only; no GPU/accelerator path",
+    "intraop_threads": 1,
+    "interop_threads": 1,
+    "deterministic_algorithms": true,
+    "pythonhashseed": "0 at startup",
+    "record": "Exact Python/PyTorch/platform/CPU, torch configuration hash, commits, source/data hashes, thread counts, deterministic flags, wall/process CPU and peak RSS with units. No cross-host bitwise guarantee."
+  },
+  "evaluation": {
+    "mode": "All models eval with inference_mode; no parameter, calibration or control-table updates. Reset recurrent state per episode; preserve it within the episode. Save each forecast before receiving that step feedback. Same measured history, not free-running rollouts.",
+    "normalization": "Before any score/MAP comparison, apply ONE uniform log-domain normalization to every predicted 8-world vector, including controls. Reject NaN/+inf or nonfinite total, require abs(raw logsumexp)<=1e-10, then subtract it. Keep all raw/normalized log values and correction. -inf stays -inf. Validate exp masses finite in [0,1] and sum within 1e-12. No clipping, smoothing, imputation or materially invalid mass repair. Training loss stays unchanged.",
+    "numerical_zeros": "Serialize -inf as null plus explicit negative_infinity status. Retain finite log probabilities even when exp underflows to zero; record underflow. Neural NLL uses normalized log probability directly, not log(exp(logp)). Structural -inf gives infinite NLL; controls zero support gives infinite NLL. Any aggregate containing an infinite answered loss has null mean plus infinite status/count; never average only finite losses.",
+    "map": "Lexicographically first maximizer in sorted-ID world order; retain all exact maximizers and tie count. Renaming can change the chosen MAP at equal probabilities; report this separately from distribution sensitivity.",
+    "primary": "Per seed/regime/model/condition/fixture: complete-world MAP accuracy at step 6, with denominator all 1,536 queries and explicit answered/abstained counts. Compare informative minus uninformative and second-pair minus same-pair for every arm; truth at final query is identical across information conditions for matched physical case/view.",
+    "secondary": "All eight steps separately, full-case all-steps MAP correctness WITH real feedback, uncapped joint NLL, full eight-world Brier, unchanged-bit errors, and both-directions-correct for 768 case-XOR-1 view pairs at query. No metric substitutes for the untouched G1 gate.",
+    "uncertainty": "Report proper scores on all cases plus groups with >1 outcome under identical preforecast evidence. Query uninformative Bayes floors are 0.75*ln(2) NLL and 0.375 Brier; informative probe floors ln(2) and 0.5. Compute descriptive 10-bin ECE using [i/10,(i+1)/10), with last bin including 1. No claim of independently calibrated uncertainty.",
+    "abstention": "None from fixed neural variants; controls may abstain. Preserve status/reason, coverage, accuracy among answers, correct/wrong/abstained per all queries. Never invent probability scores for abstentions. Report model comparisons on common answered subsets AND all-query correct/wrong/abstained counts.",
+    "paired_regressions": "For each seed/regime/condition/fixture/step compare every arm to flat and to kernel_learned_persistence on identical case/view. Also compare each arm between conditions/regimes. Retain correct-to-wrong, wrong-to-correct, correct-to-abstained and abstained-to-correct IDs, not just net improvements.",
+    "renaming": "Per physical case inverse-map all six view distributions to identity coordinates, compare to identity view with TV tolerance 1e-10, report max/median TV, distribution changes and MAP/tie changes separately. These views are correlated.",
+    "latency": "Per-fit batched forward sequence wall/process CPU measured after one discarded replay of the first already-scored physical case, repeated 20 times without learning. Report batch size, whole-sequence p50/p95 nearest-rank; do not relabel batched averages as single-query service latency.",
+    "interpretation": "All seeds, worst seed and mean; no iid confidence interval over permutations or seeds as independent physical worlds. No architecture-superiority, matched-capacity, independent generalization, partial-observation, learned probing, language or 3x claim."
+  },
+  "execution": {
+    "runner_status": "NOT_IMPLEMENTED_OR_REVIEWED_BY_THIS_PROTOCOL",
+    "review": "Protocol frozen before substantive fits/scores. A separate runner commit and implementation review must precede execution. No independent scientific review is claimed by this manifest.",
+    "lineage": "Require exact protocol and source hashes, complete clean tracked checkout, source_commit ancestry and a later runner commit. Record runner/workflow/test hashes before enabling a manually guarded one-attempt workflow. No implicit run in ordinary invariant CI.",
+    "output": "New nonexistent directory outside source checkout, parent must exist; never overwrite. Stream per-fit metadata/checkpoints then per-case raw forecasts, all coordinate maps, full histories, truth, scores and diagnostics. Strict JSON with explicit nonfinite tags. Source and data provenance retained.",
+    "failure": "Any missing/invalid fit, checkpoint, data, forecast or inventory aborts with nonzero exit and FAILED metadata; preserve completed work and raw offending record. No COMPLETE or success summary for partial work. No silent retries or post-score tuning; changes require a new explicitly labelled protocol.",
+    "success": "Validate all 120 fits and all seeds/conditions/regimes/models/fixtures/views/steps, checkpoints/table hashes, score denominators and paired contrasts; emit report and COMPLETE last. Retain full raw output and checkpoint bundle in durable research storage, not only expiring CI artifacts.",
+    "caps": "Single CPU process, 30-minute job cap; record any timeout and available partial evidence. No repeated attempts merely to get a better host budget."
+  },
+  "decision": "G1 HOLD / REVISE regardless of this opened diagnostic. Next G1 admission work needs independent held challenge, partial/noisy observation, stronger capacity/budget controls and separately demonstrated acquisition."
+}
