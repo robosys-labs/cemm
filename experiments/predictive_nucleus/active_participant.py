@@ -1,4 +1,4 @@
-"""Opt-in successor using repaired filters and unchanged v1 bundle weights.
+"""Active causal inference from a native checkpoint or unchanged v1 bundle.
 
 The frozen exported participant and its manifest stay unchanged. This command
 records a separate implementation identity; it is not the v1 research result.
@@ -17,12 +17,13 @@ from . import active_paths, external_participant as wire, domain_contract, joint
 from .active_evidence import ActiveEvidence
 
 
-VERSION = 'active-inference-v4'
+VERSION = 'active-inference-v5'
 
 
 def implementation():
     names = ('active_paths.py', 'active_participant.py', 'active_evidence.py', 'domain_contract.py',
-             'domain_kernel.py', 'context_support.py', 'external_participant.py',
+             'domain_kernel.py', 'domain_flat.py', 'active_checkpoint.py',
+             'context_support.py', 'external_participant.py',
              'masked_replay.py', 'comparison_scoring.py', 'joint_objective.py')
     root = Path(__file__).parent
     return {'version': VERSION, 'source_sha256': {n: sha256((root / n).read_bytes()).hexdigest() for n in names},
@@ -38,6 +39,8 @@ class FeedbackFailure(ValueError):
 
 class Session(wire.Session):
     def __init__(self, *, model=None, memory=None, control=None):
+        if memory is not None:
+            control = active_paths.empirical_control(memory, control)
         super().__init__(active_paths, domain_contract, joint_objective,
                          model=model, memory=memory, control=control)
         predictor = model if model is not None else memory if memory is not None else active_paths.LastObserved
@@ -92,7 +95,10 @@ class Session(wire.Session):
                         predictor_domain={'entities': list(self.supported_entities), 'self_contact': self.allow_self,
                         'live_path_limit': 64, 'candidate_expansion_limit': 512, 'action_limit': 128},
                         checkpoint_state_sha256=self.weights, empirical_table_sha256=self.table,
-                        adaptation=deepcopy(getattr(predictor, 'domain_adaptation', None)))
+                        adaptation=deepcopy(getattr(predictor, 'domain_adaptation', None)),
+                        training=deepcopy(getattr(predictor, 'training_provenance', None)),
+                        checkpoint=deepcopy(getattr(predictor, 'checkpoint_metadata',
+                                                   getattr(self, 'checkpoint_metadata', None))))
         self.implementation_sha256 = sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
         self.phase = 'READY'
         return {'status': 'STARTED', 'episode': self.episode, 'ids': self.ids,
@@ -167,21 +173,35 @@ def serve(session, incoming, outgoing):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--bundle', required=True, type=Path)
-    parser.add_argument('--manifest-sha256', required=True)
-    parser.add_argument('--participant', required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument('--bundle', type=Path)
+    source.add_argument('--checkpoint', type=Path)
+    parser.add_argument('--checkpoint-sha256')
+    parser.add_argument('--manifest-sha256')
+    parser.add_argument('--participant')
     parser.add_argument('--seed', type=int)
     parser.add_argument('--expand-domain', action='store_true',
                         help='explicit structural kernel/table adaptation; not a learned transfer result')
     args = parser.parse_args()
-    root = args.bundle.resolve()
-    manifest = wire.verify_bundle(root, args.manifest_sha256)
     wire.require(sys.version_info[:2] == (3, 13) and torch.__version__ == '2.10.0+cpu' and
                  np.__version__ == '2.3.5', 'pinned Python/PyTorch/NumPy required')
     wire.require(torch.version.cuda is None and torch.version.hip is None, 'CPU-only build required')
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
     torch.use_deterministic_algorithms(True)
+    if args.checkpoint is not None:
+        wire.require(args.checkpoint_sha256 is not None and args.manifest_sha256 is None and
+                     args.participant is None and args.seed is None and not args.expand_domain,
+                     'native checkpoint owns predictor/configuration; provide only checkpoint and its SHA')
+        from .active_checkpoint import load_checkpoint
+        saved = load_checkpoint(args.checkpoint, args.checkpoint_sha256)
+        session = Session(model=saved['model'], memory=saved['memory'], control=saved['control'])
+        session.checkpoint_metadata = deepcopy(saved['metadata'])
+        return serve(session, sys.stdin, sys.stdout)
+    wire.require(args.manifest_sha256 is not None and args.participant is not None and
+                 args.checkpoint_sha256 is None, 'bundle manifest SHA and participant required')
+    root = args.bundle.resolve()
+    manifest = wire.verify_bundle(root, args.manifest_sha256)
     # Isolated import name avoids substituting an unrelated participant_core.
     name = '_active_frozen_' + args.manifest_sha256
     wire.require(name not in sys.modules, 'bundle namespace already loaded')

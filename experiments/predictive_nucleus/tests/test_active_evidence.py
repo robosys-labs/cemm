@@ -191,7 +191,7 @@ class ActiveEvidenceSessionTests(unittest.TestCase):
     def session(self, **kwargs):
         session = api.Session(**kwargs)
         started = session.handle(start())
-        self.assertEqual(started['implementation']['version'], 'active-inference-v4')
+        self.assertEqual(started['implementation']['version'], 'active-inference-v5')
         self.assertIn('evidence_contract', started)
         return session
 
