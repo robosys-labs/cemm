@@ -2,44 +2,55 @@
 
 Exact-zero neural histories are removed, never small positive log mass. Empirical
 re-entry uses only an observed sufficient context, never guessed hidden history.
-Three binary entities and the original noiseless-visible-sensor contract remain.
+The active domain is 3-6 binary entities; legacy predictors remain three-ID only.
 """
 import math
 
 import numpy as np
 import torch
 
-from . import comparison_scoring as scores
+from . import domain_contract as scores
 from . import masked_replay as frozen
 
 WORLDS = frozen.WORLDS
-LastObserved = frozen.LastObserved
 require = scores.require
 
 
-def _anchor(anchor, limit):
-    require(type(limit) is int and limit > 0, 'positive integer path limit required')
-    require(isinstance(anchor, torch.Tensor) and anchor.device.type == 'cpu' and
-            anchor.dtype == torch.float64 and anchor.ndim == 2 and anchor.shape[1] == 3 and
-            len(anchor) > 0 and bool(((anchor == 0) | (anchor == 1)).all()), 'invalid full anchor')
+def capabilities(predictor):
+    counts = getattr(predictor, 'supported_entities', (3,))
+    aliases = getattr(predictor, 'supports_self_contact', False)
+    require(type(counts) in (tuple, list) and bool(counts) and
+            all(type(n) is int and 3 <= n <= 6 for n in counts) and
+            len(set(counts)) == len(counts) and type(aliases) is bool, 'invalid predictor domain')
+    return tuple(counts), aliases
 
 
-def _reading(reading, mask, n):
-    require(isinstance(reading, torch.Tensor) and isinstance(mask, torch.Tensor) and
-            reading.device.type == mask.device.type == 'cpu' and reading.dtype == torch.float64 and
-            mask.dtype == torch.bool and reading.shape == mask.shape == (n, 3), 'invalid feedback shape/dtype')
-    require(bool(((reading[mask] == 0) | (reading[mask] == 1)).all()) and
-            bool((reading[~mask] == -1).all()), 'hidden values must be -1; visible values binary')
+def _domain(predictor, anchor, limit, expansion_limit):
+    entities = scores.validate_anchor(anchor, limit)
+    counts, aliases = capabilities(predictor)
+    require(entities in counts, 'entity count outside predictor domain; explicit adaptation required')
+    require(type(expansion_limit) is int and expansion_limit > 0, 'positive integer expansion limit required')
+    return entities, aliases
 
 
-def _action(action, n):
-    require(isinstance(action, torch.Tensor) and action.device.type == 'cpu' and
-            action.dtype == torch.long and action.shape == (n, 4), 'invalid action shape/dtype')
-    k, p, q, v = action.unbind(-1)
-    valid = (k == 0) & (p >= 0) & (p < 3) & (q >= 0) & (q < 3) & (p != q) & (v == -1)
-    valid |= (k == 1) & (p >= 0) & (p < 3) & (q == -1) & ((v == 0) | (v == 1))
-    valid |= (k == 2) & (p == -1) & (q == -1) & (v == -1)
-    require(bool(valid.all()), 'invalid action')
+class LastObserved:
+    """Same supplied last-reading baseline, now with explicit dynamic geometry."""
+    supported_entities, supports_self_contact = (3, 4, 5, 6), True
+
+    def __init__(self, anchor):
+        self.entities = scores.validate_anchor(anchor, 64)
+        self.bits, self.diagnostic = anchor.clone(), {}
+
+    def predict(self, action):
+        scores.validate_action(action, len(self.bits), self.entities)
+        indices = scores.world_index(self.bits)
+        raw = torch.full((len(indices), 2 ** self.entities), -torch.inf, dtype=torch.float64)
+        raw[torch.arange(len(indices)), indices] = 0.
+        return raw, np.ones(len(indices), dtype=bool)
+
+    def receive(self, reading, mask):
+        scores.validate_reading(reading, mask, len(self.bits), self.entities)
+        self.bits = torch.where(mask, reading, self.bits)
 
 
 class NeuralPaths:
@@ -48,35 +59,56 @@ class NeuralPaths:
     Distinct recurrent histories are NEVER merged. Packed owners allow unequal
     path counts/masks across episodes without padding or artificial hypotheses.
     """
-    def __init__(self, model, anchor, limit=64):
-        _anchor(anchor, limit)
+    def __init__(self, model, anchor, limit=64, expansion_limit=512):
+        self.entities, self.aliases = _domain(model, anchor, limit, expansion_limit)
+        self.expansion_limit = expansion_limit
         self.model, self.limit, self.n = model, limit, len(anchor)
         self.bits, self.state = anchor.clone(), model.initial(self.n)
         self.owner = torch.arange(self.n)
         self.weight = torch.zeros(self.n, dtype=torch.float64)
-        self.worlds = torch.tensor(WORLDS, dtype=torch.float64)
+        self.worlds = torch.tensor(scores.binary_worlds(self.entities), dtype=torch.float64)
         self.ready, self.diagnostic = True, {}
 
     @torch.inference_mode()
     def predict(self, action):
         require(self.ready, 'feedback required before another prediction')
-        _action(action, self.n)
+        scores.validate_action(action, self.n, self.entities, allow_self=self.aliases)
+        counts = torch.bincount(self.owner, minlength=self.n)
+        expansions = counts * len(self.worlds)
+        require(bool((expansions <= self.expansion_limit).all()),
+                'candidate expansion bound exceeded before prediction; no pruning')
         raw, pending = self.model.predict(self.bits.clone(), action[self.owner].clone(), self.state.clone())
+        require(raw.shape == (len(self.owner), len(self.worlds)), 'predictor joint world shape mismatch')
         normalized, correction = scores.normalize(raw, np.ones(len(raw), dtype=bool))
         conditional = torch.from_numpy(normalized)
         weighted = self.weight[:, None] + conditional
-        counts = torch.bincount(self.owner, minlength=self.n)
         result = torch.stack([block.logsumexp(0) for block in weighted.split(counts.tolist())])
+        diagnostic = {'live_paths': counts.tolist(),
+                      'candidate_expansions': expansions.tolist(), 'expansion_limit': self.expansion_limit,
+                      'stored_paths_total': len(self.owner),
+                      'max_abs_conditional_log_correction': float(np.abs(correction).max())}
+        acts = action[self.owner]
+        aliases = (acts[:, 0] == 0) & (acts[:, 1] == acts[:, 2])
+        retained_mass = getattr(self.model, 'alias_log_mass', None)
+        if bool(aliases.any()) and callable(retained_mass):
+            mass = retained_mass(self.bits[aliases].clone(), acts[aliases].clone())
+            require(isinstance(mass, torch.Tensor) and mass.dtype == torch.float64 and
+                    mass.device.type == 'cpu' and mass.ndim == 2 and len(mass) == int(aliases.sum()) and
+                    bool(torch.isfinite(mass).all()) and bool((mass <= 1e-10).all()),
+                    'invalid retained alias log mass')
+            diagnostic['alias_conditioning'] = {
+                'interpretation': 'supplied_per_mode_diagonal_normalization',
+                'path_owners': self.owner[aliases].tolist(),
+                'retained_log_mass_by_path_and_mode': mass.tolist(),
+                'learned_transfer_established': False}
         self.pending, self.conditional, self.ready = pending.clone(), conditional, False
-        self.diagnostic = {'live_paths': counts.tolist(),
-                           'stored_paths_total': len(self.owner),
-                           'max_abs_conditional_log_correction': float(np.abs(correction).max())}
+        self.diagnostic = diagnostic
         return result, np.ones(self.n, dtype=bool)
 
     @torch.inference_mode()
     def receive(self, reading, mask):
         require(not self.ready, 'prediction required before feedback')
-        _reading(reading, mask, self.n)
+        scores.validate_reading(reading, mask, self.n, self.entities)
         compatible = ((self.worlds[None] == reading[:, None, :]) | ~mask[:, None, :]).all(-1)
         weighted = self.weight[:, None] + self.conditional
         alive = compatible[self.owner] & torch.isfinite(weighted)
@@ -108,8 +140,10 @@ class EmpiricalPaths(frozen.EmpiricalPaths):
     operand histories for contact; only the first contact for first_contact.
     Unknown historic bits stay -1 and are never turned into guessed evidence.
     """
-    def __init__(self, memory, anchor, *, first_contact=False, limit=64):
-        _anchor(anchor, limit)
+    def __init__(self, memory, anchor, *, first_contact=False, limit=64, expansion_limit=512):
+        self.entities, self.aliases = _domain(memory, anchor, limit, expansion_limit)
+        self.worlds = scores.binary_worlds(self.entities)
+        self.expansion_limit = expansion_limit
         require(memory.mode in ('prefix', 'local', 'contact') and type(first_contact) is bool and
                 (not first_contact or memory.mode == 'contact'), 'invalid empirical recovery policy')
         super().__init__(memory, anchor, first_contact=first_contact, limit=limit)
@@ -119,11 +153,42 @@ class EmpiricalPaths(frozen.EmpiricalPaths):
 
     def predict(self, action):
         require(self.ready, 'feedback required before another prediction')
-        _action(action, len(self.paths))
-        result = super().predict(action.clone())
+        scores.validate_action(action, len(self.paths), self.entities, allow_self=self.aliases)
+        candidates = [len(paths) * len(self.worlds) for paths in self.paths]
+        require(all(n <= self.expansion_limit for n in candidates),
+                'candidate expansion bound exceeded before prediction; no pruning')
+        raw = torch.full((len(self.paths), len(self.worlds)), -torch.inf, dtype=torch.float64)
+        answered, expansions, missing = [], [], 0
+        for paths, a in zip(self.paths, action.tolist(), strict=True):
+            a, expanded, total = tuple(a), [], [0.] * len(self.worlds)
+            supported = bool(paths)
+            for weight, pre, past in paths:
+                context = tuple(row for row in past if row[1][0] == 0)[:1] if self.first_contact else past
+                probabilities = self.memory.predict(pre, a, context)
+                if probabilities is None:
+                    missing += 1
+                    supported = False
+                    break
+                require(len(probabilities) == len(self.worlds) and
+                        all(math.isfinite(p) and 0 <= p <= 1 for p in probabilities) and
+                        abs(math.fsum(probabilities) - 1.) <= 1e-12, 'invalid empirical distribution')
+                for index, (world, probability) in enumerate(zip(self.worlds, probabilities, strict=True)):
+                    if probability > 0:
+                        mass = weight * probability
+                        require(mass > 0, 'empirical path underflow')
+                        expanded.append((mass, world, past + ((pre, a, world),)))
+                        total[index] += mass
+            answered.append(supported)
+            expansions.append(expanded if supported else [])
+            if supported:
+                raw[len(answered) - 1] = torch.tensor(total, dtype=torch.float64).log()
+        self.expansions = expansions
+        self.diagnostic = {'unsupported_positive_paths': missing,
+                           'represented_paths_max': max(map(len, self.paths), default=0),
+                           'candidate_expansions': candidates, 'expansion_limit': self.expansion_limit}
         self.actions = [tuple(row) for row in action.tolist()]
         self.ready = False
-        return result
+        return raw, np.array(answered, dtype=bool)
 
     def _context_complete(self, history):
         if self.memory.mode == 'local':
@@ -138,7 +203,7 @@ class EmpiricalPaths(frozen.EmpiricalPaths):
 
     def receive(self, reading, mask):
         require(not self.ready, 'prediction required before feedback')
-        _reading(reading, mask, len(self.paths))
+        scores.validate_reading(reading, mask, len(self.paths), self.entities)
         result, histories, observed, recovery = [], [], [], []
         for i, (paths, x, visible) in enumerate(zip(self.expansions, reading.tolist(), mask.tolist(), strict=True)):
             bits = tuple(map(int, x))

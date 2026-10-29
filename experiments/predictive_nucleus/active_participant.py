@@ -13,19 +13,20 @@ import sys
 import numpy as np
 import torch
 
-from . import active_paths, external_participant as wire, comparison_scoring, joint_objective
+from . import active_paths, external_participant as wire, domain_contract, joint_objective
 from .active_evidence import ActiveEvidence
 
 
-VERSION = 'active-inference-v3'
+VERSION = 'active-inference-v4'
 
 
 def implementation():
-    names = ('active_paths.py', 'active_participant.py', 'active_evidence.py', 'context_support.py', 'external_participant.py',
+    names = ('active_paths.py', 'active_participant.py', 'active_evidence.py', 'domain_contract.py',
+             'domain_kernel.py', 'context_support.py', 'external_participant.py',
              'masked_replay.py', 'comparison_scoring.py', 'joint_objective.py')
     root = Path(__file__).parent
     return {'version': VERSION, 'source_sha256': {n: sha256((root / n).read_bytes()).hexdigest() for n in names},
-            'gate_g1': 'NOT_ADMITTED', 'domain': 'three binary entities; noiseless visible observations'}
+            'gate_g1': 'NOT_ADMITTED', 'domain': '3-6 binary entities subject to predictor capabilities; noiseless readings'}
 
 
 class FeedbackFailure(ValueError):
@@ -37,11 +38,72 @@ class FeedbackFailure(ValueError):
 
 class Session(wire.Session):
     def __init__(self, *, model=None, memory=None, control=None):
-        super().__init__(active_paths, comparison_scoring, joint_objective,
+        super().__init__(active_paths, domain_contract, joint_objective,
                          model=model, memory=memory, control=control)
+        predictor = model if model is not None else memory if memory is not None else active_paths.LastObserved
+        self.supported_entities, self.allow_self = active_paths.capabilities(predictor)
+
+    def _observation(self, data, anchor=False):
+        wire.require(type(data) is dict and set(data) == set(self.ids), 'observation must name exactly the episode IDs')
+        values = [data[name] for name in self.ids]
+        wire.require(all(v is None or (type(v) is int and v in (0, 1)) for v in values), 'invalid reading')
+        wire.require(not anchor or all(v is not None for v in values), 'full anchor required')
+        return (torch.tensor([[v if v is not None else -1 for v in values]], dtype=torch.float64),
+                torch.tensor([[v is not None for v in values]], dtype=torch.bool))
+
+    def _action(self, data):
+        wire.require(type(data) is dict and data.get('kind') in ('contact', 'set', 'observe'), 'invalid action')
+        kind = data['kind']
+        wire.require(set(data) == ({'kind', 'participants', 'value'} if kind == 'set' else {'kind', 'participants'}),
+                     'extra/missing action field')
+        members = data['participants']
+        wire.require(type(members) is list and all(type(n) is str and n in self.ids for n in members) and
+                     len(members) == {'contact': 2, 'set': 1, 'observe': 0}[kind], 'invalid action participants')
+        value = data.get('value', -1)
+        wire.require(type(value) is int and (kind != 'set' or value in (0, 1)), 'invalid set value')
+        action = torch.tensor([[('contact', 'set', 'observe').index(kind),
+            self.ids.index(members[0]) if members else -1,
+            self.ids.index(members[1]) if len(members) == 2 else -1, value]], dtype=torch.long)
+        domain_contract.validate_action(action, 1, len(self.ids), allow_self=self.allow_self)
+        return action
+
+    def _start(self, request):
+        wire.require(self.phase == 'NEW' and set(request) == {'op', 'episode', 'ids', 'observation'}, 'invalid start')
+        wire.require(type(request['episode']) is str and 0 < len(request['episode']) <= 128, 'invalid episode identifier')
+        ids = request['ids']
+        wire.require(type(ids) is list and 3 <= len(ids) <= 6 and
+                     all(type(x) is str and 0 < len(x) <= 128 for x in ids) and len(set(ids)) == len(ids),
+                     'three to six distinct IDs required')
+        wire.require(len(ids) in self.supported_entities,
+                     'entity count outside predictor domain; explicit adaptation required')
+        self.episode, self.ids = request['episode'], tuple(sorted(ids))
+        anchor, _ = self._observation(request['observation'], anchor=True)
+        self.filter = (active_paths.NeuralPaths(self.model, anchor) if self.model is not None else
+                       active_paths.EmpiricalPaths(self.memory, anchor, first_contact=self.control == 'first_contact')
+                       if self.memory is not None else active_paths.LastObserved(anchor))
+        self.evidence = ActiveEvidence(self.ids, request['observation'])
+        identity = implementation()
+        predictor = self.model if self.model is not None else self.memory
+        identity.update(predictor_class=type(predictor).__name__ if predictor is not None else 'LastObserved',
+                        control=self.control,
+                        predictor_configuration={key: getattr(predictor, key) for key in
+                            ('persistence', 'role_tying', 'memory', 'mode')
+                            if type(getattr(predictor, key, None)) in (bool, str)},
+                        predictor_domain={'entities': list(self.supported_entities), 'self_contact': self.allow_self,
+                        'live_path_limit': 64, 'candidate_expansion_limit': 512, 'action_limit': 128},
+                        checkpoint_state_sha256=self.weights, empirical_table_sha256=self.table,
+                        adaptation=deepcopy(getattr(predictor, 'domain_adaptation', None)))
+        self.implementation_sha256 = sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+        self.phase = 'READY'
+        return {'status': 'STARTED', 'episode': self.episode, 'ids': self.ids,
+                'world_order': domain_contract.binary_worlds(len(self.ids)), 'gate_g1': 'NOT_ADMITTED',
+                'implementation': identity, 'implementation_sha256': self.implementation_sha256,
+                'evidence_contract': self.evidence.contract}
 
     def _handle(self, request):
         op = request.get('op') if type(request) is dict else None
+        if op == 'start':
+            return self._start(request)
         if op == 'predict' and self.phase == 'READY':
             # Optional active-only coverage; the frozen v1 transport stays unchanged.
             selected = request.get('sensor_ids', list(self.ids))
@@ -77,14 +139,7 @@ class Session(wire.Session):
             result['inference'] = dict(self.filter.diagnostic)
             result['evidence'] = self.evidence.receive(request['observation'], self.receipt)
             return result
-        result = super()._handle(request)
-        if result['status'] == 'STARTED':
-            result['implementation'] = implementation()
-            self.implementation_sha256 = sha256(json.dumps(result['implementation'], sort_keys=True).encode()).hexdigest()
-            self.evidence = ActiveEvidence(self.ids, request['observation'])
-            result['evidence_contract'] = self.evidence.contract
-            result['implementation_sha256'] = self.implementation_sha256
-        return result
+        return super()._handle(request)
 
 
 def serve(session, incoming, outgoing):
@@ -116,6 +171,8 @@ def main():
     parser.add_argument('--manifest-sha256', required=True)
     parser.add_argument('--participant', required=True)
     parser.add_argument('--seed', type=int)
+    parser.add_argument('--expand-domain', action='store_true',
+                        help='explicit structural kernel/table adaptation; not a learned transfer result')
     args = parser.parse_args()
     root = args.bundle.resolve()
     manifest = wire.verify_bundle(root, args.manifest_sha256)
@@ -133,6 +190,14 @@ def main():
     sys.modules[name] = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(sys.modules[name])
     model, memory = wire.restore(name, manifest, root, args.participant, args.seed)
+    if args.expand_domain:
+        if model is not None:
+            wire.require(args.participant in ('kernel_supplied_persistence', 'kernel_learned_persistence',
+                         'kernel_untied_roles', 'kernel_memory_reset'), 'flat checkpoint has a fixed three-entity domain')
+            from .domain_kernel import DomainKernel
+            model = DomainKernel.from_legacy(model).eval()
+        elif memory is not None:
+            memory = domain_contract.DomainMemory.from_legacy(memory)
     return serve(Session(model=model, memory=memory, control=args.participant), sys.stdin, sys.stdout)
 
 

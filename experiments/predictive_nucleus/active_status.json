@@ -1,7 +1,7 @@
 {
-  "version": "active-inference-v3",
-  "evidence_version": "active-evidence-v1",
-  "code_commit": "44193776aabd3f10186d5ebcba1fe6df4aaafc61",
+  "version": "active-inference-v4",
+  "evidence_version": "active-evidence-v2",
+  "code_commit": "2b281cd7f1ba0de4a7985cacc4bbf272783d01ed",
   "tracking_issue": 22,
   "repair_pr": 56,
   "gate_g1": "NOT_ADMITTED",
@@ -9,12 +9,28 @@
   "production_cutover": false,
   "active_entrypoint": "experiments.predictive_nucleus.active_participant",
   "current_domain": {
-    "entities": 3,
+    "supported_entity_counts": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "predictor_capability_check_required": true,
+    "explicit_kernel_or_table_adaptation_required": true,
+    "legacy_unadapted_entity_counts": [
+      3
+    ],
+    "legacy_flat_entity_counts": [
+      3
+    ],
     "state": "binary",
     "visible_sensor_noise": false,
-    "self_contact": false,
+    "full_initial_anchor": true,
+    "self_contact_representation": "supplied_per_mode_alias_conditioning",
+    "self_contact_generalization_established": false,
     "default_live_path_limit": 64,
-    "full_initial_anchor": true
+    "candidate_expansion_limit": 512,
+    "action_limit": 128
   },
   "completed_automated_repairs": [
     "exact_zero_neural_path_accounting",
@@ -23,7 +39,13 @@
     "joint_log_evidence_adequacy_with_latched_episode_alarm",
     "direct_observed_contact_context_support",
     "action_coverage_configuration_bound_forecast_receipts",
-    "transactional_diagnostic_commit_and_terminal_error_evidence"
+    "transactional_diagnostic_commit_and_terminal_error_evidence",
+    "explicit_dynamic_entity_geometry_and_checkpoint_adaptation",
+    "unique_physical_alias_coordinates_and_observed_support",
+    "per_mode_alias_conditioning_with_retained_mass_receipt",
+    "candidate_expansion_bound_before_prediction",
+    "predictor_configuration_and_capability_bound_identity",
+    "dimension_aware_uniform_reference_surprise_heuristic"
   ],
   "diagnostic_scope": {
     "advisory_only": true,
@@ -34,20 +56,20 @@
     "alternate_change_point_monitor_integrated": false,
     "learned_probe_selection_integrated": false,
     "alpha": 0.05,
-    "heuristic_surprise_probability": 0.03
+    "heuristic_surprise_reference_ratio": 4.0
   },
   "pending_engineering_in_order": [
     {
       "stage": "G1",
-      "work": "Cover the original 3\u20136-entity and self-contact contract with one train/predict/observe/checkpoint/evaluate interface and retained strong controls."
+      "work": "Complete a common expanded-domain train/predict/observe/checkpoint/evaluate path, including differentiable masked-observation training and comparable flat/empirical controls. Current inference/adaptation support does not establish learned transfer."
     },
     {
       "stage": "G1",
-      "work": "Version information-aware automated acceptance before new scores: explicit prediction points, answerability, coverage, probability scores and comparable budgets."
+      "work": "Version information-aware automated acceptance before new scores: prediction points, answerability, coverage, full-world trajectories, probability scores, held-out family lineage, all required seeds and comparable budgets."
     },
     {
       "stage": "G2",
-      "work": "Automatically test 1\u20132 to 3\u20135 interaction transfer over declared graph families, coherent alternatives, repeated actions and untouched entities."
+      "work": "Test one or two to three to five interactions on declared graph families, carrying earlier effects into later inputs without reset confounds and preserving shared uncertain mechanisms."
     },
     {
       "stage": "G3",
@@ -64,29 +86,50 @@
   ],
   "external_issue_55": "Independent scientific validation remains pending; it is not the sole remaining implementation dependency.",
   "line_counts": {
-    "new_runtime_source_net": 225,
-    "new_tests_net": 377,
-    "active_source_files_excluding_frozen_dependencies": 463,
-    "retained_research_total": 19417,
+    "active_files": {
+      "active_paths.py": 232,
+      "active_participant.py": 205,
+      "active_evidence.py": 156,
+      "domain_contract.py": 284,
+      "domain_kernel.py": 149
+    },
+    "active_source_files_excluding_frozen_dependencies": 1026,
+    "new_runtime_source_net": 563,
+    "new_tests_net": 834,
+    "retained_research_python": 20814,
     "inclusive_size_goal_met": false
   },
   "verification": {
-    "record": "results/active-evidence-validation-v3.json",
-    "local_tests_discovered": 457,
-    "local_tests_passed": 457,
+    "record": "results/active-domain-validation-v4.json",
+    "local_tests_discovered": 498,
+    "local_tests_passed": 498,
     "local_tests_skipped": 0,
+    "new_tests": 41,
     "historical_manifest_locks_passed": 16,
+    "original_protocol": "passed",
     "frozen_input_preflight": "passed",
-    "new_scientific_evaluation": false
+    "new_scientific_evaluation": false,
+    "publication_tree_matches_local_verified_code": true,
+    "published_tree_sha": "57136a701a2ad9dba0325c9e8725324a3417347d"
   },
   "limits": [
-    "No research model retraining or new scientific evaluation in this diagnostics tranche.",
-    "Positive-probability path growth remains bounded, not pruned or solved.",
-    "Fully supported but contradictory empirical feedback remains an explicit error.",
-    "Active command is repository-backed, not a replacement of the frozen standalone v1 bundle.",
-    "The evidence statistic is conditional on forecast and sensor assumptions; an alarm does not identify its cause.",
-    "Observed contact-context counts are episode evidence, not posterior support or calibrated reliability."
+    "No research-model retraining or new scientific evaluation in this domain tranche.",
+    "Self-contact is supplied per-mode alias conditioning; tiny retained mass can normalize to a confident forecast.",
+    "Legacy flat checkpoints remain three-entity-only; no matched wider-domain comparison has run.",
+    "Positive-mass paths are neither pruned nor merged; missing observations can exhaust the 512-candidate expansion budget.",
+    "Empirical adaptation preserves counts and abstains on new size/alias contexts without observed support.",
+    "The active command remains repository-backed; frozen standalone v1 exports and scientific evidence are unchanged.",
+    "Evidence remains conditional, uncalibrated and advisory; observed context counts are not posterior support or learned reliability.",
+    "The inference-only masked path does not constitute a coherent differentiable training/evaluation stack."
   ],
-  "local_verified_code_commit": "be65e4424ac34f4db67fc8895a2dea86f9de77c8",
-  "diagnostics_pr": 57
+  "local_verified_code_commit": "9132fa626d15c197b49f4d77d0971ed54ba1ef8d",
+  "diagnostics_pr": 57,
+  "domain_pr": 58,
+  "remaining_capability_gaps": {
+    "coherent_active_training_checkpoint_evaluation_path": "PENDING",
+    "expanded_domain_matched_flat_baseline": "PENDING",
+    "expanded_domain_scientific_evaluation": false,
+    "novel_entity_count_transfer_established": false,
+    "learned_self_contact_established": false
+  }
 }
