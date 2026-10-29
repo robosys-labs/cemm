@@ -1,0 +1,13 @@
+{
+  "status": "ARCHIVE_ARITHMETIC_VERIFIED",
+  "report_sha256": "d3a34852f04ee2d03e17eee1f3a1c4d9c74cd5cf5d4242a3622ef00455293e89",
+  "evaluations": 210,
+  "status_rows": 2580480,
+  "answered_forecasts": 2520576,
+  "abstentions": 59904,
+  "per_step_summary_cells": 1680,
+  "paired_comparisons": 1120,
+  "model_replay": false,
+  "project_imports": false,
+  "scope": "Hashes, sensor/mask encoding, raw normalization, MAP/NLL/Brier and identifiable/ambiguous subsets, unchanged-bit errors, role pairs, distribution renaming, regression IDs. Same-author separate implementation, not independent scientific review."
+}

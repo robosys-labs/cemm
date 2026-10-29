@@ -1,0 +1,29 @@
+name: Predictive nucleus source snapshot
+on:
+  pull_request:
+    paths:
+      - 'experiments/predictive_nucleus/**'
+      - '.github/workflows/predictive-nucleus-source.yml'
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Export committed research source without executing experiments
+        run: |
+          git rev-parse HEAD > source-commit.txt
+          git archive --format=tar HEAD experiments/predictive_nucleus AGENTS.md .github/workflows/predictive-nucleus.yml > predictive-source.tar
+          sha256sum predictive-source.tar > predictive-source.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: predictive-source-${{ github.event.pull_request.head.sha }}
+          path: |
+            predictive-source.tar
+            predictive-source.sha256
+            source-commit.txt
+          retention-days: 30
