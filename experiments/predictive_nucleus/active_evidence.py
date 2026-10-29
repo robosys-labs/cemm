@@ -8,11 +8,10 @@ authenticate sensors, diagnose a cause, or authorize a research gate.
 """
 from math import exp, fsum, isfinite, log
 
-from .context_support import ObservedContextSupport
+from .domain_contract import DomainSupport, binary_worlds
 
 
-VERSION = 'active-evidence-v1'
-WORLDS = tuple(tuple((i >> shift) & 1 for shift in (2, 1, 0)) for i in range(8))
+VERSION = 'active-evidence-v2'
 
 
 def require(ok, message):
@@ -39,13 +38,14 @@ class ActiveEvidence:
     128-action cap and binds action/coverage/configuration into the receipt.
     """
     def __init__(self, ids, anchor, alpha=.05):
-        require(type(ids) in (list, tuple) and len(ids) == 3 and
-                all(type(x) is str and x for x in ids) and len(set(ids)) == 3 and
-                tuple(ids) == tuple(sorted(ids)), 'three sorted distinct sensor IDs required')
+        require(type(ids) in (list, tuple) and 3 <= len(ids) <= 6 and
+                all(type(x) is str and x for x in ids) and len(set(ids)) == len(ids) and
+                tuple(ids) == tuple(sorted(ids)), 'three to six sorted distinct sensor IDs required')
         require(type(alpha) in (int, float) and isfinite(alpha) and 0 < alpha < 1, 'invalid evidence alpha')
         self.ids, self._alpha = tuple(ids), float(alpha)
         self._validate_observation(anchor, full=True)
-        self.support = ObservedContextSupport(self._envelope(anchor, 0))
+        self.worlds = binary_worlds(len(self.ids))
+        self.support = DomainSupport(self._envelope(anchor, 0))
         self.time, self.log_e_value, self.episode_alarm, self.scored_steps = 0, 0., False, 0
         self._pending, self._receipt = None, None
 
@@ -56,12 +56,12 @@ class ActiveEvidence:
     @property
     def contract(self):
         return {'version': VERSION, 'alpha': self.alpha, 'reference': 'uniform_visible_joint_outcome',
-                'heuristic_surprise_probability': .03,
+                'heuristic_surprise_reference_ratio': 4.,
                 'sensor_noise': 0., 'coverage': 'selected_before_feedback',
                 'dropout_assumption': 'predictable_or_value_independent',
                 'assumptions_verified': False, 'calibration': 'NOT_ESTABLISHED', 'advisory_only': True,
                 'provenance': 'logical_episode_step_receipt; not authenticated physical sensors',
-                'support_scope': 'episode_observed_contact_inputs; supplied_participant_locality'}
+                'support_scope': 'episode_observed_contact_inputs_and_aliases; supplied_participant_locality'}
 
     def _validate_observation(self, observation, full=False):
         require(type(observation) is dict and set(observation) == set(self.ids), 'observation ID scope mismatch')
@@ -82,7 +82,7 @@ class ActiveEvidence:
         require(self._pending is None, 'previous evidence feedback is pending')
         coverage = self.sensor_ids(sensor_ids)
         if logs is not None:
-            require(type(logs) in (tuple, list) and len(logs) == 8 and
+            require(type(logs) in (tuple, list) and len(logs) == len(self.worlds) and
                     all(v is None or (type(v) in (int, float) and
                         (isfinite(v) or v == -float('inf'))) for v in logs), 'invalid joint log forecast')
             logs = tuple(-float('inf') if v is None else float(v) for v in logs)
@@ -116,7 +116,7 @@ class ActiveEvidence:
         next_log_e, scored = self.log_e_value, bool(readings) and logs is not None
         if logs is not None:
             # Empty feedback adds exactly zero, including after an infinite alarm.
-            likelihood = (min(0., _logsumexp([mass for bits, mass in zip(WORLDS, logs)
+            likelihood = (min(0., _logsumexp([mass for bits, mass in zip(self.worlds, logs)
                           if all(bits[i] == value for i, value in readings)]) - total) if readings else 0.)
             reference = -len(readings) * log(2.)
             increment = reference - likelihood
@@ -128,7 +128,7 @@ class ActiveEvidence:
             status = 'UNSUPPORTED_PREDICTION'
         elif next_log_e >= -log(self.alpha):
             status = 'MODEL_MISMATCH_EVIDENCE'
-        elif likelihood < log(.03):
+        elif increment > log(4.):
             status = 'SURPRISING_BUT_UNCONFIRMED'
         else:
             status = 'OBSERVATION_COMPATIBLE'
