@@ -124,6 +124,52 @@ class ActiveLearningContractTests(unittest.TestCase):
             self.assertEqual(model.training_provenance['final_weights_sha256'], fingerprint(model.state_dict()))
             self.assertEqual(model.domain_adaptation['training_provenance'], model.training_provenance)
 
+    def test_reporting_interrupt_after_update_invalidates_current_checkpoint_metadata(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'initial.json'
+            saved = save_checkpoint(path, model=DomainKernel(hidden=4, persistence=True), provenance={
+                'objective': 'untrained_or_inherited', 'training_input_sha256': None, 'completed_updates': 0})
+            model = load_checkpoint(path, saved['sha256'])['model']
+            before = fingerprint(model.state_dict())
+            interrupted = KeyboardInterrupt('interrupted while collecting final report')
+            with patch.object(learning.resource, 'getrusage', side_effect=interrupted), \
+                    self.assertRaises(KeyboardInterrupt) as failure:
+                learning.fit(model, [batch()], updates=1, cpu_seconds=30)
+            self.assertIs(failure.exception, interrupted)
+            after = fingerprint(model.state_dict())
+            self.assertNotEqual(after, before)
+            self.assertFalse(hasattr(model, 'checkpoint_metadata'))
+            self.assertEqual(model.training_provenance['status'], 'INTERRUPTED')
+            self.assertEqual(model.training_provenance['final_weights_sha256'], after)
+            self.assertEqual(model.domain_adaptation['training_provenance'], model.training_provenance)
+            self.assertEqual(model.domain_adaptation['active_learned_parameters_sha256'], after)
+
+    def test_persistent_postupdate_fingerprint_failure_preserves_original_error_and_unknown_hash(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'initial.json'
+            saved = save_checkpoint(path, model=DomainKernel(hidden=4, persistence=True), provenance={
+                'objective': 'untrained_or_inherited', 'training_input_sha256': None, 'completed_updates': 0})
+            model = load_checkpoint(path, saved['sha256'])['model']
+            before, names, failures = fingerprint(model.state_dict()), set(model.state_dict()), []
+            def unavailable_after_update(tensors):
+                actual = fingerprint(tensors)
+                if set(tensors) == names and actual != before:
+                    error = RuntimeError(f'postupdate fingerprint unavailable, attempt {len(failures) + 1}')
+                    failures.append(error)
+                    raise error
+                return actual
+            with patch.object(learning, 'fingerprint', side_effect=unavailable_after_update), \
+                    self.assertRaises(RuntimeError) as failure:
+                learning.fit(model, [batch()], updates=1, cpu_seconds=30)
+            self.assertTrue(failures)
+            self.assertIs(failure.exception, failures[0])
+            self.assertNotEqual(fingerprint(model.state_dict()), before)
+            self.assertFalse(hasattr(model, 'checkpoint_metadata'))
+            self.assertEqual(model.training_provenance['status'], 'INTERRUPTED')
+            self.assertIsNone(model.training_provenance['final_weights_sha256'])
+            self.assertEqual(model.domain_adaptation['training_provenance'], model.training_provenance)
+            self.assertIsNone(model.domain_adaptation['active_learned_parameters_sha256'])
+
     def test_actual_native_cli_loads_trained_flat_and_no_change_into_fresh_episodes(self):
         data = batch(6, 'native-cli'); model = DomainFlatGRU(hidden=3, persistence=True)
         trained = learning.fit(model, [data], updates=1, cpu_seconds=30)

@@ -154,9 +154,9 @@ def replay(batch, *, model=None, memory=None, control=None, differentiable=False
 
 
 def _training_state(model, provenance):
-    model.training_provenance = deepcopy(provenance)
     if hasattr(model, 'checkpoint_metadata'):
         del model.checkpoint_metadata  # The old artifact no longer describes current weights.
+    model.training_provenance = deepcopy(provenance)
     if hasattr(model, 'domain_adaptation'):
         origin = deepcopy(model.domain_adaptation)
         origin.update(active_learned_parameters_sha256=provenance['final_weights_sha256'],
@@ -220,31 +220,37 @@ def fit(model, batches, *, updates, cpu_seconds, learning_rate=.02, limit=64, ex
             completed += 1
             last_loss, last_cpu = float(loss.detach()), process_time() - step_start
         require(_dataset(batches)[1] == digest, 'fit input changed during execution')
+        cpu, wall = process_time() - cpu_start, perf_counter() - start
+        require(completed > 0, 'budget exhausted before any optimizer update')
+        final = fingerprint(model.state_dict())
+        report = {**settings, 'version': VERSION, 'status': 'COMPLETED',
+                  'objective': 'observed_joint_nll', 'training_input_sha256': digest,
+                  'completed_updates': completed, 'requested_updates': updates,
+                  'stop_reason': 'update_limit' if completed == updates else 'cpu_limit',
+                  'initial_weights_sha256': initial, 'final_weights_sha256': final,
+                  'parameters': sum(p.numel() for p in parameters), 'observed_events_per_update': event_count,
+                  'action_events_per_update': sum(b.actions.shape[0] * b.actions.shape[1] for b in data),
+                  'visible_bits_per_update': sum(int(b.masks[1:].sum()) for b in data),
+                  'history_sha256': [b.digest() for b in data], 'last_preupdate_observed_nll': last_loss,
+                  'setup_wall_seconds': setup_seconds, 'fit_wall_seconds': wall, 'fit_cpu_seconds': cpu,
+                  'cpu_ceiling_seconds': cpu_seconds, 'cpu_overshoot_seconds': max(0., cpu - cpu_seconds),
+                  'last_step_cpu_seconds': last_cpu, 'costs': cost,
+                  'process_peak_rss_kib': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+                  'optimizer_resume_supported': False, 'capacity_or_consumed_compute_match_established': False}
+        _training_state(model, report)
+        return report
     except BaseException:
         if mutation_started:
-            _training_state(model, {**settings, 'version': VERSION, 'status': 'INTERRUPTED',
+            interrupted = {**settings, 'version': VERSION, 'status': 'INTERRUPTED',
                 'objective': 'observed_joint_nll', 'training_input_sha256': digest,
-                'completed_updates': completed, 'final_weights_sha256': fingerprint(model.state_dict())})
+                'completed_updates': completed, 'final_weights_sha256': None}
+            _training_state(model, interrupted)  # Invalidate stale identity before fallible hashing.
+            try:
+                interrupted['final_weights_sha256'] = fingerprint(model.state_dict())
+                _training_state(model, interrupted)
+            except BaseException:
+                pass  # Preserve the original failure and the explicit unavailable current hash.
         raise
-    cpu, wall = process_time() - cpu_start, perf_counter() - start
-    require(completed > 0, 'budget exhausted before any optimizer update')
-    final = fingerprint(model.state_dict())
-    report = {**settings, 'version': VERSION, 'status': 'COMPLETED',
-              'objective': 'observed_joint_nll', 'training_input_sha256': digest,
-              'completed_updates': completed, 'requested_updates': updates,
-              'stop_reason': 'update_limit' if completed == updates else 'cpu_limit',
-              'initial_weights_sha256': initial, 'final_weights_sha256': final,
-              'parameters': sum(p.numel() for p in parameters), 'observed_events_per_update': event_count,
-              'action_events_per_update': sum(b.actions.shape[0] * b.actions.shape[1] for b in data),
-              'visible_bits_per_update': sum(int(b.masks[1:].sum()) for b in data),
-              'history_sha256': [b.digest() for b in data], 'last_preupdate_observed_nll': last_loss,
-              'setup_wall_seconds': setup_seconds, 'fit_wall_seconds': wall, 'fit_cpu_seconds': cpu,
-              'cpu_ceiling_seconds': cpu_seconds, 'cpu_overshoot_seconds': max(0., cpu - cpu_seconds),
-              'last_step_cpu_seconds': last_cpu, 'costs': cost,
-              'process_peak_rss_kib': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
-              'optimizer_resume_supported': False, 'capacity_or_consumed_compute_match_established': False}
-    _training_state(model, report)
-    return report
 
 
 def fit_empirical(batches, *, mode, first_contact=False):
