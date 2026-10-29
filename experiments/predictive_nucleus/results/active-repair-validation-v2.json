@@ -1,0 +1,74 @@
+{
+  "actual_cli_missing_feedback_updates": 10,
+  "bundle_manifest_sha256": "2373c2d366c4f8a855dbb7498e5d6a88bc55b9078a00400eb51db86ca115a1a8",
+  "code_commit": "bab17260075a82b59a9bb9f9cec7fc6b1e8ef0f4",
+  "complete_branch_ci": {
+    "code_commit": "bab17260075a82b59a9bb9f9cec7fc6b1e8ef0f4",
+    "conclusion": "success",
+    "frozen_input_preflight": "passed",
+    "historical_manifest_locks_passed": 16,
+    "job_id": 123654671054,
+    "run_id": 40932601276,
+    "test_seconds": 24.347,
+    "tests_discovered": 435,
+    "tests_passed": 435,
+    "tests_skipped": 0
+  },
+  "focused_tests": {
+    "discovered": 25,
+    "passed": 25,
+    "skipped": 0
+  },
+  "forecast_vectors_compared": 240,
+  "full_evidence_sha256": "59717a0c0b08ab8f2f25566444fd7a16f20c0194e389652d3aabd9a117dec8ef",
+  "historical_files_changed": [],
+  "historical_files_checked": 189,
+  "independent_validation": false,
+  "local_execution_module": {
+    "discovered": 36,
+    "passed": 35,
+    "skipped": 1
+  },
+  "local_full_suite": "INCOMPLETE: timeout attempts at 45 and 120 seconds; non-execution selection also timed out",
+  "max_abs_log_difference": 1.7763568394002505e-15,
+  "old_manifest_locks_verified": 16,
+  "scores_computed": false,
+  "source_sha256": {
+    "active_participant.py": "a398aaf6d9d800784629ab09743afc540f1d35fa5ad7a04ccc7cbbe0e66a9a31",
+    "active_paths.py": "1d0263e205fc23003e07163ea2400d3753f2269533c2d186e9f9acae670d6d7d",
+    "comparison_scoring.py": "95865f228ccb06345deda847570efa1aaea8e72828f64645d00d19a360b6a473",
+    "external_participant.py": "802b0a93dedbcbae34006e1c0eb6959107a09c9e25686cd88e61f1777d8ade1e",
+    "joint_objective.py": "c00551ac3f0cff682b2dcd415929d8e8b7279f7fe92494fd07a2411a29ad1f4f",
+    "masked_replay.py": "fb79da609986721172b85737ef18150c465ea255b38ca176d945cc132dae69fa"
+  },
+  "status": "REPAIR_AND_PARITY_CHECK_NOT_SCIENTIFIC_EVALUATION",
+  "supplied_persistence_missing_reading_regressions": [
+    {
+      "live_paths": 1,
+      "missing_feedback_updates": 128,
+      "seed": 7
+    },
+    {
+      "live_paths": 1,
+      "missing_feedback_updates": 128,
+      "seed": 11
+    },
+    {
+      "live_paths": 1,
+      "missing_feedback_updates": 128,
+      "seed": 23
+    },
+    {
+      "live_paths": 1,
+      "missing_feedback_updates": 128,
+      "seed": 37
+    },
+    {
+      "live_paths": 1,
+      "missing_feedback_updates": 128,
+      "seed": 53
+    }
+  ],
+  "training_run": false,
+  "unchanged_saved_models": 30
+}
