@@ -1,0 +1,137 @@
+{
+  "protocol_id": "cemm-full-sensor-posthoc-checkpoint-replay-v1",
+  "status": "POST_HOC_OPEN_PUBLIC_DEVELOPMENT_NOT_G1",
+  "source_parent": "add49be126bb8353ff427fca93e6f26afe9b5b9e",
+  "purpose": "Descriptively replay the 40 retained checkpoints on opened public cases with a uniformly applied numerical transform. The v2 run remains INCOMPLETE; this is not a continuation or recovery of its original score.",
+  "source_file_sha256": {
+    "full_sensor_fixture.py": "4d99716a36e7a99781652263f35c89abd061ec403d16e9eddb16d572fb9f3cd1",
+    "full_sensor_evaluation.py": "e53645d33e0b18e8ec6d5d77105afdd176516b648fbfc1b0549dec0ecd629b45",
+    "factorial_training_data.py": "1865cc49017156abf1f50dc495ebbe5c27e7b4879026e7606b869b8f04653f88",
+    "causal_replay.py": "9dab38c80ed54e43598c2df32c88192e773a7d258e6736ec0e0439cb3e816a20",
+    "schedule_fixture.py": "d9bcaca815868880c2767bea011eb9a2e802fbf8a12a7e5deb11ff34b6eb4d2e",
+    "two_pair_fixture.py": "fb1e41ff1ac6e060d005bc20e5f9b804861aa19ce115ae4e3f2f27547a6d7602",
+    "world.py": "eb3e4c69b6b71e5af31f395e2e7033aad8caf807b4b8b299dd86d6e0faae9d65",
+    "flat_data.py": "70f5acd07f16a4d929f91a6eefde15a125b9c5930ac1557c81e55857782c2ff5",
+    "shared_training_smoke.py": "714505e2d410b1c097f7ababe0fd4838e88c27e07628b17dec1abd0494702ca2",
+    "latent_model.py": "0168e8a8fe0acf90f446c770cc8a7454f93693e0a2c43775428034de9a063f01",
+    "flat_reference.py": "9947575b94cad24d1c74ff03e36f42212cc5b215a64df4d443e89e80af1eeb79",
+    "development_run.py": "82a427246c89c03fe16e7dc5d55903c820feccd8efec0a7c39a4248a7562ff23",
+    "uncertainty.py": "425bc7deb80a4b4598ccee47d6b1b56a763020b7f025e8d1a3aec79878b5c2c2",
+    "sensor_controls.py": "810c822e6cae95a5a7d5f992877b57fad58f6abc1e8975cf820d8561414f1e9a",
+    "history_memory.py": "cfb73c3d665b26e76ea376e6fd2905f7c1669407960dcdb4d6e69f25736c3de6",
+    "role_history_memory.py": "671cfa17390a964d2908a96a52d50425a1dbc540bb0541318e0fd3527f435bfd",
+    "relabel_diagnostic.py": "0ad23daf00121489b607295327573b348c868809aee8a225ec659ea97839c4db",
+    "joint_score.py": "6986ebccf9a70215398da5372257f342d0684e19f4182e90240f1fe9d9660039",
+    "protocol.py": "05eac125862ba1aaaaeb7568711a0b4074ca0f6ee57722685b3b9ddb4cf3c56e",
+    "protocol.json": "622a0dfdf94d14b4f16461a0f20acce18bb880f094d5071e58cd1764bdc9c1e7",
+    "dev_composition_protocol_v2.json": "d1cfc5f96fd9e78cba587d730bafbad88464e9607b9a1ecc0b81152a6dc29af3",
+    "geometry_diagnostic.py": "92a2c72dc4a1c3aaaa1d765bdd5ba8b4c7ecc639cec05f736599f2aad63a4fc0",
+    "factorial_run.py": "ef2bcba62114d3a9809cfffc1406321b211930514dc8318ad3c793862cc2fba3",
+    "diagnose_failed_case6.py": "fd632e8a4be925fd4f97651d16d8715e2a54c45a4022e855ac6d761a27bfd4ce",
+    "forecast_normalization.py": "d800ad32a06b2d1b830e50c52e315323469113472fbf6b3a26bb994badc2585a",
+    "full_sensor_paired_protocol_v2.json": "2386a03847e85a75a259b0f87f03070f1643c53ca932c12abdd386cb59147377"
+  },
+  "prior_run": {
+    "run_url": "https://github.com/robosys-labs/cemm/actions/runs/40707878378",
+    "artifact_url": "https://chatgpt.com/library?file_id=libfile_5248f15801648191b1472ff0596aaa5e&account_id=personal",
+    "artifact_zip_sha256": "e8a891e113de13fcc6dce00bbf2b39a08a20f20a80881d1fba351d4c976d7bc7",
+    "failure_json_sha256": "bbfba018d70c386c52898ee9678f78baf65110e8dc2ede552aaf0d9dbe2985c7",
+    "progress_jsonl_sha256": "1626d5fe9c2c2393ebd3c5afc5b48357578c47db8dd2c2ec019729c2ef02c0e7",
+    "validation": "Require the expected incomplete evaluation failure and cases 0–5 complete; verify the two log hashes and unique inventory via diagnose_failed_case6._progress. Verify every one of 40 checkpoint byte hashes from that hash-verified log, restore using torch.load(weights_only=True), strict state_dict loading, and verify semantic tensor fingerprints before and after model loading. Rebuild the three empirical control tables for each ID arm from the public training histories and verify all six table hashes against that log. Abort on any mismatch.",
+    "original_unrecorded": "The original failing model/value and host, initial weights, training input fingerprints and final losses were not retained. The source artifact has no complete report or success marker. Do not infer equality with the original host or claim the observed post-hoc overshoot caused the failure.",
+    "archived_cases": "Do not read the prior cases.jsonl for this replay; it contains truth and partial scores. Its already-opened content and later case-6 inspections motivated this protocol, so this is post-hoc even though fixed before the replay.",
+    "artifact_zip_provenance": "ZIP hash identifies the separately retained original archive. If CI downloads an extracted Actions artifact, validate extracted failure/progress and checkpoint hashes as above; do not claim ZIP hash was verified unless the ZIP bytes were actually obtained and hashed."
+  },
+  "design": {
+    "neural_fit": "NONE. Restore the saved checkpoints; do not refit or select models. Reconstruct empirical controls only as described above.",
+    "arms": [
+      {
+        "id": "repeated_masked",
+        "id_arm": "repeated",
+        "target": "masked"
+      },
+      {
+        "id": "repeated_full",
+        "id_arm": "repeated",
+        "target": "full"
+      },
+      {
+        "id": "augmented_masked",
+        "id_arm": "augmented",
+        "target": "masked"
+      },
+      {
+        "id": "augmented_full",
+        "id_arm": "augmented",
+        "target": "full"
+      }
+    ],
+    "seed_order": [
+      7,
+      11,
+      23,
+      37,
+      53
+    ],
+    "models": [
+      "structured",
+      "flat",
+      "no_change",
+      "local_memory_with_persistence",
+      "literal_history_memory",
+      "role_normalized_history_memory"
+    ],
+    "cases": "two_pair_fixture.make_evaluator_episode(case, block=0) for physical cases 0 through 63, already opened public cases",
+    "sensor_policy": "Full noiseless feedback after every action; preserve original ordered visible readings, append missing IDs in sorted anchor-ID order.",
+    "permutation_policy": "Six lexicographic bijections of sorted anchor IDs applied consistently, with inverse round trip required.",
+    "replay": "Per case, finish all 5 seeds × 4 arms × 6 bijections × 6 models × 5 steps before calling gold_after for that case. For each replay use the same realized full sensor/action history for both learned models and all controls; verify equality and inverse ID round trips. Both paired predict callbacks finish before feedback delivery. Record forecast status, feedback diagnostics and callback measurements. No query-time learning.",
+    "truth_boundary": "Read post-action truth only after all replays for the physical case. Evaluator state is used in-process to synthesize feedback; this is a cooperative ordering, not independent custody or isolation.",
+    "counts": "64 physical cases; 384 views and 1920 action queries per model/seed/arm, including 1536 contact/set and 384 observe; 3600 status records per physical case across models, seeds, arms, views and actions.",
+    "model_settings": {
+      "structured_sensor_error_rate": 0.0,
+      "flat_sensor_metadata_mode": "neutral",
+      "flat_temperature": 1.0
+    }
+  },
+  "transform": {
+    "policy": "For every PREDICTED forecast from every model, apply forecast_normalization.normalize_joint once to its raw joint distribution, before any score or renaming comparison. For ABSTAIN require no distribution and do not normalize; unknown status aborts. No per-world clipping, imputation or external values.",
+    "admissibility": "Binary tuples of exactly three bits; finite nonnegative numeric probabilities, excluding bool; positive total with abs(math.fsum(raw)-1) <= 1e-6. Preserve support and explicit zeros; reject any positive-to-zero underflow. Normalized entries must be within [0,1] with total within 1e-12. Any failure aborts the whole replay.",
+    "audit": "Retain the entire raw and normalized represented distribution and per-world corrections, both masses, raw over-one count and maximum overshoot, maximum/total absolute change, both maximizer sets and lexicographic MAPs, and change flags for every PREDICTED forecast. Raw distribution may have missing worlds; normalized scoring treats absent worlds as zero. Do not label the raw-to-normalized half-L1 change total variation because the raw vector may not be a probability distribution.",
+    "tie": "Resolve MAP in sorted renamed-ID order using the lexicographically smallest maximizer, then inverse-map. Floating point division can introduce exact ties and change the selected MAP; explicitly report counts and retained case details."
+  },
+  "scoring": {
+    "policy": "Use the unchanged development_run.score_forecast on normalized forecasts only and unchanged relabel_diagnostic.compare_forecasts supplied with normalized identity and renamed forecasts. No invalid raw NLL. Do not treat abstention as an incorrect numeric forecast.",
+    "map": "max represented probability; exact ties choose lexicographically smallest bit tuple in sorted renamed-ID order, then inverse-map world to physical IDs",
+    "joint_brier": "sum over all 8 worlds of (probability - truth indicator)^2; missing represented world has probability zero",
+    "joint_log_loss": "Uncapped -log(numerical true-world probability); lookup of absent support yields zero. A zero (including missing worlds) is tagged infinite with null numeric field. An answered aggregate containing any zero has infinite status, null uncapped mean and an explicit zero count; never average only finite losses.",
+    "abstention": "Record explicit status/reason; no probability distribution or numeric proper score. Report coverage, accuracy among answered and correct/wrong per all queries.",
+    "summaries": "Per seed, arm, model and action position report queries, coverage, correct and wrong counts, accuracy among answered, Brier, uncapped log loss and numerical zero counts. Flat contact/set accuracy has denominator all 1536 queries per seed/arm and requires every flat query to be predicted, otherwise abort. Flat-only paired full-minus-masked and augmented-minus-repeated contrasts report correct-to-wrong and wrong-to-correct counts, and per-seed difference in differences on the same physical case/view/step. Report observe separately. Renaming sensitivity compares normalized distributions only.",
+    "inference": "Purely descriptive on opened cases; no iid confidence interval, causal architecture superiority, independently held-out performance, free-running trajectory, or G1 claim."
+  },
+  "environment": {
+    "python": "3.13.x; record exact patch",
+    "pytorch": "2.10.0+cpu",
+    "device": "CPU only; reject CUDA, HIP, available MPS and XPU",
+    "intraop_threads": 1,
+    "deterministic_algorithms": true,
+    "pythonhashseed": "0 at process startup",
+    "metadata": "Record actual Python, platform, CPU model, PyTorch version and configuration SHA-256, intra-op/inter-op counts, determinism, source/execution/runner commits and source hashes, checkpoint and table checks, replay wall/process CPU time, callback latencies, and peak RSS with platform units. Original run host and missing training metadata remain unknown. Callback p95 uses nearest rank at ceil(0.95*N) after sorting."
+  },
+  "execution": {
+    "lineage": "Before replay, verify this protocol hash and all declared source hashes, source_parent ancestry, clean tracked tree, committed source bytes, and protocol commit strictly precedes independently reviewed runner commit. Record execution commit and untracked-present status. Review and commit runner separately after protocol and before any replay score.",
+    "output": "Caller supplies a nonexistent output directory outside the entire source tree, parent must exist. Never overwrite. Stream one complete physical case per JSONL line after all case replays and scores; strict JSON with no NaN or Infinity, explicit null and status for infinite loss. Retain all raw and normalized forecasts, transformations, mappings, histories, truth, model/step scores, feedback and callback data.",
+    "success": "After all 64 complete cases validate inventory and summary denominators, emit summary/report with case file SHA-256 and then COMPLETE marker. No success or completed summary for partial run.",
+    "failure": "Fail fast on any mismatch, missing/invalid forecast, callback or nonfinite invariant. Best-effort persist failure phase/error, completed and missing cases and already-written partial case records; exit nonzero, no successful report or marker. No silent retry, selection or changed protocol after inspecting outcomes.",
+    "retention": "Preserve the full output and hashes in durable research storage; the separate original failed checkpoint archive remains retained. An expiring CI artifact alone is insufficient.",
+    "one_time_gate": "Run only via one manually prepared pull-request synchronize event whose github.event.before equals the separately reviewed runner commit and whose PR number and reviewed runner/protocol/test hashes are hard-coded in the workflow. Subsequent pushes must skip it. Download the original failed-run artifact with actions:read; check extracted files as specified. Capture success and best-effort partial failure artifacts.",
+    "resource_caps": "CPU only, a 22-minute replay step and 30-minute job timeout; one attempt, no partial retry or automatic fallback. Record actual wall/process CPU time and process peak RSS; timeout may prevent writing a failure report, so always retain available output."
+  },
+  "limits": [
+    "All cases were previously opened and some scores and a numerical anomaly were observed before this protocol; this is an explicitly post-hoc descriptive analysis.",
+    "The attempted original v2 study remains incomplete; this replay is a distinct analysis on a potentially different host.",
+    "Six related ID permutations and repeated seeds are not independent physical worlds; controls and structured models have supplied inductive biases and different training objectives and costs.",
+    "Normalized forecasts can change proper scores and ties; this transform addresses near-unit numerical drift only, not materially invalid distributions or lost support.",
+    "No independently authored and held challenge, authenticated sensors, matched-compute claim, language evaluation or utility claim."
+  ],
+  "decision": "G1 HOLD / REVISE regardless of replay results."
+}

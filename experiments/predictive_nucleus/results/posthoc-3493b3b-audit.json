@@ -1,0 +1,17 @@
+{
+  "cases": 64,
+  "cases_sha256": "0015679c10251836b1575987e679e27e3941bfb5952af65db24047675b28255a",
+  "forecast_records": 230400,
+  "interaction_cells": 5,
+  "limits": "Arithmetic/inventory audit only. Not sensor provenance, independent challenge or G1 admission.",
+  "normalization": {
+    "normalization_map_changes": 0,
+    "normalization_maximizer_changes": 0,
+    "raw_over_one_forecasts": 59
+  },
+  "paired_contrasts": 20,
+  "primary_cells": 20,
+  "report_sha256": "d46cf61680d39506cb2bed064b61d2acb440afc85a7d056ccbb3f879364c3475",
+  "status": "ARCHIVE_ARITHMETIC_VERIFIED_NOT_G1",
+  "summary_cells": 600
+}

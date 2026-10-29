@@ -1,0 +1,126 @@
+name: Predictive nucleus — one-time post-hoc checkpoint replay
+
+'on':
+  pull_request:
+    types: [synchronize]
+    paths:
+      - '.github/workflows/predictive-nucleus-posthoc-once.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  replay:
+    if: >-
+      github.repository == 'robosys-labs/cemm' &&
+      github.event.pull_request.number == 48 &&
+      github.event.pull_request.head.repo.full_name == 'robosys-labs/cemm' &&
+      github.event.pull_request.head.ref == 'research/predictive-nucleus-posthoc-replay-20261028' &&
+      github.event.before == '157436f161977063412b9d9bc21005dfe73691cb' &&
+      github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify one-time event, direct ancestry and frozen bytes
+        env:
+          PYTHONHASHSEED: '0'
+        run: |
+          python - <<'PY'
+          from hashlib import sha256
+          import json, os, subprocess
+          from pathlib import Path
+          reviewed = '157436f161977063412b9d9bc21005dfe73691cb'
+          workflow = '.github/workflows/predictive-nucleus-posthoc-once.yml'
+          def git(*args):
+              return subprocess.check_output(['git', *args], text=True).strip()
+          event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+          pr = event['pull_request']
+          if (os.environ.get('GITHUB_RUN_ATTEMPT') != '1' or
+                  os.environ.get('GITHUB_REPOSITORY') != 'robosys-labs/cemm' or
+                  event.get('action') != 'synchronize' or event.get('before') != reviewed or
+                  pr['number'] != 48 or pr['head']['repo']['full_name'] != 'robosys-labs/cemm' or
+                  pr['head']['ref'] != 'research/predictive-nucleus-posthoc-replay-20261028' or
+                  git('rev-parse', 'HEAD') != pr['head']['sha'] or
+                  git('rev-parse', 'HEAD^') != reviewed or
+                  git('diff', '--name-only', reviewed, 'HEAD') != workflow):
+              raise SystemExit('Not the single reviewed workflow-only successor event')
+          root = Path('experiments/predictive_nucleus')
+          blobs = {
+              'posthoc_replay.py': '121d466a940dbd43416b4c2c90844835fe21d572',
+              'tests/test_posthoc_replay.py': '27f97cd1fed335656ed740249ce0890cf77b1f9f',
+          }
+          for name, expected in blobs.items():
+              path = root / name
+              if git('hash-object', str(path)) != expected:
+                  raise SystemExit(f'Reviewed Git blob hash mismatch: {name}')
+              print('reviewed_sha256', name, sha256(path.read_bytes()).hexdigest())
+          protocol = root / 'full_sensor_posthoc_replay_protocol_v1.json'
+          if sha256(protocol.read_bytes()).hexdigest() != 'ced95f5692a2b3172874f3f6911aac660930b858be05b34ee290c1dbe249437f':
+              raise SystemExit('Frozen protocol SHA-256 mismatch')
+          print(json.dumps({'reviewed_commit': reviewed, 'execution_commit': git('rev-parse', 'HEAD')}, sort_keys=True))
+          PY
+      - name: Install the frozen CPU-only inference dependency
+        run: python -m pip install 'torch==2.10.0' --index-url https://download.pytorch.org/whl/cpu
+      - name: Verify historical manifest locks and synthetic replay invariants
+        env:
+          PYTHONHASHSEED: '0'
+        run: |
+          (cd experiments/predictive_nucleus && for lock in snapshots/*.sha256; do sha256sum -c "$lock"; done)
+          python -m unittest experiments.predictive_nucleus.tests.test_posthoc_replay -v
+      - name: Retain exact source for offline review
+        run: |
+          git archive --format=tar.gz HEAD AGENTS.md docs/research experiments/predictive_nucleus .github/workflows/predictive-nucleus-posthoc-once.yml > "$RUNNER_TEMP/posthoc-review-source.tar.gz"
+      - name: Download the original failed-run artifact without changing it
+        uses: actions/download-artifact@v4
+        with:
+          name: full-sensor-paired-public-development
+          github-token: ${{ github.token }}
+          repository: robosys-labs/cemm
+          run-id: 40707878378
+          path: ${{ runner.temp }}/original-incomplete-study
+      - name: Execute the frozen post-hoc replay once without neural retraining
+        timeout-minutes: 22
+        env:
+          PYTHONHASHSEED: '0'
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+        run: |
+          python -m experiments.predictive_nucleus.posthoc_replay \
+            --failed-output "$RUNNER_TEMP/original-incomplete-study" \
+            --output-dir "$RUNNER_TEMP/posthoc-replay-output"
+      - name: Display complete-report inventory and descriptive contrasts
+        run: |
+          python - <<'PY'
+          from hashlib import sha256
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP']) / 'posthoc-replay-output'
+          raw = (root / 'report.json').read_bytes()
+          if (root / 'COMPLETE').read_text().strip() != sha256(raw).hexdigest():
+              raise SystemExit('Complete report hash mismatch')
+          report = json.loads(raw)
+          print(json.dumps({key: report[key] for key in (
+              'status', 'lineage', 'verified_checkpoints', 'verified_control_tables',
+              'cases_sha256', 'replay_cost', 'environment', 'primary',
+              'paired_contrasts', 'interactions')}, sort_keys=True, allow_nan=False))
+          print('G1 HOLD / REVISE. Original v2 remains INCOMPLETE. Durable archival still required.')
+          PY
+      - name: Retain complete or incomplete evidence and exact source
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: posthoc-checkpoint-replay-not-g1
+          path: |
+            ${{ runner.temp }}/posthoc-replay-output/
+            ${{ runner.temp }}/posthoc-review-source.tar.gz
+          if-no-files-found: warn
+          retention-days: 90
