@@ -1,0 +1,136 @@
+name: Frozen sensor transfer — one attempt
+on:
+  pull_request:
+    types: [synchronize]
+    paths: ['.github/workflows/predictive-nucleus-transfer-once.yml']
+permissions:
+  contents: read
+jobs:
+  transfer:
+    if: >-
+      github.event.pull_request.number == 53 &&
+      github.event.before == 'a8abb123852e4c9c4dff51f2cabc173e2452670c' &&
+      github.run_attempt == 1 &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      actions: read
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+      REVIEWED_CODE: a8abb123852e4c9c4dff51f2cabc173e2452670c
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install pinned CPU dependencies
+        run: |
+          python -m pip install 'torch==2.10.0' --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install 'numpy==2.3.5'
+      - name: Verify frozen source and artifact before any forecast
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$REVIEWED_CODE" HEAD
+          cd experiments/predictive_nucleus
+          sha256sum -c snapshots/sensor_transfer_protocol_v1.sha256
+          sha256sum -c snapshots/sensor_transfer_implementation_v1.sha256
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          spec = json.loads(Path('sensor_transfer_implementation_v1.json').read_text())
+          for name, digest in spec['source_sha256'].items():
+              assert hashlib.sha256(Path(name).read_bytes()).hexdigest() == digest, name
+          PY
+          cd "$GITHUB_WORKSPACE"
+          curl --fail --silent --show-error --location --retry 0 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/12882021983/zip" \
+            -o "$RUNNER_TEMP/prior.zip"
+          echo "bb304deef068798777f6e2bdcc4cc5d2ead9e26b582d4d8ef21e091ea6403e4d  $RUNNER_TEMP/prior.zip" | sha256sum -c -
+          python - <<'PY'
+          import os, zipfile
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          with zipfile.ZipFile(root / 'prior.zip') as archive:
+              archive.extractall(root / 'prior')
+          PY
+      - name: Execute frozen transfer without training or retry
+        timeout-minutes: 16
+        run: |
+          set -euo pipefail
+          python -m experiments.predictive_nucleus.sensor_transfer_run \
+            --evidence "$RUNNER_TEMP/prior/common-objective-output" \
+            --output "$RUNNER_TEMP/sensor-transfer-output" \
+            --manifest experiments/predictive_nucleus/sensor_transfer_implementation_v1.json \
+            --manifest-sha f72a569d1f69f7d298a233b44c01913b7e6a2e8d5e1613ae78393c0f5c299855 \
+            --code-commit "$REVIEWED_CODE" | tee "$RUNNER_TEMP/sensor-transfer-console.log"
+      - name: Durably retain complete or failed attempt
+        if: always()
+        run: |
+          set -euo pipefail
+          export RESULT_PATH="experiments/predictive_nucleus/results/sensor-transfer-$GITHUB_RUN_ID"
+          mkdir -p "$RESULT_PATH" "$RUNNER_TEMP/sensor-transfer-output"
+          python - <<'PY'
+          import hashlib, json, os, shutil
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP']) / 'sensor-transfer-output'
+          dest = Path(os.environ['RESULT_PATH'])
+          summary = {'status': 'INCOMPLETE', 'gate_g1': 'NOT_ADMITTED', 'run_id': os.environ['GITHUB_RUN_ID']}
+          if (root / 'COMPLETE').exists() and (root / 'report.json').exists():
+              raw = (root / 'report.json').read_bytes()
+              assert hashlib.sha256(raw).hexdigest() == (root / 'COMPLETE').read_text().strip()
+              report = json.loads(raw)
+              assert len(report['checkpoint_checks']) == 30 and len(report['evaluations']) == 210
+              assert len(report['paired_full_to_masked']) == 1120
+              summary.update({k: report[k] for k in ('status','protocol_sha256','manifest_sha256','code_commit',
+                  'environment','wall_seconds','cpu_seconds','datasets','limits')})
+              summary['report_sha256'] = hashlib.sha256(raw).hexdigest()
+              summary['query_results'] = []
+              for row in report['evaluations']:
+                  pair = {k:v for k,v in row['role_pairs'].items() if k != 'both_correct_ids'}
+                  summary['query_results'].append({k: row[k] for k in ('family','policy','model','seed',
+                      'file_sha256','renaming','wall_seconds','cpu_seconds')} |
+                      {'query': row['steps'][6], 'role_pairs': pair,
+                       'unsupported_path_queries': sum(d.get('unsupported_positive_paths',0) for d in row['filter_diagnostics'])})
+              summary['query_regressions'] = []
+              for pair in report['paired_full_to_masked']:
+                  if pair['step'] == 6:
+                      item = dict(pair)
+                      for key in ('correct_to_wrong','wrong_to_correct','correct_to_abstained','abstained_to_correct'):
+                          item[key + '_count'] = len(item.pop(key))
+                      summary['query_regressions'].append(item)
+          elif (root / 'FAILED.json').exists():
+              summary['failure'] = json.loads((root / 'FAILED.json').read_text())
+          (dest / 'headline.json').write_text(json.dumps(summary, indent=2, allow_nan=False) + '\n')
+          for name in ('STARTED.json','COMPLETE','FAILED.json'):
+              if (root / name).exists(): shutil.copyfile(root / name, dest / name)
+          print(json.dumps({'status': summary['status'], 'retention': str(dest)}))
+          PY
+          tar -czf "$RUNNER_TEMP/sensor-transfer-bundle.tar.gz" -C "$RUNNER_TEMP" sensor-transfer-output
+          split -d -b 40M "$RUNNER_TEMP/sensor-transfer-bundle.tar.gz" "$RESULT_PATH/bundle.tar.gz.part-"
+          sha256sum "$RUNNER_TEMP/sensor-transfer-bundle.tar.gz" > "$RESULT_PATH/ARCHIVE_SHA256.txt"
+          (cd "$RESULT_PATH" && sha256sum bundle.tar.gz.part-* > PARTS_SHA256.txt)
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$RESULT_PATH"
+          git commit -m "research: retain frozen sensor transfer $GITHUB_RUN_ID"
+          git push origin "HEAD:refs/heads/research-results/sensor-transfer-$GITHUB_RUN_ID"
+      - name: Secondary recovery artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sensor-transfer-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/sensor-transfer-output
+            ${{ runner.temp }}/sensor-transfer-console.log
+          if-no-files-found: warn
+          retention-days: 30
