@@ -1,0 +1,123 @@
+{
+  "base_commit": "0b6744d78d920b2ef3ad90e047bf5f09ff984d31",
+  "closed_public_study_rerun": false,
+  "code_commit": "44193776aabd3f10186d5ebcba1fe6df4aaafc61",
+  "compatibility": {
+    "empirical_recovery_table_digest_unchanged": true,
+    "exact_forecast_equality": true,
+    "forecast_vectors": 24,
+    "models": "all six model_factories variants; synthetic initial weights",
+    "saved_checkpoint_evaluation_run": false,
+    "weight_fingerprints_unchanged": true
+  },
+  "complete_local_suite": {
+    "command": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONHASHSEED=0 python -m unittest discover -s experiments/predictive_nucleus/tests -v",
+    "output_sha256": "b7263af05637b134d05fab86d130468616af301c2652aa1eedf5b1fc01e07609",
+    "seconds": 36.421,
+    "tests_discovered": 457,
+    "tests_passed": 457,
+    "tests_skipped": 0
+  },
+  "diagnostics_pr": 57,
+  "earlier_uncommitted_suite": {
+    "error_test": "test_real_frozen_preflight_in_complete_checkout",
+    "errors": 1,
+    "reason": "Full-checkout preflight requires a clean committed tracked tree; passed after code commit. No test skipped or weakened.",
+    "tests_discovered": 457,
+    "tests_passed": 456
+  },
+  "environment": {
+    "cpu_model": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "default_dtype": "torch.float32",
+    "deterministic_algorithms": true,
+    "deterministic_warn_only": false,
+    "interop_threads": 1,
+    "intraop_threads": 1,
+    "peak_rss": 312984,
+    "peak_rss_unit": "KiB",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "python": "3.13.16",
+    "torch": "2.10.0+cpu",
+    "torch_config_sha256": "4f3cd65dc58472ed223329fa5ab743d0a360e777accb4001b511fc418c78128b"
+  },
+  "evidence_version": "active-evidence-v1",
+  "frozen_input_preflight": {
+    "lineage": {
+      "complete_history": true,
+      "execution_commit": "be65e4424ac34f4db67fc8895a2dea86f9de77c8",
+      "protocol_commit": "2eeae6323d8123da5ded40a56e77ef68e6aac5ac",
+      "runner_commit": "fd64a5b1a9efc460086cfe21c4f62fe631135298",
+      "runner_sha256": "143a29e7fee901a009674ef271e779c126300e6496f7c26d79fe222540772213",
+      "source_commit": "3bbce83121386501ae39567b48fc9aa62325de79",
+      "tracked_tree_clean": true,
+      "untracked_present": false
+    },
+    "protocol_sha256": "15732afe065f19f3b412a7638e386373eb586ddaa273104e2de63c14a782b1f3",
+    "status": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
+    "study_execution_enabled": false
+  },
+  "gate_g1": "NOT_ADMITTED",
+  "historical_manifest_locks_passed": 16,
+  "independent_validation": false,
+  "limits": [
+    "Three binary entities, full initial anchor and no self-contact.",
+    "Noiseless visible readings; predictable coverage and ignorable dropout are unverified assumptions.",
+    "Single-process uniform-reference diagnostic; no alternate change-point monitor or posterior-context support.",
+    "Threshold and support are advisory; no learned clarification or calibrated confidence claim.",
+    "Candidate terminal assessment is marked committed=false and does not advance stored evidence/support."
+  ],
+  "line_counts": {
+    "active_source_files_excluding_frozen_dependencies": 463,
+    "inclusive_size_goal_met": false,
+    "new_runtime_source_net": 225,
+    "new_tests_net": 377,
+    "retained_research_python": 19417
+  },
+  "local_verified_code_commit": "be65e4424ac34f4db67fc8895a2dea86f9de77c8",
+  "new_test_sha256": "25058c9e2b6d85180cf617fef25ecf7d95120c5a42e492038e5b48053fab42f7",
+  "new_tests": {
+    "discovered": 22,
+    "passed": 22,
+    "skipped": 0,
+    "test_names": [
+      "test_finite_underflow_is_surprise_not_impossibility",
+      "test_exact_zero_mass_is_explicit_and_strict_json",
+      "test_partial_observations_use_joint_marginal_not_independent_bits",
+      "test_alarm_is_latched_after_finite_statistic_falls_and_missing_feedback",
+      "test_unsupported_prediction_has_no_likelihood_or_e_increment",
+      "test_preview_is_pure_and_mutating_it_does_not_change_commit",
+      "test_invalid_forecast_rejected_before_context_commit",
+      "test_support_requires_actual_before_and_after_operand_readings",
+      "test_noncontact_context_is_not_mislabeled_as_model_failure",
+      "test_receipt_covers_action_evidence_and_canonical_sensor_coverage",
+      "test_invalid_coverage_does_not_advance_filter_or_evidence",
+      "test_bad_envelopes_and_outside_coverage_never_enter_evidence",
+      "test_duplicate_feedback_cannot_inflate_support_or_statistics",
+      "test_returned_forecast_and_request_mutation_cannot_rewrite_committed_evidence",
+      "test_tiny_finite_neural_path_is_accepted_by_filter_and_monitor",
+      "test_no_change_control_continues_after_impossible_prediction_and_latches_alarm",
+      "test_supported_neural_and_empirical_conflicts_keep_terminal_evidence",
+      "test_resource_failure_does_not_become_model_mismatch_or_completed_feedback",
+      "test_unsupported_empirical_prediction_recovers_without_fake_likelihood",
+      "test_all_six_model_forecasts_and_weights_match_unmonitored_repaired_path",
+      "test_serve_flushes_forecast_before_feedback_and_retains_terminal_diagnostic",
+      "test_end_with_unobserved_final_query_does_not_manufacture_evidence"
+    ]
+  },
+  "publication_tree_matches_local_verified_code": true,
+  "published_tree_sha": "962d8557b2fc90a3274d6c0fbc0fd4ce0132245d",
+  "research_model_training_run": false,
+  "scientific_scores_computed": false,
+  "source_sha256": {
+    "active_evidence.py": "03092f200b827fdfcb32b808c4dcc86668377527d4181732a4fd9b995b4a79ad",
+    "active_participant.py": "6799b35be54ad1a7348b4f41d3dd0391731b785ae734119e02a7576cc5ce3027",
+    "active_paths.py": "1d0263e205fc23003e07163ea2400d3753f2269533c2d186e9f9acae670d6d7d",
+    "comparison_scoring.py": "95865f228ccb06345deda847570efa1aaea8e72828f64645d00d19a360b6a473",
+    "context_support.py": "4396e3d6fd6ae4242e1ec497ebc3dd983af1c30dc256be84e9c52b11b3d190e5",
+    "external_participant.py": "802b0a93dedbcbae34006e1c0eb6959107a09c9e25686cd88e61f1777d8ade1e",
+    "joint_objective.py": "c00551ac3f0cff682b2dcd415929d8e8b7279f7fe92494fd07a2411a29ad1f4f",
+    "masked_replay.py": "fb79da609986721172b85737ef18150c465ea255b38ca176d945cc132dae69fa"
+  },
+  "status": "ACTIVE_DIAGNOSTIC_INVARIANTS_NOT_SCIENTIFIC_EVALUATION",
+  "version": "active-inference-v3"
+}
