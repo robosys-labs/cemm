@@ -255,6 +255,8 @@ class ExecutionTests(unittest.TestCase):
                 self.phase()
         failure = self.failure()
         self.assertEqual(failure['phase'], 'controls')
+        self.assertEqual(failure['current_control'], {'condition': 'uninformative', 'mode': 'prefix'})
+        self.assertEqual(failure['verified_controls'], [])
         self.assertEqual(failure['verified_ordinals'], list(range(4)))
         self.assertEqual(failure['missing_ordinals'], [])
 
@@ -385,7 +387,23 @@ class ExecutionTests(unittest.TestCase):
                 self.phase()
         failure = self.failure()
         self.assertEqual(failure['phase'], 'verification')
+        self.assertEqual(failure['current_task']['ordinal'], 0)
+        self.assertEqual(failure['checking_checkpoint'], 'fit-000/final.pt')
         self.assertEqual(failure['verified_ordinals'], list(range(4)))
+
+    def test_final_restore_failure_retains_returned_metrics_and_hashes(self):
+        restore = run._restore
+        def broken(factory, path, meta):
+            if Path(path).name == 'final.pt':
+                raise ValueError('synthetic final restore failure')
+            return restore(factory, path, meta)
+        with patch.object(run, '_restore', side_effect=broken):
+            with self.assertRaisesRegex(ValueError, 'final restore'):
+                self.phase()
+        failure = self.failure()
+        self.assertEqual(failure['checking_checkpoint'], 'fit-000/final.pt')
+        self.assertTrue((self.output / 'fit-000' / 'returned_fit.json').exists())
+        self.assertTrue((self.output / 'fit-000' / 'final.json').exists())
 
     def test_no_public_fit_flag_in_cli(self):
         result = subprocess.run([sys.executable, '-m', run.__name__, '--fit'], capture_output=True,

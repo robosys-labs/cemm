@@ -290,6 +290,7 @@ def _fit_phase(spec, training, output_dir):
     started, cpu_started = perf_counter(), process_time()
     completed, controls, initial_hashes = [], [], {}
     phase, current, model, task_dir = 'setup', None, None, None
+    active_control, checking_checkpoint = None, None
     try:
         factories = model_factories()
         require([m['id'] for m in spec['models']] == list(factories), 'factory inventory mismatch')
@@ -307,8 +308,11 @@ def _fit_phase(spec, training, output_dir):
                 torch.manual_seed(current['seed'])
                 model = factory()
                 require(sum(p.numel() for p in model.parameters()) == parameters[current['model']], 'parameter count mismatch')
-                initial = _save_state(model, task_dir / 'initial.pt', factory)
+                initial = _save_state(model, task_dir / 'initial.pt')
                 write_json(task_dir / 'initial.json', initial)
+                checking_checkpoint = str((task_dir / 'initial.pt').relative_to(output))
+                _restore(factory, task_dir / 'initial.pt', initial)
+                checking_checkpoint = None
                 key = (current['model'], current['seed'])
                 require(initial_hashes.setdefault(key, initial['tensor_sha256']) == initial['tensor_sha256'],
                         'initial weights differ between conditions/regimes')
@@ -318,10 +322,13 @@ def _fit_phase(spec, training, output_dir):
                 phase = 'fit'
                 metadata = joint.fit(model, batch, updates=current['updates'], cpu_seconds=current['cpu_seconds'])
                 phase = 'checkpoint'
-                final = _save_state(model, task_dir / 'final.pt', factory)
-                # Retain raw returned metadata before rejecting an incomplete fit.
+                # Persist returned metrics before any final-checkpoint verification.
                 write_json(task_dir / 'returned_fit.json', diagnostic_json(metadata))
+                final = _save_state(model, task_dir / 'final.pt')
                 write_json(task_dir / 'final.json', final)
+                checking_checkpoint = str((task_dir / 'final.pt').relative_to(output))
+                _restore(factory, task_dir / 'final.pt', final)
+                checking_checkpoint = None
                 require(source.digest() == batch.digest() == data_hash, 'fit mutated sensor/action data')
                 _validate_fit(metadata, current, initial, final, data_hash,
                               spec['data']['event_targets_per_update'], parameters[current['model']])
@@ -335,29 +342,39 @@ def _fit_phase(spec, training, output_dir):
             for condition, batch in training.items():
                 before = batch.digest()
                 for mode in spec['controls'][1:]:
+                    active_control = {'condition': condition, 'mode': mode}
                     control = SensorMemory(mode).fit(batch)
                     record = _save_control(control, output / f'{condition}-{mode}.json')
                     require(record['measured_events'] == spec['data']['event_targets_per_update'], 'control event count mismatch')
                     controls.append({'condition': condition, 'mode': mode, **record})
                 require(batch.digest() == before, 'control fit mutated observations')
+            active_control = None
             phase = 'verification'
             require([row['task'] for row in completed] == plan and
                     len(controls) == 3 * len(training), 'incomplete fit/control inventory')
             for row in completed:
+                current = row['task']
                 folder = output / f"fit-{row['task']['ordinal']:03d}"
                 for stage in ('initial', 'final'):
+                    checking_checkpoint = str((folder / row[stage]['file']).relative_to(output))
                     _restore(factories[row['task']['model']], folder / row[stage]['file'], row[stage])
+            current, checking_checkpoint = None, None
             for record in controls:
+                active_control = {'condition': record['condition'], 'mode': record['mode']}
                 require(digest_file(output / record['file']) == record['file_sha256'], 'changed control archive')
+            active_control = None
             report = {'status': 'FITS_VERIFIED_NOT_EVALUATED', 'gate_g1': 'HOLD_REVISE',
                       'study_complete': False, 'fits': completed, 'controls': controls,
                       'wall_seconds': perf_counter() - started, 'cpu_seconds': process_time() - cpu_started,
                       'environment': environment()}
+            phase = 'publication'
             write_json(output / 'FIT_PHASE.json', report)
             return report
     except BaseException as exc:
         failure = {'status': 'INCOMPLETE', 'phase': phase, 'type': type(exc).__name__, 'error': str(exc),
-                   'current_task': current, 'verified_ordinals': [r['task']['ordinal'] for r in completed],
+                   'current_task': current, 'current_control': active_control,
+                   'checking_checkpoint': checking_checkpoint, 'verified_controls': controls,
+                   'verified_ordinals': [r['task']['ordinal'] for r in completed],
                    'missing_ordinals': [t['ordinal'] for t in plan[len(completed):]],
                    'study_complete': False, 'gate_g1': 'HOLD_REVISE'}
         if model is not None and task_dir is not None:

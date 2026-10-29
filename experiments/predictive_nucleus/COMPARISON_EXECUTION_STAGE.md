@@ -1,6 +1,6 @@
 # Frozen comparison runner: preflight and fit/checkpoint phase
 
-Tracking: #22, stacked on #50. Date: 2026-10-29.
+Tracking: #22 / draft #51, stacked on #50. Date: 2026-10-29.
 Decision: **KEEP** this implementation tranche; **G1 HOLD / REVISE**.
 The frozen study has NOT run. This is a partial runner implementation, not a
 completed comparison or a claim of independently reviewed scientific evidence.
@@ -42,10 +42,21 @@ The files and hashes are cooperative provenance/integrity checks, not signatures
 independent custody, safe handling of arbitrary hostile checkpoints, or proof
 of cross-host reproducibility.
 
+## Implementation review correction
+
+Review of `c090895` found that a late checkpoint/control verification failure
+could lose the active task identity in the error metadata. The follow-up retains
+the exact model/seed/regime task, checkpoint path, control condition/mode and
+already-verified control records. It also persists returned fit metrics and
+checkpoint hash metadata BEFORE attempting final checkpoint restoration, so a
+restore failure cannot discard that evidence. Injected failure tests verify
+these paths. This changes diagnostic retention, not any model, frozen protocol,
+training sequence or result. No public study had begun.
+
 ## Validation and errors exercised
 
-35 new tests: 34 run locally; one requires a complete committed checkout and is
-explicitly skipped in the reconstructed local source archive. The complete-branch
+36 new tests: 35 run locally; one requires a complete committed checkout and is
+explicitly skipped in the reconstructed local source archive. Complete-branch
 CI must execute that test and verify the real frozen sources, four datasets,
 120-fit plan and CLI no-execution status. Its final result belongs in the PR
 checks, not an assumed local success.
@@ -63,12 +74,14 @@ use an explicitly fake fitter. These are not public-fixture comparison results.
 No v2 learned score, empirical-control score, tuning, calibration or independent
 challenge has been run.
 
-Local regression: 257 retained historical tests plus 34 new tests passed (291).
-The initial default-thread run timed out after 200 seconds without a reported
-test failure; a separately recorded run with explicit single-thread settings
-completed in 20.33 seconds. This was invariant-test execution, not a retry of
-any frozen study. The full parent has 55 additional tests absent from the local
-3493b3b archive; they are NOT claimed locally. CI checks the actual branch.
+Final local regression: 293 discovered tests, **292 passed and one skipped**
+(257 retained historical tests plus 35 locally executable new tests). The first
+default-thread regression attempt timed out after 200 seconds without a reported
+test failure. The first explicit-single-thread run passed 291 tests in 20.33
+seconds; after the review correction and extra test the final run completed in
+17.42 seconds. These are invariant tests, not retries of a frozen study.
+The full parent has 55 additional tests absent from the local 3493b3b archive;
+they are NOT claimed locally. CI checks the actual branch.
 The four restored dependency modules match their frozen SHA-256 values.
 Both new Python files' uploaded Git blob IDs match the locally tested bytes.
 
@@ -91,7 +104,8 @@ adding the one-attempt execution gate. Ordinary CI must not start the study.
 No production runtime, PR21, governance, historical experiment, learner or frozen
 protocol changed. Independent challenge, partial/noisy sensors, stronger capacity
 controls and learned acquisition remain outstanding. Language stays deferred.
-This tranche adds 914 physical Python lines including tests. Adding these to
-the prior complete-branch count yields 15,701 retained Python lines; this is
-not a fresh enumeration of the full remote tree, nor satisfaction of the
-practical 2,000-line goal. Historical failures were not deleted to reduce LOC.
+This tranche adds **949 physical Python lines including tests** (411 runner,
+538 tests). Adding these to the prior complete-branch count yields 15,736 retained
+Python lines; this is not a fresh enumeration of the full remote tree, nor
+satisfaction of the practical 2,000-line goal. Historical failures were not
+deleted to reduce LOC.
