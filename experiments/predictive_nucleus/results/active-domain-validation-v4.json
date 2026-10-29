@@ -1,0 +1,323 @@
+{
+  "adapted_kernel_learned_parameter_delta": 0,
+  "base_commit": "252333e28ab40251e628904847b4086d3c1df0c9",
+  "checks": [
+    {
+      "exit_code": 0,
+      "name": "protocol",
+      "stdout_sha256": "cadb9f2c91b7b2fdd3d13d2032b2b3e90b7d734e1ad8591fdc14857d8c03dcbf"
+    },
+    {
+      "exit_code": 0,
+      "name": "common_objective_comparison_protocol_v1.sha256",
+      "stdout_sha256": "b4b63f70070e7521854456d5542c1ef838a244627040564fc5f21757b473fdff"
+    },
+    {
+      "exit_code": 0,
+      "name": "context_protocol_v6.sha256",
+      "stdout_sha256": "a100cb3dbd128d6ebf98462cec21d47c65ad8e5c8306515bd440f970d137f671"
+    },
+    {
+      "exit_code": 0,
+      "name": "dev_composition_protocol_v1.sha256",
+      "stdout_sha256": "866ea5e323577f4fcb7a10cee9bab5c996b4041e018de74aba3b250f6129747a"
+    },
+    {
+      "exit_code": 0,
+      "name": "dev_composition_protocol_v2.sha256",
+      "stdout_sha256": "e520bde1c0102976391c1e58c82bb365310b34ce662ad51838854709d68b4c54"
+    },
+    {
+      "exit_code": 0,
+      "name": "epistemic_protocol_v2.sha256",
+      "stdout_sha256": "41e4cbeffade25e1c1324cb24b700ffb56098dfd58cbceadd0f30b8bba5b0818"
+    },
+    {
+      "exit_code": 0,
+      "name": "flat_protocol_v7.sha256",
+      "stdout_sha256": "03142ee36dde53addf56564b58080e0a65224991b64d2d8491ee7e0e6a9d4b89"
+    },
+    {
+      "exit_code": 0,
+      "name": "flat_updates_protocol_v8.sha256",
+      "stdout_sha256": "5bc6a4ca8e18e80756062a1c970f1c4be58fc8ed245ca27ca119d7a5277063cd"
+    },
+    {
+      "exit_code": 0,
+      "name": "full_sensor_paired_protocol_v1.sha256",
+      "stdout_sha256": "2c37478a0efa419119e11bf8c0e2ddb4a817a526c900986872a34698cfa7f673"
+    },
+    {
+      "exit_code": 0,
+      "name": "full_sensor_paired_protocol_v2.sha256",
+      "stdout_sha256": "20d58e94276f3b07f4d31a05116626e7cacd2c68d9b46f743b9d15af701734e5"
+    },
+    {
+      "exit_code": 0,
+      "name": "full_sensor_posthoc_replay_protocol_v1.sha256",
+      "stdout_sha256": "3c4323fd21fd8b5df62a7f8203f0fd861cae980b3157af0899106fa6d6b75b8b"
+    },
+    {
+      "exit_code": 0,
+      "name": "guard_protocol_v5.sha256",
+      "stdout_sha256": "381222436fb3982c1dcf66922910fe5b2baa13e419e8cb52936b48b36bd28f1f"
+    },
+    {
+      "exit_code": 0,
+      "name": "protocol.sha256",
+      "stdout_sha256": "e332deacf6e334113cb845110487bd7d4b54eec436b058825ef9170bf96f5ef9"
+    },
+    {
+      "exit_code": 0,
+      "name": "sensor_transfer_implementation_v1.sha256",
+      "stdout_sha256": "08cacf858ab86721821c9fdba914def2f1efd16f7735c53232c3a0bd40b11d12"
+    },
+    {
+      "exit_code": 0,
+      "name": "sensor_transfer_protocol_v1.sha256",
+      "stdout_sha256": "a1acbf9cf4dbe0f3885ded6ca33080ba7814cdaf70d452343e9b1ad2263deb38"
+    },
+    {
+      "exit_code": 0,
+      "name": "stability_protocol_v4.sha256",
+      "stdout_sha256": "5c1bce0851dfc8be0b3e472aa75d82d8ae4f4e6e169fa3bc908a2edda3d80376"
+    },
+    {
+      "exit_code": 0,
+      "name": "stress_protocol_v3.sha256",
+      "stdout_sha256": "6e98dab1c6d926f10b1635782728bfa92b33fd595476c8c8be977d50ca49983e"
+    },
+    {
+      "exit_code": 0,
+      "name": "preflight",
+      "stdout_sha256": "a17ff02ec8fc192cf04e4773d2e640acca07eabdebfb294c729c83316034b0b7"
+    }
+  ],
+  "ci_reference": "https://github.com/robosys-labs/cemm/pull/58/checks",
+  "ci_scope": "This record pins the locally verified code tree. The pull request records checks on the published final documentation head.",
+  "closed_public_study_rerun": false,
+  "code_commit": "2b281cd7f1ba0de4a7985cacc4bbf272783d01ed",
+  "compatibility": {
+    "actual_cli_test": "verified synthetic v1 export; six entities, self-contact, matching feedback/end; flat expansion rejected",
+    "forecast_vectors": 24,
+    "legacy_empirical_counts_and_forecasts_preserved": true,
+    "models": "all six model_factories variants; synthetic initial weights",
+    "saved_trained_checkpoint_evaluation_run": false,
+    "source_and_adapted_learned_tensors_unchanged": true,
+    "three_entity_nonalias_forecast_tolerance": 1e-12
+  },
+  "complete_local_suite": {
+    "command": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONHASHSEED=0 python -m unittest discover -s experiments/predictive_nucleus/tests -v",
+    "output_sha256": "0a1c08ffd3132906644bf3f1805decf70a019f872d70e1c23cf8fbb74a3282f1",
+    "seconds": 37.279,
+    "tests_discovered": 498,
+    "tests_passed": 498,
+    "tests_skipped": 0
+  },
+  "diagnostic_scope": {
+    "advisory_only": true,
+    "alpha": 0.05,
+    "alternate_change_point_monitor_integrated": false,
+    "calibration_established": false,
+    "dropout_independence_verified": false,
+    "heuristic_surprise_reference_ratio": 4.0,
+    "learned_probe_selection_integrated": false,
+    "posterior_context_support_integrated": false,
+    "sensor_source_authenticated": false
+  },
+  "domain": {
+    "action_limit": 128,
+    "candidate_expansion_limit": 512,
+    "default_live_path_limit": 64,
+    "explicit_kernel_or_table_adaptation_required": true,
+    "full_initial_anchor": true,
+    "legacy_flat_entity_counts": [
+      3
+    ],
+    "legacy_unadapted_entity_counts": [
+      3
+    ],
+    "predictor_capability_check_required": true,
+    "self_contact_generalization_established": false,
+    "self_contact_representation": "supplied_per_mode_alias_conditioning",
+    "state": "binary",
+    "supported_entity_counts": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "visible_sensor_noise": false
+  },
+  "domain_pr": 58,
+  "earlier_integration_failure": {
+    "cause": "CLI/integration expected DomainKernel.from_legacy while initial implementation exposed a module function",
+    "resolution": "Canonical classmethod adopted; all four kernel parity subcases and actual CLI pass; no test weakened"
+  },
+  "environment": {
+    "cpu_model": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "default_dtype": "torch.float32",
+    "deterministic_algorithms": true,
+    "deterministic_warn_only": false,
+    "interop_threads": 1,
+    "intraop_threads": 1,
+    "peak_rss": 313760,
+    "peak_rss_unit": "KiB",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "python": "3.13.16",
+    "torch": "2.10.0+cpu",
+    "torch_config_sha256": "4f3cd65dc58472ed223329fa5ab743d0a360e777accb4001b511fc418c78128b"
+  },
+  "evidence_version": "active-evidence-v2",
+  "frozen_input_preflight": {
+    "lineage": {
+      "complete_history": true,
+      "execution_commit": "9132fa626d15c197b49f4d77d0971ed54ba1ef8d",
+      "protocol_commit": "2eeae6323d8123da5ded40a56e77ef68e6aac5ac",
+      "runner_commit": "fd64a5b1a9efc460086cfe21c4f62fe631135298",
+      "runner_sha256": "143a29e7fee901a009674ef271e779c126300e6496f7c26d79fe222540772213",
+      "source_commit": "3bbce83121386501ae39567b48fc9aa62325de79",
+      "tracked_tree_clean": true,
+      "untracked_present": false
+    },
+    "protocol_sha256": "15732afe065f19f3b412a7638e386373eb586ddaa273104e2de63c14a782b1f3",
+    "status": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
+    "study_execution_enabled": false
+  },
+  "gate_g1": "NOT_ADMITTED",
+  "historical_manifest_locks_passed": 16,
+  "independent_validation": false,
+  "limits": [
+    "No research-model retraining or new scientific evaluation in this domain tranche.",
+    "Self-contact is supplied per-mode alias conditioning; tiny retained mass can normalize to a confident forecast.",
+    "Legacy flat checkpoints remain three-entity-only; no matched wider-domain comparison has run.",
+    "Positive-mass paths are neither pruned nor merged; missing observations can exhaust the 512-candidate expansion budget.",
+    "Empirical adaptation preserves counts and abstains on new size/alias contexts without observed support.",
+    "The active command remains repository-backed; frozen standalone v1 exports and scientific evidence are unchanged.",
+    "Evidence remains conditional, uncalibrated and advisory; observed context counts are not posterior support or learned reliability.",
+    "The inference-only masked path does not constitute a coherent differentiable training/evaluation stack."
+  ],
+  "line_counts": {
+    "active_files": {
+      "active_evidence.py": 156,
+      "active_participant.py": 205,
+      "active_paths.py": 232,
+      "domain_contract.py": 284,
+      "domain_kernel.py": 149
+    },
+    "active_source_files_excluding_frozen_dependencies": 1026,
+    "inclusive_size_goal_met": false,
+    "new_runtime_source_net": 563,
+    "new_tests_net": 834,
+    "retained_research_python": 20814
+  },
+  "local_verified_code_commit": "9132fa626d15c197b49f4d77d0971ed54ba1ef8d",
+  "new_scientific_evaluation": false,
+  "new_tests": {
+    "discovered": 41,
+    "passed": 41,
+    "sha256_by_file": {
+      "test_active_domain.py": "cd3f1fb4232415e1624ea35914c89cf7ebb8ddff5168345780db068f02549d85",
+      "test_domain_contract.py": "517c2a7e28176b93d0a0a93fba8448be40f7db6f32f247d7914af24c16f3cfaa",
+      "test_domain_kernel.py": "1abe79532f4f6bac3dd8d734c6ce1d98f4d180dbbf8717cfe4e4c3b65e8ca707"
+    },
+    "skipped": 0,
+    "test_names_by_file": {
+      "test_active_domain.py": [
+        "test_all_domain_sizes_handle_high_index_actions_and_self_contact",
+        "test_no_change_control_supports_every_size_and_retains_mismatch",
+        "test_unadapted_models_reject_wider_scope_and_self_contact_before_prediction",
+        "test_invalid_wire_scope_or_forecast_dimension_fails_without_evidence",
+        "test_uniform_six_bit_joint_is_compatible_not_a_small_probability_surprise",
+        "test_six_entity_finite_underflow_and_exact_zero_remain_distinct",
+        "test_alias_counts_one_physical_reading_and_never_borrows_distinct_context",
+        "test_tiny_alias_factor_support_remains_visible_and_receipt_bound",
+        "test_expansion_budget_is_checked_before_model_or_candidate_allocation",
+        "test_live_path_limit_still_rejects_real_growth_without_pruning",
+        "test_six_entity_batch_retains_unequal_episode_path_counts",
+        "test_three_entity_six_arm_wire_forecasts_match_unchanged_legacy_inference",
+        "test_startup_identity_binds_configuration_and_copies_mutable_metadata",
+        "test_converted_empirical_controls_preserve_three_entity_predictions",
+        "test_larger_empirical_scope_abstains_then_recovers_only_to_recorded_context",
+        "test_missing_historic_high_index_contact_stays_unknown_after_full_current_reading",
+        "test_jsonl_six_entity_self_contact_flushes_forecast_before_feedback",
+        "test_real_cli_expands_verified_synthetic_kernel_and_rejects_fixed_flat"
+      ],
+      "test_domain_contract.py": [
+        "test_world_coordinates_are_bijective_for_every_supported_count",
+        "test_validators_keep_missingness_and_alias_policy_explicit",
+        "test_dynamic_normalization_matches_frozen_three_entity_arithmetic",
+        "test_persistence_masks_one_physical_alias_target_and_all_untouched_entities",
+        "test_alias_context_deduplicates_physical_coordinates",
+        "test_contact_history_distinguishes_aliases_and_missing_readings",
+        "test_fit_uses_measured_worlds_and_one_count_per_physical_outcome",
+        "test_bad_fit_is_transactional_and_never_imputes_missing_targets",
+        "test_legacy_migration_preserves_counts_predictions_and_original_digest",
+        "test_legacy_contact_migration_does_not_invent_self_contact_history",
+        "test_adaptation_metadata_is_detached_and_new_observed_fit_resets_origin",
+        "test_direct_support_has_no_inherited_posterior_interface",
+        "test_alias_missing_input_cannot_be_reconstructed_from_later_feedback"
+      ],
+      "test_domain_kernel.py": [
+        "test_explicit_transfer_preserves_source_parameters_and_rng_without_stale_geometry",
+        "test_verified_export_style_class_identity_is_accepted_but_other_architecture_is_not",
+        "test_malformed_configuration_geometry_inventory_and_tensors_fail_strictly",
+        "test_three_entity_nonalias_forecasts_and_mode_updates_match_all_four_legacy_arms",
+        "test_every_domain_action_and_configuration_is_normalized_with_coherent_geometry",
+        "test_alias_conditions_each_mode_before_mixing_without_forcing_a_physical_outcome",
+        "test_tiny_finite_alias_mass_survives_and_genuinely_empty_diagonal_fails",
+        "test_background_persistence_is_supplied_only_to_the_declared_arm",
+        "test_identity_permutation_preserves_full_distributions_including_self_contact",
+        "test_alias_and_partial_zero_support_preserve_finite_training_gradients"
+      ]
+    }
+  },
+  "original_protocol_verification": "passed",
+  "publication_tree_matches_local_verified_code": true,
+  "published_code_ci": {
+    "head_commit": "2b281cd7f1ba0de4a7985cacc4bbf272783d01ed",
+    "workflows": [
+      {
+        "conclusion": "success",
+        "name": "Predictive nucleus - isolated scientific invariants",
+        "run_id": 40948565909,
+        "url": "https://github.com/robosys-labs/cemm/actions/runs/40948565909"
+      },
+      {
+        "conclusion": "success",
+        "name": "Predictive nucleus source snapshot",
+        "run_id": 40948566008,
+        "url": "https://github.com/robosys-labs/cemm/actions/runs/40948566008"
+      }
+    ]
+  },
+  "published_tree_sha": "57136a701a2ad9dba0325c9e8725324a3417347d",
+  "remaining_capability_gaps": {
+    "coherent_active_training_checkpoint_evaluation_path": "PENDING",
+    "expanded_domain_matched_flat_baseline": "PENDING",
+    "expanded_domain_scientific_evaluation": false,
+    "learned_self_contact_established": false,
+    "novel_entity_count_transfer_established": false
+  },
+  "research_model_training_run": false,
+  "review_repairs": [
+    "canonical_classmethod_loader",
+    "configuration_bound_startup_identity",
+    "deepcopied_adaptation_metadata",
+    "retained_alias_log_mass_in_forecast_receipt"
+  ],
+  "source_sha256": {
+    "active_evidence.py": "997bca8a4320bdb94752714441f0929d6ff377edbab1c609bff041415f7c75b7",
+    "active_participant.py": "aa8d8002e0adcfa58ebd647ab1909d725729b4726324256bba4ee72cf4e7524f",
+    "active_paths.py": "5aa3f2ddcb452768926cccbdacdec9dc2a745216394e188690c75aad20093e86",
+    "comparison_scoring.py": "95865f228ccb06345deda847570efa1aaea8e72828f64645d00d19a360b6a473",
+    "context_support.py": "4396e3d6fd6ae4242e1ec497ebc3dd983af1c30dc256be84e9c52b11b3d190e5",
+    "domain_contract.py": "54cf68c15d88b25f0e083ffdcbb0d83cf6ac2440904ed1d21ac1124423c4d7a5",
+    "domain_kernel.py": "c2ce94522acfe931134a6bf8d90a0f2874fed0fa6a72e81e3ec8f9cc14f29eb3",
+    "external_participant.py": "802b0a93dedbcbae34006e1c0eb6959107a09c9e25686cd88e61f1777d8ade1e",
+    "joint_objective.py": "c00551ac3f0cff682b2dcd415929d8e8b7279f7fe92494fd07a2411a29ad1f4f",
+    "masked_replay.py": "fb79da609986721172b85737ef18150c465ea255b38ca176d945cc132dae69fa"
+  },
+  "status": "ACTIVE_DOMAIN_INVARIANTS_NOT_SCIENTIFIC_EVALUATION",
+  "version": "active-inference-v4"
+}
