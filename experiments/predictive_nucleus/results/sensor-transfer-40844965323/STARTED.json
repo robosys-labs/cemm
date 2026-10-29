@@ -1,0 +1,1300 @@
+{
+  "checkpoint_checks": [
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "832a2a0a654e71b7330cd0ca805aba49b503b08db82535402b7fca0b3d51d50e",
+        "tensor_sha256": "5594beaa6211f97fe59d94327bd5cb9a1dd6aa41eeac349942ece82652f151be"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "5594beaa6211f97fe59d94327bd5cb9a1dd6aa41eeac349942ece82652f151be",
+        "fit_cpu_seconds": 8.478282557,
+        "fit_wall_seconds": 8.47894774599996,
+        "initial_weights_sha256": "486bc6f755690dbea8bcf11541e96c2008c8087bae7b8e5a73bbc21be5b3f1b0",
+        "last_preupdate_nll": 0.08866390527010372,
+        "last_step_cpu_seconds": 0.06617391399998951,
+        "parameters": 584,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009235062000016114,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "ecfc5ebc8bbae83d2aecfeb7e9ba93fe675a2754dce642ea6ce9925b1beda1d4",
+        "tensor_sha256": "486bc6f755690dbea8bcf11541e96c2008c8087bae7b8e5a73bbc21be5b3f1b0"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_learned_persistence",
+        "ordinal": 30,
+        "regime": "fixed_exposure",
+        "seed": 7,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "a050137b335f94738335e09c5d87558ce37de33556d304014eeb389fd6c765cd",
+        "tensor_sha256": "0712006b57d4b9d5baf8410ae5416b921f3928e226c90860a80e10c61bcf1a6b"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "0712006b57d4b9d5baf8410ae5416b921f3928e226c90860a80e10c61bcf1a6b",
+        "fit_cpu_seconds": 8.387234333999999,
+        "fit_wall_seconds": 8.387904780999975,
+        "initial_weights_sha256": "c695ae51d7ad47b83343873825cd87dbef49abe8d7b685c69d518861be45e487",
+        "last_preupdate_nll": 0.08822396202778791,
+        "last_step_cpu_seconds": 0.06654767000000561,
+        "parameters": 972,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009436699999980647,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "4b085f636e0b79292b892ec7157cadd2680f926047c01e2defcbd9c0678bf95c",
+        "tensor_sha256": "c695ae51d7ad47b83343873825cd87dbef49abe8d7b685c69d518861be45e487"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_untied_roles",
+        "ordinal": 31,
+        "regime": "fixed_exposure",
+        "seed": 7,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "13b30c4efeaaa41908233a1e983d51c3ddd778ad6793412888856fc2de7573d8",
+        "tensor_sha256": "66c64e5a3bdf499a7e2be33087afe01576bb0f0bf307920b7b8d8b25e43d49e2"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "66c64e5a3bdf499a7e2be33087afe01576bb0f0bf307920b7b8d8b25e43d49e2",
+        "fit_cpu_seconds": 8.376321004000005,
+        "fit_wall_seconds": 8.379141175999962,
+        "initial_weights_sha256": "486bc6f755690dbea8bcf11541e96c2008c8087bae7b8e5a73bbc21be5b3f1b0",
+        "last_preupdate_nll": 0.15359126399437234,
+        "last_step_cpu_seconds": 0.06456670900001882,
+        "parameters": 584,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009225395999976627,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "ecfc5ebc8bbae83d2aecfeb7e9ba93fe675a2754dce642ea6ce9925b1beda1d4",
+        "tensor_sha256": "486bc6f755690dbea8bcf11541e96c2008c8087bae7b8e5a73bbc21be5b3f1b0"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_memory_reset",
+        "ordinal": 32,
+        "regime": "fixed_exposure",
+        "seed": 7,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "ea73f1458e44308504055c8fa098030397ecf11ca530f9dd01c0cac75aa74bf8",
+        "tensor_sha256": "37a3fed82de7d9bfa72ac05ff900e4828242eabb6b1000c8c3e0ecfeee285719"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "37a3fed82de7d9bfa72ac05ff900e4828242eabb6b1000c8c3e0ecfeee285719",
+        "fit_cpu_seconds": 1.8864991539999778,
+        "fit_wall_seconds": 1.8867562620000058,
+        "initial_weights_sha256": "5e1dc73789270ad97d9d6aac0564aa28826afde0ff6593e33ac175a1d6c2f7c7",
+        "last_preupdate_nll": 0.2615403860624649,
+        "last_step_cpu_seconds": 0.014272505000008096,
+        "parameters": 648,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.00969311099999004,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "4a743d1eb881172024ee22eb3c3f8be05180e86e8078155d0d1e3b75f8282240",
+        "tensor_sha256": "5e1dc73789270ad97d9d6aac0564aa28826afde0ff6593e33ac175a1d6c2f7c7"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "flat",
+        "ordinal": 33,
+        "regime": "fixed_exposure",
+        "seed": 7,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "bf08a8582763c2dcc08e382d6dbdcac7c3097354c27b4f775c7ff0ac7dc3953a",
+        "tensor_sha256": "104d4874e5d79594929bbde858b40d01bc37ee6247f3cdd00444adbb9713d5cb"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "104d4874e5d79594929bbde858b40d01bc37ee6247f3cdd00444adbb9713d5cb",
+        "fit_cpu_seconds": 2.3892811559999814,
+        "fit_wall_seconds": 2.3895140599999536,
+        "initial_weights_sha256": "5e1dc73789270ad97d9d6aac0564aa28826afde0ff6593e33ac175a1d6c2f7c7",
+        "last_preupdate_nll": 0.16003797427253233,
+        "last_step_cpu_seconds": 0.01863648099998727,
+        "parameters": 648,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009154174000002513,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "4a743d1eb881172024ee22eb3c3f8be05180e86e8078155d0d1e3b75f8282240",
+        "tensor_sha256": "5e1dc73789270ad97d9d6aac0564aa28826afde0ff6593e33ac175a1d6c2f7c7"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "flat_supplied_persistence",
+        "ordinal": 34,
+        "regime": "fixed_exposure",
+        "seed": 7,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "738d958514c6cc34a0f11b484ee724051cd6f154dec07af9b3920b387463985a",
+        "tensor_sha256": "02cafdf0a99443ead55ae25e8226562e76fe4594aa68fa087067e1a420e734b3"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "02cafdf0a99443ead55ae25e8226562e76fe4594aa68fa087067e1a420e734b3",
+        "fit_cpu_seconds": 5.884964623000002,
+        "fit_wall_seconds": 5.885427215999982,
+        "initial_weights_sha256": "8512830ba90ce1e5cd96186450cdd4c6060785a66bf99dfd5bb7464b5ea72bcf",
+        "last_preupdate_nll": 0.08715823866206145,
+        "last_step_cpu_seconds": 0.04631852099998923,
+        "parameters": 470,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009182376000012482,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "2256db8e4a711f807a5aea0038769b4dd6ac58229c09bb3004a4861ef3877271",
+        "tensor_sha256": "8512830ba90ce1e5cd96186450cdd4c6060785a66bf99dfd5bb7464b5ea72bcf"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_supplied_persistence",
+        "ordinal": 35,
+        "regime": "fixed_exposure",
+        "seed": 7,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "8668ee5df1b1ea712931330fe35c1b65a11086d270416a7f4af22b29ad9e42bd",
+        "tensor_sha256": "4cccd4822eefb1baf0de440f4261673068ff51ccdb8c2060333c88849c0041a2"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "4cccd4822eefb1baf0de440f4261673068ff51ccdb8c2060333c88849c0041a2",
+        "fit_cpu_seconds": 8.365717234999977,
+        "fit_wall_seconds": 8.366374337000025,
+        "initial_weights_sha256": "e29e163156a40f6e90401859a3c0b914a4f33673ec7216733bcd3b240b0ce6f9",
+        "last_preupdate_nll": 0.0885643492832376,
+        "last_step_cpu_seconds": 0.06532558199998562,
+        "parameters": 972,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009593463999976848,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "eedf1c8f1a2320318ae7f80df45a251838730a1aa859c7aad7bd78032fa69413",
+        "tensor_sha256": "e29e163156a40f6e90401859a3c0b914a4f33673ec7216733bcd3b240b0ce6f9"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_untied_roles",
+        "ordinal": 36,
+        "regime": "fixed_exposure",
+        "seed": 11,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "53e227b2855fc21de7a099503fbd85277b6341008d0f3102f807a5e8f61a231c",
+        "tensor_sha256": "7e4cd3abe31bbd82d7f87cd99f9a371904ea7a5a62b2b09f5ed61aaf2706b09b"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "7e4cd3abe31bbd82d7f87cd99f9a371904ea7a5a62b2b09f5ed61aaf2706b09b",
+        "fit_cpu_seconds": 8.297904383000002,
+        "fit_wall_seconds": 8.298546680000015,
+        "initial_weights_sha256": "40976bb9782359df5b845fc8dfd2b2f63599fe9970a93d09974b9e4a9b947748",
+        "last_preupdate_nll": 0.1542181214551627,
+        "last_step_cpu_seconds": 0.06520162099999993,
+        "parameters": 584,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009172682000041732,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "0aa5cd32fc0ce20d346a40b0e76a9ca5f8c4369a942cffc82b470738bf420319",
+        "tensor_sha256": "40976bb9782359df5b845fc8dfd2b2f63599fe9970a93d09974b9e4a9b947748"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_memory_reset",
+        "ordinal": 37,
+        "regime": "fixed_exposure",
+        "seed": 11,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "31c936b67a93e3f4a52c04082fbda2019c7b2fd5f327790765719cbfc2993033",
+        "tensor_sha256": "baf0a119811122792c83a9a107b3199e678e175699e8a9bf2871c08c6c130b40"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "baf0a119811122792c83a9a107b3199e678e175699e8a9bf2871c08c6c130b40",
+        "fit_cpu_seconds": 1.8423331779999899,
+        "fit_wall_seconds": 1.8424496709999971,
+        "initial_weights_sha256": "7cfd41140223c0bad665bb20747642878d7eb57043af1056a1e351140798b21a",
+        "last_preupdate_nll": 0.24441478213631274,
+        "last_step_cpu_seconds": 0.014248880999986113,
+        "parameters": 648,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009066083999982766,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "c43601bceababe4dc4b644c3d6a16f1dbb4b272b4f4391ea777fdc4d7d021187",
+        "tensor_sha256": "7cfd41140223c0bad665bb20747642878d7eb57043af1056a1e351140798b21a"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "flat",
+        "ordinal": 38,
+        "regime": "fixed_exposure",
+        "seed": 11,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "53229093b4ac0f4ce2aadd0bb7c75938672e8e14e1133726932f85707ff8d5c6",
+        "tensor_sha256": "956fd82d28eb2002fd3e6b88e9c663a8c8b234574cbb45832502e8dfbde1ee2c"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "956fd82d28eb2002fd3e6b88e9c663a8c8b234574cbb45832502e8dfbde1ee2c",
+        "fit_cpu_seconds": 2.3661816329999965,
+        "fit_wall_seconds": 2.3663982290000263,
+        "initial_weights_sha256": "7cfd41140223c0bad665bb20747642878d7eb57043af1056a1e351140798b21a",
+        "last_preupdate_nll": 0.16365727696161775,
+        "last_step_cpu_seconds": 0.018277389999980187,
+        "parameters": 648,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009081303000016305,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "c43601bceababe4dc4b644c3d6a16f1dbb4b272b4f4391ea777fdc4d7d021187",
+        "tensor_sha256": "7cfd41140223c0bad665bb20747642878d7eb57043af1056a1e351140798b21a"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "flat_supplied_persistence",
+        "ordinal": 39,
+        "regime": "fixed_exposure",
+        "seed": 11,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "e6168bc514ca61cabd903c2aa2426f32cc099c4b1b1f7ac1fe4a1a8e0bd84f14",
+        "tensor_sha256": "06b8c9d179ea4b39f664eb80a3ce06d7f62fd82167912d4fac83d89d933b2875"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "06b8c9d179ea4b39f664eb80a3ce06d7f62fd82167912d4fac83d89d933b2875",
+        "fit_cpu_seconds": 5.866550052999997,
+        "fit_wall_seconds": 5.867139115999976,
+        "initial_weights_sha256": "6fb3643508bd8090b78ae3d303718fc82f85020d0f6e4877049f12f93472096c",
+        "last_preupdate_nll": 0.08718158905730466,
+        "last_step_cpu_seconds": 0.04541084900000669,
+        "parameters": 470,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.00920556599999145,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "395c455cf5d1d7ddffe3954c47365a9fd21d9c03107d7f794a353766fcd4eb83",
+        "tensor_sha256": "6fb3643508bd8090b78ae3d303718fc82f85020d0f6e4877049f12f93472096c"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_supplied_persistence",
+        "ordinal": 40,
+        "regime": "fixed_exposure",
+        "seed": 11,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "a6f81d2173428296f71aa8310e6379c555f04648c30f777d1fb20b82fafe2458",
+        "tensor_sha256": "a97a476288de14fdae84e6cca6873526fe5e4f6b02a7dafdc0472e3f91a38226"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "a97a476288de14fdae84e6cca6873526fe5e4f6b02a7dafdc0472e3f91a38226",
+        "fit_cpu_seconds": 8.418919160999991,
+        "fit_wall_seconds": 8.419731739999975,
+        "initial_weights_sha256": "40976bb9782359df5b845fc8dfd2b2f63599fe9970a93d09974b9e4a9b947748",
+        "last_preupdate_nll": 0.0893090403759526,
+        "last_step_cpu_seconds": 0.06597751800001106,
+        "parameters": 584,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009183536999955777,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "0aa5cd32fc0ce20d346a40b0e76a9ca5f8c4369a942cffc82b470738bf420319",
+        "tensor_sha256": "40976bb9782359df5b845fc8dfd2b2f63599fe9970a93d09974b9e4a9b947748"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_learned_persistence",
+        "ordinal": 41,
+        "regime": "fixed_exposure",
+        "seed": 11,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "9254afb5729bfef8a50029faa2a3691504a936290b8f8c126827c2cf01780302",
+        "tensor_sha256": "6ab632c3a7998334b37769073ac3d189a6315609c86f40a7b1fa0fb523aabaaf"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "6ab632c3a7998334b37769073ac3d189a6315609c86f40a7b1fa0fb523aabaaf",
+        "fit_cpu_seconds": 8.29402294899998,
+        "fit_wall_seconds": 8.29472947100004,
+        "initial_weights_sha256": "35d8a9568650fbf829c678b34252bee23084f7ef69ced234c7043b54684153a1",
+        "last_preupdate_nll": 0.15324330252193483,
+        "last_step_cpu_seconds": 0.06456087700001945,
+        "parameters": 584,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009188007000034304,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "1d84b66396570dccdcdd610f729347280e47615367535c611cf7c734a4f69de3",
+        "tensor_sha256": "35d8a9568650fbf829c678b34252bee23084f7ef69ced234c7043b54684153a1"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_memory_reset",
+        "ordinal": 42,
+        "regime": "fixed_exposure",
+        "seed": 23,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "aaa64b509edbb88daf02e40ba66fbbc61ac8eb0d4c9ffd243f037bb4c46485dc",
+        "tensor_sha256": "9e19024890bf76164b3ee72e81f502bbefb592d48fb91bc8367c2b53ad319086"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "9e19024890bf76164b3ee72e81f502bbefb592d48fb91bc8367c2b53ad319086",
+        "fit_cpu_seconds": 1.8438058739999974,
+        "fit_wall_seconds": 1.8439418749999845,
+        "initial_weights_sha256": "8d3c449cd284e6072c3c41279ac288da92f24955c2395431f0df5ebe9d3ea204",
+        "last_preupdate_nll": 0.3080691169381574,
+        "last_step_cpu_seconds": 0.014146680000010292,
+        "parameters": 648,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009075544999973317,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "944896de0f86e5e48c6eda32db7cc49b4ce64c625d193915917380b5167b0ff3",
+        "tensor_sha256": "8d3c449cd284e6072c3c41279ac288da92f24955c2395431f0df5ebe9d3ea204"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "flat",
+        "ordinal": 43,
+        "regime": "fixed_exposure",
+        "seed": 23,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "412a14141bfd433c59040fd7d4b8fbe636c699e691f8a86bde38f549368f75d1",
+        "tensor_sha256": "96f5ab6aaaeca8269e3c03aec1c4bda63dc91354d51fd9a838305d42ae3821f6"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "96f5ab6aaaeca8269e3c03aec1c4bda63dc91354d51fd9a838305d42ae3821f6",
+        "fit_cpu_seconds": 2.371090252999977,
+        "fit_wall_seconds": 2.3713402090000386,
+        "initial_weights_sha256": "8d3c449cd284e6072c3c41279ac288da92f24955c2395431f0df5ebe9d3ea204",
+        "last_preupdate_nll": 0.1627856375930005,
+        "last_step_cpu_seconds": 0.018234419999998863,
+        "parameters": 648,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.00906720000000405,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "944896de0f86e5e48c6eda32db7cc49b4ce64c625d193915917380b5167b0ff3",
+        "tensor_sha256": "8d3c449cd284e6072c3c41279ac288da92f24955c2395431f0df5ebe9d3ea204"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "flat_supplied_persistence",
+        "ordinal": 44,
+        "regime": "fixed_exposure",
+        "seed": 23,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "7369841f715ebce74fc1af12ecd5db5ecd38186190170107449e00f57dc14a24",
+        "tensor_sha256": "8f68f6e26ecaa05e4aabae79783dcd8ef9c7654fcd829a04eb6d2c65fcaba111"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "8f68f6e26ecaa05e4aabae79783dcd8ef9c7654fcd829a04eb6d2c65fcaba111",
+        "fit_cpu_seconds": 5.877527164000014,
+        "fit_wall_seconds": 5.87805300399998,
+        "initial_weights_sha256": "66efd45e2c69d638c140bd8fba049e51503333c2f9a6d03d35f8af024737ac4c",
+        "last_preupdate_nll": 0.08733158800730755,
+        "last_step_cpu_seconds": 0.04581004300001723,
+        "parameters": 470,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009547968999982004,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "c61cfde2600132e7bb9bd57d4ad40bf26c3a0cc2490c82061883b57095febc8c",
+        "tensor_sha256": "66efd45e2c69d638c140bd8fba049e51503333c2f9a6d03d35f8af024737ac4c"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_supplied_persistence",
+        "ordinal": 45,
+        "regime": "fixed_exposure",
+        "seed": 23,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "9ddbd45b82827dfdb8fb9d4a6c8bd9e228beee32918406e1a3168ad79f669cbd",
+        "tensor_sha256": "047ce65a8d389053cee355c8e1443db3e9677c87adc584e27c6e90c43ed48d8c"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "047ce65a8d389053cee355c8e1443db3e9677c87adc584e27c6e90c43ed48d8c",
+        "fit_cpu_seconds": 8.424590230999968,
+        "fit_wall_seconds": 8.425297873999966,
+        "initial_weights_sha256": "35d8a9568650fbf829c678b34252bee23084f7ef69ced234c7043b54684153a1",
+        "last_preupdate_nll": 0.08830800829311754,
+        "last_step_cpu_seconds": 0.06618811800001367,
+        "parameters": 584,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009163241000010203,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "1d84b66396570dccdcdd610f729347280e47615367535c611cf7c734a4f69de3",
+        "tensor_sha256": "35d8a9568650fbf829c678b34252bee23084f7ef69ced234c7043b54684153a1"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_learned_persistence",
+        "ordinal": 46,
+        "regime": "fixed_exposure",
+        "seed": 23,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "a7cb49f56780c53a36bc774f8ebb0333fbe99896a92d93641d8a9815ba626deb",
+        "tensor_sha256": "f2fb77f60cc9841cedc6c713e2563dcef779a02cf6ee596ddb33d077532ccfe6"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "f2fb77f60cc9841cedc6c713e2563dcef779a02cf6ee596ddb33d077532ccfe6",
+        "fit_cpu_seconds": 8.397766693999984,
+        "fit_wall_seconds": 8.400472449000006,
+        "initial_weights_sha256": "6b94d421bd5fdd1fb1886a55980743482500d5096aa470cfc0f241781efcb2cb",
+        "last_preupdate_nll": 0.08883073123314571,
+        "last_step_cpu_seconds": 0.06596582499997794,
+        "parameters": 972,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.00938772599999993,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "7af1db1cd2fdeedfc1e2bbf1773860f50ba5f799cc9201dc7cc238b5b119a567",
+        "tensor_sha256": "6b94d421bd5fdd1fb1886a55980743482500d5096aa470cfc0f241781efcb2cb"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_untied_roles",
+        "ordinal": 47,
+        "regime": "fixed_exposure",
+        "seed": 23,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "ff63e571508d7d9075890b09a8f2149aa41bcf1402ae78433fe83e3994d7a957",
+        "tensor_sha256": "79d8017a6c16159814bd70299a5390aea9f78eb1ec363e01404e25377270d8d3"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "79d8017a6c16159814bd70299a5390aea9f78eb1ec363e01404e25377270d8d3",
+        "fit_cpu_seconds": 1.872214620999955,
+        "fit_wall_seconds": 1.8724276620000069,
+        "initial_weights_sha256": "0e5d4ed2dd73b188be2acb305357d235ff3e8e13364d4b99626fbc3beafeae85",
+        "last_preupdate_nll": 0.2630508667781535,
+        "last_step_cpu_seconds": 0.01434012099997517,
+        "parameters": 648,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009151289000044471,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "853a59492fe394e7f4026d1b74f03bb8873a2df3236870cdbfdd7026cff57b1a",
+        "tensor_sha256": "0e5d4ed2dd73b188be2acb305357d235ff3e8e13364d4b99626fbc3beafeae85"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "flat",
+        "ordinal": 48,
+        "regime": "fixed_exposure",
+        "seed": 37,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "bd88caf8f64b9ae66cf2990547e571072c9bfae828140d4d02301aa479a24496",
+        "tensor_sha256": "d6bb041cded0f1a04e407d346ca40a803711d47c45a0498ad0c1c31239af60f5"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "d6bb041cded0f1a04e407d346ca40a803711d47c45a0498ad0c1c31239af60f5",
+        "fit_cpu_seconds": 2.3701799260000485,
+        "fit_wall_seconds": 2.3704000980000046,
+        "initial_weights_sha256": "0e5d4ed2dd73b188be2acb305357d235ff3e8e13364d4b99626fbc3beafeae85",
+        "last_preupdate_nll": 0.1587123264163486,
+        "last_step_cpu_seconds": 0.01846730399995522,
+        "parameters": 648,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009039846999996826,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "853a59492fe394e7f4026d1b74f03bb8873a2df3236870cdbfdd7026cff57b1a",
+        "tensor_sha256": "0e5d4ed2dd73b188be2acb305357d235ff3e8e13364d4b99626fbc3beafeae85"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "flat_supplied_persistence",
+        "ordinal": 49,
+        "regime": "fixed_exposure",
+        "seed": 37,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "fe48fae38d9bfdf4b7e1abc1ba6747c61729d1b5c8c10d0674677a2111d0a618",
+        "tensor_sha256": "13e0bd420b58c83b754bdec89eec42ad923e4ef7613ccfeb32fe86506fa4a37a"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "13e0bd420b58c83b754bdec89eec42ad923e4ef7613ccfeb32fe86506fa4a37a",
+        "fit_cpu_seconds": 5.888108498000008,
+        "fit_wall_seconds": 5.888667650000002,
+        "initial_weights_sha256": "97d484815cea9db4a8344ac29c007f0cce3b5d4942b65d957b6eff7d4cb344d8",
+        "last_preupdate_nll": 0.08723886146370997,
+        "last_step_cpu_seconds": 0.04571895300000506,
+        "parameters": 470,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009110150999958933,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "0f9a89b23a9b4f3f303c6e7112a89ac6ef4de20efdf572afdeb592a13383b3db",
+        "tensor_sha256": "97d484815cea9db4a8344ac29c007f0cce3b5d4942b65d957b6eff7d4cb344d8"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_supplied_persistence",
+        "ordinal": 50,
+        "regime": "fixed_exposure",
+        "seed": 37,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "9d0bf93b0904231fa128b4390364cd6e3cffd3824ec016f1085db73d91d53216",
+        "tensor_sha256": "dd64af1423fda895c76d7bc701ae2eeb07d4cef9448cc58d5e8580c728fce8d1"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "dd64af1423fda895c76d7bc701ae2eeb07d4cef9448cc58d5e8580c728fce8d1",
+        "fit_cpu_seconds": 8.448754133000023,
+        "fit_wall_seconds": 8.449298848000012,
+        "initial_weights_sha256": "084d8963ae5241a38db37b366f4d5b002c0fa70ef4e1c011458d5a852b36826e",
+        "last_preupdate_nll": 0.08827270097635347,
+        "last_step_cpu_seconds": 0.06603754999997591,
+        "parameters": 584,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009210418999998637,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "aa72799fd0c5c79b8f766c571810f17216c5cb8d9e43910a00aee9db2bb981b2",
+        "tensor_sha256": "084d8963ae5241a38db37b366f4d5b002c0fa70ef4e1c011458d5a852b36826e"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_learned_persistence",
+        "ordinal": 51,
+        "regime": "fixed_exposure",
+        "seed": 37,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "5ba94859762a8f4b149bd6514ca214a3e417d3a69d99821e76e9da39bfd022b7",
+        "tensor_sha256": "82bf6feaac53dadfbf7f48b2f71ab40fa44e4bf0800f9545da992e55e53b5437"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "82bf6feaac53dadfbf7f48b2f71ab40fa44e4bf0800f9545da992e55e53b5437",
+        "fit_cpu_seconds": 8.406550096999979,
+        "fit_wall_seconds": 8.407373777000032,
+        "initial_weights_sha256": "7453b184b434f3c6ffd3bc501f7467b44e9137d429063f17958c163a9908c996",
+        "last_preupdate_nll": 0.08883719212581113,
+        "last_step_cpu_seconds": 0.06521138900001233,
+        "parameters": 972,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009312918000034642,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "8b6903989a810dc68e625068be21e3b2ea8ab0148b3809c76cea495af8490ecc",
+        "tensor_sha256": "7453b184b434f3c6ffd3bc501f7467b44e9137d429063f17958c163a9908c996"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_untied_roles",
+        "ordinal": 52,
+        "regime": "fixed_exposure",
+        "seed": 37,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "b0dd2aeac9e60409382272b86ced4cefe24ded71cacba2589743394ae352fc58",
+        "tensor_sha256": "a000e6fdf966a0bceebcb18c022ddac3e93176b340249d6dc70fc1dfcdc2ccb6"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "a000e6fdf966a0bceebcb18c022ddac3e93176b340249d6dc70fc1dfcdc2ccb6",
+        "fit_cpu_seconds": 8.30580880299999,
+        "fit_wall_seconds": 8.306659965999984,
+        "initial_weights_sha256": "084d8963ae5241a38db37b366f4d5b002c0fa70ef4e1c011458d5a852b36826e",
+        "last_preupdate_nll": 0.15318581259986885,
+        "last_step_cpu_seconds": 0.06515376199996581,
+        "parameters": 584,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009233188999985487,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "aa72799fd0c5c79b8f766c571810f17216c5cb8d9e43910a00aee9db2bb981b2",
+        "tensor_sha256": "084d8963ae5241a38db37b366f4d5b002c0fa70ef4e1c011458d5a852b36826e"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_memory_reset",
+        "ordinal": 53,
+        "regime": "fixed_exposure",
+        "seed": 37,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "eb8e53e28c6b8bfd61f73b7d9be33cb75e22ee6d8a405eb3f863da40be1818cd",
+        "tensor_sha256": "2942aad7d559c69f85a59a1b812f16046221b879ca7fe5b4ed691c83f06b837f"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "2942aad7d559c69f85a59a1b812f16046221b879ca7fe5b4ed691c83f06b837f",
+        "fit_cpu_seconds": 2.3721685229999707,
+        "fit_wall_seconds": 2.3723905759999866,
+        "initial_weights_sha256": "a2acc21baaf452a4f242776428ce3b3256eb452ba2a083ebc786f4a7a5a9bd72",
+        "last_preupdate_nll": 0.1590239693491539,
+        "last_step_cpu_seconds": 0.018251773000031335,
+        "parameters": 648,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009054466000009143,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "f0559a5b2299f83abbb9d72be73e4cc9ff82f468902dc930977ae21ed10a455e",
+        "tensor_sha256": "a2acc21baaf452a4f242776428ce3b3256eb452ba2a083ebc786f4a7a5a9bd72"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "flat_supplied_persistence",
+        "ordinal": 54,
+        "regime": "fixed_exposure",
+        "seed": 53,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "058b77289af3d795a41c409a9223e8196243539558c34b06efc7c211a63c83b9",
+        "tensor_sha256": "6efe941c433de28dddacb9e397cce4d81ad8ea6db5fc60ade3a1a3b9e21a5b3c"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "6efe941c433de28dddacb9e397cce4d81ad8ea6db5fc60ade3a1a3b9e21a5b3c",
+        "fit_cpu_seconds": 5.902086875000009,
+        "fit_wall_seconds": 5.902639726000018,
+        "initial_weights_sha256": "d0d70e673ee4dd20ca1b9034206d4c2ae3fa54b54847d35aaaaf060f54ed609c",
+        "last_preupdate_nll": 0.08734886182620821,
+        "last_step_cpu_seconds": 0.04654984199999035,
+        "parameters": 470,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009166697000011936,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "c83e440c0d139febfd5c13857856a234da362c32f042aa30412d40092137c146",
+        "tensor_sha256": "d0d70e673ee4dd20ca1b9034206d4c2ae3fa54b54847d35aaaaf060f54ed609c"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_supplied_persistence",
+        "ordinal": 55,
+        "regime": "fixed_exposure",
+        "seed": 53,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "4c7a68cd35efacaf92509fb048438ea3dab0d339cc0c5c99df345ecfdbb78ea9",
+        "tensor_sha256": "b61d052f14740b29d3b1ce60309c34ce9425299f3a71f5bcd3b570544ecb6301"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "b61d052f14740b29d3b1ce60309c34ce9425299f3a71f5bcd3b570544ecb6301",
+        "fit_cpu_seconds": 8.494624326999997,
+        "fit_wall_seconds": 8.495521971000016,
+        "initial_weights_sha256": "8f6cb349bcd7e106674d58b15959905ac96556532fd601b14238de913133d0a6",
+        "last_preupdate_nll": 0.08849362738137066,
+        "last_step_cpu_seconds": 0.06602443499997435,
+        "parameters": 584,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009260471999994024,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "eb4632bc34b106d0480b38d154bd567882ecfe686ebfe05c78974177d78391f3",
+        "tensor_sha256": "8f6cb349bcd7e106674d58b15959905ac96556532fd601b14238de913133d0a6"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_learned_persistence",
+        "ordinal": 56,
+        "regime": "fixed_exposure",
+        "seed": 53,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "91703935fb1a174661cc58f07529681a19afb33b40817fc6d7ed764bc036db3a",
+        "tensor_sha256": "039bc75b67eeef25b5c11218ab2552dea63a1e5ca3d2ab4604f84ca134bc2255"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "039bc75b67eeef25b5c11218ab2552dea63a1e5ca3d2ab4604f84ca134bc2255",
+        "fit_cpu_seconds": 8.397708050999995,
+        "fit_wall_seconds": 8.399840455000003,
+        "initial_weights_sha256": "4ff21197a2b45615ec9e99241fc8d1498c2b8dacb01834522b626c0d58799653",
+        "last_preupdate_nll": 0.08876447595663206,
+        "last_step_cpu_seconds": 0.06497514900001988,
+        "parameters": 972,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.00934345600001052,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "5213f9e7fbb0b15062e6eec49ed3b1df30356aaed336250a93cf9c656622318e",
+        "tensor_sha256": "4ff21197a2b45615ec9e99241fc8d1498c2b8dacb01834522b626c0d58799653"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_untied_roles",
+        "ordinal": 57,
+        "regime": "fixed_exposure",
+        "seed": 53,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "98c38864cb09d35952771eb222ad542b9ac53d9032cd275fb3dc3b1ad743f5b5",
+        "tensor_sha256": "e85bbdb68bfcdb4bf7e1fdf228919e037fb7ea85b2d3270e96c9e65a9319114d"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "e85bbdb68bfcdb4bf7e1fdf228919e037fb7ea85b2d3270e96c9e65a9319114d",
+        "fit_cpu_seconds": 8.324100980000026,
+        "fit_wall_seconds": 8.324718655000027,
+        "initial_weights_sha256": "8f6cb349bcd7e106674d58b15959905ac96556532fd601b14238de913133d0a6",
+        "last_preupdate_nll": 0.1533717078761059,
+        "last_step_cpu_seconds": 0.06589015499997686,
+        "parameters": 584,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009247799000036139,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "eb4632bc34b106d0480b38d154bd567882ecfe686ebfe05c78974177d78391f3",
+        "tensor_sha256": "8f6cb349bcd7e106674d58b15959905ac96556532fd601b14238de913133d0a6"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "kernel_memory_reset",
+        "ordinal": 58,
+        "regime": "fixed_exposure",
+        "seed": 53,
+        "updates": 128
+      }
+    },
+    {
+      "events_processed": 1572864,
+      "final": {
+        "file": "final.pt",
+        "file_sha256": "9c37f83c3ca2cb8299cd9a13c68379063ca59b75b679c3ad9601d22ff281ba11",
+        "tensor_sha256": "bb8c6a62447ebbefd390a8ae39f8b710bb783f082ddc73f4cb81dddeeca6caba"
+      },
+      "fit": {
+        "completed_updates": 128,
+        "cpu_ceiling_seconds": 60.0,
+        "cpu_overshoot_seconds": 0.0,
+        "events_per_update": 12288,
+        "final_weights_sha256": "bb8c6a62447ebbefd390a8ae39f8b710bb783f082ddc73f4cb81dddeeca6caba",
+        "fit_cpu_seconds": 1.8596276659999944,
+        "fit_wall_seconds": 1.8597835289999693,
+        "initial_weights_sha256": "a2acc21baaf452a4f242776428ce3b3256eb452ba2a083ebc786f4a7a5a9bd72",
+        "last_preupdate_nll": 0.26597161830617216,
+        "last_step_cpu_seconds": 0.01414416599999413,
+        "parameters": 648,
+        "requested_updates": 128,
+        "setup_wall_seconds": 0.009193350000032297,
+        "stop_reason": "update_limit",
+        "training_input_sha256": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e"
+      },
+      "initial": {
+        "file": "initial.pt",
+        "file_sha256": "f0559a5b2299f83abbb9d72be73e4cc9ff82f468902dc930977ae21ed10a455e",
+        "tensor_sha256": "a2acc21baaf452a4f242776428ce3b3256eb452ba2a083ebc786f4a7a5a9bd72"
+      },
+      "task": {
+        "condition": "informative",
+        "cpu_seconds": 60.0,
+        "model": "flat",
+        "ordinal": 59,
+        "regime": "fixed_exposure",
+        "seed": 53,
+        "updates": 128
+      }
+    }
+  ],
+  "code_commit": "a8abb123852e4c9c4dff51f2cabc173e2452670c",
+  "control_checks": [
+    {
+      "condition": "informative",
+      "file": "informative-prefix.json",
+      "file_sha256": "f2bf707b1299a86b7b1292492db41e5c6ea3e64deae52d1b0fce34b1a2c167b0",
+      "keys": 4536,
+      "measured_events": 12288,
+      "mode": "prefix",
+      "table_sha256": "4f5f298075b40f821ba9889e3a9d530f6ccec45d0c794f5ebc7aec4878a4fb14"
+    },
+    {
+      "condition": "informative",
+      "file": "informative-local.json",
+      "file_sha256": "2ab95aee01d8dcdaf9400f35a90d4e0cbea633c318d0b96e8e335d4a0730e757",
+      "keys": 32,
+      "measured_events": 12288,
+      "mode": "local",
+      "table_sha256": "1e7bed9cb64076ba18e07c24e61f980d8d32ff21ae0609a94d7d20f03d4c8d8d"
+    },
+    {
+      "condition": "informative",
+      "file": "informative-contact.json",
+      "file_sha256": "9422fb9176c49a832973e49e9515c81c67aad5c112344eeef13591eaa3e37632",
+      "keys": 98,
+      "measured_events": 12288,
+      "mode": "contact",
+      "table_sha256": "c5863070e39322af0adba521e4b7c1954b524128f658ab9100c73931bc92d7f1"
+    }
+  ],
+  "environment": {
+    "cpu_model": "AMD EPYC 7763 64-Core Processor",
+    "default_dtype": "torch.float32",
+    "deterministic_algorithms": true,
+    "deterministic_warn_only": false,
+    "interop_threads": 1,
+    "intraop_threads": 1,
+    "peak_rss": 351468,
+    "peak_rss_unit": "KiB",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "python": "3.13.17",
+    "torch": "2.10.0+cpu",
+    "torch_config_sha256": "4096ae2ff210db4a4da17fe7e5ef17c7715c4e4dc5d4175a9357b83bf820075a"
+  },
+  "implementation": {
+    "evaluation_enabled_by_ordinary_ci": false,
+    "parent_source_export_sha256": "bf180e90d060220bcb4fc50e6e739a8a0357372be467d2251c6f19f6bfb84a2c",
+    "protocol_commit": "a6f3cc1ae1561819b41eedcd06eef5148f3d4896",
+    "source_sha256": {
+      "comparison_execution.py": "143a29e7fee901a009674ef271e779c126300e6496f7c26d79fe222540772213",
+      "comparison_run.py": "272430eaf332a9b823774f0a42821f39ceca3d9252e81ddc0c4bf56631a1a7aa",
+      "comparison_scoring.py": "95865f228ccb06345deda847570efa1aaea8e72828f64645d00d19a360b6a473",
+      "empirical_joint.py": "d93175b6c0b30a485e54f6417b98108a8e2cff06bc972f78e2c451490f4832dc",
+      "informative_curriculum.py": "5fbb22e4a26e30d2bcbc609db976000ab0fc30ff96ee106a9caff7bafa13aada",
+      "joint_objective.py": "c00551ac3f0cff682b2dcd415929d8e8b7279f7fe92494fd07a2411a29ad1f4f",
+      "masked_replay.py": "fb79da609986721172b85737ef18150c465ea255b38ca176d945cc132dae69fa",
+      "sensor_transfer_data.py": "e1176a8ed0b7c9b3826be197f8569bc5a157ada560966748bcf68f976ef4c278",
+      "sensor_transfer_protocol_v1.json": "c73017ad458398e12bb6320a1a040883b106c896f45bee57a048ecf7641524eb",
+      "sensor_transfer_run.py": "a85d17f55a15c917b1a32afbcebb5aa40d746a913764ab3181fbdc4fc58432f5",
+      "tests/test_masked_transfer.py": "c66d9d8a7175e853114a26ebe3eb29d3353aa002dd1778993a063948f787d26b"
+    },
+    "training": false
+  },
+  "manifest_sha256": "f72a569d1f69f7d298a233b44c01913b7e6a2e8d5e1613ae78393c0f5c299855",
+  "protocol": {
+    "cases": "256 factorial cases: initial bits=(case>>7,case>>6,case>>5)&1; stable mode=(case>>4)&1; target bits x,y,z=(case>>3,case>>2,case>>1)&1; last contact reversed when case&1. Six lexicographic consistent identity permutations, and three arbitrary new string handles mapped to slots. 1536 correlated views per family/sensor policy. No random selection.",
+    "checkpoint_archive": {
+      "artifact": 12882021983,
+      "report_sha256": "581172fcfd257127772ea9962544bae1071bc43ce683fca225128e9de5f5d078",
+      "run": 40838302597,
+      "zip_sha256": "bb304deef068798777f6e2bdcc4cc5d2ead9e26b582d4d8ef21e091ea6403e4d"
+    },
+    "comparisons": "Per family/policy/model/seed: accuracy and proper scores, all-query counts, full-to-hidden_resets correct-to-wrong/wrong-to-correct IDs, paired reversed-role correctness, unchanged-bit error counts. Inverse-map six identifier views to identity for distribution TV and tie/MAP sensitivity. For each empirical abstraction report training-key support and explicit unsupported-path counts; unsupported controls do not prove neural superiority. Report all seeds, mean and worst; no iid interval over permutations.",
+    "control_policy": "Restore informative training tables without refitting. first_contact reuses the unchanged contact table but supplies only the earliest contact record to its context; this supplied static-context abstraction is declared before scores. prefix/local/contact remain unchanged. Unknown context on any positive-weight branch causes explicit abstention, never renormalization over supported paths. no_change_last_observed predicts its latest measured three bits and overwrites only subsequently observed coordinates; supplied persistence, not an inferred world fact.",
+    "controls": [
+      "no_change_last_observed",
+      "prefix",
+      "local",
+      "contact",
+      "first_contact"
+    ],
+    "custody": "Same assistant author, separately implemented evaluator; NOT independent authorship, independent custody or G1 admission. New outcomes are not used to select model changes.",
+    "decision_rule": "No further tuning on these outcomes. Preserve the first result even on failure. Success is a bounded transfer result, not G1 admission: independently authored/held challenge and capacity/compute-matched evidence remain outstanding. A first_contact empirical control matching the models continues to reject special neural superiority. If identifiable partial queries fail, isolate observation-filter versus learned-transition versus representation error before any extension. No language or production change.",
+    "execution": "Commit implementation and synthetic invariant tests separately after this protocol before evaluation. One serial no-training evaluation on CPU PyTorch 2.10.0+cpu, float64, one intra/inter-op thread, deterministic algorithms, PYTHONHASHSEED=0. Use nonexistent output directory outside source; retain complete forecasts, masks, actions, gold, oracle distributions, checkpoint checks, source hashes and actual CPU/wall/RSS costs. 15-minute process deadline; preserve incomplete output and fail without silent retry. Ordinary CI runs invariants only. Implementation failure before any scientific forecasts may be repaired transparently; after forecasts are opened changes require a new protocol, never overwrite this attempt.",
+    "families": {
+      "reordered": "set(A,1), set(B,1), contact(A,B), set(C,z), set(A,x), set(B,y), contact(B,C) or contact(C,B), observe",
+      "reversed": "set(A,1), set(B,1), contact(B,A), set(C,z), set(B,y), set(A,x), contact(C,A) or contact(A,C), observe"
+    },
+    "id": "cemm-frozen-checkpoint-sensor-transfer-v1",
+    "inference": "One COMMON exact finite-path Bayesian wrapper around each unchanged model's predict/receive interface. Enumerate only possible current binary worlds, propagate learned conditional probabilities, condition on actual visible bits, retain recurrent/mode state separately for every hypothetical path. Hypothetical branch values never become observed facts. No world physics, mode label, hidden bit, future reading or evaluator annotation enters the wrapper. Missing values encoded -1 with explicit boolean mask. No pruning, smoothing or sampling; at most 64 represented paths per episode under this protocol, abort rather than truncate. This inference algorithm is SUPPLIED, not learned partial-observation competence. Full-sensor path must equal direct replay in distributions. Both families and empirical memories use identical realized actions/masks/readings; empirical memory uses hypothetical full prefixes only within the declared latent-path calculation, never as independent evidence.",
+    "physics": "Same deterministic binary directed interaction as the training environment: mode 0 means first operand is source; mode 1 means second operand is source. Target becomes XOR of source and target, source/others preserved. set writes its supplied bit; observe changes nothing. Evaluator-only explicit truth tables, no old simulator or model import in fixture implementation.",
+    "purpose": "Test frozen common-objective checkpoints on two new chronological families and explicit missing readings. Close the opened PR52 diagnostic; do not train, tune, recalibrate or rerun it.",
+    "scoring": "Reuse existing comparison_scoring normalization/score functions where compatible. Preserve raw/normalized log probabilities, explicit -inf, underflow and corrections. Score all eight steps separately; primary final query step 6, complete-world MAP, joint NLL and Brier. Lexicographic exact-tie MAP with tie-aware diagnostics. Record coverage and wrong/correct/abstained per all queries. An infinite answered NLL makes aggregate infinite; never average only finite cases. Score identifiable and ambiguous queries separately using an evaluator-only exhaustive two-mode posterior. No ECE or calibration claim required for this limited transfer test.",
+    "selection": {
+      "fits": 30,
+      "models": [
+        "kernel_supplied_persistence",
+        "kernel_learned_persistence",
+        "kernel_untied_roles",
+        "kernel_memory_reset",
+        "flat",
+        "flat_supplied_persistence"
+      ],
+      "regime": "fixed_exposure",
+      "seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ],
+      "training": "NONE; restore all selected final weights with original file and tensor hash checks; keep original parameter and training-cost metadata",
+      "training_condition": "informative"
+    },
+    "sensor_policies": {
+      "full": "All three bits observed after every action.",
+      "hidden_probe": "After action 2 no bits measured; after action 3 only C; after action 4 C and that action's reset participant; after action 5 all bits. All other readings full. Both probe participants have been reset before any subsequent full reading, so the original mode evidence remains absent.",
+      "hidden_resets": "Full except after actions 4 and 5 (zero-based): only C is measured. At query step 6 both learners must marginalize their predicted missing states; no ground-truth fill."
+    },
+    "size": "Keep this as a compact adapter/fixture around the existing models, scoring and checkpoint artifacts, not another training harness. Report added and retained LOC honestly.",
+    "source_commit": "2222df6bbb218c5fc464a639750b4e73da12f43b",
+    "status": "FROZEN_NOT_RUN"
+  },
+  "protocol_sha256": "c73017ad458398e12bb6320a1a040883b106c896f45bee57a048ecf7641524eb",
+  "source_note": "all manifest source bytes checked; code commit supplied by invoking verified workflow; hashes are integrity checks, not independent custody",
+  "status": "IN_PROGRESS"
+}
