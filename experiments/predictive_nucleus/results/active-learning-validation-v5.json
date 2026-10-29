@@ -1,0 +1,513 @@
+{
+  "base_commit": "45a6a8382a9a39a3963b469f54a36fb5d7fa2755",
+  "base_pr": 58,
+  "checkpoint_format": "cemm-active-checkpoint-v1",
+  "checks": [
+    {
+      "exit_code": 0,
+      "name": "protocol",
+      "stdout_sha256": "cadb9f2c91b7b2fdd3d13d2032b2b3e90b7d734e1ad8591fdc14857d8c03dcbf"
+    },
+    {
+      "exit_code": 0,
+      "name": "common_objective_comparison_protocol_v1.sha256",
+      "stdout_sha256": "b4b63f70070e7521854456d5542c1ef838a244627040564fc5f21757b473fdff"
+    },
+    {
+      "exit_code": 0,
+      "name": "context_protocol_v6.sha256",
+      "stdout_sha256": "a100cb3dbd128d6ebf98462cec21d47c65ad8e5c8306515bd440f970d137f671"
+    },
+    {
+      "exit_code": 0,
+      "name": "dev_composition_protocol_v1.sha256",
+      "stdout_sha256": "866ea5e323577f4fcb7a10cee9bab5c996b4041e018de74aba3b250f6129747a"
+    },
+    {
+      "exit_code": 0,
+      "name": "dev_composition_protocol_v2.sha256",
+      "stdout_sha256": "e520bde1c0102976391c1e58c82bb365310b34ce662ad51838854709d68b4c54"
+    },
+    {
+      "exit_code": 0,
+      "name": "epistemic_protocol_v2.sha256",
+      "stdout_sha256": "41e4cbeffade25e1c1324cb24b700ffb56098dfd58cbceadd0f30b8bba5b0818"
+    },
+    {
+      "exit_code": 0,
+      "name": "flat_protocol_v7.sha256",
+      "stdout_sha256": "03142ee36dde53addf56564b58080e0a65224991b64d2d8491ee7e0e6a9d4b89"
+    },
+    {
+      "exit_code": 0,
+      "name": "flat_updates_protocol_v8.sha256",
+      "stdout_sha256": "5bc6a4ca8e18e80756062a1c970f1c4be58fc8ed245ca27ca119d7a5277063cd"
+    },
+    {
+      "exit_code": 0,
+      "name": "full_sensor_paired_protocol_v1.sha256",
+      "stdout_sha256": "2c37478a0efa419119e11bf8c0e2ddb4a817a526c900986872a34698cfa7f673"
+    },
+    {
+      "exit_code": 0,
+      "name": "full_sensor_paired_protocol_v2.sha256",
+      "stdout_sha256": "20d58e94276f3b07f4d31a05116626e7cacd2c68d9b46f743b9d15af701734e5"
+    },
+    {
+      "exit_code": 0,
+      "name": "full_sensor_posthoc_replay_protocol_v1.sha256",
+      "stdout_sha256": "3c4323fd21fd8b5df62a7f8203f0fd861cae980b3157af0899106fa6d6b75b8b"
+    },
+    {
+      "exit_code": 0,
+      "name": "guard_protocol_v5.sha256",
+      "stdout_sha256": "381222436fb3982c1dcf66922910fe5b2baa13e419e8cb52936b48b36bd28f1f"
+    },
+    {
+      "exit_code": 0,
+      "name": "protocol.sha256",
+      "stdout_sha256": "e332deacf6e334113cb845110487bd7d4b54eec436b058825ef9170bf96f5ef9"
+    },
+    {
+      "exit_code": 0,
+      "name": "sensor_transfer_implementation_v1.sha256",
+      "stdout_sha256": "08cacf858ab86721821c9fdba914def2f1efd16f7735c53232c3a0bd40b11d12"
+    },
+    {
+      "exit_code": 0,
+      "name": "sensor_transfer_protocol_v1.sha256",
+      "stdout_sha256": "a1acbf9cf4dbe0f3885ded6ca33080ba7814cdaf70d452343e9b1ad2263deb38"
+    },
+    {
+      "exit_code": 0,
+      "name": "stability_protocol_v4.sha256",
+      "stdout_sha256": "5c1bce0851dfc8be0b3e472aa75d82d8ae4f4e6e169fa3bc908a2edda3d80376"
+    },
+    {
+      "exit_code": 0,
+      "name": "stress_protocol_v3.sha256",
+      "stdout_sha256": "6e98dab1c6d926f10b1635782728bfa92b33fd595476c8c8be977d50ca49983e"
+    },
+    {
+      "exit_code": 0,
+      "name": "preflight",
+      "stdout_sha256": "31548215b596ac3a245ebf7c7a5ea2430c38653ee2f08efbc0df98efedfdd699"
+    }
+  ],
+  "ci_reference": "https://github.com/robosys-labs/cemm/pull/59/checks",
+  "ci_scope": "This record pins the locally verified source tree. The draft PR records checks on the final documentation head.",
+  "closed_public_study_rerun": false,
+  "code_commit": "94c059a0fd4fdb78ad5f442419053ac99e41c124",
+  "comparison_scope": {
+    "default_parameter_counts": {
+      "flat": 1512,
+      "flat_supplied_persistence": 1512,
+      "kernel_learned_background": 584,
+      "kernel_memory_reset": 584,
+      "kernel_supplied_persistence": 470,
+      "kernel_untied_roles": 972
+    },
+    "legacy_flat_weights_convertible": false,
+    "matched_capacity": false,
+    "matched_consumed_compute": false,
+    "native_flat_implemented": true,
+    "new_scientific_comparison": false
+  },
+  "complete_local_suite": {
+    "command": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONHASHSEED=0 /tmp/cemm-active-venv/bin/python -m unittest discover -s experiments/predictive_nucleus/tests -v",
+    "log_scope": "Final corrected source commit, clean checkout.",
+    "output_sha256": "40f71cc70cd729f7e37600661921a8bd2dbf875282162963c1f97848335048dc",
+    "seconds": 52.151,
+    "tests_discovered": 546,
+    "tests_passed": 546,
+    "tests_skipped": 0
+  },
+  "diagnostic_scope": {
+    "advisory_only": true,
+    "alpha": 0.05,
+    "alternate_change_point_monitor_integrated": false,
+    "calibration_established": false,
+    "dropout_independence_verified": false,
+    "heuristic_surprise_reference_ratio": 4.0,
+    "learned_probe_selection_integrated": false,
+    "posterior_context_support_integrated": false,
+    "sensor_source_authenticated": false
+  },
+  "domain": {
+    "action_limit": 128,
+    "candidate_expansion_limit": 512,
+    "default_live_path_limit": 64,
+    "explicit_adaptation_required_for_legacy_kernel_or_table_expansion": true,
+    "full_initial_anchor": true,
+    "legacy_flat_entity_counts": [
+      3
+    ],
+    "legacy_unadapted_entity_counts": [
+      3
+    ],
+    "native_flat_entity_counts": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "native_predictors": [
+      "DomainKernel",
+      "DomainFlatGRU",
+      "DomainMemory",
+      "no_change"
+    ],
+    "predictor_capability_check_required": true,
+    "self_contact_generalization_established": false,
+    "self_contact_representation": {
+      "empirical": "observed_counts_with_explicit_size_and_alias_contexts",
+      "flat": "one_physical_output_coordinate",
+      "shared_kernel": "supplied_per_mode_alias_conditioning"
+    },
+    "state": "binary",
+    "supported_entity_counts": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "visible_sensor_noise": false
+  },
+  "earlier_v5_revision": {
+    "complete_local_suite": {
+      "command": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONHASHSEED=0 /tmp/cemm-active-venv/bin/python -m unittest discover -s experiments/predictive_nucleus/tests -v",
+      "log_scope": "Final corrected source commit, clean checkout.",
+      "output_sha256": "40f71cc70cd729f7e37600661921a8bd2dbf875282162963c1f97848335048dc",
+      "seconds": 52.151,
+      "tests_discovered": 546,
+      "tests_passed": 546,
+      "tests_skipped": 0
+    },
+    "local_code_commit": "46a05e1dadd9f7e509e0ab3ebb9a40b45375899e",
+    "published_ci": [
+      {
+        "conclusion": "success",
+        "run_id": 40963937107,
+        "url": "https://github.com/robosys-labs/cemm/actions/runs/40963937107"
+      },
+      {
+        "conclusion": "success",
+        "run_id": 40963937108,
+        "url": "https://github.com/robosys-labs/cemm/actions/runs/40963937108"
+      }
+    ],
+    "published_code_commit": "4098bc66d47ef603ac3784e499fcf65a5a923567",
+    "scope": "Preceded the two final post-update reporting/fingerprinting regressions; not the final code verification.",
+    "tree_sha": "c481371377322e97a61734634e0602baca3cdabd"
+  },
+  "environment": {
+    "cpu_model": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "default_dtype": "torch.float32",
+    "deterministic_algorithms": true,
+    "deterministic_warn_only": false,
+    "interop_threads": 1,
+    "intraop_threads": 1,
+    "peak_rss": 314032,
+    "peak_rss_unit": "KiB",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "python": "3.13.16",
+    "torch": "2.10.0+cpu",
+    "torch_config_sha256": "4f3cd65dc58472ed223329fa5ab743d0a360e777accb4001b511fc418c78128b"
+  },
+  "environment_scope": "Frozen-input preflight process; its peak RSS is not a scientific fit or inference benchmark.",
+  "evaluation_scope": {
+    "calibration_established": false,
+    "complete_world_accuracy_on_unobserved_bits": false,
+    "conditional_answered_only_nll_separately_labeled": true,
+    "delivered_observation_likelihood_and_coverage": true,
+    "hidden_gold_available": false,
+    "infinite_contradiction_nll_preserved": true,
+    "planned_denominators_retained_on_failure": true,
+    "scientific_acceptance_runner": false,
+    "unsupported_distribution_and_likelihood_are_absent": true,
+    "valid_prefixes_and_feedback_failure_forecast_retained": true,
+    "whole_trajectory_gate": false
+  },
+  "evidence_version": "active-evidence-v2",
+  "frozen_input_preflight": {
+    "lineage": {
+      "complete_history": true,
+      "execution_commit": "5a857ab0879cb1e67ca01a1de888eafbabace5d0",
+      "protocol_commit": "2eeae6323d8123da5ded40a56e77ef68e6aac5ac",
+      "runner_commit": "fd64a5b1a9efc460086cfe21c4f62fe631135298",
+      "runner_sha256": "143a29e7fee901a009674ef271e779c126300e6496f7c26d79fe222540772213",
+      "source_commit": "3bbce83121386501ae39567b48fc9aa62325de79",
+      "tracked_tree_clean": true,
+      "untracked_present": false
+    },
+    "protocol_sha256": "15732afe065f19f3b412a7638e386373eb586ddaa273104e2de63c14a782b1f3",
+    "status": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
+    "study_execution_enabled": false
+  },
+  "gate_g1": "NOT_ADMITTED",
+  "historical_manifest_locks_passed": 16,
+  "historical_result_rescored": false,
+  "independent_validation": false,
+  "learning_contract": {
+    "all_missing_event": "zero_immediate_loss_but_hidden_dynamics_and_later_gradients_continue",
+    "api_module": "experiments.predictive_nucleus.active_learning",
+    "empirical_eligibility": "complete_observed_before_after_worlds_and_sufficient_delivered_history",
+    "empirical_skips_reported": true,
+    "entrypoints": [
+      "ObservedBatch",
+      "replay",
+      "fit",
+      "fit_empirical",
+      "evaluate"
+    ],
+    "interrupted_weight_mutation_rolls_back": false,
+    "interruption_cleanup_precedes_fallible_current_hash": true,
+    "loss_reduction": "equal_weight_per_observed_event_across_all_batches",
+    "neural_objective": "mean_joint_negative_log_likelihood_of_each_event_with_any_delivered_reading",
+    "optimizer_resume": false,
+    "partial_targets": "joint_marginal_over_compatible_complete_worlds",
+    "same_delivered_histories_imply_equal_usable_target_counts": false,
+    "train_evaluation_split_disjointness_enforced": false,
+    "training_and_evaluation_cli": false,
+    "training_and_evaluation_input_fields_separate": true,
+    "training_settings_and_source_recorded": true,
+    "unavailable_current_state_hash": null,
+    "verification_scope": "synthetic_wiring_likelihood_gradient_and_causal_invariants_only"
+  },
+  "learning_pr": 59,
+  "learning_version": "active-learning-v1",
+  "limits": [
+    "Only synthetic fitting and implementation invariants ran; no historical research model was retrained or newly scored, closed study rerun, or scientific result changed.",
+    "Shared-kernel self-contact remains supplied per-mode alias conditioning; tiny retained mass can normalize to a confident forecast.",
+    "The fresh flat model has 1512 default parameters versus 470/584/972 shared arms; neither capacity nor consumed compute is matched.",
+    "Legacy flat checkpoints remain three-entity-only and cannot be converted to the new flat architecture.",
+    "Positive-mass paths are neither pruned nor merged; missing observations can exhaust the default 64-live-path or 512-candidate budgets.",
+    "Empirical fitting counts fewer eligible targets when readings/history are incomplete; hidden values and unsupported counts are never synthesized.",
+    "The current evaluator reports delivered-observation likelihood and coverage, not hidden complete-world truth, trajectory acceptance or calibrated scientific performance.",
+    "Native checkpoints restore learned state for fresh episodes only; they do not resume optimizers, live filters or pending forecasts. Declared provenance is unauthenticated.",
+    "Interrupted fitting does not roll back mutated weights; it invalidates stale checkpoint identity and marks current provenance interrupted.",
+    "If final fingerprinting also fails after a training interruption, current-state hashes are explicitly unavailable; the original failure is preserved.",
+    "The active command remains repository-backed; frozen standalone v1 exports and scientific evidence are unchanged.",
+    "Evidence remains conditional, uncalibrated and advisory; observed context counts are not posterior support or learned reliability.",
+    "The active-file subtotal excludes frozen dependencies and does not meet the inclusive 2000-line goal."
+  ],
+  "line_counts": {
+    "active_files": {
+      "active_checkpoint.py": 291,
+      "active_evidence.py": 156,
+      "active_learning.py": 346,
+      "active_participant.py": 225,
+      "active_paths.py": 255,
+      "domain_contract.py": 297,
+      "domain_flat.py": 74,
+      "domain_kernel.py": 149
+    },
+    "active_source_files_excluding_frozen_dependencies": 1793,
+    "inclusive_size_goal_met": false,
+    "new_runtime_source_net": 767,
+    "new_tests_net": 1127,
+    "retained_research_python": 22708
+  },
+  "local_verified_code_commit": "5a857ab0879cb1e67ca01a1de888eafbabace5d0",
+  "native_checkpoint": {
+    "cli_flag": "--checkpoint",
+    "encoding": "strict_plain_json",
+    "explicit_expected_sha256_required": true,
+    "fitted_empirical_control_policy_bound": true,
+    "format": "cemm-active-checkpoint-v1",
+    "fresh_episodes_only": true,
+    "legacy_origin_separate_from_current_state": true,
+    "live_session_resume": false,
+    "matching_local_inference_sources_required": true,
+    "maximum_bytes": 16777216,
+    "maximum_registered_hidden_width": 256,
+    "optimizer_resume": false,
+    "overwrite_allowed": false,
+    "provenance_authenticated": false,
+    "registered_constructors_only": true
+  },
+  "new_scientific_evaluation": false,
+  "new_tests": {
+    "counts_by_file": {
+      "test_active_checkpoint.py": 11,
+      "test_active_learning.py": 18,
+      "test_active_learning_contract.py": 10,
+      "test_domain_flat.py": 9
+    },
+    "discovered": 48,
+    "passed": 48,
+    "sha256_by_file": {
+      "test_active_checkpoint.py": "70d37db99de7e5114c99afde79b4bff496f5bb66acb1d7774f7554c73229c001",
+      "test_active_learning.py": "c1e20accba385b5e02b521790d0a34754ca965f3374837650dc101dc60fb24b4",
+      "test_active_learning_contract.py": "53aa2225e85bf77be7f3ae8cf1729346c5cd77bafbd7e25c4b3cffcb7e9bd623",
+      "test_domain_flat.py": "51a44e99a94f367032dee64b452d1decc3b1bde3db1a4bfd83c7c997105574e3"
+    },
+    "skipped": 0,
+    "test_names_by_file": {
+      "test_active_checkpoint.py": [
+        "test_all_model_configurations_round_trip_tensors_and_fresh_forecasts",
+        "test_empirical_modes_preserve_aliases_counts_origins_and_abstention",
+        "test_bound_empirical_policy_cannot_be_overridden_during_save",
+        "test_no_change_is_explicitly_stateless_and_cannot_resume_an_episode",
+        "test_fitted_legacy_origin_is_separate_from_current_state_and_metadata_detached",
+        "test_expected_hash_is_mandatory_and_local_source_must_match",
+        "test_schema_configuration_geometry_and_tensor_types_fail_closed",
+        "test_duplicate_json_fields_and_nonfinite_values_are_rejected",
+        "test_provenance_matches_predictor_kind_and_never_claims_authentication",
+        "test_bad_empirical_counts_keys_and_duplicate_contexts_are_rejected",
+        "test_exclusive_creation_and_validation_preserve_existing_state"
+      ],
+      "test_active_learning.py": [
+        "test_masked_sequence_likelihood_and_gradients_match_global_enumeration_for_all_arms_and_sizes",
+        "test_full_three_entity_objective_and_gradients_match_frozen_six_arm_path",
+        "test_visible_joint_is_a_correlated_marginal_not_independent_bit_loss",
+        "test_later_evidence_backpropagates_through_underflowed_hidden_history",
+        "test_converged_worlds_keep_distinct_recurrent_histories_and_training_graph",
+        "test_all_missing_step_has_no_loss_but_does_not_reset_the_hidden_transition",
+        "test_default_and_differentiable_replay_agree_without_mutating_data_or_weights",
+        "test_future_observations_cannot_change_their_own_forecasts",
+        "test_unequal_mask_batch_matches_separate_episode_likelihoods_and_gradients",
+        "test_differentiable_filter_preserves_order_and_checks_limits_without_pruning",
+        "test_every_arm_and_empirical_abstraction_fits_the_same_realized_histories",
+        "test_incomplete_contact_history_is_never_repaired_with_later_full_observations",
+        "test_unsupported_control_is_not_a_zero_loss_and_evaluation_remains_strict_json",
+        "test_synthetic_fit_checkpoint_load_and_fresh_evaluation_are_one_common_path",
+        "test_failed_continuation_retains_valid_forecasts_scores_and_planned_denominators",
+        "test_first_contact_policy_survives_default_replay_evaluation_and_checkpoint",
+        "test_learning_after_checkpoint_load_refreshes_provenance_seen_by_direct_session",
+        "test_evaluation_identity_does_not_relabel_training_history_or_optimizer_contract"
+      ],
+      "test_active_learning_contract.py": [
+        "test_hidden_values_and_coverage_are_never_silently_coerced",
+        "test_history_digest_binds_coverage_missingness_ids_and_is_copied",
+        "test_duplicate_episode_ids_fail_before_any_training_or_counting",
+        "test_all_missing_history_cannot_claim_a_training_update",
+        "test_empirical_skips_partition_events_and_abstention_has_no_distribution",
+        "test_conflicting_predictor_and_invalid_limits_fail_even_for_no_change",
+        "test_user_interrupt_after_mutation_invalidates_current_checkpoint_metadata",
+        "test_reporting_interrupt_after_update_invalidates_current_checkpoint_metadata",
+        "test_persistent_postupdate_fingerprint_failure_preserves_original_error_and_unknown_hash",
+        "test_actual_native_cli_loads_trained_flat_and_no_change_into_fresh_episodes"
+      ],
+      "test_domain_flat.py": [
+        "test_declared_flat_geometry_and_parameter_counts",
+        "test_every_domain_action_and_binary_anchor_has_normalized_joint_output",
+        "test_padding_is_observable_and_roles_keep_alias_identity",
+        "test_global_head_selects_padded_tail_zero_worlds_before_normalization",
+        "test_persistence_matches_shared_support_and_alias_is_one_unforced_bit",
+        "test_finite_underflow_is_preserved_and_structural_zeros_remain_exact",
+        "test_sequence_has_finite_gradients_in_every_domain_and_persistence_arm",
+        "test_prediction_and_feedback_preserve_inputs_weights_and_rng",
+        "test_invalid_configuration_observations_actions_and_state_are_rejected"
+      ]
+    }
+  },
+  "numpy_version": "2.3.5",
+  "old_tests_weakened_or_skipped": false,
+  "original_protocol_verification": "passed",
+  "production_cutover": false,
+  "proof_scope": {
+    "actual_native_cli": "Synthetic trained six-entity flat checkpoint and no-change checkpoint; self-contact, receipt-matched feedback and end.",
+    "causal_and_numerical_invariants": [
+      "prediction precedes its own feedback",
+      "later observations propagate gradients through earlier hidden transitions",
+      "joint correlated observation marginals",
+      "finite -1000 history remains selectable and differentiable",
+      "exact zero support remains impossible",
+      "equal current bits do not merge distinct recurrent histories",
+      "unequal batched masks match separate replay"
+    ],
+    "checkpoint_resume_scope": "Fresh episodes only; no live filters or optimizer resume.",
+    "entity_counts": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "full_history_reference": "Independent complete compatible-history enumeration accumulates unnormalized joint log probabilities with one final logsumexp; compares losses and every parameter gradient against packed filtering.",
+    "legacy_cli": "Verified synthetic v1 kernel bundle expansion remains covered.",
+    "legacy_full_observation_parity": "Frozen three-entity full-observation objective, forecasts and parameter gradients across all original six model variants.",
+    "neural_arms": [
+      "kernel_supplied_persistence",
+      "kernel_learned_persistence",
+      "kernel_untied_roles",
+      "kernel_memory_reset",
+      "domain_flat",
+      "domain_flat_supplied_persistence"
+    ],
+    "same_history_fit_wiring": "Six synthetic one-update neural fits and four observed-only empirical abstractions share the delivered-input digest; eligible empirical outcome counts can differ."
+  },
+  "publication_identity_note": "GitHub commit metadata differs from the local commits; the complete source tree is identical.",
+  "publication_tree_matches_local_verified_code": true,
+  "published_tree_sha": "adb0ec97aac6e3f28d5e24f5909d8c9ae2e470ec",
+  "remaining_capability_gaps": {
+    "calibrated_expanded_domain_comparison": "PENDING",
+    "coherent_active_training_checkpoint_evaluation_path": "IMPLEMENTED_FOR_DELIVERED_OBSERVATIONS",
+    "expanded_domain_flat_implementation": "IMPLEMENTED_FRESH_ARCHITECTURE",
+    "expanded_domain_matched_flat_baseline": "PENDING_CAPACITY_AND_COMPUTE_COMPARISON",
+    "expanded_domain_scientific_evaluation": false,
+    "fresh_independently_held_challenge": "PENDING",
+    "learned_self_contact_established": false,
+    "novel_entity_count_transfer_established": false,
+    "prospective_information_aware_scientific_acceptance_runner": "PENDING"
+  },
+  "research_model_training_run": false,
+  "review_repairs": [
+    {
+      "problem": "A terminal feedback failure discarded valid pre-feedback scores and exact contradictions.",
+      "resolution": "Retain valid prefix and offending forecast; preserve planned denominators, infinite NLL and explicit failure phase."
+    },
+    {
+      "problem": "Fitted first-contact controls could silently default to contact.",
+      "resolution": "Bind control_name, reject conflicting overrides and preserve the policy through native restoration."
+    },
+    {
+      "problem": "Evaluation input identity was mislabeled as training identity.",
+      "resolution": "Separate evaluation_input_sha256 from copied actual training provenance; split independence is not inferred."
+    },
+    {
+      "problem": "Neural replay could ignore a conflicting empirical control argument.",
+      "resolution": "Reject conflicting predictor selection."
+    },
+    {
+      "problem": "Fitting loaded models left stale checkpoint and adaptation metadata, including on interruption.",
+      "resolution": "Refresh current provenance and state hashes, retain immutable legacy origin, invalidate old checkpoint metadata, clean up BaseException before re-raising."
+    },
+    {
+      "problem": "Fit provenance omitted actual settings needed to reconstruct the bounded run.",
+      "resolution": "Record optimizer settings, learning rate, path limits and training-source hash."
+    },
+    {
+      "corrected_contract_test_seconds": 6.188,
+      "corrected_contract_tests": 10,
+      "corrected_contract_tests_passed": 10,
+      "problem": "Post-update reporting lay outside interruption cleanup, and repeated fingerprint failures could prevent invalidation.",
+      "reproduced_on_local_code_commit": "46a05e1dadd9f7e509e0ab3ebb9a40b45375899e",
+      "resolution": "Protect the complete success tail; install INTERRUPTED provenance and unavailable current hash before best-effort fingerprinting; preserve the original error.",
+      "targeted_reproduction_failures": 2,
+      "targeted_reproduction_tests": 2
+    }
+  ],
+  "saved_research_checkpoint_evaluation_run": false,
+  "source_sha256": {
+    "active_checkpoint.py": "34de339e769785bb1f2d4b974ec6a947688387d72463413aa142068f2a3752f4",
+    "active_evidence.py": "997bca8a4320bdb94752714441f0929d6ff377edbab1c609bff041415f7c75b7",
+    "active_participant.py": "7721cea95f8ce48b62abea7637e177a7dafd8143c9903f5112f4e55acf73e6b2",
+    "active_paths.py": "1486f3fe98ffbe650fd6410d038c3e6c83b23f4d569606ced8da647443c9a6ee",
+    "comparison_scoring.py": "95865f228ccb06345deda847570efa1aaea8e72828f64645d00d19a360b6a473",
+    "context_support.py": "4396e3d6fd6ae4242e1ec497ebc3dd983af1c30dc256be84e9c52b11b3d190e5",
+    "domain_contract.py": "65716833bea1f3f8b242c7bb5eaa985c4eb277ed96cc6cc184f65cf2baf61a03",
+    "domain_flat.py": "dfbc52aadf1c27405bba71cc34887e452da94f0d2df737b3a637af11d751031a",
+    "domain_kernel.py": "c2ce94522acfe931134a6bf8d90a0f2874fed0fa6a72e81e3ec8f9cc14f29eb3",
+    "external_participant.py": "802b0a93dedbcbae34006e1c0eb6959107a09c9e25686cd88e61f1777d8ade1e",
+    "joint_objective.py": "c00551ac3f0cff682b2dcd415929d8e8b7279f7fe92494fd07a2411a29ad1f4f",
+    "masked_replay.py": "fb79da609986721172b85737ef18150c465ea255b38ca176d945cc132dae69fa"
+  },
+  "status": "ACTIVE_LEARNING_INVARIANTS_NOT_SCIENTIFIC_EVALUATION",
+  "synthetic_optimizer_updates_in_tests": true,
+  "tracking_issue": 22,
+  "training_source_sha256": {
+    "active_learning.py": "291b66461f5576431c10d03e56ca90d7ede0f6cfb9e4a29cd244113cf281292b"
+  },
+  "version": "active-inference-v5"
+}
