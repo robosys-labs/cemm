@@ -1,0 +1,133 @@
+{
+  "version": "alias-evidence-v2",
+  "scope": "PUBLIC_PREFIT_FROZEN_EVIDENCE_INTERVENTION",
+  "gate_g1": "NOT_ADMITTED",
+  "base_commit": "658a141e1be7d11257d46d078f14c8df61ecad03",
+  "recorded_on": "2026-10-30",
+  "timezone": "Africa/Lagos",
+  "hypothesis": "Observed acquisition before self-contact assigns correction to both persistent latent branches, repairing the v1 mixture credit-assignment stall at unchanged architecture/objective and matched within-study exposure.",
+  "data": {
+    "entity_counts": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "split_seeds": {
+      "train": 20261030031,
+      "selection": 20261030032,
+      "calibration": 20261030033,
+      "evaluation": 20261030034
+    },
+    "draws_per_cell": {
+      "train": 8,
+      "selection": 4,
+      "calibration": 4,
+      "evaluation": 4
+    },
+    "max_blueprint_attempts": 10000
+  },
+  "model_seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "model": {
+    "hidden": 11,
+    "persistence": false,
+    "role_tying": false,
+    "memory": true
+  },
+  "parameters": 562,
+  "arms": {
+    "ordinary": "Fresh ordinary-only evidence",
+    "alias": "Keep observed informative contact1; replace contact2 with self-contact on a pre-known untouched entity, for one starting-zero and one starting-one lineage per entity count."
+  },
+  "substitution": {
+    "eligibility": "Select first distinct two_contact lineage per N and untouched prebit0/1 using anchor plus leading set only. Target is first eligible sorted ID outside acquisition operands. No outcome/mode-based selection.",
+    "selected_physical_lineages_each_N": 2,
+    "alias_views_each_N": 4,
+    "starting_bits": "Two views per N/prebit; related reversed-acquisition views stay dependent.",
+    "matched": "Initialization, episode IDs, action kinds/counts, sensor coverage, masks, visible bits, batch geometry, updates and CPU ceilings; actual consumed compute measured.",
+    "changed": "Only selected contact2 becomes alias and subsequent observed consequences change. The informative first contact and its full feedback are identical in both arms.",
+    "training_selector_reads_postcontact_outcomes": false,
+    "environment_modes": "Selected source lineages use (N-3+prebit)%2 before final realization in BOTH arms: one of each mode per N, two lineages per mode/prebit across N. This supplied allocation never enters learner inputs.",
+    "between_studies": "V2 uses a fresh bank; compare exposure between its arms. V1 and v2 event/bit inventories differ and cross-study performance is descriptive."
+  },
+  "evaluation": {
+    "same_bank_both_arms": true,
+    "fresh_self_queries": 16,
+    "self_each_N_each_bit": 2,
+    "self_canonical_exclusions": "Both current training tapes, reserved splits, current evaluation, historical continuation self, opened alias-v1 self queries and both alias-v1 training tapes.",
+    "continuation_queries": 704,
+    "ood_queries": 672,
+    "self_partition": "in_family in combined plan; action exposure differs deliberately between arms",
+    "oracle": "Existing independently coded conditional oracle under supplied binary-contact-v1 law; same-author public custody.",
+    "historical_canonical_overlap": "Reported descriptively for the whole bank, not hidden or claimed absent."
+  },
+  "fit": {
+    "updates": 128,
+    "cpu_seconds": 300,
+    "learning_rate": 0.02,
+    "batch_size": 32,
+    "live_path_limit": 64,
+    "candidate_expansions": 512
+  },
+  "analysis": {
+    "accuracy_each_seed": 0.95,
+    "material_self_gain": 0.2,
+    "positive_gain_each_seed": true,
+    "retention": "Zero newly wrong continuation queries relative to paired ordinary control; >=95% continuation accuracy and role-pair conjunction, full support, zero unchanged-bit errors.",
+    "self": "At least95% exact each starting bit per seed, full support and no unchanged-bit errors.",
+    "proper_scores": "Raw joint NLL/Brier/ECE10; zero truth probability retains infinite NLL, abstention missing proper score.",
+    "missing_forecasts": "Incorrect on every planned denominator; never delete failure suffixes.",
+    "inferential_scope": "Descriptive paired evidence intervention on one fresh public bank; no population significance, independent-world generalization, or same-bank v1-v2 causal superiority claim."
+  },
+  "decision_order": [
+    "STOP_INCOMPLETE_EXECUTION if any unknown failure, incomplete inventory, interrupted execution, invalid identity or unequal prescribed updates",
+    "REVISE_EVIDENCE_FIX if any candidate self/continuation/support/preservation/retention criterion fails",
+    "KEEP_EVIDENCE_FIX if mean self gain >=0.20 and positive for every seed",
+    "Otherwise NO_MATERIAL_EVIDENCE_EFFECT"
+  ],
+  "execution": {
+    "runtime": {
+      "python": "3.13.16",
+      "torch": "2.10.0+cpu",
+      "numpy": "2.3.5",
+      "threads": 1,
+      "dtype": "float64",
+      "deterministic_algorithms": true
+    },
+    "prefit_commit_required": true,
+    "actual_checkpoint_commit_before_collection": true,
+    "one_attempt": true,
+    "retries": 0,
+    "selection_or_calibration_fit": false,
+    "historical_studies_rerun": false,
+    "source_fix": "Reuses active-inference-v6 unchanged; no neural, objective, optimizer, checkpoint or inference source changes. Reuses the same study runner/data module.",
+    "recognized_model_failure": "Feedback-phase ValueError with message visible evidence outside model support or observation outside model support AND impossible_observation evidence. Retain measured incorrect/unproduced points. Every other exception or missing trial makes execution incomplete.",
+    "empirical_or_flat_new_fits": false
+  },
+  "cost_scope": "562 parameters and matched realized exposure; no claim of equal consumed compute.",
+  "supplied_vs_learned": {
+    "supplied": [
+      "binary simulator",
+      "stable IDs",
+      "two persistent latent modes",
+      "pair factorization and alias diagonal conditioning",
+      "available actions and sensors",
+      "training/evaluation design",
+      "Balanced selected training environment orientations; no orientation labels in observed input"
+    ],
+    "learned": [
+      "pair outcomes",
+      "alias diagonal ratio from added observations",
+      "intervention outcomes",
+      "untouched-entity persistence",
+      "latent-mode evidence accumulation"
+    ]
+  },
+  "historical_decision": "continuation-v1 STOP_INCOMPLETE_RUN and alias-evidence-v1 REVISE_EVIDENCE_FIX remain unchanged. This is one fresh preregistered schedule intervention, not a retry."
+}

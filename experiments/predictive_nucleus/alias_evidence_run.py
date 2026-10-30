@@ -19,13 +19,14 @@ ARMS = ('ordinary', 'alias')
 
 def sources():
     names = set(io._sources()) | {'alias_evidence_run.py', 'alias_evidence_data.py',
-        'alias_evidence_protocol_v1.json', 'snapshots/alias_evidence_protocol_v1.sha256',
+        PROTOCOL.name, 'snapshots/' + PROTOCOL.stem + '.sha256',
         'data/continuation-assets-v1.json.xz'}
+    if PROTOCOL.stem.endswith('v2'): names.add('data/alias-evidence-assets-v1.json.xz')
     return {name: io._hash(ROOT / name) for name in sorted(names)}
 
 
 def protocol():
-    expected = (ROOT / 'snapshots/alias_evidence_protocol_v1.sha256').read_text().split()[0]
+    expected = (ROOT / 'snapshots' / (PROTOCOL.stem + '.sha256')).read_text().split()[0]
     contract.require(io._hash(PROTOCOL) == expected, 'alias protocol lock differs')
     return io._read(PROTOCOL)
 
@@ -53,7 +54,7 @@ def prepare(output):
         'cases.json': {split: bundle['cases'] for split, bundle in assets['splits'].items()},
         'audit.json': assets['audit'], 'assets.json.xz': assets}
     for name, value in values.items(): artifacts[name] = io._write(output / name, value)
-    io._write(output / 'prefit.json', {'version': 'alias-evidence-prefit-v1',
+    io._write(output / 'prefit.json', {'version': 'alias-evidence-prefit-v1', 'study_id': config['version'],
         'protocol_sha256': io._hash(PROTOCOL), 'sources': sources(), 'artifacts': artifacts,
         'gate_g1': 'NOT_ADMITTED'})
     print(json.dumps({'prepared': str(output), 'audit': assets['audit']}), flush=True)
@@ -102,7 +103,7 @@ def fit(data, output):
 
 
 def bind(data, fitted):
-    verify(data)
+    config = verify(data)
     training, cases = io._read(fitted / 'training.json'), io._read(data / 'cases.json')
     inputs, oracle = io._read(data / 'evaluation-inputs.json'), io._read(data / 'evaluation-oracle.json')
     participants = {}
@@ -112,7 +113,7 @@ def bind(data, fitted):
             contract.require(io._hash(fitted / item['file']) == item['sha256'], 'checkpoint bytes differ')
             participants[arm][seed] = item['sha256']
     plan = {'version': 'active-acceptance-plan-v1', 'contract_sha256': contract.contract_digest(),
-        'study_id': 'alias-evidence-v1', 'scope': 'PROSPECTIVE_DIAGNOSTIC',
+        'study_id': config['version'], 'scope': 'PROSPECTIVE_DIAGNOSTIC',
         'input_sha256': contract.digest(inputs), 'oracle_sha256': contract.digest(oracle),
         'oracle_source_sha256': oracle['source_sha256'], 'information_law_sha256': oracle['information_law_sha256'],
         'model_seeds': list(SEEDS), 'participants': participants, 'reference_participant': 'ordinary',
@@ -174,7 +175,7 @@ def analyze(report, cases, complete, config):
     material = sum(gains) / len(gains) >= config['analysis']['material_self_gain'] and all(g > 0 for g in gains)
     decision = ('STOP_INCOMPLETE_EXECUTION' if not complete else 'REVISE_EVIDENCE_FIX' if not competent else
                 'KEEP_EVIDENCE_FIX' if material else 'NO_MATERIAL_EVIDENCE_EFFECT')
-    return {'version': 'alias-evidence-result-v1', 'by_arm': by_arm, 'changes': changes,
+    return {'version': 'alias-evidence-result-v1', 'study_id': config['version'], 'by_arm': by_arm, 'changes': changes,
         'decision': {'decision': decision, 'gate_g1': 'NOT_ADMITTED', 'execution_complete': complete,
             'competence_checks': checks, 'competence_pass': competent, 'paired_self_accuracy_gains': gains,
             'mean_gain': sum(gains) / len(gains), 'material_gain_pass': material,
@@ -219,10 +220,15 @@ def collect(data, fitted, output):
 
 
 def main():
+    global PROTOCOL, PREFIT
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('stage', choices=('prepare', 'fit', 'bind', 'collect'))
+    parser.add_argument('--study', choices=('v1', 'v2'), default='v1')
     for name in ('data', 'fitted', 'output'): parser.add_argument('--' + name, type=Path)
     args = parser.parse_args()
+    if args.study == 'v2':
+        PROTOCOL = ROOT / 'alias_evidence_protocol_v2.json'
+        PREFIT = ROOT / 'data/alias-evidence-prefit-v2.json'
     if args.stage != 'prepare' and args.data is None: parser.error('--data required')
     if args.stage in ('bind', 'collect') and args.fitted is None: parser.error('--fitted required')
     if args.stage != 'bind' and args.output is None: parser.error('--output required')
