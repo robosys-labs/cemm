@@ -1,0 +1,1 @@
+{"checkpoint_commit":"b2441a8a825a78150a99ae2893d78f8880040bf9","plan_sha256":"1d5e4f496aa7405732ab8412f070a2b2f560270f1a4f3f01808db83d7ca944b9","runtime":{"cpu_architecture":"x86_64","deterministic_algorithms":true,"dtype":"float64","numpy":"2.3.5","platform":"Linux-6.18.55-x86_64-with-glibc2.39","python":"3.13.16","threads":1,"torch":"2.10.0+cpu"}}
