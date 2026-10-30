@@ -1,4 +1,4 @@
-"""One frozen-weight mixed-composition challenge; no fitting or runtime changes.
+"""Frozen-weight composition challenges; no fitting or runtime changes.
 
 Prepare and commit the source, protocol, assets and checkpoint inventory, then
 collect once. The existing collector receives observed inputs only. Evaluator
@@ -21,7 +21,7 @@ ARMS = ('ordinary', 'alias')
 
 
 def protocol():
-    lock = ROOT / 'snapshots/mixed_composition_protocol_v1.sha256'
+    lock = ROOT / 'snapshots' / (PROTOCOL.stem + '.sha256')
     return contract.load_json(PROTOCOL, lock.read_text().split()[0])
 
 
@@ -30,22 +30,39 @@ def sources():
         'mixed_composition_run.py', 'mixed_composition_data.py',
         'prospective_data.py', 'prospective_oracle.py', 'world.py',
         'continuation_run.py', 'protocol.py', 'protocol.json', PROTOCOL.name,
-        'snapshots/mixed_composition_protocol_v1.sha256',
+        'snapshots/' + PROTOCOL.stem + '.sha256',
         'data/alias-evidence-fit-v2/training.json', 'data/alias-evidence-fit-v2/plan.json',
         *('data/' + name for name in ('prospective-assets-v1.json.xz', 'continuation-assets-v1.json.xz',
           'alias-evidence-assets-v1.json.xz', 'alias-evidence-assets-v2.json.xz'))}
+    if PROTOCOL.name == 'joint_correlation_protocol_v1.json':
+        names.update(('joint_correlation_data.py', 'data/mixed-composition-v1/assets.json.xz'))
     return {name: io._hash(ROOT / name) for name in sorted(names)}
 
 
 def prepare(output):
-    from .mixed_composition_data import build_assets
     config = protocol()
+    if 'critical_contrast' in config['analysis']:
+        from .joint_correlation_data import build_assets
+    else:
+        from .mixed_composition_data import build_assets
     assets = build_assets({'version': config['version'], 'data': {
         k: config['data'][k] for k in ('entity_counts', 'split_seed')}})
     contract.require(assets['audit']['episode_views'] == config['data']['episodes'] and
         assets['audit']['physical_lineages'] == config['data']['physical_lineages'] and
         assets['audit']['max_cumulative_missing_bits'] <= config['data']['max_cumulative_missing_bits'],
         'prepared inventory differs from protocol')
+    if 'critical_contrast' in config['analysis']:
+        audit, settings = assets['audit'], config['data']
+        contract.require(all(audit[a] == settings[b] for a, b in (
+            ('planned_forecasts', 'planned_forecasts'), ('identifiable_points', 'identifiable_forecasts'),
+            ('ambiguous_points', 'ambiguous_forecasts'), ('contrast_pairs', 'critical_contrast_pairs'),
+            ('expected_best_all_action_accuracy', 'expected_best_all_action_accuracy'))) and
+            audit['contrast_pairs'] == config['analysis']['critical_contrast']['pairs'],
+            'correlation inventory differs from protocol')
+        control = audit['factorized_control']
+        contract.require(control['contrast_pairs'] == audit['contrast_pairs'] and
+            control['target_one_range'] == [.5, .5] and control['max_abs_gap'] == 0.,
+            'marginal information-loss control differs')
     old_plan = io._read(FITTED / 'plan.json')
     inventory = io._read(FITTED / 'training.json')['checkpoints']
     pinned_files = ['training.json', 'plan.json'] + [inventory[arm][str(seed)]['file']
@@ -84,6 +101,49 @@ def prepare(output):
         'checkpoint_commit': config['checkpoint_commit'], 'checkpoints': inventory,
         'training_permitted': False, 'gate_g1': 'NOT_ADMITTED'})
     print(json.dumps({'prepared': str(output), 'audit': assets['audit']}), flush=True)
+
+
+def correlation_scores(points, cases, limits):
+    """Retain every planned observed-history contrast, including missing answers."""
+    inventory, indexed = defaultdict(dict), {(p['episode'], p['step']): p for p in points}
+    for case in cases:
+        members, condition = inventory[case['contrast_id']], case['condition']
+        contract.require(condition in ('equal', 'opposite') and condition not in members,
+                         'invalid or duplicate contrast condition')
+        contract.require(case['expected_target_bit'] == int(condition == 'opposite'),
+                         'contrast target differs from protocol')
+        members[condition] = case
+    rows = []
+    for identity, members in sorted(inventory.items()):
+        row = {'contrast_id': identity, 'equal_episode': None, 'opposite_episode': None,
+               'p_one_equal': None, 'p_one_opposite': None, 'gap': None,
+               'complete': False, 'passed': False}
+        for condition, case in members.items():
+            row[condition + '_episode'] = case['episode']
+            point = indexed.get((case['episode'], case['query_step']))
+            if point is None or point['status'] != 'ANSWERED': continue
+            logs, ids = point['log_probabilities'], point['ids']
+            if logs is None: continue
+            contract.require(case['target_id'] in ids and len(logs) == 2 ** len(ids),
+                             'invalid contrast forecast geometry')
+            shift = len(ids) - ids.index(case['target_id']) - 1
+            row['p_one_' + condition] = sum(math.exp(-math.inf if v == 'negative_infinity' else v)
+                for world, v in enumerate(logs) if (world >> shift) & 1)
+        row['complete'] = all(row['p_one_' + c] is not None for c in ('equal', 'opposite'))
+        if row['complete']:
+            contract.require(members['equal']['target_id'] == members['opposite']['target_id'] and
+                members['equal']['query_step'] == members['opposite']['query_step'], 'contrast query differs')
+            row['gap'] = row['p_one_opposite'] - row['p_one_equal']
+            row['passed'] = (row['p_one_equal'] <= limits['max_equal_p_one'] + 1e-12 and
+                row['p_one_opposite'] >= limits['min_opposite_p_one'] - 1e-12 and
+                row['gap'] >= limits['min_gap'] - 1e-12)
+        rows.append(row)
+    complete, passed = sum(r['complete'] for r in rows), sum(r['passed'] for r in rows)
+    return {'planned': limits['pairs'], 'observed_pairs': len(rows),
+        'complete_pairs': complete, 'passed_pairs': passed,
+        'all_passed': len(rows) == complete == passed == limits['pairs'],
+        'min_gap': min(r['gap'] for r in rows) if rows and complete == len(rows) == limits['pairs'] else None,
+        'pairs': rows}
 
 
 def information_scores(point, expected, previous_worlds):
@@ -168,6 +228,9 @@ def analyze(report, assets, config):
             pair_values = [v for (a, s, _), v in pairs.items() if a == arm and s == seed]
             row['identifiable_role_pairs'] = {'planned': len(pair_values),
                 'correct': sum(all(p['correct'] for p in v) for v in pair_values)}
+            if 'critical_contrast' in config['analysis']:
+                row['critical_contrasts'] = correlation_scores(points, assets['cases'],
+                    config['analysis']['critical_contrast'])
             for family, values in row['by_family'].items():
                 selected = [v for v in pair_values if v[0]['family'] == family]
                 values['identifiable_role_pairs'] = {'planned': len(selected),
@@ -201,14 +264,18 @@ def analyze(report, assets, config):
                 for f in families for stratum in ('identifiable', 'ambiguous')),
             'ambiguous_no_collapse': row['ambiguous']['max_oracle_total_variation'] is not None and
                 row['ambiguous']['max_oracle_total_variation'] <= limits['max_ambiguous_total_variation']}
+        if 'critical_contrast' in limits:
+            checks[str(seed)]['every_correlation_contrast'] = row['critical_contrasts']['all_passed']
     complete = not report['metadata']['incomplete_inventory'] and not report['metadata']['failure_records']
     passed = complete and all(all(c.values()) for c in checks.values())
-    decision = 'KEEP_MIXED_COMPOSITION' if passed else (
-        'STOP_INCOMPLETE_EXECUTION' if not complete else 'REVISE_MIXED_COMPOSITION')
+    study = 'JOINT_CORRELATION' if 'critical_contrast' in config['analysis'] else 'MIXED_COMPOSITION'
+    decision = 'KEEP_' + study if passed else (
+        'STOP_INCOMPLETE_EXECUTION' if not complete else 'REVISE_' + study)
     return _safe({'version': config['version'], 'by_arm': metrics, 'changes': changes,
         'decision': {'decision': decision, 'execution_complete': complete, 'checks': checks,
             'gate_g1': 'NOT_ADMITTED', 'g1_development_readiness': 'PROCEED_TO_G2',
-            'g2_scope': 'Mixed alias/ordinary ordered composition; full G2 remains open',
+            'g2_scope': ('Equal-marginal observed histories with different joint correlations; full G2 remains open'
+                if study == 'JOINT_CORRELATION' else 'Mixed alias/ordinary ordered composition; full G2 remains open'),
             'scientific_admission': False, 'new_training_updates': 0},
         'metadata': report['metadata'], 'protocol_sha256': io._hash(PROTOCOL)})
 
@@ -257,11 +324,14 @@ def collect(data, output):
 
 
 def main():
+    global PROTOCOL
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('stage', choices=('prepare', 'collect'))
+    parser.add_argument('--study', choices=('mixed', 'correlation'), default='mixed')
     parser.add_argument('--data', type=Path)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
+    if args.study == 'correlation': PROTOCOL = ROOT / 'joint_correlation_protocol_v1.json'
     if args.stage == 'collect' and args.data is None: parser.error('--data required')
     try:
         prepare(args.output) if args.stage == 'prepare' else collect(args.data, args.output)

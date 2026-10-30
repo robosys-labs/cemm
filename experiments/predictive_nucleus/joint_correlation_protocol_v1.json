@@ -1,0 +1,68 @@
+{
+  "version": "joint-correlation-v1",
+  "recorded_on": "2026-10-30",
+  "timezone": "Africa/Lagos",
+  "scope": "FROZEN_WEIGHT_G2_DEVELOPMENT",
+  "gate_g1": "NOT_ADMITTED",
+  "g1_development_readiness": "PROCEED_TO_G2",
+  "checkpoint_commit": "2361c48986276fe897a9cd9beac874720cfcbb7a",
+  "hypothesis": "Actual observed histories with equal individual state marginals but different joint correlations produce the distinct predictive distributions required by the same subsequent contact, with frozen learned likelihoods and the existing joint filter.",
+  "data": {
+    "entity_counts": [3, 4, 5, 6],
+    "split_seed": 20261030051,
+    "families": {
+      "chain": {"equal": "ac, ba, ba", "opposite": "ac, cb, ba"},
+      "fork": {"equal": "ca, cb, ab", "opposite": "ca, bc, ab"}
+    },
+    "initial": "a=0, b=0, c=1; remaining coordinates sampled before mode realization and shared within each matched contrast-context.",
+    "masks": "Hide a after contact 1, hide a and b after contact 2, deliver full feedback after the common query at step 2 (zero-based).",
+    "contrast": "Within motif/N/mode/direction: same opaque handles, initial anchor, action count, observation prefix, masks and final query. Only the second action differs. Equal current support is 001/111; opposite support is 011/101, each with probability 1/2, so all current state marginals coincide. The common query makes b=0 certain for equal and b=1 certain for opposite.",
+    "views": "Both persistent modes and both global role directions per condition; the eight motif/N contrast-context lineages each contain both conditions and four dependent views. Opposite-condition templates overlap across motifs under global reversal; these are dependent diagnostic contrasts, not independent physical replications or new topology evidence.",
+    "episodes": 64,
+    "physical_lineages": 8,
+    "planned_forecasts": 192,
+    "identifiable_forecasts": 32,
+    "ambiguous_forecasts": 160,
+    "critical_contrast_pairs": 32,
+    "identifiable_role_pairs": 16,
+    "expected_best_all_action_accuracy": 0.5833333333333334,
+    "max_cumulative_missing_bits": 3,
+    "freshness": "Retain canonical blueprint/template overlap against prospective, continuation, alias-v1/v2 and completed mixed-v1 assets, plus within-bank duplicates. No rejection using outcomes or learned predictions; new family labels do not imply new physical topology."
+  },
+  "model_seeds": [7, 11, 23, 37, 53],
+  "arms": ["ordinary", "alias"],
+  "parameters_each": 562,
+  "training": "Reuse all ten committed alias-v2 checkpoints byte-for-byte; no fitting, adaptation, selection, posterior injection or retries.",
+  "analysis": {
+    "identifiable_accuracy": 0.95,
+    "mean_oracle_kl": 0.05,
+    "max_ambiguous_total_variation": 0.1,
+    "critical_contrast": {"pairs": 32, "max_equal_p_one": 0.1, "min_opposite_p_one": 0.9, "min_gap": 0.8},
+    "criteria": "Each candidate seed and motif: >=95% identifiable full-world accuracy and identifiable role-pair conjunctions; complete support; zero newly wrong identifiable predictions against ordinary control, zero MAP worlds outside information support and zero definitely unchanged-bit errors. Mean KL(oracle||forecast)<=0.05 nats separately in identifiable and ambiguous strata; every ambiguous joint forecast TV<=0.1. All 32 critical pairs must have P(b=1|equal)<=0.1, P(b=1|opposite)>=0.9 and opposite-minus-equal gap>=0.8 (arithmetic tolerance 1e-12); missing or abstained forecasts fail. Both arms are measured; a tie is permissible.",
+    "marginal_control": "Evaluator-only information-loss control: factor the current physical state marginals and surviving-mode prior, then propagate the same query through the simulator. Both conditions must yield P(b=1)=0.5 and gap=0. This is an analytic control, not a trained comparator or causal neural ablation.",
+    "probability_scope": "Score full joint predictions including soft tails without oracle renormalization. Do not demand named latent branches or their internal weights match physical modes. Law-conditional predictive fidelity is not general epistemic calibration.",
+    "historical_metrics": "Retain every all-action realized MAP, NLL, Brier, realized unchanged-bit error, repair/regression ID, missing output and failure. Expected all-action MAP is 58.3333%; the original >=95% in-family G1 gate remains unchanged and is not claimed passed.",
+    "known_unchanged": "A coordinate has the same unique value across all prior worlds consistent with delivered feedback and all post-action oracle worlds.",
+    "dependence": "Finite diagnostic bank under one supplied law; seeds, directions, mode twins, paired conditions and overlapping templates are not independent physical samples.",
+    "g2_limits": "The learned likelihoods are combined with supplied joint filtering and persistent latent modes. Arbitrary multi-source laws, simultaneous timing, general calibration and independent challenge custody remain unestablished."
+  },
+  "decision_order": [
+    "STOP_INCOMPLETE_EXECUTION if any unproduced trial, terminal failure or invalid artifact",
+    "REVISE_JOINT_CORRELATION if any frozen candidate criterion fails",
+    "KEEP_JOINT_CORRELATION otherwise; continue bounded G2 development without refitting this bank"
+  ],
+  "execution": {
+    "runtime": {"python": "3.13.16", "torch": "2.10.0+cpu", "numpy": "2.3.5", "threads": 1, "dtype": "float64", "deterministic_algorithms": true},
+    "live_path_limit": 64,
+    "candidate_expansions": 512,
+    "max_contacts": 3,
+    "freeze_before_collection": true,
+    "one_attempt": true,
+    "retries": 0,
+    "same_author_public_custody": true,
+    "model_or_runtime_changes": false
+  },
+  "supplied": ["Stable handles, actions and sensor masks", "Binary simulator and independent affine oracle", "Two persistent latent modes and joint history filtering", "Challenge schedules and evaluator conditional distributions"],
+  "learned": ["Frozen outcome likelihoods and intervention behavior under supplied persistent mechanisms"],
+  "preserved_decisions": {"continuation_v1": "STOP_INCOMPLETE_RUN", "alias_v1": "REVISE_EVIDENCE_FIX", "alias_v2": "KEEP_EVIDENCE_FIX", "mixed_v1": "KEEP_MIXED_COMPOSITION"}
+}
