@@ -1,0 +1,1497 @@
+{
+  "acceptance_version": "active-acceptance-v1",
+  "admission_decision": false,
+  "audit_version": "prospective-data-audit-v1",
+  "base_commit": "40d34de6f4a0f0b0a47f2df13c2576d901c9b2c8",
+  "base_pr": 60,
+  "base_tree_sha": "1d57e814af59d95944149d455e8268badd53b51c",
+  "changed_paths_relative_to_base": [
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/PROSPECTIVE_DATA.md"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/data/prospective-assets-v1.json.xz"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/observed_io.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/prospective_audit.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/prospective_data.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/prospective_data_protocol_v1.json"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/prospective_oracle.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/snapshots/prospective_data_protocol_v1.sha256"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/tests/test_observed_io.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/tests/test_prospective_audit.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/tests/test_prospective_data.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/tests/test_prospective_integration.py"
+    },
+    {
+      "change": "A",
+      "path": "experiments/predictive_nucleus/tests/test_prospective_oracle.py"
+    }
+  ],
+  "check_inventory": {
+    "checks_completed": 20,
+    "checks_passed": 20,
+    "existing_acceptance_manifest_locks_passed": 1,
+    "frozen_input_preflight_passed": true,
+    "historical_manifest_locks_passed": 16,
+    "new_prospective_data_manifest_locks_passed": 1,
+    "original_protocol_passed": true
+  },
+  "checks": [
+    {
+      "command": [
+        "/tmp/cemm-active-venv/bin/python",
+        "-m",
+        "experiments.predictive_nucleus.protocol",
+        "verify"
+      ],
+      "exit_code": 0,
+      "name": "protocol",
+      "scope": "original_protocol_verification",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 166,
+      "stdout_sha256": "cadb9f2c91b7b2fdd3d13d2032b2b3e90b7d734e1ad8591fdc14857d8c03dcbf",
+      "working_directory": "repository root"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/active_acceptance_protocol_v1.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/active_acceptance_protocol_v1.sha256",
+      "lock_sha256": "d74c31e8bd1963c615f298405e82ad238326bc7b169dd62216a1edcb6a34c9ea",
+      "name": "active_acceptance_protocol_v1.sha256",
+      "scope": "existing_acceptance_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 32,
+      "stdout_sha256": "8782d0cb9051a1a75dae12269dafad60f0b26e6fb321b5b54a428fcaa6c98175",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/common_objective_comparison_protocol_v1.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/common_objective_comparison_protocol_v1.sha256",
+      "lock_sha256": "846ebfb907a1cc44a177148dc1c46f0471264634187f6dd9d24ff2ec7a327116",
+      "name": "common_objective_comparison_protocol_v1.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 49,
+      "stdout_sha256": "b4b63f70070e7521854456d5542c1ef838a244627040564fc5f21757b473fdff",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/context_protocol_v6.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/context_protocol_v6.sha256",
+      "lock_sha256": "2395ea02bb2ccf4571eaffaa67132bea685261b16f133ecbd377ecb9ca5b9fda",
+      "name": "context_protocol_v6.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 29,
+      "stdout_sha256": "a100cb3dbd128d6ebf98462cec21d47c65ad8e5c8306515bd440f970d137f671",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/dev_composition_protocol_v1.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/dev_composition_protocol_v1.sha256",
+      "lock_sha256": "dec5db7c1224fa885b0005b21d87160afa84f35fe7d610f02963d803d4454385",
+      "name": "dev_composition_protocol_v1.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 37,
+      "stdout_sha256": "866ea5e323577f4fcb7a10cee9bab5c996b4041e018de74aba3b250f6129747a",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/dev_composition_protocol_v2.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/dev_composition_protocol_v2.sha256",
+      "lock_sha256": "c89203ff0538471169280d559864991cb633f2f0545e16281b8c06ca74267338",
+      "name": "dev_composition_protocol_v2.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 37,
+      "stdout_sha256": "e520bde1c0102976391c1e58c82bb365310b34ce662ad51838854709d68b4c54",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/epistemic_protocol_v2.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/epistemic_protocol_v2.sha256",
+      "lock_sha256": "f8736a61ca2851a393190c29502f89dfbf372d7bb0b1187f5595ac0e0baf5da0",
+      "name": "epistemic_protocol_v2.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 31,
+      "stdout_sha256": "41e4cbeffade25e1c1324cb24b700ffb56098dfd58cbceadd0f30b8bba5b0818",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/flat_protocol_v7.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/flat_protocol_v7.sha256",
+      "lock_sha256": "6abce45fb6685cf51384003ed834275a7d5ed3491852e50604122648f389880e",
+      "name": "flat_protocol_v7.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 26,
+      "stdout_sha256": "03142ee36dde53addf56564b58080e0a65224991b64d2d8491ee7e0e6a9d4b89",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/flat_updates_protocol_v8.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/flat_updates_protocol_v8.sha256",
+      "lock_sha256": "962db643b8d893bfa6e95859cd1ca54454627aec858ef7d5c6f1672d3af65f76",
+      "name": "flat_updates_protocol_v8.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 34,
+      "stdout_sha256": "5bc6a4ca8e18e80756062a1c970f1c4be58fc8ed245ca27ca119d7a5277063cd",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/full_sensor_paired_protocol_v1.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/full_sensor_paired_protocol_v1.sha256",
+      "lock_sha256": "f17998f523f3761b35e29dad202e4bf75f88dd82c030c4c71bfce67a6b5655bc",
+      "name": "full_sensor_paired_protocol_v1.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 40,
+      "stdout_sha256": "2c37478a0efa419119e11bf8c0e2ddb4a817a526c900986872a34698cfa7f673",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/full_sensor_paired_protocol_v2.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/full_sensor_paired_protocol_v2.sha256",
+      "lock_sha256": "daa9838b102c0774046a0a87a385085203b64500589b7514e01a437bb7834a4e",
+      "name": "full_sensor_paired_protocol_v2.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 40,
+      "stdout_sha256": "20d58e94276f3b07f4d31a05116626e7cacd2c68d9b46f743b9d15af701734e5",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/full_sensor_posthoc_replay_protocol_v1.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/full_sensor_posthoc_replay_protocol_v1.sha256",
+      "lock_sha256": "5d2b3d43a48b41327dd1a2db43cdae2ea5a79c7c8e968194617e23a15ccced24",
+      "name": "full_sensor_posthoc_replay_protocol_v1.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 48,
+      "stdout_sha256": "3c4323fd21fd8b5df62a7f8203f0fd861cae980b3157af0899106fa6d6b75b8b",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/guard_protocol_v5.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/guard_protocol_v5.sha256",
+      "lock_sha256": "103f0912c8eaa9c0dab508ecd4fa31b2ef8f66b24d682567162f9988dc7282d3",
+      "name": "guard_protocol_v5.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 27,
+      "stdout_sha256": "381222436fb3982c1dcf66922910fe5b2baa13e419e8cb52936b48b36bd28f1f",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/prospective_data_protocol_v1.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/prospective_data_protocol_v1.sha256",
+      "lock_sha256": "c3a8e2840d9c5940ac74ba87beed9f223a3aa252926fd22b92e91d5c1334561e",
+      "name": "prospective_data_protocol_v1.sha256",
+      "scope": "new_prospective_data_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 38,
+      "stdout_sha256": "915ee1ba23b6435906910a49af1e12ec0bf468cff97926cb24f88d08ff08b11b",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/protocol.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/protocol.sha256",
+      "lock_sha256": "6a247890f660ede95cb4116dd4bb32ab805daaef3d3fac81009ccc457631eda2",
+      "name": "protocol.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 18,
+      "stdout_sha256": "e332deacf6e334113cb845110487bd7d4b54eec436b058825ef9170bf96f5ef9",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/sensor_transfer_implementation_v1.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/sensor_transfer_implementation_v1.sha256",
+      "lock_sha256": "e91a72e19e9d34715add07c90ec72c87a17075e2d02e192557f7ecf5a74ae645",
+      "name": "sensor_transfer_implementation_v1.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 43,
+      "stdout_sha256": "08cacf858ab86721821c9fdba914def2f1efd16f7735c53232c3a0bd40b11d12",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/sensor_transfer_protocol_v1.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/sensor_transfer_protocol_v1.sha256",
+      "lock_sha256": "ded5d67fabb6d0f155f35da6807eefb7be1e5010563292f7dbac48a5a6ade4ac",
+      "name": "sensor_transfer_protocol_v1.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 37,
+      "stdout_sha256": "a1acbf9cf4dbe0f3885ded6ca33080ba7814cdaf70d452343e9b1ad2263deb38",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/stability_protocol_v4.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/stability_protocol_v4.sha256",
+      "lock_sha256": "5a6cdeeac7910c6276b26da63c80c199fa8d7aac20456eba4439e74f983fb6cc",
+      "name": "stability_protocol_v4.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 31,
+      "stdout_sha256": "5c1bce0851dfc8be0b3e472aa75d82d8ae4f4e6e169fa3bc908a2edda3d80376",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "snapshots/stress_protocol_v3.sha256"
+      ],
+      "exit_code": 0,
+      "lock_file": "snapshots/stress_protocol_v3.sha256",
+      "lock_sha256": "a0088f8ac9daeb9e6d8e232aa72fa6ec14791c08f2342ec38a5eedc3d932a5d6",
+      "name": "stress_protocol_v3.sha256",
+      "scope": "historical_lock",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 28,
+      "stdout_sha256": "6e98dab1c6d926f10b1635782728bfa92b33fd595476c8c8be977d50ca49983e",
+      "working_directory": "experiments/predictive_nucleus"
+    },
+    {
+      "command": [
+        "/tmp/cemm-active-venv/bin/python",
+        "-m",
+        "experiments.predictive_nucleus.comparison_execution",
+        "--preflight"
+      ],
+      "exit_code": 0,
+      "name": "preflight",
+      "scope": "frozen_input_preflight_only",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 26431,
+      "stdout_sha256": "e4dbb8916e42746eb76834993b477e2a2e6ffdc4e38f3d4e912b695288c3a01d",
+      "working_directory": "repository root"
+    }
+  ],
+  "ci_reference": "https://github.com/robosys-labs/cemm/pull/61/checks",
+  "ci_scope": "This record pins local clean-commit verification. Final-head remote CI is tracked at the pull request checks and must be verified separately; no remote CI success is asserted by this record.",
+  "closed_public_study_rerun": false,
+  "code_commit": "8c662f588a9b81bdbcbdef48d3bdc26db1479c85",
+  "complete_local_suite": {
+    "checkout_clean": true,
+    "command": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONHASHSEED=0 /tmp/cemm-active-venv/bin/python -m unittest discover -s experiments/predictive_nucleus/tests -v",
+    "exit_code": 0,
+    "log_scope": "Complete source/data commit in a clean checkout; includes historical implementation tests and synthetic fit invariants, not scientific study reruns.",
+    "output_sha256": "38a5d0d0f2a35bc6897dcfe4f80078d6dab5aa10522334975181172023ee3be6",
+    "seconds": 72.123,
+    "tests_discovered": 627,
+    "tests_passed": 627,
+    "tests_skipped": 0
+  },
+  "data_contract": {
+    "acceptance_plan_created": false,
+    "config": {
+      "development_families": [
+        "single_contact",
+        "two_contacts"
+      ],
+      "draws_per_family_entity": {
+        "calibration": 4,
+        "evaluation": 8,
+        "selection": 4,
+        "train": 8
+      },
+      "entity_counts": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "evaluation_families": [
+        "single_contact",
+        "two_contacts",
+        "three_contact_chain",
+        "fork",
+        "cycle",
+        "disjoint",
+        "self_contact"
+      ],
+      "execution_policy": {
+        "closed_study_rerun_enabled": false,
+        "independent_custody_verified": false,
+        "participant_isolation_verified": false,
+        "postfit_freeze": "Bind actual native checkpoint hashes to the prefit commitment before collection; never use placeholder hashes as completed acceptance plans.",
+        "prefit_freeze": "This contract fixes data and information-law construction. A complete scientific comparison also requires frozen arm configurations, fitting/selection/calibration rules, matching and statistical decisions.",
+        "research_fit_enabled": false,
+        "research_model_scoring_enabled": false,
+        "scientific_comparison_design_complete": false
+      },
+      "information_law": {
+        "blueprint_sampling": {
+          "dropout": "Select a bounded exogenous mask before rolling out either role; no filtering by truth, carry witnesses or accuracy ceiling",
+          "initial_bits": "Independent fair binary draws before mode selection",
+          "leading_set_probability": 0.5,
+          "sensor_coverage": "All physical IDs selected; realized missingness is explicit",
+          "trailing_observe_probability": 0.5,
+          "two_contact_templates": [
+            "overlapping_pair",
+            "repeated_pair"
+          ]
+        },
+        "deduplication": "Canonical blueprint and reversed view ancestry; selected without hidden mode, complete truth or future delivered values",
+        "feedback": "Noiseless delivered bits; absent values remain absent",
+        "hidden_source_slot_prior": [
+          0.5,
+          0.5
+        ],
+        "initial_state": "Complete observed binary anchor",
+        "mode_persistence": "One source slot per physical draw; shared by its reversed views and fixed through every contact",
+        "oracle": "Enumerate every persistent mode compatible with delivered past before revealing current feedback",
+        "same_author_assets_are_independent_validation": false,
+        "scheduling": "Actions, coverage, realized masks and identity labels selected before and independently of actual hidden mode"
+      },
+      "max_actions": 12,
+      "max_blueprint_attempts": 10000,
+      "max_cumulative_missing_bits": 3,
+      "model_seeds": [
+        7,
+        11,
+        23,
+        37,
+        53
+      ],
+      "reporting": {
+        "carry": "Audit actual counterfactual dependence; do not select or drop cases using its result",
+        "ceiling_scope": "Expected accuracy under the declared law, not a hard upper bound on a finite realized sample",
+        "gate_g1": "NOT_ADMITTED",
+        "law_audit": "Equal prior mass for both counterfactual persistent modes of every fixed blueprint; probability mass aggregated before computing scores",
+        "map_ties": "First lexicographic complete world, matching acceptance-v1",
+        "original_g1_target": 0.95,
+        "prediction_points": "Every planned action before its feedback",
+        "primary_diagnostic": "All-planned complete-world accuracy; separate contact, family, answerable and ambiguous strata",
+        "target_redefined": false,
+        "trajectory_and_pair": "Conjunction on coherent histories, never product of marginal ceilings"
+      },
+      "scope": "PUBLIC_SAME_AUTHOR_ENGINEERING_ASSETS",
+      "split_seeds": {
+        "calibration": 2026103003,
+        "evaluation": 2026103004,
+        "selection": 2026103002,
+        "train": 2026103001
+      },
+      "version": "prospective-data-v1",
+      "world_contract": "binary-contact-v1"
+    },
+    "information_law": {
+      "conditioning": "delivered observations before prediction, past/current actions and selected coverage only",
+      "contact": "source = participants[mode]; target = participants[1-mode]; target ^= source",
+      "design": "actions, selected coverage, missingness and opaque IDs are exogenous to hidden mode and outcomes",
+      "entities": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "excluded": [
+        "actual hidden mode",
+        "evaluator family",
+        "current feedback",
+        "future observations/actions"
+      ],
+      "hidden_source_slot": {
+        "persistence": "one fixed mode for the whole episode",
+        "probabilities": [
+          0.5,
+          0.5
+        ],
+        "values": [
+          0,
+          1
+        ]
+      },
+      "initial_anchor": "complete, noiseless, independent of hidden source slot",
+      "observe": "identity transition",
+      "readings": "noiseless visible binary values; null is absent evidence",
+      "scope": "evaluator-only law-conditional probabilities; no independent-custody or model-performance claim",
+      "self_contact": "one physical coordinate; its GF(2) sum with itself is zero",
+      "set": "replace exactly the named coordinate with the supplied binary value",
+      "version": "prospective-binary-contact-information-law-v1",
+      "world_contract": "binary-contact-v1",
+      "world_order": "lexicographic binary vectors in sorted physical-ID order"
+    },
+    "information_law_sha256": "b2f8b0cb32d3e39dd2d21c6baa7c5f9f3d2ab89f2d200976647cd81e78ed152c",
+    "lock": "snapshots/prospective_data_protocol_v1.sha256",
+    "lock_sha256": "c3a8e2840d9c5940ac74ba87beed9f223a3aa252926fd22b92e91d5c1334561e",
+    "original_0_95_target_unchanged": true,
+    "original_protocol_sha256": "622a0dfdf94d14b4f16461a0f20acce18bb880f094d5071e58cd1764bdc9c1e7",
+    "original_protocol_unchanged": true,
+    "path": "prospective_data_protocol_v1.json",
+    "sha256": "4135a2150355d6fd7fe623d21b2dd652621462ed0ab577d21583a30ba0b78847",
+    "source_sha256": {
+      "acceptance_contract.py": "e502cee5c68f44cc3d592d8536de9989b1eff1be5a7949b0eb16465570836368",
+      "observed_io.py": "034c017513e614255b0c2ff4f502919622c6eff20cc63f96c4e1cdb23c5e4648",
+      "prospective_audit.py": "353610c7a6b6936d274426a089e1d005edf8bab41d2c1b91c8aae35e6179548d",
+      "prospective_data.py": "fd28973cf4760a3b49f793d001f1dd416b7e9fe58c131c72251b28e37a65aecb",
+      "prospective_data_protocol_v1.json": "4135a2150355d6fd7fe623d21b2dd652621462ed0ab577d21583a30ba0b78847",
+      "prospective_oracle.py": "90911804cc18baeb469a2e5277a650061c9466c6cc8f4c8d9dcb913ef9f3d14d",
+      "protocol.json": "622a0dfdf94d14b4f16461a0f20acce18bb880f094d5071e58cd1764bdc9c1e7",
+      "protocol.py": "05eac125862ba1aaaaeb7568711a0b4074ca0f6ee57722685b3b9ddb4cf3c56e",
+      "snapshots/prospective_data_protocol_v1.sha256": "c3a8e2840d9c5940ac74ba87beed9f223a3aa252926fd22b92e91d5c1334561e",
+      "world.py": "eb3e4c69b6b71e5af31f395e2e7033aad8caf807b4b8b299dd86d6e0faae9d65"
+    }
+  },
+  "data_version": "prospective-data-v1",
+  "environment_preflight": {
+    "cli_numpy_requirement": "2.3.5",
+    "cli_python_requirement": "3.13",
+    "cli_torch_requirement": "2.10.0+cpu",
+    "cpu_model": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "default_dtype": "torch.float32",
+    "deterministic_algorithms": true,
+    "deterministic_warn_only": false,
+    "environment_variables": {
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "PYTHONHASHSEED": "0"
+    },
+    "interop_threads": 1,
+    "intraop_threads": 1,
+    "model_tensor_dtype": "CPU torch.float64 for native learned predictors; torch default dtype is reported separately.",
+    "peak_rss": 313680,
+    "peak_rss_unit": "KiB",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "python": "3.13.16",
+    "scope": "Standalone frozen-input preflight environment; not per-model benchmark measurements.",
+    "torch": "2.10.0+cpu",
+    "torch_config_sha256": "4f3cd65dc58472ed223329fa5ab743d0a360e777accb4001b511fc418c78128b"
+  },
+  "existing_runtime_and_historical_results_modified": false,
+  "focused_local_suite": {
+    "exit_code": 0,
+    "output_sha256": "81c6d6627d2bf342e542305c8a93569acc99d64b5909995c09ea02b95e401fef",
+    "scope": "All 37 new oracle, generator, audit, observed-input and integration invariant tests; final full suite independently includes them.",
+    "seconds": 7.519,
+    "test_modules": [
+      "experiments.predictive_nucleus.tests.test_prospective_oracle",
+      "experiments.predictive_nucleus.tests.test_prospective_data",
+      "experiments.predictive_nucleus.tests.test_prospective_audit",
+      "experiments.predictive_nucleus.tests.test_observed_io",
+      "experiments.predictive_nucleus.tests.test_prospective_integration"
+    ],
+    "tests_discovered": 37,
+    "tests_passed": 37,
+    "tests_skipped": 0
+  },
+  "frozen_input_preflight": {
+    "data_sha256": {
+      "informative_same_pair": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e",
+      "informative_second_pair": "a10748428184b1834275efb2e82da1da566356193c77af25cdac1e44be40a3ca",
+      "uninformative_same_pair": "fe89cf2a609fa36d6ad4cb65048b56934fdc4f62cda86455e49f3cc3dfbecd1d",
+      "uninformative_second_pair": "4f52d492c03c60eac8416ba7a7a4328f78b0eb731a0b9980e67c4c3499ee783c"
+    },
+    "gate_g1": "HOLD_REVISE",
+    "lineage": {
+      "complete_history": true,
+      "execution_commit": "cd9df92861f9e0ea1c2000ee4aa1c356b40e1169",
+      "protocol_commit": "2eeae6323d8123da5ded40a56e77ef68e6aac5ac",
+      "runner_commit": "fd64a5b1a9efc460086cfe21c4f62fe631135298",
+      "runner_sha256": "143a29e7fee901a009674ef271e779c126300e6496f7c26d79fe222540772213",
+      "source_commit": "3bbce83121386501ae39567b48fc9aa62325de79",
+      "tracked_tree_clean": true,
+      "untracked_present": false
+    },
+    "protocol_sha256": "15732afe065f19f3b412a7638e386373eb586ddaa273104e2de63c14a782b1f3",
+    "status": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
+    "study_execution_enabled": false
+  },
+  "gate_g1": "NOT_ADMITTED",
+  "generated_assets": {
+    "action_templates_shared_across_in_family_splits": 45,
+    "archive_bytes": 217752,
+    "archive_contents": "Complete bundle (strict observed inputs, separate evaluator gold and metadata, source/config identities) plus full audit, compressed with deterministic XZ CRC64.",
+    "archive_git_blob_sha": "b0eb3ff73ab00aa7483ea98c5862275a99a9b4c7",
+    "archive_path": "experiments/predictive_nucleus/data/prospective-assets-v1.json.xz",
+    "archive_sha256": "42cf52fb84fece67d23b78751080cd6c6d603767cc6981a517116dca52995f6d",
+    "blueprint_and_lineage_overlap_across_splits": 0,
+    "bundle_content_sha256": "16c4719d51ab8a03af6811a6950f2539380f6405d987bfb468eb1d5a117aa283",
+    "evaluation_in_family_ceiling": {
+      "expected_optimal_event_accuracy": 0.8562874251497006,
+      "formula": "1 - 0.5 * 96 / 334",
+      "law_expected_ambiguous_predictions": 96,
+      "original_target": 0.95,
+      "planned_predictions": 334,
+      "scope": "Conditional expectation over equiprobable persistent modes for every accepted evaluation in-family blueprint; not a hard bound on one finite realized sample and not measured neural accuracy.",
+      "target_redefined": false
+    },
+    "export_manifest_written_last": true,
+    "export_refuses_existing_directory": true,
+    "inventory": {
+      "aggregate": {
+        "ambiguous_steps": 518,
+        "answerable_steps": 1311,
+        "contact_steps": 1184,
+        "episodes": 624,
+        "physical_draws": 328,
+        "planned_steps": 1829,
+        "role_pairs": 296
+      },
+      "by_split": {
+        "calibration": {
+          "ambiguous_steps": 66,
+          "answerable_steps": 90,
+          "contact_steps": 96,
+          "episodes": 64,
+          "physical_draws": 32,
+          "planned_steps": 156,
+          "role_pairs": 32
+        },
+        "evaluation": {
+          "ambiguous_steps": 304,
+          "answerable_steps": 881,
+          "contact_steps": 800,
+          "episodes": 368,
+          "physical_draws": 200,
+          "planned_steps": 1185,
+          "role_pairs": 168
+        },
+        "selection": {
+          "ambiguous_steps": 46,
+          "answerable_steps": 106,
+          "contact_steps": 96,
+          "episodes": 64,
+          "physical_draws": 32,
+          "planned_steps": 152,
+          "role_pairs": 32
+        },
+        "train": {
+          "ambiguous_steps": 102,
+          "answerable_steps": 234,
+          "contact_steps": 192,
+          "episodes": 128,
+          "physical_draws": 64,
+          "planned_steps": 336,
+          "role_pairs": 64
+        }
+      },
+      "self_contact_unpaired_views": 32
+    },
+    "law_weighted_audit": {
+      "aggregate": {
+        "carry": {
+          "branches_with_witness": 284,
+          "expected_fraction_of_views_with_witness": 0.22756410256410256,
+          "mode_branches": 1248,
+          "tested_contact_pairs": 1440,
+          "witnesses": 382
+        },
+        "counts": {
+          "ambiguous_steps": 518,
+          "answerable_steps": 1311,
+          "contact_steps": 1184,
+          "episodes": 624,
+          "physical_draws": 328,
+          "planned_steps": 1829,
+          "role_pairs": 296
+        },
+        "frozen_lexicographic_role_pair_exact": 0.18243243243243243,
+        "frozen_lexicographic_trajectory_exact": 0.6057692307692307,
+        "law_expected": {
+          "all": {
+            "bayes_map_accuracy": 0.8583925642427556,
+            "expected_step_mass": 1829.0,
+            "expected_tied_step_mass": 518.0,
+            "frozen_lexicographic_map_accuracy": 0.8583925642427556,
+            "mean_brier_floor": 0.14160743575724438,
+            "mean_entropy_nats": 0.19630958968291506
+          },
+          "ambiguous": {
+            "bayes_map_accuracy": 0.5,
+            "expected_step_mass": 518.0,
+            "expected_tied_step_mass": 518.0,
+            "frozen_lexicographic_map_accuracy": 0.5,
+            "mean_brier_floor": 0.5,
+            "mean_entropy_nats": 0.6931471805599453
+          },
+          "answerable": {
+            "bayes_map_accuracy": 1.0,
+            "expected_step_mass": 1311.0,
+            "expected_tied_step_mass": 0.0,
+            "frozen_lexicographic_map_accuracy": 1.0,
+            "mean_brier_floor": 0.0,
+            "mean_entropy_nats": 0.0
+          },
+          "contact": {
+            "bayes_map_accuracy": 0.7871621621621622,
+            "expected_step_mass": 1184.0,
+            "expected_tied_step_mass": 504.0,
+            "frozen_lexicographic_map_accuracy": 0.7871621621621622,
+            "mean_brier_floor": 0.21283783783783783,
+            "mean_entropy_nats": 0.29505589442754426
+          }
+        },
+        "original_in_family_target": {
+          "admission_decision": false,
+          "expected_all_action_ceiling": 0.8415132924335378,
+          "expected_ceiling_at_least_target": false,
+          "target": 0.95
+        },
+        "resources": {
+          "episodes_exceeding_configured_missing_bits": 0,
+          "episodes_with_dense_bound_exceedance": 0,
+          "maximum_candidate_expansions": 512,
+          "maximum_live_histories_after_feedback": 8
+        }
+      },
+      "assumptions": {
+        "balanced_persistent_mode_law": true,
+        "configured_resource_envelope_satisfied": true,
+        "cross_split_blueprint_lineage_reuse": false,
+        "exogenous_design_independently_authenticated": false,
+        "independent_custody_verified": false,
+        "paired_mode_mask_anchor_consistency_checked": true,
+        "scientific_comparison_design_complete": false
+      },
+      "bundle_sha256": "16c4719d51ab8a03af6811a6950f2539380f6405d987bfb468eb1d5a117aa283",
+      "by_split": {
+        "calibration": {
+          "all_action_nll_floor_nats": 0.29325457639074604,
+          "all_action_sum_brier_floor": 0.21153846153846154,
+          "carry": {
+            "branches_with_witness": 26,
+            "expected_fraction_of_views_with_witness": 0.203125,
+            "mode_branches": 128,
+            "tested_contact_pairs": 64,
+            "witnesses": 26
+          },
+          "contact_nll_floor_nats": 0.4476575541116314,
+          "contact_sum_brier_floor": 0.3229166666666667,
+          "counts": {
+            "ambiguous_steps": 66,
+            "answerable_steps": 90,
+            "contact_steps": 96,
+            "episodes": 64,
+            "physical_draws": 32,
+            "planned_steps": 156,
+            "role_pairs": 32
+          },
+          "expected_all_action_accuracy": 0.7884615384615384,
+          "expected_all_action_ambiguous_points": 66.0,
+          "expected_contact_accuracy": 0.6770833333333334,
+          "expected_contact_ambiguous_points": 62.0,
+          "frozen_lexicographic_role_pair_exact": 0.09375,
+          "frozen_lexicographic_trajectory_exact": 0.515625,
+          "resources": {
+            "episodes_exceeding_configured_missing_bits": 0,
+            "episodes_with_dense_bound_exceedance": 0,
+            "maximum_candidate_expansions": 256,
+            "maximum_live_histories_after_feedback": 8
+          }
+        },
+        "evaluation": {
+          "all_action_nll_floor_nats": 0.17782003619428133,
+          "all_action_sum_brier_floor": 0.12827004219409283,
+          "carry": {
+            "branches_with_witness": 198,
+            "expected_fraction_of_views_with_witness": 0.26902173913043476,
+            "mode_branches": 736,
+            "tested_contact_pairs": 1184,
+            "witnesses": 296
+          },
+          "contact_nll_floor_nats": 0.2581973247585796,
+          "contact_sum_brier_floor": 0.18625,
+          "counts": {
+            "ambiguous_steps": 304,
+            "answerable_steps": 881,
+            "contact_steps": 800,
+            "episodes": 368,
+            "physical_draws": 200,
+            "planned_steps": 1185,
+            "role_pairs": 168
+          },
+          "expected_all_action_accuracy": 0.8717299578059071,
+          "expected_all_action_ambiguous_points": 304.0,
+          "expected_contact_accuracy": 0.81375,
+          "expected_contact_ambiguous_points": 298.0,
+          "frozen_lexicographic_role_pair_exact": 0.15476190476190477,
+          "frozen_lexicographic_trajectory_exact": 0.6086956521739131,
+          "resources": {
+            "episodes_exceeding_configured_missing_bits": 0,
+            "episodes_with_dense_bound_exceedance": 0,
+            "maximum_candidate_expansions": 512,
+            "maximum_live_histories_after_feedback": 8
+          }
+        },
+        "selection": {
+          "all_action_nll_floor_nats": 0.20976822569577291,
+          "all_action_sum_brier_floor": 0.1513157894736842,
+          "carry": {
+            "branches_with_witness": 18,
+            "expected_fraction_of_views_with_witness": 0.140625,
+            "mode_branches": 128,
+            "tested_contact_pairs": 64,
+            "witnesses": 18
+          },
+          "contact_nll_floor_nats": 0.33213302401830713,
+          "contact_sum_brier_floor": 0.23958333333333334,
+          "counts": {
+            "ambiguous_steps": 46,
+            "answerable_steps": 106,
+            "contact_steps": 96,
+            "episodes": 64,
+            "physical_draws": 32,
+            "planned_steps": 152,
+            "role_pairs": 32
+          },
+          "expected_all_action_accuracy": 0.8486842105263158,
+          "expected_all_action_ambiguous_points": 46.0,
+          "expected_contact_accuracy": 0.7604166666666666,
+          "expected_contact_ambiguous_points": 46.0,
+          "frozen_lexicographic_role_pair_exact": 0.3125,
+          "frozen_lexicographic_trajectory_exact": 0.65625,
+          "resources": {
+            "episodes_exceeding_configured_missing_bits": 0,
+            "episodes_with_dense_bound_exceedance": 0,
+            "maximum_candidate_expansions": 256,
+            "maximum_live_histories_after_feedback": 8
+          }
+        },
+        "train": {
+          "all_action_nll_floor_nats": 0.21041967981284052,
+          "all_action_sum_brier_floor": 0.15178571428571427,
+          "carry": {
+            "branches_with_witness": 42,
+            "expected_fraction_of_views_with_witness": 0.1640625,
+            "mode_branches": 256,
+            "tested_contact_pairs": 128,
+            "witnesses": 42
+          },
+          "contact_nll_floor_nats": 0.3537938734108054,
+          "contact_sum_brier_floor": 0.2552083333333333,
+          "counts": {
+            "ambiguous_steps": 102,
+            "answerable_steps": 234,
+            "contact_steps": 192,
+            "episodes": 128,
+            "physical_draws": 64,
+            "planned_steps": 336,
+            "role_pairs": 64
+          },
+          "expected_all_action_accuracy": 0.8482142857142857,
+          "expected_all_action_ambiguous_points": 102.0,
+          "expected_contact_accuracy": 0.7447916666666666,
+          "expected_contact_ambiguous_points": 98.0,
+          "frozen_lexicographic_role_pair_exact": 0.234375,
+          "frozen_lexicographic_trajectory_exact": 0.6171875,
+          "resources": {
+            "episodes_exceeding_configured_missing_bits": 0,
+            "episodes_with_dense_bound_exceedance": 0,
+            "maximum_candidate_expansions": 512,
+            "maximum_live_histories_after_feedback": 8
+          }
+        }
+      },
+      "carry_interpretation": "Suppress one earlier contact and compare the later contact destination; unrelated surviving bystander differences do not count.",
+      "case_details_location": "audit.json:cases, also in checked-in archive audit; omitted here to avoid duplicating 624 case records",
+      "ceiling_interpretation": "Expected under both equiprobable persistent modes, not a hard bound on a finite realized sample.",
+      "conjunction_interpretation": "Frozen lexicographic MAP with delivered feedback; not an optimal trajectory/pair policy ceiling.",
+      "detailed_strata_location": "Full by-split/by-family answerable and ambiguous conditional-law strata and target diagnostics remain in the hash-bound audit.json and archive. This record retains aggregate, split and evaluation-family summaries.",
+      "evaluation_by_family": {
+        "cycle": {
+          "all_action_nll_floor_nats": 0.15873599554807907,
+          "all_action_sum_brier_floor": 0.11450381679389313,
+          "carry": {
+            "branches_with_witness": 90,
+            "expected_fraction_of_views_with_witness": 0.703125,
+            "mode_branches": 128,
+            "tested_contact_pairs": 384,
+            "witnesses": 128
+          },
+          "contact_nll_floor_nats": 0.2166084939249829,
+          "contact_sum_brier_floor": 0.15625,
+          "counts": {
+            "ambiguous_steps": 60,
+            "answerable_steps": 202,
+            "contact_steps": 192,
+            "episodes": 64,
+            "physical_draws": 32,
+            "planned_steps": 262,
+            "role_pairs": 32
+          },
+          "expected_all_action_accuracy": 0.8854961832061069,
+          "expected_all_action_ambiguous_points": 60.0,
+          "expected_contact_accuracy": 0.84375,
+          "expected_contact_ambiguous_points": 60.0,
+          "frozen_lexicographic_role_pair_exact": 0.09375,
+          "frozen_lexicographic_trajectory_exact": 0.546875,
+          "resources": {
+            "episodes_exceeding_configured_missing_bits": 0,
+            "episodes_with_dense_bound_exceedance": 0,
+            "maximum_candidate_expansions": 512,
+            "maximum_live_histories_after_feedback": 8
+          }
+        },
+        "disjoint": {
+          "all_action_nll_floor_nats": 0.22788400456765323,
+          "all_action_sum_brier_floor": 0.1643835616438356,
+          "carry": {
+            "branches_with_witness": 0,
+            "expected_fraction_of_views_with_witness": 0.0,
+            "mode_branches": 96,
+            "tested_contact_pairs": 96,
+            "witnesses": 0
+          },
+          "contact_nll_floor_nats": 0.33213302401830713,
+          "contact_sum_brier_floor": 0.23958333333333334,
+          "counts": {
+            "ambiguous_steps": 48,
+            "answerable_steps": 98,
+            "contact_steps": 96,
+            "episodes": 48,
+            "physical_draws": 24,
+            "planned_steps": 146,
+            "role_pairs": 24
+          },
+          "expected_all_action_accuracy": 0.8356164383561644,
+          "expected_all_action_ambiguous_points": 48.0,
+          "expected_contact_accuracy": 0.7604166666666666,
+          "expected_contact_ambiguous_points": 46.0,
+          "frozen_lexicographic_role_pair_exact": 0.08333333333333333,
+          "frozen_lexicographic_trajectory_exact": 0.5208333333333334,
+          "resources": {
+            "episodes_exceeding_configured_missing_bits": 0,
+            "episodes_with_dense_bound_exceedance": 0,
+            "maximum_candidate_expansions": 256,
+            "maximum_live_histories_after_feedback": 8
+          }
+        },
+        "fork": {
+          "all_action_nll_floor_nats": 0.19494764453248462,
+          "all_action_sum_brier_floor": 0.140625,
+          "carry": {
+            "branches_with_witness": 34,
+            "expected_fraction_of_views_with_witness": 0.3541666666666667,
+            "mode_branches": 96,
+            "tested_contact_pairs": 288,
+            "witnesses": 68
+          },
+          "contact_nll_floor_nats": 0.2599301927099795,
+          "contact_sum_brier_floor": 0.1875,
+          "counts": {
+            "ambiguous_steps": 54,
+            "answerable_steps": 138,
+            "contact_steps": 144,
+            "episodes": 48,
+            "physical_draws": 24,
+            "planned_steps": 192,
+            "role_pairs": 24
+          },
+          "expected_all_action_accuracy": 0.859375,
+          "expected_all_action_ambiguous_points": 54.0,
+          "expected_contact_accuracy": 0.8125,
+          "expected_contact_ambiguous_points": 54.0,
+          "frozen_lexicographic_role_pair_exact": 0.041666666666666664,
+          "frozen_lexicographic_trajectory_exact": 0.5208333333333334,
+          "resources": {
+            "episodes_exceeding_configured_missing_bits": 0,
+            "episodes_with_dense_bound_exceedance": 0,
+            "maximum_candidate_expansions": 512,
+            "maximum_live_histories_after_feedback": 8
+          }
+        },
+        "self_contact": {
+          "all_action_nll_floor_nats": 0.0,
+          "all_action_sum_brier_floor": 0.0,
+          "carry": {
+            "branches_with_witness": 0,
+            "expected_fraction_of_views_with_witness": 0.0,
+            "mode_branches": 64,
+            "tested_contact_pairs": 0,
+            "witnesses": 0
+          },
+          "contact_nll_floor_nats": 0.0,
+          "contact_sum_brier_floor": 0.0,
+          "counts": {
+            "ambiguous_steps": 0,
+            "answerable_steps": 61,
+            "contact_steps": 32,
+            "episodes": 32,
+            "physical_draws": 32,
+            "planned_steps": 61,
+            "role_pairs": 0
+          },
+          "expected_all_action_accuracy": 1.0,
+          "expected_all_action_ambiguous_points": 0.0,
+          "expected_contact_accuracy": 1.0,
+          "expected_contact_ambiguous_points": 0.0,
+          "frozen_lexicographic_role_pair_exact": null,
+          "frozen_lexicographic_trajectory_exact": 1.0,
+          "resources": {
+            "episodes_exceeding_configured_missing_bits": 0,
+            "episodes_with_dense_bound_exceedance": 0,
+            "maximum_candidate_expansions": 256,
+            "maximum_live_histories_after_feedback": 8
+          }
+        },
+        "single_contact": {
+          "all_action_nll_floor_nats": 0.23104906018664842,
+          "all_action_sum_brier_floor": 0.16666666666666666,
+          "carry": {
+            "branches_with_witness": 0,
+            "expected_fraction_of_views_with_witness": 0.0,
+            "mode_branches": 128,
+            "tested_contact_pairs": 0,
+            "witnesses": 0
+          },
+          "contact_nll_floor_nats": 0.4765386866349624,
+          "contact_sum_brier_floor": 0.34375,
+          "counts": {
+            "ambiguous_steps": 48,
+            "answerable_steps": 96,
+            "contact_steps": 64,
+            "episodes": 64,
+            "physical_draws": 32,
+            "planned_steps": 144,
+            "role_pairs": 32
+          },
+          "expected_all_action_accuracy": 0.8333333333333334,
+          "expected_all_action_ambiguous_points": 48.0,
+          "expected_contact_accuracy": 0.65625,
+          "expected_contact_ambiguous_points": 44.0,
+          "frozen_lexicographic_role_pair_exact": 0.3125,
+          "frozen_lexicographic_trajectory_exact": 0.65625,
+          "resources": {
+            "episodes_exceeding_configured_missing_bits": 0,
+            "episodes_with_dense_bound_exceedance": 0,
+            "maximum_candidate_expansions": 256,
+            "maximum_live_histories_after_feedback": 8
+          }
+        },
+        "three_contact_chain": {
+          "all_action_nll_floor_nats": 0.16781458055661835,
+          "all_action_sum_brier_floor": 0.12105263157894737,
+          "carry": {
+            "branches_with_witness": 36,
+            "expected_fraction_of_views_with_witness": 0.375,
+            "mode_branches": 96,
+            "tested_contact_pairs": 288,
+            "witnesses": 62
+          },
+          "contact_nll_floor_nats": 0.22142201601220476,
+          "contact_sum_brier_floor": 0.1597222222222222,
+          "counts": {
+            "ambiguous_steps": 46,
+            "answerable_steps": 144,
+            "contact_steps": 144,
+            "episodes": 48,
+            "physical_draws": 24,
+            "planned_steps": 190,
+            "role_pairs": 24
+          },
+          "expected_all_action_accuracy": 0.8789473684210526,
+          "expected_all_action_ambiguous_points": 46.0,
+          "expected_contact_accuracy": 0.8402777777777778,
+          "expected_contact_ambiguous_points": 46.0,
+          "frozen_lexicographic_role_pair_exact": 0.041666666666666664,
+          "frozen_lexicographic_trajectory_exact": 0.5208333333333334,
+          "resources": {
+            "episodes_exceeding_configured_missing_bits": 0,
+            "episodes_with_dense_bound_exceedance": 0,
+            "maximum_candidate_expansions": 256,
+            "maximum_live_histories_after_feedback": 8
+          }
+        },
+        "two_contacts": {
+          "all_action_nll_floor_nats": 0.17511086666777564,
+          "all_action_sum_brier_floor": 0.12631578947368421,
+          "carry": {
+            "branches_with_witness": 38,
+            "expected_fraction_of_views_with_witness": 0.296875,
+            "mode_branches": 128,
+            "tested_contact_pairs": 128,
+            "witnesses": 38
+          },
+          "contact_nll_floor_nats": 0.25993019270997947,
+          "contact_sum_brier_floor": 0.1875,
+          "counts": {
+            "ambiguous_steps": 48,
+            "answerable_steps": 142,
+            "contact_steps": 128,
+            "episodes": 64,
+            "physical_draws": 32,
+            "planned_steps": 190,
+            "role_pairs": 32
+          },
+          "expected_all_action_accuracy": 0.8736842105263158,
+          "expected_all_action_ambiguous_points": 48.0,
+          "expected_contact_accuracy": 0.8125,
+          "expected_contact_ambiguous_points": 48.0,
+          "frozen_lexicographic_role_pair_exact": 0.28125,
+          "frozen_lexicographic_trajectory_exact": 0.625,
+          "resources": {
+            "episodes_exceeding_configured_missing_bits": 0,
+            "episodes_with_dense_bound_exceedance": 0,
+            "maximum_candidate_expansions": 512,
+            "maximum_live_histories_after_feedback": 8
+          }
+        }
+      },
+      "gate_g1": "NOT_ADMITTED",
+      "learned_model_evaluated": false,
+      "pair_tie_caveat": "A balanced unidentified reversed pair can have zero conjunction credit even for exact calibrated forecasts.",
+      "resource_interpretation": "Conservative dense-support history counts without merging; no measured model cost or oracle pruning.",
+      "scope": "Exact conditional-law engineering audit of public same-author assets; no research result.",
+      "selection_policy": "All supplied cases retained regardless of ambiguity, carry witnesses or resource limits.",
+      "template_inventory_location": "audit.json:templates_shared_across_splits, also in checked-in archive audit",
+      "templates_shared_across_splits_count": 45,
+      "version": "prospective-data-audit-v1"
+    },
+    "manifest_byte_sha256": "c8e5814e6656ad633ea6a553c209c4a0b76f3af8f028ad63590d891b85c43815",
+    "observed_exposure_scope": "Raw delivered event/bit and immediately preceding/subsequent complete-reading counts. These do not establish equally eligible history-based targets, equal learner capacity or equal consumed compute across arms.",
+    "participant_boundary": "Only observed inputs and native checkpoint enter the participant. Combined archive, audit, oracle and hidden case metadata stay on the evaluator side.",
+    "raw_observed_exposure": {
+      "calibration": {
+        "all_missing_feedback_events": 0,
+        "complete_operands_before_after_contacts": 54,
+        "complete_world_before_after_contacts": 24,
+        "contacts": 96,
+        "delivered_bits": 612,
+        "episodes": 64,
+        "events": 156,
+        "observed_feedback_events": 156
+      },
+      "evaluation": {
+        "all_missing_feedback_events": 1,
+        "complete_operands_before_after_contacts": 583,
+        "complete_world_before_after_contacts": 399,
+        "contacts": 800,
+        "delivered_bits": 5037,
+        "episodes": 368,
+        "events": 1185,
+        "observed_feedback_events": 1184
+      },
+      "selection": {
+        "all_missing_feedback_events": 0,
+        "complete_operands_before_after_contacts": 64,
+        "complete_world_before_after_contacts": 50,
+        "contacts": 96,
+        "delivered_bits": 622,
+        "episodes": 64,
+        "events": 152,
+        "observed_feedback_events": 152
+      },
+      "train": {
+        "all_missing_feedback_events": 4,
+        "complete_operands_before_after_contacts": 104,
+        "complete_world_before_after_contacts": 64,
+        "contacts": 192,
+        "delivered_bits": 1314,
+        "episodes": 128,
+        "events": 336,
+        "observed_feedback_events": 332
+      }
+    },
+    "repeated_template_interpretation": "Blueprint and lineage disjointness does not imply every action template, atomic context or prefix is novel.",
+    "reproducibility": {
+      "all_artifact_bytes_identical": true,
+      "artifacts": [
+        {
+          "bytes": 217752,
+          "file": "asset-bundle.json.xz",
+          "sha256": "42cf52fb84fece67d23b78751080cd6c6d603767cc6981a517116dca52995f6d"
+        },
+        {
+          "bytes": 4117859,
+          "file": "audit.json",
+          "sha256": "2ed49605e011beb18d3d14b477e6fa32b4f131f9f0e6109e76d55bc6a125c5f3"
+        },
+        {
+          "bytes": 110758,
+          "file": "calibration.inputs.json",
+          "sha256": "f8f19081556875b1c8767b3a82d124c774b6c1fa366da887b74c1fafaa598885"
+        },
+        {
+          "bytes": 69648,
+          "file": "calibration.oracle.json",
+          "sha256": "22d7a903573f224dd77146c590291917c07eb75c9d6aeefc5bafcce85716644a"
+        },
+        {
+          "bytes": 807292,
+          "file": "evaluation.inputs.json",
+          "sha256": "c550f70cadac95eaba55f5073a389f6926345b359eef88552de72c453af80782"
+        },
+        {
+          "bytes": 494887,
+          "file": "evaluation.oracle.json",
+          "sha256": "26d15c255fdf208b47e19cd935a8964eb8ff52e4f9d6edfb6118b57652b6ae08"
+        },
+        {
+          "bytes": 355125,
+          "file": "manifest.json",
+          "sha256": "c8e5814e6656ad633ea6a553c209c4a0b76f3af8f028ad63590d891b85c43815"
+        },
+        {
+          "bytes": 110528,
+          "file": "selection.inputs.json",
+          "sha256": "ba07abb7bf2d976d8b98076509b2f93e42435b0702683a88bf61ee8ea7e8d5ed"
+        },
+        {
+          "bytes": 68932,
+          "file": "selection.oracle.json",
+          "sha256": "f40b052b6fdcc41088b1d68c4d46b9bfd20729ea05933f272e123fb501fdb5e3"
+        },
+        {
+          "bytes": 233388,
+          "file": "train.inputs.json",
+          "sha256": "da787aee16c322ea262ab9f93b7370898aa3725c473c9765724077e5e0f50072"
+        },
+        {
+          "bytes": 145966,
+          "file": "train.oracle.json",
+          "sha256": "213e1812e07b974cfa74ff834c70b16a3576d4fcf1b39dac5a08328a8c5b922c"
+        }
+      ],
+      "identical_files": 11,
+      "independent_default_exports": 2
+    },
+    "scope": "PUBLIC_SAME_AUTHOR_ENGINEERING_ASSETS"
+  },
+  "historical_results_rescored": false,
+  "independent_validation": false,
+  "inference_version": "active-inference-v5",
+  "learned_parameter_delta": 0,
+  "learned_research_model_scored": false,
+  "learning_version": "active-learning-v1",
+  "limitations": {
+    "export_atomicity": "Pre-validation occurs before destination creation and the completion manifest is written last; an I/O failure can leave a newly created incomplete directory without the manifest.",
+    "fixed_map_conjunctions": "Lexicographic-MAP trajectory and role-pair values describe the frozen point-decision rule, not an optimal coherent joint-policy ceiling. Exact calibrated distributions can receive zero pair conjunction credit in an ambiguous reversed pair.",
+    "full_comparison_freeze": "Arm configurations, selection/calibration, eligible-target exposure, capacity/compute matching, effect sizes, inference units and multiplicity remain to be frozen before research fitting.",
+    "law_weighted_not_learned_results": "No research model was fitted or scored. The 85.6287% evaluation in-family ceiling quantifies the previously known first-contact ambiguity on fresh assets, not a trained-model regression.",
+    "proposal_vs_accepted_distribution": "Blueprint rejection happens before hidden-mode choice and can alter accepted initial-state/topology/mask frequencies. Audit conditions on accepted blueprints; proposal probabilities are not claimed as accepted frequencies.",
+    "resource_estimates": "Conservative dense histories without merging and before-feedback candidate expansions, not measured model runtime, memory cost or oracle pruning.",
+    "sampling_units": "Reversed views, action steps and counterfactual mode branches are correlated. The 624 views arise from 328 physical draws; model seeds and physical worlds are distinct replication dimensions.",
+    "scientific_admission": "No G1 admission, unseen entity-count transfer, independent challenge result or language/G2 promotion follows from this engineering validation.",
+    "scope_of_oracle_completeness": "Complete only for the declared balanced persistent two-mode binary-contact law and noiseless exogenous observation design. Independent authentication of that law, authorship and custody remains pending.",
+    "size_goal": "The active source count is 3344 physical lines excluding frozen dependencies; the inclusive 2000-line goal is not met.",
+    "statistics": "Five paired model seeds alone give minimum two-sided exact sign-flip p = 2/32 = 0.0625; no new statistical acceptance framework was implemented."
+  },
+  "line_counts": {
+    "active_files": {
+      "acceptance_contract.py": 423,
+      "acceptance_runner.py": 175,
+      "acceptance_scoring.py": 294,
+      "active_checkpoint.py": 291,
+      "active_evidence.py": 156,
+      "active_learning.py": 346,
+      "active_participant.py": 225,
+      "active_paths.py": 255,
+      "domain_contract.py": 297,
+      "domain_flat.py": 74,
+      "domain_kernel.py": 149,
+      "observed_io.py": 48,
+      "prospective_audit.py": 294,
+      "prospective_data.py": 238,
+      "prospective_oracle.py": 79
+    },
+    "active_source_files_excluding_frozen_dependencies": 3344,
+    "inclusive_size_goal_met": false,
+    "learned_parameter_delta": 0,
+    "new_runtime_source_net": 659,
+    "new_tests_net": 839,
+    "retained_research_python": 26038
+  },
+  "local_verified_code_commit": "cd9df92861f9e0ea1c2000ee4aa1c356b40e1169",
+  "local_verified_tree_sha": "7fbf1f6c670f2e77d4bfac32a69636974fc8a6e5",
+  "new_capabilities": {
+    "observed_io.py": "Hash-bound observed-only input conversion to existing ObservedBatch, grouped by entity count and action length without temporal padding or hidden-target filling; no generator/oracle import.",
+    "prospective_audit.py": "Exact inventory/topology/source validation; law-weighted event ceilings and proper-score floors; coherent fixed-policy trajectory/pair conjunctions; conservative dense resource counts; genuine later-contact carry witnesses.",
+    "prospective_data.py": "Frozen fresh four-way assets, original physical law and family topologies, exogenous bounded missingness, no intervening reset, reversed-view coupling, canonical blueprint and lineage disjointness, deterministic export and manifest.",
+    "prospective_oracle.py": "Evaluator-only exact conditional support and probabilities from the delivered prefix; preserves persistent modes through world coalescence; no simulator or learner import."
+  },
+  "new_test_coverage": {
+    "exhaustive_entity_counts": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "exhaustive_single_step_state_action_combinations": 4816,
+    "integration_checks": "Actual default CLI export and no overwrite; deterministic smaller exports and byte hashes; all four observed splits load; join to existing acceptance contract with a real native no-change checkpoint under SYNTHETIC_INVARIANTS; empty traces remain UNPRODUCED.",
+    "neural_check_scope": "Untrained replay parity with the existing participant, not learned research-model evaluation.",
+    "new_tests": 37,
+    "oracle_checks": "Original simulator parity for every binary state/legal action; all sensor masks on multi-step histories; persistent-mode correlations, coalescence, aliases and current/future-feedback exclusion.",
+    "test_synthesis_is_not_independent_validation": true
+  },
+  "new_test_inventory": {
+    "tests/test_observed_io.py": {
+      "count": 5,
+      "lines": 108,
+      "sha256": "22aee7044249f5d22d1094836c9957db70d2f8f37c4f3232db58e61e3e97890b",
+      "tests": [
+        "ObservedIOTests.test_coordinate_alias_and_absence_encoding_preserve_delivered_tape",
+        "ObservedIOTests.test_mixed_geometries_keep_every_episode_and_do_not_pad_time",
+        "ObservedIOTests.test_exact_file_hash_and_observed_schema_reject_privileged_fields",
+        "ObservedIOTests.test_converted_neural_replay_matches_direct_wire_forecasts_at_every_size",
+        "ObservedIOTests.test_import_does_not_load_data_generator_or_oracle"
+      ]
+    },
+    "tests/test_prospective_audit.py": {
+      "count": 13,
+      "lines": 250,
+      "sha256": "8fd456a223b240c61800a92b6365ff18a5c19c35530bfd0665df17469e627392",
+      "tests": [
+        "LawWeightedAuditTests.test_first_contact_balanced_law_and_reversed_pair_tie_are_exact",
+        "LawWeightedAuditTests.test_world_mass_is_aggregated_before_entropy_and_self_is_one_physical_output",
+        "LawWeightedAuditTests.test_coherent_trajectory_conjunction_is_not_product_of_marginal_ceilings",
+        "LawWeightedAuditTests.test_actual_hidden_draw_never_selects_the_law_weighted_result",
+        "LawWeightedAuditTests.test_all_actions_and_contact_denominators_remain_distinct",
+        "LawWeightedAuditTests.test_resource_bound_uses_cumulative_hidden_history_and_keeps_complete_later_readings",
+        "LawWeightedAuditTests.test_carry_targets_later_contact_effects_not_persistent_bystander_changes",
+        "AssetAuditContractTests.test_complete_small_bundle_is_strict_json_pure_and_retains_every_family_and_draw",
+        "AssetAuditContractTests.test_removing_a_whole_physical_pair_cannot_shorten_the_configured_denominator",
+        "AssetAuditContractTests.test_family_relabel_and_reset_between_contacts_are_rejected",
+        "AssetAuditContractTests.test_source_truth_and_incomplete_oracle_are_rejected",
+        "AssetAuditContractTests.test_pair_mode_consistency_and_cross_split_lineage_are_checked",
+        "AssetAuditContractTests.test_bound_exceedance_remains_reported_without_dropping_cases_or_claiming_conformance"
+      ]
+    },
+    "tests/test_prospective_data.py": {
+      "count": 9,
+      "lines": 204,
+      "sha256": "118e3b14688232e93a61d988a399ce7a9428c43bde2ef6de0f8961aa31b9231d",
+      "tests": [
+        "ProspectiveDataTests.test_locked_recipe_exact_counts_sources_and_reproducibility",
+        "ProspectiveDataTests.test_observed_fields_and_separate_gold_match_physics",
+        "ProspectiveDataTests.test_blueprints_and_lineages_are_disjoint_and_identity_normalized",
+        "ProspectiveDataTests.test_blueprint_uses_mask_and_anchor_but_never_later_values",
+        "ProspectiveDataTests.test_role_pairs_share_mode_anchor_and_realized_masks",
+        "ProspectiveDataTests.test_schedules_have_no_contact_resets_and_missingness_is_bounded",
+        "ProspectiveDataTests.test_mode_choice_happens_after_blueprint_acceptance",
+        "ProspectiveDataTests.test_config_rejects_historical_seeds_changed_law_and_unbounded_work",
+        "ProspectiveDataTests.test_duplicate_exhaustion_fails_instead_of_shortening_inventory"
+      ]
+    },
+    "tests/test_prospective_integration.py": {
+      "count": 2,
+      "lines": 94,
+      "sha256": "26e3d5c00e4edff899eea1f31f778b2d983dfbcc89ded2115a74c74ebe4fc3f0",
+      "tests": [
+        "ProspectiveIntegrationTests.test_export_is_byte_reproducible_and_joins_existing_contract_without_fake_weights",
+        "ProspectiveIntegrationTests.test_actual_cli_exports_default_inventory_and_refuses_overwrite"
+      ]
+    },
+    "tests/test_prospective_oracle.py": {
+      "count": 8,
+      "lines": 183,
+      "sha256": "e07e9bdf8ab8bbbd66932ac59259acc1e39c5670a71ac7fd05d0fdf7d214860f",
+      "tests": [
+        "ProspectiveOracleTests.test_exhaustive_all_states_actions_and_entity_counts_match_original_physics",
+        "ProspectiveOracleTests.test_every_sensor_mask_filters_complete_correlated_histories_in_all_domains",
+        "ProspectiveOracleTests.test_persistent_mode_retains_joint_and_temporal_correlations_after_world_coalescence",
+        "ProspectiveOracleTests.test_affine_constants_aliases_and_observe_compose_after_interventions",
+        "ProspectiveOracleTests.test_own_feedback_and_future_actions_cannot_select_the_current_forecast",
+        "ProspectiveOracleTests.test_jointly_impossible_and_later_contradictory_feedback_reject_the_episode",
+        "ProspectiveOracleTests.test_shared_input_validation_rejects_hidden_fields_and_partial_anchor",
+        "ProspectiveOracleTests.test_source_law_json_and_input_rng_purity"
+      ]
+    }
+  },
+  "next_steps": [
+    "Specify and review the prospective information/query scope using permitted preforecast information, while preserving all-action diagnostics, ambiguous cases, proper scores and the unchanged original 95% gate.",
+    "Freeze a complete comparison contract: exact arms, seed roles, selection and calibration, target eligibility and delivered exposure, capacity and consumed-compute matching, material effects, statistical unit and multiplicity.",
+    "Resolve independent authorship/custody and evaluator-controlled participant isolation separately from deterministic public engineering assets.",
+    "Only after those prefit commitments, fit and select as prescribed, bind actual checkpoint byte hashes to the preserved commitments, then collect once under the approved protocol."
+  ],
+  "preflight_scope": "The historical runner only checked its frozen inputs/environment and kept study execution disabled. Its HOLD_REVISE gate and unused fit plan are historical metadata, not an executed prospective study or G1 admission.",
+  "prior_acceptance_record": {
+    "path": "results/active-acceptance-validation-v1.json",
+    "sha256": "988f03f3a5eb4c2eebf8ade77453c222a93e9d3f3f3c974141e65ff248b8374c",
+    "status": "Retained unchanged; its 590-test verification remains historical evidence for PR60, not this tranche."
+  },
+  "prospective_pr": 61,
+  "publication_equivalence": {
+    "equal_tree": true,
+    "later_changes": "Only ACTIVE_NUCLEUS.md, active_status.json and this validation record.",
+    "local_verified_source_commit": "cd9df92861f9e0ea1c2000ee4aa1c356b40e1169",
+    "local_verified_tree_sha": "7fbf1f6c670f2e77d4bfac32a69636974fc8a6e5",
+    "published_source_commit": "8c662f588a9b81bdbcbdef48d3bdc26db1479c85",
+    "published_source_tree_sha": "7fbf1f6c670f2e77d4bfac32a69636974fc8a6e5",
+    "verification": "GitHub Git commit/tree API read after publication; commit metadata differs."
+  },
+  "publication_equivalence_requirement": "The published source/data commit must have exactly this verified Git tree; commit metadata may differ. Later changes are restricted to handoff and validation records.",
+  "publication_tree_matches_local_verified_code": true,
+  "published_tree_sha": "7fbf1f6c670f2e77d4bfac32a69636974fc8a6e5",
+  "recorded_on": "2026-10-30",
+  "research_fit_executed": false,
+  "review_findings_and_repairs": [
+    {
+      "change": "Compute all compatible persistent source modes from the observed prefix using an independently structured affine GF(2) transition implementation. Completeness remains conditional on the declared two-mode law.",
+      "finding": "PR60 validates truth-in-support and collection/scoring consistency but cannot establish caller-supplied oracle completeness."
+    },
+    {
+      "change": "New assets have no set between contacts. Audit counterfactual dependence at a later contact destination; retain cases without witnesses.",
+      "finding": "The historical generator resets operands before contacts, which can remove the need for carried effects."
+    },
+    {
+      "change": "Select and globally deduplicate blueprints before drawing the persistent hidden mode; share the same mode, anchor and masks across reversed views.",
+      "finding": "Action, identity and mask selection must remain independent of the latent mode and outcomes."
+    },
+    {
+      "change": "Require exact configured family-by-eligible-entity-count physical-draw inventory, in addition to internal consistency.",
+      "finding": "An audit version accepted deletion of a complete paired physical draw after rehashing remaining data.",
+      "regression_test": "AssetAuditContractTests.test_removing_a_whole_physical_pair_cannot_shorten_the_configured_denominator"
+    },
+    {
+      "change": "Require the actual action schedule and topology, including no intervening resets, to match the declared family under allowed renaming and reversal.",
+      "finding": "An audit version accepted a single-contact pair relabeled as two_contacts.",
+      "regression_test": "AssetAuditContractTests.test_family_relabel_and_reset_between_contacts_are_rejected"
+    },
+    {
+      "change": "Allow per-split draw-count reductions only, bounded by the frozen train/selection/calibration/evaluation limits 8/4/4/8.",
+      "finding": "Custom test configurations could otherwise silently expand the frozen draw budget.",
+      "regression_test": "ProspectiveDataTests.test_config_rejects_historical_seeds_changed_law_and_unbounded_work"
+    },
+    {
+      "change": "Export a data manifest only. Freeze full scientific design before fitting, then bind actual selected native checkpoint hashes before collection.",
+      "finding": "A prefit source/data freeze cannot contain unknown future checkpoint byte hashes."
+    }
+  ],
+  "scope": "LOCAL_IMPLEMENTATION_AND_DATA_LAW_VALIDATION_ONLY",
+  "summary_decision": "KEEP the public same-author data/oracle engineering implementation; REVISE the prospective information/query and scientific comparison contract before research fitting.",
+  "timezone": "Africa/Lagos",
+  "validation_version": "prospective-data-validation-v1"
+}

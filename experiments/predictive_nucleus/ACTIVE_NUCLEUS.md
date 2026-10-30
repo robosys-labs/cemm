@@ -1,15 +1,16 @@
-# Active nucleus: observed-history learning, inference and acceptance
+# Active nucleus: observed learning, acceptance and prospective data
 
-Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22); acceptance draft
-[#60](https://github.com/robosys-labs/cemm/pull/60),
-stacked on [draft #59](https://github.com/robosys-labs/cemm/pull/59).
-Acceptance source: `642265d231cc1e4d606dea5e0f892e56693b3fdc`.
-Locally verified code: `956078ffc509b945bd86b2393d8453ee5bdb81bc`, tree
-`61a6f214941ad71c44e5a0f8ea93e2952b6bcaa2`.
-Decision: KEEP the prospective acceptance contract, observed-only collector and
-complete-world scorer. Fresh prospective data, oracle lineage and a frozen
-comparison contract are the next engineering work.
-**G1 remains NOT ADMITTED. Engineering does not wait solely on issue #55.**
+Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22); prospective-data
+[draft #61](https://github.com/robosys-labs/cemm/pull/61),
+stacked on [draft #60](https://github.com/robosys-labs/cemm/pull/60).
+Prospective data source: `8c662f588a9b81bdbcbdef48d3bdc26db1479c85`.
+Locally verified code/assets: `cd9df92861f9e0ea1c2000ee4aa1c356b40e1169`, tree
+`7fbf1f6c670f2e77d4bfac32a69636974fc8a6e5`.
+Decision: KEEP the public observed curriculum, exact conditional oracle, asset
+audit and observed-only batch adapter; REVISE the prospective information/query
+and comparison contract before research fitting. The default evaluation
+in-family all-action ceiling is 85.6287% under its declared information law.
+**G1 remains NOT ADMITTED. The original 95% target is unchanged.**
 
 ## Active versus frozen paths
 
@@ -19,11 +20,13 @@ class/configuration, declared domain, resource limits, weight/table fingerprints
 and current training, checkpoint and adaptation provenance. Forecast receipts
 bind this identity. `active-learning-v1` supplies Python training, replay and
 evaluation APIs; `cemm-active-checkpoint-v1` stores registered learned state.
-Those eight active source files are unchanged by the acceptance tranche.
-`active-acceptance-v1` adds three source files around the existing Session and
-native artifacts, for eleven active files in total. They reuse the frozen
-streaming transport, verified bundle loader and learned modules. Historical
-sources, protocols, checkpoints, studies and standalone v1 exports remain unchanged.
+The eight learning/inference sources and three `active-acceptance-v1` modules
+are unchanged by the prospective-data tranche. `prospective-data-v1` adds four
+sources for generation, a conditional oracle, auditing and observed-only batch
+conversion, bringing the active-file inventory to fifteen. The existing Session,
+native artifacts, streaming transport, verified bundle loader and learned modules
+are reused. Historical sources, protocols, checkpoints, studies and standalone
+v1 exports remain unchanged.
 
 The native artifact route starts a fresh streaming episode from a separately
 saved and hash-verified checkpoint:
@@ -199,7 +202,7 @@ must not be promoted to the roadmap's outcome gate.
 ## Prospective acceptance contract, collector and scorer
 
 `ACCEPTANCE.md` documents the implemented APIs, commands and artifact formats.
-The new `acceptance_protocol_v1.json` freezes the scoring/recording contract,
+`acceptance_protocol_v1.json` freezes the scoring/recording contract,
 not a complete scientific study. The original protocol and its target remain
 unchanged. Inference stays `active-inference-v5`, learning stays
 `active-learning-v1`, and the native checkpoint format is unchanged.
@@ -241,9 +244,11 @@ denominator; empirical `ABSTAIN` remains distinct and has no invented score.
 
 Answerability is singleton **declared complete oracle support** under the
 delivered prefix/current action/selected coverage. Consistent information keys
-cannot receive conflicting support. The software does not prove that the
-alternatives are exhaustive, infer a uniform prior from support size, calculate
-a Bayes floor from it, or condition a submitted forecast on oracle support.
+cannot receive conflicting support. The acceptance validator does not prove
+that caller-supplied alternatives are exhaustive, infer a uniform prior from
+support size, calculate a Bayes floor from it, or condition a submitted forecast
+on oracle support. The separate prospective oracle below computes alternatives
+under its explicitly declared physical and observation law.
 
 Reports include all-planned complete-world MAP accuracy, answerable/ambiguous
 strata, joint NLL/Brier, unchanged-coordinate errors, explicit coverage, fixed
@@ -262,6 +267,95 @@ likelihood. A failure during final feedback does not erase its valid forecast;
 forecast correctness and execution completion remain separate. The per-seed
 comparison to 0.95 is numeric reporting only, with `admission_decision: false`.
 Every report retains `gate_g1: NOT_ADMITTED`.
+
+## Prospective observed curriculum and conditional oracle
+
+`PROSPECTIVE_DATA.md` documents the new `prospective-data-v1` data contract,
+exporter and findings. The source/hash-pinned default archive is
+`data/prospective-assets-v1.json.xz`, SHA-256
+`42cf52fb84fece67d23b78751080cd6c6d603767cc6981a517116dca52995f6d`.
+Two separate exports of the same public recipe produced identical bytes for
+all eleven files. This is reproducibility, not independent authorship or custody.
+
+| Split | Physical draws | Episode views |
+|---|---:|---:|
+| Train | 64 | 128 |
+| Selection | 32 | 64 |
+| Calibration | 32 | 64 |
+| Evaluation | 200 | 368 |
+| Total | 328 | 624 |
+
+Development contains single contacts and overlapping or repeated two-contact
+histories. Evaluation also includes the original chain, fork, cycle, disjoint
+and self-contact families. The domain remains three to six entities, with a
+complete initial anchor and at most twelve actions. Self-contact is evaluation-
+only and has no redundant reversed view. Entity-count support is not unseen-count
+transfer. The original protocol and all historical challenge seeds remain untouched.
+
+`prospective_data.py` samples an observable blueprint before its hidden mode.
+Blueprint identity includes the anchor, action schedule, full selected coverage
+and realized masks, canonicalized over naming and global contact reversal.
+No resulting bits or actual orientation enter deduplication. Accepted blueprints
+and physical lineages do not cross splits; 45 concrete action templates are
+shared across in-family splits and explicitly disclosed. Disjoint blueprints do
+not imply unfamiliar atomic contexts or independently authored families.
+
+A leading set and trailing observe are independently proposed with probability
+one half, and there are no resets between contacts. Duplicate rejection can
+change accepted proposal frequencies. All cases, including no-change and no-carry
+cases, remain. Each reversed pair shares its actual hidden orientation, anchor,
+IDs, coverage and masks; both directions are simulated separately. At most three
+missing bit-events occur over an episode, so the full-support bound is eight
+recurrent histories and 512 candidate expansions. The participant receives no
+oracle support for pruning.
+
+`prospective_oracle.py` composes affine binary maps for both persistent source
+orientations. Before current feedback, it emits every complete world compatible
+with the delivered prefix and its conditional probability under the explicit
+balanced prior. It preserves mode identity even when world states coincide.
+Only delivered feedback filters alternatives. The oracle's arguments contain no
+actual mode, family or hidden truth. Completeness is conditional on this supplied
+two-mode law; it is not proof of externally correct physics or a measurement of
+the learner's uncertainty over unknown laws.
+
+`prospective_audit.py` reconstructs both modes of each fixed blueprint, checks
+exact family/count/pair inventories, and computes law-weighted event accuracy
+ceilings and proper-score floors. These use explicit probabilities, not a
+uniform-prior assumption inferred from support size. Trajectory and role-pair
+conjunctions use coherent branches and the frozen lexicographic MAP tie rule;
+they are not products of event ceilings or optimal joint-policy bounds. A correct
+probability forecast can have zero paired MAP exactness when complementary role
+outcomes tie. Carry witnesses check whether suppressing an earlier contact
+changes a later contact's destination, rather than merely preserving a bystander
+change. Evaluation has 198 carry-positive branches out of 736 mode/view branches;
+these correlated branches are not independent samples.
+
+The evaluation in-family design has 334 planned actions and law-expected
+ambiguous mass of 96. Its expected optimal event accuracy is
+`1 - 0.5 * 96 / 334 = 0.8562874251497006`, or **85.6287%**. Across all evaluation
+families it is **87.1730%** over 1,185 actions. These are conditional information-
+design calculations, not trained-model scores or hard bounds on a finite
+realized sample. They quantify why an all-action interpretation of the unchanged
+95% target is unattainable in expectation on this design. The historical 93.75%
+ceiling belongs to a different closed workload. Neither finding is a model
+regression or permission to redefine G1.
+
+`observed_io.load_batches` converts the same delivered input files into validated
+`ObservedBatch` records. It groups full episodes by entity count and length,
+canonicalizes coordinates and preserves missing values and masks without temporal
+padding or gold filling. It imports no simulator or prospective oracle. Every
+compared arm must use the same batching policy. Of the training tape's 336 events,
+332 deliver at least one bit; four all-missing events remain. Of 192 contacts,
+64 have full before/after readings and 104 have both operand readings. These
+counts do not establish equal target eligibility under every empirical history
+policy, or matched exposure/cost.
+
+The exporter writes separate observed and evaluator files and a completion
+manifest last; an existing destination is rejected. An I/O failure can leave a
+new incomplete directory without its manifest. Keep the combined archive, audit
+and case metadata on the evaluator side. The code does not impose OS isolation,
+secret seed custody or physical provenance. This public same-author asset audit
+runs no research fit, saved-model evaluation or scientific comparison.
 
 ## Domain and self-contact contract
 
@@ -384,7 +478,39 @@ remain terminal; the no-change control continues its existing last-reading updat
 while reporting and latching the contradiction. The active CLI preserves these
 diagnostics in strict-JSON `ERROR` responses and exits with code 2.
 
-## Current acceptance integration verification
+## Current prospective-data integration verification
+
+The clean source/assets commit `cd9df92861f9e0ea1c2000ee4aa1c356b40e1169` passed
+**627 tests in 72.123 seconds, zero skips**. The **37 new tests** comprise eight
+oracle, nine generator, thirteen audit, five observed-adapter and two integration
+checks; the focused set passed in 7.519 seconds. The original protocol, all
+16 historical locks, the acceptance lock, the new data lock and frozen-input
+preflight passed: **20 standalone checks**. Preflight retained complete history,
+a clean tracked tree and no untracked files, with study execution disabled.
+Published source commit `8c662f588a9b81bdbcbdef48d3bdc26db1479c85` has exactly the
+locally verified tree; only Git commit metadata differs. Final-head CI belongs to
+[the prospective-data PR](https://github.com/robosys-labs/cemm/pull/61).
+The retained validation record is `results/prospective-data-validation-v1.json`.
+
+The oracle checks exhaust every binary initial state and action at each supported
+entity count against the original imperative physics, with separate checks for
+persistent correlations, mode coalescence, aliases, intervention constants,
+partial readings and causal timing. Generator tests cover exact inventories,
+source commitments, latent-independent selection, canonical overlap and paired
+sensor/role coupling. Two malformed audit reproductions exposed complete-pair
+deletion and family relabeling; both are rejected after the fixes. Adapter tests
+check observed-only conversion and native forecast parity, while integration
+checks cover the actual exporter CLI, no overwrite and reproducible artifacts.
+
+No research model was fitted or scored. Inference, learning and acceptance
+sources remain unchanged; learned parameter delta is **zero**. The tranche adds
+**659 runtime lines** and **839 test lines**. Fifteen active files total **3,344
+physical Python lines excluding frozen dependencies**; retained research Python
+totals **26,038 lines**. The inclusive 2,000-line goal remains **unmet**. No
+historical evidence was deleted, and suite timing is not a scientific-compute or
+inference-latency benchmark.
+
+## Earlier acceptance integration verification
 
 The clean code commit `956078ffc509b945bd86b2393d8453ee5bdb81bc` passed
 **590 tests in 54.477 seconds, zero skips**. The **44 new tests** comprise
@@ -579,51 +705,57 @@ line goal. No historical evidence was removed to improve a size figure.
 
 ## Remaining engineering, excluding manual sign-off
 
-`active_status.json` records the common training/inference/native-checkpoint path
-and the prospective acceptance contract, collector and scorer as implemented.
-The next bounded engineering work is the **fresh prospective data and comparison
-contract**: a delivered-observation curriculum whose earlier effects remain
-relevant, fresh held-out family inventories, complete conditional oracle support,
-split/source/information-law lineage and all required seed/checkpoint plans.
-Freeze these assets before substantive fits or research scores, using the
-implemented collector/scorer rather than another competing inference harness.
+The common learning/inference/native-checkpoint path, acceptance collector and
+scorer, and public prospective data/oracle/audit/observed adapter are implemented.
+The next engineering decision is the **information/query and comparison contract
+before fitting**. The 85.6287% expected in-family ceiling makes an all-action 95%
+interpretation incompatible with the current data law. Define any proposed task,
+query scope or information intervention from permitted preforecast evidence,
+quantify its identifiability and state the scientific interpretation explicitly.
+Preserve all-action diagnostics, ambiguous proper scores, role-pair tie behavior,
+and the original gate. Do not pad easy actions, select cases from outcomes or
+silently substitute an answerable-only denominator.
 
-Predeclare the interpretation of scientific denominators, calibration criteria,
-material effect size/statistical test, and concrete exposure/capacity/actual-compute
-comparisons. Retain the strongest applicable empirical abstractions and disclose
-their eligible targets and training support. Equal ceilings or identical
-histories alone do not match information or cost. Preserve every planned failure
-and regression. Fresh asset construction and matching remain implementation
-work; external sign-off is not the sole blocker.
+Then freeze concrete arm configurations, fitting/selection/calibration rules,
+material effect sizes, statistical units and multiplicity decisions, and actual
+exposure/capacity/consumed-compute comparisons. Retain the strongest applicable
+empirical abstractions, eligible-target/support accounting and every planned
+failure or regression. Equal histories, update limits or CPU ceilings do not
+match information or cost. Five seed labels are not five independent physical
+worlds; repeated views and steps are correlated. Under a two-sided exact sign-flip
+test on only five seed pairs, the minimum p-value is `2 / 2**5 = 0.0625`; a claimed
+5% test requires a prospectively justified design rather than a convenient label.
 
-Separately accountable authorship/custody, external oracle completeness review
-and evaluator-controlled isolation remain required for admission. A later
-controlled comparison must satisfy those requirements under its frozen new
-contract. The opened common-objective and sensor-transfer studies stay closed.
-Another same-author fixture or fresh seed does not become independent validation.
+There are two freeze stages. Commit the complete data and comparison design
+before substantive fitting; after the prescribed fitting and selection, bind
+actual native checkpoint byte hashes to those prefit commitments before
+collection. A data manifest is not a completed acceptance plan, and placeholder
+weight hashes cannot substitute for fitted artifacts. Reuse the existing
+observed adapter, fitting APIs, native checkpoints and acceptance collector/scorer.
+The current data contract deliberately leaves research fitting and model scoring
+disabled while its scientific comparison remains incomplete.
 
-Keep the roadmap's G1 target and held-out families. Do not reinterpret historical
-final-query results as whole-trajectory success or pool easy resets to manufacture
-a 95% pass. The original generator already samples three through six entities
-during training, so supporting six IDs is not an unseen-count transfer result.
-A prospective unseen-count split must withhold those counts. Training self-contact
-examples cannot count as success on the original untrained self-contact family.
+Separately accountable challenge authorship/custody, external oracle review and
+evaluator-controlled isolation remain admission requirements. The new analytic
+oracle is complete only under the declared law; public same-author assets and
+new deterministic seeds do not independently validate that law or a learner.
+Issue #55 remains pending and does not replace the engineering decisions above.
+The opened common-objective and sensor-transfer studies stay closed.
 
-Then implement the concrete G2 workload: train on one or two interactions and
-evaluate three to five over declared chains, forks, cycles and disjoint groups,
-including repeated actions, untouched entities and coherent joint alternatives.
-Earlier outputs must become later inputs without reset interventions erasing
-the dependency. A named graph or reset-separated edge sequence alone does not
-establish causal composition. Repeated uses of one uncertain mechanism must
-retain their shared uncertainty rather than independently resampling it.
+Keep the roadmap's G1 target and held-out families. Historical final-query results
+are not whole-trajectory success. Supporting three through six entities is not
+unseen-count transfer without a withheld-count design, and training self-contact
+cannot count as success on the original untrained self-contact family.
 
-Direct observed support and the joint-log advisory diagnostic are integrated.
+G2 remains the subsequent concrete workload: train on one or two interactions
+and evaluate three to five over declared chains, forks, cycles and disjoint
+groups, including repeated actions, untouched entities and coherent joint
+alternatives. Earlier effects must enter later transitions without resets erasing
+the dependency. Shared uncertain mechanisms must retain correlation across uses.
+The current asset audit does not admit G2 or establish learned composition.
+
 Posterior-context support, alternate change-point evidence, calibrated confidence
 and learned probe selection remain unestablished. Grounded bilingual language
 and G3–G8 follow the roadmap dependency order. Learned communication and lifelong
-learning are not new G1 prerequisites.
-
-Issue #55 remains pending for independent scientific validation; it does not
-replace or block these implementation requirements. Automatic correctness and
-regression checks remain required. No scientific gate is weakened or admitted,
-and no production/PR21 cutover or language implementation occurs in this tranche.
+learning are not new G1 prerequisites. No scientific gate is weakened or admitted,
+and no production/PR21 cutover or language implementation occurs here.
