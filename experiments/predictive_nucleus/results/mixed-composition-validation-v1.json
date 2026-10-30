@@ -1,0 +1,490 @@
+{
+  "checks": {
+    "artifact": 14,
+    "attempt_freeze_commit": 1,
+    "attempt_freeze_sha": 1,
+    "changes": 20,
+    "checkpoint": 10,
+    "checkpoint_original_commit": 10,
+    "complete_point_inventory": 1,
+    "complete_trace_inventory": 1,
+    "decision_arithmetic": 1,
+    "decision_checks": 5,
+    "episode_complete": 1920,
+    "event_inventory": 1920,
+    "forecast_binding": 8000,
+    "forecast_feedback": 8000,
+    "frozen_before_after": 10,
+    "frozen_state": 10,
+    "implementation": 1920,
+    "input_digest": 1,
+    "log_batch": 16000,
+    "manifest_freeze": 1,
+    "manifest_plan": 1,
+    "no_execution_failures": 1,
+    "normalized": 16000,
+    "oracle_digest": 1,
+    "parameters": 10,
+    "point_information": 8000,
+    "point_metric": 120000,
+    "point_raw_join": 8000,
+    "prepared_artifact": 2,
+    "prepared_at_freeze": 3,
+    "protocol_lock": 1,
+    "protocol_sha": 1,
+    "receipt": 8000,
+    "role_pairs": 70,
+    "source": 31,
+    "source_at_freeze": 31,
+    "summary_metric": 4200,
+    "tensor_fingerprint": 10,
+    "tensor_schema": 200,
+    "trace_episode_inventory": 10,
+    "trace_identity": 10,
+    "trace_input": 10,
+    "trace_source": 10
+  },
+  "counts": {
+    "checkpoints": 10,
+    "episodes_per_checkpoint": 192,
+    "forecast_receipts": 8000,
+    "parameter_count_each": 562,
+    "point_inventory": 8000,
+    "prepared_artifacts": 2,
+    "result_artifacts": 14,
+    "source_bindings": 31
+  },
+  "defects": [],
+  "freeze_commit": "669b7b1181f478cdd6c74429535b52a3d80b5ade",
+  "headline_metrics_by_arm_seed": {
+    "alias": {
+      "11": {
+        "all": {
+          "accuracy": 0.82,
+          "correct": 656,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.030782788103395367,
+          "mean_brier": 0.1801344630123971,
+          "mean_nll": 0.25737074701692675,
+          "mean_oracle_kl": 0.007837762015346432,
+          "planned_points": 800,
+          "unchanged_bit_errors": 76
+        },
+        "ambiguous": {
+          "accuracy": 0.5,
+          "correct": 144,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.020284754869352807,
+          "mean_brier": 0.5000307201415501,
+          "mean_nll": 0.6980054163940729,
+          "mean_oracle_kl": 0.004858235834127607,
+          "planned_points": 288,
+          "unchanged_bit_errors": 76
+        },
+        "identifiable": {
+          "accuracy": 1.0,
+          "correct": 512,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.030782788103395367,
+          "mean_brier": 0.00019281837724846238,
+          "mean_nll": 0.009513745492282021,
+          "mean_oracle_kl": 0.009513745492282021,
+          "planned_points": 512,
+          "unchanged_bit_errors": 0
+        },
+        "role_pairs": {
+          "correct": 96
+        }
+      },
+      "23": {
+        "all": {
+          "accuracy": 0.82,
+          "correct": 656,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.016719666091463393,
+          "mean_brier": 0.18004743011207075,
+          "mean_nll": 0.2546515652622191,
+          "mean_oracle_kl": 0.005118580260638805,
+          "planned_points": 800,
+          "unchanged_bit_errors": 44
+        },
+        "ambiguous": {
+          "accuracy": 0.5,
+          "correct": 144,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.011813077933052373,
+          "mean_brier": 0.5000115841378574,
+          "mean_nll": 0.6965507107406655,
+          "mean_oracle_kl": 0.003403530180720237,
+          "planned_points": 288,
+          "unchanged_bit_errors": 44
+        },
+        "identifiable": {
+          "accuracy": 1.0,
+          "correct": 512,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.016719666091463393,
+          "mean_brier": 6.75934725658141e-05,
+          "mean_nll": 0.006083295930593,
+          "mean_oracle_kl": 0.006083295930593,
+          "planned_points": 512,
+          "unchanged_bit_errors": 0
+        },
+        "role_pairs": {
+          "correct": 96
+        }
+      },
+      "37": {
+        "all": {
+          "accuracy": 0.82,
+          "correct": 656,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.020283520706523627,
+          "mean_brier": 0.18008581981168717,
+          "mean_nll": 0.25656601291998904,
+          "mean_oracle_kl": 0.007033027918408724,
+          "planned_points": 800,
+          "unchanged_bit_errors": 48
+        },
+        "ambiguous": {
+          "accuracy": 0.5,
+          "correct": 144,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.015501984075799571,
+          "mean_brier": 0.5000225736784834,
+          "mean_nll": 0.6979049564747689,
+          "mean_oracle_kl": 0.00475777591482365,
+          "planned_points": 288,
+          "unchanged_bit_errors": 48
+        },
+        "identifiable": {
+          "accuracy": 1.0,
+          "correct": 512,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.020283520706523627,
+          "mean_brier": 0.0001213957616143387,
+          "mean_nll": 0.008312857170425328,
+          "mean_oracle_kl": 0.008312857170425328,
+          "planned_points": 512,
+          "unchanged_bit_errors": 0
+        },
+        "role_pairs": {
+          "correct": 96
+        }
+      },
+      "53": {
+        "all": {
+          "accuracy": 0.82,
+          "correct": 656,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.026099309487506096,
+          "mean_brier": 0.18011175797938975,
+          "mean_nll": 0.2565152378777974,
+          "mean_oracle_kl": 0.00698225287621707,
+          "planned_points": 800,
+          "unchanged_bit_errors": 88
+        },
+        "ambiguous": {
+          "accuracy": 0.5,
+          "correct": 144,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.018688382899359673,
+          "mean_brier": 0.5000345963562506,
+          "mean_nll": 0.6975401438360399,
+          "mean_oracle_kl": 0.004392963276094672,
+          "planned_points": 288,
+          "unchanged_bit_errors": 88
+        },
+        "identifiable": {
+          "accuracy": 1.0,
+          "correct": 512,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.026099309487506096,
+          "mean_brier": 0.00015516139240550372,
+          "mean_nll": 0.008438728276285919,
+          "mean_oracle_kl": 0.008438728276285919,
+          "planned_points": 512,
+          "unchanged_bit_errors": 0
+        },
+        "role_pairs": {
+          "correct": 96
+        }
+      },
+      "7": {
+        "all": {
+          "accuracy": 0.82,
+          "correct": 656,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.018646275757299838,
+          "mean_brier": 0.18007357426152748,
+          "mean_nll": 0.2555068993888449,
+          "mean_oracle_kl": 0.005973914387264565,
+          "planned_points": 800,
+          "unchanged_bit_errors": 120
+        },
+        "ambiguous": {
+          "accuracy": 0.5,
+          "correct": 144,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.014808323141065583,
+          "mean_brier": 0.5000194034293567,
+          "mean_nll": 0.6970636359552593,
+          "mean_oracle_kl": 0.0039164553953140585,
+          "planned_points": 288,
+          "unchanged_bit_errors": 120
+        },
+        "identifiable": {
+          "accuracy": 1.0,
+          "correct": 512,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 0,
+          "max_oracle_total_variation": 0.018646275757299838,
+          "mean_brier": 0.00010404535462356006,
+          "mean_nll": 0.007131235070236726,
+          "mean_oracle_kl": 0.007131235070236726,
+          "planned_points": 512,
+          "unchanged_bit_errors": 0
+        },
+        "role_pairs": {
+          "correct": 96
+        }
+      }
+    },
+    "ordinary": {
+      "11": {
+        "all": {
+          "accuracy": 0.71,
+          "correct": 568,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 96,
+          "max_oracle_total_variation": 0.9985176628671643,
+          "mean_brier": 0.41528910030507427,
+          "mean_nll": 0.9431018448579788,
+          "mean_oracle_kl": 0.6935688598563985,
+          "planned_points": 800,
+          "unchanged_bit_errors": 48
+        },
+        "ambiguous": {
+          "accuracy": 0.4722222222222222,
+          "correct": 136,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 16,
+          "max_oracle_total_variation": 0.9954348517601859,
+          "mean_brier": 0.6048852311475582,
+          "mean_nll": 1.0796277528553442,
+          "mean_oracle_kl": 0.38648057229539895,
+          "planned_points": 288,
+          "unchanged_bit_errors": 48
+        },
+        "identifiable": {
+          "accuracy": 0.84375,
+          "correct": 432,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 80,
+          "max_oracle_total_variation": 0.9985176628671643,
+          "mean_brier": 0.308641276706177,
+          "mean_nll": 0.8663060216094608,
+          "mean_oracle_kl": 0.8663060216094608,
+          "planned_points": 512,
+          "unchanged_bit_errors": 0
+        },
+        "role_pairs": {
+          "correct": 56
+        }
+      },
+      "23": {
+        "all": {
+          "accuracy": 0.71,
+          "correct": 568,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 96,
+          "max_oracle_total_variation": 0.9981466899396987,
+          "mean_brier": 0.4156540039493881,
+          "mean_nll": 0.9132913300772849,
+          "mean_oracle_kl": 0.6637583450757046,
+          "planned_points": 800,
+          "unchanged_bit_errors": 56
+        },
+        "ambiguous": {
+          "accuracy": 0.4722222222222222,
+          "correct": 136,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 16,
+          "max_oracle_total_variation": 0.994069303430765,
+          "mean_brier": 0.6068563930226066,
+          "mean_nll": 1.0689563174990069,
+          "mean_oracle_kl": 0.3758091369390615,
+          "planned_points": 288,
+          "unchanged_bit_errors": 56
+        },
+        "identifiable": {
+          "accuracy": 0.84375,
+          "correct": 432,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 80,
+          "max_oracle_total_variation": 0.9981466899396987,
+          "mean_brier": 0.3081026600957027,
+          "mean_nll": 0.8257297746525663,
+          "mean_oracle_kl": 0.8257297746525663,
+          "planned_points": 512,
+          "unchanged_bit_errors": 0
+        },
+        "role_pairs": {
+          "correct": 56
+        }
+      },
+      "37": {
+        "all": {
+          "accuracy": 0.71,
+          "correct": 568,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 96,
+          "max_oracle_total_variation": 0.9974152319365912,
+          "mean_brier": 0.4204742132349139,
+          "mean_nll": 0.8159455953538404,
+          "mean_oracle_kl": 0.56641261035226,
+          "planned_points": 800,
+          "unchanged_bit_errors": 56
+        },
+        "ambiguous": {
+          "accuracy": 0.4722222222222222,
+          "correct": 136,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 16,
+          "max_oracle_total_variation": 0.977325772707914,
+          "mean_brier": 0.6390845879569202,
+          "mean_nll": 1.118097054126678,
+          "mean_oracle_kl": 0.42494987356673253,
+          "planned_points": 288,
+          "unchanged_bit_errors": 56
+        },
+        "identifiable": {
+          "accuracy": 0.84375,
+          "correct": 432,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 80,
+          "max_oracle_total_variation": 0.9974152319365912,
+          "mean_brier": 0.2975058774537853,
+          "mean_nll": 0.6459853997941192,
+          "mean_oracle_kl": 0.6459853997941192,
+          "planned_points": 512,
+          "unchanged_bit_errors": 0
+        },
+        "role_pairs": {
+          "correct": 56
+        }
+      },
+      "53": {
+        "all": {
+          "accuracy": 0.71,
+          "correct": 568,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 96,
+          "max_oracle_total_variation": 0.996625417704567,
+          "mean_brier": 0.4179461146393155,
+          "mean_nll": 0.8076777660584967,
+          "mean_oracle_kl": 0.5581447810569165,
+          "planned_points": 800,
+          "unchanged_bit_errors": 56
+        },
+        "ambiguous": {
+          "accuracy": 0.4722222222222222,
+          "correct": 136,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 16,
+          "max_oracle_total_variation": 0.9808710272097575,
+          "mean_brier": 0.6279459914939907,
+          "mean_nll": 1.0721960919814175,
+          "mean_oracle_kl": 0.37904891142147235,
+          "planned_points": 288,
+          "unchanged_bit_errors": 56
+        },
+        "identifiable": {
+          "accuracy": 0.84375,
+          "correct": 432,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 80,
+          "max_oracle_total_variation": 0.996625417704567,
+          "mean_brier": 0.2998211839085608,
+          "mean_nll": 0.6588862077268537,
+          "mean_oracle_kl": 0.6588862077268537,
+          "planned_points": 512,
+          "unchanged_bit_errors": 0
+        },
+        "role_pairs": {
+          "correct": 56
+        }
+      },
+      "7": {
+        "all": {
+          "accuracy": 0.71,
+          "correct": 568,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 96,
+          "max_oracle_total_variation": 0.9991391245941963,
+          "mean_brier": 0.4119414761499937,
+          "mean_nll": 1.0243384559245552,
+          "mean_oracle_kl": 0.774805470922975,
+          "planned_points": 800,
+          "unchanged_bit_errors": 56
+        },
+        "ambiguous": {
+          "accuracy": 0.4722222222222222,
+          "correct": 136,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 16,
+          "max_oracle_total_variation": 0.9979366391128464,
+          "mean_brier": 0.592565548448365,
+          "mean_nll": 1.0967647049066303,
+          "mean_oracle_kl": 0.40361752434668496,
+          "planned_points": 288,
+          "unchanged_bit_errors": 56
+        },
+        "identifiable": {
+          "accuracy": 0.84375,
+          "correct": 432,
+          "known_unchanged_errors": 0,
+          "map_outside_support": 80,
+          "max_oracle_total_variation": 0.9991391245941963,
+          "mean_brier": 0.31034043548215995,
+          "mean_nll": 0.983598690872138,
+          "mean_oracle_kl": 0.983598690872138,
+          "planned_points": 512,
+          "unchanged_bit_errors": 0
+        },
+        "role_pairs": {
+          "correct": 56
+        }
+      }
+    }
+  },
+  "independently_reconstructed_decision": "KEEP_MIXED_COMPOSITION",
+  "manifest_sha256": "4adf74b20e2613d6553c4c9922556c7ff378d624f86f1d4a0e82d6f47d091633",
+  "max_log_normalization_error": {
+    "log_normalization_error": 6.661338147750939e-16,
+    "raw_log_normalization_error": 6.661338147750939e-16
+  },
+  "paired_changes": {
+    "ambiguous_regressions": 332,
+    "ambiguous_repairs": 372,
+    "identifiable_regressions": 0,
+    "identifiable_repairs": 400
+  },
+  "scope": "Internal independent arithmetic review of retained JSON/bytes; not independent scientific custody. No model, fitter, collector, oracle or scorer executed.",
+  "status": "PASS",
+  "version": "mixed-composition-internal-byte-audit-v1"
+}

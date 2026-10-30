@@ -8,6 +8,10 @@ successful fits or treat unobservable hidden outcomes as a new nucleus defect.
 This is an explicit development scheduling decision, not a retrospective change
 to the original research gate or a production admission.
 
+**Completed result: `KEEP_MIXED_COMPOSITION` at every seed.** The published freeze
+is `669b7b1181f478cdd6c74429535b52a3d80b5ade`; the single collection and byte audit
+are complete in [PR #63](https://github.com/robosys-labs/cemm/pull/63).
+
 ## What is already established
 
 The starting checkpoint is
@@ -112,3 +116,90 @@ demonstrated cause. These tests cover ordered interactions under the supplied
 binary law; simultaneous timing and independently varied multi-source laws remain
 unmeasured. A successful mixed-composition decision advances G2 but does not
 complete the entire G2 gate or independent scientific validation.
+
+## Result: KEEP_MIXED_COMPOSITION
+
+All frozen criteria pass at seeds **7, 11, 23, 37 and 53**. Every alias seed
+answers **512/512 identifiable predictions** and **96/96 identifiable role-pair
+conjunctions** correctly, including every family. The paired ordinary-evidence
+control achieves 432/512 and 56/96 respectively. All **8,000 planned forecasts**
+were produced and supported, with no failures, abstentions or missing trials.
+
+| Metric across five seeds | Ordinary evidence | Acquired-alias evidence |
+|---|---:|---:|
+| Identifiable predictions | 2,160/2,560 | **2,560/2,560** |
+| Identifiable role pairs | 280/480 | **480/480** |
+| Ambiguous realized predictions | 680/1,440 | 720/1,440 |
+| All-action realized predictions | 2,840/4,000 (71%) | 3,280/4,000 (82%) |
+| MAP worlds outside information support | 480 | **0** |
+| Definitely unchanged-bit errors | 0 | **0** |
+| Mean joint NLL | 0.900871 | **0.256122** |
+| Mean joint Brier | 0.416261 | **0.180091** |
+| Mean oracle KL, all actions | 0.651338 | **0.006589** |
+
+The candidate's 82% pooled accuracy matches the bank's expected oracle accuracy.
+It is not a decline from V2's 88.74%: the new bank deliberately contains more
+ambiguous prediction points. All identifiable points remain correct. Its worst
+family/stratum mean KL is **0.010532 nats**, below the frozen 0.05 threshold;
+worst ambiguous total variation is **0.020285**, below 0.1. The coalescence and
+withheld-feedback families pass, supporting persistent mechanism uncertainty
+through the tested alias/ordinary combinations.
+
+### Retained regressions and interpretation
+
+There are **400 identifiable repairs and zero identifiable accuracy regressions**.
+All-action accounting also retains **372 ambiguous repairs and 332 ambiguous
+regressions**. Realized unchanged-bit errors rise **272 to 376**, entirely on
+ambiguous forecasts; every candidate MAP world is nevertheless compatible with
+the available information. None is a definitely unchanged-coordinate error.
+
+Probability scores do not improve at every point. The ambiguous first-acquisition
+strata in `acquired_alias_reverse` and `interleaved_chain` worsen by 0.000453 nats
+in mean NLL/KL versus the ordinary arm. Among identifiable points, 1,375 individual
+NLLs worsen and 1,185 improve; the largest increase is 0.017532 nats. The overall
+improvement and exactness retention do not erase those differences. These compare
+the two already-frozen V2 arms; this tranche changes neither arm's weights.
+
+### Reproduction, verification and cost
+
+- [Frozen plan and checkpoints](data/mixed-composition-v1/freeze.json),
+  [decision](results/mixed-composition-v1/decision.json),
+  [complete artifact manifest](results/mixed-composition-v1/manifest.json).
+- **669 tests passed**, zero skips, in **87.920 seconds**. All 22 manifest locks
+  and the existing frozen preflight passed. Exact-freeze
+  [invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41086979788) and
+  [source snapshot CI](https://github.com/robosys-labs/cemm/actions/runs/41086980144)
+  passed. Final result-head checks are linked in PR #63.
+- The [separate internal byte audit](results/mixed-composition-validation-v1.json)
+  verifies 14 result artifacts, 31 source bindings, ten original checkpoints and
+  tensor fingerprints, 8,000 receipts, 120,000 point metrics and 4,200 summary
+  metrics. No learner or collector was rerun; internal review is not independent
+  scientific custody.
+- Collection: **57.596350 CPU seconds / 57.652386 measured wall seconds** across
+  ten calls; **560,740 KiB** whole-process peak RSS. Compression and analysis are
+  outside those collection timings. Candidate per-seed prediction p95 is
+  **3.878–7.712 ms**; this is the measured prediction region, not service latency.
+- **Zero training updates, zero added parameters, zero inference source changes.**
+  Two study adapters add 401 physical lines and their tests add 212. The active
+  import closure remains 2,732 lines, or 2,917 with its source pin. Total retained
+  research Python is 28,534 lines, including 12,861 test lines; the inclusive
+  2,000-line objective remains unmet.
+- Before collection, a local mirror was not yet synchronized to the published
+  commit. The clean-checkout guard rejected launch before any output directory
+  or forecast existed. After exact tree/commit synchronization, the one recorded
+  scientific attempt ran to completion. No scored bank was retried.
+
+## Next G2 step
+
+Keep the successful weights fixed. Test two **observed histories with the same
+individual 50/50 state marginals but different joint correlations**, followed by
+the same relational or ordered two-source prediction. Construct those beliefs
+through actual actions and observations, not by injecting a gold posterior.
+Use the existing oracle, collector and joint scorer, retain reversed roles and
+untouched coordinates, and freeze the contrasting predictions before execution.
+
+This closes the next explicit G2 dependency question. It does not require another
+alias curriculum, larger model or workspace. Add a mechanism only if a concrete
+failure demonstrates the current function class cannot represent the task.
+Simultaneous timing and independently varied multi-source laws remain subsequent
+G2 scope; G3 language follows the relevant composition evidence.
