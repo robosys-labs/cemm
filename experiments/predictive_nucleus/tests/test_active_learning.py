@@ -393,7 +393,7 @@ class ActiveLearningTests(unittest.TestCase):
                 self.assertEqual(record['answered'], [[True], [True]])
                 self.assertEqual(record['scored'], [[True], [True]])
                 self.assertEqual(len(record['log_probabilities']['values']), 2)
-                if predictor.get('control') != 'no_change':
+                if predictor.get('model') is not None:
                     self.assertEqual(report['failed_batches'], 1)
                     self.assertEqual((record['status'], record['step'], record['phase']),
                                      ('REPLAY_ERROR', 1, 'feedback'))

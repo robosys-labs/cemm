@@ -17,7 +17,7 @@ from . import active_paths, external_participant as wire, domain_contract, joint
 from .active_evidence import ActiveEvidence
 
 
-VERSION = 'active-inference-v5'
+VERSION = 'active-inference-v6'
 
 
 def implementation():

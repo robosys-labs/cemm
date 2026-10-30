@@ -228,14 +228,15 @@ class EmpiricalPaths:
     def receive(self, reading, mask):
         require(not self.ready, 'prediction required before feedback')
         scores.validate_reading(reading, mask, len(self.paths), self.entities)
-        result, histories, observed, recovery = [], [], [], []
+        result, histories, observed, recovery, contradictions = [], [], [], [], []
         for i, (paths, x, visible) in enumerate(zip(self.expansions, reading.tolist(), mask.tolist(), strict=True)):
             bits = tuple(map(int, x))
             history = self.history[i] + ((self.observed[i], self.actions[i], bits),)
             selected = [(w, state, past) for w, state, past in paths if
                         all(not show or bit == value for bit, value, show in zip(state, x, visible))]
-            # Supported but impossible observations remain explicit conflicts.
-            require(not paths or bool(selected), 'visible evidence outside empirical support')
+            # A contradicted forecast keeps zero likelihood. New observations may
+            # still establish the next context without changing the fixed table.
+            contradictions.append(bool(paths) and not selected)
             require(len(selected) <= self.limit, 'empirical live path bound exceeded')
             if selected:
                 mass = math.fsum(w for w, _, _ in selected)
@@ -252,5 +253,6 @@ class EmpiricalPaths:
             observed.append(bits)
             histories.append(history)
         self.paths, self.history, self.observed, self.ready = result, histories, observed, True
-        self.diagnostic = {'recovery': recovery, 'live_paths': list(map(len, result))}
+        self.diagnostic = {'recovery': recovery, 'live_paths': list(map(len, result)),
+                           'support_contradiction': contradictions}
         del self.actions, self.expansions
