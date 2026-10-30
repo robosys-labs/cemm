@@ -1,0 +1,862 @@
+{
+  "all_declared_contrasts_match_control_values": true,
+  "controls": {
+    "full_factorization": {
+      "definition": "Product of unconditional physical coordinate marginals and independent mechanism prior.",
+      "gap": 0.0,
+      "p_one_equal": 0.5,
+      "p_one_opposite": 0.5
+    },
+    "full_state_mode_joint": {
+      "definition": "Retain the complete correct association between physical world and persistent mechanism.",
+      "gap": 1.0,
+      "p_one_equal": 0.0,
+      "p_one_opposite": 1.0
+    },
+    "mode_conditioned_marginals": {
+      "definition": "Preserve mechanism prior and each coordinate marginal conditional on that mechanism. Each conditional state is deterministic in this bank.",
+      "gap": 1.0,
+      "p_one_equal": 0.0,
+      "p_one_opposite": 1.0
+    },
+    "physical_joint_mode_independent": {
+      "definition": "Preserve complete physical-state joint distribution; remove only its association with the persistent mechanism.",
+      "gap": 0.5,
+      "p_one_equal": 0.25,
+      "p_one_opposite": 0.75
+    }
+  },
+  "counts": {
+    "declared_contrast_pairs": 32,
+    "declared_episode_views": 64,
+    "declared_forecast_points": 192,
+    "distinct_paired_prequery_histories": 16,
+    "distinct_prequery_histories": 32,
+    "model_executions": 0,
+    "new_training_updates": 0,
+    "unique_information_keys": 74
+  },
+  "history_identity": "Opaque handle identities, action prefix including current query, observations strictly before query feedback, and selected coverage; excludes episode and evaluator labels. Mode twins share these histories.",
+  "independent_scientific_custody": false,
+  "interpretation": [
+    "The study rejects unconditional marginal-only prediction on these histories; it does not rule out all factorized representations.",
+    "The analytic factorized control removes both physical correlations and physical-state/mechanism association, so the result does not isolate the two contributions.",
+    "Explicit joint-world enumeration is not proven necessary: mechanism-conditioned coordinate marginals are sufficient for this deterministic conditional bank.",
+    "Repeated physical-mode views are valid coverage but are not independent demonstrations.",
+    "These observations do not invalidate the frozen result or establish that the existing pairwise model cannot compose multiple sources."
+  ],
+  "no_invalidating_result_defect_found": true,
+  "records": [
+    {
+      "contrast_id": "0ef23683a92f9c11198f7f470cc54ce391a635b1759068dc86cf8f66db771e77",
+      "equal_episode": "6c51beac9ed75d9d9c24e6cc37bb7d32",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "7cf585ed6f0ec90829c9ec5852738fb1",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "20b8d7d445bbbe9509e4cb1e61459c20716f9a531cdb02d0f8f37687be9c81c4",
+      "equal_episode": "31d5f8bc6de3b34ec13b443a95264eff",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "29aec389b06a4344a085c211dfbe5cf8",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "2d64ea391cd435d42785f05eeddfc471c0e318386196f6c9ce5d4252b86738f5",
+      "equal_episode": "c6ba882104ccebfd46ff8eeeb682763f",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "b4282bee476b62ad299c55d801c0dd32",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "3007d9a350c00b84b33da5b29059c1b3dfd23b6e781c62ad29e269ea92f1ad6b",
+      "equal_episode": "3652f4a8fd257b3f2e6163db6985032e",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "d3a06688a5275aeabec1ec815f8ed6a3",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "4562baf65d4893adb001cadb7abeca6a266780b2bbd1c5b9b71f6d17733abccd",
+      "equal_episode": "f2fc76df348e08a3898a02301f622157",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "d1c65f61dbe3768798e5e8d1339f4938",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "594f181df41917d9215d52947e867e08a663ce4153c854f978fed3dc90ba8261",
+      "equal_episode": "6f132fb09ce8b3345daf00e5a1f6f48a",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "ba827e9a38ae8501d8e97307a79aae51",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "63f0aa94a3721ac3c8317e82bd6e50c6bf275b5e77f6d624d312635aade2368e",
+      "equal_episode": "dccde67d9cb537522b873bf3707f0d4d",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "9a76da4ebbc390c9c54c873a62a5944b",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "6a19e9b5bf7af3ea15bb6492495f49e0d7d3c97b15ad9130e5b77cfad715629f",
+      "equal_episode": "e5f57df8b1c8d131d570d0750ef9ecbd",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "f5c68be7108f3958445a169c610334a7",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "715a69330ebb6f7cd987bb0774ebece54f18c4e5640946767489ba8550712e79",
+      "equal_episode": "cdbace8bc53650a2d867bfd968636e17",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "ef2e4c0aca6fb7c57a47e01dcd60ec32",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "838a93df3acbb61aad8cec2bfa0668a74955965d4c47a9538372fa80ff2aad3a",
+      "equal_episode": "64f85c447a93d7e0b0d634f58a16dcc4",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "95e9fa6048cfb2702d502158571fe85e",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "85f9bc8a72e32b7be2e291c889d38e5da20ca1947d3f3fef9a7d25fb15e220ae",
+      "equal_episode": "529597d9c879579ffac6cc0cf84b36ca",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "ffabb49f0c22dbab9639d4cc80cc508e",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "8a4e5e258fe1febba89f1e72fe050fea2402fc480f437313a53128644155bef6",
+      "equal_episode": "98ddab15ca9b68e1424b563f24ef356f",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "f2781781514b66d4ed3daa6f9f0a8174",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "97b439f6fa218c57fbf9f1923866717c5b3da1389dcdb8daf32a05f9348f6d48",
+      "equal_episode": "e291b0355844b4fe652dd26351ecad94",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "eb29f8b2d26155b3da032053aeee1b31",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "9bf18e1503ad844f0062b91ef3cb1202d91bf7f803bd9a01d600db18ceee5f71",
+      "equal_episode": "aa2cc97e390c3db72fb042bf7be8374e",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "58f29acdbf75e93fd2c3bbd07deff403",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "a65d2917faa17def32aa26923800e921f19a03468b3a8c6b1a560983fba1ea15",
+      "equal_episode": "92e643d879b32e680155f50344c85bf2",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "a9bac5493a1860a84bc8d075df7fb3e6",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "a8de476c3d7a59a08bd53dd3986818fa86cd9f73df9f0366d409c179504da8a6",
+      "equal_episode": "c0365972bc8b8a391cd9fd22f915321b",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "71c10d284da645c3992e30a1151d49d5",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "b89940981d92281c052e4a4765271b0c93c8ace6ee28eb5f333e2167f5b867f5",
+      "equal_episode": "8aef25375c5e3a7fac42240b26bf755e",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "f6bb9c65a68d692d79e187e913127252",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "bbfc4a99d9f221ba42c2e1e4e4dd1fb7cf4fad02d59bd57fa155e8609524573e",
+      "equal_episode": "a9b85151189b1a9d3cef34f73202e785",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "0bbb57dc8c4958ccbcf30949cfa80a23",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "cdb2db2d3e653d0f06198b9b83ad894f7aa18ddc0a72195bfd448477e55c49ec",
+      "equal_episode": "fc9302d97d2b5ac8e3d3c8006b56ea16",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "1517c9bafd0c20ef12476bc3bc79e3fe",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "ce84b050bb6920956c017f4a958156d17175971550dd02d460e8ff34b52a4678",
+      "equal_episode": "e9511577622eab8b08ff538529513258",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "7758a1bed96a9c6532d79d5b15a10305",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "d1e70c78af8c41c3c7bfc29369399262170fa2efa6b9daff515293e941b03bb1",
+      "equal_episode": "351b3da16b6c92713e2c29313b8143b0",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "5ceb58e38ea5f14c061c6997979cbfd9",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "d2e705dfd7072d387113c7f45480a8d4cbfca9033d7ad444dc396406b41c58cd",
+      "equal_episode": "123f256ac1eb8cf9f80cc596ce7bdaa0",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "6356fda17533dabae90d5dda309ef949",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "d52e7f25d06aa7cfd820a7e3eb6f2419cd27362564c5ddf4ef84ebe5544facc1",
+      "equal_episode": "9b58e7e1d2e3ff5ceb6668313d05e0b7",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "0629fe787b7482d02feeaab2330be96e",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "d7abb8bc0b47bbd2739b3a5a17d07461cd8eb534fc35dc8c22561363253d7fa4",
+      "equal_episode": "25b6973d4eb32536330d1ccff3943a7d",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "b3cab24228e36ce528f9ee12691575c2",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "e1b5054b8117c08f8e7dc5fba935e9c6594d40aec3d8541b3c162b320054753d",
+      "equal_episode": "1ac15cf327e143fded135ea7c88010f1",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "4f4f285d73ea648a8d2614be470d59d9",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "e5eec4cbd5317b4e42c78142d4d2602857ff46135367a84434b8fa187b3930fb",
+      "equal_episode": "08d072b0d7fe7d4ed4608f6a779b16fe",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "f063d8ab5ea1d791f897c150df7fea91",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "e8522f42ba0616aee0f2b6558c08107de10d8615e4d4a29894f5df061b7ac95c",
+      "equal_episode": "6b88e2dcbcf765d9a1792cdd2767d887",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "c150096948271d56e08aa28947f712d4",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "f27e5f9f0ca0612639ec39d07edcde68d4a5c05fd9abd0a3d0a226e0f7953c0a",
+      "equal_episode": "c03cf767f16b4c96fee968464f0956d1",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "e5d2401f012c856cd6493010a6082206",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "f4beac5320ec77dfd458a3716eaf786b0ac757eac64c82c77eb7ce3307f265d2",
+      "equal_episode": "233a414b2bd15326b6371a04e54b9220",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "7f422f3031989fbcc0ba1520f91d989c",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "f5b8e8a47aebe651d86e29452a82eba48a8dbdce52190d8b3a90f155ac441dd2",
+      "equal_episode": "94a89d7b0df8355feb6b89d19e6b3ad6",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "4e654664378e6254aa680022da02bfdc",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "f73085855d91a6ccab50661a63f3a84376098e8074ba0cfd3ee4917fb9a5493f",
+      "equal_episode": "91c6916cca4ec58edd231656b5b73492",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "58855e11eb9d3f50524323ecd1bb1fce",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    },
+    {
+      "contrast_id": "fdc62d77361968962e169b992729a7d267628b254a8e4d953f2c0fde0ede2ca7",
+      "equal_episode": "067a61ca999d9adfefbd276a5f1ffc05",
+      "full_factorization": {
+        "gap": 0.0,
+        "p_one_equal": 0.5,
+        "p_one_opposite": 0.5
+      },
+      "full_state_mode_joint": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "mode_conditioned_marginals": {
+        "gap": 1.0,
+        "p_one_equal": 0.0,
+        "p_one_opposite": 1.0
+      },
+      "opposite_episode": "3b6edb29bb5a653c20d6fd2c061bed7b",
+      "physical_joint_mode_independent": {
+        "gap": 0.5,
+        "p_one_equal": 0.25,
+        "p_one_opposite": 0.75
+      }
+    }
+  ],
+  "retained_decision": "KEEP_JOINT_CORRELATION",
+  "same_author_internal_review": true,
+  "scope": "Retrospective mathematical audit of saved evaluator assets and declared binary-contact law; no learner, stored simulator, stored oracle, scorer, fitting or collection executed. Does not generate a new neural performance result.",
+  "source": {
+    "asset": "experiments/predictive_nucleus/data/joint-correlation-v1/assets.json.xz",
+    "matches_published_freeze_bytes": true,
+    "published_freeze_commit": "2181a01d60689722d62f2ee44110b9c00471e031",
+    "sha256": "55e06f128b6be6f5fd706f3be9f0b3d810484acf4c624e07c65dd7990ac1cd4b"
+  },
+  "unchanged_metric_scope": "The known_unchanged metric checks a coordinate with one identical known value over prior and successor support; zero does not independently prove trajectory-wise preservation of a still-uncertain coordinate.",
+  "version": "joint-correlation-assumption-review-v1"
+}

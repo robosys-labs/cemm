@@ -1,0 +1,146 @@
+{
+  "version": "multisource-law-v1",
+  "recorded_on": "2026-10-30",
+  "timezone": "Africa/Lagos",
+  "scope": "PAIRED_OBSERVED_LAW_LEARNING_AND_G2_COMPOSITION",
+  "base_commit": "43507fbcafb3eb0ed7d93fc8d8cddfa1d4cf142e",
+  "gate_g1": "NOT_ADMITTED",
+  "g1_development_readiness": "PROCEED_TO_G2",
+  "hypothesis": "The unchanged pairwise nucleus learns two different outcome laws from observed evidence and composes each over two independent external sources, without a new primitive, workspace, supplied effect table or law label in its inputs.",
+  "correction": "The previous one-event three-operand locality argument does not show that serial composition is impossible. Existing XOR contacts already compute t XOR a XOR b. No ternary action or architecture extension is justified by that argument.",
+  "laws": {
+    "nand": "source unchanged; target becomes 1 - source*target",
+    "nor": "source unchanged; target becomes (1-source)*(1-target)"
+  },
+  "data": {
+    "entity_counts": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "split_seeds": {
+      "train": 20261030061,
+      "evaluation": 20261030062
+    },
+    "initial": "All eight (a,b,t) states for every geometry; remaining spectator bits sampled before either law/mode is realized.",
+    "design": "Both persistent source modes and global role reversals. Shared opaque handles, episode and lineage IDs, anchors, action tapes and full observation masks across the two separate law banks; only physical consequences differ.",
+    "train": {
+      "episodes": 128,
+      "events": 256,
+      "visible_bits": 1152,
+      "schedule": "at, tb",
+      "contacts": 2
+    },
+    "evaluation": {
+      "episodes": 384,
+      "events": 1536,
+      "primary_composition_events": 768,
+      "identifiable_events": 1152,
+      "ambiguous_events": 384,
+      "families": {
+        "aab": "at, at, bt",
+        "abba": "at, bt, bt, at",
+        "abaab": "at, bt, at, at, bt"
+      },
+      "physical_fan_in_views": 192,
+      "physical_fan_out_views": 192,
+      "expected_best_all_action_accuracy": 0.875
+    },
+    "information": "The first contact identifies the persistent mode under either law once full feedback arrives. Its forecast has two equally weighted outcomes; every later full-world forecast is identifiable. All actions remain in the reported denominator.",
+    "law_contrasts": "AAB at zero-based step 1 with initial a=t, including 00 and 11. The two law banks have identical delivered prefixes and query actions but disjoint singleton oracle outcomes. There are 64 dependent matched-law contexts per seed. Select only from the fixed physical design before fitting, never from model predictions.",
+    "flow": "Nominal at/bt actions are physical fan-in only when mode equals global reversal direction; opposite views are physical fan-out. Score both separately.",
+    "split_scope": "No selection or calibration fitting; those lineage lists are empty. Current training/evaluation trajectories and all historical canonical overlap are audited before fitting. Shared law twins and repeated modes/directions are dependent, not independent world replications.",
+    "feedback_scope": "Fully observed, closed-loop one-step forecasts along longer action sequences. Intermediate observations carry previous effects; this is not an open-loop 3–5-step rollout from the initial anchor."
+  },
+  "model_seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "model": {
+    "hidden": 11,
+    "persistence": false,
+    "role_tying": false,
+    "memory": true
+  },
+  "parameters": 562,
+  "fits": "Ten fresh fits: NAND and NOR separately at each seed, copied from identical initial tensors. One checkpoint is not trained on a four-way law-by-mode mixture. Preserve all previous XOR/alias checkpoints unchanged.",
+  "arms": [
+    "crossed",
+    "matched"
+  ],
+  "controls": "For each evaluation bank, matched uses its law-trained checkpoint and crossed uses the other law-trained checkpoint. Both have the same architecture, initialization and prescribed exposure. Five shared untrained initial checkpoints are retained for provenance, not reported as a scored baseline. The same unchanged initialization cannot give two different distributions for an identical delivered prefix/query; no flat-model or architecture-superiority claim is made.",
+  "fit": {
+    "updates": 128,
+    "cpu_seconds": 180,
+    "learning_rate": 0.02,
+    "batch_size": 32,
+    "live_path_limit": 64,
+    "candidate_expansions": 512
+  },
+  "analysis": {
+    "identifiable_accuracy": 0.95,
+    "mean_oracle_kl": 0.05,
+    "max_ambiguous_total_variation": 0.1,
+    "law_contrast": {
+      "contexts": 64,
+      "min_matched_probability": 0.9,
+      "max_wrong_law_probability": 0.1,
+      "min_gap": 0.8,
+      "min_mean_nll_gain": 0.1,
+      "probability_tolerance": 1e-12
+    },
+    "criteria": "Every law/seed/family: >=95% identifiable complete-world accuracy and identifiable role-pair conjunctions, complete coverage, zero identifiable regressions against the crossed checkpoint, zero MAP worlds outside information support and zero errors on coordinates known to retain one fixed value. Mean oracle KL<=0.05 nats separately in each information stratum; maximum ambiguous TV<=0.1. Primary composition indices>=2 also require >=95% accuracy, complete coverage and the same preservation conditions in every family/physical-flow cell. Because all primary targets are identifiable, zero unsupported MAP worlds makes effective primary exactness 100%; the 95% floor does not relax this.",
+    "law_discrimination": "At every shared-history context, matching NAND and NOR forecasts each assign >=0.9 to their own unique oracle world; NOR assigns <=0.1 to the NAND world and the NAND-minus-NOR mass gap on that world is >=0.8. Mean critical NLL advantage over the crossed checkpoint is >=0.1 nats for each law/seed. A crossed prediction must equal its corresponding other-bank matched prediction at the identical history; bindings and all planned contexts are checked.",
+    "probability_scope": "Full joint distributions including soft tails; no conditioning model forecasts on oracle support. Missing/abstained forecasts retain their planned denominators and cannot pass probability checks. Exact zero truth mass retains infinite NLL.",
+    "retention_scope": "Compare newly trained law checkpoints only on this new two-law bank; historical data, weights, decisions and inference code remain unchanged. Crossed-law repairs/regressions are information-intervention comparisons, not a before/after update to the old XOR predictor.",
+    "unchanged_scope": "Known-fixed-value preservation does not by itself establish pathwise preservation of an uncertain variable. Here all feedback is complete; conditional joint metrics provide the broader forecast check.",
+    "limits": "Two separately learned pairwise laws and their ordered compositions. This is not zero-shot transfer to an unseen law, one unified checkpoint for both laws, arbitrary atomic ternary effects, simultaneous timing, general calibration, independent scientific custody or evidence that explicit joint enumeration is necessary."
+  },
+  "decision_order": [
+    "STOP_INCOMPLETE_EXPOSURE if any fit does not complete the fixed 128 updates; retain endpoints and do not collect or refit",
+    "STOP_INCOMPLETE_EXECUTION for any incomplete collection, terminal failure or invalid artifact/binding",
+    "REVISE_MULTISOURCE_LAWS if any prospective competence, composition or law-discrimination criterion fails",
+    "KEEP_MULTISOURCE_LAWS otherwise; retain all local regressions and proceed without same-bank retuning"
+  ],
+  "execution": {
+    "runtime": {
+      "python": "3.13.16",
+      "torch": "2.10.0+cpu",
+      "numpy": "2.3.5",
+      "threads": 1,
+      "dtype": "float64",
+      "deterministic_algorithms": true
+    },
+    "prefit_public_source_data_commit": true,
+    "actual_checkpoint_public_commit_before_collection": true,
+    "one_attempt": true,
+    "retries": 0,
+    "planned_fits": 10,
+    "planned_collections": 20,
+    "planned_forecasts": 30720,
+    "selection_or_calibration_fit": false,
+    "model_or_inference_source_changes": false,
+    "historical_study_reruns": false
+  },
+  "supplied": [
+    "Stable handles, ordered contacts and exogenous full observations",
+    "Two persistent modes, pair factorization and joint filtering",
+    "Evaluator-only physical laws and separately coded truth-table oracle",
+    "Paired training design and fixed challenge schedules"
+  ],
+  "learned": [
+    "Pairwise outcome likelihoods under each separate law",
+    "Role distinctions and untouched-coordinate persistence; Bayesian mode conditioning itself is supplied"
+  ],
+  "preserved_decisions": {
+    "continuation_v1": "STOP_INCOMPLETE_RUN",
+    "alias_v1": "REVISE_EVIDENCE_FIX",
+    "alias_v2": "KEEP_EVIDENCE_FIX",
+    "mixed_v1": "KEEP_MIXED_COMPOSITION",
+    "joint_correlation_v1": "KEEP_JOINT_CORRELATION"
+  }
+}

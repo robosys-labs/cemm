@@ -186,17 +186,40 @@ results and decisions are unchanged; no historical experiment was rerun.
   is 28,947 lines, including 13,072 test lines; the inclusive 2,000-line objective
   remains unmet. This result does not justify a larger model or generic platform.
 
-## Next bounded G2 task
+## Assumption review — 2026-10-30
 
-The explicit correlation dependency test is complete for the current law. The
-next task is a three-operand observed-outcome pilot: one event depends on two
-independently varied external sources and a third target. The existing two-handle
-input and local pair factor cannot express this at a fixed initial prior. This
-separate source-level limitation, rather than a failure of the retained weights,
-justifies testing a minimal general ternary factor under a fresh protocol.
+The [saved-asset review](results/joint-correlation-assumption-review-v1.json)
+finds **no defect invalidating KEEP_JOINT_CORRELATION**. It adds three scope
+clarifications without changing the frozen protocol, outputs or decision.
 
-Preserve the existing checkpoints, make the missing-source invariance executable,
-and freeze two separately learned law datasets plus matched controls before any
-new fitting. Details and the remaining simultaneous-timing distinction are in
-the [current next-task record](ACTIVE_NUCLEUS.md#next-g2-experiment-one-event-with-two-independent-sources).
-No new pilot training or simultaneous-action result is claimed here.
+The analytic control destroys both physical state correlation and its association
+with the persistent mechanism. For every contrast, its target-one probabilities
+are 0.5/0.5. Retaining the physical-state joint while discarding only its mechanism
+association gives 0.25/0.75; correct associations give 0/1. Thus the result excludes
+unconditional marginals, but does not establish a need for explicit full-world
+enumeration. Per-entity marginals conditioned on the persistent mechanism suffice
+for this bank.
+
+The 64 episode views contain 32 distinct pre-query histories; 32 declared contrasts
+contain 16 distinct paired histories repeated across physical-mode realizations.
+There are 74 unique information keys across 192 forecast positions. Repeated views
+and seeds do not turn these into independent physical-world demonstrations.
+The known-unchanged metric checks coordinates with one fixed retained value; it
+does not alone prove trajectory-wise retention of an uncertain coordinate.
+
+## Corrected next bounded G2 task
+
+The previous proposed ternary extension overinterpreted an atomic-event arity
+limit as a compositional limit. Existing XOR contacts already compute
+`t XOR a XOR b` across two actions. Preserve the successful weights and test
+fresh NAND/NOR laws through the unchanged pairwise interface instead. The
+[new study](MULTISOURCE_LAW_DECISION_V1.md) uses matched initial tensors and
+exposure, separate law learning and crossed-law forecasts at controlled identical
+histories. It changes no neural inference or checkpoint implementation.
+Simultaneous timing remains unestablished scope.
+
+The corrected follow-on is now complete: [multisource law v1](MULTISOURCE_LAW_DECISION_V1.md)
+retains KEEP_MULTISOURCE_LAWS at all five seeds for both laws. It preserves this
+correlation decision and establishes full-feedback one-step composition. The
+next selected task uses those frozen checkpoints to test propagation through
+a hidden intermediate state, with zero further fitting.
