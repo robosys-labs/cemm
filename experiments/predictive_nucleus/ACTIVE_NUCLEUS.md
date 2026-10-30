@@ -1,32 +1,47 @@
 # Active nucleus: current implementation and next scientific decision
 
-Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [draft #61](https://github.com/robosys-labs/cemm/pull/61), stacked on [#60](https://github.com/robosys-labs/cemm/pull/60). Updated 2026-10-30 (Africa/Lagos).
-Current cleanup source: `5a35c5d3db01901a5e016cb03cfe8c0284c6433d`; verified tree `e49d13cfd5ae2b912ab4bdbd9071910aed4de277`.
-Prospective data source remains `8c662f588a9b81bdbcbdef48d3bdc26db1479c85`.
-**G1 remains NOT ADMITTED. No later scientific gate is complete.**
+Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #62](https://github.com/robosys-labs/cemm/pull/62). Updated 2026-10-30 (Africa/Lagos).
+**Continuation v1: STOP_INCOMPLETE_RUN. G1 remains NOT_ADMITTED. No later scientific gate is complete.**
+Source/data prefit commit: `994054d892b14e4d18835758e9ee1837f394d911`.
+Actual checkpoint/plan commit: `edb6ab2abad3575ed6ba4f67fad95d8aae4d0f00`.
 
-## Progress and completion boundary
+## Completed comparison and current boundary
 
-The latest learned result remains the closed [common-objective](COMMON_OBJECTIVE_DECISION.md)
-and [sensor-transfer](SENSOR_TRANSFER_DECISION.md) studies: bounded use of retained
-evidence, matched by strong empirical controls. Subsequent path/domain/learning/
-acceptance/data work improves execution reliability; it adds no new learned
-performance result. Invariant counts, PR counts and interfaces are not scientific
-milestone completion. The earlier [decision review](G1_DECISION_REVIEW.md) already
-identified a preparation loop; another planning-only cycle is not the next task.
+The [continuation-v1 decision](CONTINUATION_DECISION_V1.md) records an actual
+frozen comparison, with its [protocol](continuation_protocol_v1.json),
+[checkpoints and plan](data/continuation-fit-v1/plan.json), and
+[complete result artifacts](results/continuation-v1/manifest.json).
+Prefit design, checkpoint commitment, all 15 neural fits and one collection pass
+are complete. Every neural fit used 562 parameters and 128 updates over the same
+delivered histories. Artifact completion is distinct from participant completion:
+empirical feedback contradictions left later required forecasts `UNPRODUCED`,
+so the first frozen decision rule requires **STOP_INCOMPLETE_RUN**. The failed
+controls and all planned denominators remain in the record.
 
-The next substantive tranche must contain **one frozen comparison and its actual
-KEEP / REVISE / REJECT / STOP result**. Commit the complete design before fitting,
-then bind real checkpoints before collection in that same end-to-end tranche.
-A further preparation-only tranche requires a reproduced defect that blocks that
-specific comparison. Reuse the current APIs; no new general runner, checkpoint
-format, diagnostics platform or model architecture follows merely from a low score.
-The concrete task and decision boundaries are at the end of this document.
+The retained descriptive result is **704/704 continuation queries correct at
+each of five shared-model seeds**, including all 672 OOD queries, all 136
+continuation role-pair conjunctions and zero unchanged-bit errors. Mean OOD
+macro exactness is **100% shared, 9.5688657% flat and 60.4398148% reset**.
+The paired mean shared-minus-flat gain is 90.4311343 percentage points; the
+prespecified one-sided sign reference is 0.03125, conditional on this frozen
+bank and the assumed independent initializations. Flat's mean in-family
+exactness is only 15%, so the entire gap cannot be attributed specifically to
+compositional extrapolation. Equal parameters and exposure do not establish
+equal consumed compute or independent-world generalization.
+
+The separately held-out self-contact result is **7/16 correct at every shared
+seed**. The retained diagnosis identifies an underdetermined supplied alias
+extension, not a demonstrated inability of the existing model to learn from
+alias observations. The next bounded experiment below tests that evidence gap
+with unchanged architecture. No second diagnostic-only pass or same-bank refit
+is needed. The closed [common-objective](COMMON_OBJECTIVE_DECISION.md) and
+[sensor-transfer](SENSOR_TRANSFER_DECISION.md) studies remain historical evidence.
 
 The 85.6287% expectation rejects the proposed **all-action 95% interpretation of
 prospective-data-v1**, not the nucleus itself. Its archived finding and original
-numeric target stay unchanged. The next task uses an explicitly declared
-post-acquisition query scope; it cannot retroactively pass a historical gate.
+numeric target stay unchanged. Continuation v1 measured a separately frozen
+post-acquisition scope; shared all-action exactness is 88.265683%, and neither
+that result nor the perfect query result retroactively passes a historical gate.
 
 ## Active versus frozen paths
 
@@ -40,7 +55,9 @@ The prospective-data tranche preserved the eight learning/inference sources and
 three `active-acceptance-v1` modules. The subsequent bounded cleanup changes only
 `active_paths.py` to remove inherited initialization from frozen replay. `prospective-data-v1` adds four
 sources for generation, a conditional oracle, auditing and observed-only batch
-conversion, bringing the active-file inventory to fifteen. The existing Session,
+conversion, bringing that integration inventory to fifteen. The three continuation
+study modules now compose these APIs, bringing the named inventory to eighteen
+without changing inference imports. The existing Session,
 native artifacts, streaming transport, verified bundle loader and learned modules
 are reused. Historical sources, protocols, checkpoints, studies and standalone
 v1 exports remain unchanged.
@@ -170,13 +187,15 @@ shared model. An alias names one physical output coordinate.
 | Flat, either persistence setting | 1,512 | Six address slots, existence mask and restricted global output geometry |
 
 The flat default uses hidden width eight; shared defaults use width sixteen.
-These capacities are **not matched**. The new flat architecture does not restore
+These default capacities are **not matched**. The new flat architecture does not restore
 old three-entity flat weights, and its supplied padding/output geometry is not
-learned count transfer. Shared and flat arms now use the same delivered-history
-loss and filter; they still have different function classes, parameter counts
-and costs. Strong empirical abstractions and no-change remain controls. No
-wider-domain performance comparison, calibrated superiority or scientific
-advantage has been established by this implementation tranche.
+learned count transfer. Shared and flat arms use the same delivered-history loss
+and filter; they retain different function classes and costs. Continuation v1
+selected shared width 11 and flat width 3 to match 562 parameters and actual
+training exposure. Its measured comparison, weak flat in-family fit and formal
+STOP are retained in the decision report. Strong empirical abstractions and
+no-change remain controls; matched consumed compute and general calibrated
+superiority are not established.
 
 ## Native checkpoint and evaluation boundaries
 
@@ -495,38 +514,33 @@ remain terminal; the no-change control continues its existing last-reading updat
 while reporting and latching the contradiction. The active CLI preserves these
 diagnostics in strict-JSON `ERROR` responses and exits with code 2.
 
-## Current verification and dependency reduction
+## Current verification and code size
 
-The cleanup source `5a35c5d3db01901a5e016cb03cfe8c0284c6433d` has exactly the locally verified tree
-`e49d13cfd5ae2b912ab4bdbd9071910aed4de277` (local commit `f6ce5b4f12cbc324d474bd57db2fe3f45dc7182d`). The clean local suite passed
-**627 tests, zero skips, in 68.430 seconds**; 67 existing path/domain/checkpoint
-checks also passed. No new tests, model parameters, schema or framework were added.
-`active_status.json` records the log hashes, source identity and dependency inventory;
-final-head CI is tracked on [PR #61](https://github.com/robosys-labs/cemm/pull/61/checks).
-The earlier data validation remains in
-[prospective-data-validation-v1.json](results/prospective-data-validation-v1.json).
+The continuation prefit source `994054d892b14e4d18835758e9ee1837f394d911`
+(tree `e2d5598af547f40434b4b948924a96821428bf6b`) passed **645 local tests,
+zero skips, in 76.670 seconds**. Prefit
+[CI run 41027369357](https://github.com/robosys-labs/cemm/actions/runs/41027369357)
+also passed, with the suite completing in **43.401 seconds**. These checks include
+18 new synthetic continuation tests; research fits are separate from CI.
+`active_status.json` records the local log hash and verification scope.
+The separately frozen checkpoint/plan commit precedes the actual one-pass
+collection and its [retained decision](CONTINUATION_DECISION_V1.md).
 
-The empirical filter already overrode prediction and feedback; it now owns the
-same three initialization statements directly. Its eight-world compatibility
-constant comes from the existing geometry function. A fresh import of the active
-participant, learning and checkpoint entrypoints loads **12 local modules / 2,730
-physical lines**, down from 14 / 3,337. Including the still-required historical
-hash pin, the package needs **2,915 lines**, down from 3,337. This measures source
-dependencies, not resident memory, inference speed or learned performance.
+The study adds three small modules composing existing data, fitting, checkpoint,
+collector and scorer APIs: **602 source lines and 482 test lines**. Inference,
+learning and checkpoint source imports are unchanged: **12 local modules / 2,730
+physical lines**, or **2,915 lines** including the still-required historical
+`masked_replay.py` source pin. The cleanup reduced these from 14 / 3,337;
+removing the remaining 185-line pin still requires a separate commitment
+migration. These counts measure source dependencies, not resident memory or
+inference speed. Old native checkpoints remain bound to their original source
+checkout; strict matching and frozen v1 bundles are unchanged.
 
-The redundant 185-line `masked_replay.py` source pin stays because removing it
-also changes the acceptance source inventory and pinned data commitments. That
-migration is deferred; the module and old study runner are no longer imported.
-Old native checkpoints remain bound to their original source checkout and fail
-strict source matching here. Frozen v1 bundles, protocols and research evidence
-are unchanged; there is no compatibility bypass.
-
-The named fifteen-file integration inventory is **3,345 lines**, including
-acceptance/data tools but excluding frozen dependencies. All retained research
-Python is **26,039 lines**, including 11,809 test lines. These are distinct measures;
-none meets the original inclusive 2,000-line goal. This cleanup reduces dependency
-debt while adding one authored line. Duplicated historical handoff prose is replaced
-by references below; the evidence itself is retained.
+The named eighteen-file integration/study inventory is **3,947 lines**, including
+evaluator tools and excluding frozen dependencies. All retained research Python
+is **27,123 lines**, including **12,291 test lines**. The inclusive **2,000-line
+goal remains unmet**; the unchanged inference footprint does not hide the added
+study code. Further infrastructure work requires a demonstrated execution need.
 
 ## Historical verification records
 
@@ -540,6 +554,7 @@ unchanged.
 
 | Tranche | Retained verification | CI reference |
 |---|---|---|
+| Dependency cleanup / public data | [Cleanup handoff](https://github.com/robosys-labs/cemm/blob/5a35c5d3db01901a5e016cb03cfe8c0284c6433d/experiments/predictive_nucleus/ACTIVE_NUCLEUS.md): 627 tests in 68.430 seconds; [data validation](results/prospective-data-validation-v1.json) | [PR #61](https://github.com/robosys-labs/cemm/pull/61/checks) |
 | Acceptance v1 | [active-acceptance-validation-v1.json](results/active-acceptance-validation-v1.json) | [PR #60](https://github.com/robosys-labs/cemm/pull/60/checks) |
 | Learning / inference v5 | [active-learning-validation-v5.json](results/active-learning-validation-v5.json) | [PR #59](https://github.com/robosys-labs/cemm/pull/59/checks) |
 | Domain / inference v4 | [active-domain-validation-v4.json](results/active-domain-validation-v4.json) | [PR #58](https://github.com/robosys-labs/cemm/pull/58/checks) |
@@ -567,69 +582,43 @@ partial histories still abstain rather than renormalizing away unknown mass.
 A previously supported prediction contradicted by reliable feedback remains an
 explicit conflict, not a silent reinitialization or automatic model repair.
 
-## Next end-to-end tranche: evidence followed by prediction
+## Next bounded experiment: observed alias evidence
 
-**Task choice is settled; fitting and statistical commitments still need to be
-frozen before execution.** This is externally scheduled acquisition, not a learned
-clarification policy. Keep the v1 data recipe/archive and closed studies unchanged;
-version the new information/query scope explicitly.
+The retained diagnosis is complete: the shared and reset models copy the active
+bit on all 16 self-contact cases; the supplied alias extension conditions a
+learned distinct-role output distribution on equal post-state slots. Ordinary
+training does not determine the diagonal ratio needed for active-bit-one self
+contacts. This is an evidence/transfer assumption to test, not a reason to add a
+hardcoded self-contact rule or a larger architecture.
 
-1. Use the **first existing distinct-entity contact** for acquisition, counted
-   within the total contact budget. Choose its pre-contact pair from `01`, `10`,
-   or `11` before latent-mode selection, and fully deliver its outcome. Account
-   for any leading interventions when determining this pre-contact state.
-   The two mode outcomes are respectively `(01,11)`, `(11,10)`, and `(10,01)`;
-   they always differ. This proves sufficient evidence under the declared law,
-   not that a model has learned to use it. Do not add a hidden third training contact.
-2. Freeze **later contact indices** as post-acquisition queries before outcomes.
-   Keep every acquisition/all-action forecast, proper score, abstention and failure
-   in the existing report. Report query exactness and query-pair conjunctions
-   separately without renumbering them as full trajectories. There are no
-   intercontact resets, oracle-based query selection or easy-action padding.
-3. Train on one or two **total** contacts. A single-contact episode has zero
-   post-acquisition queries and remains acquisition/ambiguity evidence, never a
-   100% query pass. Use fresh **two-contact in-family** episodes, with the second
-   contact queried, for the 95% in-family continuation criterion. Separately
-   evaluate **three to five total contacts for OOD composition** on declared
-   chain/fork/cycle/disjoint histories. The old two-contact disjoint template needs explicitly
-   declared repetitions; unique edges and total contacts are different quantities.
-   Preserve the first held-out self-contact as a separate mode-invariant query,
-   without an unscored self-contact warm-up or a false composition-depth claim.
-4. Use the existing untied, learned-background shared kernel at hidden width 11,
-   its reset-memory sibling with identical initial tensors, and the flat GRU at
-   hidden width 3: **562 learned parameters each**, verified by construction.
-   Keep no-change, untrained initial predictors and the strongest applicable
-   observed-count controls, including contact and first-contact abstractions.
-   Report eligible targets, unseen support and abstentions; matching parameter
-   counts alone does not match function classes, evidence or consumed compute.
-5. In the prefit commit, settle exact data/source hashes, primary contrast,
-   fitting/selection/calibration rules, actual exposure/compute accounting,
-   material gain, independent units and multiplicity. Use one fixed execution
-   budget and all five model seeds. Five paired seeds alone cannot support a
-   two-sided exact sign-flip p<.05 (minimum .0625); choose a justified analysis
-   before outcomes instead of relabeling correlated views as independent samples.
-   Then fit, bind actual checkpoint hashes, collect once and publish all outcomes.
+1. Compare the **unchanged shared architecture** under ordinary-only evidence
+   against a **fixed replacement tranche of observed self-contact evidence**.
+   Hold all remaining training evidence fixed. Match initialization, parameter
+   count, training exposure and prespecified compute ceilings; report actual
+   consumed costs separately.
+2. Freeze fresh data and one primary alias-transfer contrast before fitting.
+   Evaluate self-contact **starting-bit-0 and starting-bit-1** cases with new
+   identities/backgrounds; both physical outcomes are zero. Freeze continuation
+   competence, role-pair, unchanged-bit and regression criteria alongside it.
+3. Prespecify participant-model-failure versus interrupted-execution completeness
+   semantics, including abstention and missing-output denominators. The current
+   v1 STOP remains unchanged; any revised rule belongs to the fresh protocol.
+4. Complete the frozen comparison and its actual decision in one bounded tranche,
+   using the existing APIs. Successful self learning would establish **learned
+   alias transfer**, not zero-shot transfer from distinct contacts alone.
 
-The 95% criterion on declared post-acquisition queries is a **new prospective
-scope**, with the original numeric threshold; it is not an all-action pass or
-admission of the original frozen study. Independent challenge authorship/custody
-and review remain necessary for admission. They do not prevent an honest bounded
-public development decision. Use the existing adapter, fitting, artifacts and
-acceptance scoring; a small query summary over validated points is sufficient.
+Do not refit the opened v1 bank, rerun closed studies, reopen the completed
+trace/source audit, or add a generic runner, checkpoint format or diagnostics
+platform. Independent challenge custody/review remains an admission requirement;
+it does not require repeating preparation work or rewriting the original 95%
+all-action criterion.
 
-**Decision at the fixed budget:** KEEP only the bounded competence actually
-supported; REJECT superiority or choose the simpler control if it explains the
-result; REVISE at most one reproduced representation/optimization/evidence cause
-with its direct ablation; STOP this design if the comparison is infeasible or
-adds no material useful transfer. Do not respond with another general audit
-layer, a fresh same-fixture sweep or a larger architecture without that diagnosis.
-
-## Remaining roadmap after that decision
+## Remaining roadmap after continuation v1
 
 | Stage | Evidence still required |
 |---|---|
-| G1 | Actual feasible, fair comparison and decision; independent evidence for admission. |
-| G2 | Learned 1–2 to 3–5 composition, carried effects, independent-source functions and coherent uncertainty; reuse relevant G1 evidence. |
+| G1 | Resolve the bounded alias-evidence question under fresh declared completeness rules; participant-complete and independent evidence for admission. |
+| G2 | Reuse the observed 1–2 to 3–5 continuation result; extend evidence to independent-source functions and coherent uncertainty without claiming the full gate complete. |
 | G3 | Teach a relation nonverbally, then transfer it through two languages on the same frozen world model. |
 | G4 | Communication improves held-out external-goal utility against silent/random/shuffled controls. |
 | G5 | Answered experience persists across episodes, reduces later clarification and preserves earlier competence. |

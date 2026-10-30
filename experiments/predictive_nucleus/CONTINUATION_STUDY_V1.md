@@ -49,7 +49,11 @@ once and reused under five collection seed labels; these are not independent
 empirical replicates. Each neural fit has a 300 CPU-second cap; incomplete exposure
 forces STOP. Bounds remain 64 live paths and 512 candidate expansions.
 
-## Execute once, with two committed freezes
+## Recorded execution, with two committed freezes
+
+This attempt is closed; its [results and decision](CONTINUATION_DECISION_V1.md)
+are retained. The commands below document the executed sequence. Any new fitting
+requires a separately frozen study scope; a new output path is not a v1 retry.
 
 Run from the repository root in the pinned Python 3.13.16, PyTorch 2.10.0+cpu,
 NumPy 2.3.5 environment. The runner enforces float64, one thread, deterministic

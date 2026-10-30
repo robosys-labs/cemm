@@ -1,10 +1,87 @@
 {
   "version": "active-inference-v5",
   "evidence_version": "active-evidence-v2",
-  "code_commit": "5a35c5d3db01901a5e016cb03cfe8c0284c6433d",
+  "code_commit": "994054d892b14e4d18835758e9ee1837f394d911",
   "tracking_issue": 22,
   "repair_pr": 56,
   "gate_g1": "NOT_ADMITTED",
+  "continuation_study": {
+    "version": "continuation-study-v1",
+    "scope": "PUBLIC_PREFIT_FROZEN_DEVELOPMENT_COMPARISON",
+    "formal_decision": "STOP_INCOMPLETE_RUN",
+    "gate_g1": "NOT_ADMITTED",
+    "report": "CONTINUATION_DECISION_V1.md",
+    "protocol": "continuation_protocol_v1.json",
+    "results": "results/continuation-v1",
+    "prefit_commit": "994054d892b14e4d18835758e9ee1837f394d911",
+    "checkpoint_plan_commit": "edb6ab2abad3575ed6ba4f67fad95d8aae4d0f00",
+    "prefit_freeze_complete": true,
+    "actual_checkpoint_freeze_complete": true,
+    "neural_fitting_complete": true,
+    "collection_execution_complete": true,
+    "artifacts_complete": true,
+    "participant_complete_run": false,
+    "scientific_gate_complete": false,
+    "model_seeds": [
+      7,
+      11,
+      23,
+      37,
+      53
+    ],
+    "neural_parameters_each": 562,
+    "completed_updates_each": 128,
+    "neural_fits": 15,
+    "empirical_controls_fitted_once": 4,
+    "empirical_checkpoint_labels_each": 5,
+    "independent_empirical_seed_replications": false,
+    "training_input_sha256": "61c98acffbef555751b9f87cd00e0b54cb7e302a1ef1277b7c379769d3d85aa5",
+    "observed_events_per_update": 334,
+    "visible_bits_per_update": 1476,
+    "shared_reset_initial_tensors_match_each_seed": true,
+    "mean_ood_macro_accuracy": {
+      "empirical_contact": 0.05396412037037037,
+      "empirical_first_contact": 0.10286458333333333,
+      "empirical_local": 0.26142939814814814,
+      "empirical_prefix": 0.0,
+      "flat": 0.09568865740740741,
+      "no_change": 0.4370659722222222,
+      "reset": 0.6043981481481482,
+      "shared": 1.0,
+      "untrained_shared": 0.026880787037037036
+    },
+    "shared_each_seed": {
+      "continuation_correct": 704,
+      "continuation_planned": 704,
+      "in_family_correct": 32,
+      "in_family_planned": 32,
+      "ood_correct": 672,
+      "ood_planned": 672,
+      "continuation_role_pairs_exact": 136,
+      "continuation_role_pairs_planned": 136,
+      "support_coverage": 1.0,
+      "unchanged_bit_errors": 0,
+      "self_contact_correct": 7,
+      "self_contact_planned": 16
+    },
+    "shared_flat_mean_gain": 0.9043113425925926,
+    "positive_seeds": 5,
+    "one_sided_sign_p": 0.03125,
+    "statistical_scope": "Conditional on the fixed bank and assumed independent initializations; no physical-world generalization inference.",
+    "candidate_competence_pass": true,
+    "material_gain_pass": true,
+    "empirical_matches": false,
+    "completion_blocker": "Empirical feedback contradictions: visible evidence outside empirical support; later required forecasts remain UNPRODUCED.",
+    "empirical_terminal_failure_records_across_repeated_labels": 1005,
+    "empirical_unproduced_all_action_forecasts_across_repeated_labels": 2565,
+    "missing_trial_or_episode_inventory": 0,
+    "selection_or_calibration_fitted": false,
+    "closed_studies_rerun": false,
+    "matched_realized_training_exposure": true,
+    "matched_consumed_compute": false,
+    "inference_sources_modified": false,
+    "original_95_all_action_target_redefined": false
+  },
   "independent_validation": "PENDING_SEPARATE_FROM_ENGINEERING",
   "production_cutover": false,
   "active_entrypoint": "experiments.predictive_nucleus.active_participant",
@@ -103,26 +180,26 @@
   "pending_engineering_in_order": [
     {
       "stage": "G1",
-      "work": "Complete selected post-acquisition comparison in one end-to-end tranche: prefit freeze, three 562-parameter neural arms and strong empirical controls, fixed budget, actual fitting/checkpoints/collection, all outcomes and terminal decision. Further standalone preparation needs a blocking reproduced defect."
+      "work": "Run one fresh preregistered alias-evidence versus matched ordinary-evidence ablation using the unchanged shared architecture. Hold remaining evidence fixed, match initialization/parameters/training exposure and compute ceilings, retain continuation regression criteria, and freeze participant-failure versus execution-completeness semantics before fitting. No same-bank refit or new general infrastructure."
     },
     {
       "stage": "G2",
-      "work": "Test one or two to three to five interactions on declared graph families, carrying earlier effects into later inputs without reset confounds and preserving shared uncertain mechanisms."
+      "work": "Retain continuation-v1 evidence for one/two to three/five contacts; extend to independent-source functions and coherent uncertainty without treating this bounded conditional result as completion of G2."
     },
     {
       "stage": "G3",
       "work": "Learn bilingual grounding into the same predictive state without gold programs."
     },
     {
-      "stage": "G4–G5",
+      "stage": "G4\u2013G5",
       "work": "Implement learned communication, durable acquisition, correction, restart and retention in dependency order."
     },
     {
-      "stage": "G6–G8",
+      "stage": "G6\u2013G8",
       "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
     }
   ],
-  "external_issue_55": "Independent challenge custody/review remains required for admission; it does not block the bounded public development decision. Task/query and exact parameter choices are selected; execution/statistical commitments remain to be frozen before fits.",
+  "external_issue_55": "Independent challenge custody/review remains required for admission. Continuation v1 completed its prefit/checkpoint commitments and execution, with formal STOP_INCOMPLETE_RUN from empirical feedback contradictions; this does not admit G1 or justify reopening the same bank.",
   "line_counts": {
     "active_files": {
       "active_paths.py": 256,
@@ -139,47 +216,51 @@
       "prospective_oracle.py": 79,
       "prospective_data.py": 238,
       "prospective_audit.py": 294,
-      "observed_io.py": 48
+      "observed_io.py": 48,
+      "continuation_data.py": 153,
+      "continuation_summary.py": 116,
+      "continuation_run.py": 333
     },
-    "active_source_files_excluding_frozen_dependencies": 3345,
-    "new_runtime_source_net": 1,
-    "new_tests_net": 0,
-    "retained_research_python": 26039,
+    "active_source_files_excluding_frozen_dependencies": 3947,
+    "new_runtime_source_net": 0,
+    "new_tests_net": 482,
+    "retained_research_python": 27123,
     "inclusive_size_goal_met": false,
     "learned_parameter_delta": 0,
-    "new_tests": 0,
-    "scope": "Named integration files include evaluator tools and exclude frozen dependencies; see active_dependency_inventory for import/pin footprint."
+    "new_tests": 18,
+    "scope": "Physical lines including comments/blanks: eighteen named integration/study files include evaluator tools and exclude frozen dependencies. Study adds 602 source lines and 482 test lines; inference import footprint is unchanged and separately recorded.",
+    "new_study_source_net": 602,
+    "retained_test_lines": 12291
   },
   "verification": {
-    "scope": "Bounded active dependency cleanup; no research fit or performance result. Historical data verification is referenced below.",
-    "local_tests_discovered": 627,
-    "local_tests_passed": 627,
+    "scope": "Continuation implementation prefit invariants and separate one-pass research execution; artifact completion does not imply participant completion or scientific admission.",
+    "local_tests_discovered": 645,
+    "local_tests_passed": 645,
     "local_tests_skipped": 0,
-    "local_suite_seconds": 68.43,
-    "local_output_sha256": "e36108c9ddff12caed16eca0db52372947f472e83f09331214b09ae33ddb9bdc",
-    "focused_tests_passed": 67,
-    "focused_suite_seconds": 10.621,
-    "focused_output_sha256": "cc1ca4c170d2e5c8b2638636dba48ece826dfb55664f80c5457bdcb5f76e5d63",
-    "new_tests": 0,
-    "clean_local_source_commit": "f6ce5b4f12cbc324d474bd57db2fe3f45dc7182d",
-    "local_verified_tree_sha": "e49d13cfd5ae2b912ab4bdbd9071910aed4de277",
-    "published_tree_sha": "e49d13cfd5ae2b912ab4bdbd9071910aed4de277",
-    "publication_tree_matches_local_verified_code": true,
-    "changed_runtime_source": {
-      "path": "active_paths.py",
-      "before_sha256": "1486f3fe98ffbe650fd6410d038c3e6c83b23f4d569606ced8da647443c9a6ee",
-      "after_sha256": "2fe80aa36686a8e47d487bac0044a02b71c2494cfd1c1ce9b837b4b0d41384e3"
-    },
-    "frozen_sources_data_protocols_modified": false,
-    "new_research_fits": false,
-    "new_scientific_evaluation": false,
-    "ci_reference": "https://github.com/robosys-labs/cemm/pull/61/checks",
-    "remote_ci_scope": "Final handoff head; exact-run status is retained on the PR, separately from local verification."
+    "local_suite_seconds": 76.67,
+    "local_output_sha256": "faf1b0e29f9a46e47f130baf9bb5efc2b57df76094901aefaca0f5f4041ccc77",
+    "new_tests": 18,
+    "clean_local_source_commit": "994054d892b14e4d18835758e9ee1837f394d911",
+    "local_verified_tree_sha": "e2d5598af547f40434b4b948924a96821428bf6b",
+    "ci_reference": "https://github.com/robosys-labs/cemm/actions/runs/41027369357",
+    "remote_ci_run_id": 41027369357,
+    "remote_ci_conclusion": "success",
+    "remote_ci_suite_seconds": 43.401,
+    "remote_ci_scope": "Prefit source verification; research fits are not ordinary CI tests.",
+    "inference_and_learning_sources_modified": false,
+    "historical_data_protocols_modified": false,
+    "new_research_fits": true,
+    "neural_fit_count": 15,
+    "empirical_fit_count": 4,
+    "new_scientific_evaluation": true,
+    "closed_study_reruns": false,
+    "result_record": "CONTINUATION_DECISION_V1.md",
+    "result_manifest": "results/continuation-v1/manifest.json"
   },
   "limits": [
-    "The prospective-data tranche generated and audited public same-author assets and ran implementation invariants only. No research fitting, saved-research-model evaluation, closed study rerun or scientific comparison occurred.",
-    "Shared-kernel self-contact remains supplied per-mode alias conditioning; tiny retained mass can normalize to a confident forecast.",
-    "The fresh flat model has 1512 default parameters versus 470/584/972 shared arms; neither capacity nor consumed compute is matched.",
+    "Continuation v1 completed its frozen fits and artifact collection but formally STOPPED: empirical zero-support feedback contradictions terminated episodes and left required forecasts unproduced. G1 remains NOT_ADMITTED; failures and all planned denominators are retained.",
+    "Shared-kernel self-contact remains supplied per-mode alias conditioning. Continuation-v1 shared/reset copy the active bit on all sixteen self cases and score seven/sixteen; ordinary evidence does not identify the required alias diagonal ratio. This does not prove the unchanged model cannot learn alias behavior from observations.",
+    "Default flat/shared capacities differ. Continuation v1 selected 562 parameters and identical realized exposure for each neural arm; function classes, supplied biases and consumed CPU remain different. Flat mean in-family accuracy was 15%, limiting a specifically compositional interpretation of the full gap.",
     "Legacy flat checkpoints remain three-entity-only and cannot be converted to the new flat architecture.",
     "Positive-mass paths are neither pruned nor merged; missing observations can exhaust the default 64-live-path or 512-candidate budgets.",
     "Empirical fitting counts fewer eligible targets when readings/history are incomplete; hidden values and unsupported counts are never synthesized.",
@@ -196,35 +277,36 @@
     "Predictable or outcome-ignorable dropout is asserted, not verified by the collector.",
     "Whole-trajectory and role-pair metrics conjoin forecasts under delivered feedback; they are not free-running rollouts or hidden-trajectory likelihoods.",
     "A valid final forecast survives a final-feedback failure; forecast correctness does not imply successful execution completion.",
-    "The numeric per-seed comparison to 0.95 never admits G1; scientific denominator, calibration, significance, capacity and consumed-compute criteria remain to be frozen.",
+    "The 0.95 identifiable-query competence criterion and statistical decision order were frozen for continuation v1. They do not replace the historical all-action target or admit G1; the global completion rule returns STOP before later superiority rules.",
     "The acceptance Session limit is 128 actions; the original G1 protocol action budget and gate remain unchanged.",
     "Conditional-oracle completeness is established only under the declared deterministic two-mode law, complete anchor and noiseless exogenous observation design; external correctness/custody is not established.",
-    "The evaluation in-family expected all-action ceiling is 0.8562874251497006, below the unchanged 0.95 target. This is an information-design expectation, not a finite-sample bound or learned-model regression.",
+    "Historical prospective-data-v1: the evaluation in-family expected all-action ceiling is 0.8562874251497006, below the unchanged 0.95 target. This is an information-design expectation, not a finite-sample bound or learned-model regression.",
     "The law audit uses explicit equal prior mode masses. It does not infer a uniform prior from support cardinality or condition participant predictions on oracle support.",
     "Frozen lexicographic MAP trajectory/pair conjunctions are not optimal joint-policy ceilings; correct conditional probabilities can still yield zero pair exactness under ties.",
-    "Canonical blueprints and physical lineages are disjoint across splits, but 45 concrete action templates repeat across in-family splits; novel atomic contexts and independent structural authorship are not established.",
-    "The new assets cap cumulative missingness at three bit-events, giving conservative bounds of eight recurrent histories and 512 expansions. This does not expand the general participant resource limits.",
-    "The prefit data manifest contains no real trained checkpoint inventory. A complete comparison design must precede fitting, followed by a separate actual-checkpoint acceptance commitment.",
+    "Historical prospective-data-v1: canonical blueprints and physical lineages are disjoint across splits, but 45 concrete action templates repeat across in-family splits; novel atomic contexts and independent structural authorship are not established.",
+    "Historical prospective-data-v1: the new assets cap cumulative missingness at three bit-events, giving conservative bounds of eight recurrent histories and 512 expansions. This does not expand the general participant resource limits.",
+    "Continuation-v1 source/data commitments and actual native checkpoint/plan hashes were committed before collection. Historical prospective-data-v1 commitments and its absent trained-checkpoint inventory remain unchanged.",
     "The data exporter publishes a completion manifest last; an I/O failure may leave a new incomplete directory without it. The combined archive and audit contain evaluator-only information.",
-    "Research fitting/model scoring remain disabled in the data contract until the incomplete information/query/comparison/matching/statistical/calibration design is resolved.",
-    "The next 95% post-acquisition criterion is a new explicit prospective scope; single-contact has zero such queries and self-contact remains separate. No historical all-action gate is thereby passed."
+    "Research fitting/model scoring remain disabled in the historical prospective-data-v1 contract. The separate frozen continuation-study-v1 protocol enabled and completed one prescribed attempt; selection/calibration fitting remained disabled and no same-bank retry is permitted.",
+    "Continuation-v1 post-acquisition criteria have an explicit prospective scope: single-contact has zero such queries, self-contact is separate, and all-action reports remain authoritative for their original scope. Shared mean all-action accuracy is 88.265683%; no historical all-action gate is passed.",
+    "The five-seed sign reference is conditional on one frozen public bank and assumed independent initializations. Related views/query positions are not independent physical draws; repeated empirical checkpoint labels are not independent fits. No physical-world generalization inference or general calibration claim is established."
   ],
-  "local_verified_code_commit": "f6ce5b4f12cbc324d474bd57db2fe3f45dc7182d",
+  "local_verified_code_commit": "994054d892b14e4d18835758e9ee1837f394d911",
   "diagnostics_pr": 57,
   "domain_pr": 58,
   "remaining_capability_gaps": {
     "coherent_active_training_checkpoint_evaluation_path": "IMPLEMENTED_FOR_DELIVERED_OBSERVATIONS",
     "expanded_domain_flat_implementation": "IMPLEMENTED_FRESH_ARCHITECTURE",
-    "expanded_domain_matched_flat_baseline": "PENDING_CAPACITY_AND_COMPUTE_COMPARISON",
-    "prospective_information_aware_scientific_acceptance_runner": "CONTRACT_COLLECTOR_SCORER_AND_PUBLIC_DATA_ENGINEERING_IMPLEMENTED; SCIENTIFIC_INFORMATION_AND_COMPARISON_CONTRACT_PENDING",
+    "expanded_domain_matched_flat_baseline": "CONTINUATION_V1_COMPLETED_PARAMETER_AND_REALIZED_EXPOSURE_MATCH; CONSUMED_COMPUTE_NOT_MATCHED",
+    "prospective_information_aware_scientific_acceptance_runner": "CONTINUATION_V1_EXECUTED_WITH_RETAINED_STOP; PARTICIPANT_COMPLETE_RUN_AND_INDEPENDENT_ADMISSION_NOT_ESTABLISHED",
     "fresh_independently_held_challenge": "PENDING",
-    "calibrated_expanded_domain_comparison": "PENDING",
-    "expanded_domain_scientific_evaluation": false,
+    "calibrated_expanded_domain_comparison": "CONTINUATION_V1_PROPER_SCORE_AND_ECE_DIAGNOSTICS_RETAINED; GENERAL_CALIBRATION_NOT_ESTABLISHED",
+    "expanded_domain_scientific_evaluation": true,
     "novel_entity_count_transfer_established": false,
     "learned_self_contact_established": false,
     "fresh_prospective_observed_curriculum_and_held_out_families": "IMPLEMENTED_PUBLIC_SAME_AUTHOR_ASSETS; INDEPENDENT_CHALLENGE_PENDING",
     "complete_conditional_oracle_and_split_lineage": "IMPLEMENTED_UNDER_DECLARED_TWO_MODE_LAW_WITH_CANONICAL_BLUEPRINT_LINEAGE; EXTERNAL_REVIEW_PENDING",
-    "scientific_denominator_matching_and_statistics_contract": "POST_ACQUISITION_TASK_AND_EXACT_PARAMETER_CHOICES_SELECTED; EXECUTION_STATISTICAL_AND_CALIBRATION_FREEZE_REMAINS_BEFORE_FITS",
+    "scientific_denominator_matching_and_statistics_contract": "CONTINUATION_V1_FROZEN_AND_EXECUTED; FORMAL_STOP_INCOMPLETE_RUN",
     "crash_durable_forecast_journal": "NOT_IMPLEMENTED",
     "participant_os_isolation": "NOT_IMPLEMENTED",
     "observed_only_batch_adapter": "IMPLEMENTED_NO_SIMULATOR_OR_ORACLE_IMPORT"
@@ -293,7 +375,7 @@
       "conditional_answered_only_nll_separately_labeled": true
     },
     "prospective_acceptance_collector_and_scorer": true,
-    "complete_scientific_study_runner": false,
+    "complete_scientific_study_runner": true,
     "hidden_gold_scope": "SEPARATE_EVALUATOR_ONLY; PROSPECTIVE_ASSETS_GENERATE_DECLARED_LAW_TRUTH_AND_SUPPORT",
     "learner_hidden_gold_access": false,
     "complete_world_accuracy_on_unobserved_bits": true,
@@ -315,7 +397,10 @@
     "numeric_original_in_family_target_comparison": true,
     "automatic_scientific_admission": false,
     "prospective_data_conditional_oracle_and_law_audit": true,
-    "law_audit_is_learned_model_score": false
+    "law_audit_is_learned_model_score": false,
+    "complete_scientific_study_runner_scope": "Study-specific continuation-v1 driver composing existing APIs; not a new general framework.",
+    "participant_complete_scientific_run": false,
+    "continuation_fixed_query_summary": true
   },
   "comparison_scope": {
     "native_flat_implemented": true,
@@ -329,10 +414,23 @@
     },
     "matched_capacity": false,
     "matched_consumed_compute": false,
-    "new_scientific_comparison": false,
-    "legacy_flat_weights_convertible": false
+    "new_scientific_comparison": true,
+    "legacy_flat_weights_convertible": false,
+    "continuation_v1_neural_parameters_each": 562,
+    "matched_realized_training_exposure": true,
+    "formal_decision": "STOP_INCOMPLETE_RUN"
   },
   "verification_history": [
+    {
+      "version": "active-inference-v5",
+      "scope": "Bounded dependency cleanup before continuation v1",
+      "code_commit": "5a35c5d3db01901a5e016cb03cfe8c0284c6433d",
+      "record": "https://github.com/robosys-labs/cemm/blob/5a35c5d3db01901a5e016cb03cfe8c0284c6433d/experiments/predictive_nucleus/ACTIVE_NUCLEUS.md",
+      "local_tests_passed": 627,
+      "local_suite_seconds": 68.43,
+      "local_output_sha256": "e36108c9ddff12caed16eca0db52372947f472e83f09331214b09ae33ddb9bdc",
+      "ci_reference": "https://github.com/robosys-labs/cemm/pull/61/checks"
+    },
     {
       "version": "active-inference-v5",
       "data_version": "prospective-data-v1",
@@ -416,10 +514,11 @@
     "latency_scope": "REPORTED_PREDICTION_REGION_NEAREST_RANK; NOT_END_TO_END",
     "learned_parameter_delta": 0,
     "inference_and_learning_source_changes": false,
-    "fresh_scientific_assets_complete": false,
+    "fresh_scientific_assets_complete": true,
     "automatic_gate_admission": false,
     "prospective_conditional_oracle_available": true,
-    "oracle_completeness_scope": "ACCEPTANCE_VALIDATOR_CHECKS_CONSISTENCY_ONLY; SEPARATE_DATA_ORACLE_COMPUTES_COMPLETE_SUPPORT_UNDER_ITS_DECLARED_LAW"
+    "oracle_completeness_scope": "ACCEPTANCE_VALIDATOR_CHECKS_CONSISTENCY_ONLY; SEPARATE_DATA_ORACLE_COMPUTES_COMPLETE_SUPPORT_UNDER_ITS_DECLARED_LAW",
+    "fresh_scientific_assets_scope": "CONTINUATION_V1_PUBLIC_PREFIT_FROZEN; INDEPENDENT_CUSTODY_NOT_ESTABLISHED"
   },
   "acceptance_code_commit": "642265d231cc1e4d606dea5e0f892e56693b3fdc",
   "prospective_data_version": "prospective-data-v1",
@@ -514,7 +613,8 @@
     "participant_isolation_enforced": false,
     "automatic_gate_admission": false,
     "prefit_freeze": "DATA_AND_COMPLETE_INFORMATION_COMPARISON_DESIGN_BEFORE_FITTING",
-    "postfit_freeze": "ACTUAL_NATIVE_CHECKPOINT_SHA_INVENTORY_BOUND_TO_PREFIT_COMMITMENTS_BEFORE_COLLECTION"
+    "postfit_freeze": "ACTUAL_NATIVE_CHECKPOINT_SHA_INVENTORY_BOUND_TO_PREFIT_COMMITMENTS_BEFORE_COLLECTION",
+    "record_role": "HISTORICAL_PROSPECTIVE_DATA_V1_CONTRACT; UNCHANGED_BY_CONTINUATION_STUDY"
   },
   "prospective_data_code_commit": "8c662f588a9b81bdbcbdef48d3bdc26db1479c85",
   "active_dependency_inventory": {
@@ -548,53 +648,56 @@
     "previous_imported_source_lines": 3337,
     "previous_import_plus_source_pin_lines": 3337,
     "parameter_delta": 0,
-    "retained_test_lines": 11809,
+    "retained_test_lines": 12291,
     "remaining_pin_reason": "Removing the masked_replay.py identity pin changes acceptance/data commitments; migration deferred.",
-    "compatibility": "Old native checkpoints require their original source checkout; strict matching remains enforced. Frozen v1 bundles unchanged."
+    "compatibility": "Old native checkpoints require their original source checkout; strict matching remains enforced. Frozen v1 bundles unchanged.",
+    "continuation_study_changed_inference_imports": false
   },
   "progress_control": {
     "last_learned_results": [
+      "CONTINUATION_DECISION_V1.md"
+    ],
+    "invariant_count_is_scientific_gate_progress": false,
+    "next_deliverable": "One fresh preregistered alias-evidence versus matched ordinary-evidence experiment using the unchanged shared model, followed by its actual decision and continuation regression result.",
+    "another_preparation_only_tranche_requires": "Reproduced defect blocking that specific fresh experiment; retained self-contact diagnosis is already complete.",
+    "new_generic_runner_checkpoint_format_or_model_architecture_planned": false,
+    "further_refactor_scope": "Only a demonstrated execution blocker or later release packaging milestone.",
+    "historical_learned_results": [
       "COMMON_OBJECTIVE_DECISION.md",
       "SENSOR_TRANSFER_DECISION.md"
     ],
-    "invariant_count_is_scientific_gate_progress": false,
-    "next_deliverable": "One frozen comparison AND actual KEEP/REVISE/REJECT/STOP report; separate prefit/checkpoint commitments in the same end-to-end tranche.",
-    "another_preparation_only_tranche_requires": "Reproduced defect blocking that concrete comparison.",
-    "new_generic_runner_checkpoint_format_or_model_architecture_planned": false,
-    "further_refactor_scope": "Only a demonstrated execution blocker or later release packaging milestone."
+    "last_frozen_decision": "STOP_INCOMPLETE_RUN",
+    "execution_and_artifact_collection_complete": true,
+    "participant_complete_run": false
   },
   "selected_next_task": {
-    "details": "ACTIVE_NUCLEUS.md#next-end-to-end-tranche-evidence-followed-by-prediction",
-    "information_scope": "First existing non-self contact acquires evidence; pre-contact 01/10/11 chosen before mode, full feedback delivered, later contact indices fixed as queries.",
-    "train_total_contacts": [
-      1,
-      2
+    "details": "ACTIVE_NUCLEUS.md#next-bounded-experiment-observed-alias-evidence",
+    "status": "SELECTED_FRESH_EXPERIMENT; PREFIT_PROTOCOL_NOT_YET_FROZEN",
+    "diagnosis_complete": true,
+    "evidence_contrast": "Ordinary-only evidence versus a fixed replacement tranche of observed self-contact outcomes; hold all remaining training evidence fixed.",
+    "architecture": "Unchanged shared model; no hardcoded self-contact rule or new architecture.",
+    "matching": [
+      "initialization",
+      "parameter count",
+      "realized training exposure",
+      "prespecified compute ceilings"
     ],
-    "query_threshold": 0.95,
-    "criterion_scope": "New prospective post-acquisition criterion; single-contact has zero such queries, self-contact is separately scored. No historical gate is thereby passed.",
-    "all_action_reports_retained": true,
-    "learned_query_policy_claimed": false,
-    "selected_neural_configs": {
-      "untied_shared": "hidden 11, persistence False, role_tying False, memory True: 562 parameters",
-      "reset_shared": "same 562 parameters and initial tensors, memory False",
-      "flat": "hidden 3, persistence False: 562 parameters"
-    },
-    "consumed_compute_match_established": false,
-    "execution_contract_frozen": false,
-    "remaining_prefit_decisions": [
-      "Exact data/source hashes and controls",
-      "Primary contrast and material effect",
-      "Fitting/selection/calibration rules",
-      "Actual exposure/compute accounting",
-      "Independent units, multiplicity and fixed budget"
+    "actual_consumed_costs_reported": true,
+    "consumed_compute_match_claimed": false,
+    "fresh_preregistered_cases_required": true,
+    "evaluation": "Self-contact starting-bit-0 and starting-bit-1 cases, both with true next active bit zero, with new identities/backgrounds and continuation regression checks.",
+    "prefit_decisions": [
+      "One primary alias-transfer contrast and effect criterion",
+      "Continuation competence, role-pair, unchanged-bit and regression criteria",
+      "Participant-model-failure versus interrupted-execution completeness semantics, retaining abstention and missing-output denominators"
     ],
-    "in_family_continuation_total_contacts": 2,
-    "ood_composition_total_contacts": [
-      3,
-      4,
-      5
-    ],
-    "single_contact_scope": "Acquisition/ambiguity diagnostic, zero post-acquisition queries.",
-    "self_contact_scope": "First held-out self-contact separately scored; mode-invariant, no composition-depth claim."
-  }
+    "success_scope": "Learned alias transfer from observed outcomes; not zero-shot transfer from distinct contacts alone.",
+    "same_bank_refit_or_retry": false,
+    "generic_infrastructure_planned": false,
+    "current_v1_decision_unchanged": "STOP_INCOMPLETE_RUN",
+    "historical_95_all_action_target_unchanged": true
+  },
+  "current_pr": 62,
+  "continuation_pr": 62,
+  "current_study_decision": "STOP_INCOMPLETE_RUN"
 }
