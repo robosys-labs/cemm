@@ -1,9 +1,9 @@
-# Active nucleus: G2 mixed composition completed
+# Active nucleus: G2 joint correlation completed
 
-Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #63](https://github.com/robosys-labs/cemm/pull/63). Updated 2026-10-30 (Africa/Lagos).
-**G1 development readiness: PROCEED_TO_G2. Mixed-composition v1: KEEP_MIXED_COMPOSITION.**
+Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #64](https://github.com/robosys-labs/cemm/pull/64). Updated 2026-10-30 (Africa/Lagos).
+**G1 development readiness: PROCEED_TO_G2. Joint-correlation v1: KEEP_JOINT_CORRELATION.**
 Formal G1 scientific admission remains NOT_ADMITTED; full G2 remains open.
-Published source/data/checkpoint freeze: `669b7b1181f478cdd6c74429535b52a3d80b5ade`.
+Published source/data/checkpoint freeze: `2181a01d60689722d62f2ee44110b9c00471e031`.
 Unchanged checkpoint source: `2361c48986276fe897a9cd9beac874720cfcbb7a`.
 
 ## Completed comparison and current boundary
@@ -16,26 +16,36 @@ remains historically unpassed, but is not a reason to keep refitting this fixtur
 Original baseline adequacy and independent custody remain scientific requirements.
 The user's requested bounded G2 development proceeds separately and explicitly.
 
-The new frozen-weight mixed challenge is complete: **8,000/8,000 forecasts**,
-all five seeds, no failures, abstentions or missing outputs. Every alias seed
-achieves **512/512 identifiable outcomes and 96/96 identifiable role pairs**;
-the ordinary-evidence control achieves 432/512 and 56/96. Both arms reuse their
-V2 weights without training. The 562-parameter model and inference code are unchanged.
+The [joint-correlation challenge](JOINT_CORRELATION_DECISION_V1.md) is complete:
+**1,920/1,920 forecasts**, no failures, abstentions or missing outputs. Both frozen
+V2 arms pass **32/32 critical contrasts, 32/32 identifiable complete worlds and
+16/16 identifiable reversed-role pairs at every seed**. Histories with identical
+anchors, delivered readings and individual state marginals require opposite
+predictions under the same next contact. The candidate's minimum probability
+separation is **0.988057**, against a frozen 0.8 target. An analytic factorized
+control gives zero separation. No posterior was injected into the learner.
 
-The six fresh families cover alias before/after acquisition, repeated aliases,
-reversal, interleaved contacts, withheld feedback and mechanisms whose worlds
-coalesce then diverge again. Every candidate MAP world remains information-compatible;
-definitely unchanged coordinates have zero errors. Worst ambiguous joint total
-variation is 0.020285 (frozen limit 0.1); worst family/stratum mean KL is 0.010532
-nats (limit 0.05). The [decision](results/mixed-composition-v1/decision.json) is
-**KEEP_MIXED_COMPOSITION**. See the [manifest](results/mixed-composition-v1/manifest.json).
+Worst candidate ambiguous joint TV is **0.026692** (limit 0.1); worst
+family/stratum mean KL is **0.008059 nats** (limit 0.05). Unsupported MAP worlds
+and definitely unchanged-bit errors are zero. The [decision](results/joint-correlation-v1/decision.json)
+is **KEEP_JOINT_CORRELATION**; the [manifest](results/joint-correlation-v1/manifest.json)
+retains every forecast. All-action exactness is **58.3333%** for both arms, matching
+this deliberately ambiguous bank's expected oracle MAP rate.
 
-All-action exactness is **71% to 82%** across the paired arms; 82% matches the new
-bank's expected oracle accuracy. This is not comparable to V2's raw 88.74% because
-ambiguity prevalence changed. There are **400 identifiable repairs, zero
-identifiable accuracy regressions**, and 372 ambiguous repairs/332 ambiguous
-regressions. All realized-world errors remain counted. Local probability-score
-regressions also remain in the review; do not claim universal improvement.
+There are zero identifiable regressions. All-action accounting retains **136
+ambiguous repairs / 136 ambiguous regressions**. The alias arm's NLL is 0.000605
+nats worse on average, and realized unchanged-bit errors are 328 versus 408;
+none is a definitely unchanged-coordinate error. Both arms meet the probability
+criteria. This is a capability tie with retained local regressions, not a claim
+that alias evidence improves every task. All ten 562-parameter checkpoints remain
+byte-identical; this tranche adds zero training updates and zero inference changes.
+
+The earlier mixed-composition result also remains complete: **8,000 forecasts**,
+512/512 identifiable worlds and 96/96 identifiable role pairs per candidate seed,
+400 identifiable repairs and zero identifiable regressions. Its 82% pooled score
+and V2's 88.74% use different ambiguity mixtures from this bank; they must not be
+treated as a descending performance series. Historical regressions and the supplied
+joint-filtering boundary remain in the respective reports.
 
 | Retained study | Frozen decision |
 |---|---|
@@ -43,6 +53,7 @@ regressions also remain in the review; do not claim universal improvement.
 | [Alias evidence v1](ALIAS_EVIDENCE_DECISION_V1.md) | REVISE_EVIDENCE_FIX |
 | [Alias evidence v2](ALIAS_EVIDENCE_DECISION_V2.md) | KEEP_EVIDENCE_FIX |
 | [Mixed composition v1](G1_G2_PROGRESS_REVIEW.md#result-keep_mixed_composition) | KEEP_MIXED_COMPOSITION |
+| [Joint correlation v1](JOINT_CORRELATION_DECISION_V1.md#result-keep_joint_correlation) | KEEP_JOINT_CORRELATION |
 
 These are bounded public fixed-law results. Simultaneous interactions,
 independently varied multi-source laws, general calibration and independent
@@ -524,22 +535,24 @@ the contradiction. Terminal errors retain strict-JSON diagnostics and exit code 
 
 ## Current verification and code size
 
-The published mixed-composition freeze passed **669 local tests**, zero skips,
-in 87.920 seconds, all 22 protocol/manifest locks and frozen preflight. Its
-[invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41086979788) and
-[source snapshot CI](https://github.com/robosys-labs/cemm/actions/runs/41086980144)
-passed. Final result-head checks are linked in PR #63. The
-[internal result audit](results/mixed-composition-validation-v1.json) verifies
-all artifacts, unchanged checkpoints, 8,000 receipts and independent metric arithmetic.
+The published correlation freeze passes the **681-test isolated suite**, all
+**23 protocol/manifest locks** and frozen preflight in
+[invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41091915442).
+[Source snapshot CI](https://github.com/robosys-labs/cemm/actions/runs/41091915993)
+also passes. Final result-head checks are linked in PR #64. The
+[internal result audit](results/joint-correlation-validation-v1.json) verifies
+14 result artifacts, 33 source bindings, ten unchanged checkpoints, 1,920 receipts,
+28,800 point metrics, 1,800 summary metrics and all 320 learned contrast pairs.
 Invariant tests and internal arithmetic review are not scientific admission.
 
-This tranche adds **zero inference lines and zero parameters**. Its two study
-adapters total 401 lines and tests total 212 lines. The twelve-module active
+This tranche adds **zero inference lines and zero parameters**, a 132-line data
+generator, 70 net lines in the reused runner, and 211 lines of focused tests.
+The twelve-module active
 inference/learning/checkpoint import closure remains **2,732 physical lines**, or
 **2,917** including the historical source pin. All retained research Python is
-**28,534 lines**, including **12,861 test lines**; the inclusive **2,000-line goal
-remains unmet**. The next composition measurement should reuse these APIs; no
-new generic runner, architecture or diagnostic platform is selected.
+**28,947 lines**, including **13,072 test lines**; the inclusive **2,000-line goal
+remains unmet**. The next bounded extension must address the demonstrated
+three-operand input/locality limit; no generic workspace is selected.
 
 ## Historical verification records
 
@@ -553,6 +566,7 @@ unchanged.
 
 | Tranche | Retained verification | CI reference |
 |---|---|---|
+| Mixed composition v1 | [Retained decision](G1_G2_PROGRESS_REVIEW.md): 669 tests, 87.920 seconds; KEEP_MIXED_COMPOSITION | [PR #63](https://github.com/robosys-labs/cemm/pull/63/checks) |
 | Continuation v1 | [Retained decision](CONTINUATION_DECISION_V1.md): 645 tests, 76.670 seconds; frozen `STOP_INCOMPLETE_RUN` | [CI 41031823696](https://github.com/robosys-labs/cemm/actions/runs/41031823696) |
 | Alias evidence v1 | [Retained decision](ALIAS_EVIDENCE_DECISION_V1.md): 655 tests; frozen `REVISE_EVIDENCE_FIX` | [CI 41063316079](https://github.com/robosys-labs/cemm/actions/runs/41063316079) |
 | Dependency cleanup / public data | [Cleanup handoff](https://github.com/robosys-labs/cemm/blob/5a35c5d3db01901a5e016cb03cfe8c0284c6433d/experiments/predictive_nucleus/ACTIVE_NUCLEUS.md): 627 tests in 68.430 seconds; [data validation](results/prospective-data-validation-v1.json) | [PR #61](https://github.com/robosys-labs/cemm/pull/61/checks) |
@@ -590,26 +604,40 @@ No retained failing historical episode or continuation-v1 study was replayed;
 the alias studies contain neural arms only. Historical empirical completion and
 accuracy are therefore unchanged and no new empirical run-level result is claimed.
 
-## Next G2 experiment: joint correlation beyond individual marginals
+## Next G2 experiment: one event with two independent sources
 
-Keep the successful V2 checkpoints frozen. Construct two delivered histories
-with equal individual 50/50 state marginals but different joint correlations,
-then apply the same relational or ordered two-source prediction. The belief must
-arise through actual actions and observations; never inject the evaluator's
-posterior into the learner. Reuse the existing conditional oracle, collector and
-full-joint scorer, with reversed roles, untouched coordinates and frozen criteria.
+The explicit equal-marginal/different-correlation test is complete. Preserve the
+successful V2 checkpoints and run a bounded **three-operand observed-outcome
+learning pilot**. The current [action contract](domain_contract.py) names only
+two handles, and [DomainKernel](domain_kernel.py) reads only their bits in its
+interaction factor; a nonparticipant's background sees only its own bit and
+action kind. At a fixed initial latent prior, a single event `c'=f(a,b)` with
+three distinct independently varied coordinates cannot be represented. Naming
+`(a,b)` excludes c from the factor; naming `(a,c)` excludes b. More examples of
+the existing pairwise law cannot remove this input/locality limit.
 
-This tests a remaining G2 dependency distinction. It does not reopen ordinary
-continuation, self-contact training or the completed mixed challenge. A workspace
-or larger model requires a demonstrated representation failure. Simultaneous
-interactions and independently varied multi-source laws remain subsequent G2 work.
+First retain a small executable missing-source invariance witness, then add only
+the required three-operand input and one shared learned joint interaction factor.
+Freeze fresh data and budgets before any new fitting. Two separately trained
+law datasets (for example XOR and directed AND-NOT, evaluator-only) should use
+the same architecture, independent source and target bits, 1–2 training actions
+and 3–5 evaluation actions, role orders and untouched-coordinate checks. Include
+a missing-source ablation and an equally expressive neural control at matched
+exposure. Reuse the existing observed loss and evidence APIs where the versioned
+arity extension permits. This is not a new generic workspace or a reason to
+rerun closed pairwise studies. The next pilot is selected, not yet frozen or run.
 
-## Remaining roadmap after mixed composition v1
+Simultaneous timing remains separate: the current Session serializes actions and
+requires feedback between predictions. An explicit observable same-time grouping
+is absent. Do not claim that another serial chain or the ternary pilot establishes
+simultaneous composition.
+
+## Remaining roadmap after joint correlation v1
 
 | Stage | Current state and remaining evidence |
 |---|---|
 | G1 | Development foundation sufficient for G2. Original scientific admission remains open for baseline adequacy and independent challenge evidence; historical target unchanged. |
-| G2 | Ordinary 1–2 to 3–5 continuation and mixed alias/ordinary uncertainty tests complete. Next: equal-marginal/opposite-correlation histories, then remaining multi-source/timing scope. |
+| G2 | Ordinary continuation, mixed alias/ordinary uncertainty and equal-marginal/different-correlation tests complete. Next: bounded independent multi-source learning; simultaneous timing remains explicit subsequent scope. |
 | G3 | Teach a relation nonverbally, then transfer it through two languages on the same world model after composition evidence. |
 | G4 | Communication improves held-out external-goal utility against silent/random/shuffled controls. |
 | G5 | Answered experience persists across episodes, reduces later clarification and preserves earlier competence. |

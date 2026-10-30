@@ -9,12 +9,21 @@
 ## Current development checkpoint — 2026-10-30
 
 G1's verified development foundation is sufficient to proceed into **G2**. The
-frozen mixed-composition challenge completed with **KEEP_MIXED_COMPOSITION** at
-all five seeds, zero new training updates and no inference/model change.
+frozen mixed-composition challenge retained **KEEP_MIXED_COMPOSITION**; the
+subsequent observed-history dependency test now has **KEEP_JOINT_CORRELATION**
+at all five seeds. Both reused V2 weights with zero new training updates and
+no inference/model change. The explicit equal-marginal/different-correlation
+requirement is complete for this supplied binary law.
 Formal G1 scientific admission remains open; the historical gate below is unchanged.
-See [the G1/G2 review and result](../../experiments/predictive_nucleus/G1_G2_PROGRESS_REVIEW.md)
-and [PR #63](https://github.com/robosys-labs/cemm/pull/63). Do not reopen successful
+See [the G1/G2 review](../../experiments/predictive_nucleus/G1_G2_PROGRESS_REVIEW.md),
+[joint-correlation result](../../experiments/predictive_nucleus/JOINT_CORRELATION_DECISION_V1.md)
+and [PR #64](https://github.com/robosys-labs/cemm/pull/64). Do not reopen successful
 alias fitting or interpret unknowable hidden outcomes as a new architectural defect.
+Next is a bounded three-operand learning pilot: the current pair-only action
+contract and local factor cannot express one event depending on two independent
+external sources and a third target. First record an executable witness for
+this source-level limitation, then add only the missing general input/factor support under a fresh frozen
+protocol. Simultaneous timing remains separate unestablished scope.
 
 ## 0. Decision
 
