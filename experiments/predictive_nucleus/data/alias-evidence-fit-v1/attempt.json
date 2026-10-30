@@ -1,0 +1,1 @@
+{"one_attempt":true,"prefit_commit":"f9cc9e66b3ee44db61ea5a4f3b51e75781d4890a","prefit_sha256":"446d21282b3191eb92e6c51e720cab3ea7d1af1c746f7afe7cde63e501809277","runtime":{"cpu_architecture":"x86_64","deterministic_algorithms":true,"dtype":"float64","numpy":"2.3.5","platform":"Linux-6.18.55-x86_64-with-glibc2.39","python":"3.13.16","threads":1,"torch":"2.10.0+cpu"}}
