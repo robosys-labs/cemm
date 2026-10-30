@@ -1,0 +1,62 @@
+{
+  "version": "mixed-composition-v1",
+  "recorded_on": "2026-10-30",
+  "timezone": "Africa/Lagos",
+  "scope": "FROZEN_WEIGHT_G2_DEVELOPMENT",
+  "gate_g1": "NOT_ADMITTED",
+  "g1_development_readiness": "PROCEED_TO_G2",
+  "checkpoint_commit": "2361c48986276fe897a9cd9beac874720cfcbb7a",
+  "hypothesis": "The learned alias dynamics compose with ordinary directed contacts without losing persistent latent-mode uncertainty before informative feedback or correct predictions afterward.",
+  "data": {
+    "entity_counts": [3, 4, 5, 6],
+    "split_seed": 20261030041,
+    "families": {
+      "acquired_alias_reverse": "ab, cc, ba",
+      "alias_before_acquisition": "cc, ab, ba",
+      "repeated_alias": "cc, cc, ab, ba",
+      "withheld_alias": "ab with b withheld, cc with b withheld, observe all, ba, ab",
+      "mode_coalescence": "ab with b withheld, ab fully observed, cc, ab, ba",
+      "interleaved_chain": "ab, cc, bc, ab, ba"
+    },
+    "initial": "a=1, b=0, c=0/1; remaining coordinates sampled before mode realization",
+    "views": "Both persistent modes and both global role directions per blueprint; mode/direction twins are dependent, with one physical lineage per family/N/prebit.",
+    "episodes": 192,
+    "physical_lineages": 48,
+    "max_cumulative_missing_bits": 2,
+    "freshness": "Report canonical blueprint and template overlap against prospective, continuation and alias-v1/v2 train/reserved/evaluation archives before collection; no rejection using observed outcomes or learned predictions."
+  },
+  "model_seeds": [7, 11, 23, 37, 53],
+  "arms": ["ordinary", "alias"],
+  "parameters_each": 562,
+  "training": "Reuse all ten committed alias-v2 checkpoints byte-for-byte; no fitting, adaptation, selection or retries.",
+  "analysis": {
+    "identifiable_accuracy": 0.95,
+    "mean_oracle_kl": 0.05,
+    "max_ambiguous_total_variation": 0.1,
+    "criteria": "Each seed and family: >=95% identifiable full-world accuracy, complete support, zero newly wrong identifiable predictions against paired ordinary control, zero MAP worlds outside information support, zero definitely unchanged-bit errors; >=95% identifiable role-pair conjunctions. Mean KL(oracle||forecast)<=0.05 nats separately in each family's identifiable and ambiguous strata; every ambiguous joint forecast TV<=0.1.",
+    "probability_scope": "Compare full joint distributions including soft tails, without oracle renormalization. Law-conditional predictive fidelity is not general epistemic calibration.",
+    "historical_metrics": "Retain all-action realized accuracy/NLL/Brier, realized unchanged-bit errors, every repair/regression ID, missing output and failure. The original >=95% in-family gate is unchanged and is not claimed passed by this study.",
+    "known_unchanged": "A coordinate has the same unique value across all prior worlds consistent with delivered feedback and all post-action oracle worlds.",
+    "dependence": "Descriptive finite-bank comparison; seeds, directions and mode twins are not independent physical samples.",
+    "g2_limits": "Ordered binary contacts only. Simultaneous interactions, independently varied multi-source laws, general calibration and independent challenge custody remain unestablished."
+  },
+  "decision_order": [
+    "STOP_INCOMPLETE_EXECUTION if any unproduced trial, terminal failure or invalid artifact",
+    "REVISE_MIXED_COMPOSITION if any frozen candidate criterion fails",
+    "KEEP_MIXED_COMPOSITION otherwise; continue bounded G2 development without refitting this bank"
+  ],
+  "execution": {
+    "runtime": {"python": "3.13.16", "torch": "2.10.0+cpu", "numpy": "2.3.5", "threads": 1, "dtype": "float64", "deterministic_algorithms": true},
+    "live_path_limit": 64,
+    "candidate_expansions": 512,
+    "max_contacts": 5,
+    "freeze_before_collection": true,
+    "one_attempt": true,
+    "retries": 0,
+    "same_author_public_custody": true,
+    "model_or_runtime_changes": false
+  },
+  "supplied": ["Stable handles, actions and sensor masks", "Binary simulator and independent affine oracle", "Two persistent latent modes, pair factorization and alias diagonal conditioning", "Challenge schedules and evaluator conditional distributions"],
+  "learned": ["Frozen outcome likelihoods, alias diagonal ratios, intervention behavior and persistence"],
+  "preserved_decisions": {"continuation_v1": "STOP_INCOMPLETE_RUN", "alias_v1": "REVISE_EVIDENCE_FIX", "alias_v2": "KEEP_EVIDENCE_FIX"}
+}
