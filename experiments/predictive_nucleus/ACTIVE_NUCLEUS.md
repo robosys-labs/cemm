@@ -1,62 +1,53 @@
-# Active nucleus: current implementation and next scientific decision
+# Active nucleus: G2 mixed composition completed
 
-Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #62](https://github.com/robosys-labs/cemm/pull/62). Updated 2026-10-30 (Africa/Lagos).
-**Alias evidence v2: KEEP_EVIDENCE_FIX. G1 remains NOT_ADMITTED. No later scientific gate is complete.**
-Source/data prefit commit: `12de2bd8d8c8ab5619552acc04c473a9f3335047`.
-Actual checkpoint/plan commit: `48de76e0780900bc2ce4bac12195c00116dcb678`.
+Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #63](https://github.com/robosys-labs/cemm/pull/63). Updated 2026-10-30 (Africa/Lagos).
+**G1 development readiness: PROCEED_TO_G2. Mixed-composition v1: KEEP_MIXED_COMPOSITION.**
+Formal G1 scientific admission remains NOT_ADMITTED; full G2 remains open.
+Published source/data/checkpoint freeze: `669b7b1181f478cdd6c74429535b52a3d80b5ade`.
+Unchanged checkpoint source: `2361c48986276fe897a9cd9beac874720cfcbb7a`.
 
 ## Completed comparison and current boundary
 
-The [alias-v2 decision](ALIAS_EVIDENCE_DECISION_V2.md) records a completed,
-prospectively frozen evidence intervention. The same 562-parameter model learned
-self-contact after an informative ordinary contact and its observed feedback.
-At every seed `[7, 11, 23, 37, 53]`, the alias-evidence arm answers **16/16 self
-queries correctly, including 8/8 from each starting bit**; the paired ordinary
-arm answers **8/16**. Both retain **704/704 continuation queries and 136/136
-role-pair conjunctions**. Self/continuation support is complete, with zero
-unchanged-bit errors and zero newly incorrect continuation queries.
+The [G1/G2 progress review](G1_G2_PROGRESS_REVIEW.md) resolves the earlier
+progress-accounting error. V2 already had **5,240/5,240 identifiable predictions**;
+all its residual MAP errors were ambiguous. The pooled 88.74% was close to that
+bank's expected oracle result of 88.76%. The original >=95% in-family target
+remains historically unpassed, but is not a reason to keep refitting this fixture.
+Original baseline adequacy and independent custody remain scientific requirements.
+The user's requested bounded G2 development proceeds separately and explicitly.
 
-All ten fits completed 128 updates with paired initial tensors and matched
-realized exposure: 334 observed events and 1,514 visible bits per update. All
-13,520 planned forecasts were produced without abstention, terminal failure or
-missing inventory. Self accuracy improves **40/80 to 80/80**; a measured
-50-percentage-point gain occurs at every seed. The five-seed decision is
-**KEEP_EVIDENCE_FIX**, scoped to this public fixed-law bank under supplied
-diagonal conditioning. The model architecture, objective and parameter count
-did not change. See the [protocol](alias_evidence_protocol_v2.json),
-[checkpoints/plan](data/alias-evidence-fit-v2/plan.json) and
-[result manifest](results/alias-evidence-v2/manifest.json).
+The new frozen-weight mixed challenge is complete: **8,000/8,000 forecasts**,
+all five seeds, no failures, abstentions or missing outputs. Every alias seed
+achieves **512/512 identifiable outcomes and 96/96 identifiable role pairs**;
+the ordinary-evidence control achieves 432/512 and 56/96. Both arms reuse their
+V2 weights without training. The 562-parameter model and inference code are unchanged.
 
-The result is not an unqualified absence of regressions. All-action accuracy is
-**5,905/6,760 (87.352071%) to 5,999/6,760 (88.742604%)**. There are 277 repairs
-(40 self and 237 ambiguous acquisition points) and **183 regressions**, all at
-ambiguous acquisition points. All-action unchanged-bit errors increase 290 to
-473, also entirely at acquisition. Continuation NLL increases slightly from
-0.006230 to 0.008788 despite unchanged exactness. The original **95% all-action
-target remains unmet and unchanged**; query competence is a separate scope.
+The six fresh families cover alias before/after acquisition, repeated aliases,
+reversal, interleaved contacts, withheld feedback and mechanisms whose worlds
+coalesce then diverge again. Every candidate MAP world remains information-compatible;
+definitely unchanged coordinates have zero errors. Worst ambiguous joint total
+variation is 0.020285 (frozen limit 0.1); worst family/stratum mean KL is 0.010532
+nats (limit 0.05). The [decision](results/mixed-composition-v1/decision.json) is
+**KEEP_MIXED_COMPOSITION**. See the [manifest](results/mixed-composition-v1/manifest.json).
 
-| Retained study | Frozen outcome and implication |
+All-action exactness is **71% to 82%** across the paired arms; 82% matches the new
+bank's expected oracle accuracy. This is not comparable to V2's raw 88.74% because
+ambiguity prevalence changed. There are **400 identifiable repairs, zero
+identifiable accuracy regressions**, and 372 ambiguous repairs/332 ambiguous
+regressions. All realized-world errors remain counted. Local probability-score
+regressions also remain in the review; do not claim universal improvement.
+
+| Retained study | Frozen decision |
 |---|---|
-| [Continuation v1](CONTINUATION_DECISION_V1.md) | `STOP_INCOMPLETE_RUN`; empirical contradictions terminated episodes. Shared had 704/704 continuation but only 7/16 self queries per seed. No retrospective rescoring. |
-| [Alias evidence v1](ALIAS_EVIDENCE_DECISION_V1.md) | `REVISE_EVIDENCE_FIX`; observed aliases improved 40/80 to 72/80, but seed 37 failed every starting-one self query. |
-| [Alias evidence v2](ALIAS_EVIDENCE_DECISION_V2.md) | `KEEP_EVIDENCE_FIX`; acquisition before alias learning resolves the five-seed criterion without a larger model. |
+| [Continuation v1](CONTINUATION_DECISION_V1.md) | STOP_INCOMPLETE_RUN |
+| [Alias evidence v1](ALIAS_EVIDENCE_DECISION_V1.md) | REVISE_EVIDENCE_FIX |
+| [Alias evidence v2](ALIAS_EVIDENCE_DECISION_V2.md) | KEEP_EVIDENCE_FIX |
+| [Mixed composition v1](G1_G2_PROGRESS_REVIEW.md#result-keep_mixed_composition) | KEEP_MIXED_COMPOSITION |
 
-Ordinary distinct-contact targets do not identify the alias diagonal ratio.
-V1 then supported a latent-mixture credit-assignment hypothesis: at the saved
-endpoint, one branch could explain nearly every first-alias observation while
-its sibling had little responsibility and corrective gradient. V2 changes the observed schedule so acquisition informs
-the branch before alias feedback. This is evidence for a specific learnable
-curriculum correction, not arbitrary self laws, architecture superiority or
-independent scientific admission. The closed [common-objective](COMMON_OBJECTIVE_DECISION.md)
-and [sensor-transfer](SENSOR_TRANSFER_DECISION.md) results remain historical.
-
-Saved-tensor arithmetic confirms that seed 37's two branch probabilities for
-the correct starting-one alias outcome are now 0.98714038 and 0.99034227, versus
-0.99428642 and 0.00476490 in v1. The result is not merely a MAP boundary crossing.
-These are local alias probabilities, excluding background-state factors. The
-endpoint check does not reconstruct the optimization trajectory. V2 also changes
-lineages, orientation balance and event inventory; its paired-arm result does not
-isolate acquisition timing alone relative to v1.
+These are bounded public fixed-law results. Simultaneous interactions,
+independently varied multi-source laws, general calibration and independent
+scientific admission are not established. All earlier repaired capabilities,
+weights, source pins and failed experiments remain intact.
 
 ## Active versus frozen paths
 
@@ -70,7 +61,7 @@ The existing Session, native artifacts, streaming transport, verified bundle
 loader and learned modules are reused. The empirical recovery repair adds two
 net inference lines; neural, objective and checkpoint implementations are
 unchanged. Prospective, continuation and the two reused alias-study modules
-compose these APIs, bringing the named integration/study inventory to twenty.
+compose these APIs, bringing the named integration/study inventory to twenty before the two mixed-composition adapters.
 Historical protocols, checkpoints, results and standalone v1 exports remain
 unchanged and reproduce under their pinned original source commits.
 
@@ -533,33 +524,22 @@ the contradiction. Terminal errors retain strict-JSON diagnostics and exit code 
 
 ## Current verification and code size
 
-The alias-v2 prefit source `12de2bd8d8c8ab5619552acc04c473a9f3335047`
-(tree `91c90c2a357e5d1d151ecc502503ef25f16efa58`) passed **658 local tests,
-zero skips, in 102.916 seconds**. Exact-source
-[invariant CI 41067452292](https://github.com/robosys-labs/cemm/actions/runs/41067452292)
-and [source snapshot CI 41067452302](https://github.com/robosys-labs/cemm/actions/runs/41067452302)
-passed. These are prefit checks; final result-head verification is separate.
-`active_status.json` retains the local log hash and verification scope. The
-checkpoint/plan commitment above precedes collection. Research fits are not CI
-invariant tests, and internal arithmetic review is not independent custody.
+The published mixed-composition freeze passed **669 local tests**, zero skips,
+in 87.920 seconds, all 22 protocol/manifest locks and frozen preflight. Its
+[invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41086979788) and
+[source snapshot CI](https://github.com/robosys-labs/cemm/actions/runs/41086980144)
+passed. Final result-head checks are linked in PR #63. The
+[internal result audit](results/mixed-composition-validation-v1.json) verifies
+all artifacts, unchanged checkpoints, 8,000 receipts and independent metric arithmetic.
+Invariant tests and internal arithmetic review are not scientific admission.
 
-Relative to the continuation checkpoint, the correction adds **two net inference
-lines and zero parameters**. The two reused alias-study modules total **438
-source lines**; V2 extends them by 63 lines rather than adding another runner.
-Their tests total 302 lines, with another 56 net lines in existing tests. The
-current inference/learning/checkpoint import closure remains twelve modules:
-**2,732 physical lines**, or **2,917** including the 185-line historical
-`masked_replay.py` source pin. There are no new runtime imports. The remaining
-pin requires a separate commitment migration; it is not a reason to interrupt
-the measured work. Counts describe source dependencies, not resident memory or
-inference speed. Old native checkpoints still require their pinned source checkout.
-
-The twenty-file integration/study inventory is **4,387 lines**, excluding frozen
-dependencies. All retained research Python is **27,921 lines**, including
-**12,649 test lines**. The inclusive **2,000-line goal remains unmet**. Tests rose
-from 645 to 658: eleven study invariants and two recovery regressions. The next
-step reuses frozen checkpoints and the existing collector/scorer; new generic
-infrastructure requires a demonstrated blocker.
+This tranche adds **zero inference lines and zero parameters**. Its two study
+adapters total 401 lines and tests total 212 lines. The twelve-module active
+inference/learning/checkpoint import closure remains **2,732 physical lines**, or
+**2,917** including the historical source pin. All retained research Python is
+**28,534 lines**, including **12,861 test lines**; the inclusive **2,000-line goal
+remains unmet**. The next composition measurement should reuse these APIs; no
+new generic runner, architecture or diagnostic platform is selected.
 
 ## Historical verification records
 
@@ -610,35 +590,27 @@ No retained failing historical episode or continuation-v1 study was replayed;
 the alias studies contain neural arms only. Historical empirical completion and
 accuracy are therefore unchanged and no new empirical run-level result is claimed.
 
-## Next bounded experiment: frozen-weight mixed composition
+## Next G2 experiment: joint correlation beyond individual marginals
 
-Keep both v2 arms' checkpoints frozen. The bounded alias-evidence question now
-has a successful five-seed answer; repeating its fit or changing the architecture
-would not answer the remaining composition and uncertainty questions.
+Keep the successful V2 checkpoints frozen. Construct two delivered histories
+with equal individual 50/50 state marginals but different joint correlations,
+then apply the same relational or ordered two-source prediction. The belief must
+arise through actual actions and observations; never inject the evaluator's
+posterior into the learner. Reuse the existing conditional oracle, collector and
+full-joint scorer, with reversed roles, untouched coordinates and frozen criteria.
 
-1. Freeze fresh mixed self/ordinary-contact families, including repeated aliases
-   and varied order, before opening results. Use the existing collector, oracle
-   and scorer with the same two checkpoint arms; do not retrain or enlarge them.
-2. Include withheld or partially observed acquisition. Identify what the delivered
-   evidence can determine and evaluate coherent joint probabilities on ambiguous
-   cases; do not turn unknowable outcomes into an exact-answer requirement.
-3. Retain full planned denominators, query preservation, regression IDs, proper
-   scores and declared path/compute bounds. Separate insufficient evidence,
-   predictive contradiction and resource failure. A successful mixed-composition
-   result still needs independent challenge custody before admission.
+This tests a remaining G2 dependency distinction. It does not reopen ordinary
+continuation, self-contact training or the completed mixed challenge. A workspace
+or larger model requires a demonstrated representation failure. Simultaneous
+interactions and independently varied multi-source laws remain subsequent G2 work.
 
-No new architecture, language tranche, generic runner or diagnostics platform is
-selected. The original 95% all-action target and all historical decisions remain
-unchanged. Independent review is an admission requirement, not a reason to
-repeat completed preparation or reopen the alias fits.
+## Remaining roadmap after mixed composition v1
 
-## Remaining roadmap after alias evidence v2
-
-| Stage | Evidence still required |
+| Stage | Current state and remaining evidence |
 |---|---|
-| G1 | Retain the bounded alias learning result; test frozen-weight mixed compositions and evidence withholding, then independent challenge admission. |
-| G2 | Reuse the observed 1–2 to 3–5 continuation result; extend evidence to independent-source functions and coherent uncertainty without claiming the full gate complete. |
-| G3 | Teach a relation nonverbally, then transfer it through two languages on the same frozen world model. |
+| G1 | Development foundation sufficient for G2. Original scientific admission remains open for baseline adequacy and independent challenge evidence; historical target unchanged. |
+| G2 | Ordinary 1–2 to 3–5 continuation and mixed alias/ordinary uncertainty tests complete. Next: equal-marginal/opposite-correlation histories, then remaining multi-source/timing scope. |
+| G3 | Teach a relation nonverbally, then transfer it through two languages on the same world model after composition evidence. |
 | G4 | Communication improves held-out external-goal utility against silent/random/shuffled controls. |
 | G5 | Answered experience persists across episodes, reduces later clarification and preserves earlier competence. |
 | G6 | Corpus exposure improves new grounded decisions beyond retrieval/frequency controls. |
@@ -646,6 +618,6 @@ repeat completed preparation or reopen the alias fits.
 | G8 | Independent reproduction and reviewed integration with existing authority/effect boundaries. |
 
 Learned probes, noisy sensors, lifelong learning, language, arbitrary entity counts,
-optimizer/session resume, a durable forecast journal and a production isolation
-platform are not added G1 prerequisites. Later success is conditional on evidence;
-completion may require rejecting a hypothesis rather than growing its implementation.
+optimizer/session resume, durable forecast journals and production isolation are
+not added G1 development prerequisites. Historical scientific decisions are
+preserved rather than relabelled passed. Current work is G2 development.

@@ -6,6 +6,16 @@
 **Implementation boundary:** independent experiment first; no root runtime or Hybrid cutover  
 **Companion foundation:** [draft PR #21](https://github.com/robosys-labs/cemm/pull/21)
 
+## Current development checkpoint — 2026-10-30
+
+G1's verified development foundation is sufficient to proceed into **G2**. The
+frozen mixed-composition challenge completed with **KEEP_MIXED_COMPOSITION** at
+all five seeds, zero new training updates and no inference/model change.
+Formal G1 scientific admission remains open; the historical gate below is unchanged.
+See [the G1/G2 review and result](../../experiments/predictive_nucleus/G1_G2_PROGRESS_REVIEW.md)
+and [PR #63](https://github.com/robosys-labs/cemm/pull/63). Do not reopen successful
+alias fitting or interpret unknowable hidden outcomes as a new architectural defect.
+
 ## 0. Decision
 
 Try a **world-first, language-second** experiment rather than continuing to grow the existing semantic parser. An agent should acquire predictive distinctions through observations and actions, then learn which utterances communicate those distinctions or help achieve goals. This is a falsifiable hypothesis, not a claim about the origin of human language or current general cognition.
