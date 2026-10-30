@@ -1,0 +1,192 @@
+{
+  "version": "continuation-study-v1",
+  "scope": "PUBLIC_PREFIT_FROZEN_DEVELOPMENT_COMPARISON",
+  "gate_g1": "NOT_ADMITTED",
+  "base_commit": "add97695178bdfee4067a4cec7fc144d7d235bf3",
+  "recorded_on": "2026-10-30",
+  "timezone": "Africa/Lagos",
+  "hypothesis": "At equal parameters and realized training exposure, the untied shared learner predicts fixed post-acquisition withheld-composition queries more accurately than a flat GRU.",
+  "data": {
+    "entity_counts": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "split_seeds": {
+      "train": 20261030011,
+      "selection": 20261030012,
+      "calibration": 20261030013,
+      "evaluation": 20261030014
+    },
+    "draws_per_cell": {
+      "train": 8,
+      "selection": 4,
+      "calibration": 4,
+      "evaluation": 4
+    },
+    "max_blueprint_attempts": 10000
+  },
+  "design": {
+    "world_contract": "binary-contact-v1",
+    "mode_prior": [
+      0.5,
+      0.5
+    ],
+    "persistent_mode_shared_across_reversed_views": true,
+    "development_families": [
+      "single_contact",
+      "two_contacts"
+    ],
+    "in_family_total_contacts": [
+      1,
+      2
+    ],
+    "ood_families": [
+      "three_contact_chain",
+      "fork",
+      "cycle",
+      "disjoint"
+    ],
+    "ood_total_contacts": [
+      3,
+      4,
+      5
+    ],
+    "self_contact": "Separate first held-out self-contact; one physical query, no reversed duplicate",
+    "acquisition": "First existing distinct contact; precontact 01/10/11 selected before mode; full feedback through acquisition",
+    "queries": "Every later contact position fixed before mode/outcomes; single-contact has zero continuation queries",
+    "observations": "Full train/selection/calibration; evaluation has 0..3 exogenous missing bit-events after acquisition; self full",
+    "leading_set_probability": 0.5,
+    "trailing_observe_probability": 0.5,
+    "intercontact_resets": false,
+    "all_planned_actions_retained": true,
+    "deduplication": "Canonical blueprint/reversal/renaming, before hidden mode; no cross-split blueprint or lineage overlap",
+    "query_criterion_scope": "New prospective post-acquisition scope; original protocols/95 target and archived failures unchanged",
+    "independent_custody": false
+  },
+  "model_seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "neural_arms": {
+    "shared": {
+      "kind": "kernel",
+      "hidden": 11,
+      "persistence": false,
+      "role_tying": false,
+      "memory": true
+    },
+    "reset": {
+      "kind": "kernel",
+      "hidden": 11,
+      "persistence": false,
+      "role_tying": false,
+      "memory": false
+    },
+    "flat": {
+      "kind": "flat",
+      "hidden": 3,
+      "persistence": false
+    }
+  },
+  "neural_parameters_each": 562,
+  "paired_initialization": "shared and reset receive identical initial tensors for each model seed; flat uses same seed label, different architecture",
+  "controls": [
+    "untrained_shared",
+    "empirical_local",
+    "empirical_contact",
+    "empirical_first_contact",
+    "empirical_prefix",
+    "no_change"
+  ],
+  "fit": {
+    "updates": 128,
+    "cpu_seconds": 300,
+    "learning_rate": 0.02,
+    "batch_size": 32,
+    "optimizer": "existing Adam defaults",
+    "objective": "existing observed joint event NLL",
+    "selected_checkpoint": "final prescribed update only",
+    "live_path_limit": 64,
+    "candidate_expansions": 512,
+    "full_dataset_each_update": true,
+    "same_input_hash_for_all_arms": true,
+    "cpu_limit_outcome": "STOP_INCOMPLETE_EXPOSURE; retain actual costs/partial outputs; no retry",
+    "retries": 0
+  },
+  "selection": {
+    "enabled": false,
+    "reserved_inputs_unused": true,
+    "hyperparameter_search": false
+  },
+  "calibration": {
+    "fitting_enabled": false,
+    "reserved_inputs_unused": true,
+    "transform": "identity",
+    "diagnostics": [
+      "fixed ECE10",
+      "joint NLL",
+      "joint Brier",
+      "acquisition excess over ln2 NLL and 0.5 Brier floors"
+    ],
+    "general_calibration_claim": false
+  },
+  "analysis": {
+    "primary_candidate": "shared",
+    "primary_reference": "flat",
+    "primary_metric": "OOD continuation exactness: equal families, then eligible(N,contact_count)cells, then physical draws; within draw mean over both views and fixed query positions",
+    "material_mean_gain": 0.05,
+    "seed_test": "one-sided exact sign test of positive paired seed differences; ties nonpositive",
+    "seed_test_null": "Conditional on frozen bank,P(shared-flat>0)<=0.5; initialization replicates assumed independent",
+    "seed_test_alpha": 0.05,
+    "physical_world_generalization_inference": false,
+    "other_contrasts": "descriptive, including reset and empirical controls; no additional significance tests",
+    "empirical_match_tolerance": 0.01,
+    "missing_or_abstained_query_correctness": 0,
+    "unsupported_proper_scores": "No overall numeric mean; conditional supported mean labeled",
+    "in_family_accuracy_each_seed": 0.95,
+    "in_family_query_role_pair_exact_each_seed": 0.95,
+    "query_support_coverage_each_seed": 1.0,
+    "query_unchanged_bit_errors_allowed": 0,
+    "in_family_reference_nonregression_each_seed": true,
+    "first_acquisition_MAP_not_accuracy_gate": true,
+    "source_preservation_gate_scope": "Declared identifiable continuation query points; all-action errors remain descriptive",
+    "empirical_match_rule": "Best of four prespecified empirical OOD macro planned-denominator accuracies >= mean shared OOD macro across five seeds minus 0.01; descriptive, no selected-winner test",
+    "query_support_and_preservation_scope": "All declared continuation queries; self-contact diagnostic separate",
+    "in_family_reference_nonregression_scope": "shared vs flat in-family continuation accuracy, each seed",
+    "in_family_role_pair_scope": "Only two_contacts query role-pair records; conjunction across both reversed views"
+  },
+  "decision_order": [
+    "STOP on incomplete run or unequal completed exposure",
+    "REJECT_CURRENT_CONFIGURATION on candidate identifiable-query competence/support/preservation failure; no automatic cause diagnosis or retuning",
+    "REJECT_SUPERIORITY_SIMPLIFY if strongest prespecified empirical OOD macro planned-query accuracy >= candidate mean minus 0.01",
+    "KEEP_BOUNDED_ADVANTAGE only if competence, mean gain >=0.05, all five seed differences positive and one-sided sign p<=0.05; independent G1 still not admitted",
+    "Otherwise REJECT material architectural advantage at this fixed budget"
+  ],
+  "execution": {
+    "fit_enabled": true,
+    "research_model_scoring_enabled": true,
+    "prefit_commit_required": true,
+    "real_checkpoint_hash_commit_before_collection": true,
+    "one_attempt": true,
+    "closed_studies_rerun": false,
+    "inference_sources_modified": false,
+    "fit_runner_imports_simulator": false,
+    "output_no_overwrite": true,
+    "ordinary_ci_research_fits": false,
+    "runtime": {
+      "python": "3.13.16",
+      "torch": "2.10.0+cpu",
+      "numpy": "2.3.5",
+      "threads": 1,
+      "dtype": "float64",
+      "deterministic_algorithms": true
+    },
+    "deterministic_control_reuse": "Fit once and collect separately under each of five seed labels; identical checkpoints and repeated deterministic data are not five independent empirical replicates. All repeated execution costs retained."
+  },
+  "cost_scope": "Exact parameter and realized-exposure match if all 128 updates complete; actual CPU/wall/path work/RSS reported, not matched-consumed-compute superiority."
+}
