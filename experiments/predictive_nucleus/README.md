@@ -1,5 +1,9 @@
 # Predictive world nucleus — isolated research, G0 protocol
 
+**Current entry point:** [ACTIVE_NUCLEUS.md](ACTIVE_NUCLEUS.md) records the live
+interfaces, actual progress and next bounded comparison. The G0 instructions
+below are retained historical scope; they are not the current implementation status.
+
 > **Audit hold:** Read [the 2026-10-28 integrity audit](2026-10-28-AUDIT.md)
 > before interpreting historical metrics or alarm rates. G1 is not admitted.
 
