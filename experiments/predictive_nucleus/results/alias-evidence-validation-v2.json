@@ -1,0 +1,542 @@
+{
+  "aggregate_metrics": {
+    "alias": {
+      "all_action": {
+        "abstentions": 0,
+        "accuracy": 0.8874260355029586,
+        "correct": 5999,
+        "max_confidence": 0.998538428357329,
+        "mean_brier": 0.11256350981712047,
+        "mean_confidence": 0.8815053406373593,
+        "mean_nll": 0.16261409141398767,
+        "min_confidence": 0.4975513849104241,
+        "planned": 6760,
+        "unchanged_bit_errors": 473,
+        "unproduced": 0
+      },
+      "ambiguous": {
+        "abstentions": 0,
+        "accuracy": 0.4993421052631579,
+        "correct": 759,
+        "max_confidence": 0.5020041858102842,
+        "mean_brier": 0.5002089133658608,
+        "mean_confidence": 0.49898677304709066,
+        "mean_nll": 0.6970842367363483,
+        "min_confidence": 0.4975513849104241,
+        "planned": 1520,
+        "unchanged_bit_errors": 473,
+        "unproduced": 0
+      },
+      "answerable": {
+        "abstentions": 0,
+        "accuracy": 1.0,
+        "correct": 5240,
+        "max_confidence": 0.998538428357329,
+        "mean_brier": 0.00011675153580645875,
+        "mean_confidence": 0.9924649251291929,
+        "mean_nll": 0.007576950022768547,
+        "min_confidence": 0.9505916857398435,
+        "planned": 5240,
+        "unchanged_bit_errors": 0,
+        "unproduced": 0
+      },
+      "continuation": {
+        "abstentions": 0,
+        "accuracy": 1.0,
+        "correct": 3520,
+        "max_confidence": 0.998538428357329,
+        "mean_brier": 0.00015395621368149574,
+        "mean_confidence": 0.9912665359228466,
+        "mean_nll": 0.008788208837865873,
+        "min_confidence": 0.9505916857398435,
+        "planned": 3520,
+        "unchanged_bit_errors": 0,
+        "unproduced": 0
+      },
+      "self_bit_0": {
+        "abstentions": 0,
+        "accuracy": 1.0,
+        "correct": 40,
+        "max_confidence": 0.996078317621155,
+        "mean_brier": 6.56054756367745e-05,
+        "mean_confidence": 0.9932999926720847,
+        "mean_nll": 0.006724107173341674,
+        "min_confidence": 0.9892959344083665,
+        "planned": 40,
+        "unchanged_bit_errors": 0,
+        "unproduced": 0
+      },
+      "self_bit_1": {
+        "abstentions": 0,
+        "accuracy": 1.0,
+        "correct": 40,
+        "max_confidence": 0.9895711516952445,
+        "mean_brier": 0.0004303004629332993,
+        "mean_confidence": 0.9842096197803369,
+        "mean_nll": 0.01592136925586288,
+        "min_confidence": 0.9787609839771022,
+        "planned": 40,
+        "unchanged_bit_errors": 0,
+        "unproduced": 0
+      },
+      "self_contact": {
+        "abstentions": 0,
+        "accuracy": 1.0,
+        "correct": 80,
+        "max_confidence": 0.996078317621155,
+        "mean_brier": 0.0002479529692850369,
+        "mean_confidence": 0.9887548062262109,
+        "mean_nll": 0.011322738214602278,
+        "min_confidence": 0.9787609839771022,
+        "planned": 80,
+        "unchanged_bit_errors": 0,
+        "unproduced": 0
+      }
+    },
+    "ordinary": {
+      "all_action": {
+        "abstentions": 0,
+        "accuracy": 0.8735207100591716,
+        "correct": 5905,
+        "max_confidence": 0.9983648888718198,
+        "mean_brier": 0.12400925134239711,
+        "mean_confidence": 0.8827385799298317,
+        "mean_nll": 0.1900190591171231,
+        "min_confidence": 0.497499388250705,
+        "planned": 6760,
+        "unchanged_bit_errors": 290,
+        "unproduced": 0
+      },
+      "ambiguous": {
+        "abstentions": 0,
+        "accuracy": 0.46381578947368424,
+        "correct": 705,
+        "max_confidence": 0.500392935845237,
+        "mean_brier": 0.5000008138775357,
+        "mean_confidence": 0.4986527145593357,
+        "mean_nll": 0.6965936066051931,
+        "min_confidence": 0.497499388250705,
+        "planned": 1520,
+        "unchanged_bit_errors": 290,
+        "unproduced": 0
+      },
+      "answerable": {
+        "abstentions": 0,
+        "accuracy": 0.9923664122137404,
+        "correct": 5200,
+        "max_confidence": 0.9983648888718198,
+        "mean_brier": 0.014942996561211896,
+        "mean_confidence": 0.9941528004189831,
+        "mean_nll": 0.04307377053279744,
+        "min_confidence": 0.9718545776207745,
+        "planned": 5240,
+        "unchanged_bit_errors": 0,
+        "unproduced": 0
+      },
+      "continuation": {
+        "abstentions": 0,
+        "accuracy": 1.0,
+        "correct": 3520,
+        "max_confidence": 0.9983648888718198,
+        "mean_brier": 6.299319251944252e-05,
+        "mean_confidence": 0.9937946660444125,
+        "mean_nll": 0.006229735448298838,
+        "min_confidence": 0.9792291788684021,
+        "planned": 3520,
+        "unchanged_bit_errors": 0,
+        "unproduced": 0
+      },
+      "self_bit_0": {
+        "abstentions": 0,
+        "accuracy": 1.0,
+        "correct": 40,
+        "max_confidence": 0.993542557966791,
+        "mean_brier": 0.00010284943654160251,
+        "mean_confidence": 0.9915939159018625,
+        "mean_nll": 0.008442209698439097,
+        "min_confidence": 0.9895172756199028,
+        "planned": 40,
+        "unchanged_bit_errors": 0,
+        "unproduced": 0
+      },
+      "self_bit_1": {
+        "abstentions": 0,
+        "accuracy": 0.0,
+        "correct": 0,
+        "max_confidence": 0.9962546290256896,
+        "mean_brier": 1.9506377886330526,
+        "mean_confidence": 0.9859685377037387,
+        "mean_nll": 4.888013670125572,
+        "min_confidence": 0.9718545776207745,
+        "planned": 40,
+        "unchanged_bit_errors": 0,
+        "unproduced": 0
+      },
+      "self_contact": {
+        "abstentions": 0,
+        "accuracy": 0.5,
+        "correct": 40,
+        "max_confidence": 0.9962546290256896,
+        "mean_brier": 0.9753703190347972,
+        "mean_confidence": 0.9887812268028006,
+        "mean_nll": 2.4482279399120057,
+        "min_confidence": 0.9718545776207745,
+        "planned": 80,
+        "unchanged_bit_errors": 0,
+        "unproduced": 0
+      }
+    }
+  },
+  "all_action_changes": {
+    "acquisition/regressed": 183,
+    "acquisition/repaired": 237,
+    "ambiguous/regressed": 183,
+    "ambiguous/repaired": 237,
+    "answerable/repaired": 40,
+    "self_contact/repaired": 40
+  },
+  "checkpoint_audit": {
+    "checks": {
+      "checkpoint_source_bindings": 140,
+      "fit_report_checkpoint_provenance": 10,
+      "independent_batch_hash_bindings": 160,
+      "initial_tensor_fingerprint_comparisons": 10,
+      "paired_initializations": 5,
+      "plan_checkpoint_hashes": 10,
+      "plan_software_bindings": 15,
+      "prefit_committed_source_bindings": 33,
+      "prepared_artifacts": 7,
+      "trained_tensor_fingerprint_comparisons": 10
+    },
+    "mismatches": [],
+    "status": "PASS",
+    "unique_tensor_fingerprints": 15
+  },
+  "checkpoint_commit": "48de76e0780900bc2ce4bac12195c00116dcb678",
+  "closed_studies_rerun": false,
+  "collection_cpu_seconds": 109.78641469399997,
+  "collection_peak_process_rss_kib": 700400,
+  "earlier_uncommitted_validation": {
+    "discovered": 658,
+    "errors": 1,
+    "passed": 657,
+    "reason": "Historical preflight correctly rejected the dirty tracked checkout; the complete suite passed after committing unchanged study sources.",
+    "research_execution_attempt": false
+  },
+  "empirical_historical_episode_replay_performed": false,
+  "endpoint_branch_audit": {
+    "arithmetic": "Python float64 values and math.tanh/math.fsum; no ML library imported.",
+    "checkpoint_plan_sha256": "a0618e6e64eb0b17f227c5385f84f3873c05060148bc7629841147f084499e0d",
+    "conclusion": "All branches learned a high-probability zero outcome on self starting one; success is not merely a mixture MAP boundary crossing.",
+    "derivation": "Reconstruct each stored two-hidden-layer tanh MLP using its JSON tensors. For branch logits z, diagonal conditioning gives P(self=0)=exp(z00)/(exp(z00)+exp(z11))=sigmoid(z00-z11). Equal unknown-mode prior gives mean of the two branch probabilities. Background factors are not included; reported quantity is local alias probability, not full-world confidence.",
+    "input": "Two role input bits [1,1], self-contact identity; alias outcome zero is the evaluator-law-correct outcome.",
+    "limits": [
+      "Same supplied binary-contact law, pair factorization, exactly two persistent branches, and diagonal alias conditioning.",
+      "Endpoint calculations do not reconstruct the actual optimization path or isolate timing from v2 environment balancing and fresh data.",
+      "Alias conditional remains tied to ordinary equal-input diagonal ratios; arbitrary independent self-interaction laws are not representable.",
+      "G1 remains NOT_ADMITTED; no general calibration, independent challenge custody, autonomous information-seeking or learned credit-assignment algorithm is established."
+    ],
+    "probability_range_across_10_alias_branches": {
+      "maximum": 0.991338331670266,
+      "minimum": 0.9781794787873989
+    },
+    "rows": [
+      {
+        "branches": [
+          {
+            "branch": "pair",
+            "diagonal_logit_difference_z00_minus_z11": 4.733500855818416,
+            "retained_diagonal_log_mass": -7.125142107764709,
+            "self_zero_probability": 0.9912810636307614
+          },
+          {
+            "branch": "pair_other",
+            "diagonal_logit_difference_z00_minus_z11": 4.218891708290771,
+            "retained_diagonal_log_mass": -8.208793105454406,
+            "self_zero_probability": 0.9854984456378815
+          }
+        ],
+        "checkpoint_sha256": "815f9f6124891a408e231a62feafe075df0ac5e7545a76cf66c8dcc5cf95d7dd",
+        "equal_prior_self_zero_probability": 0.9883897546343214,
+        "seed": 7,
+        "state_sha256": "6ec6e84fdb2e96dbdf691371e50a6a1efda76a8c40523dd20a665fe7fb83de89"
+      },
+      {
+        "branches": [
+          {
+            "branch": "pair",
+            "diagonal_logit_difference_z00_minus_z11": 4.173886564882848,
+            "retained_diagonal_log_mass": -8.740498282970687,
+            "self_zero_probability": 0.984841011540842
+          },
+          {
+            "branch": "pair_other",
+            "diagonal_logit_difference_z00_minus_z11": 4.007013206528303,
+            "retained_diagonal_log_mass": -6.878804795805006,
+            "self_zero_probability": 0.9821372444055915
+          }
+        ],
+        "checkpoint_sha256": "77a5351d9a37a0a511680681e7263c36b80d2c9948f33529c409a5a98f43f1ec",
+        "equal_prior_self_zero_probability": 0.9834891279732167,
+        "seed": 11,
+        "state_sha256": "019b5ea9e81d93bc23f30043342a50b78b8d1d758414d0cad8541c444309e5e0"
+      },
+      {
+        "branches": [
+          {
+            "branch": "pair",
+            "diagonal_logit_difference_z00_minus_z11": 4.675689158229635,
+            "retained_diagonal_log_mass": -7.564157073124641,
+            "self_zero_probability": 0.9907669431957526
+          },
+          {
+            "branch": "pair_other",
+            "diagonal_logit_difference_z00_minus_z11": 4.718161565193625,
+            "retained_diagonal_log_mass": -6.8627190991864655,
+            "self_zero_probability": 0.9911474833939465
+          }
+        ],
+        "checkpoint_sha256": "36d0d2917fdb99a93dd6893f340cf3cf25c89de35edbb29506550ffca4eb0b3b",
+        "equal_prior_self_zero_probability": 0.9909572132948496,
+        "seed": 23,
+        "state_sha256": "61bb7c14930dac72e12d75f88d7d55584d7941db2effd618e4dd5d4db575c0ff"
+      },
+      {
+        "branches": [
+          {
+            "branch": "pair",
+            "diagonal_logit_difference_z00_minus_z11": 4.340720363245473,
+            "retained_diagonal_log_mass": -6.613782705805682,
+            "self_zero_probability": 0.9871403834824469
+          },
+          {
+            "branch": "pair_other",
+            "diagonal_logit_difference_z00_minus_z11": 4.630291583123773,
+            "retained_diagonal_log_mass": -7.356080725191466,
+            "self_zero_probability": 0.9903422662070634
+          }
+        ],
+        "checkpoint_sha256": "a1a77b6c1f69375e404803570907b1507054869a8abe2ad318406f024819f6c7",
+        "equal_prior_self_zero_probability": 0.9887413248447552,
+        "seed": 37,
+        "state_sha256": "5c1e90b3c79de42aac134bb1b0e6f1a7fe9de8b9459690fdcb6290777e044027"
+      },
+      {
+        "branches": [
+          {
+            "branch": "pair",
+            "diagonal_logit_difference_z00_minus_z11": 4.740148528578405,
+            "retained_diagonal_log_mass": -7.401106748021638,
+            "self_zero_probability": 0.991338331670266
+          },
+          {
+            "branch": "pair_other",
+            "diagonal_logit_difference_z00_minus_z11": 3.8028423023003812,
+            "retained_diagonal_log_mass": -9.852927080191302,
+            "self_zero_probability": 0.9781794787873989
+          }
+        ],
+        "checkpoint_sha256": "1307401f17fde045019dab876f0726cdd178610799837f63b86a469b0376e73e",
+        "equal_prior_self_zero_probability": 0.9847589052288324,
+        "seed": 53,
+        "state_sha256": "48050560f1012ed11abe9a561fb5ec480b40555ea10032b10d0f3add69e82b44"
+      }
+    ],
+    "scope": "Endpoint mechanism arithmetic from saved JSON tensors; no model class, fitting, predictions on benchmark cases, or proof of optimization trajectory.",
+    "seed37_v1_reference": [
+      0.9942864245860256,
+      0.004764897909894106
+    ],
+    "version": "alias-evidence-v2-branch-endpoint-audit-v1"
+  },
+  "existing_preflight_passed": true,
+  "fit_candidate_worlds": 12902400,
+  "fit_cpu_seconds": 591.6757115559999,
+  "fit_path_model_evaluations": 427520,
+  "fit_peak_process_rss_kib": 352004,
+  "fit_wall_seconds": 592.1625007300026,
+  "gate_g1": "NOT_ADMITTED",
+  "information_design": {
+    "ambiguous_first_acquisition_points_per_arm_seed": 304,
+    "balanced_prior_expected_all_action_accuracy": 0.8875739644970414,
+    "interpretation": "Conditional declared-law design expectation; not a finite-realization bound or revised historical acceptance target."
+  },
+  "line_counts": {
+    "active_import_closure": 2732,
+    "active_named_modules": 20,
+    "active_named_source_lines": 4387,
+    "alias_study_modules": 438,
+    "alias_study_tests": 302,
+    "closure_with_historical_source_pin": 2917,
+    "included_test_python": 12649,
+    "inclusive_2000_line_goal_met": false,
+    "learned_parameter_delta": 0,
+    "method": "Physical Python lines including comments and blanks",
+    "retained_research_python": 27921,
+    "runtime_delta_since_e84db0a9": 2
+  },
+  "local_tests": {
+    "local_commit": "a504369e294c11079ba0f37c016e17e82cb3f8fc",
+    "log_sha256": "e7794c19fe156c031ba1aec447bcd9b9d73c2777b1c79f59a5d60d441d31bea5",
+    "passed": 658,
+    "public_commit_has_identical_tree": true,
+    "seconds": 102.916,
+    "skipped": 0
+  },
+  "prefit_ci": {
+    "head_sha": "12de2bd8d8c8ab5619552acc04c473a9f3335047",
+    "invariants": {
+      "conclusion": "success",
+      "run_id": 41067452292
+    },
+    "source_snapshot": {
+      "conclusion": "success",
+      "run_id": 41067452302
+    }
+  },
+  "prefit_commit": "12de2bd8d8c8ab5619552acc04c473a9f3335047",
+  "prefit_tree": "91c90c2a357e5d1d151ecc502503ef25f16efa58",
+  "prepared_files_byte_identical": 8,
+  "protocol_locks_verified": 21,
+  "research_retries": 0,
+  "result_audit": {
+    "checks": {
+      "all_planned_points_retained": 1,
+      "answerability_binding": 13520,
+      "attempt_plan_binding": 1,
+      "change_inventory": 20,
+      "checkpoint_commit_binding": 10,
+      "checkpoint_commit_bytes": 2,
+      "checkpoint_plan_binding": 10,
+      "checkpoint_sources": 70,
+      "collected_artifact": 14,
+      "collection_cost_binding": 10,
+      "complete_raw_forecast_inventory": 1,
+      "current_source_binding": 33,
+      "decision_competence_checks": 5,
+      "decision_effect_arithmetic": 1,
+      "decision_identity": 1,
+      "episode_checkpoint_binding": 3200,
+      "episode_implementation_hash": 3200,
+      "episode_inventory": 1,
+      "episode_source_binding": 38400,
+      "exposure_match": 1,
+      "fit_complete": 1,
+      "fit_exposure": 30,
+      "fit_provenance_binding": 10,
+      "fit_state_binding": 10,
+      "fixed_fit_settings": 10,
+      "forecast_implementation_binding": 13520,
+      "forecast_receipt": 13520,
+      "forecast_request_binding": 13520,
+      "frozen_predictor_retained": 10,
+      "frozen_prefit_identity": 1,
+      "frozen_software": 15,
+      "independent_decision": 1,
+      "initial_commit_binding": 5,
+      "manifest_inventory": 1,
+      "manifest_plan_training": 2,
+      "metadata_content_binding": 3,
+      "metadata_identity": 1,
+      "no_incomplete_or_failed_execution": 1,
+      "pair_record_arithmetic": 1360,
+      "paired_initial_binding": 10,
+      "planned_scope_denominators": 10,
+      "point_arithmetic": 81120,
+      "point_distribution_binding": 13520,
+      "point_gold_binding": 13520,
+      "prefit_committed_bytes": 1,
+      "prepared_artifact": 7,
+      "probability_normalization": 13520,
+      "protocol_binding": 1,
+      "role_pair_arithmetic": 10,
+      "source_commit_binding": 33,
+      "study_identity": 1,
+      "summary_arithmetic": 1170,
+      "summary_prefit_binding": 1,
+      "tensor_dtype": 300,
+      "tensor_fingerprint": 15,
+      "tensor_shape": 300,
+      "trace_checkpoint_binding": 10,
+      "trace_episode_inventory": 10,
+      "trace_identity": 10,
+      "trace_input_binding": 10,
+      "trace_state_binding": 10,
+      "unique_forecast": 13520
+    },
+    "manifest_sha256": "edbe25cb23d8a2c3f57c5ab97ab3aa223f64ad43683f590177fcdcd2a579c49b",
+    "mismatches": 0,
+    "success": true,
+    "total_assertions": 237631
+  },
+  "scope": "INTERNAL_ENGINEERING_NOT_INDEPENDENT_SCIENTIFIC_CUSTODY",
+  "study_decision": {
+    "competence_checks": {
+      "11": {
+        "continuation_accuracy": true,
+        "continuation_pairs": true,
+        "continuation_preservation": true,
+        "continuation_support": true,
+        "no_new_continuation_errors": true,
+        "self_both_bits": true,
+        "self_preservation": true,
+        "self_support": true
+      },
+      "23": {
+        "continuation_accuracy": true,
+        "continuation_pairs": true,
+        "continuation_preservation": true,
+        "continuation_support": true,
+        "no_new_continuation_errors": true,
+        "self_both_bits": true,
+        "self_preservation": true,
+        "self_support": true
+      },
+      "37": {
+        "continuation_accuracy": true,
+        "continuation_pairs": true,
+        "continuation_preservation": true,
+        "continuation_support": true,
+        "no_new_continuation_errors": true,
+        "self_both_bits": true,
+        "self_preservation": true,
+        "self_support": true
+      },
+      "53": {
+        "continuation_accuracy": true,
+        "continuation_pairs": true,
+        "continuation_preservation": true,
+        "continuation_support": true,
+        "no_new_continuation_errors": true,
+        "self_both_bits": true,
+        "self_preservation": true,
+        "self_support": true
+      },
+      "7": {
+        "continuation_accuracy": true,
+        "continuation_pairs": true,
+        "continuation_preservation": true,
+        "continuation_support": true,
+        "no_new_continuation_errors": true,
+        "self_both_bits": true,
+        "self_preservation": true,
+        "self_support": true
+      }
+    },
+    "competence_pass": true,
+    "decision": "KEEP_EVIDENCE_FIX",
+    "execution_complete": true,
+    "gate_g1": "NOT_ADMITTED",
+    "material_gain_pass": true,
+    "mean_gain": 0.5,
+    "paired_self_accuracy_gains": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "scope": "Public fixed-law evidence intervention; no architecture superiority or broad calibration claim"
+  },
+  "version": "alias-evidence-validation-v2"
+}

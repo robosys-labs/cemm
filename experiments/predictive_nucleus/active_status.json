@@ -1,10 +1,191 @@
 {
-  "version": "active-inference-v5",
+  "version": "active-inference-v6",
   "evidence_version": "active-evidence-v2",
-  "code_commit": "994054d892b14e4d18835758e9ee1837f394d911",
+  "code_commit": "12de2bd8d8c8ab5619552acc04c473a9f3335047",
   "tracking_issue": 22,
   "repair_pr": 56,
   "gate_g1": "NOT_ADMITTED",
+  "alias_evidence_study": {
+    "version": "alias-evidence-v2",
+    "scope": "PUBLIC_PREFIT_FROZEN_EVIDENCE_INTERVENTION",
+    "formal_decision": "KEEP_EVIDENCE_FIX",
+    "gate_g1": "NOT_ADMITTED",
+    "report": "ALIAS_EVIDENCE_DECISION_V2.md",
+    "protocol": "alias_evidence_protocol_v2.json",
+    "results": "results/alias-evidence-v2",
+    "prefit_commit": "12de2bd8d8c8ab5619552acc04c473a9f3335047",
+    "prefit_tree": "91c90c2a357e5d1d151ecc502503ef25f16efa58",
+    "checkpoint_plan_commit": "48de76e0780900bc2ce4bac12195c00116dcb678",
+    "prefit_freeze_complete": true,
+    "actual_checkpoint_freeze_complete": true,
+    "neural_fitting_complete": true,
+    "collection_execution_complete": true,
+    "participant_complete_run": true,
+    "artifacts_complete": true,
+    "scientific_gate_complete": false,
+    "model_seeds": [
+      7,
+      11,
+      23,
+      37,
+      53
+    ],
+    "neural_fits": 10,
+    "neural_parameters_each": 562,
+    "completed_updates_each": 128,
+    "observed_events_per_update": 334,
+    "visible_bits_per_update": 1514,
+    "paired_initial_tensors_match_each_seed": true,
+    "matched_realized_training_exposure": true,
+    "matched_consumed_compute": false,
+    "training_change": "Sixteen selected second-contact views become self-contact after identical informative observed acquisition; all other evidence and within-study exposure match.",
+    "metrics_over_five_seeds": {
+      "ordinary": {
+        "self_contact": {
+          "correct": 40,
+          "planned_points": 80,
+          "accuracy": 0.5,
+          "mean_nll": 2.4482279399120057,
+          "mean_brier": 0.975370319034797,
+          "unchanged_bit_errors": 0
+        },
+        "continuation": {
+          "correct": 3520,
+          "planned_points": 3520,
+          "accuracy": 1.0,
+          "mean_nll": 0.006229735448298838,
+          "mean_brier": 6.299319251944252e-05,
+          "unchanged_bit_errors": 0
+        },
+        "all_action": {
+          "correct": 5905,
+          "planned_points": 6760,
+          "accuracy": 0.8735207100591718,
+          "mean_nll": 0.19001905911712308,
+          "mean_brier": 0.12400925134239713,
+          "unchanged_bit_errors": 290
+        }
+      },
+      "alias": {
+        "self_contact": {
+          "correct": 80,
+          "planned_points": 80,
+          "accuracy": 1.0,
+          "mean_nll": 0.011322738214602278,
+          "mean_brier": 0.0002479529692850369,
+          "unchanged_bit_errors": 0
+        },
+        "continuation": {
+          "correct": 3520,
+          "planned_points": 3520,
+          "accuracy": 1.0,
+          "mean_nll": 0.008788208837865871,
+          "mean_brier": 0.00015395621368149574,
+          "unchanged_bit_errors": 0
+        },
+        "all_action": {
+          "correct": 5999,
+          "planned_points": 6760,
+          "accuracy": 0.8874260355029586,
+          "mean_nll": 0.16261409141398767,
+          "mean_brier": 0.11256350981712046,
+          "unchanged_bit_errors": 473
+        }
+      }
+    },
+    "each_seed": {
+      "ordinary_self_correct": 8,
+      "alias_self_correct": 16,
+      "self_planned": 16,
+      "alias_self_correct_each_starting_bit": 8,
+      "self_planned_each_starting_bit": 8,
+      "continuation_correct_each_arm": 704,
+      "continuation_planned_each_arm": 704,
+      "continuation_role_pairs_exact_each_arm": 136,
+      "continuation_role_pairs_planned_each_arm": 136,
+      "self_and_continuation_support_coverage": 1.0,
+      "self_and_continuation_unchanged_bit_errors": 0
+    },
+    "paired_self_accuracy_gains": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "all_competence_checks_passed": true,
+    "self_repairs": 40,
+    "self_regressions": 0,
+    "continuation_regressions": 0,
+    "all_action_repairs": 277,
+    "all_action_regressions": 183,
+    "ambiguous_acquisition_repairs": 237,
+    "ambiguous_acquisition_regressions": 183,
+    "preservation_scope": "No self/continuation accuracy regressions; all-action unchanged-bit errors increase 290 to 473 at ambiguous acquisition. Continuation proper scores worsen slightly despite perfect exactness.",
+    "planned_forecasts": 13520,
+    "unproduced_forecasts": 0,
+    "abstentions": 0,
+    "terminal_failure_records": 0,
+    "incomplete_inventory": 0,
+    "fit_cpu_seconds": 591.675711556,
+    "fit_wall_seconds": 592.16250073,
+    "fit_path_model_evaluations": 427520,
+    "fit_candidate_worlds": 12902400,
+    "fit_peak_process_rss_kib": 352004,
+    "collection_cpu_seconds": 109.78641469399997,
+    "collection_wall_seconds": 109.87250147899613,
+    "collection_peak_process_rss_kib": 700400,
+    "neural_or_objective_sources_modified": false,
+    "new_parameters": 0,
+    "selection_or_calibration_fitted": false,
+    "historical_studies_rerun": false,
+    "original_95_all_action_target_redefined": false,
+    "learned_scope": "Observed self-contact learning under supplied per-mode diagonal conditioning and one deterministic binary law; arbitrary alias laws, mixed alias/ordinary composition and independent custody are not established.",
+    "seed 37_correct_alias_probability_each_branch": [
+      0.98714038,
+      0.99034227
+    ],
+    "endpoint_check_scope": "Saved tensor arithmetic; not a reconstructed optimization trajectory or additional benchmark run.",
+    "internal_artifact_audit": {
+      "passed": true,
+      "artifact_hashes": 14,
+      "tensor_fingerprints": 15,
+      "forecast_receipts": 13520,
+      "per_point_metric_comparisons": 81120,
+      "independent_scientific_custody": false
+    }
+  },
+  "historical_alias_evidence_v1": {
+    "formal_decision": "REVISE_EVIDENCE_FIX",
+    "report": "ALIAS_EVIDENCE_DECISION_V1.md",
+    "prefit_commit": "f9cc9e66b3ee44db61ea5a4f3b51e75781d4890a",
+    "checkpoint_plan_commit": "b2441a8a825a78150a99ae2893d78f8880040bf9",
+    "ordinary_self_correct": 40,
+    "alias_self_correct": 72,
+    "self_planned": 80,
+    "failed_seed": 37,
+    "failure": "All eight starting-one aliases fail; one latent branch receives little corrective responsibility.",
+    "continuation_correct_each_arm_each_seed": 704,
+    "continuation_regressions": 0,
+    "same_bank_retried": false
+  },
+  "empirical_recovery_v6": {
+    "repair_commit": "c3ba713",
+    "runtime_net_lines": 2,
+    "change": "Remove premature supported-prediction contradiction exception before existing observed-context recovery.",
+    "full_observed_sufficient_context_required": true,
+    "missing_current_or_relevant_history_abstains": true,
+    "unknown_history_imputed": false,
+    "table_mutated": false,
+    "zero_probability_and_infinite_loss_preserved": true,
+    "support_contradiction_diagnostic": true,
+    "committed_sticky_mismatch_alarm": true,
+    "validation": "Source-localized defect and 67 focused synthetic/invariant tests across all four empirical policies, native sessions and loss reporting.",
+    "retained_failing_episode_replayed": false,
+    "historical_study_replayed": false,
+    "new_empirical_run_level_result": false,
+    "alias_studies_neural_only": true
+  },
   "continuation_study": {
     "version": "continuation-study-v1",
     "scope": "PUBLIC_PREFIT_FROZEN_DEVELOPMENT_COMPARISON",
@@ -123,7 +304,8 @@
       4,
       5,
       6
-    ]
+    ],
+    "bounded_observed_self_contact_learning": "ALIAS_V2_KEEP_ON_DECLARED_FIXED_LAW; GENERAL_SELF_CONTACT_GENERALIZATION_NOT_ESTABLISHED"
   },
   "completed_automated_repairs": [
     "exact_zero_neural_path_accounting",
@@ -164,7 +346,8 @@
     "actual_carry_witness_and_cumulative_dense_path_resource_audit",
     "observed_only_geometry_and_horizon_batch_adapter",
     "deterministic_export_and_separate_observed_evaluator_artifact_manifests",
-    "active_empirical_filter_decoupled_from_frozen_replay_and_study_import"
+    "active_empirical_filter_decoupled_from_frozen_replay_and_study_import",
+    "empirical_contradiction_retains_loss_and_alarm_while_recovering_only_observed_sufficient_context"
   ],
   "diagnostic_scope": {
     "advisory_only": true,
@@ -180,11 +363,11 @@
   "pending_engineering_in_order": [
     {
       "stage": "G1",
-      "work": "Run one fresh preregistered alias-evidence versus matched ordinary-evidence ablation using the unchanged shared architecture. Hold remaining evidence fixed, match initialization/parameters/training exposure and compute ceilings, retain continuation regression criteria, and freeze participant-failure versus execution-completeness semantics before fitting. No same-bank refit or new general infrastructure."
+      "work": "Preregister one frozen-weight comparison of mixed self/ordinary-contact compositions, repeated aliases and varied order, including withheld or partial acquisition and coherent joint uncertainty. Reuse both alias-v2 checkpoint arms and existing collector/oracle/scorer; no retraining, larger model or language tranche."
     },
     {
       "stage": "G2",
-      "work": "Retain continuation-v1 evidence for one/two to three/five contacts; extend to independent-source functions and coherent uncertainty without treating this bounded conditional result as completion of G2."
+      "work": "Extend retained ordinary 1-2 to 3-5 continuation evidence and bounded alias learning to mixed compositions, independent-source functions and coherent uncertainty; full G2 is not complete."
     },
     {
       "stage": "G3",
@@ -199,10 +382,10 @@
       "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
     }
   ],
-  "external_issue_55": "Independent challenge custody/review remains required for admission. Continuation v1 completed its prefit/checkpoint commitments and execution, with formal STOP_INCOMPLETE_RUN from empirical feedback contradictions; this does not admit G1 or justify reopening the same bank.",
+  "external_issue_55": "Independent challenge custody/review remains required for admission. Alias-v2 KEEP establishes bounded observed learning; continuation-v1 STOP and alias-v1 REVISE remain unchanged. No historical bank is reopened.",
   "line_counts": {
     "active_files": {
-      "active_paths.py": 256,
+      "active_paths.py": 258,
       "active_participant.py": 225,
       "active_evidence.py": 156,
       "domain_contract.py": 297,
@@ -219,47 +402,59 @@
       "observed_io.py": 48,
       "continuation_data.py": 153,
       "continuation_summary.py": 116,
-      "continuation_run.py": 333
+      "continuation_run.py": 333,
+      "alias_evidence_data.py": 191,
+      "alias_evidence_run.py": 247
     },
-    "active_source_files_excluding_frozen_dependencies": 3947,
-    "new_runtime_source_net": 0,
-    "new_tests_net": 482,
-    "retained_research_python": 27123,
+    "active_source_files_excluding_frozen_dependencies": 4387,
+    "new_runtime_source_net": 2,
+    "new_tests_net": 358,
+    "retained_research_python": 27921,
     "inclusive_size_goal_met": false,
     "learned_parameter_delta": 0,
-    "new_tests": 18,
-    "scope": "Physical lines including comments/blanks: eighteen named integration/study files include evaluator tools and exclude frozen dependencies. Study adds 602 source lines and 482 test lines; inference import footprint is unchanged and separately recorded.",
-    "new_study_source_net": 602,
-    "retained_test_lines": 12291
+    "new_tests": 13,
+    "scope": "Physical lines including comments/blanks, relative to e84db0a9: twenty named integration/study files exclude frozen dependencies. Runtime grows two lines; two reused alias-study modules total 438 lines, their tests 302 lines and existing-test changes 56 net lines. Inference imports remain twelve modules.",
+    "new_study_source_net": 438,
+    "retained_test_lines": 12649
   },
   "verification": {
-    "scope": "Continuation implementation prefit invariants and separate one-pass research execution; artifact completion does not imply participant completion or scientific admission.",
-    "local_tests_discovered": 645,
-    "local_tests_passed": 645,
+    "scope": "Alias-v2 prefit invariants and separate one-pass research execution; internal arithmetic verification is not independent scientific admission.",
+    "local_tests_discovered": 658,
+    "local_tests_passed": 658,
     "local_tests_skipped": 0,
-    "local_suite_seconds": 76.67,
-    "local_output_sha256": "faf1b0e29f9a46e47f130baf9bb5efc2b57df76094901aefaca0f5f4041ccc77",
-    "new_tests": 18,
-    "clean_local_source_commit": "994054d892b14e4d18835758e9ee1837f394d911",
-    "local_verified_tree_sha": "e2d5598af547f40434b4b948924a96821428bf6b",
-    "ci_reference": "https://github.com/robosys-labs/cemm/actions/runs/41027369357",
-    "remote_ci_run_id": 41027369357,
+    "local_suite_seconds": 102.916,
+    "local_output_sha256": "e7794c19fe156c031ba1aec447bcd9b9d73c2777b1c79f59a5d60d441d31bea5",
+    "new_tests": 13,
+    "clean_local_source_commit": "12de2bd8d8c8ab5619552acc04c473a9f3335047",
+    "local_verified_tree_sha": "91c90c2a357e5d1d151ecc502503ef25f16efa58",
+    "ci_reference": "https://github.com/robosys-labs/cemm/actions/runs/41067452292",
+    "remote_ci_run_id": 41067452292,
     "remote_ci_conclusion": "success",
-    "remote_ci_suite_seconds": 43.401,
-    "remote_ci_scope": "Prefit source verification; research fits are not ordinary CI tests.",
-    "inference_and_learning_sources_modified": false,
+    "remote_ci_head": "12de2bd8d8c8ab5619552acc04c473a9f3335047",
+    "source_snapshot_ci_reference": "https://github.com/robosys-labs/cemm/actions/runs/41067452302",
+    "source_snapshot_ci_conclusion": "success",
+    "remote_ci_scope": "Exact prefit source verification; final result-head CI is separate and research fits are not ordinary CI tests.",
+    "inference_and_learning_sources_modified": true,
+    "inference_change_scope": "Two net lines for empirical recovery plus active version bump; neural/objective/checkpoint sources unchanged.",
     "historical_data_protocols_modified": false,
     "new_research_fits": true,
-    "neural_fit_count": 15,
-    "empirical_fit_count": 4,
+    "neural_fit_count": 10,
+    "historical_alias_v1_neural_fit_count": 10,
+    "empirical_fit_count": 0,
     "new_scientific_evaluation": true,
     "closed_study_reruns": false,
-    "result_record": "CONTINUATION_DECISION_V1.md",
-    "result_manifest": "results/continuation-v1/manifest.json"
+    "result_record": "ALIAS_EVIDENCE_DECISION_V2.md",
+    "result_manifest": "results/alias-evidence-v2/manifest.json",
+    "final_result_head_ci": {
+      "verification_location": "https://github.com/robosys-labs/cemm/pull/62/checks",
+      "scope": "Current result-head checks are reported by GitHub and the PR handoff; embedded CI references above identify the prefit source."
+    },
+    "local_test_checkout_commit": "a504369e294c11079ba0f37c016e17e82cb3f8fc",
+    "published_prefit_tree_matches_tested_checkout": true
   },
   "limits": [
     "Continuation v1 completed its frozen fits and artifact collection but formally STOPPED: empirical zero-support feedback contradictions terminated episodes and left required forecasts unproduced. G1 remains NOT_ADMITTED; failures and all planned denominators are retained.",
-    "Shared-kernel self-contact remains supplied per-mode alias conditioning. Continuation-v1 shared/reset copy the active bit on all sixteen self cases and score seven/sixteen; ordinary evidence does not identify the required alias diagonal ratio. This does not prove the unchanged model cannot learn alias behavior from observations.",
+    "Alias-v2 establishes bounded observed self-contact learning on one public deterministic law with supplied diagonal conditioning. General self laws, mixed alias/ordinary compositions, withheld-acquisition uncertainty and independent scientific custody remain untested.",
     "Default flat/shared capacities differ. Continuation v1 selected 562 parameters and identical realized exposure for each neural arm; function classes, supplied biases and consumed CPU remain different. Flat mean in-family accuracy was 15%, limiting a specifically compositional interpretation of the full gap.",
     "Legacy flat checkpoints remain three-entity-only and cannot be converted to the new flat architecture.",
     "Positive-mass paths are neither pruned nor merged; missing observations can exhaust the default 64-live-path or 512-candidate budgets.",
@@ -289,27 +484,32 @@
     "The data exporter publishes a completion manifest last; an I/O failure may leave a new incomplete directory without it. The combined archive and audit contain evaluator-only information.",
     "Research fitting/model scoring remain disabled in the historical prospective-data-v1 contract. The separate frozen continuation-study-v1 protocol enabled and completed one prescribed attempt; selection/calibration fitting remained disabled and no same-bank retry is permitted.",
     "Continuation-v1 post-acquisition criteria have an explicit prospective scope: single-contact has zero such queries, self-contact is separate, and all-action reports remain authoritative for their original scope. Shared mean all-action accuracy is 88.265683%; no historical all-action gate is passed.",
-    "The five-seed sign reference is conditional on one frozen public bank and assumed independent initializations. Related views/query positions are not independent physical draws; repeated empirical checkpoint labels are not independent fits. No physical-world generalization inference or general calibration claim is established."
+    "The five-seed sign reference is conditional on one frozen public bank and assumed independent initializations. Related views/query positions are not independent physical draws; repeated empirical checkpoint labels are not independent fits. No physical-world generalization inference or general calibration claim is established.",
+    "Alias-v1 remains REVISE_EVIDENCE_FIX: four seeds succeed but seed 37 fails starting-one self contacts. Alias-v2 changes only the observed schedule on a fresh bank, not the architecture, objective, budget criteria or old result.",
+    "Alias-v2 KEEP is scoped to self/continuation queries: all-action accuracy is 88.742604%, with 183 ambiguous-acquisition regressions and 473 unchanged-bit errors. The original 95% all-action target remains unchanged and unmet.",
+    "Empirical v6 recovery is source-localized and synthetic-regression-tested; no retained failing historical episode or empirical study was replayed. Neural-only alias studies do not establish empirical run-level recovery.",
+    "Balanced training environment orientations are supplied study design, not learner labels; selection precedes final realization in both arms. Cross-study V1/V2 performance is descriptive because their fresh banks differ."
   ],
-  "local_verified_code_commit": "994054d892b14e4d18835758e9ee1837f394d911",
+  "local_verified_code_commit": "12de2bd8d8c8ab5619552acc04c473a9f3335047",
   "diagnostics_pr": 57,
   "domain_pr": 58,
   "remaining_capability_gaps": {
     "coherent_active_training_checkpoint_evaluation_path": "IMPLEMENTED_FOR_DELIVERED_OBSERVATIONS",
     "expanded_domain_flat_implementation": "IMPLEMENTED_FRESH_ARCHITECTURE",
     "expanded_domain_matched_flat_baseline": "CONTINUATION_V1_COMPLETED_PARAMETER_AND_REALIZED_EXPOSURE_MATCH; CONSUMED_COMPUTE_NOT_MATCHED",
-    "prospective_information_aware_scientific_acceptance_runner": "CONTINUATION_V1_EXECUTED_WITH_RETAINED_STOP; PARTICIPANT_COMPLETE_RUN_AND_INDEPENDENT_ADMISSION_NOT_ESTABLISHED",
+    "prospective_information_aware_scientific_acceptance_runner": "ALIAS_V2_EXECUTED_KEEP_WITH_COMPLETE_NEURAL_RUN; INDEPENDENT_ADMISSION_PENDING",
     "fresh_independently_held_challenge": "PENDING",
     "calibrated_expanded_domain_comparison": "CONTINUATION_V1_PROPER_SCORE_AND_ECE_DIAGNOSTICS_RETAINED; GENERAL_CALIBRATION_NOT_ESTABLISHED",
     "expanded_domain_scientific_evaluation": true,
     "novel_entity_count_transfer_established": false,
-    "learned_self_contact_established": false,
+    "learned_self_contact_established": true,
     "fresh_prospective_observed_curriculum_and_held_out_families": "IMPLEMENTED_PUBLIC_SAME_AUTHOR_ASSETS; INDEPENDENT_CHALLENGE_PENDING",
     "complete_conditional_oracle_and_split_lineage": "IMPLEMENTED_UNDER_DECLARED_TWO_MODE_LAW_WITH_CANONICAL_BLUEPRINT_LINEAGE; EXTERNAL_REVIEW_PENDING",
-    "scientific_denominator_matching_and_statistics_contract": "CONTINUATION_V1_FROZEN_AND_EXECUTED; FORMAL_STOP_INCOMPLETE_RUN",
+    "scientific_denominator_matching_and_statistics_contract": "ALIAS_V2_PRESPECIFIED_PAIRED_EVIDENCE_INTERVENTION_COMPLETE; HISTORICAL_DECISIONS_UNCHANGED",
     "crash_durable_forecast_journal": "NOT_IMPLEMENTED",
     "participant_os_isolation": "NOT_IMPLEMENTED",
-    "observed_only_batch_adapter": "IMPLEMENTED_NO_SIMULATOR_OR_ORACLE_IMPORT"
+    "observed_only_batch_adapter": "IMPLEMENTED_NO_SIMULATOR_OR_ORACLE_IMPORT",
+    "learned_self_contact_scope": "Bounded observed learning under supplied alias conditioning and one binary law; mixed composition and arbitrary self laws remain untested."
   },
   "learning_version": "active-learning-v1",
   "checkpoint_format": "cemm-active-checkpoint-v1",
@@ -337,7 +537,7 @@
     "training_settings_and_source_recorded": true,
     "optimizer_resume": false,
     "interrupted_weight_mutation_rolls_back": false,
-    "verification_scope": "synthetic_wiring_likelihood_gradient_and_causal_invariants_only",
+    "verification_scope": "Synthetic API likelihood/gradient/causal invariants plus separately frozen alias-v2 observed-learning experiment; admission and general calibration remain unestablished.",
     "interruption_cleanup_precedes_fallible_current_hash": true,
     "unavailable_current_state_hash": null
   },
@@ -518,7 +718,7 @@
     "automatic_gate_admission": false,
     "prospective_conditional_oracle_available": true,
     "oracle_completeness_scope": "ACCEPTANCE_VALIDATOR_CHECKS_CONSISTENCY_ONLY; SEPARATE_DATA_ORACLE_COMPUTES_COMPLETE_SUPPORT_UNDER_ITS_DECLARED_LAW",
-    "fresh_scientific_assets_scope": "CONTINUATION_V1_PUBLIC_PREFIT_FROZEN; INDEPENDENT_CUSTODY_NOT_ESTABLISHED"
+    "fresh_scientific_assets_scope": "ALIAS_V2_PUBLIC_PREFIT_FROZEN; INDEPENDENT_CUSTODY_NOT_ESTABLISHED"
   },
   "acceptance_code_commit": "642265d231cc1e4d606dea5e0f892e56693b3fdc",
   "prospective_data_version": "prospective-data-v1",
@@ -623,12 +823,12 @@
       "active_learning",
       "active_checkpoint"
     ],
-    "module_import_source_lines": 2730,
+    "module_import_source_lines": 2732,
     "module_import_files": {
       "comparison_scoring.py": 177,
       "context_support.py": 193,
       "domain_contract.py": 297,
-      "active_paths.py": 256,
+      "active_paths.py": 258,
       "external_participant.py": 244,
       "joint_objective.py": 322,
       "active_evidence.py": 156,
@@ -641,63 +841,59 @@
     "hash_required_but_not_imported": {
       "masked_replay.py": 185
     },
-    "import_plus_source_pin_lines": 2915,
+    "import_plus_source_pin_lines": 2917,
     "forbidden_imports_present": [],
-    "active_paths_sha256": "2fe80aa36686a8e47d487bac0044a02b71c2494cfd1c1ce9b837b4b0d41384e3",
+    "active_paths_sha256": "9f389ae1f96e39ee1971dafb1e0c05a51f89fdc564396ab493f1c4f2df12ff55",
     "previous_imported_modules": 14,
     "previous_imported_source_lines": 3337,
     "previous_import_plus_source_pin_lines": 3337,
     "parameter_delta": 0,
-    "retained_test_lines": 12291,
+    "retained_test_lines": 12649,
     "remaining_pin_reason": "Removing the masked_replay.py identity pin changes acceptance/data commitments; migration deferred.",
     "compatibility": "Old native checkpoints require their original source checkout; strict matching remains enforced. Frozen v1 bundles unchanged.",
-    "continuation_study_changed_inference_imports": false
+    "continuation_study_changed_inference_imports": false,
+    "alias_studies_changed_inference_imports": false,
+    "runtime_net_lines_since_continuation": 2
   },
   "progress_control": {
     "last_learned_results": [
-      "CONTINUATION_DECISION_V1.md"
+      "ALIAS_EVIDENCE_DECISION_V2.md"
     ],
     "invariant_count_is_scientific_gate_progress": false,
-    "next_deliverable": "One fresh preregistered alias-evidence versus matched ordinary-evidence experiment using the unchanged shared model, followed by its actual decision and continuation regression result.",
-    "another_preparation_only_tranche_requires": "Reproduced defect blocking that specific fresh experiment; retained self-contact diagnosis is already complete.",
+    "next_deliverable": "Preregister one frozen-weight comparison of mixed self/ordinary-contact compositions, repeated aliases and varied order, including withheld or partial acquisition and coherent joint uncertainty. Reuse both alias-v2 checkpoint arms and existing collector/oracle/scorer; no retraining, larger model or language tranche.",
+    "another_preparation_only_tranche_requires": "A reproduced blocker of the specific frozen-weight mixed-composition experiment; do not repeat successful alias fits.",
     "new_generic_runner_checkpoint_format_or_model_architecture_planned": false,
     "further_refactor_scope": "Only a demonstrated execution blocker or later release packaging milestone.",
     "historical_learned_results": [
+      "ALIAS_EVIDENCE_DECISION_V1.md",
+      "CONTINUATION_DECISION_V1.md",
       "COMMON_OBJECTIVE_DECISION.md",
       "SENSOR_TRANSFER_DECISION.md"
     ],
-    "last_frozen_decision": "STOP_INCOMPLETE_RUN",
+    "last_frozen_decision": "KEEP_EVIDENCE_FIX",
     "execution_and_artifact_collection_complete": true,
-    "participant_complete_run": false
+    "participant_complete_run": true
   },
   "selected_next_task": {
-    "details": "ACTIVE_NUCLEUS.md#next-bounded-experiment-observed-alias-evidence",
-    "status": "SELECTED_FRESH_EXPERIMENT; PREFIT_PROTOCOL_NOT_YET_FROZEN",
+    "details": "ACTIVE_NUCLEUS.md#next-bounded-experiment-frozen-weight-mixed-composition",
+    "status": "SELECTED_FRESH_FROZEN_WEIGHT_EXPERIMENT; PREFIT_PROTOCOL_NOT_YET_FROZEN",
     "diagnosis_complete": true,
-    "evidence_contrast": "Ordinary-only evidence versus a fixed replacement tranche of observed self-contact outcomes; hold all remaining training evidence fixed.",
-    "architecture": "Unchanged shared model; no hardcoded self-contact rule or new architecture.",
-    "matching": [
-      "initialization",
-      "parameter count",
-      "realized training exposure",
-      "prespecified compute ceilings"
-    ],
-    "actual_consumed_costs_reported": true,
-    "consumed_compute_match_claimed": false,
+    "work": "Preregister one frozen-weight comparison of mixed self/ordinary-contact compositions, repeated aliases and varied order, including withheld or partial acquisition and coherent joint uncertainty. Reuse both alias-v2 checkpoint arms and existing collector/oracle/scorer; no retraining, larger model or language tranche.",
+    "checkpoints": "data/alias-evidence-fit-v2; both ordinary and alias arms; five seeds each",
+    "architecture": "Unchanged; no new model, workspace, checkpoint format or language tranche.",
+    "training_permitted": false,
     "fresh_preregistered_cases_required": true,
-    "evaluation": "Self-contact starting-bit-0 and starting-bit-1 cases, both with true next active bit zero, with new identities/backgrounds and continuation regression checks.",
-    "prefit_decisions": [
-      "One primary alias-transfer contrast and effect criterion",
-      "Continuation competence, role-pair, unchanged-bit and regression criteria",
-      "Participant-model-failure versus interrupted-execution completeness semantics, retaining abstention and missing-output denominators"
-    ],
-    "success_scope": "Learned alias transfer from observed outcomes; not zero-shot transfer from distinct contacts alone.",
+    "evaluation": "Mixed aliases and ordinary contacts, repetition/order, withheld or partial acquisition; score joint uncertainty on genuinely ambiguous cases and exact outcomes only where identifiable.",
+    "preserved": "All planned denominators, query preservation and regression IDs, proper scores, explicit path/compute limits; distinguish insufficient evidence, predictive contradiction and resource failure.",
     "same_bank_refit_or_retry": false,
     "generic_infrastructure_planned": false,
-    "current_v1_decision_unchanged": "STOP_INCOMPLETE_RUN",
+    "historical_decisions_unchanged": {
+      "continuation_v1": "STOP_INCOMPLETE_RUN",
+      "alias_v1": "REVISE_EVIDENCE_FIX"
+    },
     "historical_95_all_action_target_unchanged": true
   },
   "current_pr": 62,
   "continuation_pr": 62,
-  "current_study_decision": "STOP_INCOMPLETE_RUN"
+  "current_study_decision": "KEEP_EVIDENCE_FIX"
 }
