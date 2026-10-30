@@ -1,15 +1,32 @@
-# Active nucleus: observed-history learning, inference and acceptance
+# Active nucleus: current implementation and next scientific decision
 
-Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22); acceptance draft
-[#60](https://github.com/robosys-labs/cemm/pull/60),
-stacked on [draft #59](https://github.com/robosys-labs/cemm/pull/59).
-Acceptance source: `642265d231cc1e4d606dea5e0f892e56693b3fdc`.
-Locally verified code: `956078ffc509b945bd86b2393d8453ee5bdb81bc`, tree
-`61a6f214941ad71c44e5a0f8ea93e2952b6bcaa2`.
-Decision: KEEP the prospective acceptance contract, observed-only collector and
-complete-world scorer. Fresh prospective data, oracle lineage and a frozen
-comparison contract are the next engineering work.
-**G1 remains NOT ADMITTED. Engineering does not wait solely on issue #55.**
+Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [draft #61](https://github.com/robosys-labs/cemm/pull/61), stacked on [#60](https://github.com/robosys-labs/cemm/pull/60). Updated 2026-10-30 (Africa/Lagos).
+Current cleanup source: `5a35c5d3db01901a5e016cb03cfe8c0284c6433d`; verified tree `e49d13cfd5ae2b912ab4bdbd9071910aed4de277`.
+Prospective data source remains `8c662f588a9b81bdbcbdef48d3bdc26db1479c85`.
+**G1 remains NOT ADMITTED. No later scientific gate is complete.**
+
+## Progress and completion boundary
+
+The latest learned result remains the closed [common-objective](COMMON_OBJECTIVE_DECISION.md)
+and [sensor-transfer](SENSOR_TRANSFER_DECISION.md) studies: bounded use of retained
+evidence, matched by strong empirical controls. Subsequent path/domain/learning/
+acceptance/data work improves execution reliability; it adds no new learned
+performance result. Invariant counts, PR counts and interfaces are not scientific
+milestone completion. The earlier [decision review](G1_DECISION_REVIEW.md) already
+identified a preparation loop; another planning-only cycle is not the next task.
+
+The next substantive tranche must contain **one frozen comparison and its actual
+KEEP / REVISE / REJECT / STOP result**. Commit the complete design before fitting,
+then bind real checkpoints before collection in that same end-to-end tranche.
+A further preparation-only tranche requires a reproduced defect that blocks that
+specific comparison. Reuse the current APIs; no new general runner, checkpoint
+format, diagnostics platform or model architecture follows merely from a low score.
+The concrete task and decision boundaries are at the end of this document.
+
+The 85.6287% expectation rejects the proposed **all-action 95% interpretation of
+prospective-data-v1**, not the nucleus itself. Its archived finding and original
+numeric target stay unchanged. The next task uses an explicitly declared
+post-acquisition query scope; it cannot retroactively pass a historical gate.
 
 ## Active versus frozen paths
 
@@ -19,11 +36,14 @@ class/configuration, declared domain, resource limits, weight/table fingerprints
 and current training, checkpoint and adaptation provenance. Forecast receipts
 bind this identity. `active-learning-v1` supplies Python training, replay and
 evaluation APIs; `cemm-active-checkpoint-v1` stores registered learned state.
-Those eight active source files are unchanged by the acceptance tranche.
-`active-acceptance-v1` adds three source files around the existing Session and
-native artifacts, for eleven active files in total. They reuse the frozen
-streaming transport, verified bundle loader and learned modules. Historical
-sources, protocols, checkpoints, studies and standalone v1 exports remain unchanged.
+The prospective-data tranche preserved the eight learning/inference sources and
+three `active-acceptance-v1` modules. The subsequent bounded cleanup changes only
+`active_paths.py` to remove inherited initialization from frozen replay. `prospective-data-v1` adds four
+sources for generation, a conditional oracle, auditing and observed-only batch
+conversion, bringing the active-file inventory to fifteen. The existing Session,
+native artifacts, streaming transport, verified bundle loader and learned modules
+are reused. Historical sources, protocols, checkpoints, studies and standalone
+v1 exports remain unchanged.
 
 The native artifact route starts a fresh streaming episode from a separately
 saved and hash-verified checkpoint:
@@ -199,7 +219,7 @@ must not be promoted to the roadmap's outcome gate.
 ## Prospective acceptance contract, collector and scorer
 
 `ACCEPTANCE.md` documents the implemented APIs, commands and artifact formats.
-The new `acceptance_protocol_v1.json` freezes the scoring/recording contract,
+`acceptance_protocol_v1.json` freezes the scoring/recording contract,
 not a complete scientific study. The original protocol and its target remain
 unchanged. Inference stays `active-inference-v5`, learning stays
 `active-learning-v1`, and the native checkpoint format is unchanged.
@@ -241,9 +261,11 @@ denominator; empirical `ABSTAIN` remains distinct and has no invented score.
 
 Answerability is singleton **declared complete oracle support** under the
 delivered prefix/current action/selected coverage. Consistent information keys
-cannot receive conflicting support. The software does not prove that the
-alternatives are exhaustive, infer a uniform prior from support size, calculate
-a Bayes floor from it, or condition a submitted forecast on oracle support.
+cannot receive conflicting support. The acceptance validator does not prove
+that caller-supplied alternatives are exhaustive, infer a uniform prior from
+support size, calculate a Bayes floor from it, or condition a submitted forecast
+on oracle support. The separate prospective oracle below computes alternatives
+under its explicitly declared physical and observation law.
 
 Reports include all-planned complete-world MAP accuracy, answerable/ambiguous
 strata, joint NLL/Brier, unchanged-coordinate errors, explicit coverage, fixed
@@ -262,6 +284,95 @@ likelihood. A failure during final feedback does not erase its valid forecast;
 forecast correctness and execution completion remain separate. The per-seed
 comparison to 0.95 is numeric reporting only, with `admission_decision: false`.
 Every report retains `gate_g1: NOT_ADMITTED`.
+
+## Prospective observed curriculum and conditional oracle
+
+`PROSPECTIVE_DATA.md` documents the new `prospective-data-v1` data contract,
+exporter and findings. The source/hash-pinned default archive is
+`data/prospective-assets-v1.json.xz`, SHA-256
+`42cf52fb84fece67d23b78751080cd6c6d603767cc6981a517116dca52995f6d`.
+Two separate exports of the same public recipe produced identical bytes for
+all eleven files. This is reproducibility, not independent authorship or custody.
+
+| Split | Physical draws | Episode views |
+|---|---:|---:|
+| Train | 64 | 128 |
+| Selection | 32 | 64 |
+| Calibration | 32 | 64 |
+| Evaluation | 200 | 368 |
+| Total | 328 | 624 |
+
+Development contains single contacts and overlapping or repeated two-contact
+histories. Evaluation also includes the original chain, fork, cycle, disjoint
+and self-contact families. The domain remains three to six entities, with a
+complete initial anchor and at most twelve actions. Self-contact is evaluation-
+only and has no redundant reversed view. Entity-count support is not unseen-count
+transfer. The original protocol and all historical challenge seeds remain untouched.
+
+`prospective_data.py` samples an observable blueprint before its hidden mode.
+Blueprint identity includes the anchor, action schedule, full selected coverage
+and realized masks, canonicalized over naming and global contact reversal.
+No resulting bits or actual orientation enter deduplication. Accepted blueprints
+and physical lineages do not cross splits; 45 concrete action templates are
+shared across in-family splits and explicitly disclosed. Disjoint blueprints do
+not imply unfamiliar atomic contexts or independently authored families.
+
+A leading set and trailing observe are independently proposed with probability
+one half, and there are no resets between contacts. Duplicate rejection can
+change accepted proposal frequencies. All cases, including no-change and no-carry
+cases, remain. Each reversed pair shares its actual hidden orientation, anchor,
+IDs, coverage and masks; both directions are simulated separately. At most three
+missing bit-events occur over an episode, so the full-support bound is eight
+recurrent histories and 512 candidate expansions. The participant receives no
+oracle support for pruning.
+
+`prospective_oracle.py` composes affine binary maps for both persistent source
+orientations. Before current feedback, it emits every complete world compatible
+with the delivered prefix and its conditional probability under the explicit
+balanced prior. It preserves mode identity even when world states coincide.
+Only delivered feedback filters alternatives. The oracle's arguments contain no
+actual mode, family or hidden truth. Completeness is conditional on this supplied
+two-mode law; it is not proof of externally correct physics or a measurement of
+the learner's uncertainty over unknown laws.
+
+`prospective_audit.py` reconstructs both modes of each fixed blueprint, checks
+exact family/count/pair inventories, and computes law-weighted event accuracy
+ceilings and proper-score floors. These use explicit probabilities, not a
+uniform-prior assumption inferred from support size. Trajectory and role-pair
+conjunctions use coherent branches and the frozen lexicographic MAP tie rule;
+they are not products of event ceilings or optimal joint-policy bounds. A correct
+probability forecast can have zero paired MAP exactness when complementary role
+outcomes tie. Carry witnesses check whether suppressing an earlier contact
+changes a later contact's destination, rather than merely preserving a bystander
+change. Evaluation has 198 carry-positive branches out of 736 mode/view branches;
+these correlated branches are not independent samples.
+
+The evaluation in-family design has 334 planned actions and law-expected
+ambiguous mass of 96. Its expected optimal event accuracy is
+`1 - 0.5 * 96 / 334 = 0.8562874251497006`, or **85.6287%**. Across all evaluation
+families it is **87.1730%** over 1,185 actions. These are conditional information-
+design calculations, not trained-model scores or hard bounds on a finite
+realized sample. They quantify why an all-action interpretation of the unchanged
+95% target is unattainable in expectation on this design. The historical 93.75%
+ceiling belongs to a different closed workload. Neither finding is a model
+regression or permission to redefine G1.
+
+`observed_io.load_batches` converts the same delivered input files into validated
+`ObservedBatch` records. It groups full episodes by entity count and length,
+canonicalizes coordinates and preserves missing values and masks without temporal
+padding or gold filling. It imports no simulator or prospective oracle. Every
+compared arm must use the same batching policy. Of the training tape's 336 events,
+332 deliver at least one bit; four all-missing events remain. Of 192 contacts,
+64 have full before/after readings and 104 have both operand readings. These
+counts do not establish equal target eligibility under every empirical history
+policy, or matched exposure/cost.
+
+The exporter writes separate observed and evaluator files and a completion
+manifest last; an existing destination is rejected. An I/O failure can leave a
+new incomplete directory without its manifest. Keep the combined archive, audit
+and case metadata on the evaluator side. The code does not impose OS isolation,
+secret seed custody or physical provenance. This public same-author asset audit
+runs no research fit, saved-model evaluation or scientific comparison.
 
 ## Domain and self-contact contract
 
@@ -384,141 +495,56 @@ remain terminal; the no-change control continues its existing last-reading updat
 while reporting and latching the contradiction. The active CLI preserves these
 diagnostics in strict-JSON `ERROR` responses and exits with code 2.
 
-## Current acceptance integration verification
+## Current verification and dependency reduction
 
-The clean code commit `956078ffc509b945bd86b2393d8453ee5bdb81bc` passed
-**590 tests in 54.477 seconds, zero skips**. The **44 new tests** comprise
-13 artifact-contract, 10 collector, 17 scoring and four integration checks;
-the focused set passed in 6.752 seconds. The original protocol, all 16 historical
-manifest locks, the new acceptance-contract lock and frozen-input preflight
-passed: 19 standalone checks. Preflight ran with a clean tracked tree, no
-untracked files and study execution disabled. The published source tree exactly
-matches the clean locally verified code tree. Full evidence is recorded in
-`results/active-acceptance-validation-v1.json`; final-head CI status is recorded
-on [the acceptance PR](https://github.com/robosys-labs/cemm/pull/60).
+The cleanup source `5a35c5d3db01901a5e016cb03cfe8c0284c6433d` has exactly the locally verified tree
+`e49d13cfd5ae2b912ab4bdbd9071910aed4de277` (local commit `f6ce5b4f12cbc324d474bd57db2fe3f45dc7182d`). The clean local suite passed
+**627 tests, zero skips, in 68.430 seconds**; 67 existing path/domain/checkpoint
+checks also passed. No new tests, model parameters, schema or framework were added.
+`active_status.json` records the log hashes, source identity and dependency inventory;
+final-head CI is tracked on [PR #61](https://github.com/robosys-labs/cemm/pull/61/checks).
+The earlier data validation remains in
+[prospective-data-validation-v1.json](results/prospective-data-validation-v1.json).
 
-Synthetic checks exercise dynamic geometry, causal information keys, missing
-and incomplete inventories, role-pair and trajectory conjunctions, source and
-lineage drift, ambiguity, exact zeros, finite underflow, conditional means,
-native checkpoint collection and actual command-line scoring. Integration
-reproduced three malformed traces that previously passed: a frozen predictor
-specification inconsistent with its checkpoint, inconsistent raw/normalized log
-vectors and an oversized normalization correction. All three are now rejected.
-The valid terminal-contradiction forecast and future unproduced denominator are
-retained, and changing evaluator-only targets cannot change collected forecasts.
+The empirical filter already overrode prediction and feedback; it now owns the
+same three initialization statements directly. Its eight-world compatibility
+constant comes from the existing geometry function. A fresh import of the active
+participant, learning and checkpoint entrypoints loads **12 local modules / 2,730
+physical lines**, down from 14 / 3,337. Including the still-required historical
+hash pin, the package needs **2,915 lines**, down from 3,337. This measures source
+dependencies, not resident memory, inference speed or learned performance.
 
-No research fitting or new scientific performance comparison ran. Closed studies,
-historical results and all learned modules remain unchanged; learned parameter
-delta is **zero**. This tranche adds **892 runtime lines** and **940 test lines**.
-The eleven active files total **2,685 physical Python lines excluding frozen
-dependencies**, and retained research Python totals **24,540 lines**. The
-inclusive 2,000-line goal remains **unmet**. No historical evidence was removed
-to improve the size figure, and suite timing is not a compute/latency benchmark.
+The redundant 185-line `masked_replay.py` source pin stays because removing it
+also changes the acceptance source inventory and pinned data commitments. That
+migration is deferred; the module and old study runner are no longer imported.
+Old native checkpoints remain bound to their original source checkout and fail
+strict source matching here. Frozen v1 bundles, protocols and research evidence
+are unchanged; there is no compatibility bypass.
 
-## Earlier v5 learning integration verification
+The named fifteen-file integration inventory is **3,345 lines**, including
+acceptance/data tools but excluding frozen dependencies. All retained research
+Python is **26,039 lines**, including 11,809 test lines. These are distinct measures;
+none meets the original inclusive 2,000-line goal. This cleanup reduces dependency
+debt while adding one authored line. Duplicated historical handoff prose is replaced
+by references below; the evidence itself is retained.
 
-Published v5 code `94c059a0fd4fdb78ad5f442419053ac99e41c124` matches the
-locally verified `5a857ab0879cb1e67ca01a1de888eafbabace5d0` tree
-`adb0ec97aac6e3f28d5e24f5909d8c9ae2e470ec`.
+## Historical verification records
 
-The clean local code commit `5a857ab0879cb1e67ca01a1de888eafbabace5d0` passed
-**546 tests in 52.151 seconds, zero skips**, including **48 new tests**: 18 learning,
-11 checkpoint, nine flat-model and ten active-contract checks. The original
-protocol, all 16 historical manifest locks and standalone frozen-input preflight
-passed. The published source tree matches this locally verified tree exactly.
-Checks on the final documentation head are recorded at
-[draft #59 checks](https://github.com/robosys-labs/cemm/pull/59/checks).
+Historical verification is retained in the records below. Full test narratives,
+local incomplete attempts, source/tree identities, compatibility checks and
+historical size measurements remain in the
+[immutable pre-consolidation handoff](https://github.com/robosys-labs/cemm/blob/1bfa4fbd9f57f25571505e13e31c71f97e01ac96/experiments/predictive_nucleus/ACTIVE_NUCLEUS.md).
+These records establish implementation invariants, not new learned performance
+or scientific admission. Historical source, checkpoints and failed studies are
+unchanged.
 
-Synthetic tests compare masked sequence likelihoods and parameter gradients
-with a separate whole-history enumeration across the covered model arms and
-entity counts. They also check the frozen all-visible three-entity objective,
-correlated joint events, causal timing, gradients through hidden transitions,
-finite underflow versus exact zero, unequal episode path counts and explicit
-resource failures. The fresh flat model is not claimed to reproduce legacy flat
-weights. Observed-only table eligibility, bound first-contact policy, native
-checkpoint round trips, retained failure forecasts and interruption metadata are
-covered. Two final regressions reproduced stale identity after report interruption
-and persistent fingerprint failure; both now pass without weakening earlier tests.
-The actual native CLI was exercised with synthetic flat/no-change
-artifacts; legacy bundle regressions remain covered.
-
-These are software and synthetic fitting invariants. No closed fixture was
-reopened, historical checkpoint retrained, saved research model newly scored,
-or scientific result changed. The tranche establishes a differentiable shared
-implementation, not learned self-contact/count transfer, matched-budget advantage,
-calibration or G1 admission.
-
-`results/active-learning-validation-v5.json` records code identity, source hashes,
-test output and frozen-input checks. This tranche adds **767 net runtime lines**
-and **1,127 net test lines**. Retained research Python totals **22,708 physical
-lines**. The eight active source files total **1,793 lines excluding frozen
-dependencies**. That subset is not an inclusive size measure; the inclusive
-2,000-line goal remains **unmet**. Historical code/evidence was not deleted to
-improve a count. Test runtime is not an inference-latency or scientific-compute
-benchmark.
-
-## Earlier v4 domain integration verification
-
-Published v4 code `2b281cd7f1ba0de4a7985cacc4bbf272783d01ed` has the same tree as
-its locally verified `9132fa626d15c197b49f4d77d0971ed54ba1ef8d` (Git metadata differs).
-
-The clean local code commit `9132fa626d15c197b49f4d77d0971ed54ba1ef8d` passed
-**498 tests in 37.279 seconds, zero skips**, including **41 new tests**: 13 domain
-contract, 10 shared-kernel and 18 integration checks. The original protocol,
-all 16 historical manifest locks and standalone frozen-input preflight passed.
-The actual CLI loaded a verified **synthetic** v1 export, processed six entities
-and self-contact with receipt-matched feedback/end, and rejected flat expansion.
-
-Checks cover all entity counts and action kinds, arbitrary per-mode alias ratios,
-finite underflow versus impossible support, direct-kernel finite gradients,
-identity equivariance, candidate/live-path limits, unequal episode path counts,
-observed-only table migration/recovery, dimension-aware evidence, configuration
-identity and receipt binding. Twenty-four forecast vectors across all six
-synthetic model variants match unchanged three-entity inference within `1e-12`;
-source and adapted tensors remain unchanged. Empirical migration preserves
-legacy three-entity predictions and source counts.
-
-The first integration run exposed a classmethod/CLI adapter mismatch; it was
-repaired before this full-suite run. Review also made configuration part of
-startup identity and exposed retained alias mass. No test was weakened or skipped.
-These are implementation invariants, not new trained-model accuracy,
-calibration, entity-count transfer, self-contact generalization or an expanded
-matched-baseline comparison. No research model was retrained, closed study rerun,
-or historical score changed.
-
-`results/active-domain-validation-v4.json` records code/tree equivalence, source
-hashes, test output hash, preflight lineage and scope. This tranche adds **563 net
-runtime lines** and **834 test lines**, with no additional learned parameters in
-adapted kernels. Retained research Python totals **20,814 physical lines**.
-The five active source files total **1,026 lines excluding frozen dependencies**;
-this is not an inclusive implementation size. The inclusive 2,000-line goal
-remains unmet. No historical evidence was deleted to improve the count. Test
-runtime and preflight environment are recorded; no new inference-latency or
-scientific compute benchmark is claimed. Both code-commit workflows passed: invariants run `40948565909` and source snapshot
-run `40948566008`. Final documentation-head CI is linked from draft #58.
-
-## Earlier v3 diagnostics verification
-
-The clean local code commit `be65e4424ac34f4db67fc8895a2dea86f9de77c8` passed **457 tests in 36.421 seconds, zero skips**, including
-22 new diagnostic/integration regressions and the full-checkout preflight test.
-Standalone frozen-input preflight and all 16 historical manifest locks also passed.
-Before the local code commit, the suite had 456 passes and one preflight error:
-that required gate rejects an uncommitted tracked tree. It passed on the clean
-commit; no test was disabled or weakened.
-
-Twenty-four forecast vectors across all six synthetic model variants match the
-unmonitored repaired path exactly on the hand-written full/missing-reading trace;
-weight fingerprints remain unchanged. Empirical recovery tests preserve table
-digests. These are software invariants, not new saved-model accuracy, calibration,
-independent scientific validation or an architectural comparison. No research
-model was retrained, public study rerun or historical result re-scored.
-
-`results/active-evidence-validation-v3.json` records the code identity, source
-hashes, test results, preflight lineage and scope. The tranche adds 225 net runtime
-lines and 377 test lines. Retained research Python totals **19,417 physical lines**,
-including historical studies/tests. The three active source files alone total
-463 lines, excluding their frozen dependencies; neither count establishes the
-inclusive 2,000-line goal. No evidence was deleted to improve a size figure.
+| Tranche | Retained verification | CI reference |
+|---|---|---|
+| Acceptance v1 | [active-acceptance-validation-v1.json](results/active-acceptance-validation-v1.json) | [PR #60](https://github.com/robosys-labs/cemm/pull/60/checks) |
+| Learning / inference v5 | [active-learning-validation-v5.json](results/active-learning-validation-v5.json) | [PR #59](https://github.com/robosys-labs/cemm/pull/59/checks) |
+| Domain / inference v4 | [active-domain-validation-v4.json](results/active-domain-validation-v4.json) | [PR #58](https://github.com/robosys-labs/cemm/pull/58/checks) |
+| Diagnostics / inference v3 | [active-evidence-validation-v3.json](results/active-evidence-validation-v3.json) | [PR #57](https://github.com/robosys-labs/cemm/pull/57/checks) |
+| Repair / inference v2 | [active-repair-validation-v2.json](results/active-repair-validation-v2.json) | [PR #56](https://github.com/robosys-labs/cemm/pull/56/checks) |
 
 ## Exact repairs
 
@@ -541,89 +567,77 @@ partial histories still abstain rather than renormalizing away unknown mass.
 A previously supported prediction contradicted by reliable feedback remains an
 explicit conflict, not a silent reinitialization or automatic model repair.
 
-## Earlier v2 repair verification
+## Next end-to-end tranche: evidence followed by prediction
 
-Both audit examples reproduced against unchanged frozen source. Twenty-five
-new tests cover both fixes, causal ordering, malformed inputs, per-episode
-budgets, unequal masks, history-specific recovery, real conflicts, underflow,
-retained recurrent distinctions and end-to-end streaming behavior.
+**Task choice is settled; fitting and statistical commitments still need to be
+frozen before execution.** This is externally scheduled acquisition, not a learned
+clarification policy. Keep the v1 data recipe/archive and closed studies unchanged;
+version the new information/query scope explicitly.
 
-**Complete-branch CI run 40932601276 passed all 435 tests with no skips in
-24.347 seconds**, all 16 historical manifest locks and frozen-input preflight.
-This includes the checkout-dependent test unavailable in a source archive.
-The later documentation/evidence CI run 40933549651 also completed successfully.
+1. Use the **first existing distinct-entity contact** for acquisition, counted
+   within the total contact budget. Choose its pre-contact pair from `01`, `10`,
+   or `11` before latent-mode selection, and fully deliver its outcome. Account
+   for any leading interventions when determining this pre-contact state.
+   The two mode outcomes are respectively `(01,11)`, `(11,10)`, and `(10,01)`;
+   they always differ. This proves sufficient evidence under the declared law,
+   not that a model has learned to use it. Do not add a hidden third training contact.
+2. Freeze **later contact indices** as post-acquisition queries before outcomes.
+   Keep every acquisition/all-action forecast, proper score, abstention and failure
+   in the existing report. Report query exactness and query-pair conjunctions
+   separately without renumbering them as full trajectories. There are no
+   intercontact resets, oracle-based query selection or easy-action padding.
+3. Train on one or two **total** contacts. A single-contact episode has zero
+   post-acquisition queries and remains acquisition/ambiguity evidence, never a
+   100% query pass. Use fresh **two-contact in-family** episodes, with the second
+   contact queried, for the 95% in-family continuation criterion. Separately
+   evaluate **three to five total contacts for OOD composition** on declared
+   chain/fork/cycle/disjoint histories. The old two-contact disjoint template needs explicitly
+   declared repetitions; unique edges and total contacts are different quantities.
+   Preserve the first held-out self-contact as a separate mode-invariant query,
+   without an unscored self-contact warm-up or a false composition-depth claim.
+4. Use the existing untied, learned-background shared kernel at hidden width 11,
+   its reset-memory sibling with identical initial tensors, and the flat GRU at
+   hidden width 3: **562 learned parameters each**, verified by construction.
+   Keep no-change, untrained initial predictors and the strongest applicable
+   observed-count controls, including contact and first-contact abstractions.
+   Report eligible targets, unseen support and abstentions; matching parameter
+   counts alone does not match function classes, evidence or consumed compute.
+5. In the prefit commit, settle exact data/source hashes, primary contrast,
+   fitting/selection/calibration rules, actual exposure/compute accounting,
+   material gain, independent units and multiplicity. Use one fixed execution
+   budget and all five model seeds. Five paired seeds alone cannot support a
+   two-sided exact sign-flip p<.05 (minimum .0625); choose a justified analysis
+   before outcomes instead of relabeling correlated views as independent samples.
+   Then fit, bind actual checkpoint hashes, collect once and publish all outcomes.
 
-Saved-weight compatibility checks restored all 30 original models. On a
-hand-written four-action history, with full and missing readings, 240 forecast
-vectors matched the old valid inference path within 1e-12; maximum absolute
-finite-log difference was `1.7763568394002505e-15`. All five supplied-persistence
-checkpoints survived 128 fully missing observe updates at path limit one, always
-retaining exactly one live state. The actual new CLI completed ten such updates.
-These are implementation regressions/equivalence checks, not new accuracy,
-calibration, independent challenge or superiority results. No closed study was
-rerun and no weights or empirical counts were changed.
+The 95% criterion on declared post-acquisition queries is a **new prospective
+scope**, with the original numeric threshold; it is not an all-action pass or
+admission of the original frozen study. Independent challenge authorship/custody
+and review remain necessary for admission. They do not prevent an honest bounded
+public development decision. Use the existing adapter, fitting, artifacts and
+acceptance scoring; a small query summary over validated points is sufficient.
 
-Local focused tests passed. The old execution-test module separately passed
-35 tests with one checkout-dependent skip. Several local full-suite attempts
-hit their execution limits (45 seconds, 120 seconds and a separate selection);
-they remain INCOMPLETE, not counted as passes. The cause of those local stalls
-was not established. Remote full-branch CI supplied the complete verification.
+**Decision at the fixed budget:** KEEP only the bounded competence actually
+supported; REJECT superiority or choose the simpler control if it explains the
+result; REVISE at most one reproduced representation/optimization/evidence cause
+with its direct ablation; STOP this design if the comparison is infeasible or
+adds no material useful transfer. Do not respond with another general audit
+layer, a fresh same-fixture sweep or a larger architecture without that diagnosis.
 
-The retained summary is `results/active-repair-validation-v2.json`; it identifies
-the full downloadable local evidence by hash. All 189 pre-existing files in the
-source archive were byte-compared with zero changes. New source is 238 lines;
-new tests are 348 lines. Direct retained-tree enumeration is 18,815 Python lines,
-including historical studies and tests. Neither new-file size nor archive size
-is a complete active-dependency count or proof of meeting the inclusive 2,000-
-line goal. No historical evidence was removed to improve a size figure.
+## Remaining roadmap after that decision
 
-## Remaining engineering, excluding manual sign-off
+| Stage | Evidence still required |
+|---|---|
+| G1 | Actual feasible, fair comparison and decision; independent evidence for admission. |
+| G2 | Learned 1–2 to 3–5 composition, carried effects, independent-source functions and coherent uncertainty; reuse relevant G1 evidence. |
+| G3 | Teach a relation nonverbally, then transfer it through two languages on the same frozen world model. |
+| G4 | Communication improves held-out external-goal utility against silent/random/shuffled controls. |
+| G5 | Answered experience persists across episodes, reduces later clarification and preserves earlier competence. |
+| G6 | Corpus exposure improves new grounded decisions beyond retrieval/frequency controls. |
+| G7 | The frozen task bank meets the stated 3× supported-utility, precision, retention and cost criteria. |
+| G8 | Independent reproduction and reviewed integration with existing authority/effect boundaries. |
 
-`active_status.json` records the common training/inference/native-checkpoint path
-and the prospective acceptance contract, collector and scorer as implemented.
-The next bounded engineering work is the **fresh prospective data and comparison
-contract**: a delivered-observation curriculum whose earlier effects remain
-relevant, fresh held-out family inventories, complete conditional oracle support,
-split/source/information-law lineage and all required seed/checkpoint plans.
-Freeze these assets before substantive fits or research scores, using the
-implemented collector/scorer rather than another competing inference harness.
-
-Predeclare the interpretation of scientific denominators, calibration criteria,
-material effect size/statistical test, and concrete exposure/capacity/actual-compute
-comparisons. Retain the strongest applicable empirical abstractions and disclose
-their eligible targets and training support. Equal ceilings or identical
-histories alone do not match information or cost. Preserve every planned failure
-and regression. Fresh asset construction and matching remain implementation
-work; external sign-off is not the sole blocker.
-
-Separately accountable authorship/custody, external oracle completeness review
-and evaluator-controlled isolation remain required for admission. A later
-controlled comparison must satisfy those requirements under its frozen new
-contract. The opened common-objective and sensor-transfer studies stay closed.
-Another same-author fixture or fresh seed does not become independent validation.
-
-Keep the roadmap's G1 target and held-out families. Do not reinterpret historical
-final-query results as whole-trajectory success or pool easy resets to manufacture
-a 95% pass. The original generator already samples three through six entities
-during training, so supporting six IDs is not an unseen-count transfer result.
-A prospective unseen-count split must withhold those counts. Training self-contact
-examples cannot count as success on the original untrained self-contact family.
-
-Then implement the concrete G2 workload: train on one or two interactions and
-evaluate three to five over declared chains, forks, cycles and disjoint groups,
-including repeated actions, untouched entities and coherent joint alternatives.
-Earlier outputs must become later inputs without reset interventions erasing
-the dependency. A named graph or reset-separated edge sequence alone does not
-establish causal composition. Repeated uses of one uncertain mechanism must
-retain their shared uncertainty rather than independently resampling it.
-
-Direct observed support and the joint-log advisory diagnostic are integrated.
-Posterior-context support, alternate change-point evidence, calibrated confidence
-and learned probe selection remain unestablished. Grounded bilingual language
-and G3–G8 follow the roadmap dependency order. Learned communication and lifelong
-learning are not new G1 prerequisites.
-
-Issue #55 remains pending for independent scientific validation; it does not
-replace or block these implementation requirements. Automatic correctness and
-regression checks remain required. No scientific gate is weakened or admitted,
-and no production/PR21 cutover or language implementation occurs in this tranche.
+Learned probes, noisy sensors, lifelong learning, language, arbitrary entity counts,
+optimizer/session resume, a durable forecast journal and a production isolation
+platform are not added G1 prerequisites. Later success is conditional on evidence;
+completion may require rejecting a hypothesis rather than growing its implementation.

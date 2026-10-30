@@ -1,0 +1,92 @@
+{
+  "version": "prospective-data-v1",
+  "scope": "PUBLIC_SAME_AUTHOR_ENGINEERING_ASSETS",
+  "world_contract": "binary-contact-v1",
+  "model_seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "split_seeds": {
+    "train": 2026103001,
+    "selection": 2026103002,
+    "calibration": 2026103003,
+    "evaluation": 2026103004
+  },
+  "entity_counts": [
+    3,
+    4,
+    5,
+    6
+  ],
+  "draws_per_family_entity": {
+    "train": 8,
+    "selection": 4,
+    "calibration": 4,
+    "evaluation": 8
+  },
+  "development_families": [
+    "single_contact",
+    "two_contacts"
+  ],
+  "evaluation_families": [
+    "single_contact",
+    "two_contacts",
+    "three_contact_chain",
+    "fork",
+    "cycle",
+    "disjoint",
+    "self_contact"
+  ],
+  "max_actions": 12,
+  "max_cumulative_missing_bits": 3,
+  "max_blueprint_attempts": 10000,
+  "information_law": {
+    "hidden_source_slot_prior": [
+      0.5,
+      0.5
+    ],
+    "mode_persistence": "One source slot per physical draw; shared by its reversed views and fixed through every contact",
+    "initial_state": "Complete observed binary anchor",
+    "scheduling": "Actions, coverage, realized masks and identity labels selected before and independently of actual hidden mode",
+    "deduplication": "Canonical blueprint and reversed view ancestry; selected without hidden mode, complete truth or future delivered values",
+    "feedback": "Noiseless delivered bits; absent values remain absent",
+    "oracle": "Enumerate every persistent mode compatible with delivered past before revealing current feedback",
+    "same_author_assets_are_independent_validation": false,
+    "blueprint_sampling": {
+      "initial_bits": "Independent fair binary draws before mode selection",
+      "two_contact_templates": [
+        "overlapping_pair",
+        "repeated_pair"
+      ],
+      "leading_set_probability": 0.5,
+      "trailing_observe_probability": 0.5,
+      "dropout": "Select a bounded exogenous mask before rolling out either role; no filtering by truth, carry witnesses or accuracy ceiling",
+      "sensor_coverage": "All physical IDs selected; realized missingness is explicit"
+    }
+  },
+  "reporting": {
+    "prediction_points": "Every planned action before its feedback",
+    "primary_diagnostic": "All-planned complete-world accuracy; separate contact, family, answerable and ambiguous strata",
+    "law_audit": "Equal prior mass for both counterfactual persistent modes of every fixed blueprint; probability mass aggregated before computing scores",
+    "ceiling_scope": "Expected accuracy under the declared law, not a hard upper bound on a finite realized sample",
+    "map_ties": "First lexicographic complete world, matching acceptance-v1",
+    "trajectory_and_pair": "Conjunction on coherent histories, never product of marginal ceilings",
+    "carry": "Audit actual counterfactual dependence; do not select or drop cases using its result",
+    "original_g1_target": 0.95,
+    "target_redefined": false,
+    "gate_g1": "NOT_ADMITTED"
+  },
+  "execution_policy": {
+    "research_fit_enabled": false,
+    "research_model_scoring_enabled": false,
+    "closed_study_rerun_enabled": false,
+    "prefit_freeze": "This contract fixes data and information-law construction. A complete scientific comparison also requires frozen arm configurations, fitting/selection/calibration rules, matching and statistical decisions.",
+    "postfit_freeze": "Bind actual native checkpoint hashes to the prefit commitment before collection; never use placeholder hashes as completed acceptance plans.",
+    "scientific_comparison_design_complete": false,
+    "independent_custody_verified": false,
+    "participant_isolation_verified": false
+  }
+}

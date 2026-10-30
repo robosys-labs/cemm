@@ -1,7 +1,7 @@
 {
   "version": "active-inference-v5",
   "evidence_version": "active-evidence-v2",
-  "code_commit": "642265d231cc1e4d606dea5e0f892e56693b3fdc",
+  "code_commit": "5a35c5d3db01901a5e016cb03cfe8c0284c6433d",
   "tracking_issue": 22,
   "repair_pr": 56,
   "gate_g1": "NOT_ADMITTED",
@@ -78,7 +78,16 @@
     "declared_preforecast_support_and_cross_partition_lineage_validation",
     "all_planned_unproduced_and_abstention_denominators",
     "dynamic_complete_world_scores_trajectory_and_role_pair_conjunctions",
-    "per_seed_family_reference_regressions_and_explicit_numeric_target_scope"
+    "per_seed_family_reference_regressions_and_explicit_numeric_target_scope",
+    "fresh_public_observed_curriculum_without_intercontact_resets",
+    "canonical_blueprint_and_reversal_lineage_deduplication_before_hidden_mode",
+    "complete_conditional_oracle_under_explicit_persistent_two_mode_law",
+    "law_weighted_information_feasibility_and_coherent_pair_tie_audit",
+    "configured_physical_draw_inventory_and_actual_family_topology_validation",
+    "actual_carry_witness_and_cumulative_dense_path_resource_audit",
+    "observed_only_geometry_and_horizon_batch_adapter",
+    "deterministic_export_and_separate_observed_evaluator_artifact_manifests",
+    "active_empirical_filter_decoupled_from_frozen_replay_and_study_import"
   ],
   "diagnostic_scope": {
     "advisory_only": true,
@@ -94,11 +103,7 @@
   "pending_engineering_in_order": [
     {
       "stage": "G1",
-      "work": "Construct and freeze fresh prospective observed curricula with carried effects, held-out trajectory families, complete conditional oracle support, split/source/information-law lineage and all required seed/checkpoint plans before substantive fits or research scores; reuse the implemented acceptance path."
-    },
-    {
-      "stage": "G1",
-      "work": "Freeze scientific denominator interpretation, calibration criteria, material effect size/statistical test and concrete exposure/capacity/actual-compute comparisons; retain strong empirical controls and their eligible-target/support accounting. Independent authorship/custody and evaluator isolation remain separate admission requirements; closed studies stay closed."
+      "work": "Complete selected post-acquisition comparison in one end-to-end tranche: prefit freeze, three 562-parameter neural arms and strong empirical controls, fixed budget, actual fitting/checkpoints/collection, all outcomes and terminal decision. Further standalone preparation needs a blocking reproduced defect."
     },
     {
       "stage": "G2",
@@ -109,18 +114,18 @@
       "work": "Learn bilingual grounding into the same predictive state without gold programs."
     },
     {
-      "stage": "G4\u2013G5",
+      "stage": "G4–G5",
       "work": "Implement learned communication, durable acquisition, correction, restart and retention in dependency order."
     },
     {
-      "stage": "G6\u2013G8",
+      "stage": "G6–G8",
       "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
     }
   ],
-  "external_issue_55": "Independent scientific validation remains pending; fresh prospective data/oracle assets and matching/statistical contracts remain engineering work. Manual validation is not the sole blocker.",
+  "external_issue_55": "Independent challenge custody/review remains required for admission; it does not block the bounded public development decision. Task/query and exact parameter choices are selected; execution/statistical commitments remain to be frozen before fits.",
   "line_counts": {
     "active_files": {
-      "active_paths.py": 255,
+      "active_paths.py": 256,
       "active_participant.py": 225,
       "active_evidence.py": 156,
       "domain_contract.py": 297,
@@ -130,53 +135,49 @@
       "active_checkpoint.py": 291,
       "acceptance_contract.py": 423,
       "acceptance_runner.py": 175,
-      "acceptance_scoring.py": 294
+      "acceptance_scoring.py": 294,
+      "prospective_oracle.py": 79,
+      "prospective_data.py": 238,
+      "prospective_audit.py": 294,
+      "observed_io.py": 48
     },
-    "active_source_files_excluding_frozen_dependencies": 2685,
-    "new_runtime_source_net": 892,
-    "new_tests_net": 940,
-    "retained_research_python": 24540,
+    "active_source_files_excluding_frozen_dependencies": 3345,
+    "new_runtime_source_net": 1,
+    "new_tests_net": 0,
+    "retained_research_python": 26039,
     "inclusive_size_goal_met": false,
-    "learned_parameter_delta": 0
+    "learned_parameter_delta": 0,
+    "new_tests": 0,
+    "scope": "Named integration files include evaluator tools and exclude frozen dependencies; see active_dependency_inventory for import/pin footprint."
   },
   "verification": {
-    "record": "results/active-acceptance-validation-v1.json",
-    "local_tests_discovered": 590,
-    "local_tests_passed": 590,
+    "scope": "Bounded active dependency cleanup; no research fit or performance result. Historical data verification is referenced below.",
+    "local_tests_discovered": 627,
+    "local_tests_passed": 627,
     "local_tests_skipped": 0,
-    "local_suite_seconds": 54.477,
-    "new_tests": 44,
-    "new_test_breakdown": {
-      "contract": 13,
-      "collector": 10,
-      "scoring": 17,
-      "integration": 4
-    },
-    "focused_tests_passed": 44,
-    "focused_suite_seconds": 6.752,
-    "historical_manifest_locks_expected": 16,
-    "historical_manifest_locks_passed": 16,
-    "new_acceptance_manifest_locks_expected": 1,
-    "new_acceptance_manifest_locks_passed": 1,
-    "original_protocol": "passed",
-    "frozen_input_preflight": "passed",
-    "synthetic_artifact_collection_scoring_and_causal_invariants": true,
-    "native_collector_and_scoring_cli": "passed_in_synthetic_tests",
-    "reproduced_malformed_trace_variants_now_rejected": 3,
-    "new_scientific_evaluation": false,
-    "new_research_fits": false,
-    "local_verified_tree_sha": "61a6f214941ad71c44e5a0f8ea93e2952b6bcaa2",
+    "local_suite_seconds": 68.43,
+    "local_output_sha256": "e36108c9ddff12caed16eca0db52372947f472e83f09331214b09ae33ddb9bdc",
+    "focused_tests_passed": 67,
+    "focused_suite_seconds": 10.621,
+    "focused_output_sha256": "cc1ca4c170d2e5c8b2638636dba48ece826dfb55664f80c5457bdcb5f76e5d63",
+    "new_tests": 0,
+    "clean_local_source_commit": "f6ce5b4f12cbc324d474bd57db2fe3f45dc7182d",
+    "local_verified_tree_sha": "e49d13cfd5ae2b912ab4bdbd9071910aed4de277",
+    "published_tree_sha": "e49d13cfd5ae2b912ab4bdbd9071910aed4de277",
     "publication_tree_matches_local_verified_code": true,
-    "published_tree_sha": "61a6f214941ad71c44e5a0f8ea93e2952b6bcaa2",
-    "remote_ci": {
-      "reference": "https://github.com/robosys-labs/cemm/pull/60/checks",
-      "scope": "Final documentation head; live status is recorded on the pull request. Local verification is not a substitute for remote CI."
+    "changed_runtime_source": {
+      "path": "active_paths.py",
+      "before_sha256": "1486f3fe98ffbe650fd6410d038c3e6c83b23f4d569606ced8da647443c9a6ee",
+      "after_sha256": "2fe80aa36686a8e47d487bac0044a02b71c2494cfd1c1ce9b837b4b0d41384e3"
     },
-    "ci_reference": "https://github.com/robosys-labs/cemm/pull/60/checks",
-    "standalone_checks_passed": 19
+    "frozen_sources_data_protocols_modified": false,
+    "new_research_fits": false,
+    "new_scientific_evaluation": false,
+    "ci_reference": "https://github.com/robosys-labs/cemm/pull/61/checks",
+    "remote_ci_scope": "Final handoff head; exact-run status is retained on the PR, separately from local verification."
   },
   "limits": [
-    "The acceptance tranche ran synthetic implementation invariants only; no research fitting, saved-research-model evaluation, closed study rerun or new scientific comparison occurred. Earlier synthetic learning verification remains historical evidence.",
+    "The prospective-data tranche generated and audited public same-author assets and ran implementation invariants only. No research fitting, saved-research-model evaluation, closed study rerun or scientific comparison occurred.",
     "Shared-kernel self-contact remains supplied per-mode alias conditioning; tiny retained mass can normalize to a confident forecast.",
     "The fresh flat model has 1512 default parameters versus 470/584/972 shared arms; neither capacity nor consumed compute is matched.",
     "Legacy flat checkpoints remain three-entity-only and cannot be converted to the new flat architecture.",
@@ -196,26 +197,37 @@
     "Whole-trajectory and role-pair metrics conjoin forecasts under delivered feedback; they are not free-running rollouts or hidden-trajectory likelihoods.",
     "A valid final forecast survives a final-feedback failure; forecast correctness does not imply successful execution completion.",
     "The numeric per-seed comparison to 0.95 never admits G1; scientific denominator, calibration, significance, capacity and consumed-compute criteria remain to be frozen.",
-    "The acceptance Session limit is 128 actions; the original G1 protocol action budget and gate remain unchanged."
+    "The acceptance Session limit is 128 actions; the original G1 protocol action budget and gate remain unchanged.",
+    "Conditional-oracle completeness is established only under the declared deterministic two-mode law, complete anchor and noiseless exogenous observation design; external correctness/custody is not established.",
+    "The evaluation in-family expected all-action ceiling is 0.8562874251497006, below the unchanged 0.95 target. This is an information-design expectation, not a finite-sample bound or learned-model regression.",
+    "The law audit uses explicit equal prior mode masses. It does not infer a uniform prior from support cardinality or condition participant predictions on oracle support.",
+    "Frozen lexicographic MAP trajectory/pair conjunctions are not optimal joint-policy ceilings; correct conditional probabilities can still yield zero pair exactness under ties.",
+    "Canonical blueprints and physical lineages are disjoint across splits, but 45 concrete action templates repeat across in-family splits; novel atomic contexts and independent structural authorship are not established.",
+    "The new assets cap cumulative missingness at three bit-events, giving conservative bounds of eight recurrent histories and 512 expansions. This does not expand the general participant resource limits.",
+    "The prefit data manifest contains no real trained checkpoint inventory. A complete comparison design must precede fitting, followed by a separate actual-checkpoint acceptance commitment.",
+    "The data exporter publishes a completion manifest last; an I/O failure may leave a new incomplete directory without it. The combined archive and audit contain evaluator-only information.",
+    "Research fitting/model scoring remain disabled in the data contract until the incomplete information/query/comparison/matching/statistical/calibration design is resolved.",
+    "The next 95% post-acquisition criterion is a new explicit prospective scope; single-contact has zero such queries and self-contact remains separate. No historical all-action gate is thereby passed."
   ],
-  "local_verified_code_commit": "956078ffc509b945bd86b2393d8453ee5bdb81bc",
+  "local_verified_code_commit": "f6ce5b4f12cbc324d474bd57db2fe3f45dc7182d",
   "diagnostics_pr": 57,
   "domain_pr": 58,
   "remaining_capability_gaps": {
     "coherent_active_training_checkpoint_evaluation_path": "IMPLEMENTED_FOR_DELIVERED_OBSERVATIONS",
     "expanded_domain_flat_implementation": "IMPLEMENTED_FRESH_ARCHITECTURE",
     "expanded_domain_matched_flat_baseline": "PENDING_CAPACITY_AND_COMPUTE_COMPARISON",
-    "prospective_information_aware_scientific_acceptance_runner": "CONTRACT_COLLECTOR_AND_SCORER_IMPLEMENTED; COMPLETE_SCIENTIFIC_STUDY_ASSETS_PENDING",
+    "prospective_information_aware_scientific_acceptance_runner": "CONTRACT_COLLECTOR_SCORER_AND_PUBLIC_DATA_ENGINEERING_IMPLEMENTED; SCIENTIFIC_INFORMATION_AND_COMPARISON_CONTRACT_PENDING",
     "fresh_independently_held_challenge": "PENDING",
     "calibrated_expanded_domain_comparison": "PENDING",
     "expanded_domain_scientific_evaluation": false,
     "novel_entity_count_transfer_established": false,
     "learned_self_contact_established": false,
-    "fresh_prospective_observed_curriculum_and_held_out_families": "PENDING",
-    "complete_conditional_oracle_and_split_lineage": "PENDING_EXTERNAL_ASSETS_AND_REVIEW",
-    "scientific_denominator_matching_and_statistics_contract": "PENDING_BEFORE_RESEARCH_FITS_OR_SCORES",
+    "fresh_prospective_observed_curriculum_and_held_out_families": "IMPLEMENTED_PUBLIC_SAME_AUTHOR_ASSETS; INDEPENDENT_CHALLENGE_PENDING",
+    "complete_conditional_oracle_and_split_lineage": "IMPLEMENTED_UNDER_DECLARED_TWO_MODE_LAW_WITH_CANONICAL_BLUEPRINT_LINEAGE; EXTERNAL_REVIEW_PENDING",
+    "scientific_denominator_matching_and_statistics_contract": "POST_ACQUISITION_TASK_AND_EXACT_PARAMETER_CHOICES_SELECTED; EXECUTION_STATISTICAL_AND_CALIBRATION_FREEZE_REMAINS_BEFORE_FITS",
     "crash_durable_forecast_journal": "NOT_IMPLEMENTED",
-    "participant_os_isolation": "NOT_IMPLEMENTED"
+    "participant_os_isolation": "NOT_IMPLEMENTED",
+    "observed_only_batch_adapter": "IMPLEMENTED_NO_SIMULATOR_OR_ORACLE_IMPORT"
   },
   "learning_version": "active-learning-v1",
   "checkpoint_format": "cemm-active-checkpoint-v1",
@@ -282,7 +294,7 @@
     },
     "prospective_acceptance_collector_and_scorer": true,
     "complete_scientific_study_runner": false,
-    "hidden_gold_scope": "SEPARATE_EVALUATOR_ONLY_CALLER_SUPPLIED",
+    "hidden_gold_scope": "SEPARATE_EVALUATOR_ONLY; PROSPECTIVE_ASSETS_GENERATE_DECLARED_LAW_TRUTH_AND_SUPPORT",
     "learner_hidden_gold_access": false,
     "complete_world_accuracy_on_unobserved_bits": true,
     "all_action_planned_denominators": true,
@@ -301,7 +313,9 @@
     "unsupported_distribution_and_likelihood_are_absent": true,
     "conditional_answered_only_nll_separately_labeled": true,
     "numeric_original_in_family_target_comparison": true,
-    "automatic_scientific_admission": false
+    "automatic_scientific_admission": false,
+    "prospective_data_conditional_oracle_and_law_audit": true,
+    "law_audit_is_learned_model_score": false
   },
   "comparison_scope": {
     "native_flat_implemented": true,
@@ -321,99 +335,34 @@
   "verification_history": [
     {
       "version": "active-inference-v5",
+      "data_version": "prospective-data-v1",
+      "code_commit": "8c662f588a9b81bdbcbdef48d3bdc26db1479c85",
+      "record": "results/prospective-data-validation-v1.json",
+      "record_sha256": "310cec1aae9e4c19467c3b29cda64affb652667ac341e44e8a9fe8432cbf73de",
+      "ci_reference": "https://github.com/robosys-labs/cemm/pull/61/checks"
+    },
+    {
+      "version": "active-inference-v5",
+      "acceptance_version": "active-acceptance-v1",
+      "code_commit": "642265d231cc1e4d606dea5e0f892e56693b3fdc",
+      "record": "results/active-acceptance-validation-v1.json",
+      "record_sha256": "988f03f3a5eb4c2eebf8ade77453c222a93e9d3f3f3c974141e65ff248b8374c",
+      "ci_reference": "https://github.com/robosys-labs/cemm/pull/60/checks"
+    },
+    {
+      "version": "active-inference-v5",
       "learning_version": "active-learning-v1",
       "code_commit": "94c059a0fd4fdb78ad5f442419053ac99e41c124",
-      "local_verified_code_commit": "5a857ab0879cb1e67ca01a1de888eafbabace5d0",
-      "verification": {
-        "record": "results/active-learning-validation-v5.json",
-        "local_tests_discovered": 546,
-        "local_tests_passed": 546,
-        "local_tests_skipped": 0,
-        "local_suite_seconds": 52.151,
-        "new_tests": 48,
-        "new_test_breakdown": {
-          "learning": 18,
-          "checkpoint": 11,
-          "flat": 9,
-          "active_contract": 10
-        },
-        "historical_manifest_locks_passed": 16,
-        "original_protocol": "passed",
-        "frozen_input_preflight": "passed",
-        "synthetic_fit_and_gradient_wiring": true,
-        "native_cli_synthetic_flat_and_no_change": "passed",
-        "new_scientific_evaluation": false,
-        "local_verified_tree_sha": "adb0ec97aac6e3f28d5e24f5909d8c9ae2e470ec",
-        "publication_tree_matches_local_verified_code": true,
-        "published_tree_sha": "adb0ec97aac6e3f28d5e24f5909d8c9ae2e470ec",
-        "remote_ci": {
-          "reference": "https://github.com/robosys-labs/cemm/pull/59/checks",
-          "scope": "Final documentation head; live status is recorded on the pull request."
-        },
-        "ci_reference": "https://github.com/robosys-labs/cemm/pull/59/checks"
-      },
-      "line_counts": {
-        "active_files": {
-          "active_paths.py": 255,
-          "active_participant.py": 225,
-          "active_evidence.py": 156,
-          "domain_contract.py": 297,
-          "domain_kernel.py": 149,
-          "domain_flat.py": 74,
-          "active_learning.py": 346,
-          "active_checkpoint.py": 291
-        },
-        "active_source_files_excluding_frozen_dependencies": 1793,
-        "new_runtime_source_net": 767,
-        "new_tests_net": 1127,
-        "retained_research_python": 22708,
-        "inclusive_size_goal_met": false
-      },
-      "evaluation_scope": {
-        "delivered_observation_likelihood_and_coverage": true,
-        "hidden_gold_available": false,
-        "scientific_acceptance_runner": false,
-        "complete_world_accuracy_on_unobserved_bits": false,
-        "whole_trajectory_gate": false,
-        "calibration_established": false,
-        "valid_prefixes_and_feedback_failure_forecast_retained": true,
-        "planned_denominators_retained_on_failure": true,
-        "infinite_contradiction_nll_preserved": true,
-        "unsupported_distribution_and_likelihood_are_absent": true,
-        "conditional_answered_only_nll_separately_labeled": true
-      }
+      "record": "results/active-learning-validation-v5.json",
+      "record_sha256": "0afe42e906f4f7263ed32202a3cccda7d041d0bf20a0301098955ff51c855cc8",
+      "ci_reference": "https://github.com/robosys-labs/cemm/pull/59/checks"
     },
     {
       "version": "active-inference-v4",
       "code_commit": "2b281cd7f1ba0de4a7985cacc4bbf272783d01ed",
-      "local_verified_code_commit": "9132fa626d15c197b49f4d77d0971ed54ba1ef8d",
-      "verification": {
-        "record": "results/active-domain-validation-v4.json",
-        "local_tests_discovered": 498,
-        "local_tests_passed": 498,
-        "local_tests_skipped": 0,
-        "new_tests": 41,
-        "historical_manifest_locks_passed": 16,
-        "original_protocol": "passed",
-        "frozen_input_preflight": "passed",
-        "new_scientific_evaluation": false,
-        "publication_tree_matches_local_verified_code": true,
-        "published_tree_sha": "57136a701a2ad9dba0325c9e8725324a3417347d"
-      },
-      "line_counts": {
-        "active_files": {
-          "active_paths.py": 232,
-          "active_participant.py": 205,
-          "active_evidence.py": 156,
-          "domain_contract.py": 284,
-          "domain_kernel.py": 149
-        },
-        "active_source_files_excluding_frozen_dependencies": 1026,
-        "new_runtime_source_net": 563,
-        "new_tests_net": 834,
-        "retained_research_python": 20814,
-        "inclusive_size_goal_met": false
-      }
+      "record": "results/active-domain-validation-v4.json",
+      "record_sha256": "0ce44001d5ad06c3f2abe2c919fe3f33ba29cdbef1844462fd0a6c39836922cd",
+      "ci_reference": "https://github.com/robosys-labs/cemm/pull/58/checks"
     }
   ],
   "acceptance_version": "active-acceptance-v1",
@@ -468,6 +417,184 @@
     "learned_parameter_delta": 0,
     "inference_and_learning_source_changes": false,
     "fresh_scientific_assets_complete": false,
-    "automatic_gate_admission": false
+    "automatic_gate_admission": false,
+    "prospective_conditional_oracle_available": true,
+    "oracle_completeness_scope": "ACCEPTANCE_VALIDATOR_CHECKS_CONSISTENCY_ONLY; SEPARATE_DATA_ORACLE_COMPUTES_COMPLETE_SUPPORT_UNDER_ITS_DECLARED_LAW"
+  },
+  "acceptance_code_commit": "642265d231cc1e4d606dea5e0f892e56693b3fdc",
+  "prospective_data_version": "prospective-data-v1",
+  "prospective_data_pr": 61,
+  "prospective_data_scope": {
+    "version": "prospective-data-v1",
+    "handoff": "PROSPECTIVE_DATA.md",
+    "contract": "prospective_data_protocol_v1.json",
+    "manifest_lock": "snapshots/prospective_data_protocol_v1.sha256",
+    "builder_module": "experiments.predictive_nucleus.prospective_data",
+    "export_cli": "python -m experiments.predictive_nucleus.prospective_data --output NEW_DIRECTORY",
+    "oracle_module": "experiments.predictive_nucleus.prospective_oracle",
+    "audit_module": "experiments.predictive_nucleus.prospective_audit",
+    "observed_adapter": "experiments.predictive_nucleus.observed_io.load_batches",
+    "scope": "PUBLIC_SAME_AUTHOR_ENGINEERING_ASSETS",
+    "archive": "data/prospective-assets-v1.json.xz",
+    "archive_sha256": "42cf52fb84fece67d23b78751080cd6c6d603767cc6981a517116dca52995f6d",
+    "archive_bytes": 217752,
+    "source_files_pinned": 10,
+    "physical_draws": 328,
+    "episode_views": 624,
+    "splits": {
+      "calibration": {
+        "physical_draws": 32,
+        "episode_views": 64,
+        "planned_actions": 156
+      },
+      "evaluation": {
+        "physical_draws": 200,
+        "episode_views": 368,
+        "planned_actions": 1185
+      },
+      "selection": {
+        "physical_draws": 32,
+        "episode_views": 64,
+        "planned_actions": 152
+      },
+      "train": {
+        "physical_draws": 64,
+        "episode_views": 128,
+        "planned_actions": 336
+      }
+    },
+    "entity_counts": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "maximum_actions": 12,
+    "maximum_cumulative_missing_bits": 3,
+    "maximum_dense_live_histories": 8,
+    "maximum_dense_candidate_expansions": 512,
+    "self_contact_in_development": false,
+    "intercontact_reset_interventions": false,
+    "oracle_law": "binary-contact-v1; two fixed equally likely source orientations",
+    "oracle_inputs_include_actual_hidden_mode": false,
+    "oracle_inputs_include_hidden_truth": false,
+    "conditional_support_complete_under_declared_law": true,
+    "source_truth_and_oracle_cross_checked": true,
+    "blueprint_selection_before_actual_mode": true,
+    "cross_split_canonical_blueprint_overlap": 0,
+    "shared_action_templates_across_splits": 45,
+    "role_pairs_share_actual_mode_anchor_and_masks": true,
+    "actual_family_and_configured_inventory_checked": true,
+    "training_events": 336,
+    "training_events_with_any_reading": 332,
+    "training_all_missing_events": 4,
+    "training_contacts": 192,
+    "training_contacts_full_before_after": 64,
+    "training_contacts_operands_before_after": 104,
+    "raw_reading_counts_establish_all_empirical_eligibility": false,
+    "evaluation_in_family_planned_actions": 334,
+    "evaluation_in_family_expected_ambiguous_mass": 96.0,
+    "evaluation_in_family_expected_all_action_ceiling": 0.8562874251497006,
+    "evaluation_all_family_planned_actions": 1185,
+    "evaluation_all_family_expected_all_action_ceiling": 0.8717299578059071,
+    "original_target": 0.95,
+    "original_target_redefined": false,
+    "ceiling_scope": "EXPECTED_UNDER_DECLARED_LAW_CONDITIONAL_ON_ACCEPTED_BLUEPRINTS; NOT_A_FINITE_REALIZED_SAMPLE_BOUND",
+    "trajectory_pair_scope": "COHERENT_BRANCH_CONJUNCTION_WITH_FROZEN_LEXICOGRAPHIC_MAP; NOT_OPTIMAL_JOINT_POLICY",
+    "evaluation_carry_positive_mode_view_branches": 198,
+    "evaluation_mode_view_branches": 736,
+    "cases_selected_using_carry_or_ceiling": false,
+    "observed_adapter_temporal_padding": false,
+    "observed_adapter_hidden_target_filling": false,
+    "acceptance_plan_created": false,
+    "research_fitting_enabled": false,
+    "research_model_scoring_enabled": false,
+    "scientific_comparison_design_complete": false,
+    "independent_custody_verified": false,
+    "participant_isolation_enforced": false,
+    "automatic_gate_admission": false,
+    "prefit_freeze": "DATA_AND_COMPLETE_INFORMATION_COMPARISON_DESIGN_BEFORE_FITTING",
+    "postfit_freeze": "ACTUAL_NATIVE_CHECKPOINT_SHA_INVENTORY_BOUND_TO_PREFIT_COMMITMENTS_BEFORE_COLLECTION"
+  },
+  "prospective_data_code_commit": "8c662f588a9b81bdbcbdef48d3bdc26db1479c85",
+  "active_dependency_inventory": {
+    "entrypoints": [
+      "active_participant",
+      "active_learning",
+      "active_checkpoint"
+    ],
+    "module_import_source_lines": 2730,
+    "module_import_files": {
+      "comparison_scoring.py": 177,
+      "context_support.py": 193,
+      "domain_contract.py": 297,
+      "active_paths.py": 256,
+      "external_participant.py": 244,
+      "joint_objective.py": 322,
+      "active_evidence.py": 156,
+      "active_participant.py": 225,
+      "active_learning.py": 346,
+      "domain_flat.py": 74,
+      "domain_kernel.py": 149,
+      "active_checkpoint.py": 291
+    },
+    "hash_required_but_not_imported": {
+      "masked_replay.py": 185
+    },
+    "import_plus_source_pin_lines": 2915,
+    "forbidden_imports_present": [],
+    "active_paths_sha256": "2fe80aa36686a8e47d487bac0044a02b71c2494cfd1c1ce9b837b4b0d41384e3",
+    "previous_imported_modules": 14,
+    "previous_imported_source_lines": 3337,
+    "previous_import_plus_source_pin_lines": 3337,
+    "parameter_delta": 0,
+    "retained_test_lines": 11809,
+    "remaining_pin_reason": "Removing the masked_replay.py identity pin changes acceptance/data commitments; migration deferred.",
+    "compatibility": "Old native checkpoints require their original source checkout; strict matching remains enforced. Frozen v1 bundles unchanged."
+  },
+  "progress_control": {
+    "last_learned_results": [
+      "COMMON_OBJECTIVE_DECISION.md",
+      "SENSOR_TRANSFER_DECISION.md"
+    ],
+    "invariant_count_is_scientific_gate_progress": false,
+    "next_deliverable": "One frozen comparison AND actual KEEP/REVISE/REJECT/STOP report; separate prefit/checkpoint commitments in the same end-to-end tranche.",
+    "another_preparation_only_tranche_requires": "Reproduced defect blocking that concrete comparison.",
+    "new_generic_runner_checkpoint_format_or_model_architecture_planned": false,
+    "further_refactor_scope": "Only a demonstrated execution blocker or later release packaging milestone."
+  },
+  "selected_next_task": {
+    "details": "ACTIVE_NUCLEUS.md#next-end-to-end-tranche-evidence-followed-by-prediction",
+    "information_scope": "First existing non-self contact acquires evidence; pre-contact 01/10/11 chosen before mode, full feedback delivered, later contact indices fixed as queries.",
+    "train_total_contacts": [
+      1,
+      2
+    ],
+    "query_threshold": 0.95,
+    "criterion_scope": "New prospective post-acquisition criterion; single-contact has zero such queries, self-contact is separately scored. No historical gate is thereby passed.",
+    "all_action_reports_retained": true,
+    "learned_query_policy_claimed": false,
+    "selected_neural_configs": {
+      "untied_shared": "hidden 11, persistence False, role_tying False, memory True: 562 parameters",
+      "reset_shared": "same 562 parameters and initial tensors, memory False",
+      "flat": "hidden 3, persistence False: 562 parameters"
+    },
+    "consumed_compute_match_established": false,
+    "execution_contract_frozen": false,
+    "remaining_prefit_decisions": [
+      "Exact data/source hashes and controls",
+      "Primary contrast and material effect",
+      "Fitting/selection/calibration rules",
+      "Actual exposure/compute accounting",
+      "Independent units, multiplicity and fixed budget"
+    ],
+    "in_family_continuation_total_contacts": 2,
+    "ood_composition_total_contacts": [
+      3,
+      4,
+      5
+    ],
+    "single_contact_scope": "Acquisition/ambiguity diagnostic, zero post-acquisition queries.",
+    "self_contact_scope": "First held-out self-contact separately scored; mode-invariant, no composition-depth claim."
   }
 }
