@@ -363,7 +363,7 @@
   "pending_engineering_in_order": [
     {
       "stage": "G2",
-      "work": "Keep V2 weights frozen; compare observed histories with equal individual 50/50 state marginals and different joint correlations, then the same relational or ordered two-source prediction. Reuse existing collector, conditional oracle and joint scorer; no posterior injection, refitting or new workspace without evidence."
+      "work": "Freeze a bounded three-operand observed-outcome learning pilot after an executable missing-source invariance witness. Add only the missing input arity and shared joint factor; use independent source bits, two separately learned laws, five seeds and matched controls. Preserve successful V2 checkpoints and all closed studies; simultaneous timing remains separate."
     },
     {
       "stage": "G3",
@@ -378,7 +378,7 @@
       "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
     }
   ],
-  "external_issue_55": "Independent challenge custody/review remains required for admission. Alias-v2 KEEP establishes bounded observed learning; continuation-v1 STOP and alias-v1 REVISE remain unchanged. No historical bank is reopened.",
+  "external_issue_55": "Independent challenge custody/review remains required for scientific admission. Alias-v2, mixed-v1 and joint-correlation-v1 KEEP decisions establish bounded capabilities under supplied structure; continuation-v1 STOP and alias-v1 REVISE remain unchanged. No historical bank is reopened.",
   "line_counts": {
     "active_files": {
       "active_paths.py": 258,
@@ -402,34 +402,49 @@
       "alias_evidence_data.py": 191,
       "alias_evidence_run.py": 247,
       "mixed_composition_data.py": 126,
-      "mixed_composition_run.py": 275
+      "mixed_composition_run.py": 345,
+      "joint_correlation_data.py": 132
     },
-    "active_source_files_excluding_frozen_dependencies": 4788,
+    "active_source_files_excluding_frozen_dependencies": 4990,
     "new_runtime_source_net": 0,
-    "new_tests_net": 212,
-    "retained_research_python": 28534,
+    "new_tests_net": 211,
+    "retained_research_python": 28947,
     "inclusive_size_goal_met": false,
     "learned_parameter_delta": 0,
-    "new_tests": 11,
-    "scope": "Current mixed-composition tranche:401 study-adapter lines,212 test lines; zero runtime/parameter growth. Physical counts include comments/blanks; historical studies remain retained.",
-    "new_study_source_net": 401,
-    "retained_test_lines": 12861
+    "new_tests": 12,
+    "scope": "Current joint-correlation tranche:132 generator lines,70 net reused-runner lines,211 focused test lines; zero runtime/parameter growth. Physical counts include comments/blanks; historical studies remain retained.",
+    "new_study_source_net": 202,
+    "retained_test_lines": 13072
   },
   "verification": {
-    "local_tests_passed": 669,
-    "local_tests_skipped": 0,
-    "local_suite_seconds": 87.92,
-    "local_test_output_sha256": "03f010eeadb304b46edcee3f4c6a058835607b9700639d1426c57183eacedf76",
-    "published_source_commit": "669b7b1181f478cdd6c74429535b52a3d80b5ade",
-    "published_tree": "d98e5c5d3143b2d57b7123947d85f576e019a6df",
-    "protocol_manifest_locks": 22,
+    "scope": "Current joint-correlation source invariants plus one prospective collection; internal byte review is not independent scientific admission.",
+    "isolated_suite_tests": 681,
+    "isolated_suite_ci_conclusion": "success",
+    "local_precommit_sweep": {
+      "tests": 681,
+      "passed": 680,
+      "errors": 1,
+      "seconds": 119.015,
+      "error_test": "test_real_frozen_preflight_in_complete_checkout",
+      "cause": "Required clean tracked tree before the new source was committed",
+      "output_sha256": "1f51b34b3f4e9bf389232fbc6a086010d8fc1ed0666b50e8d732badc94d5f56f"
+    },
+    "local_committed_preflight_rerun": {
+      "tests": 1,
+      "passed": 1,
+      "seconds": 4.477,
+      "output_sha256": "2b9ff9581565e70427544a4447ffd19d2f84c90a475f271df1d22e22fce33263"
+    },
+    "published_source_commit": "2181a01d60689722d62f2ee44110b9c00471e031",
+    "published_tree": "639a5c45a613f09e7d38c0a91838d9427a99f353",
+    "protocol_manifest_locks": 23,
     "frozen_preflight": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
-    "invariant_ci_run": 41086979788,
+    "invariant_ci_run": 41091915442,
     "invariant_ci_conclusion": "success",
-    "source_ci_run": 41086980144,
+    "source_ci_run": 41091915993,
     "source_ci_conclusion": "success",
-    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/63/checks",
-    "independent_artifact_arithmetic": "results/mixed-composition-validation-v1.json",
+    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/64/checks",
+    "internal_artifact_arithmetic": "results/joint-correlation-validation-v1.json",
     "independent_scientific_custody": false,
     "closed_study_reruns": false,
     "new_fits": 0,
@@ -437,7 +452,7 @@
   },
   "limits": [
     "Continuation v1 completed its frozen fits and artifact collection but formally STOPPED: empirical zero-support feedback contradictions terminated episodes and left required forecasts unproduced. G1 remains NOT_ADMITTED; failures and all planned denominators are retained.",
-    "Alias-v2 and mixed-composition-v1 establish self-contact learning and ordered interoperability under one supplied binary law, including withheld feedback and mode coalescence. Opposite-correlation histories, simultaneous timing, independently varied laws and independent custody remain open.",
+    "Alias-v2, mixed-composition-v1 and joint-correlation-v1 establish bounded self-contact learning, ordered interoperability and different predictions for equal-marginal histories under one supplied binary law. Joint filtering and persistent modes are supplied. Simultaneous timing, independently varied multi-source laws and independent custody remain open.",
     "Default flat/shared capacities differ. Continuation v1 selected 562 parameters and identical realized exposure for each neural arm; function classes, supplied biases and consumed CPU remain different. Flat mean in-family accuracy was 15%, limiting a specifically compositional interpretation of the full gap.",
     "Legacy flat checkpoints remain three-entity-only and cannot be converted to the new flat architecture.",
     "Positive-mass paths are neither pruned nor merged; missing observations can exhaust the default 64-live-path or 512-candidate budgets.",
@@ -455,7 +470,7 @@
     "Predictable or outcome-ignorable dropout is asserted, not verified by the collector.",
     "Whole-trajectory and role-pair metrics conjoin forecasts under delivered feedback; they are not free-running rollouts or hidden-trajectory likelihoods.",
     "A valid final forecast survives a final-feedback failure; forecast correctness does not imply successful execution completion.",
-    "The 0.95 identifiable-query competence criterion and statistical decision order were frozen for continuation v1. They do not replace the historical all-action target or admit G1; the global completion rule returns STOP before later superiority rules.",
+    "The 0.95 identifiable-query competence criterion and statistical decision order were frozen for continuation v1. They do not replace the historical in-family complete-world target or admit G1; the global completion rule returns STOP before later superiority rules.",
     "The acceptance Session limit is 128 actions; the original G1 protocol action budget and gate remain unchanged.",
     "Conditional-oracle completeness is established only under the declared deterministic two-mode law, complete anchor and noiseless exogenous observation design; external correctness/custody is not established.",
     "Historical prospective-data-v1: the evaluation in-family expected all-action ceiling is 0.8562874251497006, below the unchanged 0.95 target. This is an information-design expectation, not a finite-sample bound or learned-model regression.",
@@ -469,18 +484,18 @@
     "Continuation-v1 post-acquisition criteria have an explicit prospective scope: single-contact has zero such queries, self-contact is separate, and all-action reports remain authoritative for their original scope. Shared mean all-action accuracy is 88.265683%; no historical all-action gate is passed.",
     "The five-seed sign reference is conditional on one frozen public bank and assumed independent initializations. Related views/query positions are not independent physical draws; repeated empirical checkpoint labels are not independent fits. No physical-world generalization inference or general calibration claim is established.",
     "Alias-v1 remains REVISE_EVIDENCE_FIX: four seeds succeed but seed 37 fails starting-one self contacts. Alias-v2 changes only the observed schedule on a fresh bank, not the architecture, objective, budget criteria or old result.",
-    "Alias-v2 KEEP is scoped to self/continuation queries: all-action accuracy is 88.742604%, with 183 ambiguous-acquisition regressions and 473 unchanged-bit errors. The original 95% all-action target remains unchanged and unmet.",
+    "Alias-v2 KEEP is scoped to self/continuation queries: all-action accuracy is 88.742604%, with 183 ambiguous-acquisition regressions and 473 unchanged-bit errors. The original 95% in-family complete-world target remains unchanged and unmet.",
     "Empirical v6 recovery is source-localized and synthetic-regression-tested; no retained failing historical episode or empirical study was replayed. Neural-only alias studies do not establish empirical run-level recovery.",
     "Balanced training environment orientations are supplied study design, not learner labels; selection precedes final realization in both arms. Cross-study V1/V2 performance is descriptive because their fresh banks differ."
   ],
-  "local_verified_code_commit": "669b7b1181f478cdd6c74429535b52a3d80b5ade",
+  "local_verified_code_commit": "2181a01d60689722d62f2ee44110b9c00471e031",
   "diagnostics_pr": 57,
   "domain_pr": 58,
   "remaining_capability_gaps": {
     "coherent_active_training_checkpoint_evaluation_path": "IMPLEMENTED_FOR_DELIVERED_OBSERVATIONS",
     "expanded_domain_flat_implementation": "IMPLEMENTED_FRESH_ARCHITECTURE",
     "expanded_domain_matched_flat_baseline": "CONTINUATION_V1_COMPLETED_PARAMETER_AND_REALIZED_EXPOSURE_MATCH; CONSUMED_COMPUTE_NOT_MATCHED",
-    "prospective_information_aware_scientific_acceptance_runner": "MIXED_COMPOSITION_V1_EXECUTED_KEEP; FORMAL_ADMISSION_PENDING",
+    "prospective_information_aware_scientific_acceptance_runner": "MIXED_AND_JOINT_CORRELATION_V1_EXECUTED_KEEP; FORMAL_ADMISSION_PENDING",
     "fresh_independently_held_challenge": "PENDING",
     "calibrated_expanded_domain_comparison": "CONTINUATION_V1_PROPER_SCORE_AND_ECE_DIAGNOSTICS_RETAINED; GENERAL_CALIBRATION_NOT_ESTABLISHED",
     "expanded_domain_scientific_evaluation": true,
@@ -488,14 +503,16 @@
     "learned_self_contact_established": true,
     "fresh_prospective_observed_curriculum_and_held_out_families": "IMPLEMENTED_PUBLIC_SAME_AUTHOR_ASSETS; INDEPENDENT_CHALLENGE_PENDING",
     "complete_conditional_oracle_and_split_lineage": "IMPLEMENTED_UNDER_DECLARED_TWO_MODE_LAW_WITH_CANONICAL_BLUEPRINT_LINEAGE; EXTERNAL_REVIEW_PENDING",
-    "scientific_denominator_matching_and_statistics_contract": "MIXED_V1_PROSPECTIVELY_SEPARATES_IDENTIFIABLE_EXACTNESS_AND_AMBIGUOUS_JOINT_FIDELITY; HISTORICAL_GATES_UNCHANGED",
+    "scientific_denominator_matching_and_statistics_contract": "MIXED_AND_CORRELATION_V1_PROSPECTIVELY_SEPARATE_IDENTIFIABLE_EXACTNESS_AND_AMBIGUOUS_JOINT_FIDELITY; HISTORICAL_GATES_UNCHANGED",
     "crash_durable_forecast_journal": "NOT_IMPLEMENTED",
     "participant_os_isolation": "NOT_IMPLEMENTED",
     "observed_only_batch_adapter": "IMPLEMENTED_NO_SIMULATOR_OR_ORACLE_IMPORT",
     "learned_self_contact_scope": "Bounded observed learning and mixed ordered composition under supplied alias conditioning and one binary law; arbitrary self laws and independent custody remain untested.",
     "mixed_alias_ordinary_composition": "COMPLETED_KEEP_MIXED_COMPOSITION_PUBLIC_FIXED_LAW",
     "withheld_acquisition_and_mode_coalescence": "TESTED_WITH_FROZEN_WEIGHTS",
-    "equal_marginals_different_correlations": "NEXT_G2_MEASUREMENT"
+    "equal_marginals_different_correlations": "COMPLETED_KEEP_JOINT_CORRELATION_FROM_OBSERVED_HISTORIES_WITH_FROZEN_WEIGHTS",
+    "independent_multi_source_laws": "NEXT_G2_PILOT; CURRENT_TWO_OPERAND_INPUT_AND_LOCAL_FACTOR_CANNOT_EXPRESS_SINGLE_THREE_PARTICIPANT_EVENT",
+    "simultaneous_timing": "NOT_REPRESENTED_IN_CURRENT_SERIAL_ACTION_CONTRACT; SEPARATE_G2_SCOPE"
   },
   "learning_version": "active-learning-v1",
   "checkpoint_format": "cemm-active-checkpoint-v1",
@@ -584,27 +601,27 @@
     "automatic_scientific_admission": false,
     "prospective_data_conditional_oracle_and_law_audit": true,
     "law_audit_is_learned_model_score": false,
-    "complete_scientific_study_runner_scope": "Study-specific continuation-v1 driver composing existing APIs; not a new general framework.",
-    "participant_complete_scientific_run": false,
-    "continuation_fixed_query_summary": true
+    "complete_scientific_study_runner_scope": "Current frozen-weight mixed/correlation driver composes existing APIs; historical continuation-v1 remains separately retained.",
+    "participant_complete_scientific_run": true,
+    "continuation_fixed_query_summary": true,
+    "participant_complete_scientific_run_scope": "Current joint-correlation-v1 execution is complete; historical continuation-v1 remains STOP_INCOMPLETE_RUN and is not reclassified."
   },
   "comparison_scope": {
-    "native_flat_implemented": true,
-    "default_parameter_counts": {
-      "kernel_supplied_persistence": 470,
-      "kernel_learned_background": 584,
-      "kernel_untied_roles": 972,
-      "kernel_memory_reset": 584,
-      "flat": 1512,
-      "flat_supplied_persistence": 1512
-    },
-    "matched_capacity": false,
-    "matched_consumed_compute": false,
-    "new_scientific_comparison": true,
-    "legacy_flat_weights_convertible": false,
-    "continuation_v1_neural_parameters_each": 562,
-    "matched_realized_training_exposure": true,
-    "formal_decision": "STOP_INCOMPLETE_RUN"
+    "record_role": "CURRENT_JOINT_CORRELATION_V1_COMPARISON",
+    "study": "joint-correlation-v1",
+    "formal_decision": "KEEP_JOINT_CORRELATION",
+    "arms": [
+      "ordinary",
+      "alias"
+    ],
+    "parameters_each": 562,
+    "identical_architecture": true,
+    "frozen_v2_checkpoints": true,
+    "new_training_updates": 0,
+    "both_arms_pass_all_critical_contrasts": true,
+    "analytic_marginal_control_is_trained_baseline": false,
+    "historical_baseline_comparison": "historical_continuation_comparison_scope",
+    "independent_scientific_admission": false
   },
   "verification_history": [
     {
@@ -685,6 +702,30 @@
         },
         "local_test_checkout_commit": "a504369e294c11079ba0f37c016e17e82cb3f8fc",
         "published_prefit_tree_matches_tested_checkout": true
+      }
+    },
+    {
+      "study": "mixed-composition-v1",
+      "record": "G1_G2_PROGRESS_REVIEW.md",
+      "verification": {
+        "local_tests_passed": 669,
+        "local_tests_skipped": 0,
+        "local_suite_seconds": 87.92,
+        "local_test_output_sha256": "03f010eeadb304b46edcee3f4c6a058835607b9700639d1426c57183eacedf76",
+        "published_source_commit": "669b7b1181f478cdd6c74429535b52a3d80b5ade",
+        "published_tree": "d98e5c5d3143b2d57b7123947d85f576e019a6df",
+        "protocol_manifest_locks": 22,
+        "frozen_preflight": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
+        "invariant_ci_run": 41086979788,
+        "invariant_ci_conclusion": "success",
+        "source_ci_run": 41086980144,
+        "source_ci_conclusion": "success",
+        "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/63/checks",
+        "independent_artifact_arithmetic": "results/mixed-composition-validation-v1.json",
+        "independent_scientific_custody": false,
+        "closed_study_reruns": false,
+        "new_fits": 0,
+        "checkpoint_files_unchanged": 10
       }
     }
   ],
@@ -873,21 +914,21 @@
     "previous_imported_source_lines": 3337,
     "previous_import_plus_source_pin_lines": 3337,
     "parameter_delta": 0,
-    "retained_test_lines": 12861,
+    "retained_test_lines": 13072,
     "remaining_pin_reason": "Removing the masked_replay.py identity pin changes acceptance/data commitments; migration deferred.",
     "compatibility": "Old native checkpoints require their original source checkout; strict matching remains enforced. Frozen v1 bundles unchanged.",
     "continuation_study_changed_inference_imports": false,
     "alias_studies_changed_inference_imports": false,
-    "runtime_net_lines_since_continuation": 2
+    "runtime_net_lines_since_continuation": 2,
+    "joint_correlation_study_changed_inference_imports": false
   },
   "progress_control": {
     "last_learned_results": [
       "ALIAS_EVIDENCE_DECISION_V2.md"
     ],
     "invariant_count_is_scientific_gate_progress": false,
-    "next_deliverable": "Keep V2 weights frozen; compare observed histories with equal individual 50/50 state marginals and different joint correlations, then the same relational or ordered two-source prediction. Reuse existing collector, conditional oracle and joint scorer; no posterior injection, refitting or new workspace without evidence.",
-    "another_preparation_only_tranche_requires": "A concrete blocker of the selected fresh correlation challenge; do not repeat completed G1 or mixed-composition work.",
-    "new_generic_runner_checkpoint_format_or_model_architecture_planned": false,
+    "next_deliverable": "Freeze a bounded three-operand observed-outcome learning pilot after an executable missing-source invariance witness. Add only the missing input arity and shared joint factor; use independent source bits, two separately learned laws, five seeds and matched controls. Preserve successful V2 checkpoints and all closed studies; simultaneous timing remains separate.",
+    "another_preparation_only_tranche_requires": "The demonstrated three-operand input/locality limitation; retain its executable witness and proceed directly to one bounded fresh learning pilot, without repeating completed G1, mixed or correlation studies.",
     "further_refactor_scope": "Only a demonstrated execution blocker or later release packaging milestone.",
     "historical_learned_results": [
       "ALIAS_EVIDENCE_DECISION_V1.md",
@@ -895,27 +936,32 @@
       "COMMON_OBJECTIVE_DECISION.md",
       "SENSOR_TRANSFER_DECISION.md"
     ],
-    "last_frozen_decision": "KEEP_MIXED_COMPOSITION",
+    "last_frozen_decision": "KEEP_JOINT_CORRELATION",
     "execution_and_artifact_collection_complete": true,
     "participant_complete_run": true,
     "latest_frozen_weight_results": [
+      "JOINT_CORRELATION_DECISION_V1.md",
       "G1_G2_PROGRESS_REVIEW.md"
-    ]
+    ],
+    "next_bounded_representation_extension": "Three-operand input and one shared learned joint factor justified by current pair-only locality; no generic workspace.",
+    "new_generic_runner_planned": false,
+    "bounded_model_architecture_extension_selected": true
   },
   "selected_next_task": {
-    "status": "SELECTED_G2_CORRELATION_CHALLENGE; PROTOCOL_NOT_YET_FROZEN",
+    "status": "SELECTED_G2_INDEPENDENT_MULTI_SOURCE_PILOT; PROTOCOL_NOT_YET_FROZEN",
     "stage": "G2",
-    "work": "Keep V2 weights frozen; compare observed histories with equal individual 50/50 state marginals and different joint correlations, then the same relational or ordered two-source prediction. Reuse existing collector, conditional oracle and joint scorer; no posterior injection, refitting or new workspace without evidence.",
-    "details": "ACTIVE_NUCLEUS.md#next-g2-experiment-joint-correlation-beyond-individual-marginals",
+    "work": "Freeze a bounded three-operand observed-outcome learning pilot after an executable missing-source invariance witness. Add only the missing input arity and shared joint factor; use independent source bits, two separately learned laws, five seeds and matched controls. Preserve successful V2 checkpoints and all closed studies; simultaneous timing remains separate.",
+    "details": "ACTIVE_NUCLEUS.md#next-g2-experiment-one-event-with-two-independent-sources",
     "training_permitted": false,
-    "checkpoints": "data/alias-evidence-fit-v2; both arms and all five seeds",
-    "completed_previous_task": "mixed-composition-v1 KEEP_MIXED_COMPOSITION",
+    "training_prerequisite": "Fresh source/data/budget freeze and missing-source invariance witness before any pilot fitting.",
+    "preserve_checkpoints": "All ten data/alias-evidence-fit-v2 checkpoints remain byte-identical; any ternary pilot uses a separately versioned and prospectively frozen model.",
+    "completed_previous_task": "joint-correlation-v1 KEEP_JOINT_CORRELATION",
     "historical_decisions_unchanged": true,
     "scientific_admission_unchanged": true
   },
-  "current_pr": 63,
+  "current_pr": 64,
   "continuation_pr": 62,
-  "current_study_decision": "KEEP_MIXED_COMPOSITION",
+  "current_study_decision": "KEEP_JOINT_CORRELATION",
   "g1_development_readiness": "PROCEED_TO_G2",
   "current_development_stage": "G2",
   "mixed_composition_study": {
@@ -948,5 +994,109 @@
     "worst_ambiguous_total_variation": 0.020284754869352807,
     "collection_cpu_seconds": 57.596349937,
     "same_author_public_custody": true
+  },
+  "mixed_composition_pr": 63,
+  "joint_correlation_study": {
+    "version": "joint-correlation-v1",
+    "formal_decision": "KEEP_JOINT_CORRELATION",
+    "scientific_gate_admitted": false,
+    "freeze_commit": "2181a01d60689722d62f2ee44110b9c00471e031",
+    "checkpoint_commit": "2361c48986276fe897a9cd9beac874720cfcbb7a",
+    "report": "JOINT_CORRELATION_DECISION_V1.md",
+    "results": "results/joint-correlation-v1",
+    "validation": "results/joint-correlation-validation-v1.json",
+    "forecasts": 1920,
+    "execution_complete": true,
+    "parameters_each": 562,
+    "training_updates": 0,
+    "inference_source_changes": 0,
+    "critical_contrast_pairs_each_arm": 160,
+    "critical_contrast_pairs_passed_each_arm": 160,
+    "identifiable_correct_each_arm": 160,
+    "identifiable_planned_each_arm": 160,
+    "identifiable_role_pairs_correct_each_arm": 80,
+    "identifiable_role_pairs_planned_each_arm": 80,
+    "identifiable_repairs": 0,
+    "identifiable_regressions": 0,
+    "ambiguous_repairs": 136,
+    "ambiguous_regressions": 136,
+    "map_outside_information_support": 0,
+    "known_unchanged_errors": 0,
+    "all_action_accuracy_each_arm": 0.5833333333333334,
+    "expected_oracle_all_action_accuracy": 0.5833333333333334,
+    "candidate_mean_oracle_kl": 0.00535308552387005,
+    "worst_candidate_ambiguous_total_variation": 0.02669159302111975,
+    "candidate_equal_target_one_range": [
+      0.0027162678555542386,
+      0.009121426040802788
+    ],
+    "candidate_opposite_target_one_range": [
+      0.9957128673113642,
+      0.9988643139188896
+    ],
+    "candidate_paired_gap_range": [
+      0.98805689539534,
+      0.9961480460633354
+    ],
+    "ordinary_paired_gap_range": [
+      0.986984674475206,
+      0.9944860033242061
+    ],
+    "factorized_control": {
+      "scope": "Analytic information-loss control; not a trained baseline or neural ablation",
+      "equal_target_one": 0.5,
+      "opposite_target_one": 0.5,
+      "gap": 0.0
+    },
+    "probability_score_regressions": {
+      "mean_nll_delta_alias_minus_ordinary": 0.0006048341816651259,
+      "identifiable": {
+        "improved": 96,
+        "worsened": 64,
+        "equal": 0,
+        "max_increase": 0.0014517082143343553,
+        "mean_delta": 0.0001313319963379298
+      },
+      "ambiguous": {
+        "improved": 259,
+        "worsened": 541,
+        "equal": 0,
+        "max_increase": 0.03394966122159471,
+        "mean_delta": 0.0006995346187304198
+      }
+    },
+    "collection_cpu_seconds": 13.223050647000003,
+    "collection_wall_seconds": 13.224660104999202,
+    "same_author_public_custody": true,
+    "unique_blueprints": 15,
+    "contrast_context_lineages": 8,
+    "independent_physical_replication_claimed": false,
+    "realized_unchanged_bit_errors": {
+      "ordinary": 328,
+      "alias": 408
+    },
+    "known_unchanged_bit_errors": {
+      "ordinary": 0,
+      "alias": 0
+    }
+  },
+  "historical_continuation_comparison_scope": {
+    "native_flat_implemented": true,
+    "default_parameter_counts": {
+      "kernel_supplied_persistence": 470,
+      "kernel_learned_background": 584,
+      "kernel_untied_roles": 972,
+      "kernel_memory_reset": 584,
+      "flat": 1512,
+      "flat_supplied_persistence": 1512
+    },
+    "matched_capacity": false,
+    "matched_consumed_compute": false,
+    "new_scientific_comparison": true,
+    "legacy_flat_weights_convertible": false,
+    "continuation_v1_neural_parameters_each": 562,
+    "matched_realized_training_exposure": true,
+    "formal_decision": "STOP_INCOMPLETE_RUN",
+    "record_role": "HISTORICAL_CONTINUATION_V1_BASELINE_COMPARISON; NOT_CURRENT_STUDY_STATUS"
   }
 }

@@ -12,6 +12,12 @@ to the original research gate or a production admission.
 is `669b7b1181f478cdd6c74429535b52a3d80b5ade`; the single collection and byte audit
 are complete in [PR #63](https://github.com/robosys-labs/cemm/pull/63).
 
+**Subsequent progress:** the selected joint-correlation challenge is also
+complete with **KEEP_JOINT_CORRELATION** at every seed. See its
+[retained decision](JOINT_CORRELATION_DECISION_V1.md) and
+[PR #64](https://github.com/robosys-labs/cemm/pull/64). This review's historical
+mixed-composition measurements and admission boundaries are unchanged.
+
 ## What is already established
 
 The starting checkpoint is
@@ -189,7 +195,7 @@ the two already-frozen V2 arms; this tranche changes neither arm's weights.
   or forecast existed. After exact tree/commit synchronization, the one recorded
   scientific attempt ran to completion. No scored bank was retried.
 
-## Next G2 step
+## Selected follow-on G2 step — now completed
 
 Keep the successful weights fixed. Test two **observed histories with the same
 individual 50/50 state marginals but different joint correlations**, followed by
@@ -203,3 +209,8 @@ alias curriculum, larger model or workspace. Add a mechanism only if a concrete
 failure demonstrates the current function class cannot represent the task.
 Simultaneous timing and independently varied multi-source laws remain subsequent
 G2 scope; G3 language follows the relevant composition evidence.
+
+The [joint-correlation result](JOINT_CORRELATION_DECISION_V1.md) fulfills this
+follow-on task without new fitting. The current next task is the bounded
+[independent multi-source pilot](ACTIVE_NUCLEUS.md#next-g2-experiment-one-event-with-two-independent-sources),
+motivated by the demonstrated two-operand input/locality limit.
