@@ -11,9 +11,8 @@ import numpy as np
 import torch
 
 from . import domain_contract as scores
-from . import masked_replay as frozen
 
-WORLDS = frozen.WORLDS
+WORLDS = scores.binary_worlds(3)
 require = scores.require
 
 
@@ -155,7 +154,7 @@ class NeuralPaths:
         return evidence
 
 
-class EmpiricalPaths(frozen.EmpiricalPaths):
+class EmpiricalPaths:
     """Retain direct observations separately from predictive table support.
 
     Recovery requires a full current observation and the sufficient *observed*
@@ -169,7 +168,9 @@ class EmpiricalPaths(frozen.EmpiricalPaths):
         self.expansion_limit = expansion_limit
         require(memory.mode in ('prefix', 'local', 'contact') and type(first_contact) is bool and
                 (not first_contact or memory.mode == 'contact'), 'invalid empirical recovery policy')
-        super().__init__(memory, anchor, first_contact=first_contact, limit=limit)
+        self.memory, self.first_contact, self.limit = memory, first_contact, limit
+        self.paths = [[(1., tuple(map(int, bits)), ())] for bits in anchor.tolist()]
+        self.diagnostic = {}
         self.observed = [tuple(map(int, row)) for row in anchor.tolist()]
         self.history = [() for _ in self.observed]
         self.ready = True
