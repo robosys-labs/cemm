@@ -948,12 +948,12 @@
     "bounded_model_architecture_extension_selected": false
   },
   "selected_next_task": {
-    "status": "PREPARED_G2_MULTISOURCE_LAWS; PUBLIC_PREFIT_COMMIT_REQUIRED",
+    "status": "FITS_COMPLETE; PUBLIC_CHECKPOINT_FREEZE_THEN_ONE_COLLECTION",
     "stage": "G2",
     "work": "Freeze and execute one paired NAND/NOR outcome-learning study on the unchanged 562-parameter model and native API. Test fully observed one-step predictions through held three-to-five-contact multisource schedules, with matched/crossed law checkpoints. Preserve all historical weights, decisions and closed studies; simultaneous timing remains separate.",
     "details": "MULTISOURCE_LAW_DECISION_V1.md",
     "training_permitted": false,
-    "training_prerequisite": "Public source/data/protocol commitment before ten fixed fits; actual checkpoint and plan commitment before one collection.",
+    "training_prerequisite": "All ten prescribed fits are complete. No refitting this bank; commit actual checkpoint/plan bytes before collection.",
     "preserve_checkpoints": "All historical checkpoints remain byte-identical. Ten new law-specific checkpoints use the unchanged model and native checkpoint format.",
     "completed_previous_task": "joint-correlation-v1 KEEP_JOINT_CORRELATION",
     "historical_decisions_unchanged": true,
@@ -1110,5 +1110,22 @@
     "distinct_paired_prequery_histories": 16,
     "unique_information_keys": 74,
     "independent_scientific_custody": false
-  }
+  },
+  "multisource_law_study": {
+    "version": "multisource-law-v1",
+    "stage": "FITS_COMPLETE_BEFORE_COLLECTION",
+    "protocol": "multisource_law_protocol_v1.json",
+    "prefit_commit": "682672eb3ff30ceb8437b808b6058c9c673c4380",
+    "data": "data/multisource-law-v1",
+    "fitted": "data/multisource-law-fit-v1",
+    "fits": 10,
+    "completed_updates": 1280,
+    "parameters_each": 562,
+    "model_or_inference_changes": false,
+    "scored_result": null,
+    "historical_checkpoints_changed": false,
+    "fit_cpu_seconds": 92.19074129000002,
+    "fit_wall_seconds": 92.20662882098986
+  },
+  "multisource_law_pr": 65
 }

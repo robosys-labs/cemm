@@ -1,7 +1,7 @@
 # Multisource law v1: prospective unchanged-model test
 
 Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22). Recorded 2026-10-30.
-**Status: prepared for public prefit freeze; no new-law result yet.**
+**Status: ten prescribed fits complete; checkpoint commitment precedes collection. No scored result yet.**
 G1 development remains PROCEED_TO_G2; formal scientific admission remains
 NOT_ADMITTED. All earlier STOP, REVISE and KEEP decisions are preserved.
 
@@ -117,3 +117,15 @@ The stage commands are `python -m experiments.predictive_nucleus.multisource_law
 with `prepare --output DATA`, `fit --data DATA --output FIT`,
 `bind --data DATA --fitted FIT`, then `collect --data DATA --fitted FIT --output RESULTS`.
 The required public commits separate prepare/fit and bind/collect.
+
+## Prefit and checkpoint record
+
+Public source/data freeze: `682672eb3ff30ceb8437b808b6058c9c673c4380`.
+All **700 isolated tests** passed locally in **89.796 seconds**, all 24 locks
+match, and [freeze invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41103517083)
+passed. All ten fits completed 128 updates each (**1,280 updates** total), using
+**92.190741 CPU seconds** and **92.206629 fit-region wall seconds** in total.
+No fit reached its 180-second ceiling or required a retry. The exact native
+[training manifest](data/multisource-law-fit-v1/training.json), five initial
+checkpoints, ten trained checkpoints and both evaluation plans are retained.
+These are exposure and provenance records, not measured competence.
