@@ -22,12 +22,12 @@ V2 arms pass **32/32 critical contrasts, 32/32 identifiable complete worlds and
 16/16 identifiable reversed-role pairs at every seed**. Histories with identical
 anchors, delivered readings and individual state marginals require opposite
 predictions under the same next contact. The candidate's minimum probability
-separation is **0.988057**, against a frozen 0.8 target. An analytic factorized
+separation is **0.988057**, against a frozen 0.8 target. An analytic unconditional-factorization
 control gives zero separation. No posterior was injected into the learner.
 
 Worst candidate ambiguous joint TV is **0.026692** (limit 0.1); worst
 family/stratum mean KL is **0.008059 nats** (limit 0.05). Unsupported MAP worlds
-and definitely unchanged-bit errors are zero. The [decision](results/joint-correlation-v1/decision.json)
+and errors on coordinates known to retain a fixed value are zero. The [decision](results/joint-correlation-v1/decision.json)
 is **KEEP_JOINT_CORRELATION**; the [manifest](results/joint-correlation-v1/manifest.json)
 retains every forecast. All-action exactness is **58.3333%** for both arms, matching
 this deliberately ambiguous bank's expected oracle MAP rate.
@@ -46,6 +46,15 @@ The earlier mixed-composition result also remains complete: **8,000 forecasts**,
 and V2's 88.74% use different ambiguity mixtures from this bank; they must not be
 treated as a descending performance series. Historical regressions and the supplied
 joint-filtering boundary remain in the respective reports.
+
+The [saved-asset assumption review](results/joint-correlation-assumption-review-v1.json)
+finds no invalidating result defect. The control discards both state–state and
+state–mechanism dependence; it does not exclude marginals conditioned on the
+persistent mechanism, which suffice for this bank. The 64 episode views contain
+32 distinct pre-query histories, and the 32 contrast records contain 16 distinct
+paired histories. These dependent counts are descriptive, not independent trials.
+Zero known-fixed-value errors alone does not establish preservation of an
+uncertain variable along every possible trajectory.
 
 | Retained study | Frozen decision |
 |---|---|
@@ -551,8 +560,8 @@ The twelve-module active
 inference/learning/checkpoint import closure remains **2,732 physical lines**, or
 **2,917** including the historical source pin. All retained research Python is
 **28,947 lines**, including **13,072 test lines**; the inclusive **2,000-line goal
-remains unmet**. The next bounded extension must address the demonstrated
-three-operand input/locality limit; no generic workspace is selected.
+remains unmet**. The next study uses the unchanged pairwise model and tests fresh
+learned laws; the review below withdraws the proposed input-arity extension.
 
 ## Historical verification records
 
@@ -604,40 +613,41 @@ No retained failing historical episode or continuation-v1 study was replayed;
 the alias studies contain neural arms only. Historical empirical completion and
 accuracy are therefore unchanged and no new empirical run-level result is claimed.
 
-## Next G2 experiment: one event with two independent sources
+## Next G2 experiment: learned laws and multisource composition
 
-The explicit equal-marginal/different-correlation test is complete. Preserve the
-successful V2 checkpoints and run a bounded **three-operand observed-outcome
-learning pilot**. The current [action contract](domain_contract.py) names only
-two handles, and [DomainKernel](domain_kernel.py) reads only their bits in its
-interaction factor; a nonparticipant's background sees only its own bit and
-action kind. At a fixed initial latent prior, a single event `c'=f(a,b)` with
-three distinct independently varied coordinates cannot be represented. Naming
-`(a,b)` excludes c from the factor; naming `(a,c)` excludes b. More examples of
-the existing pairwise law cannot remove this input/locality limit.
+**Assumption correction, 2026-10-30:** the earlier argument concerned a new
+atomic three-operand event. It did not establish a limit on serial composition.
+Existing contacts `(a,t); (b,t)` already compute `t XOR a XOR b`; the earlier
+reversed-fork bank also includes physical fan-in. That locality argument does
+not justify a new action, factor, workspace or checkpoint format.
 
-First retain a small executable missing-source invariance witness, then add only
-the required three-operand input and one shared learned joint interaction factor.
-Freeze fresh data and budgets before any new fitting. Two separately trained
-law datasets (for example XOR and directed AND-NOT, evaluator-only) should use
-the same architecture, independent source and target bits, 1–2 training actions
-and 3–5 evaluation actions, role orders and untouched-coordinate checks. Include
-a missing-source ablation and an equally expressive neural control at matched
-exposure. Reuse the existing observed loss and evidence APIs where the versioned
-arity extension permits. This is not a new generic workspace or a reason to
-rerun closed pairwise studies. The next pilot is selected, not yet frozen or run.
+The [next frozen study](MULTISOURCE_LAW_DECISION_V1.md) learns **NAND and NOR
+separately from observed consequences**, using the same 562-parameter nucleus,
+native fitting, checkpoint, session and evaluation APIs. Both laws use identical
+initial states, action geometry, masks and training budgets. After two-contact
+training, held three-to-five-contact schedules combine independently varied
+source and target bits. Physical fan-in and fan-out are scored separately.
+At 64 controlled contexts, identical delivered histories and the same next action
+require different outcomes under the two laws. Matched and crossed-law checkpoints
+test whether learned outcomes change forecasts. The oracle and law labels remain
+evaluator-only. The five paired seeds are ten fresh fits; old V2 weights and
+closed studies remain unchanged.
+
+Public source/data/budget commitment precedes fitting; actual trained checkpoints
+and plans are committed before one collection. The primary points are identifiable,
+so zero unsupported MAP predictions requires **100% primary exactness**, in addition
+to the stated 95% accuracy floor. No new-law performance is claimed before collection.
 
 Simultaneous timing remains separate: the current Session serializes actions and
 requires feedback between predictions. An explicit observable same-time grouping
-is absent. Do not claim that another serial chain or the ternary pilot establishes
-simultaneous composition.
+is absent. Ordered compositions do not establish simultaneous composition.
 
 ## Remaining roadmap after joint correlation v1
 
 | Stage | Current state and remaining evidence |
 |---|---|
 | G1 | Development foundation sufficient for G2. Original scientific admission remains open for baseline adequacy and independent challenge evidence; historical target unchanged. |
-| G2 | Ordinary continuation, mixed alias/ordinary uncertainty and equal-marginal/different-correlation tests complete. Next: bounded independent multi-source learning; simultaneous timing remains explicit subsequent scope. |
+| G2 | Ordinary continuation, mixed alias/ordinary uncertainty and equal-marginal/different-correlation tests complete. Next: separately learned NAND/NOR laws and ordered multisource composition on the existing model; simultaneous timing remains subsequent scope. |
 | G3 | Teach a relation nonverbally, then transfer it through two languages on the same world model after composition evidence. |
 | G4 | Communication improves held-out external-goal utility against silent/random/shuffled controls. |
 | G5 | Answered experience persists across episodes, reduces later clarification and preserves earlier competence. |

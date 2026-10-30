@@ -19,11 +19,14 @@ See [the G1/G2 review](../../experiments/predictive_nucleus/G1_G2_PROGRESS_REVIE
 [joint-correlation result](../../experiments/predictive_nucleus/JOINT_CORRELATION_DECISION_V1.md)
 and [PR #64](https://github.com/robosys-labs/cemm/pull/64). Do not reopen successful
 alias fitting or interpret unknowable hidden outcomes as a new architectural defect.
-Next is a bounded three-operand learning pilot: the current pair-only action
-contract and local factor cannot express one event depending on two independent
-external sources and a third target. First record an executable witness for
-this source-level limitation, then add only the missing general input/factor support under a fresh frozen
-protocol. Simultaneous timing remains separate unestablished scope.
+The assumption review corrects the proposed next step: the pair-only interface
+limits atomic-event arity, but existing contacts already compose two independent
+sources. No architecture extension follows from that argument. Next is
+[fresh NAND/NOR learning and ordered multisource composition](../../experiments/predictive_nucleus/MULTISOURCE_LAW_DECISION_V1.md)
+on the unchanged 562-parameter model, with matched exposure and crossed-law
+controls. The correlation control excludes unconditional marginals; it does not
+exclude representations conditioned on the persistent mechanism. Simultaneous
+timing remains separate unestablished scope.
 
 ## 0. Decision
 

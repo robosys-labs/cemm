@@ -363,18 +363,18 @@
   "pending_engineering_in_order": [
     {
       "stage": "G2",
-      "work": "Freeze a bounded three-operand observed-outcome learning pilot after an executable missing-source invariance witness. Add only the missing input arity and shared joint factor; use independent source bits, two separately learned laws, five seeds and matched controls. Preserve successful V2 checkpoints and all closed studies; simultaneous timing remains separate."
+      "work": "Freeze and execute one paired NAND/NOR outcome-learning study on the unchanged 562-parameter model and native API. Test fully observed one-step predictions through held three-to-five-contact multisource schedules, with matched/crossed law checkpoints. Preserve all historical weights, decisions and closed studies; simultaneous timing remains separate."
     },
     {
       "stage": "G3",
       "work": "Learn bilingual grounding into the same predictive state without gold programs."
     },
     {
-      "stage": "G4\u2013G5",
+      "stage": "G4–G5",
       "work": "Implement learned communication, durable acquisition, correction, restart and retention in dependency order."
     },
     {
-      "stage": "G6\u2013G8",
+      "stage": "G6–G8",
       "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
     }
   ],
@@ -927,8 +927,8 @@
       "ALIAS_EVIDENCE_DECISION_V2.md"
     ],
     "invariant_count_is_scientific_gate_progress": false,
-    "next_deliverable": "Freeze a bounded three-operand observed-outcome learning pilot after an executable missing-source invariance witness. Add only the missing input arity and shared joint factor; use independent source bits, two separately learned laws, five seeds and matched controls. Preserve successful V2 checkpoints and all closed studies; simultaneous timing remains separate.",
-    "another_preparation_only_tranche_requires": "The demonstrated three-operand input/locality limitation; retain its executable witness and proceed directly to one bounded fresh learning pilot, without repeating completed G1, mixed or correlation studies.",
+    "next_deliverable": "Freeze and execute one paired NAND/NOR outcome-learning study on the unchanged 562-parameter model and native API. Test fully observed one-step predictions through held three-to-five-contact multisource schedules, with matched/crossed law checkpoints. Preserve all historical weights, decisions and closed studies; simultaneous timing remains separate.",
+    "another_preparation_only_tranche_requires": "A concrete execution blocker; no architecture extension is justified by the corrected atomic-arity argument. Proceed to the single fixed experiment after public freeze.",
     "further_refactor_scope": "Only a demonstrated execution blocker or later release packaging milestone.",
     "historical_learned_results": [
       "ALIAS_EVIDENCE_DECISION_V1.md",
@@ -943,18 +943,18 @@
       "JOINT_CORRELATION_DECISION_V1.md",
       "G1_G2_PROGRESS_REVIEW.md"
     ],
-    "next_bounded_representation_extension": "Three-operand input and one shared learned joint factor justified by current pair-only locality; no generic workspace.",
+    "next_bounded_representation_extension": null,
     "new_generic_runner_planned": false,
-    "bounded_model_architecture_extension_selected": true
+    "bounded_model_architecture_extension_selected": false
   },
   "selected_next_task": {
-    "status": "SELECTED_G2_INDEPENDENT_MULTI_SOURCE_PILOT; PROTOCOL_NOT_YET_FROZEN",
+    "status": "PREPARED_G2_MULTISOURCE_LAWS; PUBLIC_PREFIT_COMMIT_REQUIRED",
     "stage": "G2",
-    "work": "Freeze a bounded three-operand observed-outcome learning pilot after an executable missing-source invariance witness. Add only the missing input arity and shared joint factor; use independent source bits, two separately learned laws, five seeds and matched controls. Preserve successful V2 checkpoints and all closed studies; simultaneous timing remains separate.",
-    "details": "ACTIVE_NUCLEUS.md#next-g2-experiment-one-event-with-two-independent-sources",
+    "work": "Freeze and execute one paired NAND/NOR outcome-learning study on the unchanged 562-parameter model and native API. Test fully observed one-step predictions through held three-to-five-contact multisource schedules, with matched/crossed law checkpoints. Preserve all historical weights, decisions and closed studies; simultaneous timing remains separate.",
+    "details": "MULTISOURCE_LAW_DECISION_V1.md",
     "training_permitted": false,
-    "training_prerequisite": "Fresh source/data/budget freeze and missing-source invariance witness before any pilot fitting.",
-    "preserve_checkpoints": "All ten data/alias-evidence-fit-v2 checkpoints remain byte-identical; any ternary pilot uses a separately versioned and prospectively frozen model.",
+    "training_prerequisite": "Public source/data/protocol commitment before ten fixed fits; actual checkpoint and plan commitment before one collection.",
+    "preserve_checkpoints": "All historical checkpoints remain byte-identical. Ten new law-specific checkpoints use the unchanged model and native checkpoint format.",
     "completed_previous_task": "joint-correlation-v1 KEEP_JOINT_CORRELATION",
     "historical_decisions_unchanged": true,
     "scientific_admission_unchanged": true
@@ -1098,5 +1098,17 @@
     "matched_realized_training_exposure": true,
     "formal_decision": "STOP_INCOMPLETE_RUN",
     "record_role": "HISTORICAL_CONTINUATION_V1_BASELINE_COMPARISON; NOT_CURRENT_STUDY_STATUS"
+  },
+  "assumption_review": {
+    "artifact": "results/joint-correlation-assumption-review-v1.json",
+    "invalidating_result_defect": false,
+    "joint_correlation_decision": "KEEP_JOINT_CORRELATION",
+    "ternary_extension_withdrawn": true,
+    "reason": "Atomic-event arity limits do not imply limits on serial multisource composition; existing contacts compute t XOR a XOR b.",
+    "correlation_control_scope": "Unconditional factorization is excluded; conditioning entity marginals on the persistent mechanism suffices for this bank.",
+    "distinct_prequery_histories": 32,
+    "distinct_paired_prequery_histories": 16,
+    "unique_information_keys": 74,
+    "independent_scientific_custody": false
   }
 }

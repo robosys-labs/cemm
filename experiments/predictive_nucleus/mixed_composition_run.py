@@ -194,7 +194,8 @@ def _metrics(points):
     return result
 
 
-def analyze(report, assets, config):
+def analyze(report, assets, config, *, arms=ARMS, reference='ordinary', candidate='alias',
+            study=None, protocol_path=None, scope=None, training_updates=0):
     from .acceptance_scoring import _safe
     observed = {c['episode']: c for c in assets['inputs']['episodes']}
     information = {c['episode']: c['forecasts'] for c in assets['information']['episodes']}
@@ -216,7 +217,7 @@ def analyze(report, assets, config):
         by_identity[p['participant'], p['model_seed'], p['episode'], t] = p
         if p['answerable']: pairs[p['participant'], p['model_seed'], p['pair_id']].append(p)
     metrics, checks, changes = {}, {}, {}
-    for arm in ARMS:
+    for arm in arms:
         metrics[arm] = {}
         for seed in config['model_seeds']:
             points = groups[arm, seed]
@@ -237,17 +238,17 @@ def analyze(report, assets, config):
                     'correct': sum(all(p['correct'] for p in v) for v in selected)}
             metrics[arm][str(seed)] = row
     for seed in config['model_seeds']:
-        points = groups['alias', seed]
+        points = groups[candidate, seed]
         changed = {key: [] for key in ('identifiable_repairs', 'identifiable_regressions',
                                       'ambiguous_repairs', 'ambiguous_regressions')}
         for p in points:
-            before = by_identity['ordinary', seed, p['episode'], p['step']]
+            before = by_identity[reference, seed, p['episode'], p['step']]
             if before['correct'] != p['correct']:
                 key = ('identifiable' if p['answerable'] else 'ambiguous') + (
                     '_repairs' if p['correct'] else '_regressions')
                 changed[key].append([p['episode'], p['step']])
         changes[str(seed)] = changed
-        row, limits = metrics['alias'][str(seed)], config['analysis']
+        row, limits = metrics[candidate][str(seed)], config['analysis']
         families = list(row['by_family'].values())
         checks[str(seed)] = {
             'complete_support': row['all']['support_coverage'] == 1.,
@@ -268,16 +269,16 @@ def analyze(report, assets, config):
             checks[str(seed)]['every_correlation_contrast'] = row['critical_contrasts']['all_passed']
     complete = not report['metadata']['incomplete_inventory'] and not report['metadata']['failure_records']
     passed = complete and all(all(c.values()) for c in checks.values())
-    study = 'JOINT_CORRELATION' if 'critical_contrast' in config['analysis'] else 'MIXED_COMPOSITION'
+    study = study or ('JOINT_CORRELATION' if 'critical_contrast' in config['analysis'] else 'MIXED_COMPOSITION')
     decision = 'KEEP_' + study if passed else (
         'STOP_INCOMPLETE_EXECUTION' if not complete else 'REVISE_' + study)
     return _safe({'version': config['version'], 'by_arm': metrics, 'changes': changes,
         'decision': {'decision': decision, 'execution_complete': complete, 'checks': checks,
             'gate_g1': 'NOT_ADMITTED', 'g1_development_readiness': 'PROCEED_TO_G2',
-            'g2_scope': ('Equal-marginal observed histories with different joint correlations; full G2 remains open'
+            'g2_scope': scope or ('Equal-marginal observed histories with different joint correlations; full G2 remains open'
                 if study == 'JOINT_CORRELATION' else 'Mixed alias/ordinary ordered composition; full G2 remains open'),
-            'scientific_admission': False, 'new_training_updates': 0},
-        'metadata': report['metadata'], 'protocol_sha256': io._hash(PROTOCOL)})
+            'scientific_admission': False, 'new_training_updates': training_updates},
+        'metadata': report['metadata'], 'protocol_sha256': io._hash(protocol_path or PROTOCOL)})
 
 
 def collect(data, output):
