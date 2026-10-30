@@ -1,0 +1,130 @@
+{
+  "version": "alias-evidence-v1",
+  "scope": "PUBLIC_PREFIT_FROZEN_EVIDENCE_INTERVENTION",
+  "gate_g1": "NOT_ADMITTED",
+  "base_commit": "e84db0a9c6706436207a9380ad05ed4c2d31ce6f",
+  "recorded_on": "2026-10-30",
+  "timezone": "Africa/Lagos",
+  "hypothesis": "Observed self-contact evidence repairs the unidentified alias ratio without adding parameters or losing learned distinct-role continuation.",
+  "data": {
+    "entity_counts": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "split_seeds": {
+      "train": 20261030021,
+      "selection": 20261030022,
+      "calibration": 20261030023,
+      "evaluation": 20261030024
+    },
+    "draws_per_cell": {
+      "train": 8,
+      "selection": 4,
+      "calibration": 4,
+      "evaluation": 4
+    },
+    "max_blueprint_attempts": 10000
+  },
+  "model_seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "model": {
+    "hidden": 11,
+    "persistence": false,
+    "role_tying": false,
+    "memory": true
+  },
+  "parameters": 562,
+  "arms": {
+    "ordinary": "Fresh ordinary-only evidence",
+    "alias": "Identical evidence except contacts in first two eligible single-contact lineages per N; both reversed views become self contacts on their own first operand."
+  },
+  "substitution": {
+    "eligibility": "Different PRECONTACT operand bits, determined from anchor plus optional leading set only. Never select on hidden mode or contact outcome.",
+    "selected_physical_lineages_each_N": 2,
+    "alias_views_each_N": 4,
+    "starting_bits": "Two zero and two one per N; retain dependence of the two views of each lineage.",
+    "matched": "Initialization, episode IDs, action kinds/counts, sensor coverage, masks, visible bits, batch geometry, updates and CPU ceilings; actual consumed compute measured.",
+    "changed": "Contact alias structure and consequential subsequent observed values only.",
+    "training_selector_reads_postcontact_outcomes": false
+  },
+  "evaluation": {
+    "same_bank_both_arms": true,
+    "fresh_self_queries": 16,
+    "self_each_N_each_bit": 2,
+    "self_canonical_exclusions": "Both training tapes, reserved splits, within-bank duplicates, historical continuation-v1 self-contact blueprints.",
+    "continuation_queries": 704,
+    "ood_queries": 672,
+    "self_partition": "in_family in combined plan; action exposure differs deliberately between arms",
+    "oracle": "Existing independently coded conditional oracle under supplied binary-contact-v1 law; same-author public custody.",
+    "historical_canonical_overlap": "Reported descriptively for the whole bank, not hidden or claimed absent."
+  },
+  "fit": {
+    "updates": 128,
+    "cpu_seconds": 300,
+    "learning_rate": 0.02,
+    "batch_size": 32,
+    "live_path_limit": 64,
+    "candidate_expansions": 512
+  },
+  "analysis": {
+    "accuracy_each_seed": 0.95,
+    "material_self_gain": 0.2,
+    "positive_gain_each_seed": true,
+    "retention": "Zero newly wrong continuation queries relative to paired ordinary control; >=95% continuation accuracy and role-pair conjunction, full support, zero unchanged-bit errors.",
+    "self": "At least95% exact each starting bit per seed, full support and no unchanged-bit errors.",
+    "proper_scores": "Raw joint NLL/Brier/ECE10; zero truth probability retains infinite NLL, abstention missing proper score.",
+    "missing_forecasts": "Incorrect on every planned denominator; never delete failure suffixes.",
+    "inferential_scope": "Descriptive five-seed paired intervention on one public bank; no population significance test or independent-world generalization claim."
+  },
+  "decision_order": [
+    "STOP_INCOMPLETE_EXECUTION if any unknown failure, incomplete inventory, interrupted execution, invalid identity or unequal prescribed updates",
+    "REVISE_EVIDENCE_FIX if any candidate self/continuation/support/preservation/retention criterion fails",
+    "KEEP_EVIDENCE_FIX if mean self gain >=0.20 and positive for every seed",
+    "Otherwise NO_MATERIAL_EVIDENCE_EFFECT"
+  ],
+  "execution": {
+    "runtime": {
+      "python": "3.13.16",
+      "torch": "2.10.0+cpu",
+      "numpy": "2.3.5",
+      "threads": 1,
+      "dtype": "float64",
+      "deterministic_algorithms": true
+    },
+    "prefit_commit_required": true,
+    "actual_checkpoint_commit_before_collection": true,
+    "one_attempt": true,
+    "retries": 0,
+    "selection_or_calibration_fit": false,
+    "historical_studies_rerun": false,
+    "source_fix": "active-inference-v6 permits empirical observed-context recovery after contradiction; neural architecture and objective unchanged.",
+    "recognized_model_failure": "Feedback-phase ValueError with message visible evidence outside model support or observation outside model support AND impossible_observation evidence. Retain measured incorrect/unproduced points. Every other exception or missing trial makes execution incomplete.",
+    "empirical_or_flat_new_fits": false
+  },
+  "cost_scope": "562 parameters and matched realized exposure; no claim of equal consumed compute.",
+  "supplied_vs_learned": {
+    "supplied": [
+      "binary simulator",
+      "stable IDs",
+      "two persistent latent modes",
+      "pair factorization and alias diagonal conditioning",
+      "available actions and sensors",
+      "training/evaluation design"
+    ],
+    "learned": [
+      "pair outcomes",
+      "alias diagonal ratio from added observations",
+      "intervention outcomes",
+      "untouched-entity persistence",
+      "latent-mode evidence accumulation"
+    ]
+  },
+  "historical_decision": "continuation-v1 STOP_INCOMPLETE_RUN remains unchanged; no gate redefinition or admission."
+}

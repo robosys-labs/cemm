@@ -1,6 +1,5 @@
 """Successor repair regressions, not a trained-performance or challenge study."""
 from collections import Counter
-from copy import deepcopy
 import json
 import math
 import unittest
@@ -277,14 +276,47 @@ class RepairTests(unittest.TestCase):
         f.predict(actions(CONTACT)); f.receive(*visible([(1, 0, 0)]))
         self.assertEqual(f.diagnostic['recovery'], ['missing_relevant_history'])
 
-    def test_supported_empirical_conflict_is_not_silently_resynchronized(self):
-        memory = SensorMemory('local'); add(memory, ANCHOR, OBSERVE, (), ANCHOR)
-        f = active.EmpiricalPaths(memory, bits(ANCHOR))
-        f.predict(actions(OBSERVE)); before = deepcopy(f.paths)
-        with self.assertRaisesRegex(ValueError, 'outside empirical support'):
-            f.receive(*visible([(0, 0, 0)]))
-        self.assertEqual(f.paths, before)
-        self.assertEqual(f.history, [()])
+    def test_empirical_contradiction_retains_zero_forecast_and_recovers_observed_context(self):
+        observed = (0, 1, 0); history = ((ANCHOR, CONTACT, observed),)
+        for mode, first in (('local', False), ('prefix', False), ('contact', False), ('contact', True)):
+            with self.subTest(mode=mode, first_contact=first):
+                memory = SensorMemory(mode); add(memory, ANCHOR, CONTACT, (), (1, 0, 0))
+                add(memory, observed, OBSERVE, history, observed)
+                before = memory.digest()
+                f = active.EmpiricalPaths(memory, bits(ANCHOR), first_contact=first)
+                p, yes = f.predict(actions(CONTACT))
+                self.assertTrue(yes[0]); self.assertTrue(torch.isneginf(p[0, 2]))
+                f.receive(*visible([observed]))
+                self.assertEqual(f.diagnostic['support_contradiction'], [True])
+                self.assertEqual(f.diagnostic['recovery'], ['recovered_observed_context'])
+                self.assertEqual(f.paths, [[(1., observed, history)]])
+                self.assertTrue(torch.isneginf(p[0, 2]))  # Recovery does not rescore the forecast.
+                p, yes = f.predict(actions(OBSERVE))
+                self.assertTrue(yes[0]); self.assertEqual(p[0, 2], 0.)
+                f.receive(*visible([observed]))
+                self.assertEqual(f.diagnostic['support_contradiction'], [False])
+                self.assertEqual(memory.digest(), before)
+
+    def test_partial_empirical_contradiction_abstains_without_fabricating_history(self):
+        observed = (0, 1, 0)
+        for mode, first in (('local', False), ('prefix', False), ('contact', False), ('contact', True)):
+            with self.subTest(mode=mode, first_contact=first):
+                memory = SensorMemory(mode); add(memory, ANCHOR, CONTACT, (), (1, 0, 0))
+                add(memory, observed, OBSERVE, (), observed)
+                before = memory.digest()
+                f = active.EmpiricalPaths(memory, bits(ANCHOR), first_contact=first)
+                f.predict(actions(CONTACT)); f.receive(*visible([(-1, 1, 0)]))
+                self.assertEqual(f.diagnostic['support_contradiction'], [True])
+                self.assertEqual(f.diagnostic['recovery'], ['missing_current_readings'])
+                self.assertEqual(f.paths, [[]])
+                _, yes = f.predict(actions(OBSERVE)); self.assertFalse(yes[0])
+                f.receive(*visible([observed]))
+                self.assertEqual(f.diagnostic['support_contradiction'], [False])
+                self.assertEqual(f.history[0][0][2], (-1, 1, 0))
+                self.assertEqual(f.diagnostic['recovery'], ['recovered_observed_context'
+                    if mode == 'local' else 'missing_relevant_history'])
+                _, yes = f.predict(actions(OBSERVE)); self.assertEqual(bool(yes[0]), mode == 'local')
+                self.assertEqual(memory.digest(), before)
 
     def test_partial_unknown_support_is_not_renormalized_away(self):
         memory = SensorMemory('local'); add(memory, ANCHOR, OBSERVE, (), ANCHOR)
@@ -319,7 +351,7 @@ class RepairTests(unittest.TestCase):
         s = Session(model=JointKernel(persistence=True))
         start = s.handle({'op': 'start', 'episode': 'x', 'ids': ['a', 'b', 'c'],
                          'observation': dict(zip('abc', ANCHOR))})
-        self.assertEqual(start['implementation']['version'], 'active-inference-v5')
+        self.assertEqual(start['implementation']['version'], 'active-inference-v6')
         for step in range(10):
             p = s.handle({'op': 'predict', 'episode': 'x', 'step': step,
                           'action': {'kind': 'observe', 'participants': []}})

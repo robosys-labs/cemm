@@ -191,7 +191,7 @@ class ActiveEvidenceSessionTests(unittest.TestCase):
     def session(self, **kwargs):
         session = api.Session(**kwargs)
         started = session.handle(start())
-        self.assertEqual(started['implementation']['version'], 'active-inference-v5')
+        self.assertEqual(started['implementation']['version'], 'active-inference-v6')
         self.assertIn('evidence_contract', started)
         return session
 
@@ -274,20 +274,44 @@ class ActiveEvidenceSessionTests(unittest.TestCase):
         self.assertEqual((s.evidence.time, result['evidence']['scored_steps']), (2, 1))
         self.assertEqual(s.phase, 'READY')
 
-    def test_supported_neural_and_empirical_conflicts_keep_terminal_evidence(self):
-        for kwargs in ({'model': joint_objective.JointKernel(persistence=True)},
-                       {'memory': local_memory(), 'control': 'local'}):
-            s = self.session(**kwargs); response = s.handle(predict())
-            with self.assertRaises(api.FeedbackFailure) as caught:
-                s.handle(feedback(response['receipt'], values=(1, 1, 0)))
-            evidence = caught.exception.evidence
-            self.assertTrue(evidence['impossible_observation'])
-            self.assertFalse(evidence['committed'])
-            self.assertEqual(evidence['status'], 'MODEL_MISMATCH_EVIDENCE')
-            self.assertEqual((s.step, s.evidence.time, s.evidence.support.time), (0, 0, 0))
-            self.assertEqual(s.evidence.log_e_value, 0.)
-            self.assertEqual(s.phase, 'ERROR')
-            json.dumps(evidence, allow_nan=False)
+    def test_supported_neural_conflict_keeps_terminal_evidence(self):
+        s = self.session(model=joint_objective.JointKernel(persistence=True)); response = s.handle(predict())
+        with self.assertRaises(api.FeedbackFailure) as caught:
+            s.handle(feedback(response['receipt'], values=(1, 1, 0)))
+        evidence = caught.exception.evidence
+        self.assertTrue(evidence['impossible_observation'])
+        self.assertFalse(evidence['committed'])
+        self.assertEqual(evidence['status'], 'MODEL_MISMATCH_EVIDENCE')
+        self.assertEqual((s.step, s.evidence.time, s.evidence.support.time), (0, 0, 0))
+        self.assertEqual(s.evidence.log_e_value, 0.)
+        self.assertEqual(s.phase, 'ERROR')
+        json.dumps(evidence, allow_nan=False)
+
+    def test_empirical_contradiction_survives_recovery_with_sticky_alarm_and_unchanged_table(self):
+        for first_reading in ((1, 1, 0), (1, None, 0)):
+            with self.subTest(first_reading=first_reading):
+                memory = local_memory()
+                key, order = context((1, 1, 0), (2, -1, -1, -1), (), 'local')
+                memory.table[key] = Counter({tuple((1, 1, 0)[i] for i in order): 1})
+                before = memory.digest()
+                s = self.session(memory=memory, control='local'); response = s.handle(predict())
+                result = s.handle(feedback(response['receipt'], values=first_reading))
+                evidence = result['evidence']
+                self.assertEqual(result['inference']['support_contradiction'], [True])
+                self.assertTrue(evidence['impossible_observation'] and evidence['committed'])
+                self.assertEqual(evidence['observed_log_likelihood'], 'negative_infinity')
+                self.assertEqual(evidence['status'], 'MODEL_MISMATCH_EVIDENCE')
+                self.assertEqual(s.phase, 'READY')
+                response = s.handle(predict(1))
+                self.assertEqual(response['status'], 'ABSTAIN' if None in first_reading else 'PREDICTED')
+                result = s.handle(feedback(response['receipt'], 1, (1, 1, 0)))
+                self.assertTrue(result['evidence']['episode_alarm'])
+                self.assertEqual(result['evidence']['log_e_value'], 'positive_infinity')
+                self.assertEqual(result['evidence']['observed_log_likelihood'],
+                                 None if None in first_reading else 0.)
+                self.assertEqual(s.handle(predict(2))['status'], 'PREDICTED')
+                self.assertEqual(memory.digest(), before)
+                json.dumps(result, allow_nan=False)
 
     def test_resource_failure_does_not_become_model_mismatch_or_completed_feedback(self):
         s = self.session(model=FixedForecast(UNIFORM))

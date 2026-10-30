@@ -1,0 +1,62 @@
+{
+  "version": "continuation-validation-v1",
+  "scope": "INTERNAL_ENGINEERING_AND_RETAINED_ARITHMETIC_REVIEW_NOT_INDEPENDENT_SCIENTIFIC_CUSTODY",
+  "prefit_commit": "994054d892b14e4d18835758e9ee1837f394d911",
+  "prefit_tree": "e2d5598af547f40434b4b948924a96821428bf6b",
+  "checkpoint_commit": "edb6ab2abad3575ed6ba4f67fad95d8aae4d0f00",
+  "checkpoint_tree": "5d017a40a2ff65ae5c71f2aa534c3f17fea5c8cf",
+  "local_tests": {
+    "passed": 645,
+    "skipped": 0,
+    "seconds": 76.67,
+    "stdout": "----------------------------------------------------------------------\nRan 645 tests in 76.670s\n\nOK\n",
+    "stdout_sha256": "faf1b0e29f9a46e47f130baf9bb5efc2b57df76094901aefaca0f5f4041ccc77",
+    "new_tests": 18
+  },
+  "prefit_ci": {
+    "url": "https://github.com/robosys-labs/cemm/actions/runs/41027369357",
+    "passed": 645,
+    "skipped": 0,
+    "seconds": 43.401,
+    "conclusion": "success"
+  },
+  "prefit_source_ci": {
+    "url": "https://github.com/robosys-labs/cemm/actions/runs/41027369263",
+    "conclusion": "success"
+  },
+  "prepared_files_byte_identical": 12,
+  "protocol_and_historical_locks_verified": 19,
+  "existing_preflight_passed": true,
+  "frozen_source_hashes_still_match": true,
+  "fairness": {
+    "neural_fits": 15,
+    "parameters_each": 562,
+    "updates_each": 128,
+    "observed_events_per_update": 334,
+    "visible_bits_per_update": 1476,
+    "shared_reset_initial_tensors_equal_each_seed": true,
+    "ordered_training_history_hashes_equal_all_19_fits": true,
+    "independently_recomputed_tensor_fingerprints": 30,
+    "checkpoint_bindings_verified": 45,
+    "unique_bound_checkpoints": 25,
+    "empirical_fits_once_each": 4,
+    "actual_compute_matched": false
+  },
+  "retained_arithmetic_review": {
+    "method": "Exact rational physical-draw/cell/family averages reconstructed from validated points; no model reruns",
+    "arms": 9,
+    "seeds": 5,
+    "metric_comparisons_verified": 39253,
+    "manifested_file_hashes_and_sizes_verified": 57,
+    "manifested_bytes": 19546029
+  },
+  "collection": {
+    "attempted_trials": 45,
+    "artifacts_complete": true,
+    "run_complete": false,
+    "decision": "STOP_INCOMPLETE_RUN",
+    "research_refits_or_collection_retries": 0
+  },
+  "gate_g1": "NOT_ADMITTED",
+  "production_cutover": false
+}

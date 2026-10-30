@@ -192,7 +192,7 @@ class ActiveLearningContractTests(unittest.TestCase):
                 try:
                     opened = exchange({'op': 'start', 'episode': 'native', 'ids': names,
                                        'observation': dict.fromkeys(names, 0)})
-                    self.assertEqual(opened['implementation']['version'], 'active-inference-v5')
+                    self.assertEqual(opened['implementation']['version'], 'active-inference-v6')
                     self.assertEqual(opened['implementation']['checkpoint']['state_sha256'], saved['state_sha256'])
                     prediction = exchange({'op': 'predict', 'episode': 'native', 'step': 0,
                         'action': {'kind': 'contact', 'participants': ['f', 'f']}, 'sensor_ids': ['f']})
