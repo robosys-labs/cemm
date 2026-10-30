@@ -363,7 +363,7 @@
   "pending_engineering_in_order": [
     {
       "stage": "G2",
-      "work": "Freeze and execute one paired NAND/NOR outcome-learning study on the unchanged 562-parameter model and native API. Test fully observed one-step predictions through held three-to-five-contact multisource schedules, with matched/crossed law checkpoints. Preserve all historical weights, decisions and closed studies; simultaneous timing remains separate."
+      "work": "Freeze one fresh three-contact cycle challenge with full-feedback twins and one hidden intermediate participant. Reuse the ten successful NAND/NOR checkpoints, both cycle orders, all anchors/modes/reversals and 3–6 entities: 15,360 forecasts, zero fits, existing observation and inference APIs. Define the nontrivial propagation subset before collection; simultaneous timing remains separate."
     },
     {
       "stage": "G3",
@@ -402,53 +402,55 @@
       "alias_evidence_data.py": 191,
       "alias_evidence_run.py": 247,
       "mixed_composition_data.py": 126,
-      "mixed_composition_run.py": 345,
-      "joint_correlation_data.py": 132
+      "mixed_composition_run.py": 346,
+      "joint_correlation_data.py": 132,
+      "multisource_law_data.py": 137,
+      "multisource_law_oracle.py": 51,
+      "multisource_law_run.py": 299,
+      "multisource_law_scoring.py": 137
     },
-    "active_source_files_excluding_frozen_dependencies": 4990,
+    "active_source_files_excluding_frozen_dependencies": 5615,
     "new_runtime_source_net": 0,
-    "new_tests_net": 211,
-    "retained_research_python": 28947,
+    "new_tests_net": 364,
+    "retained_research_python": 29936,
     "inclusive_size_goal_met": false,
     "learned_parameter_delta": 0,
-    "new_tests": 12,
-    "scope": "Current joint-correlation tranche:132 generator lines,70 net reused-runner lines,211 focused test lines; zero runtime/parameter growth. Physical counts include comments/blanks; historical studies remain retained.",
-    "new_study_source_net": 202,
-    "retained_test_lines": 13072
+    "new_tests": 19,
+    "scope": "Current multisource-law tranche: 624 lines across four study modules, one net reused-analyzer line, 364 focused test lines. Zero neural inference/learning source or parameter growth. Physical counts include comments/blanks; historical studies remain retained.",
+    "new_study_source_net": 625,
+    "retained_test_lines": 13436
   },
   "verification": {
-    "scope": "Current joint-correlation source invariants plus one prospective collection; internal byte review is not independent scientific admission.",
-    "isolated_suite_tests": 681,
+    "scope": "Public prefit source invariants, ten prescribed fits and one prospective collection; standalone same-author byte/arithmetic audit is not independent scientific admission.",
+    "isolated_suite_tests": 700,
     "isolated_suite_ci_conclusion": "success",
-    "local_precommit_sweep": {
-      "tests": 681,
-      "passed": 680,
-      "errors": 1,
-      "seconds": 119.015,
-      "error_test": "test_real_frozen_preflight_in_complete_checkout",
-      "cause": "Required clean tracked tree before the new source was committed",
-      "output_sha256": "1f51b34b3f4e9bf389232fbc6a086010d8fc1ed0666b50e8d732badc94d5f56f"
+    "local_committed_suite": {
+      "tests": 700,
+      "passed": 700,
+      "seconds": 89.796,
+      "output_sha256": "38bcac31a937c66f967a6152564c9b77f1c1d8938ee7e367f1487c6ebeaa87e5"
     },
-    "local_committed_preflight_rerun": {
-      "tests": 1,
-      "passed": 1,
-      "seconds": 4.477,
-      "output_sha256": "2b9ff9581565e70427544a4447ffd19d2f84c90a475f271df1d22e22fce33263"
-    },
-    "published_source_commit": "2181a01d60689722d62f2ee44110b9c00471e031",
-    "published_tree": "639a5c45a613f09e7d38c0a91838d9427a99f353",
-    "protocol_manifest_locks": 23,
+    "published_source_commit": "682672eb3ff30ceb8437b808b6058c9c673c4380",
+    "published_tree": "f6332c46503b5b430d66b39403471d2cc97b2a27",
+    "checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
+    "protocol_manifest_locks": 24,
     "frozen_preflight": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
-    "invariant_ci_run": 41091915442,
+    "invariant_ci_run": 41103517083,
     "invariant_ci_conclusion": "success",
-    "source_ci_run": 41091915993,
+    "source_ci_run": 41103516949,
     "source_ci_conclusion": "success",
-    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/64/checks",
-    "internal_artifact_arithmetic": "results/joint-correlation-validation-v1.json",
+    "checkpoint_invariant_ci_run": 41104430562,
+    "checkpoint_invariant_ci_conclusion": "success",
+    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/65/checks",
+    "internal_artifact_arithmetic": "results/multisource-law-validation-v1.json",
+    "internal_artifact_checks": 4384792,
+    "internal_artifact_defects": 0,
     "independent_scientific_custody": false,
     "closed_study_reruns": false,
-    "new_fits": 0,
-    "checkpoint_files_unchanged": 10
+    "new_fits": 10,
+    "completed_training_updates": 1280,
+    "historical_v2_files_unchanged": 46,
+    "historical_trained_checkpoint_files_unchanged": 10
   },
   "limits": [
     "Continuation v1 completed its frozen fits and artifact collection but formally STOPPED: empirical zero-support feedback contradictions terminated episodes and left required forecasts unproduced. G1 remains NOT_ADMITTED; failures and all planned denominators are retained.",
@@ -486,16 +488,17 @@
     "Alias-v1 remains REVISE_EVIDENCE_FIX: four seeds succeed but seed 37 fails starting-one self contacts. Alias-v2 changes only the observed schedule on a fresh bank, not the architecture, objective, budget criteria or old result.",
     "Alias-v2 KEEP is scoped to self/continuation queries: all-action accuracy is 88.742604%, with 183 ambiguous-acquisition regressions and 473 unchanged-bit errors. The original 95% in-family complete-world target remains unchanged and unmet.",
     "Empirical v6 recovery is source-localized and synthetic-regression-tested; no retained failing historical episode or empirical study was replayed. Neural-only alias studies do not establish empirical run-level recovery.",
-    "Balanced training environment orientations are supplied study design, not learner labels; selection precedes final realization in both arms. Cross-study V1/V2 performance is descriptive because their fresh banks differ."
+    "Balanced training environment orientations are supplied study design, not learner labels; selection precedes final realization in both arms. Cross-study V1/V2 performance is descriptive because their fresh banks differ.",
+    "Multisource-law-v1 learns NAND/NOR separately and tests full-feedback closed-loop one-step composition. It does not establish one unified law checkpoint, zero-shot new-law transfer, hidden-intermediate propagation, open-loop rollout or simultaneous timing."
   ],
-  "local_verified_code_commit": "2181a01d60689722d62f2ee44110b9c00471e031",
+  "local_verified_code_commit": "682672eb3ff30ceb8437b808b6058c9c673c4380",
   "diagnostics_pr": 57,
   "domain_pr": 58,
   "remaining_capability_gaps": {
     "coherent_active_training_checkpoint_evaluation_path": "IMPLEMENTED_FOR_DELIVERED_OBSERVATIONS",
     "expanded_domain_flat_implementation": "IMPLEMENTED_FRESH_ARCHITECTURE",
     "expanded_domain_matched_flat_baseline": "CONTINUATION_V1_COMPLETED_PARAMETER_AND_REALIZED_EXPOSURE_MATCH; CONSUMED_COMPUTE_NOT_MATCHED",
-    "prospective_information_aware_scientific_acceptance_runner": "MIXED_AND_JOINT_CORRELATION_V1_EXECUTED_KEEP; FORMAL_ADMISSION_PENDING",
+    "prospective_information_aware_scientific_acceptance_runner": "MIXED, CORRELATION AND MULTISOURCE_LAW_V1_EXECUTED_KEEP; FORMAL_ADMISSION_PENDING",
     "fresh_independently_held_challenge": "PENDING",
     "calibrated_expanded_domain_comparison": "CONTINUATION_V1_PROPER_SCORE_AND_ECE_DIAGNOSTICS_RETAINED; GENERAL_CALIBRATION_NOT_ESTABLISHED",
     "expanded_domain_scientific_evaluation": true,
@@ -503,7 +506,7 @@
     "learned_self_contact_established": true,
     "fresh_prospective_observed_curriculum_and_held_out_families": "IMPLEMENTED_PUBLIC_SAME_AUTHOR_ASSETS; INDEPENDENT_CHALLENGE_PENDING",
     "complete_conditional_oracle_and_split_lineage": "IMPLEMENTED_UNDER_DECLARED_TWO_MODE_LAW_WITH_CANONICAL_BLUEPRINT_LINEAGE; EXTERNAL_REVIEW_PENDING",
-    "scientific_denominator_matching_and_statistics_contract": "MIXED_AND_CORRELATION_V1_PROSPECTIVELY_SEPARATE_IDENTIFIABLE_EXACTNESS_AND_AMBIGUOUS_JOINT_FIDELITY; HISTORICAL_GATES_UNCHANGED",
+    "scientific_denominator_matching_and_statistics_contract": "CURRENT_STUDIES_SEPARATE_IDENTIFIABLE_EXACTNESS_AND_AMBIGUOUS_JOINT_FIDELITY; HISTORICAL_GATES_UNCHANGED",
     "crash_durable_forecast_journal": "NOT_IMPLEMENTED",
     "participant_os_isolation": "NOT_IMPLEMENTED",
     "observed_only_batch_adapter": "IMPLEMENTED_NO_SIMULATOR_OR_ORACLE_IMPORT",
@@ -511,8 +514,9 @@
     "mixed_alias_ordinary_composition": "COMPLETED_KEEP_MIXED_COMPOSITION_PUBLIC_FIXED_LAW",
     "withheld_acquisition_and_mode_coalescence": "TESTED_WITH_FROZEN_WEIGHTS",
     "equal_marginals_different_correlations": "COMPLETED_KEEP_JOINT_CORRELATION_FROM_OBSERVED_HISTORIES_WITH_FROZEN_WEIGHTS",
-    "independent_multi_source_laws": "NEXT_G2_PILOT; CURRENT_TWO_OPERAND_INPUT_AND_LOCAL_FACTOR_CANNOT_EXPRESS_SINGLE_THREE_PARTICIPANT_EVENT",
-    "simultaneous_timing": "NOT_REPRESENTED_IN_CURRENT_SERIAL_ACTION_CONTRACT; SEPARATE_G2_SCOPE"
+    "independent_multi_source_laws": "COMPLETED_KEEP_MULTISOURCE_LAWS_FOR_SEPARATE_NAND_NOR_FULL_FEEDBACK_FITS",
+    "simultaneous_timing": "NOT_REPRESENTED_IN_CURRENT_SERIAL_ACTION_CONTRACT; SEPARATE_G2_SCOPE",
+    "hidden_intermediate_new_law_propagation": "SELECTED_FROZEN_CHECKPOINT_CYCLE_CHALLENGE; ZERO_FITS"
   },
   "learning_version": "active-learning-v1",
   "checkpoint_format": "cemm-active-checkpoint-v1",
@@ -601,25 +605,34 @@
     "automatic_scientific_admission": false,
     "prospective_data_conditional_oracle_and_law_audit": true,
     "law_audit_is_learned_model_score": false,
-    "complete_scientific_study_runner_scope": "Current frozen-weight mixed/correlation driver composes existing APIs; historical continuation-v1 remains separately retained.",
+    "complete_scientific_study_runner_scope": "Current multisource-law driver composes existing native fitting/checkpoint/collection/scoring APIs; earlier mixed/correlation and historical continuation records remain retained.",
     "participant_complete_scientific_run": true,
     "continuation_fixed_query_summary": true,
-    "participant_complete_scientific_run_scope": "Current joint-correlation-v1 execution is complete; historical continuation-v1 remains STOP_INCOMPLETE_RUN and is not reclassified."
+    "participant_complete_scientific_run_scope": "Current multisource-law-v1 completed 30,720 forecasts with KEEP_MULTISOURCE_LAWS; historical continuation-v1 remains STOP_INCOMPLETE_RUN. Full-feedback one-step composition only."
   },
   "comparison_scope": {
-    "record_role": "CURRENT_JOINT_CORRELATION_V1_COMPARISON",
-    "study": "joint-correlation-v1",
-    "formal_decision": "KEEP_JOINT_CORRELATION",
+    "record_role": "CURRENT_MULTISOURCE_LAW_V1_COMPARISON",
+    "study": "multisource-law-v1",
+    "formal_decision": "KEEP_MULTISOURCE_LAWS",
+    "laws": [
+      "nand",
+      "nor"
+    ],
     "arms": [
-      "ordinary",
-      "alias"
+      "crossed",
+      "matched"
     ],
     "parameters_each": 562,
     "identical_architecture": true,
-    "frozen_v2_checkpoints": true,
-    "new_training_updates": 0,
-    "both_arms_pass_all_critical_contrasts": true,
-    "analytic_marginal_control_is_trained_baseline": false,
+    "paired_initial_tensors": true,
+    "equal_prescribed_exposure": true,
+    "actual_consumed_compute_equality_claimed": false,
+    "new_training_updates": 1280,
+    "matched_laws_pass_all_criteria": true,
+    "shared_initial_checkpoints_scored": false,
+    "same_history_contrast_pairs": 320,
+    "same_history_contrast_pairs_passed": 320,
+    "architecture_superiority_claimed": false,
     "historical_baseline_comparison": "historical_continuation_comparison_scope",
     "independent_scientific_admission": false
   },
@@ -722,6 +735,44 @@
         "source_ci_conclusion": "success",
         "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/63/checks",
         "independent_artifact_arithmetic": "results/mixed-composition-validation-v1.json",
+        "independent_scientific_custody": false,
+        "closed_study_reruns": false,
+        "new_fits": 0,
+        "checkpoint_files_unchanged": 10
+      }
+    },
+    {
+      "study": "joint-correlation-v1",
+      "record": "JOINT_CORRELATION_DECISION_V1.md",
+      "verification": {
+        "scope": "Current joint-correlation source invariants plus one prospective collection; internal byte review is not independent scientific admission.",
+        "isolated_suite_tests": 681,
+        "isolated_suite_ci_conclusion": "success",
+        "local_precommit_sweep": {
+          "tests": 681,
+          "passed": 680,
+          "errors": 1,
+          "seconds": 119.015,
+          "error_test": "test_real_frozen_preflight_in_complete_checkout",
+          "cause": "Required clean tracked tree before the new source was committed",
+          "output_sha256": "1f51b34b3f4e9bf389232fbc6a086010d8fc1ed0666b50e8d732badc94d5f56f"
+        },
+        "local_committed_preflight_rerun": {
+          "tests": 1,
+          "passed": 1,
+          "seconds": 4.477,
+          "output_sha256": "2b9ff9581565e70427544a4447ffd19d2f84c90a475f271df1d22e22fce33263"
+        },
+        "published_source_commit": "2181a01d60689722d62f2ee44110b9c00471e031",
+        "published_tree": "639a5c45a613f09e7d38c0a91838d9427a99f353",
+        "protocol_manifest_locks": 23,
+        "frozen_preflight": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
+        "invariant_ci_run": 41091915442,
+        "invariant_ci_conclusion": "success",
+        "source_ci_run": 41091915993,
+        "source_ci_conclusion": "success",
+        "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/64/checks",
+        "internal_artifact_arithmetic": "results/joint-correlation-validation-v1.json",
         "independent_scientific_custody": false,
         "closed_study_reruns": false,
         "new_fits": 0,
@@ -924,11 +975,12 @@
   },
   "progress_control": {
     "last_learned_results": [
+      "MULTISOURCE_LAW_DECISION_V1.md",
       "ALIAS_EVIDENCE_DECISION_V2.md"
     ],
     "invariant_count_is_scientific_gate_progress": false,
-    "next_deliverable": "Freeze and execute one paired NAND/NOR outcome-learning study on the unchanged 562-parameter model and native API. Test fully observed one-step predictions through held three-to-five-contact multisource schedules, with matched/crossed law checkpoints. Preserve all historical weights, decisions and closed studies; simultaneous timing remains separate.",
-    "another_preparation_only_tranche_requires": "A concrete execution blocker; no architecture extension is justified by the corrected atomic-arity argument. Proceed to the single fixed experiment after public freeze.",
+    "next_deliverable": "Freeze one fresh three-contact cycle challenge with full-feedback twins and one hidden intermediate participant. Reuse the ten successful NAND/NOR checkpoints, both cycle orders, all anchors/modes/reversals and 3–6 entities: 15,360 forecasts, zero fits, existing observation and inference APIs. Define the nontrivial propagation subset before collection; simultaneous timing remains separate.",
+    "another_preparation_only_tranche_requires": "A concrete execution blocker. Current laws pass; the selected follow-on is one zero-fit measurement of hidden-state propagation, not a model or workspace extension.",
     "further_refactor_scope": "Only a demonstrated execution blocker or later release packaging milestone.",
     "historical_learned_results": [
       "ALIAS_EVIDENCE_DECISION_V1.md",
@@ -936,7 +988,7 @@
       "COMMON_OBJECTIVE_DECISION.md",
       "SENSOR_TRANSFER_DECISION.md"
     ],
-    "last_frozen_decision": "KEEP_JOINT_CORRELATION",
+    "last_frozen_decision": "KEEP_MULTISOURCE_LAWS",
     "execution_and_artifact_collection_complete": true,
     "participant_complete_run": true,
     "latest_frozen_weight_results": [
@@ -948,20 +1000,21 @@
     "bounded_model_architecture_extension_selected": false
   },
   "selected_next_task": {
-    "status": "FITS_COMPLETE; PUBLIC_CHECKPOINT_FREEZE_THEN_ONE_COLLECTION",
+    "status": "SELECTED_G2_HIDDEN_INTERMEDIATE_PROPAGATION; PROTOCOL_NOT_YET_FROZEN",
     "stage": "G2",
-    "work": "Freeze and execute one paired NAND/NOR outcome-learning study on the unchanged 562-parameter model and native API. Test fully observed one-step predictions through held three-to-five-contact multisource schedules, with matched/crossed law checkpoints. Preserve all historical weights, decisions and closed studies; simultaneous timing remains separate.",
-    "details": "MULTISOURCE_LAW_DECISION_V1.md",
+    "work": "Freeze one fresh three-contact cycle challenge with full-feedback twins and one hidden intermediate participant. Reuse the ten successful NAND/NOR checkpoints, both cycle orders, all anchors/modes/reversals and 3–6 entities: 15,360 forecasts, zero fits, existing observation and inference APIs. Define the nontrivial propagation subset before collection; simultaneous timing remains separate.",
+    "details": "MULTISOURCE_LAW_DECISION_V1.md#next-bounded-g2-task-propagate-a-hidden-learned-consequence",
     "training_permitted": false,
-    "training_prerequisite": "All ten prescribed fits are complete. No refitting this bank; commit actual checkpoint/plan bytes before collection.",
-    "preserve_checkpoints": "All historical checkpoints remain byte-identical. Ten new law-specific checkpoints use the unchanged model and native checkpoint format.",
-    "completed_previous_task": "joint-correlation-v1 KEEP_JOINT_CORRELATION",
+    "training_prerequisite": "No fitting is selected; preserve all ten successful new law checkpoints and all older weights.",
+    "collection_prerequisite": "Fresh public data/protocol/plan commitment and fixed conditional-probability criteria before one collection.",
+    "preserve_checkpoints": "All historical and new law checkpoints remain frozen.",
+    "completed_previous_task": "multisource-law-v1 KEEP_MULTISOURCE_LAWS",
     "historical_decisions_unchanged": true,
     "scientific_admission_unchanged": true
   },
-  "current_pr": 64,
+  "current_pr": 65,
   "continuation_pr": 62,
-  "current_study_decision": "KEEP_JOINT_CORRELATION",
+  "current_study_decision": "KEEP_MULTISOURCE_LAWS",
   "g1_development_readiness": "PROCEED_TO_G2",
   "current_development_stage": "G2",
   "mixed_composition_study": {
@@ -1113,7 +1166,7 @@
   },
   "multisource_law_study": {
     "version": "multisource-law-v1",
-    "stage": "FITS_COMPLETE_BEFORE_COLLECTION",
+    "stage": "COMPLETE",
     "protocol": "multisource_law_protocol_v1.json",
     "prefit_commit": "682672eb3ff30ceb8437b808b6058c9c673c4380",
     "data": "data/multisource-law-v1",
@@ -1122,10 +1175,191 @@
     "completed_updates": 1280,
     "parameters_each": 562,
     "model_or_inference_changes": false,
-    "scored_result": null,
+    "scored_result": "results/multisource-law-v1/decision.json",
     "historical_checkpoints_changed": false,
     "fit_cpu_seconds": 92.19074129000002,
-    "fit_wall_seconds": 92.20662882098986
+    "fit_wall_seconds": 92.20662882098986,
+    "formal_decision": "KEEP_MULTISOURCE_LAWS",
+    "report": "MULTISOURCE_LAW_DECISION_V1.md",
+    "results": "results/multisource-law-v1",
+    "validation": "results/multisource-law-validation-v1.json",
+    "checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
+    "scientific_gate_admitted": false,
+    "execution_complete": true,
+    "forecasts": 30720,
+    "identifiable_correct": 11520,
+    "identifiable_planned": 11520,
+    "primary_correct": 7680,
+    "primary_planned": 7680,
+    "identifiable_role_pairs_correct": 1920,
+    "identifiable_role_pairs_planned": 1920,
+    "critical_contrast_pairs": 320,
+    "critical_contrast_pairs_passed": 320,
+    "identifiable_repairs": 5912,
+    "identifiable_regressions": 0,
+    "ambiguous_repairs": 768,
+    "ambiguous_regressions": 720,
+    "realized_unchanged_bit_errors": 1008,
+    "known_fixed_value_preservation_errors": 0,
+    "all_action_accuracy": 0.875,
+    "expected_oracle_all_action_accuracy": 0.875,
+    "by_law": {
+      "nand": {
+        "crossed": {
+          "correct": 3748,
+          "planned_points": 7680,
+          "unproduced_forecasts": 0,
+          "explicit_abstentions": 0,
+          "map_outside_support": 3020,
+          "known_unchanged_errors": 1836,
+          "unchanged_bit_errors": 2316,
+          "mean_nll": 3.4474984766588,
+          "mean_brier": 0.8990287660436357,
+          "mean_oracle_kl": 3.2742116815188136,
+          "identifiable_correct": 2836,
+          "identifiable_planned": 5760,
+          "role_pairs_correct": 0,
+          "role_pairs_planned": 960,
+          "worst_ambiguous_tv": 0.5032839105352256,
+          "worst_family_stratum_mean_kl": 4.5365977348336495,
+          "primary_correct": 2068,
+          "primary_planned": 3840
+        },
+        "matched": {
+          "correct": 6720,
+          "planned_points": 7680,
+          "unproduced_forecasts": 0,
+          "explicit_abstentions": 0,
+          "map_outside_support": 0,
+          "known_unchanged_errors": 0,
+          "unchanged_bit_errors": 480,
+          "mean_nll": 0.17700454377995373,
+          "mean_brier": 0.12501813374384332,
+          "mean_oracle_kl": 0.003717748639967389,
+          "identifiable_correct": 5760,
+          "identifiable_planned": 5760,
+          "role_pairs_correct": 960,
+          "role_pairs_planned": 960,
+          "worst_ambiguous_tv": 0.006518956116932526,
+          "worst_family_stratum_mean_kl": 0.005424806150878953,
+          "primary_correct": 3840,
+          "primary_planned": 3840
+        },
+        "changes": {
+          "ambiguous_regressions": 336,
+          "ambiguous_repairs": 384,
+          "identifiable_regressions": 0,
+          "identifiable_repairs": 2924
+        },
+        "composition_changes": {
+          "repairs": 1772,
+          "regressions": 0,
+          "unpaired": 0
+        },
+        "probability_score_changes": {
+          "nll_improved": 5854,
+          "nll_worsened": 1826,
+          "equal": 0,
+          "max_nll_increase": 0.002888942327634109,
+          "mean_nll_delta_matched_minus_crossed": -3.2704939328788467
+        }
+      },
+      "nor": {
+        "crossed": {
+          "correct": 3732,
+          "planned_points": 7680,
+          "unproduced_forecasts": 0,
+          "explicit_abstentions": 0,
+          "map_outside_support": 2988,
+          "known_unchanged_errors": 1836,
+          "unchanged_bit_errors": 2316,
+          "mean_nll": 3.298883889496863,
+          "mean_brier": 0.904735592985072,
+          "mean_oracle_kl": 3.125597094356876,
+          "identifiable_correct": 2772,
+          "identifiable_planned": 5760,
+          "role_pairs_correct": 0,
+          "role_pairs_planned": 960,
+          "worst_ambiguous_tv": 0.5027700530042827,
+          "worst_family_stratum_mean_kl": 4.191808054814783,
+          "primary_correct": 2052,
+          "primary_planned": 3840
+        },
+        "matched": {
+          "correct": 6720,
+          "planned_points": 7680,
+          "unproduced_forecasts": 0,
+          "explicit_abstentions": 0,
+          "map_outside_support": 0,
+          "known_unchanged_errors": 0,
+          "unchanged_bit_errors": 528,
+          "mean_nll": 0.17676216098075634,
+          "mean_brier": 0.12501558807965055,
+          "mean_oracle_kl": 0.003475365840770002,
+          "identifiable_correct": 5760,
+          "identifiable_planned": 5760,
+          "role_pairs_correct": 960,
+          "role_pairs_planned": 960,
+          "worst_ambiguous_tv": 0.007081035427681554,
+          "worst_family_stratum_mean_kl": 0.004694489402856164,
+          "primary_correct": 3840,
+          "primary_planned": 3840
+        },
+        "changes": {
+          "ambiguous_regressions": 384,
+          "ambiguous_repairs": 384,
+          "identifiable_regressions": 0,
+          "identifiable_repairs": 2988
+        },
+        "composition_changes": {
+          "repairs": 1788,
+          "regressions": 0,
+          "unpaired": 0
+        },
+        "probability_score_changes": {
+          "nll_improved": 6134,
+          "nll_worsened": 1546,
+          "equal": 0,
+          "max_nll_increase": 0.0020952731500579747,
+          "mean_nll_delta_matched_minus_crossed": -3.122121728516106
+        }
+      }
+    },
+    "critical_ranges": {
+      "nand_probability": [
+        0.9913024824900342,
+        0.9984100869367387
+      ],
+      "nor_probability": [
+        0.9919011248239887,
+        0.998762410564754
+      ],
+      "wrong_law_probability": [
+        3.841145408920284e-06,
+        0.001421428455725298
+      ],
+      "gap": [
+        0.9911631527796609,
+        0.9980491403317603
+      ]
+    },
+    "critical_min_mean_nll_gain": 7.543283672920284,
+    "costs": {
+      "collection_cpu_seconds": 195.26891541999998,
+      "collection_wall_seconds": 195.49404783599311,
+      "peak_rss_kib": 526016,
+      "matched_p50_ms_range": [
+        1.461731000006239,
+        1.8836999999933823
+      ],
+      "matched_p95_ms_range": [
+        2.466417999997361,
+        5.453770000002578
+      ]
+    },
+    "same_author_public_custody": true,
+    "independent_physical_replication_claimed": false,
+    "feedback_scope": "Fully observed, closed-loop one-step forecasts along longer schedules; hidden-intermediate propagation and open-loop rollout not established."
   },
   "multisource_law_pr": 65
 }

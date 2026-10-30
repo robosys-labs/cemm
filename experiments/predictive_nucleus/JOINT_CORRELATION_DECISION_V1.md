@@ -217,3 +217,9 @@ fresh NAND/NOR laws through the unchanged pairwise interface instead. The
 exposure, separate law learning and crossed-law forecasts at controlled identical
 histories. It changes no neural inference or checkpoint implementation.
 Simultaneous timing remains unestablished scope.
+
+The corrected follow-on is now complete: [multisource law v1](MULTISOURCE_LAW_DECISION_V1.md)
+retains KEEP_MULTISOURCE_LAWS at all five seeds for both laws. It preserves this
+correlation decision and establishes full-feedback one-step composition. The
+next selected task uses those frozen checkpoints to test propagation through
+a hidden intermediate state, with zero further fitting.

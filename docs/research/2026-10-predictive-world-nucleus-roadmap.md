@@ -19,14 +19,22 @@ See [the G1/G2 review](../../experiments/predictive_nucleus/G1_G2_PROGRESS_REVIE
 [joint-correlation result](../../experiments/predictive_nucleus/JOINT_CORRELATION_DECISION_V1.md)
 and [PR #64](https://github.com/robosys-labs/cemm/pull/64). Do not reopen successful
 alias fitting or interpret unknowable hidden outcomes as a new architectural defect.
-The assumption review corrects the proposed next step: the pair-only interface
-limits atomic-event arity, but existing contacts already compose two independent
-sources. No architecture extension follows from that argument. Next is
-[fresh NAND/NOR learning and ordered multisource composition](../../experiments/predictive_nucleus/MULTISOURCE_LAW_DECISION_V1.md)
-on the unchanged 562-parameter model, with matched exposure and crossed-law
-controls. The correlation control excludes unconditional marginals; it does not
-exclude representations conditioned on the persistent mechanism. Simultaneous
-timing remains separate unestablished scope.
+The assumption review corrected the proposed ternary extension: atomic-event
+arity does not imply a serial-composition limit. The subsequent
+[NAND/NOR law-learning study](../../experiments/predictive_nucleus/MULTISOURCE_LAW_DECISION_V1.md)
+now has **KEEP_MULTISOURCE_LAWS**: all 30,720 planned forecasts completed, with
+11,520/11,520 identifiable and 7,680/7,680 primary matched forecasts correct and
+320/320 common-history law contrast pairs passing. Ten paired fits completed
+1,280 updates on the unchanged 562-parameter model; historical weights and
+inference implementations remain unchanged. [PR #65](https://github.com/robosys-labs/cemm/pull/65)
+retains the full results and local regressions.
+
+This establishes separately learned laws under full-feedback one-step composition.
+Next is a frozen-weight cycle challenge with one hidden intermediate participant,
+paired against full feedback: zero fitting and the existing observation API.
+Simultaneous timing remains a separate observable-input distinction. The
+correlation control excludes unconditional marginals, not representations
+conditioned on the persistent mechanism. No completed gate is reopened.
 
 ## 0. Decision
 

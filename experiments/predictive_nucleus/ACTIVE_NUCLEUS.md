@@ -1,12 +1,37 @@
-# Active nucleus: G2 joint correlation completed
+# Active nucleus: G2 learned laws completed
 
-Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #64](https://github.com/robosys-labs/cemm/pull/64). Updated 2026-10-30 (Africa/Lagos).
-**G1 development readiness: PROCEED_TO_G2. Joint-correlation v1: KEEP_JOINT_CORRELATION.**
+Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #65](https://github.com/robosys-labs/cemm/pull/65). Updated 2026-10-30 (Africa/Lagos).
+**G1 development readiness: PROCEED_TO_G2. Multisource law v1: KEEP_MULTISOURCE_LAWS.**
 Formal G1 scientific admission remains NOT_ADMITTED; full G2 remains open.
-Published source/data/checkpoint freeze: `2181a01d60689722d62f2ee44110b9c00471e031`.
-Unchanged checkpoint source: `2361c48986276fe897a9cd9beac874720cfcbb7a`.
+Public prefit freeze: `682672eb3ff30ceb8437b808b6058c9c673c4380`.
+Public trained-checkpoint/plan freeze: `25ae19b317c5b7dbfc487fa5204fb5da5f0e7420`.
 
-## Completed comparison and current boundary
+## Current result and retained foundations
+
+The [NAND/NOR learning study](MULTISOURCE_LAW_DECISION_V1.md) completed all
+**30,720 forecasts** in one collection. Across five seeds for each law, matched
+checkpoints achieve **11,520/11,520 identifiable complete worlds**,
+**7,680/7,680 primary composition worlds**, **1,920/1,920 identifiable role pairs**
+and **320/320 paired common-history contrasts**. Minimum contrast separation is
+**0.991163** (required 0.8); worst family/stratum mean KL is **0.005425 nats**
+(limit 0.05), and worst ambiguous TV is **0.007081** (limit 0.1).
+
+The model learned each law separately from observed outcomes using identical
+initial tensors and prescribed exposure. The architecture remains **562 parameters**,
+with the same native loss, checkpoint and inference implementation. Ten fits
+completed **1,280 updates**. This is fully observed, closed-loop one-step
+composition along three-to-five-contact schedules. Intermediate observations
+carry earlier effects; propagation through hidden intermediate state is the next
+selected test. No simultaneous timing or unified-law checkpoint is claimed.
+
+Compared with crossed-law checkpoints, the matched models retain **5,912
+identifiable repairs / zero identifiable regressions**, plus **768 ambiguous
+repairs / 720 ambiguous regressions**. There are zero unsupported MAP worlds
+and zero errors on coordinates known to retain a fixed value. Realized unchanged
+bit errors remain **480 NAND / 528 NOR**, all at ambiguous first forecasts.
+Local NLL also worsens slightly on 3,372 forecasts; the complete records retain
+these differences. Pooled matched accuracy is **87.5%**, exactly this bank's
+expected oracle MAP rate. All historical checkpoints and decisions remain unchanged.
 
 The [G1/G2 progress review](G1_G2_PROGRESS_REVIEW.md) resolves the earlier
 progress-accounting error. V2 already had **5,240/5,240 identifiable predictions**;
@@ -38,7 +63,7 @@ nats worse on average, and realized unchanged-bit errors are 328 versus 408;
 none is a definitely unchanged-coordinate error. Both arms meet the probability
 criteria. This is a capability tie with retained local regressions, not a claim
 that alias evidence improves every task. All ten 562-parameter checkpoints remain
-byte-identical; this tranche adds zero training updates and zero inference changes.
+byte-identical; that correlation tranche added zero training updates and zero inference changes.
 
 The earlier mixed-composition result also remains complete: **8,000 forecasts**,
 512/512 identifiable worlds and 96/96 identifiable role pairs per candidate seed,
@@ -63,6 +88,7 @@ uncertain variable along every possible trajectory.
 | [Alias evidence v2](ALIAS_EVIDENCE_DECISION_V2.md) | KEEP_EVIDENCE_FIX |
 | [Mixed composition v1](G1_G2_PROGRESS_REVIEW.md#result-keep_mixed_composition) | KEEP_MIXED_COMPOSITION |
 | [Joint correlation v1](JOINT_CORRELATION_DECISION_V1.md#result-keep_joint_correlation) | KEEP_JOINT_CORRELATION |
+| [Multisource law v1](MULTISOURCE_LAW_DECISION_V1.md#result-keep_multisource_laws) | KEEP_MULTISOURCE_LAWS |
 
 These are bounded public fixed-law results. Simultaneous interactions,
 independently varied multi-source laws, general calibration and independent
@@ -544,24 +570,27 @@ the contradiction. Terminal errors retain strict-JSON diagnostics and exit code 
 
 ## Current verification and code size
 
-The published correlation freeze passes the **681-test isolated suite**, all
-**23 protocol/manifest locks** and frozen preflight in
-[invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41091915442).
-[Source snapshot CI](https://github.com/robosys-labs/cemm/actions/runs/41091915993)
-also passes. Final result-head checks are linked in PR #64. The
-[internal result audit](results/joint-correlation-validation-v1.json) verifies
-14 result artifacts, 33 source bindings, ten unchanged checkpoints, 1,920 receipts,
-28,800 point metrics, 1,800 summary metrics and all 320 learned contrast pairs.
-Invariant tests and internal arithmetic review are not scientific admission.
+The public prefit source passed **700 isolated tests** locally in **89.796 seconds**,
+all **24 protocol/manifest locks** and frozen preflight in
+[invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41103517083).
+[Source snapshot CI](https://github.com/robosys-labs/cemm/actions/runs/41103516949)
+also passed. The checkpoint freeze passed
+[invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41104430562);
+final result-head checks are linked in PR #65.
 
-This tranche adds **zero inference lines and zero parameters**, a 132-line data
-generator, 70 net lines in the reused runner, and 211 lines of focused tests.
-The twelve-module active
-inference/learning/checkpoint import closure remains **2,732 physical lines**, or
-**2,917** including the historical source pin. All retained research Python is
-**28,947 lines**, including **13,072 test lines**; the inclusive **2,000-line goal
-remains unmet**. The next study uses the unchanged pairwise model and tests fresh
-learned laws; the review below withdraws the proposed input-arity extension.
+The [internal arithmetic audit](results/multisource-law-validation-v1.json)
+reconstructs the decision without executing a model: 30,720 forecast receipts,
+41 source bindings, 15 checkpoint fingerprints, 25 result artifacts and 46
+unchanged historical V2 files pass with zero discrepancies. This is internal
+review, not independent scientific custody or additional learned evidence.
+
+This tranche adds **zero neural inference/learning lines and zero parameters per
+model**. Four study modules add 624 lines and the reused analyzer grows by one
+net line; 19 focused tests add 364 lines. The active import closure remains
+**2,732 physical lines**, or **2,917** with its historical source pin. All retained
+research Python is **29,936 lines**, including **13,436 test lines**; the inclusive
+**2,000-line goal remains unmet**. The selected next measurement reuses frozen
+weights and the existing partial-observation API.
 
 ## Historical verification records
 
@@ -575,6 +604,7 @@ unchanged.
 
 | Tranche | Retained verification | CI reference |
 |---|---|---|
+| Joint correlation v1 | [Retained decision](JOINT_CORRELATION_DECISION_V1.md): 681 tests, 23 locks; KEEP_JOINT_CORRELATION | [PR #64](https://github.com/robosys-labs/cemm/pull/64/checks) |
 | Mixed composition v1 | [Retained decision](G1_G2_PROGRESS_REVIEW.md): 669 tests, 87.920 seconds; KEEP_MIXED_COMPOSITION | [PR #63](https://github.com/robosys-labs/cemm/pull/63/checks) |
 | Continuation v1 | [Retained decision](CONTINUATION_DECISION_V1.md): 645 tests, 76.670 seconds; frozen `STOP_INCOMPLETE_RUN` | [CI 41031823696](https://github.com/robosys-labs/cemm/actions/runs/41031823696) |
 | Alias evidence v1 | [Retained decision](ALIAS_EVIDENCE_DECISION_V1.md): 655 tests; frozen `REVISE_EVIDENCE_FIX` | [CI 41063316079](https://github.com/robosys-labs/cemm/actions/runs/41063316079) |
@@ -613,41 +643,35 @@ No retained failing historical episode or continuation-v1 study was replayed;
 the alias studies contain neural arms only. Historical empirical completion and
 accuracy are therefore unchanged and no new empirical run-level result is claimed.
 
-## Next G2 experiment: learned laws and multisource composition
+## Corrected assumption and next G2 experiment
 
-**Assumption correction, 2026-10-30:** the earlier argument concerned a new
-atomic three-operand event. It did not establish a limit on serial composition.
-Existing contacts `(a,t); (b,t)` already compute `t XOR a XOR b`; the earlier
-reversed-fork bank also includes physical fan-in. That locality argument does
-not justify a new action, factor, workspace or checkpoint format.
+The earlier atomic three-operand locality argument did not establish a limit on
+serial composition: existing contacts `(a,t); (b,t)` already compute
+`t XOR a XOR b`, and the earlier reversed-fork bank includes physical fan-in.
+The proposed ternary action/factor extension was therefore withdrawn. The fresh
+NAND/NOR study now passes on the unchanged model. The correlation result also
+remains valid within its clarified unconditional-factorization scope.
 
-The [next frozen study](MULTISOURCE_LAW_DECISION_V1.md) learns **NAND and NOR
-separately from observed consequences**, using the same 562-parameter nucleus,
-native fitting, checkpoint, session and evaluation APIs. Both laws use identical
-initial states, action geometry, masks and training budgets. After two-contact
-training, held three-to-five-contact schedules combine independently varied
-source and target bits. Physical fan-in and fan-out are scored separately.
-At 64 controlled contexts, identical delivered histories and the same next action
-require different outcomes under the two laws. Matched and crossed-law checkpoints
-test whether learned outcomes change forecasts. The oracle and law labels remain
-evaluator-only. The five paired seeds are ten fresh fits; old V2 weights and
-closed studies remain unchanged.
+Next, use the ten new frozen law checkpoints in a fresh **three-contact cycle
+with one hidden intermediate participant**, paired against full-feedback twins.
+This tests whether a learned consequence is carried into the final prediction
+when it was not directly observed. The selected design has both cycle orders,
+all anchors, modes, role reversals and entity counts 3–6, for **15,360 forecasts
+and zero fits**. Predeclare the nontrivial propagation subset from the oracle,
+preserve all-action probability/coverage accounting, and stay within the existing
+path and expansion bounds. [Concrete witnesses and scope](MULTISOURCE_LAW_DECISION_V1.md#next-bounded-g2-task-propagate-a-hidden-learned-consequence)
+show why this adds evidence. It is selected, not yet frozen or run.
 
-Public source/data/budget commitment precedes fitting; actual trained checkpoints
-and plans are committed before one collection. The primary points are identifiable,
-so zero unsupported MAP predictions requires **100% primary exactness**, in addition
-to the stated 95% accuracy floor. No new-law performance is claimed before collection.
+Simultaneous timing still requires an explicit observable time-group contract.
+The serial Session does not represent that distinction. Masking feedback does
+not establish simultaneous semantics, and no neural capacity failure is claimed.
 
-Simultaneous timing remains separate: the current Session serializes actions and
-requires feedback between predictions. An explicit observable same-time grouping
-is absent. Ordered compositions do not establish simultaneous composition.
-
-## Remaining roadmap after joint correlation v1
+## Remaining roadmap after learned laws v1
 
 | Stage | Current state and remaining evidence |
 |---|---|
 | G1 | Development foundation sufficient for G2. Original scientific admission remains open for baseline adequacy and independent challenge evidence; historical target unchanged. |
-| G2 | Ordinary continuation, mixed alias/ordinary uncertainty and equal-marginal/different-correlation tests complete. Next: separately learned NAND/NOR laws and ordered multisource composition on the existing model; simultaneous timing remains subsequent scope. |
+| G2 | Ordinary continuation, mixed alias/ordinary uncertainty, correlation dependencies and separate NAND/NOR full-feedback composition complete. Next: hidden-intermediate state propagation with frozen law checkpoints; simultaneous timing remains subsequent scope. |
 | G3 | Teach a relation nonverbally, then transfer it through two languages on the same world model after composition evidence. |
 | G4 | Communication improves held-out external-goal utility against silent/random/shuffled controls. |
 | G5 | Answered experience persists across episodes, reduces later clarification and preserves earlier competence. |

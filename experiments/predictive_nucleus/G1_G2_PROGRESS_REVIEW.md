@@ -214,6 +214,10 @@ The [joint-correlation result](JOINT_CORRELATION_DECISION_V1.md) fulfills this
 follow-on task without new fitting. A subsequent assumption review preserves
 that decision and corrects the proposed next step: an atomic-event arity limit
 does not imply a serial-composition limit. Existing contacts already combine
-two independent sources. The current next task is the bounded
-[NAND/NOR law-learning study](MULTISOURCE_LAW_DECISION_V1.md), using the unchanged
-model and native API, matched exposure and controlled crossed-law comparisons.
+two independent sources. The bounded
+[NAND/NOR law-learning study](MULTISOURCE_LAW_DECISION_V1.md) now retains
+KEEP_MULTISOURCE_LAWS: all 11,520 identifiable and 7,680 primary matched forecasts
+are correct, and 320 common-history contrast pairs pass. This used the unchanged
+model and native API with matched exposure and controlled crossed-law comparisons.
+It establishes full-feedback one-step composition; the next selected test carries
+a hidden intermediate learned consequence through a cycle with zero new fitting.
