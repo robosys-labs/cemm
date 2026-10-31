@@ -1,0 +1,9 @@
+{
+  "audit.json": "c7610f59e04af07adda5e3b58a1f200cd9b2f54fe163236c6b49293ef48e299a",
+  "freeze.json": "c7b3cee5ac80fa353f20153e755d9da3c92dc7a72611b3657319c7d9583072fd",
+  "nand-inputs.json.xz": "0f821d595de16236ce577171a8ce2d75cc07b23d1ca8052e5f98799325ad6d1c",
+  "nand-oracle.json.xz": "c04f0d5c4ba7ab920c6f34b6f94557c616999e3aa2139bfb82548a61982317fd",
+  "nor-inputs.json.xz": "ab413740fe810baed1290cd10888c958736f20e5613e3e99406d2a6f27d7365c",
+  "nor-oracle.json.xz": "86d5137e32add1b2d7cebf3cedd1882b47610cd7f722450f7ea0759bb391e080",
+  "train-inputs.json.xz": "d35cfa2cd47fbc47f0132daf385df3568ace511836aab59173a2f562550c281e"
+}
