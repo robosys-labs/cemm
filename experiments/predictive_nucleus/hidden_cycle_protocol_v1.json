@@ -1,0 +1,101 @@
+{
+  "version": "hidden-cycle-v1",
+  "recorded_on": "2026-10-30",
+  "timezone": "Africa/Lagos",
+  "scope": "FROZEN_WEIGHT_HIDDEN_INTERMEDIATE_PROPAGATION",
+  "base_commit": "66f0e28f34fdd1767e271c813988a3494023e6ae",
+  "checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
+  "gate_g1": "NOT_ADMITTED",
+  "g1_development_readiness": "PROCEED_TO_G2",
+  "hypothesis": "The ten unchanged NAND/NOR checkpoints propagate a learned consequence through one unobserved intermediate participant into a subsequent contact, retaining full-feedback competence without fitting or model expansion.",
+  "data": {
+    "entity_counts": [3, 4, 5, 6],
+    "split_seed": 20261030063,
+    "orders": {
+      "cycle_forward": "ab;bc;ca, hide c after contact 2",
+      "cycle_reverse": "ca;bc;ab, hide b after contact 2"
+    },
+    "initial": "All eight (a,b,c) anchors. Spectator bits and opaque identity permutations fixed before mode/law realization. Both persistent modes and global role reversals retained.",
+    "feedback": "For every physical view include full and hidden twins. Both deliver full initial/first/final readings. Hidden delivers None for the structurally shared participant only after contact 2; sensor coverage remains all ids. Mask selection is independent of mode, law and bit values.",
+    "episodes_per_law": 512,
+    "physical_lineages_per_law": 64,
+    "forecasts_per_law_seed": 1536,
+    "identifiable_per_law_seed": 1024,
+    "ambiguous_per_law_seed": 512,
+    "final_forecasts_per_condition_law_seed": 256,
+    "twin_pairs_per_law": 256,
+    "role_pairs_per_law": 256,
+    "changed_hidden_pairs_per_law": 112,
+    "critical_pairs_per_law": 48,
+    "max_cumulative_missing_bits": 1,
+    "expected_best_all_action_accuracy": 0.8333333333333334,
+    "critical_selection": "Evaluator only: replace the hidden participant in the true pre-final state with its last delivered value, apply the final contact, and select iff the physical final target differs. A different complete world alone does not count. Retain all other views as controls. No prediction-dependent selection.",
+    "information": "The first complete feedback identifies the persistent mode for either law. All second/final oracle worlds are identifiable despite the masked intermediate; first forecasts have two equally likely worlds. Keep every action in the reported denominator; do not demand 95% pooled MAP correctness.",
+    "overlap": "Audit exact blueprints and canonical topology/mask templates against actual NAND/NOR training and all historical banks. Constituents and two-contact prefixes are expected to overlap. The two cycle orders are isomorphic under identity/global reversal; old XOR cycle geometry is not new. The new evidence is withholding intermediate feedback under separately learned laws.",
+    "dependence": "Law, mode, direction, condition, identity and model-seed views are dependent; report counts without treating them as independent physical trials."
+  },
+  "laws": ["nand", "nor"],
+  "model_seeds": [7, 11, 23, 37, 53],
+  "parameters": 562,
+  "checkpoints": "Reuse the exact ten matched law checkpoints, five seeds per law. No crossed-law fits, warmup, calibration, optimization, checkpoint alteration or historical-study replay.",
+  "controls": "Full-feedback twins use the same frozen checkpoint and physical trajectory. The stale-intermediate counterfactual is evaluator-only and diagnoses downstream consequence sensitivity; it is not a fitted baseline or evidence of architecture superiority.",
+  "analysis": {
+    "identifiable_accuracy": 0.95,
+    "mean_oracle_kl": 0.05,
+    "max_ambiguous_total_variation": 0.1,
+    "critical_pairs": 48,
+    "min_critical_probability": 0.9,
+    "max_stale_target_probability": 0.1,
+    "probability_tolerance": 1e-12,
+    "criteria": "Every law/seed/order/condition: complete support; >=95% identifiable exact worlds and identifiable role-pair conjunctions; zero unsupported MAP worlds and zero errors on known fixed unchanged values; mean joint oracle KL<=0.05 separately for identifiable and ambiguous points; ambiguous max TV<=0.1. Singleton oracle support plus zero unsupported MAP makes effective identifiable exactness 100%.",
+    "twins": "Full/hidden distributions before masked feedback (steps 0 and 1) must agree within 1e-12. Every final twin remains in the denominator. Require no identifiable full-to-hidden regressions; record every repair/regression and NLL/probability difference, including adverse differences. No extra arbitrary probability-drop threshold.",
+    "critical": "Every one of 48 critical hidden finals per law/seed must give the true singleton complete world >=0.9 and the counterfactual stale-target event <=0.1, summing over the entire joint distribution. Require complete matched full/hidden records. Do not condition forecasts on oracle support. Critical role-pair membership need not include both reversal directions.",
+    "probability_scope": "Retain full joint soft tails, exact-zero truth probability as infinite NLL, abstentions and missing records. Planned denominators never shrink. MAP tie handling remains the existing lexicographic rule.",
+    "preservation_scope": "Report realized unchanged-coordinate errors separately from known-fixed-value errors. Feedback withholding changes information, not checkpoint weights; paired changes are not historical parameter regressions.",
+    "limits": "One hidden intermediate and one subsequent step under two separately learned laws, after full feedback identifies the mode. Not a fully open-loop rollout, simultaneous timing, a unified-law checkpoint, general calibration, independent custody or proof explicit world enumeration is necessary."
+  },
+  "decision_order": [
+    "STOP_INCOMPLETE_EXECUTION for incomplete collection, missing trace, failure or invalid artifact/binding",
+    "REVISE_HIDDEN_CYCLE if any frozen competence or propagation criterion fails",
+    "KEEP_HIDDEN_CYCLE otherwise; preserve all local differences and continue G2 without same-bank tuning"
+  ],
+  "execution": {
+    "runtime": {
+      "python": "3.13.16",
+      "torch": "2.10.0+cpu",
+      "numpy": "2.3.5",
+      "threads": 1,
+      "dtype": "float64",
+      "deterministic_algorithms": true
+    },
+    "public_source_data_plan_freeze_before_collection": true,
+    "one_attempt": true,
+    "retries": 0,
+    "planned_fits": 0,
+    "planned_collections": 10,
+    "planned_forecasts": 15360,
+    "live_path_limit": 64,
+    "candidate_expansions": 512,
+    "max_live_paths_before_final": 2,
+    "max_final_candidate_expansions": 128,
+    "model_or_inference_source_changes": false,
+    "historical_study_reruns": false
+  },
+  "supplied": [
+    "Stable entity handles, ordered contacts, exogenous readings and masks",
+    "Persistent-mode hypothesis and exact joint filtering/world enumeration",
+    "Evaluator physical law, independently coded truth-table oracle and stale-state counterfactual",
+    "Prospective cycle design, full-feedback twins and fixed probability criteria"
+  ],
+  "learned": [
+    "Previously fitted pairwise outcome likelihoods, role distinctions and unchanged-state behavior for each separate law"
+  ],
+  "preserved_decisions": {
+    "continuation_v1": "STOP_INCOMPLETE_RUN",
+    "alias_v1": "REVISE_EVIDENCE_FIX",
+    "alias_v2": "KEEP_EVIDENCE_FIX",
+    "mixed_v1": "KEEP_MIXED_COMPOSITION",
+    "joint_correlation_v1": "KEEP_JOINT_CORRELATION",
+    "multisource_law_v1": "KEEP_MULTISOURCE_LAWS"
+  }
+}
