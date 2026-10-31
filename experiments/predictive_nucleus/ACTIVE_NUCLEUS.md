@@ -1,29 +1,53 @@
-# Active nucleus: G3 lexical contrast implemented over retained bilingual roles
+# Active nucleus: lexical grounding retained; structural reuse remains open
 
-Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #68](https://github.com/robosys-labs/cemm/pull/68). Updated 2026-10-31 (Africa/Lagos).
-**Bilingual v1: KEEP_BILINGUAL_GROUNDING. G2 development readiness: PROCEED_TO_G3.**
+Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #69](https://github.com/robosys-labs/cemm/pull/69). Updated 2026-10-31 (Africa/Lagos).
+**Lexical v1: KEEP_LEXICAL_GROUNDING; STRUCTURAL_TRANSFER_NOT_ESTABLISHED.**
+G2 development readiness remains PROCEED_TO_G3. G3 is not complete.
 Formal G1 scientific admission remains NOT_ADMITTED; G2 scientific admission remains open.
-Public timing source/data/plan freeze: `86936788d6f90ccb99f719d48e2c9a3b13e03756`.
+Public lexical source/data/plan freeze: `7645485bd75c80051a480d6b24aa459a1c8c0d48`.
+Lexical checkpoint freeze before collection: `12adb6bdb0361a37d36bb2d8a1ddf16cbe225592`.
 Unchanged checkpoint freeze: `25ae19b317c5b7dbfc487fa5204fb5da5f0e7420`.
 
-## Current implementation: lexical direction
+## Current G3 result: lexical direction
 
-The [fixed-order lexical study](LEXICAL_STUDY_V1.md) is implemented and awaiting
-its public source/data/protocol freeze. The same **474-parameter encoder** learns
-direct/inverse words through observed consequences, with **zero added model
-parameters** and unchanged acquired worlds. Linguistic events receive no gold
-participant-order, action-kind or parser supervision; supplied native calibration
-actions remain part of the observed context.
+The [fixed-order lexical study](LEXICAL_DECISION_V1.md) completes five prescribed
+fits and all **138,560 candidate/control forecasts**. The same **474-parameter
+encoder** learns direct/inverse words through observed consequences, with
+**zero added model parameters** and unchanged acquired worlds. Linguistic events
+receive no gold participant-order, action-kind, language-ID or parser supervision;
+supplied native calibration actions still have ordered operands. Roster identity
+matching, token boundaries and the two contact alternatives remain supplied.
 
-Final contrast twins have identical names, layout and history. Masking only the
-current word removes the distinction; swapping it must produce the counterpart's
-world. A separate diagnostic tests unseen combinations of known words and learned
-layouts. Five prescribed fits rehearse old training observations; old challenge
-inputs are reserved for updated-encoder retention against archived predictions.
-The new design adds no G1/G2 refitting or workspace requirement. **No new learned
-result is claimed before the one frozen cycle completes.**
+Primary predictions achieve **41,600/41,600 complete worlds and orders**, with
+**5,760/5,760 lexical-pair conjunctions**. The updated encoder retains
+**20,800/20,800** old-bank complete worlds and orders, measured against archived
+forecasts. All 130 primary criteria pass under NAND and NOR at all five seeds.
+Masking the current word yields identical twin distributions and 50% accuracy;
+swapping it gives the correct counterpart world on **11,520/11,520** probes.
 
-## Current G3 result
+**Structural reuse fails:** seen word–layout combinations score **5,760/5,760**,
+but held-out combinations score **2,016/5,760 (35%)**, with only **576/2,880 (20%)**
+both-correct lexical pairs. Every law/seed fails all four held-out criteria.
+Every wrong held-out world selects the wrong operand order and equals the
+opposite-action foil. The pattern is the same under both laws and can be highly
+confident. This localizes the observed failure to text binding; it does not prove
+the GRU cannot represent a solution or that native-world capacity is deficient.
+
+There are zero exact-world retention regressions, but **all 20,800 old-bank NLLs
+worsen**: mean +0.0006803064 nats, maximum +0.0020646568. All 41,600 fresh NLLs
+also exceed their gold-action native references. Complete probability changes,
+dependent-view denominators, costs and failures remain in the saved record.
+
+The next task is one **small neural binding comparison**: learned lexical content
+and learned layout/mention binding with a learned interaction, versus the GRU
+under the same observed curriculum and training history. Cap each at 474 actual
+parameters, use fresh word × layout holdouts, preserve existing checkpoints as
+retention references and reuse the current runner. No role labels, word dispatch
+or handwritten inverse rule are selected. The factorization is a hypothesis,
+not a guaranteed solution. This next comparison is **selected, not implemented
+or frozen**. G4/G5 remain later work; no G1/G2 refit or new workspace is added.
+
+## Retained bilingual role result
 
 The [bilingual study](BILINGUAL_DECISION_V1.md) completes 25 prescribed fits and
 all 124,800 candidate/control forecasts. The grounded adapter achieves
@@ -39,13 +63,12 @@ The encoder has 474 parameters and each unchanged acquired world 562. All
 denominators and probability losses remain in the saved record. A separate
 stdlib audit reconstructs the decision with 1,060,066 checks and no discrepancies.
 
-This establishes outcome-trained participant/order binding with supplied
-identity grounding and a contact-only interface. Token positions alone can
-distinguish the two orders, so lexical identity necessity and independent synonym
-semantics remain untested. **The next G3 task is a fresh fixed-order lexical
-contrast over at least two already acquired native effects**, with no gold action
-kind and a lexical masking/shuffling control. Preserve this successful binding;
-do not reopen G1/G2 fitting. That task is now implemented above, not fitted or run.
+This established outcome-trained participant/order binding with supplied
+identity grounding and a contact-only interface. Token positions alone could
+distinguish the two orders, leaving lexical identity necessity untested by that
+study. The completed lexical study above closes that specific gap while exposing
+failed transfer across word–layout combinations. Both results and their original
+checkpoints remain intact.
 
 ## Retained timing result
 
@@ -670,22 +693,28 @@ the contradiction. Terminal errors retain strict-JSON diagnostics and exit code 
 
 ## Current verification and code size
 
-The bilingual implementation passes **796 isolated tests**, **27 locks**,
-57 source bindings and eight prepared-data hashes. Hosted invariant and source
-checks pass after the documented test-only floating-point portability correction;
-the [PR #68 checks](https://github.com/robosys-labs/cemm/pull/68/checks) track the
+The lexical implementation has **817 isolated tests**, including 21 new tests,
+and **28 locks**. Public source [invariants](https://github.com/robosys-labs/cemm/actions/runs/41214328710)
+and [source snapshot](https://github.com/robosys-labs/cemm/actions/runs/41214328655)
+pass. The initial local clean-checkout preflight error occurred with uncommitted
+documentation; the exact test passed after commit. The
+[PR #69 checks](https://github.com/robosys-labs/cemm/pull/69/checks) track the final
 published head. No scientific fit or collection was retried.
 
-The saved [bilingual arithmetic audit](results/bilingual-validation-v1.json)
-performs **1,060,066 checks with zero discrepancies**, reconstructing all 110
-criteria without running a model or repository scorer. It is a separate
-implementation within the same team, not independent scientific custody.
+The saved [lexical arithmetic audit](results/lexical-validation-v1.json) performs
+**2,787,821 checks with zero discrepancies**, reconstructing the lexical success
+and structural failure without running a model or study scorer. It verifies
+62 source bindings, six prepared artifacts, 23 historical bindings, 60 traces
+and 20 tensor fingerprints. It is separate implementation within the same team,
+not independent scientific custody.
 
-This tranche adds **1,984 Python lines**: 914 study source, 415 audit source and
-655 test lines. Retained research Python totals **35,032 lines**, including
-**15,537 test lines**. The inclusive **2,000-line objective remains unmet**.
-The [bilingual result](BILINGUAL_DECISION_V1.md) records all runtime costs,
-controls, probability regressions and limits.
+This tranche adds **1,481 Python lines**: 697 study source, 237 audit source and
+547 test lines. Retained research Python totals **36,513 lines**, including
+**16,084 test lines**. The inclusive **2,000-line objective remains unmet**.
+Five fits took 13.220 recorded CPU seconds; peak recorded RSS was 431,448 KiB.
+The [lexical result](LEXICAL_DECISION_V1.md) records all runtime scopes,
+controls, probability losses and limits. The next comparison reuses the current
+experiment infrastructure; no generic framework or broad refactor is selected.
 
 ## Retained timing verification
 
@@ -726,6 +755,7 @@ unchanged.
 
 | Tranche | Retained verification | CI reference |
 |---|---|---|
+| Bilingual v1 | [Retained decision](BILINGUAL_DECISION_V1.md): 796 tests, 27 locks; KEEP_BILINGUAL_GROUNDING; 1,060,066 audit checks | [PR #68](https://github.com/robosys-labs/cemm/pull/68/checks) |
 | Multisource law v1 | [Retained decision](MULTISOURCE_LAW_DECISION_V1.md): 700 tests, 24 locks; KEEP_MULTISOURCE_LAWS | [PR #65](https://github.com/robosys-labs/cemm/pull/65/checks) |
 | Joint correlation v1 | [Retained decision](JOINT_CORRELATION_DECISION_V1.md): 681 tests, 23 locks; KEEP_JOINT_CORRELATION | [PR #64](https://github.com/robosys-labs/cemm/pull/64/checks) |
 | Mixed composition v1 | [Retained decision](G1_G2_PROGRESS_REVIEW.md): 669 tests, 87.920 seconds; KEEP_MIXED_COMPOSITION | [PR #63](https://github.com/robosys-labs/cemm/pull/63/checks) |
@@ -789,9 +819,11 @@ frozen world weights, genuinely different SVO/OSV orders, held-out entities,
 reversed roles and new combinations, plus text-only and supervised-parser
 controls. No gold parser programs or linguistic role tags entered the candidate.
 Fresh language data/source/fit plans were published before encoder fitting.
-The one fit/evaluate/decision cycle is now complete with
-[KEEP_BILINGUAL_GROUNDING](BILINGUAL_DECISION_V1.md); fixed-order lexical
-contrast is the selected remaining G3 scope.
+That cycle completed with [KEEP_BILINGUAL_GROUNDING](BILINGUAL_DECISION_V1.md).
+The next [fixed-order lexical cycle](LEXICAL_DECISION_V1.md) now also completes
+with KEEP_LEXICAL_GROUNDING. Its failed word–layout transfer selects the small
+binding comparison described above. Preserve these gains while testing whether
+meaning can be reused structurally under matched observed training histories.
 
 Independent challenge custody, strong architecture comparisons at matched
 consumed compute and general calibration remain scientific limits. Fully hidden
@@ -799,13 +831,13 @@ long rollouts remain a separate resource-scaling question; no new G2 prerequisit
 or larger workspace is introduced. Preserve all successful weights and failed
 study history.
 
-## Remaining roadmap after bilingual v1
+## Remaining roadmap after lexical v1
 
 | Stage | Current state and remaining evidence |
 |---|---|
 | G1 | Development foundation sufficient for G2. Original scientific admission remains open for baseline adequacy and independent challenge evidence; historical target unchanged. |
 | G2 | Selected bounded composition capabilities, hidden propagation and explicit timing complete. Development readiness PROCEED_TO_G3; formal scientific admission remains open. |
-| G3 | Bounded SVO/OSV participant/order binding passes. Fixed-order lexical contrast and separate word-by-layout diagnostic implemented; one frozen fit/evaluation cycle pending. |
+| G3 | Role binding and fixed-order lexical contrast pass. Held-out word–layout transfer is only 35%; small learned-factor versus GRU comparison selected, not implemented/frozen. G3 remains open. |
 | G4 | Communication improves held-out external-goal utility against silent/random/shuffled controls. |
 | G5 | Answered experience persists across episodes, reduces later clarification and preserves earlier competence. |
 | G6 | Corpus exposure improves new grounded decisions beyond retrieval/frequency controls. |

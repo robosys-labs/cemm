@@ -3,7 +3,12 @@
 Tracking: [roadmap #22](https://github.com/robosys-labs/cemm/issues/22).
 Parent: [bilingual role binding, PR #68](https://github.com/robosys-labs/cemm/pull/68),
 commit `02500ffe5d310364142ca6cecfcde14e83b8e827`.
-Prepared 31 October 2026 (Africa/Lagos). **Implemented; not fitted or evaluated.**
+Prepared and completed 31 October 2026 (Africa/Lagos).
+**KEEP_LEXICAL_GROUNDING; STRUCTURAL_TRANSFER_NOT_ESTABLISHED.**
+The prospective design below is retained. See the
+[completed decision and limitations](LEXICAL_DECISION_V1.md): 41,600/41,600 fresh
+complete worlds, 20,800/20,800 exact retention, but only 35% held-out word–layout
+transfer. One prescribed fit/collection cycle completed without scientific retries.
 
 ## Roadmap alignment
 

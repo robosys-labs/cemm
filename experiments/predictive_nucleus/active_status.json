@@ -363,113 +363,66 @@
   "pending_engineering_in_order": [
     {
       "stage": "G3",
-      "work": "Implement one bounded bilingual-grounding tranche into the same frozen learned world: English-like SVO and genuinely different artificial OSV, held-out entity/role/composition transfer, text-only and supervised-parser controls, no gold parser programs or linguistic role labels. Publish fresh source/data/fit plans before encoder training, then complete one fit/evaluate/decision cycle."
+      "work": "Compare a learned lexical-content factor plus learned layout/mention-binding factor and small learned interaction against the GRU architecture, each with at most 474 actual parameters, through the same prospectively frozen observed curriculum, initialization policy and training history. Use only observed-outcome likelihood, a fresh word-by-layout holdout and existing acquired worlds/collector; preserve successful checkpoints and opened failure cases as references."
     },
     {
-      "stage": "G4\u2013G5",
+      "stage": "G4–G5",
       "work": "Implement learned communication, durable acquisition, correction, restart and retention in dependency order."
     },
     {
-      "stage": "G6\u2013G8",
+      "stage": "G6–G8",
       "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
     }
   ],
-  "external_issue_55": "Independent challenge custody/review remains required for scientific admission. Alias-v2, mixed-v1 and joint-correlation-v1 KEEP decisions establish bounded capabilities under supplied structure; continuation-v1 STOP and alias-v1 REVISE remain unchanged. No historical bank is reopened.",
+  "external_issue_55": "Independent challenge custody/review remains required for scientific admission. Retained KEEP decisions establish bounded capabilities under supplied structure; continuation-v1 STOP and alias-v1 REVISE remain unchanged. Historical models and scientific collections were not rerun. Lexical-v1 explicitly uses the opened bilingual bank for updated-encoder retention against archived forecasts, not fresh generalization.",
   "line_counts": {
-    "active_files": {
-      "active_paths.py": 258,
-      "active_participant.py": 225,
-      "active_evidence.py": 156,
-      "domain_contract.py": 297,
-      "domain_kernel.py": 149,
-      "domain_flat.py": 74,
-      "active_learning.py": 346,
-      "active_checkpoint.py": 291,
-      "acceptance_contract.py": 423,
-      "acceptance_runner.py": 175,
-      "acceptance_scoring.py": 294,
-      "prospective_oracle.py": 79,
-      "prospective_data.py": 238,
-      "prospective_audit.py": 294,
-      "observed_io.py": 48,
-      "continuation_data.py": 153,
-      "continuation_summary.py": 116,
-      "continuation_run.py": 333,
-      "alias_evidence_data.py": 191,
-      "alias_evidence_run.py": 247,
-      "mixed_composition_data.py": 126,
-      "mixed_composition_run.py": 346,
-      "joint_correlation_data.py": 132,
-      "multisource_law_data.py": 137,
-      "multisource_law_oracle.py": 51,
-      "multisource_law_run.py": 299,
-      "multisource_law_scoring.py": 137,
-      "hidden_cycle_data.py": 144,
-      "hidden_cycle_run.py": 207,
-      "hidden_cycle_scoring.py": 194,
-      "timing_evaluate.py": 129,
-      "timing_session.py": 100,
-      "timing_run.py": 154,
-      "timing_runner.py": 83,
-      "timing_data.py": 170,
-      "timing_scoring.py": 245,
-      "timing_kernel.py": 72,
-      "timing_contract.py": 101,
-      "timing_oracle.py": 67
-    },
-    "active_source_files_excluding_frozen_dependencies": 7281,
-    "new_runtime_source_net": 273,
-    "new_tests_net": 975,
-    "retained_research_python": 33048,
+    "study_source": 697,
+    "audit_source": 237,
+    "tests": 547,
+    "retained_research_python": 36513,
+    "added_total": 1481,
+    "retained_test_lines": 16084,
     "inclusive_size_goal_met": false,
     "learned_parameter_delta": 0,
-    "new_tests": 38,
-    "scope": "Timing tranche: 273 lines runtime/contract/session plus 848 bounded data/collection/evaluation lines and 975 focused test lines. Total retained count includes tests; excludes separately disclosed 318-line temporary stdlib arithmetic review.",
-    "new_study_source_net": 848,
-    "retained_test_lines": 14882
+    "new_tests": 21,
+    "scope": "Lexical-v1 physical Python lines: 697 study, 237 saved-artifact auditor, 547 tests. Retained total includes all historical research Python and tests; the inclusive 2000-line objective remains unmet."
   },
   "verification": {
-    "scope": "Public source/data/plan freeze, one prospective zero-fit timing collection and stdlib-only internal saved-artifact arithmetic; not independent scientific admission.",
-    "isolated_suite_tests": 760,
-    "isolated_suite_ci_conclusion": "success",
-    "local_prepublication_suite": {
-      "tests": 760,
-      "passed": 760,
-      "seconds": 64.59,
-      "output_sha256": "6f3f9c26486e299557836a701dc3cf0259e5cb74e236f43db32a9552a116b4e0"
-    },
-    "initial_uncommitted_suite": {
-      "tests": 760,
+    "scope": "Lexical source/data/protocol freeze and one fit/collection cycle; separate stdlib saved-artifact arithmetic, not independent scientific custody.",
+    "isolated_suite_tests": 817,
+    "new_tests": 21,
+    "protocol_manifest_locks": 28,
+    "initial_local_suite": {
+      "tests": 817,
+      "passed": 816,
       "errors": 1,
-      "reason": "Existing preflight requires a clean committed checkout; no implementation test failed.",
-      "output_sha256": "43f524ed80a6209d9af6824e87eed6b435fb17d45e17cf2b65b99de551a41334"
+      "seconds": 68.621,
+      "reason": "Existing preflight requires a clean committed checkout; documentation was uncommitted. Exact preflight test passed after commit in 2.833 seconds; no implementation change."
     },
-    "published_source_commit": "86936788d6f90ccb99f719d48e2c9a3b13e03756",
-    "published_tree": "0b899e390bb7e09c7b332f77f923532b490be1cb",
+    "published_source_commit": "7645485bd75c80051a480d6b24aa459a1c8c0d48",
+    "published_tree": "01847b2240001069287273eb582b5b17a9360ab4",
     "published_tree_matches_tested_tree": true,
-    "checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
-    "protocol_manifest_locks": 26,
-    "frozen_preflight": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
-    "invariant_ci_run": 41198968742,
+    "invariant_ci_run": 41214328710,
     "invariant_ci_conclusion": "success",
-    "source_ci_run": 41198968713,
+    "source_ci_run": 41214328655,
     "source_ci_conclusion": "success",
-    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/67/checks",
-    "internal_artifact_arithmetic": "results/timing-validation-v1.json",
-    "internal_artifact_checks": 1118458,
+    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/69/checks",
+    "internal_artifact_arithmetic": "results/lexical-validation-v1.json",
+    "internal_artifact_checks": 2787821,
     "internal_artifact_defects": 0,
     "independent_scientific_custody": false,
-    "closed_study_reruns": false,
-    "new_fits": 0,
-    "completed_training_updates": 0,
-    "historical_data_result_lock_files_unchanged": 374,
-    "historical_trained_checkpoint_files_unchanged": 10,
-    "temporary_internal_audit_script_lines": 318,
-    "temporary_internal_audit_script_sha256": "2a2ed5b8dabe3576541bf00e020789c03c7b2925b5f249b48fc8b99393f3455e"
+    "scientific_runs_retried": false,
+    "new_fits": 5,
+    "completed_training_updates": 1280,
+    "source_bindings": 62,
+    "prepared_artifacts": 6,
+    "historical_bindings": 23,
+    "result_traces": 60,
+    "tensor_fingerprints": 20
   },
   "limits": [
     "Continuation v1 completed its frozen fits and artifact collection but formally STOPPED: empirical zero-support feedback contradictions terminated episodes and left required forecasts unproduced. G1 remains NOT_ADMITTED; failures and all planned denominators are retained.",
-    "Bounded self-contact, ordered composition, observed-history correlation, separate learned NAND/NOR laws and one hidden-intermediate consequence are established by retained KEEP studies. Joint filtering and persistent modes are supplied. Simultaneous timing, a unified-law model, arbitrary multisource physics, long fully open-loop propagation and independent custody remain unestablished.",
+    "Bounded self-contact, ordered composition, observed-history correlation, separate learned NAND/NOR laws, one hidden-intermediate consequence and explicit timing under a supplied binary scheduler are established by retained KEEP studies. Joint filtering and persistent modes are supplied. Learned general concurrency, a unified-law model, arbitrary multisource physics, long fully open-loop propagation and independent custody remain unestablished.",
     "Default flat/shared capacities differ. Continuation v1 selected 562 parameters and identical realized exposure for each neural arm; function classes, supplied biases and consumed CPU remain different. Flat mean in-family accuracy was 15%, limiting a specifically compositional interpretation of the full gap.",
     "Legacy flat checkpoints remain three-entity-only and cannot be converted to the new flat architecture.",
     "Positive-mass paths are neither pruned nor merged; missing observations can exhaust the default 64-live-path or 512-candidate budgets.",
@@ -480,7 +433,7 @@
     "If final fingerprinting also fails after a training interruption, current-state hashes are explicitly unavailable; the original failure is preserved.",
     "The active command remains repository-backed; frozen standalone v1 exports and scientific evidence are unchanged.",
     "Evidence remains conditional, uncalibrated and advisory; observed context counts are not posterior support or learned reliability.",
-    "The active-file subtotal excludes frozen dependencies and does not meet the inclusive 2000-line goal.",
+    "Historical active-file subtotals excluded frozen dependencies. Current total retained research Python is 36,513 lines including tests and audit source; the inclusive 2000-line goal remains unmet.",
     "The collector freezes forecasts in memory before feedback and writes its trace after collection; it does not provide crash-durable per-forecast journaling or an OS isolation boundary.",
     "Source/input/checkpoint hashes and declared split tokens enforce identities and consistency, not independent authorship, authenticated physical events or undisclosed lineage completeness.",
     "Oracle support must be complete under the declared information law. The evaluator checks consistency only and neither assumes uniform support probabilities nor derives Bayes floors.",
@@ -505,7 +458,9 @@
     "Empirical v6 recovery is source-localized and synthetic-regression-tested; no retained failing historical episode or empirical study was replayed. Neural-only alias studies do not establish empirical run-level recovery.",
     "Balanced training environment orientations are supplied study design, not learner labels; selection precedes final realization in both arms. Cross-study V1/V2 performance is descriptive because their fresh banks differ.",
     "Multisource-law-v1 learns NAND/NOR separately and tests full-feedback closed-loop one-step composition. It does not establish one unified law checkpoint, zero-shot new-law transfer, hidden-intermediate propagation, open-loop rollout or simultaneous timing.",
-    "Hidden-cycle-v1 preserves all identifiable MAP forecasts but missing feedback slightly increases final probability loss: 2,512 NLL increases and 48 decreases. Its 83.333333% pooled MAP accuracy equals this bank's expected oracle rate; all MAP errors are ambiguous first forecasts. Timing/group semantics are the next input-contract task and are not inferred from masking feedback."
+    "Hidden-cycle-v1 preserves all identifiable MAP forecasts but missing feedback slightly increases final probability loss: 2,512 NLL increases and 48 decreases. Its 83.333333% pooled MAP accuracy equals the bank expected oracle rate; all MAP errors are ambiguous first forecasts. Explicit timing was subsequently completed in timing-v1 under a supplied binary scheduler; it is not inferred from masking feedback.",
+    "Lexical-v1 retains all 41,600 primary worlds and 20,800 opened-bank worlds, but NLL worsens on all old-bank predictions and all fresh predictions relative to gold-action native references; exact retention is not zero probability degradation.",
+    "Lexical-v1 held-out word-by-layout combinations achieve only 2,016/5,760 correct worlds and 576/2,880 both-correct pairs. Every wrong world chooses the wrong operand order. G3 structural reuse and general language comprehension remain unestablished; a matched small neural binding comparison is selected, not implemented or frozen."
   ],
   "local_verified_code_commit": "16a2326491b1add7e3057304d88e430724964584",
   "diagnostics_pr": 57,
@@ -533,7 +488,10 @@
     "independent_multi_source_laws": "COMPLETED_KEEP_MULTISOURCE_LAWS_FOR_SEPARATE_NAND_NOR_FULL_FEEDBACK_FITS",
     "simultaneous_timing": "COMPLETED_KEEP_TIMING_WITH_SUPPLIED_BINARY_SCHEDULER_AND_FROZEN_LEARNED_PAIRS; BOUNDED_FULL_ENDPOINT_FEEDBACK",
     "hidden_intermediate_new_law_propagation": "COMPLETED_KEEP_HIDDEN_CYCLE_WITH_TEN_FROZEN_CHECKPOINTS; ONE_HIDDEN_INTERMEDIATE_AND_ONE_LATER_STEP",
-    "bilingual_grounding": "SELECTED_G3_NOT_IMPLEMENTED"
+    "bilingual_grounding": "COMPLETE_KEEP_BILINGUAL_GROUNDING; SUPPLIED_CONTACT_INTERFACE_AND_IDENTITY_GROUNDING",
+    "fixed_order_lexical_grounding": "COMPLETE_KEEP_LEXICAL_GROUNDING; 41600_OF_41600_FRESH_WORLDS; ZERO_NEW_PARAMETERS",
+    "word_layout_structural_transfer": "NOT_ESTABLISHED; 2016_OF_5760_HELD_OUT_WORLDS; ALL_40_HELD_OUT_CHECKS_FAIL",
+    "exact_retention_probability_limit": "20800_OF_20800_OLD_WORLDS_RETAINED; ALL_20800_NLLS_WORSE"
   },
   "learning_version": "active-learning-v1",
   "checkpoint_format": "cemm-active-checkpoint-v1",
@@ -831,6 +789,102 @@
         "historical_v2_files_unchanged": 46,
         "historical_trained_checkpoint_files_unchanged": 10
       }
+    },
+    {
+      "study": "timing-v1",
+      "record": "TIMING_DECISION_V1.md",
+      "verification": {
+        "scope": "Public source/data/plan freeze, one prospective zero-fit timing collection and stdlib-only internal saved-artifact arithmetic; not independent scientific admission.",
+        "isolated_suite_tests": 760,
+        "isolated_suite_ci_conclusion": "success",
+        "local_prepublication_suite": {
+          "tests": 760,
+          "passed": 760,
+          "seconds": 64.59,
+          "output_sha256": "6f3f9c26486e299557836a701dc3cf0259e5cb74e236f43db32a9552a116b4e0"
+        },
+        "initial_uncommitted_suite": {
+          "tests": 760,
+          "errors": 1,
+          "reason": "Existing preflight requires a clean committed checkout; no implementation test failed.",
+          "output_sha256": "43f524ed80a6209d9af6824e87eed6b435fb17d45e17cf2b65b99de551a41334"
+        },
+        "published_source_commit": "86936788d6f90ccb99f719d48e2c9a3b13e03756",
+        "published_tree": "0b899e390bb7e09c7b332f77f923532b490be1cb",
+        "published_tree_matches_tested_tree": true,
+        "checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
+        "protocol_manifest_locks": 26,
+        "frozen_preflight": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
+        "invariant_ci_run": 41198968742,
+        "invariant_ci_conclusion": "success",
+        "source_ci_run": 41198968713,
+        "source_ci_conclusion": "success",
+        "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/67/checks",
+        "internal_artifact_arithmetic": "results/timing-validation-v1.json",
+        "internal_artifact_checks": 1118458,
+        "internal_artifact_defects": 0,
+        "independent_scientific_custody": false,
+        "closed_study_reruns": false,
+        "new_fits": 0,
+        "completed_training_updates": 0,
+        "historical_data_result_lock_files_unchanged": 374,
+        "historical_trained_checkpoint_files_unchanged": 10,
+        "temporary_internal_audit_script_lines": 318,
+        "temporary_internal_audit_script_sha256": "2a2ed5b8dabe3576541bf00e020789c03c7b2925b5f249b48fc8b99393f3455e"
+      },
+      "line_counts": {
+        "active_files": {
+          "active_paths.py": 258,
+          "active_participant.py": 225,
+          "active_evidence.py": 156,
+          "domain_contract.py": 297,
+          "domain_kernel.py": 149,
+          "domain_flat.py": 74,
+          "active_learning.py": 346,
+          "active_checkpoint.py": 291,
+          "acceptance_contract.py": 423,
+          "acceptance_runner.py": 175,
+          "acceptance_scoring.py": 294,
+          "prospective_oracle.py": 79,
+          "prospective_data.py": 238,
+          "prospective_audit.py": 294,
+          "observed_io.py": 48,
+          "continuation_data.py": 153,
+          "continuation_summary.py": 116,
+          "continuation_run.py": 333,
+          "alias_evidence_data.py": 191,
+          "alias_evidence_run.py": 247,
+          "mixed_composition_data.py": 126,
+          "mixed_composition_run.py": 346,
+          "joint_correlation_data.py": 132,
+          "multisource_law_data.py": 137,
+          "multisource_law_oracle.py": 51,
+          "multisource_law_run.py": 299,
+          "multisource_law_scoring.py": 137,
+          "hidden_cycle_data.py": 144,
+          "hidden_cycle_run.py": 207,
+          "hidden_cycle_scoring.py": 194,
+          "timing_evaluate.py": 129,
+          "timing_session.py": 100,
+          "timing_run.py": 154,
+          "timing_runner.py": 83,
+          "timing_data.py": 170,
+          "timing_scoring.py": 245,
+          "timing_kernel.py": 72,
+          "timing_contract.py": 101,
+          "timing_oracle.py": 67
+        },
+        "active_source_files_excluding_frozen_dependencies": 7281,
+        "new_runtime_source_net": 273,
+        "new_tests_net": 975,
+        "retained_research_python": 33048,
+        "inclusive_size_goal_met": false,
+        "learned_parameter_delta": 0,
+        "new_tests": 38,
+        "scope": "Timing tranche: 273 lines runtime/contract/session plus 848 bounded data/collection/evaluation lines and 975 focused test lines. Total retained count includes tests; excludes separately disclosed 318-line temporary stdlib arithmetic review.",
+        "new_study_source_net": 848,
+        "retained_test_lines": 14882
+      }
     }
   ],
   "acceptance_version": "active-acceptance-v1",
@@ -1054,12 +1108,14 @@
   },
   "progress_control": {
     "last_learned_results": [
+      "LEXICAL_DECISION_V1.md",
+      "BILINGUAL_DECISION_V1.md",
       "MULTISOURCE_LAW_DECISION_V1.md",
       "ALIAS_EVIDENCE_DECISION_V2.md"
     ],
     "invariant_count_is_scientific_gate_progress": false,
-    "next_deliverable": "Implement one bounded bilingual-grounding tranche into the same frozen learned world: English-like SVO and genuinely different artificial OSV, held-out entity/role/composition transfer, text-only and supervised-parser controls, no gold parser programs or linguistic role labels. Publish fresh source/data/fit plans before encoder training, then complete one fit/evaluate/decision cycle.",
-    "another_preparation_only_tranche_requires": "A concrete execution blocker. Explicit timing is complete; next work must implement and execute the bounded G3 grounding comparison, not repeat closed studies or add another generic harness.",
+    "next_deliverable": "Compare a learned lexical-content factor plus learned layout/mention-binding factor and small learned interaction against the GRU architecture, each with at most 474 actual parameters, through the same prospectively frozen observed curriculum, initialization policy and training history. Use only observed-outcome likelihood, a fresh word-by-layout holdout and existing acquired worlds/collector; preserve successful checkpoints and opened failure cases as references.",
+    "another_preparation_only_tranche_requires": "A concrete execution blocker. Lexical-v1 is complete with a structural failure; next work should change and test the small neural binding hypothesis using existing infrastructure, not repeat closed collections or add a generic harness.",
     "further_refactor_scope": "Only a demonstrated execution blocker or later release packaging milestone.",
     "historical_learned_results": [
       "ALIAS_EVIDENCE_DECISION_V1.md",
@@ -1067,7 +1123,7 @@
       "COMMON_OBJECTIVE_DECISION.md",
       "SENSOR_TRANSFER_DECISION.md"
     ],
-    "last_frozen_decision": "KEEP_TIMING",
+    "last_frozen_decision": "KEEP_LEXICAL_GROUNDING",
     "execution_and_artifact_collection_complete": true,
     "participant_complete_run": true,
     "latest_frozen_weight_results": [
@@ -1076,28 +1132,34 @@
       "JOINT_CORRELATION_DECISION_V1.md",
       "G1_G2_PROGRESS_REVIEW.md"
     ],
-    "next_bounded_representation_extension": null,
+    "next_bounded_representation_extension": "Learned lexical-content and layout/mention-binding factors with learned interaction, at most 474 parameters per language model.",
     "new_generic_runner_planned": false,
-    "bounded_model_architecture_extension_selected": false
+    "bounded_model_architecture_extension_selected": true,
+    "last_structural_transfer_decision": "STRUCTURAL_TRANSFER_NOT_ESTABLISHED"
   },
   "selected_next_task": {
-    "status": "IMPLEMENTED_G3_LEXICAL_CONTRAST; AWAITING_PUBLIC_SOURCE_FREEZE",
+    "status": "SELECTED_NOT_IMPLEMENTED_OR_FROZEN",
     "stage": "G3",
-    "work": "One outcome-only lexical continuation of the unchanged474-parameter encoder: fixed-layout direct/inverse contact contrasts, current-word masking/swap controls, opened-bank retention, and a separately reported held-out word-by-layout combination diagnostic.",
-    "details": "LEXICAL_STUDY_V1.md",
+    "work": "Compare a learned lexical-content factor plus learned layout/mention-binding factor and small learned interaction against the GRU architecture, each with at most 474 actual parameters, through the same prospectively frozen observed curriculum, initialization policy and training history. Use only observed-outcome likelihood, a fresh word-by-layout holdout and existing acquired worlds/collector; preserve successful checkpoints and opened failure cases as references.",
+    "details": "LEXICAL_DECISION_V1.md#roadmap-decision",
     "world_training_permitted": false,
-    "new_model_parameters": 0,
-    "language_encoder_training_prerequisite": "Publicly freeze source/data/protocol; five warm-start fits; publish checkpoints before one collection.",
+    "language_parameter_ceiling_each": 474,
+    "new_generic_runner_planned": false,
+    "supervision": "Observed complete-world outcomes only for linguistic events; no gold linguistic participant-order, action-kind, language ID, parser labels, teacher logits, literal-word dispatch or handwritten inverse rule.",
+    "comparison_fairness": "Both architectures traverse the same declared observed training history from a declared initialization policy. A fresh architecture versus only a warm-start GRU is not a fair architecture comparison. Report actual parameters and consumed compute.",
+    "freshness": "Fresh prospectively frozen word-by-layout holdout; lexical-v1 failures remain opened diagnostic/regression cases, not new generalization evidence.",
+    "hypothesis_limit": "Learned factorization may still fit exceptions; current results do not prove a GRU capacity limit or distinguish all effects of evidence allocation and optimization.",
+    "language_encoder_training_prerequisite": "Publish new source/data/protocol and matched observed curriculum before any new fits; publish all prescribed checkpoints before collection.",
     "preserve_checkpoints": "All historical native/language checkpoint files and source pins remain byte-identical.",
-    "completed_previous_task": "bilingual-v1 KEEP_BILINGUAL_GROUNDING; participant/order binding only",
+    "completed_previous_task": "lexical-v1 KEEP_LEXICAL_GROUNDING; STRUCTURAL_TRANSFER_NOT_ESTABLISHED",
     "historical_decisions_unchanged": true,
     "scientific_admission_unchanged": true,
     "new_open_loop_gate_added": false,
     "new_physics_or_workspace_added": false
   },
-  "current_pr": 68,
+  "current_pr": 69,
   "continuation_pr": 62,
-  "current_study_decision": "KEEP_BILINGUAL_GROUNDING",
+  "current_study_decision": "KEEP_LEXICAL_GROUNDING",
   "g1_development_readiness": "PROCEED_TO_G2",
   "current_development_stage": "G3",
   "mixed_composition_study": {
@@ -1879,16 +1941,17 @@
       "retained_research_total": 35032,
       "inclusive_2000_target_met": false
     },
-    "next_lexical_contrast_required": true,
-    "general_language_comprehension_claimed": false
+    "next_lexical_contrast_required": false,
+    "general_language_comprehension_claimed": false,
+    "next_lexical_contrast_completed_by": "lexical-v1 KEEP_LEXICAL_GROUNDING; structural transfer remains open"
   },
   "bilingual_pr": 68,
-  "g3_development_readiness": "ROLE_BINDING_COMPLETE_LEXICAL_GROUNDING_OPEN",
+  "g3_development_readiness": "LEXICAL_GROUNDING_COMPLETE_STRUCTURAL_TRANSFER_OPEN",
   "lexical_study": {
     "version": "lexical-v1",
-    "stage": "IMPLEMENTED_NOT_FITTED",
+    "stage": "COMPLETE",
     "protocol": "lexical_protocol_v1.json",
-    "report": "LEXICAL_STUDY_V1.md",
+    "report": "LEXICAL_DECISION_V1.md",
     "data": "data/lexical-v1",
     "fitted": "data/lexical-fit-v1",
     "results": "results/lexical-v1",
@@ -1915,6 +1978,161 @@
     "lexical_decision_separate_from_structural_transfer": true,
     "scientific_gate_admitted": false,
     "historical_checkpoints_changed": false,
-    "learned_result": null
-  }
+    "learned_result": "Outcome-trained lexical selection of directed contact at fixed name positions. All 41600 primary worlds and 20800 archived-bank worlds correct, but only 2016/5760 held-out word-layout worlds correct; structural reuse is not established.",
+    "design": "LEXICAL_STUDY_V1.md",
+    "headline": "results/lexical-headline-v1.json",
+    "validation": "results/lexical-validation-v1.json",
+    "failure_diagnostic": "results/lexical-binding-diagnostic-v1.json",
+    "formal_decision": "KEEP_LEXICAL_GROUNDING",
+    "structural_transfer": "STRUCTURAL_TRANSFER_NOT_ESTABLISHED",
+    "source_data_plan_commit": "7645485bd75c80051a480d6b24aa459a1c8c0d48",
+    "weights_commit": "12adb6bdb0361a37d36bb2d8a1ddf16cbe225592",
+    "native_checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
+    "source_freeze_before_fitting": true,
+    "weight_freeze_before_collection": true,
+    "execution_complete": true,
+    "actual_fits": 5,
+    "completed_updates": 1280,
+    "collected_forecasts": 138560,
+    "evaluator_native_references": 41600,
+    "exact_worlds": {
+      "correct": 41600,
+      "planned": 41600
+    },
+    "participant_orders": {
+      "correct": 41600,
+      "planned": 41600
+    },
+    "whole_trajectories": {
+      "correct": 11520,
+      "planned": 11520
+    },
+    "lexical_pairs": {
+      "correct": 5760,
+      "planned": 5760
+    },
+    "old_bank_exact_retention": {
+      "correct": 20800,
+      "planned": 20800,
+      "opened_bank": true,
+      "exact_regressions": 0
+    },
+    "structural_transfer_metrics": {
+      "seen": {
+        "correct": 5760,
+        "planned": 5760,
+        "mean_nll": 0.006506116122008494,
+        "mean_brier": 6.413809170128182e-05,
+        "order_correct": 5760,
+        "order_planned": 5760,
+        "minimum_true_probability": 0.985849839714703,
+        "maximum_foil_probability": 0.007802459096283085,
+        "unchanged_bit_errors": 0
+      },
+      "held_out": {
+        "correct": 2016,
+        "planned": 5760,
+        "mean_nll": 3.5777402903461026,
+        "mean_brier": 1.3034134645015736,
+        "order_correct": 2016,
+        "order_planned": 5760,
+        "minimum_true_probability": 0.00042038755965848106,
+        "maximum_foil_probability": 0.9985794790322082,
+        "unchanged_bit_errors": 2672
+      }
+    },
+    "structural_transfer_pairs": {
+      "seen": {
+        "correct": 2880,
+        "planned": 2880
+      },
+      "held_out": {
+        "correct": 576,
+        "planned": 2880
+      }
+    },
+    "primary_checks": {
+      "passed": 130,
+      "planned": 130
+    },
+    "structural_checks": {
+      "seen": {
+        "passed": 40,
+        "planned": 40
+      },
+      "held_out": {
+        "passed": 0,
+        "planned": 40
+      }
+    },
+    "counterfactual_controls": {
+      "masked_max_tv": 0.0,
+      "masked_both_correct": 0,
+      "swapped_counterparts_correct": 11520,
+      "swapped_max_tv": 0.0,
+      "swapped_min_counterpart_probability": 0.9844963337575072
+    },
+    "probability_comparisons": {
+      "native": {
+        "regressions": 0,
+        "repairs": 0,
+        "nll_worse": 41600,
+        "nll_better": 0,
+        "mean_nll_delta": 0.0021633676490644964,
+        "max_nll_increase": 0.007515499647570349
+      },
+      "parent_fresh": {
+        "regressions": 0,
+        "repairs": 24432,
+        "nll_worse": 9488,
+        "nll_better": 32112,
+        "mean_nll_delta": -3.71273683509009,
+        "max_nll_increase": 0.002064349030672454
+      },
+      "parent_retention": {
+        "regressions": 0,
+        "repairs": 0,
+        "nll_worse": 20800,
+        "nll_better": 0,
+        "mean_nll_delta": 0.0006803064283543267,
+        "max_nll_increase": 0.002064656771147415
+      }
+    },
+    "result_manifest_sha256": "ab439608fd7c7068b62c5d81796ba618e00be4fa97965b19cc56008b11097d1e",
+    "result_summary_sha256": "327dd4ebff4b7fae82d5edd396feba353b942299a8a5272b5d6e6d952c177d58",
+    "saved_artifact_audit": {
+      "checks": 2787821,
+      "discrepancies": 0,
+      "independent_scientific_custody": false
+    },
+    "resources": {
+      "fitting": {
+        "cpu_seconds": 13.219926049000001,
+        "peak_rss_kib": 316204,
+        "wall_seconds": 13.248766799002624
+      },
+      "forecasts_cpu_seconds": 1.603440917999981,
+      "forecasts_wall_seconds": 1.6009548119436658,
+      "peak_rss_kib": 431448,
+      "preparation_cpu_seconds": 5.948882161000004,
+      "preparation_wall_seconds": 5.94939138799964,
+      "scoring": {
+        "cpu_seconds": 17.929793638,
+        "wall_seconds": 17.93185711100159
+      }
+    },
+    "resource_scope": "Recorded fit/cache/forecast/scoring regions; no claim of total process cost. Forecast chunks exclude serialization and include shared prefix only once. Batch-amortized p95 is not individual request latency.",
+    "python_lines": {
+      "study_source": 697,
+      "audit_source": 237,
+      "tests": 547,
+      "retained_research_python": 36513,
+      "added_total": 1481
+    },
+    "failure_localization": "Every wrong held-out world selects the wrong operand order and equals the opposite-action foil, identically under NAND/NOR; this does not establish a GRU capacity limit.",
+    "scientific_runs_retried": false,
+    "general_language_comprehension_claimed": false
+  },
+  "lexical_pr": 69,
+  "structural_transfer_decision": "STRUCTURAL_TRANSFER_NOT_ESTABLISHED"
 }

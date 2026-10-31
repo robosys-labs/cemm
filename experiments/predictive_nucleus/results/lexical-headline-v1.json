@@ -1,0 +1,418 @@
+{
+  "decision": "KEEP_LEXICAL_GROUNDING",
+  "structural_transfer": "STRUCTURAL_TRANSFER_NOT_ESTABLISHED",
+  "full": {
+    "grounded": {
+      "correct": 41600,
+      "planned": 41600,
+      "mean_nll": 0.006080037803597967,
+      "mean_brier": 5.723415040626107e-05,
+      "order_correct": 41600,
+      "order_planned": 41600,
+      "minimum_true_probability": 0.9840862907745761,
+      "maximum_foil_probability": 0.009597447635893581,
+      "unchanged_bit_errors": 0
+    },
+    "prior": {
+      "correct": 17168,
+      "planned": 41600,
+      "mean_nll": 3.718816872893688,
+      "mean_brier": 1.090144247605828,
+      "order_correct": 20800,
+      "order_planned": 41600,
+      "minimum_true_probability": 5.451469718035326e-05,
+      "maximum_foil_probability": 0.9989019047427671,
+      "unchanged_bit_errors": 19142
+    },
+    "retention": {
+      "correct": 20800,
+      "planned": 20800,
+      "mean_nll": 0.004698786045601242,
+      "mean_brier": 2.990069102307276e-05,
+      "order_correct": 20800,
+      "order_planned": 20800,
+      "minimum_true_probability": 0.9893467782824648,
+      "maximum_foil_probability": 0.004316184211701948,
+      "unchanged_bit_errors": 0
+    }
+  },
+  "probes": {
+    "grounded": {
+      "correct": 11520,
+      "planned": 11520,
+      "mean_nll": 0.005911559633630788,
+      "mean_brier": 5.410207275298771e-05,
+      "order_correct": 11520,
+      "order_planned": 11520,
+      "minimum_true_probability": 0.9844963337575072,
+      "maximum_foil_probability": 0.009161344081191996,
+      "unchanged_bit_errors": 0
+    },
+    "prior": {
+      "correct": 5760,
+      "planned": 11520,
+      "mean_nll": 3.2256946869303276,
+      "mean_brier": 0.9668509977341712,
+      "order_correct": 5760,
+      "order_planned": 11520,
+      "minimum_true_probability": 5.7829213183538346e-05,
+      "maximum_foil_probability": 0.9989019047427671,
+      "unchanged_bit_errors": 4070
+    },
+    "masked": {
+      "correct": 5760,
+      "planned": 11520,
+      "mean_nll": 2.2300473990265552,
+      "mean_brier": 0.9615726282620918,
+      "order_correct": 5760,
+      "order_planned": 11520,
+      "minimum_true_probability": 0.001381776720128685,
+      "maximum_foil_probability": 0.9976152745527991,
+      "unchanged_bit_errors": 4096
+    },
+    "swapped": {
+      "correct": 0,
+      "planned": 11520,
+      "mean_nll": 6.252516822614836,
+      "mean_brier": 1.9831009766933332,
+      "order_correct": 0,
+      "order_planned": 11520,
+      "minimum_true_probability": 0.00016601390918624692,
+      "maximum_foil_probability": 0.9985277807430702,
+      "unchanged_bit_errors": 8240
+    },
+    "cross_order": {
+      "correct": 7776,
+      "planned": 11520,
+      "mean_nll": 1.7921232032340555,
+      "mean_brier": 0.6517388012966374,
+      "order_correct": 7776,
+      "order_planned": 11520,
+      "minimum_true_probability": 0.00042038755965848106,
+      "maximum_foil_probability": 0.9985794790322082,
+      "unchanged_bit_errors": 2672
+    }
+  },
+  "transfer": {
+    "seen": {
+      "correct": 5760,
+      "planned": 5760,
+      "mean_nll": 0.006506116122008494,
+      "mean_brier": 6.413809170128182e-05,
+      "order_correct": 5760,
+      "order_planned": 5760,
+      "minimum_true_probability": 0.985849839714703,
+      "maximum_foil_probability": 0.007802459096283085,
+      "unchanged_bit_errors": 0
+    },
+    "held_out": {
+      "correct": 2016,
+      "planned": 5760,
+      "mean_nll": 3.5777402903461026,
+      "mean_brier": 1.3034134645015736,
+      "order_correct": 2016,
+      "order_planned": 5760,
+      "minimum_true_probability": 0.00042038755965848106,
+      "maximum_foil_probability": 0.9985794790322082,
+      "unchanged_bit_errors": 2672
+    }
+  },
+  "structural_by_seed": {
+    "nand/7": {
+      "seen": {
+        "correct": 576,
+        "planned": 576,
+        "mean_nll": 0.006132010088645755,
+        "order_correct": 576,
+        "order_planned": 576
+      },
+      "held_out": {
+        "correct": 144,
+        "planned": 576,
+        "mean_nll": 3.9522183738907457,
+        "order_correct": 144,
+        "order_planned": 576
+      }
+    },
+    "nand/11": {
+      "seen": {
+        "correct": 576,
+        "planned": 576,
+        "mean_nll": 0.0056705937460213044,
+        "order_correct": 576,
+        "order_planned": 576
+      },
+      "held_out": {
+        "correct": 144,
+        "planned": 576,
+        "mean_nll": 4.345334901777223,
+        "order_correct": 144,
+        "order_planned": 576
+      }
+    },
+    "nand/23": {
+      "seen": {
+        "correct": 576,
+        "planned": 576,
+        "mean_nll": 0.006903785802775514,
+        "order_correct": 576,
+        "order_planned": 576
+      },
+      "held_out": {
+        "correct": 288,
+        "planned": 576,
+        "mean_nll": 2.8350473357760198,
+        "order_correct": 288,
+        "order_planned": 576
+      }
+    },
+    "nand/37": {
+      "seen": {
+        "correct": 576,
+        "planned": 576,
+        "mean_nll": 0.0075838436094620935,
+        "order_correct": 576,
+        "order_planned": 576
+      },
+      "held_out": {
+        "correct": 288,
+        "planned": 576,
+        "mean_nll": 2.6969608983718136,
+        "order_correct": 288,
+        "order_planned": 576
+      }
+    },
+    "nand/53": {
+      "seen": {
+        "correct": 576,
+        "planned": 576,
+        "mean_nll": 0.006905131483040472,
+        "order_correct": 576,
+        "order_planned": 576
+      },
+      "held_out": {
+        "correct": 144,
+        "planned": 576,
+        "mean_nll": 3.9350481177930985,
+        "order_correct": 144,
+        "order_planned": 576
+      }
+    },
+    "nor/7": {
+      "seen": {
+        "correct": 576,
+        "planned": 576,
+        "mean_nll": 0.006222861491592879,
+        "order_correct": 576,
+        "order_planned": 576
+      },
+      "held_out": {
+        "correct": 144,
+        "planned": 576,
+        "mean_nll": 3.938324652192018,
+        "order_correct": 144,
+        "order_planned": 576
+      }
+    },
+    "nor/11": {
+      "seen": {
+        "correct": 576,
+        "planned": 576,
+        "mean_nll": 0.0051495224271737566,
+        "order_correct": 576,
+        "order_planned": 576
+      },
+      "held_out": {
+        "correct": 144,
+        "planned": 576,
+        "mean_nll": 4.44698598187536,
+        "order_correct": 144,
+        "order_planned": 576
+      }
+    },
+    "nor/23": {
+      "seen": {
+        "correct": 576,
+        "planned": 576,
+        "mean_nll": 0.006662389609039993,
+        "order_correct": 576,
+        "order_planned": 576
+      },
+      "held_out": {
+        "correct": 288,
+        "planned": 576,
+        "mean_nll": 2.862688165156513,
+        "order_correct": 288,
+        "order_planned": 576
+      }
+    },
+    "nor/37": {
+      "seen": {
+        "correct": 576,
+        "planned": 576,
+        "mean_nll": 0.007190518112224861,
+        "order_correct": 576,
+        "order_planned": 576
+      },
+      "held_out": {
+        "correct": 288,
+        "planned": 576,
+        "mean_nll": 2.7687367887314775,
+        "order_correct": 288,
+        "order_planned": 576
+      }
+    },
+    "nor/53": {
+      "seen": {
+        "correct": 576,
+        "planned": 576,
+        "mean_nll": 0.006640504850108304,
+        "order_correct": 576,
+        "order_planned": 576
+      },
+      "held_out": {
+        "correct": 144,
+        "planned": 576,
+        "mean_nll": 3.996057687896759,
+        "order_correct": 144,
+        "order_planned": 576
+      }
+    }
+  },
+  "pair_counts": {
+    "grounded": {
+      "correct": 5760,
+      "planned": 5760
+    },
+    "prior": {
+      "correct": 0,
+      "planned": 5760
+    },
+    "masked": {
+      "correct": 0,
+      "planned": 5760
+    },
+    "cross_order": {
+      "correct": 3456,
+      "planned": 5760
+    }
+  },
+  "trajectories": {
+    "grounded": {
+      "correct": 11520,
+      "planned": 11520
+    },
+    "prior": {
+      "correct": 0,
+      "planned": 11520
+    },
+    "retention": {
+      "correct": 5760,
+      "planned": 5760
+    }
+  },
+  "comparisons": {
+    "native": {
+      "regressions": 0,
+      "repairs": 0,
+      "nll_worse": 41600,
+      "nll_better": 0,
+      "mean_nll_delta": 0.0021633676490644964,
+      "max_nll_increase": 0.007515499647570349
+    },
+    "parent_fresh": {
+      "regressions": 0,
+      "repairs": 24432,
+      "nll_worse": 9488,
+      "nll_better": 32112,
+      "mean_nll_delta": -3.71273683509009,
+      "max_nll_increase": 0.002064349030672454
+    },
+    "parent_retention": {
+      "regressions": 0,
+      "repairs": 0,
+      "nll_worse": 20800,
+      "nll_better": 0,
+      "mean_nll_delta": 0.0006803064283543267,
+      "max_nll_increase": 0.002064656771147415
+    }
+  },
+  "controls": {
+    "masked_max_tv": 0.0,
+    "masked_both_correct": 0,
+    "swapped_counterparts_correct": 11520,
+    "swapped_max_tv": 0.0,
+    "swapped_min_counterpart_probability": 0.9844963337575072
+  },
+  "summary_sha256": "327dd4ebff4b7fae82d5edd396feba353b942299a8a5272b5d6e6d952c177d58",
+  "manifest_sha256": "ab439608fd7c7068b62c5d81796ba618e00be4fa97965b19cc56008b11097d1e",
+  "version": "lexical-headline-v1",
+  "source_data_commit": "7645485bd75c80051a480d6b24aa459a1c8c0d48",
+  "weights_commit": "12adb6bdb0361a37d36bb2d8a1ddf16cbe225592",
+  "candidate_parameters": 474,
+  "world_parameters": 562,
+  "new_parameters": 0,
+  "new_fits": 5,
+  "updates": 1280,
+  "resources": {
+    "fitting": {
+      "cpu_seconds": 13.219926049000001,
+      "peak_rss_kib": 316204,
+      "wall_seconds": 13.248766799002624
+    },
+    "forecasts_cpu_seconds": 1.603440917999981,
+    "forecasts_wall_seconds": 1.6009548119436658,
+    "peak_rss_kib": 431448,
+    "preparation_cpu_seconds": 5.948882161000004,
+    "preparation_wall_seconds": 5.94939138799964,
+    "scoring": {
+      "cpu_seconds": 17.929793638,
+      "wall_seconds": 17.93185711100159
+    }
+  },
+  "audit": {
+    "checks": 2787821,
+    "discrepancies": 0,
+    "independent_scientific_custody": false
+  },
+  "scientific_admission": false,
+  "structural_pairs": {
+    "seen": {
+      "correct": 2880,
+      "planned": 2880
+    },
+    "held_out": {
+      "correct": 576,
+      "planned": 2880
+    }
+  },
+  "primary_checks": {
+    "passed": 130,
+    "planned": 130
+  },
+  "structural_checks": {
+    "seen": {
+      "passed": 40,
+      "planned": 40
+    },
+    "held_out": {
+      "passed": 0,
+      "planned": 40
+    }
+  },
+  "bilingual_max_tv": 0.003111360062749865,
+  "synonym_max_tv": 0.005012686195158129,
+  "minimum_lexical_probability_gap": 0.9753712508069722,
+  "grounded_batch_amortized_p95_seconds": [
+    1.2489593757436523e-05,
+    2.0672828100032348e-05
+  ],
+  "resource_scope": "Recorded fit/cache/forecast/scoring regions; no claim of total process cost. Forecast chunks exclude serialization and include shared prefix only once. Batch-amortized p95 is not individual request latency.",
+  "code_size": {
+    "study_source": 697,
+    "audit_source": 237,
+    "tests": 547,
+    "retained_research_python": 36513,
+    "added_total": 1481
+  }
+}
