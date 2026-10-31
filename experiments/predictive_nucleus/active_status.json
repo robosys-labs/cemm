@@ -1081,13 +1081,14 @@
     "bounded_model_architecture_extension_selected": false
   },
   "selected_next_task": {
-    "status": "SELECTED_G3_LEXICAL_CONTRAST; NOT_IMPLEMENTED_OR_FROZEN",
+    "status": "IMPLEMENTED_G3_LEXICAL_CONTRAST; AWAITING_PUBLIC_SOURCE_FREEZE",
     "stage": "G3",
-    "work": "Keep entity layout and word order fixed while different lexical items denote at least two already acquired native effects. Train only the text adapter from observed outcomes, without action-kind labels. Include lexical masking/shuffling controls, both languages, held-out combinations and retention of successful role binding.",
-    "details": "BILINGUAL_DECISION_V1.md#what-this-establishes-and-the-next-g3-task",
+    "work": "One outcome-only lexical continuation of the unchanged474-parameter encoder: fixed-layout direct/inverse contact contrasts, current-word masking/swap controls, opened-bank retention, and a separately reported held-out word-by-layout combination diagnostic.",
+    "details": "LEXICAL_STUDY_V1.md",
     "world_training_permitted": false,
-    "language_encoder_training_prerequisite": "Fresh public source/data/fit-plan freeze before one prescribed fitting/evaluation cycle.",
-    "preserve_checkpoints": "All historical world checkpoints remain byte-identical; no G1/G2 refitting.",
+    "new_model_parameters": 0,
+    "language_encoder_training_prerequisite": "Publicly freeze source/data/protocol; five warm-start fits; publish checkpoints before one collection.",
+    "preserve_checkpoints": "All historical native/language checkpoint files and source pins remain byte-identical.",
     "completed_previous_task": "bilingual-v1 KEEP_BILINGUAL_GROUNDING; participant/order binding only",
     "historical_decisions_unchanged": true,
     "scientific_admission_unchanged": true,
@@ -1882,5 +1883,38 @@
     "general_language_comprehension_claimed": false
   },
   "bilingual_pr": 68,
-  "g3_development_readiness": "ROLE_BINDING_COMPLETE_LEXICAL_GROUNDING_OPEN"
+  "g3_development_readiness": "ROLE_BINDING_COMPLETE_LEXICAL_GROUNDING_OPEN",
+  "lexical_study": {
+    "version": "lexical-v1",
+    "stage": "IMPLEMENTED_NOT_FITTED",
+    "protocol": "lexical_protocol_v1.json",
+    "report": "LEXICAL_STUDY_V1.md",
+    "data": "data/lexical-v1",
+    "fitted": "data/lexical-fit-v1",
+    "results": "results/lexical-v1",
+    "branch": "research/predictive-nucleus-lexical-20261031",
+    "parent_pr": 68,
+    "parent_language_checkpoint_commit": "2db941c2dd4fed97d0b5cef718b24f17ba88bb39",
+    "training_law": "nand",
+    "transfer_law": "nor",
+    "encoder_parameters": 474,
+    "world_parameters": 562,
+    "new_model_parameters": 0,
+    "planned_fits": 5,
+    "planned_updates_each": 256,
+    "training_episodes": 640,
+    "training_forecasts_each_update": 768,
+    "fresh_training_outcomes": 384,
+    "old_training_rehearsal_outcomes": 384,
+    "direct_inverse_training_exposure": [
+      576,
+      192
+    ],
+    "planned_collected_forecasts": 138560,
+    "planned_evaluator_native_references": 41600,
+    "lexical_decision_separate_from_structural_transfer": true,
+    "scientific_gate_admitted": false,
+    "historical_checkpoints_changed": false,
+    "learned_result": null
+  }
 }

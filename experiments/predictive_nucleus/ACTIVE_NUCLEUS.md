@@ -1,10 +1,27 @@
-# Active nucleus: G3 bilingual roles retained; lexical contrast selected
+# Active nucleus: G3 lexical contrast implemented over retained bilingual roles
 
 Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #68](https://github.com/robosys-labs/cemm/pull/68). Updated 2026-10-31 (Africa/Lagos).
 **Bilingual v1: KEEP_BILINGUAL_GROUNDING. G2 development readiness: PROCEED_TO_G3.**
 Formal G1 scientific admission remains NOT_ADMITTED; G2 scientific admission remains open.
 Public timing source/data/plan freeze: `86936788d6f90ccb99f719d48e2c9a3b13e03756`.
 Unchanged checkpoint freeze: `25ae19b317c5b7dbfc487fa5204fb5da5f0e7420`.
+
+## Current implementation: lexical direction
+
+The [fixed-order lexical study](LEXICAL_STUDY_V1.md) is implemented and awaiting
+its public source/data/protocol freeze. The same **474-parameter encoder** learns
+direct/inverse words through observed consequences, with **zero added model
+parameters** and unchanged acquired worlds. Linguistic events receive no gold
+participant-order, action-kind or parser supervision; supplied native calibration
+actions remain part of the observed context.
+
+Final contrast twins have identical names, layout and history. Masking only the
+current word removes the distinction; swapping it must produce the counterpart's
+world. A separate diagnostic tests unseen combinations of known words and learned
+layouts. Five prescribed fits rehearse old training observations; old challenge
+inputs are reserved for updated-encoder retention against archived predictions.
+The new design adds no G1/G2 refitting or workspace requirement. **No new learned
+result is claimed before the one frozen cycle completes.**
 
 ## Current G3 result
 
@@ -28,7 +45,7 @@ distinguish the two orders, so lexical identity necessity and independent synony
 semantics remain untested. **The next G3 task is a fresh fixed-order lexical
 contrast over at least two already acquired native effects**, with no gold action
 kind and a lexical masking/shuffling control. Preserve this successful binding;
-do not reopen G1/G2 fitting. The next task is selected, not frozen or run.
+do not reopen G1/G2 fitting. That task is now implemented above, not fitted or run.
 
 ## Retained timing result
 
@@ -788,7 +805,7 @@ study history.
 |---|---|
 | G1 | Development foundation sufficient for G2. Original scientific admission remains open for baseline adequacy and independent challenge evidence; historical target unchanged. |
 | G2 | Selected bounded composition capabilities, hidden propagation and explicit timing complete. Development readiness PROCEED_TO_G3; formal scientific admission remains open. |
-| G3 | Bounded SVO/OSV participant/order binding passes. Next: fixed-order lexical contrasts over acquired effects; no claim of general lexical semantics yet. |
+| G3 | Bounded SVO/OSV participant/order binding passes. Fixed-order lexical contrast and separate word-by-layout diagnostic implemented; one frozen fit/evaluation cycle pending. |
 | G4 | Communication improves held-out external-goal utility against silent/random/shuffled controls. |
 | G5 | Answered experience persists across episodes, reduces later clarification and preserves earlier competence. |
 | G6 | Corpus exposure improves new grounded decisions beyond retrieval/frequency controls. |

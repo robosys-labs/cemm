@@ -1,0 +1,80 @@
+{
+  "version": "lexical-v1",
+  "recorded_on": "2026-10-31",
+  "timezone": "Africa/Lagos",
+  "base_commit": "02500ffe5d310364142ca6cecfcde14e83b8e827",
+  "checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
+  "language_checkpoint_commit": "2db941c2dd4fed97d0b5cef718b24f17ba88bb39",
+  "parent_language_training_sha256": "d130118f685c7cfed905ef0e57968744be9975ba6063992923ea079ca7138f51",
+  "old_data_freeze_sha256": "d8c508ce1b5d55ed7b6ff5f08d483297cacf47c5a81b6e6b96ab85ca660d75ca",
+  "old_result_manifest_sha256": "c650958da148ec0d16d540ffce24ed0b216a27e4bb1328e80b79ae5d41ac7a85",
+  "parameters": 562,
+  "model_seeds": [7, 11, 23, 37, 53],
+  "scope": "OUTCOME_LEARNED_LEXICAL_DIRECTION_WITH_FIXED_ORDER_AND_FROZEN_ACQUIRED_WORLDS",
+  "hypothesis": "The unchanged 474-parameter encoder can learn direct/inverse lexical meaning from observed consequences, preserve acquired SVO/OSV bindings and transfer unchanged from NAND to NOR. An additional held-out word-by-layout slice tests whether lexical meaning composes with word order rather than merely fitting seen word/order pairs.",
+  "data": {
+    "split_seeds": {"train": 20261031083, "challenge": 20261031089},
+    "train_entity_counts": [3, 4],
+    "challenge_entity_counts": [3, 4, 5, 6]
+  },
+  "data_contract": {
+    "training": "384 fresh single-contact NAND outcomes plus exactly the original 384 bilingual-v1 TRAIN outcomes: 640 episodes / 768 forecasts. Uniform mean per observed outcome gives equal fresh/rehearsal weight. Fresh effects are balanced192:192; all-direct rehearsal makes total exposure576direct:192inverse (3:1), intentionally retention-weighted. No old or fresh challenge outcome enters fitting.",
+    "new_examples": "256 balanced original-layout single-contact examples, plus 128 examples teaching synonym-index-zero words in the other layout. All give only words, observed native context and later world readings to the candidate.",
+    "lexicon": "Controlled direct contacts/touches and dax/mip versus inverse receives/accepts and vok/nuz. Inverse selects the opposite already acquired ordered contact while preserving mention positions. These are controlled usages, not a claim about unrestricted English.",
+    "structural_holdout": "contacts/receives and dax/vok (synonym index 0) appear in both layouts during fitting; touches/accepts and mip/nuz (index 1) appear only in their original layout. At evaluation, replace only the final word with its other-lexicon same-meaning counterpart, preserving layout/history. Report seen-layout and held-out word-by-layout cases separately, using contrast_synonym for the actual final word rather than the trajectory's starting synonym variant.",
+    "challenge": "Per law: 1152 episodes / 4160 forecasts, 576 final lexical pairs. Fresh names/permutations and 3-5 contact chain/fork/cycle/repeated/disjoint families. Prefixes alternate meanings; paired final probes share the full prefix and differ only in one lexical token, with distinct complete-world truths.",
+    "retention": "Updated encoder alone forecasts the original 2080-point bilingual challenge per law/seed and is compared against archived grounded outputs. This opened-bank regression measurement is separate from new generalization evidence; original models, traces and decisions are not rerun or replaced.",
+    "identity_and_context": "Supplied exact roster equality, three-token event boundaries, two candidate ordered contacts, full noiseless endpoint feedback and observed native acquisition/reset actions with ordered operands. Linguistic events receive no gold participant-order or action-kind labels, hidden-mode label, language ID or parser program. Native calibration actions remain observed context.",
+    "dependency": "Languages, synonyms, lexical branches, role reversals, modes, laws and seeds are matched dependent views, not independent physical trials. Same-team public generation; no independent challenge custody."
+  },
+  "model": {
+    "implementation": "Reuse bilingual_model.OrderEncoder, tokenization, two-order mixture, native world and outcome objective byte-for-byte. No new model parameters, action kinds, physics, feature dimensions or workspace.",
+    "initialization": "Each candidate starts from the successful grounded bilingual-v1 checkpoint of the same seed. Fresh Adam state; no optimizer-resume claim. Only observed outcome NLL updates language weights; no teacher logits, old predictions, parser labels or gold order supervise fitting.",
+    "prior": "The unchanged parent grounded encoder forecasts the fresh canonical lexical bank once. Its old-bank predictions are read from archived traces, not recomputed.",
+    "masked": "Evaluation-only final-probe control: zero only the current nonidentity token's character feature coordinates. Reuse the updated encoder's unchanged actual prefix state and native likelihoods. Matched lexical twins now have identical effective inputs.",
+    "swapped": "Evaluation-only final-probe control: exchange direct/inverse current words, preserving names, positions and actual prefix. Compare its distribution and prediction with the counterpart's canonical forecast and truth, not only with the original truth.",
+    "cross_order": "Evaluation-only final-probe transfer view: replace current word by its same-meaning counterpart from the other controlled lexicon. Keep the entire original prefix and current name layout. This is a valid new combination, not a wrong-message ablation.",
+    "comparison_scope": "Five candidate fits only. Current-query interventions and the old encoder isolate the new question; the earlier parser/text-only/direct-sequence comparisons remain historical evidence and are not refitted. No architecture-superiority claim."
+  },
+  "fit": {
+    "updates": 256,
+    "learning_rate": 0.02,
+    "gradient_clip": 5.0,
+    "cpu_seconds_per_fit": 120,
+    "new_fits": 5,
+    "world_updates": 0,
+    "training_forecasts_per_update": 768,
+    "optimizer": "Fresh Adam defaults; full-data mean observed complete-world NLL; final prescribed update, no early stopping or checkpoint selection",
+    "selection": "One prescribed attempt. No hyperparameter search, challenge tuning, retries or old-challenge rehearsal. Retain every failure."
+  },
+  "analysis": {
+    "min_accuracy": 0.95,
+    "max_mean_nll": 0.05,
+    "min_true_probability": 0.9,
+    "max_wrong_order_probability": 0.1,
+    "min_lexical_probability_gap": 0.8,
+    "max_twin_tv": 0.02,
+    "max_control_tv": 1e-10,
+    "min_prior_probe_accuracy_gain": 0.25,
+    "primary": "Each law/seed: full canonical family/language world and order accuracy >=95%, mean NLL<=0.05 and reversed-role whole-trajectory conjunction>=95%; final-probe world/order accuracy and NLL also pass separately by family/language/lexical polarity. Both-twin lexical conjunction >=95% each family/language, minimum lexical probability gap>=0.8, all critical true-world probabilities>=0.9 and opposite-world probabilities<=0.1. Preserve bilingual/synonym consistency and zero native-correct to candidate-wrong outcomes.",
+    "controls": "Masked twin distributions match within TV1e-10 and masked both-correct pair count is zero (balanced MAP<=50%). Swapped probe distributions match counterpart canonical probes within TV1e-10 and put >=0.9 on counterpart truth. Updated probe accuracy exceeds parent by >=0.25 per law/seed. All views are collected before oracle scoring.",
+    "retention": "Zero archived-parent-correct to updated-wrong complete worlds; report every repair, regression and NLL increase/decrease without averaging away failures. Retain old family/language, whole-trajectory and role-pair accounting. Rehearsal is disclosed as old TRAIN evidence only.",
+    "structural_transfer": "Separately apply >=95% world/order accuracy per family/language/polarity, NLL<=0.05, true probability>=0.9, foil probability<=0.1, lexical probability gap>=0.8 and both-twin conjunction>=95% to synonym1 borrowed-word probes. The synonym0 seen-combination control must meet the same criteria; report both strata separately. This diagnostic does not retroactively change the primary lexical KEEP decision or imply full G3 completion.",
+    "denominator": "Across two laws and five seeds: 41600 canonical candidate +41600 parent +11520 masked +11520 swapped +11520 cross-order +20800 opened-bank candidate retention =138560 collected forecast rows, plus41600 separately labeled evaluator-only fresh native references. Sixty traces. Missing/invalid inventory yields STOP.",
+    "metrics": ["complete_world_exact", "joint_nll", "joint_brier", "ece_10", "order_accuracy", "lexical_pair_conjunction", "lexical_probability_gap", "masked_pair_tv", "swapped_counterpart_tv", "word_by_order_transfer", "role_pairs", "bilingual_tv", "synonym_tv", "prior_repairs_regressions", "old_bank_retention", "native_probability_losses", "parameters", "cpu_wall", "peak_rss", "batch_amortized_latency"]
+  },
+  "execution": {
+    "runtime": {"python": "3.13.16", "torch": "2.10.0+cpu", "numpy": "2.3.5", "threads": 1, "dtype": "float64", "deterministic_algorithms": true},
+    "source_data_plan_public_before_fit": true,
+    "weights_public_before_challenge": true,
+    "one_attempt": true,
+    "retries": 0,
+    "world_checkpoint_changes": false,
+    "historical_study_reruns": false
+  },
+  "decisions": ["STOP_INCOMPLETE_EXECUTION", "REVISE_LEXICAL_GROUNDING", "KEEP_LEXICAL_GROUNDING"],
+  "structural_decisions": ["STRUCTURAL_TRANSFER_ESTABLISHED", "STRUCTURAL_TRANSFER_NOT_ESTABLISHED"],
+  "scientific_admission": false,
+  "g2_development_readiness": "PROCEED_TO_G3",
+  "limits": ["Only two supplied directed contact alternatives; no newly invented operator or action-kind", "Exact identity linkage and candidate structure remain supplied", "No general-language, clarification, communication-policy or architecture-superiority claim", "Opened-bank retention is not new generalization evidence", "Same-team public custody", "Report actual added and retained code size; overall inclusive2000-line objective remains unmet"]
+}
