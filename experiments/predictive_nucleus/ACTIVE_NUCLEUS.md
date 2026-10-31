@@ -1,4 +1,4 @@
-# Active nucleus: G2 timing complete; G3 grounding selected
+# Active nucleus: G3 bilingual grounding implementation
 
 Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #67](https://github.com/robosys-labs/cemm/pull/67). Updated 2026-10-31 (Africa/Lagos).
 **Timing v1: KEEP_TIMING. G2 development readiness: PROCEED_TO_G3.**
@@ -6,7 +6,22 @@ Formal G1 scientific admission remains NOT_ADMITTED; G2 scientific admission rem
 Public timing source/data/plan freeze: `86936788d6f90ccb99f719d48e2c9a3b13e03756`.
 Unchanged checkpoint freeze: `25ae19b317c5b7dbfc487fa5204fb5da5f0e7420`.
 
-## Current result
+## Current G3 tranche
+
+The [bounded bilingual grounding implementation](BILINGUAL_STUDY_V1.md) now
+exists with outcome-trained SVO/OSV order binding and all declared controls.
+The new language adapter has 474 parameters; the acquired world remains frozen
+at 562 parameters. Its fresh source/data/fit plan must be published before the
+one prescribed fit. **No G3 learned result has been obtained yet.**
+
+Training uses 384 observed text outcomes on NAND. The same encoder will be
+evaluated without refitting on new names and 3–5-event compositions in both the
+NAND and NOR worlds. The supervised parser, direct sequence, text-only, random
+world and exchanged-name controls retain explicit limitations. This is supplied
+identity grounding and learned operand order for one contact relation, not
+unrestricted language or an architecture-superiority claim.
+
+## Retained timing result
 
 The [explicit timing study](TIMING_DECISION_V1.md) completes its one frozen
 collection with **KEEP_TIMING** for both laws at all five seeds. All **46,080
@@ -724,12 +739,13 @@ receives no evaluator law, mode, source orientation or gold write mask. The
 background-duration caveat.
 
 The last selected explicit G2 capability gap is closed for development.
-**PROCEED_TO_G3** means implement one bounded bilingual-grounding tranche with
+**PROCEED_TO_G3** selects the bounded bilingual-grounding tranche with
 frozen world weights, genuinely different SVO/OSV orders, held-out entities,
 reversed roles and new combinations, plus text-only and supervised-parser
 controls. No gold parser programs or linguistic role tags enter the candidate.
 Publish fresh language data/source/fit plans before encoder fitting and complete
-one fit/evaluate/decision cycle. This task is selected, not yet implemented.
+one fit/evaluate/decision cycle. Its implementation and prospective design are
+now in [BILINGUAL_STUDY_V1.md](BILINGUAL_STUDY_V1.md); learned results remain pending.
 
 Independent challenge custody, strong architecture comparisons at matched
 consumed compute and general calibration remain scientific limits. Fully hidden
@@ -743,7 +759,7 @@ study history.
 |---|---|
 | G1 | Development foundation sufficient for G2. Original scientific admission remains open for baseline adequacy and independent challenge evidence; historical target unchanged. |
 | G2 | Selected bounded composition capabilities, hidden propagation and explicit timing complete. Development readiness PROCEED_TO_G3; formal scientific admission remains open. |
-| G3 | Selected next: one bounded SVO/OSV grounding tranche into the frozen learned world, with held-out role/identity/composition transfer and declared controls. |
+| G3 | Bounded SVO/OSV grounding implemented; prospective source/data/fit freeze, one fit and one challenge decision pending. |
 | G4 | Communication improves held-out external-goal utility against silent/random/shuffled controls. |
 | G5 | Answered experience persists across episodes, reduces later clarification and preserves earlier competence. |
 | G6 | Corpus exposure improves new grounded decisions beyond retrieval/frequency controls. |

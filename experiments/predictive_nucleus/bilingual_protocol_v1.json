@@ -1,0 +1,78 @@
+{
+  "version": "bilingual-v1",
+  "recorded_on": "2026-10-31",
+  "timezone": "Africa/Lagos",
+  "base_commit": "b94e6eb915553d53cd3d844a86017810aff5365c",
+  "checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
+  "parameters": 562,
+  "model_seeds": [7, 11, 23, 37, 53],
+  "scope": "BOUNDED_OUTCOME_TRAINED_BILINGUAL_ORDER_GROUNDING_WITH_FROZEN_ACQUIRED_WORLDS",
+  "hypothesis": "Observed consequences train one language adapter to bind SVO and artificial OSV mentions into the same frozen predictive world; the unchanged adapter transfers to new identities, longer compositions and the separately acquired NOR world without language refitting.",
+  "data": {
+    "split_seeds": {"train": 20261031071, "challenge": 20261031073},
+    "train_entity_counts": [3, 4],
+    "challenge_entity_counts": [3, 4, 5, 6]
+  },
+  "data_contract": {
+    "train": "256 NAND episodes, 384 utterance outcomes; single/two contacts, four core anchors, two modes, reversed directions, both languages and two synonyms. No NOR language fitting.",
+    "challenge": "576 episodes and 2080 utterance forecasts per law; chain, fork, cycle, repeated and disjoint whole-trajectory families of 3-5 contacts. Two complementary core anchors and one deterministic spectator pattern per lineage; not all possible binary states. New names, entity permutations and alternating synonym sequences.",
+    "languages": "English-like name contacts/touches name (SVO); artificial object subject dax/mip (OSV). Realization rules exist only in the data generator and supervised labels. The learner has no language ID, POS, role tag, action label or parser program.",
+    "identity": "Exact string equality with supplied opaque roster handles links mention occurrences. Identity tokens use one generic feature; nonidentity lexemes use signed character/bigram hashing. New names transfer through supplied identity lookup, not learned arbitrary name grounding.",
+    "context": "All-zero anchor, one observed native acquisition contact and observed native set resets precede text. Acquisition identifies the persistent physical mode without exposing its label. Full noiseless feedback follows each text forecast; there is no hidden-intermediate challenge here.",
+    "twins": "Bilingual and synonym views stay within one trajectory split. All role reversals, modes, laws and seeds remain paired dependent views, not independent physical trials.",
+    "boundaries": "Event boundaries, three-token utterances, exactly two identity mentions and one contact relation are supplied. No arbitrary sentence segmentation, novel relation semantics, unknown synonym inference or natural language understanding claim. No simultaneous-language timing in this tranche."
+  },
+  "model": {
+    "grounded": "474-parameter GRU OrderEncoder assigns probabilities to the two supplied mention-order permutations. Marginalize these through the existing 562-parameter frozen DomainKernel, keeping shared mode/world dependence. Only outcome NLL supervises candidate language weights.",
+    "parser": "Identical 474-parameter encoder and initialization, trained only in this control on the gold mention-order index, then composed with the same frozen world.",
+    "sequence": "1048-parameter GRU plus observed-context projection directly predicts a complete world. Sees current readings and the observed acquisition action/before/after plus the same message and identities, without pretrained world weights or role labels. The context is sufficient for this full-feedback fixture.",
+    "text_only": "Same direct 1048-parameter architecture and fit budget, with acquisition and state readings removed; roster existence and mention identity addresses remain supplied.",
+    "ungrounded": "Same order adapter over a fresh random frozen 562-parameter world, initialized at seed+1000; outcome-trained with the same language exposures. The random world does not change across laws.",
+    "shuffled": "Evaluation-only grounded adapter with the two entity names exchanged in every message, retaining the original sensor trajectory. Tests message-role dependence; not a trained alternative.",
+    "comparison_limit": "1036 total acquired candidate parameters versus 1048 direct-control parameters (1.16% difference). New language examples and updates match; consumed compute and lifetime pretraining exposure do not. Direct control trains only 16 of 64 output coordinates at 3/4 entities; 5/6-entity transfer activates untrained output rows. Report 3/4 and 5/6 entity results separately. No architecture-superiority claim follows from this comparison.",
+    "cache": "Full-feedback native per-order/per-mode transition likelihoods may be cached from current observed readings using a uniform mode prior and removing that prior. Add the live mode posterior at each event. This algebra preserves native probabilities and allows gradients through two-event language feedback without updating native weights."
+  },
+  "fit": {
+    "updates": 256,
+    "learning_rate": 0.02,
+    "gradient_clip": 5.0,
+    "cpu_seconds_per_fit": 120,
+    "optimizer": "Adam defaults; full 384-observation mean loss each update; no early stopping or checkpoint selection",
+    "objective": "Joint observed complete-world negative log likelihood for grounded, sequence, text_only and ungrounded; supervised mention-order cross entropy only for parser",
+    "new_fits": 25,
+    "world_updates": 0,
+    "selection": "Use final prescribed update for every seed. No hyperparameter search, validation-driven selection, challenge tuning or retries. Retain failed attempts."
+  },
+  "analysis": {
+    "min_accuracy": 0.95,
+    "max_mean_nll": 0.05,
+    "min_true_probability": 0.9,
+    "max_wrong_order_probability": 0.1,
+    "max_twin_tv": 0.02,
+    "max_parser_accuracy_gap": 0.02,
+    "min_ablation_accuracy_gain": 0.1,
+    "min_shuffle_accuracy_gain": 0.25,
+    "criteria": "Each law/seed/family/language grounded exact-world and order accuracy >=95%, mean NLL<=0.05. Every role pair must meet >=95% both-whole-trajectory conjunction per law/seed; every critical forecast gives its true world >=0.9 and the reversed-action same-prestate counterfactual <=0.1. All bilingual and synonym probability-vector twin TV<=0.02. Zero new exact-world errors relative to the gold-action native reference. All forecasts retained.",
+    "controls": "Each law/seed grounded exactness exceeds text_only and ungrounded by >=0.10 and shuffled by >=0.25, with parser accuracy gap <=0.02. Report sequence comparisons without a superiority gate because lifetime pretraining and consumed compute do not match.",
+    "native_reference": "After all candidate/control traces are durable, evaluator alone replays gold ordered contacts through the same frozen world and observed context. Retain all native-to-language probability losses, repairs and regressions. This is a new reference on the language bank, not a rerun of a closed G1/G2 study.",
+    "complete_denominator": "60 traces x2080=124800 text forecasts, plus separately labeled evaluator-native references. Missing/duplicate/nonfinite/invalid records stop execution, completed failed criteria produce REVISE_BILINGUAL_GROUNDING.",
+    "metrics": ["complete_world_exact", "joint_nll", "joint_brier", "ece_10", "order_accuracy", "role_pair_conjunction", "bilingual_tv", "synonym_tv", "native_repairs", "native_regressions", "native_nll_worsenings", "batch_amortized_latency", "parameters", "cpu_wall", "peak_rss"]
+  },
+  "execution": {
+    "runtime": {"python": "3.13.16", "torch": "2.10.0+cpu", "numpy": "2.3.5", "threads": 1, "dtype": "float64", "deterministic_algorithms": true},
+    "source_data_plan_public_before_fit": true,
+    "weights_public_before_challenge": true,
+    "one_attempt": true,
+    "retries": 0,
+    "world_checkpoint_changes": false,
+    "historical_study_reruns": false
+  },
+  "decisions": ["STOP_INCOMPLETE_EXECUTION", "REVISE_BILINGUAL_GROUNDING", "KEEP_BILINGUAL_GROUNDING"],
+  "scientific_admission": false,
+  "gate_g1": "NOT_ADMITTED",
+  "gate_g2": "NOT_ADMITTED",
+  "g2_development_readiness": "PROCEED_TO_G3",
+  "supplied": ["Opaque identity handles, token/event boundaries and contact-only interface", "Two candidate operand permutations, neural sequence structure and character features", "Existing two-mode world hypothesis and exact mixture/feedback arithmetic", "Full observed context and post-prediction outcomes", "Evaluator physics, splits, controls and preregistered criteria"],
+  "learned": ["Previously acquired native pair dynamics and background behavior for NAND and NOR separately", "Language-specific ordering and synonym use from observed consequences in candidate fitting"],
+  "limits": ["Same-author public custody, not an independently sealed challenge", "Two previously learned laws, not one unified-law checkpoint", "Names already refer to supplied physical identities", "Bounded usage of previously seen synonyms, not unseen synonym semantics", "No learned clarification or communication policy (G4/G5)", "Inclusive 2000-line objective remains unmet; report actual incremental and retained LOC"]
+}

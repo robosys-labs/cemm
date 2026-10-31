@@ -366,11 +366,11 @@
       "work": "Implement one bounded bilingual-grounding tranche into the same frozen learned world: English-like SVO and genuinely different artificial OSV, held-out entity/role/composition transfer, text-only and supervised-parser controls, no gold parser programs or linguistic role labels. Publish fresh source/data/fit plans before encoder training, then complete one fit/evaluate/decision cycle."
     },
     {
-      "stage": "G4–G5",
+      "stage": "G4\u2013G5",
       "work": "Implement learned communication, durable acquisition, correction, restart and retention in dependency order."
     },
     {
-      "stage": "G6–G8",
+      "stage": "G6\u2013G8",
       "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
     }
   ],
@@ -1798,5 +1798,25 @@
   },
   "timing_pr": 67,
   "g2_development_readiness": "PROCEED_TO_G3",
-  "gate_g2_scientific": "NOT_ADMITTED"
+  "gate_g2_scientific": "NOT_ADMITTED",
+  "bilingual_study": {
+    "version": "bilingual-v1",
+    "stage": "IMPLEMENTED_NOT_FITTED",
+    "protocol": "bilingual_protocol_v1.json",
+    "report": "BILINGUAL_STUDY_V1.md",
+    "data": "data/bilingual-v1",
+    "fitted": "data/bilingual-fit-v1",
+    "results": "results/bilingual-v1",
+    "training_law": "nand",
+    "transfer_law": "nor",
+    "encoder_parameters": 474,
+    "world_parameters": 562,
+    "direct_control_parameters": 1048,
+    "planned_fits": 25,
+    "planned_updates_each": 256,
+    "planned_forecasts": 124800,
+    "scientific_gate_admitted": false,
+    "historical_checkpoints_changed": false,
+    "learned_result": null
+  }
 }
