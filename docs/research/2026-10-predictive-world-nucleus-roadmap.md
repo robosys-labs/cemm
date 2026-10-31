@@ -38,13 +38,15 @@ inference-source changes. Probability costs of missing feedback remain recorded.
 [PR #66](https://github.com/robosys-labs/cemm/pull/66) retains the public freeze,
 traces, audit and decision. This closes the selected hidden-intermediate task.
 
-Next is the explicit simultaneous/ordered timing requirement: introduce a bounded
-compound-contact input with a declared common-snapshot scheduler, then compare
-fresh timing twins using frozen learned pair distributions. Event-local outputs
+The explicit simultaneous/ordered timing implementation is now prepared: a bounded
+compound-contact input with a declared common-snapshot scheduler will compare
+46,080 fresh timing/permutation forecasts using frozen learned pair distributions.
+See the [timing protocol and implementation](../../experiments/predictive_nucleus/TIMING_DECISION_V1.md).
+Event-local outputs
 must be combined after each reads the same base world; independently mixing
 fixed modes or forcing overlapping factors onto one final variable is invalid.
 Scheduling semantics are supplied and must be reported separately from learned
-dynamics. The task is selected, not yet implemented or frozen. The
+dynamics. Collection remains pending the public source/data/plan freeze. The
 correlation control excludes unconditional marginals, not representations
 conditioned on the persistent mechanism. No completed gate is reopened.
 

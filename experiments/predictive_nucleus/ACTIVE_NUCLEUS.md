@@ -1,4 +1,4 @@
-# Active nucleus: G2 hidden-intermediate propagation completed
+# Active nucleus: G2 explicit timing implementation prepared
 
 Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #66](https://github.com/robosys-labs/cemm/pull/66). Updated 2026-10-31 (Africa/Lagos).
 **G1 development readiness: PROCEED_TO_G2. Hidden cycle v1: KEEP_HIDDEN_CYCLE.**
@@ -6,7 +6,17 @@ Formal G1 scientific admission remains NOT_ADMITTED; full G2 remains open.
 Public source/data/plan freeze: `16a2326491b1add7e3057304d88e430724964584`.
 Unchanged checkpoint freeze: `25ae19b317c5b7dbfc487fa5204fb5da5f0e7420`.
 
-## Current result
+## Current implementation
+
+The [explicit timing tranche](TIMING_DECISION_V1.md) is implemented in a separate
+full-feedback session around the ten unchanged learned checkpoints. It adds
+ordered and common-snapshot two-contact groups with a supplied binary delta-union
+scheduler. The prospective bank has 46,080 forecasts across both laws/five seeds,
+including real event-list permutation controls. Collection has not opened;
+source/data/plan publication precedes the one permitted collection. No new
+parameters or fitting are planned; this is a new inference scheduling capability.
+
+## Latest completed result
 
 The [hidden-cycle study](HIDDEN_CYCLE_DECISION_V1.md) completed all **15,360
 forecasts** in one collection with the ten frozen NAND/NOR checkpoints. It
@@ -21,7 +31,7 @@ The architecture remains **562 parameters**; this tranche adds **zero fits,
 zero parameter growth and zero inference/learning/checkpoint implementation changes**.
 All previous weights, source pins and decisions are intact. The observed run
 is a bounded one-hidden-intermediate result, not a fully open-loop rollout or
-simultaneous timing. The explicit timing requirement is the next selected task.
+simultaneous timing. The explicit timing implementation is now prepared above.
 
 The [decision](results/hidden-cycle-v1/decision.json) and
 [trace manifest](results/hidden-cycle-v1/manifest.json) retain every planned
@@ -697,8 +707,9 @@ mask or neural parameter is supplied. See the [selected contract and study](HIDD
 
 Timing is not expressible in the current serial API; missing feedback alone does
 not encode it. The scheduling contract is supplied computation, not a claim that
-simultaneous physics was learned from isolated events. This next task is selected,
-not yet implemented or frozen. Fully hidden long rollouts remain a separate
+simultaneous physics was learned from isolated events. The implementation and
+prospective [timing protocol](TIMING_DECISION_V1.md) are prepared; collection is
+pending public source/data/plan freeze. Fully hidden long rollouts remain a separate
 resource-scaling question; their path explosion does not justify a new G2 gate
 or a larger neural architecture.
 

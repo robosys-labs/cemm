@@ -1043,10 +1043,10 @@
     "bounded_model_architecture_extension_selected": false
   },
   "selected_next_task": {
-    "status": "SELECTED_G2_COMPOUND_ACTION_TIMING; NOT_IMPLEMENTED_OR_FROZEN",
+    "status": "IMPLEMENTED_PREPARED_TIMING; AWAITING_PUBLIC_FREEZE_AND_COLLECTION",
     "stage": "G2",
     "work": "Implement a bounded compound-contact input with explicit ordered/common-snapshot timing, then freeze and execute one fresh timing-twin study using the ten unchanged NAND/NOR checkpoints. Use a shared persistent mode, event-local outputs and an explicitly supplied binary delta-union scheduler; include overlapping chains/cycles and disjoint controls across 3–5 total contacts. Zero fitting or neural parameter growth; no new general audit or workspace.",
-    "details": "HIDDEN_CYCLE_DECISION_V1.md#next-g2-task-make-interaction-timing-observable",
+    "details": "TIMING_DECISION_V1.md",
     "training_permitted": false,
     "training_prerequisite": "No fitting selected; existing learned pair distributions and ten historical checkpoints stay frozen.",
     "collection_prerequisite": "Implement and invariant-check the explicit time-group contract, then publish fresh source/data/plans and decision criteria before one collection.",
@@ -1541,5 +1541,23 @@
     "same_author_public_custody": true,
     "independent_physical_replication_claimed": false,
     "scope": "One hidden learned consequence and one subsequent step after full feedback identifies the persistent mode. Does not establish simultaneous timing, fully open-loop rollout, a unified-law checkpoint or independent scientific admission."
+  },
+  "timing_study": {
+    "version": "timing-v1",
+    "stage": "PREPARED",
+    "protocol": "timing_protocol_v1.json",
+    "report": "TIMING_DECISION_V1.md",
+    "data": "data/timing-v1",
+    "results": "results/timing-v1",
+    "checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
+    "parameters_each": 562,
+    "planned_forecasts": 46080,
+    "planned_atomic_contacts": 63360,
+    "planned_fits": 0,
+    "new_parameters": 0,
+    "new_inference_scheduler": true,
+    "native_inference_sources_changed": false,
+    "historical_checkpoints_changed": false,
+    "scientific_gate_admitted": false
   }
 }
