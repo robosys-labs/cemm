@@ -1,0 +1,1 @@
+{"freeze_sha256":"1f21a54d37a241af9dc52af53d5f9e0d19efe18e3d135f08ff20d51079721261","one_attempt":true,"runtime":{"cpu_architecture":"x86_64","deterministic_algorithms":true,"dtype":"float64","numpy":"2.3.5","platform":"Linux-6.18.57-x86_64-with-glibc2.39","python":"3.13.16","threads":1,"torch":"2.10.0+cpu"},"source_data_commit":"7645485bd75c80051a480d6b24aa459a1c8c0d48"}
