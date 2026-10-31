@@ -1,0 +1,54 @@
+{
+  "version": "saturation-v1",
+  "base_commit": "594dc715d7562587568858be4ad62bc51c581786",
+  "recorded_on": "2026-10-31",
+  "model_seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "train_forecasts": 1152,
+  "challenge_forecasts_per_law": 1728,
+  "hypothesis": "Remove only the two terminal factor tanh operations, at identical 89-parameter initial tensors, histories and update budgets; test fresh lexical-layout transfer and labeled retention.",
+  "fit": {
+    "updates": 256,
+    "learning_rate": 0.02,
+    "gradient_clip": 5.0,
+    "cpu_seconds_per_arm": 120.0
+  },
+  "analysis": {
+    "min_accuracy": 0.95,
+    "max_mean_nll": 0.05,
+    "min_true_probability": 0.9,
+    "max_foil_probability": 0.1,
+    "min_gap": 0.8,
+    "max_control_tv": 1e-10
+  },
+  "execution": {
+    "runtime": {
+      "python": "3.13.5",
+      "torch": "2.10.0+cpu",
+      "numpy": "2.3.5",
+      "threads": 1,
+      "dtype": "float64",
+      "deterministic_algorithms": true
+    }
+  },
+  "design": {
+    "training": "Exact binding-v1 TRAIN tape (1024 outcomes) plus 128 fresh single-contact observations for kef/ruz at SVO and wom/jit at VOS. Equal per-event observed-outcome loss. Ten fresh fits; no challenge gold.",
+    "holdout": "Four fresh words in eight withheld word-layout cells; diamond4 and bridge5 graphs with four/five active entities and four nonuniform anchor patterns. Both laws, modes, role reversals, all layout rotations. No filtering for favorable outcomes.",
+    "retention": "New models on explicitly opened bilingual-v1, lexical-v1 and binding-v1 banks; compare archived lexical-v1 forecasts and archived original factor-v1 binding forecasts. No old model refit or recollection.",
+    "controls": "Paired original 89-parameter factor. Final-only lexical mask/swap with shared true prefix; separate evaluator-only native-action reference. Historical GRU/additive outcomes provide context only, not a fresh-bank superiority comparator.",
+    "decision": "Candidate must pass unchanged cell/pair/probability/control thresholds at every seed/law; observed train mean NLL<=.05, zero native/archived/paired exact regressions, and no mean fresh NLL increase versus paired original. Otherwise REVISE_SATURATION_HYPOTHESIS. All local losses and failures retained. A tie is not evidence of exclusive saturation advantage.",
+    "publication": "Publish source/recipe/all data hashes before fit, actual ten-checkpoint bundle before collection. Offline SHA arguments are externally verified attestations.",
+    "failure": "One fit/collection attempt, exclusive outputs, no retries, seed selection, early stopping or post-score tuning. All trained seeds collected even if training-fit diagnostic fails. Invalid/incomplete inventory stops.",
+    "limits": "Same-team public study. Known physics, supplied identity resolution, token boundaries, two directed contact alternatives, full endpoint feedback, rank-one inductive bias and mode filtering. Not general language, G3 admission or matched-consumed-compute superiority."
+  },
+  "scientific_admission": false,
+  "arms": [
+    "factor",
+    "unsaturated"
+  ]
+}

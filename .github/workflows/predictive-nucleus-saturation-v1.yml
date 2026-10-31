@@ -1,0 +1,94 @@
+name: Saturation v1 — one frozen paired collection
+on:
+  pull_request:
+    paths:
+      - 'experiments/predictive_nucleus/saturation_collection_request_v1.json'
+permissions:
+  contents: write
+jobs:
+  collect:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'research/predictive-nucleus-saturation-20261031' &&
+      github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      SOURCE_BRANCH: research/predictive-nucleus-saturation-20261031
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+      - name: Require the new one-shot request and exact published weights
+        id: request
+        shell: bash
+        run: |
+          set -euo pipefail
+          request=experiments/predictive_nucleus/saturation_collection_request_v1.json
+          if git diff-tree --no-commit-id --diff-filter=A --name-only -r HEAD | grep -Fxq "$request"; then
+            python - <<'PY'
+          import hashlib, json, pathlib
+          root = pathlib.Path('experiments/predictive_nucleus')
+          request = json.loads((root / 'saturation_collection_request_v1.json').read_text())
+          weights = root / 'data/saturation-fit-v1/checkpoints.json.xz'
+          assert request['one_attempt'] is True
+          assert hashlib.sha256(weights.read_bytes()).hexdigest() == request['checkpoint_sha256']
+          assert not (root / 'results/saturation-v1').exists()
+          PY
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-python@v5
+        if: steps.request.outputs.run == 'true'
+        with:
+          python-version: '3.13.5'
+      - name: Install prescribed runtime
+        if: steps.request.outputs.run == 'true'
+        run: |
+          python -m pip install 'torch==2.10.0' --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install 'numpy==2.3.5'
+      - name: Reproduce commitments and collect once
+        if: steps.request.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=experiments/predictive_nucleus
+          mkdir -p "$root/results/saturation-v1"
+          python -m experiments.predictive_nucleus.saturation_run prepare --output "$root/data/saturation-v1"
+          python -m experiments.predictive_nucleus.saturation_run collect --data "$root/data/saturation-v1" --fitted "$root/data/saturation-fit-v1" --output "$root/results/saturation-v1/traces" --publication "$HEAD_SHA" 2>&1 | tee "$root/results/saturation-v1/collection.log"
+          python -m experiments.predictive_nucleus.saturation_run score --data "$root/data/saturation-v1" --fitted "$root/data/saturation-fit-v1" --traces "$root/results/saturation-v1/traces" --output "$root/results/saturation-v1/scoring" 2>&1 | tee "$root/results/saturation-v1/scoring.log"
+      - name: Preserve evidence or failure without overwriting another head
+        if: always() && steps.request.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=experiments/predictive_nucleus
+          mkdir -p "$root/results/saturation-v1"
+          python - <<'PY'
+          import json, os, pathlib
+          path = pathlib.Path('experiments/predictive_nucleus/results/saturation-v1/execution.json')
+          with path.open('x') as stream:
+              json.dump({'weights_commit': os.environ['HEAD_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'], 'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'scientific_admission': False}, stream, sort_keys=True)
+              stream.write('\n')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "$root/results/saturation-v1"
+          if test -d "$root/data/saturation-v1"; then git add -- "$root/data/saturation-v1"; fi
+          test "$(git ls-remote origin "refs/heads/$SOURCE_BRANCH" | cut -f1)" = "$HEAD_SHA"
+          git commit -m 'research: retain the single paired saturation collection and decision'
+          git push origin "HEAD:refs/heads/$SOURCE_BRANCH"
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.request.outputs.run == 'true'
+        with:
+          name: saturation-v1-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/predictive_nucleus/data/saturation-v1
+            experiments/predictive_nucleus/results/saturation-v1
+          retention-days: 30
