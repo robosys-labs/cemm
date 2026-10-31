@@ -1,0 +1,90 @@
+{
+  "aggregate": {
+    "additive": {
+      "fresh_correct": 7456,
+      "fresh_planned": 17280,
+      "held_correct": 2240,
+      "held_order_correct": 2368,
+      "held_planned": 11520,
+      "old_bilingual_regressions": 0,
+      "old_lexical_regressions": 7280
+    },
+    "factor": {
+      "fresh_correct": 11680,
+      "fresh_planned": 17280,
+      "held_correct": 6304,
+      "held_order_correct": 6528,
+      "held_planned": 11520,
+      "old_bilingual_regressions": 0,
+      "old_lexical_regressions": 6240
+    },
+    "gru": {
+      "fresh_correct": 10912,
+      "fresh_planned": 17280,
+      "held_correct": 5496,
+      "held_order_correct": 6144,
+      "held_planned": 11520,
+      "old_bilingual_regressions": 0,
+      "old_lexical_regressions": 0
+    }
+  },
+  "artifacts": {
+    "decision.json": "55b8677fb69cce311a6a55a2f18ca25f4d094b035845166d2a66daaece698421",
+    "failure.json": "3fa3553437200927f0e203abe35081110f721e34f076c8992a1466ecb92b9404",
+    "summary.json.xz": "26ea8ccd40a07c5e76c955e2b5766e963495ff3be2335118860a2ede7f92a0d8"
+  },
+  "audit_passed": true,
+  "auditor_sha256": "e8175934451ca2e7361046aea97bc1a7b8eb12a0080d22de8fe956b43fee0489",
+  "bound_historical_files": 46,
+  "bound_sources": 64,
+  "check_count": 3255288,
+  "discrepancy_count": 0,
+  "factor_seed_fresh": {
+    "11": {
+      "nand": 800,
+      "nor": 832,
+      "planned_per_law": 1728
+    },
+    "23": {
+      "nand": 800,
+      "nor": 800,
+      "planned_per_law": 1728
+    },
+    "37": {
+      "nand": 1728,
+      "nor": 1728,
+      "planned_per_law": 1728
+    },
+    "53": {
+      "nand": 768,
+      "nor": 768,
+      "planned_per_law": 1728
+    },
+    "7": {
+      "nand": 1728,
+      "nor": 1728,
+      "planned_per_law": 1728
+    }
+  },
+  "forecast_count": 262080,
+  "full_report_sha256": "bcd1255bb158fd0e66d8312b5588a21f944f749f9df1a8264a0273e74916f659",
+  "metric_helper_sha256": "925baec5249091c7795629b80692963a9b0a50273afb49812474d55bb448f3de",
+  "native_reference_count": 17280,
+  "new_candidate": {
+    "causal_saturation_claim": false,
+    "native_checkpoint_registration": false,
+    "paired_initial_tensors": true,
+    "parameters": 89,
+    "research_fits": 0,
+    "status": "IMPLEMENTED_NOT_SCIENTIFICALLY_EVALUATED",
+    "type": "UnsaturatedFactorOrderEncoder"
+  },
+  "new_collections": 0,
+  "new_fits": 0,
+  "original_process_status": "STOP_INCOMPLETE_EXECUTION",
+  "recovered_scientific_interpretation": "REVISE_STRUCTURAL_BINDING",
+  "scientific_admission": false,
+  "seed_scope": "Pooled law/seed/view counts are dependent descriptive counts, not independent trials.",
+  "source_commit": "b63749c90fd91148f0451bd2e2fd030f3de279cd",
+  "version": "binding-saved-audit-v1"
+}

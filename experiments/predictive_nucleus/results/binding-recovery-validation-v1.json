@@ -1,0 +1,33 @@
+{
+  "base_commit": "b63749c90fd91148f0451bd2e2fd030f3de279cd",
+  "baseline_files": 996,
+  "changed_existing_paths": [
+    "experiments/predictive_nucleus/ACTIVE_NUCLEUS.md"
+  ],
+  "collections": 0,
+  "full_suite": {
+    "discovered": 873,
+    "passed": 872,
+    "seconds": 80.77,
+    "skip_reason": "source archive lacks Git ancestry; full-checkout preflight only",
+    "skipped": 1
+  },
+  "hosted_checks_claimed": false,
+  "locks_passed": 29,
+  "log_sha256": {
+    "audit-final-source.log": "6ef810842a4cbc3f91b77776f9e87377720048f9062fbc1969b2a882cb04cd3a",
+    "full-suite-final.log": "6f46f9a1a3558b55d5363e528c1d3c4e0ab264bf90f6ae4c33f42d0bbbb75b79",
+    "locks.log": "9520f67cdb62835c0ea4084cd1be4739770a582941876e55d7b925c27d0e1f31",
+    "new-tests-combined.log": "6a58c3358bb29cccca46cd23e90e86de2f5ab8a88bda3220118726b26ceb62d8"
+  },
+  "missing_baseline_paths": [],
+  "new_source_lines": 322,
+  "new_test_lines": 190,
+  "new_tests": 18,
+  "original_scorer_reruns": 0,
+  "research_fits": 0,
+  "retained_research_python_lines": 38171,
+  "source_archive_commit": "b227063a36362d3d3a3d475fc2862b75031e4141",
+  "unchanged_baseline_files": 995,
+  "version": "binding-recovery-validation-v1"
+}
