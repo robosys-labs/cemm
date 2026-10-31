@@ -1,0 +1,19 @@
+{
+  "checkpoint_sha256": "424d68b973b7358c08ca0c4c21351497e458df416c0447858d43a88d4d8d1220",
+  "checkpoint_parts": [
+    {
+      "file": "checkpoints.json.xz.part0",
+      "sha256": "74eddc3667bf44a187731a30ccb2b1f2ea14051b48d4ebb969463b779c8ea448"
+    },
+    {
+      "file": "checkpoints.json.xz.part1",
+      "sha256": "14ea391c90e629f3aadbf8e2f26a3ebb05cf8f9296cd9fac06f3f6e94f58ca51"
+    },
+    {
+      "file": "checkpoints.json.xz.part2",
+      "sha256": "6dfcdfa1c3e050fbd425921700e8c9fa397d2668203dc7cdb481821298e7b989"
+    }
+  ],
+  "source_publication": "cd1c1fd2663677121f7ec81ffa08e521931ef71f",
+  "one_attempt": true
+}

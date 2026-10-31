@@ -36,6 +36,15 @@ jobs:
           root = pathlib.Path('experiments/predictive_nucleus')
           request = json.loads((root / 'binding_collection_request_v1.json').read_text())
           weights = root / 'data/binding-fit-v1/checkpoints.json.xz'
+          pieces = []
+          for item in request['checkpoint_parts']:
+              part = weights.parent / item['file']
+              assert part.name == item['file']
+              payload = part.read_bytes()
+              assert hashlib.sha256(payload).hexdigest() == item['sha256']
+              pieces.append(payload)
+          assert not weights.exists()
+          weights.write_bytes(b''.join(pieces))
           assert hashlib.sha256(weights.read_bytes()).hexdigest() == request['checkpoint_sha256']
           assert request['one_attempt'] is True
           PY
@@ -76,7 +85,7 @@ jobs:
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- "$root/results/binding-v1"
+          git add -- "$root/results/binding-v1" "$root/data/binding-fit-v1/checkpoints.json.xz"
           if test -d "$root/data/binding-v1"; then git add -- "$root/data/binding-v1"; fi
           test "$(git ls-remote origin "refs/heads/$SOURCE_BRANCH" | cut -f1)" = "$HEAD_SHA"
           git commit -m 'research: retain single binding-v1 collection and unchanged scientific gates'
