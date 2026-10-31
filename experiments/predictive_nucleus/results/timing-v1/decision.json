@@ -1,0 +1,1 @@
+{"checks":{"nand":true,"nor":true},"decision":"KEEP_TIMING","execution_complete":true,"g1_development_readiness":"PROCEED_TO_G2","gate_g1":"NOT_ADMITTED","historical_checkpoints_changed":false,"native_inference_sources_changed":false,"new_inference_scheduler":true,"new_parameters_each":0,"new_training_updates":0,"scientific_admission":false}

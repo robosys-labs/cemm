@@ -1,22 +1,43 @@
-# Active nucleus: G2 explicit timing implementation prepared
+# Active nucleus: G2 timing complete; G3 grounding selected
 
-Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #66](https://github.com/robosys-labs/cemm/pull/66). Updated 2026-10-31 (Africa/Lagos).
-**G1 development readiness: PROCEED_TO_G2. Hidden cycle v1: KEEP_HIDDEN_CYCLE.**
-Formal G1 scientific admission remains NOT_ADMITTED; full G2 remains open.
-Public source/data/plan freeze: `16a2326491b1add7e3057304d88e430724964584`.
+Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #67](https://github.com/robosys-labs/cemm/pull/67). Updated 2026-10-31 (Africa/Lagos).
+**Timing v1: KEEP_TIMING. G2 development readiness: PROCEED_TO_G3.**
+Formal G1 scientific admission remains NOT_ADMITTED; G2 scientific admission remains open.
+Public timing source/data/plan freeze: `86936788d6f90ccb99f719d48e2c9a3b13e03756`.
 Unchanged checkpoint freeze: `25ae19b317c5b7dbfc487fa5204fb5da5f0e7420`.
 
-## Current implementation
+## Current result
 
-The [explicit timing tranche](TIMING_DECISION_V1.md) is implemented in a separate
-full-feedback session around the ten unchanged learned checkpoints. It adds
-ordered and common-snapshot two-contact groups with a supplied binary delta-union
-scheduler. The prospective bank has 46,080 forecasts across both laws/five seeds,
-including real event-list permutation controls. Collection has not opened;
-source/data/plan publication precedes the one permitted collection. No new
-parameters or fitting are planned; this is a new inference scheduling capability.
+The [explicit timing study](TIMING_DECISION_V1.md) completes its one frozen
+collection with **KEEP_TIMING** for both laws at all five seeds. All **46,080
+forecasts** are produced and answered; **28,800/28,800 identifiable complete
+worlds**, **8,640/8,640 identifiable role conjunctions**, **1,200/1,200 critical
+timing pairs** and **15,360/15,360 common-snapshot permutation forecast pairs**
+pass. The last count includes 12,800 comparisons from nontrivial event-list swaps.
+Minimum critical true-world probability is **0.983679**; maximum opposite-timing
+world probability is **0.003864**, with minimum timing separation **0.981534**.
 
-## Latest completed result
+The separate full-feedback timing session composes two native transitions without
+intermediate feedback, or merges event-local common-snapshot changes with one
+shared persistent mode. The binary delta-union scheduler is supplied computation;
+the pair dynamics are previously learned. All ten **562-parameter** checkpoints
+and native source pins are unchanged, with **zero new parameters or fitting**.
+This tranche adds an explicit inference scheduling capability.
+
+Pooled accuracy is **81.25%**, equal to the oracle MAP expectation; all errors are
+ambiguous acquisition predictions. Known-fixed-value and unsupported-MAP errors
+are zero. All **37 adverse group NLL changes** and **668 adverse suffix changes**
+remain recorded. Disjoint worlds agree, while learned probabilities differ because
+ordered timing applies background twice and common snapshots once. The maximum
+common-snapshot permutation log difference is **7.11e-15**.
+
+The [decision](results/timing-v1/decision.json), [headline](results/timing-v1/headline.json)
+and [manifest](results/timing-v1/manifest.json) retain the complete denominator.
+**G2 development readiness is PROCEED_TO_G3**: the next bounded work is bilingual
+grounding into the frozen learned world, with SVO/OSV and declared controls.
+Formal G1/G2 scientific admission remains open; no historical failure is relabelled.
+
+## Retained hidden-cycle result
 
 The [hidden-cycle study](HIDDEN_CYCLE_DECISION_V1.md) completed all **15,360
 forecasts** in one collection with the ten frozen NAND/NOR checkpoints. It
@@ -31,7 +52,7 @@ The architecture remains **562 parameters**; this tranche adds **zero fits,
 zero parameter growth and zero inference/learning/checkpoint implementation changes**.
 All previous weights, source pins and decisions are intact. The observed run
 is a bounded one-hidden-intermediate result, not a fully open-loop rollout or
-simultaneous timing. The explicit timing implementation is now prepared above.
+simultaneous timing. The explicit timing implementation and study are now complete above.
 
 The [decision](results/hidden-cycle-v1/decision.json) and
 [trace manifest](results/hidden-cycle-v1/manifest.json) retain every planned
@@ -608,27 +629,30 @@ the contradiction. Terminal errors retain strict-JSON diagnostics and exit code 
 
 ## Current verification and code size
 
-The public hidden-cycle freeze passed **722 isolated tests** locally in
-**58.425 seconds**, all **25 protocol/manifest locks** and frozen preflight.
-[Invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41195738585) and
-[source snapshot CI](https://github.com/robosys-labs/cemm/actions/runs/41195738479)
-passed; final result-commit checks are linked in PR #66.
+The public timing freeze passes **760 isolated tests** locally in **64.590
+seconds**, all **26 protocol/manifest locks** and frozen preflight.
+[Invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41198968742) and
+[source snapshot CI](https://github.com/robosys-labs/cemm/actions/runs/41198968713)
+pass; result-head checks are linked in [PR #67](https://github.com/robosys-labs/cemm/pull/67/checks).
 
-The [internal arithmetic audit](results/hidden-cycle-validation-v1.json)
-reconstructs the decision without executing a model: 15,360 forecast vectors and
-receipts, 3,072 oracle distributions, 50 source bindings, ten checkpoint
-fingerprints and 349 unchanged historical data/result/lock files pass with zero
-discrepancies. This is internal
-review, not independent scientific custody or additional learned evidence.
+The [internal arithmetic audit](results/timing-validation-v1.json) independently
+reconstructs the decision from saved artifacts: 46,080 vectors and receipts,
+9,216 oracle distributions, 61 source bindings, ten checkpoint fingerprints and
+**374 unchanged historical data/result/lock files**, with zero discrepancies.
+It executes no model, collector or scorer and claims no independent custody.
 
-This tranche adds **zero neural inference/learning lines and zero parameters per
-model**. Three study adapters add 545 lines; 22 focused tests add 471 lines.
-The active import closure remains
-**2,732 physical lines**, or **2,917** with its historical source pin. All retained
-research Python is **30,952 lines**, including **13,907 test lines**; the inclusive
-**2,000-line goal remains unmet**. The temporary internal arithmetic-review script
-is a separate 292-line analysis, identified by its digest in the audit report.
-The next selected input-contract change adds timing, with frozen neural weights.
+The new timing runtime/contract/session adds **273 physical Python lines**.
+The whole tranche adds **1,121 source lines and 975 test lines** (38 tests), with
+zero learned parameters or training updates. The separate timing entrypoint's
+static import closure is **2,457 lines**, or **2,642** including its historical
+source-only pin. The unchanged native entrypoints retain their 2,732-line closure.
+All retained research Python is **33,048 lines**, including **14,882 test lines**;
+the inclusive **2,000-line objective remains unmet**. The temporary stdlib audit
+is a separate 318-line analysis identified by its digest in the audit report.
+
+Collection regions use **133.412 CPU / 133.447 wall seconds**, peak recorded RSS
+**525,232 KiB**, and per-seed forecast p95 **2.005–2.309 ms**. Compression, scoring,
+report serialization and publication are excluded from those collection times.
 
 ## Historical verification records
 
@@ -682,7 +706,7 @@ No retained failing historical episode or continuation-v1 study was replayed;
 the alias studies contain neural arms only. Historical empirical completion and
 accuracy are therefore unchanged and no new empirical run-level result is claimed.
 
-## Corrected assumption and next G2 experiment
+## Corrected assumption, completed timing and next G3 experiment
 
 The earlier atomic three-operand locality argument did not establish a limit on
 serial composition: existing contacts `(a,t); (b,t)` already compute
@@ -691,35 +715,35 @@ The proposed ternary action/factor extension was therefore withdrawn. The fresh
 NAND/NOR study now passes on the unchanged model. The correlation result also
 remains valid within its clarified unconditional-factorization scope.
 
-The zero-fit hidden-cycle task has completed with **KEEP_HIDDEN_CYCLE**. Do not
-reopen its collection or prior successful fitting. The next explicit G2 gap is
-**simultaneous versus ordered timing**. Introduce a bounded compound-contact input
-with observable timing, then freeze and execute a fresh timing-twin challenge
-using the ten successful checkpoints. One acquisition contact, one two-contact
-group and zero to two suffix contacts cover three-to-five-contact schedules.
+The zero-fit hidden-cycle and explicit timing tasks are now complete with
+**KEEP_HIDDEN_CYCLE** and **KEEP_TIMING**. Common-snapshot events read one base
+world and predict event-local outputs conditional on the same persistent mode;
+the supplied binary delta-union merger combines changes afterward. The model
+receives no evaluator law, mode, source orientation or gold write mask. The
+[completed timing decision](TIMING_DECISION_V1.md) records the full evidence and
+background-duration caveat.
 
-Both common-snapshot events read one base world and predict separate event-local
-outputs conditional on the same persistent mode. Combine their proposed changes
-afterward, using an explicitly supplied binary delta-union scheduler. Never
-multiply overlapping pair factors against one shared final variable or resample
-the fixed mode per event. No law-specific rule, source orientation, gold write
-mask or neural parameter is supplied. See the [selected contract and study](HIDDEN_CYCLE_DECISION_V1.md#next-g2-task-make-interaction-timing-observable).
+The last selected explicit G2 capability gap is closed for development.
+**PROCEED_TO_G3** means implement one bounded bilingual-grounding tranche with
+frozen world weights, genuinely different SVO/OSV orders, held-out entities,
+reversed roles and new combinations, plus text-only and supervised-parser
+controls. No gold parser programs or linguistic role tags enter the candidate.
+Publish fresh language data/source/fit plans before encoder fitting and complete
+one fit/evaluate/decision cycle. This task is selected, not yet implemented.
 
-Timing is not expressible in the current serial API; missing feedback alone does
-not encode it. The scheduling contract is supplied computation, not a claim that
-simultaneous physics was learned from isolated events. The implementation and
-prospective [timing protocol](TIMING_DECISION_V1.md) are prepared; collection is
-pending public source/data/plan freeze. Fully hidden long rollouts remain a separate
-resource-scaling question; their path explosion does not justify a new G2 gate
-or a larger neural architecture.
+Independent challenge custody, strong architecture comparisons at matched
+consumed compute and general calibration remain scientific limits. Fully hidden
+long rollouts remain a separate resource-scaling question; no new G2 prerequisite
+or larger workspace is introduced. Preserve all successful weights and failed
+study history.
 
-## Remaining roadmap after hidden cycle v1
+## Remaining roadmap after timing v1
 
 | Stage | Current state and remaining evidence |
 |---|---|
 | G1 | Development foundation sufficient for G2. Original scientific admission remains open for baseline adequacy and independent challenge evidence; historical target unchanged. |
-| G2 | Ordered continuation, mixed alias/ordinary uncertainty, correlation dependencies, separate NAND/NOR composition and bounded hidden-intermediate propagation complete. Next: explicit compound-action timing and one frozen simultaneous/ordered comparison. Full G2 remains open. |
-| G3 | Teach a relation nonverbally, then transfer it through two languages on the same world model after composition evidence. |
+| G2 | Selected bounded composition capabilities, hidden propagation and explicit timing complete. Development readiness PROCEED_TO_G3; formal scientific admission remains open. |
+| G3 | Selected next: one bounded SVO/OSV grounding tranche into the frozen learned world, with held-out role/identity/composition transfer and declared controls. |
 | G4 | Communication improves held-out external-goal utility against silent/random/shuffled controls. |
 | G5 | Answered experience persists across episodes, reduces later clarification and preserves earlier competence. |
 | G6 | Corpus exposure improves new grounded decisions beyond retrieval/frequency controls. |
@@ -729,4 +753,4 @@ or a larger neural architecture.
 Learned probes, noisy sensors, lifelong learning, language, arbitrary entity counts,
 optimizer/session resume, durable forecast journals and production isolation are
 not added G1 development prerequisites. Historical scientific decisions are
-preserved rather than relabelled passed. Current work is G2 development.
+preserved rather than relabelled passed. Current selected work is G3 development.

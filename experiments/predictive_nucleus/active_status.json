@@ -362,12 +362,8 @@
   },
   "pending_engineering_in_order": [
     {
-      "stage": "G2",
-      "work": "Implement a bounded compound-contact input with explicit ordered/common-snapshot timing, then freeze and execute one fresh timing-twin study using the ten unchanged NAND/NOR checkpoints. Use a shared persistent mode, event-local outputs and an explicitly supplied binary delta-union scheduler; include overlapping chains/cycles and disjoint controls across 3–5 total contacts. Zero fitting or neural parameter growth; no new general audit or workspace."
-    },
-    {
       "stage": "G3",
-      "work": "Learn bilingual grounding into the same predictive state without gold programs."
+      "work": "Implement one bounded bilingual-grounding tranche into the same frozen learned world: English-like SVO and genuinely different artificial OSV, held-out entity/role/composition transfer, text-only and supervised-parser controls, no gold parser programs or linguistic role labels. Publish fresh source/data/fit plans before encoder training, then complete one fit/evaluate/decision cycle."
     },
     {
       "stage": "G4–G5",
@@ -410,51 +406,66 @@
       "multisource_law_scoring.py": 137,
       "hidden_cycle_data.py": 144,
       "hidden_cycle_run.py": 207,
-      "hidden_cycle_scoring.py": 194
+      "hidden_cycle_scoring.py": 194,
+      "timing_evaluate.py": 129,
+      "timing_session.py": 100,
+      "timing_run.py": 154,
+      "timing_runner.py": 83,
+      "timing_data.py": 170,
+      "timing_scoring.py": 245,
+      "timing_kernel.py": 72,
+      "timing_contract.py": 101,
+      "timing_oracle.py": 67
     },
-    "active_source_files_excluding_frozen_dependencies": 6160,
-    "new_runtime_source_net": 0,
-    "new_tests_net": 471,
-    "retained_research_python": 30952,
+    "active_source_files_excluding_frozen_dependencies": 7281,
+    "new_runtime_source_net": 273,
+    "new_tests_net": 975,
+    "retained_research_python": 33048,
     "inclusive_size_goal_met": false,
     "learned_parameter_delta": 0,
-    "new_tests": 22,
-    "scope": "Hidden-cycle tranche: 545 lines across three bounded study adapters and 471 focused test lines. No runtime, inference, learning or parameter growth. Retained source counts exclude the separately disclosed 292-line temporary internal arithmetic review.",
-    "new_study_source_net": 545,
-    "retained_test_lines": 13907
+    "new_tests": 38,
+    "scope": "Timing tranche: 273 lines runtime/contract/session plus 848 bounded data/collection/evaluation lines and 975 focused test lines. Total retained count includes tests; excludes separately disclosed 318-line temporary stdlib arithmetic review.",
+    "new_study_source_net": 848,
+    "retained_test_lines": 14882
   },
   "verification": {
-    "scope": "Public source/data/plan freeze, one prospective zero-fit collection and separate stdlib-only internal arithmetic review; not independent scientific admission.",
-    "isolated_suite_tests": 722,
+    "scope": "Public source/data/plan freeze, one prospective zero-fit timing collection and stdlib-only internal saved-artifact arithmetic; not independent scientific admission.",
+    "isolated_suite_tests": 760,
     "isolated_suite_ci_conclusion": "success",
     "local_prepublication_suite": {
-      "tests": 722,
-      "passed": 722,
-      "seconds": 58.425,
-      "output_sha256": "92b8d2943c57ca28660d66f205522cf7e2d34ef46dabfde0cd5991304ea22e89"
+      "tests": 760,
+      "passed": 760,
+      "seconds": 64.59,
+      "output_sha256": "6f3f9c26486e299557836a701dc3cf0259e5cb74e236f43db32a9552a116b4e0"
     },
-    "published_source_commit": "16a2326491b1add7e3057304d88e430724964584",
-    "published_tree": "0884fc39f29acb0f6ce71bb3853a1d133d344328",
+    "initial_uncommitted_suite": {
+      "tests": 760,
+      "errors": 1,
+      "reason": "Existing preflight requires a clean committed checkout; no implementation test failed.",
+      "output_sha256": "43f524ed80a6209d9af6824e87eed6b435fb17d45e17cf2b65b99de551a41334"
+    },
+    "published_source_commit": "86936788d6f90ccb99f719d48e2c9a3b13e03756",
+    "published_tree": "0b899e390bb7e09c7b332f77f923532b490be1cb",
     "published_tree_matches_tested_tree": true,
     "checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
-    "protocol_manifest_locks": 25,
+    "protocol_manifest_locks": 26,
     "frozen_preflight": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
-    "invariant_ci_run": 41195738585,
+    "invariant_ci_run": 41198968742,
     "invariant_ci_conclusion": "success",
-    "source_ci_run": 41195738479,
+    "source_ci_run": 41198968713,
     "source_ci_conclusion": "success",
-    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/66/checks",
-    "internal_artifact_arithmetic": "results/hidden-cycle-validation-v1.json",
-    "internal_artifact_checks": 335781,
+    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/67/checks",
+    "internal_artifact_arithmetic": "results/timing-validation-v1.json",
+    "internal_artifact_checks": 1118458,
     "internal_artifact_defects": 0,
     "independent_scientific_custody": false,
     "closed_study_reruns": false,
     "new_fits": 0,
     "completed_training_updates": 0,
-    "historical_data_result_lock_files_unchanged": 349,
+    "historical_data_result_lock_files_unchanged": 374,
     "historical_trained_checkpoint_files_unchanged": 10,
-    "temporary_internal_audit_script_lines": 292,
-    "temporary_internal_audit_script_sha256": "fadfdb1debd97a8f71bfb776e61e3eea281388bc1f66035d24db9c67f28694de"
+    "temporary_internal_audit_script_lines": 318,
+    "temporary_internal_audit_script_sha256": "2a2ed5b8dabe3576541bf00e020789c03c7b2925b5f249b48fc8b99393f3455e"
   },
   "limits": [
     "Continuation v1 completed its frozen fits and artifact collection but formally STOPPED: empirical zero-support feedback contradictions terminated episodes and left required forecasts unproduced. G1 remains NOT_ADMITTED; failures and all planned denominators are retained.",
@@ -503,7 +514,7 @@
     "coherent_active_training_checkpoint_evaluation_path": "IMPLEMENTED_FOR_DELIVERED_OBSERVATIONS",
     "expanded_domain_flat_implementation": "IMPLEMENTED_FRESH_ARCHITECTURE",
     "expanded_domain_matched_flat_baseline": "CONTINUATION_V1_COMPLETED_PARAMETER_AND_REALIZED_EXPOSURE_MATCH; CONSUMED_COMPUTE_NOT_MATCHED",
-    "prospective_information_aware_scientific_acceptance_runner": "MIXED, CORRELATION, MULTISOURCE_LAW AND HIDDEN_CYCLE_V1_EXECUTED_KEEP; FORMAL_ADMISSION_PENDING",
+    "prospective_information_aware_scientific_acceptance_runner": "MIXED, CORRELATION, MULTISOURCE_LAW, HIDDEN_CYCLE AND TIMING_V1_EXECUTED_KEEP; FORMAL_ADMISSION_PENDING",
     "fresh_independently_held_challenge": "PENDING",
     "calibrated_expanded_domain_comparison": "CONTINUATION_V1_PROPER_SCORE_AND_ECE_DIAGNOSTICS_RETAINED; GENERAL_CALIBRATION_NOT_ESTABLISHED",
     "expanded_domain_scientific_evaluation": true,
@@ -520,8 +531,9 @@
     "withheld_acquisition_and_mode_coalescence": "TESTED_WITH_FROZEN_WEIGHTS",
     "equal_marginals_different_correlations": "COMPLETED_KEEP_JOINT_CORRELATION_FROM_OBSERVED_HISTORIES_WITH_FROZEN_WEIGHTS",
     "independent_multi_source_laws": "COMPLETED_KEEP_MULTISOURCE_LAWS_FOR_SEPARATE_NAND_NOR_FULL_FEEDBACK_FITS",
-    "simultaneous_timing": "SELECTED_EXPLICIT_COMPOUND_ACTION_TIMING_CONTRACT_AND_FROZEN_WEIGHT_STUDY; NOT_YET_IMPLEMENTED",
-    "hidden_intermediate_new_law_propagation": "COMPLETED_KEEP_HIDDEN_CYCLE_WITH_TEN_FROZEN_CHECKPOINTS; ONE_HIDDEN_INTERMEDIATE_AND_ONE_LATER_STEP"
+    "simultaneous_timing": "COMPLETED_KEEP_TIMING_WITH_SUPPLIED_BINARY_SCHEDULER_AND_FROZEN_LEARNED_PAIRS; BOUNDED_FULL_ENDPOINT_FEEDBACK",
+    "hidden_intermediate_new_law_propagation": "COMPLETED_KEEP_HIDDEN_CYCLE_WITH_TEN_FROZEN_CHECKPOINTS; ONE_HIDDEN_INTERMEDIATE_AND_ONE_LATER_STEP",
+    "bilingual_grounding": "SELECTED_G3_NOT_IMPLEMENTED"
   },
   "learning_version": "active-learning-v1",
   "checkpoint_format": "cemm-active-checkpoint-v1",
@@ -1006,14 +1018,39 @@
     "previous_imported_source_lines": 3337,
     "previous_import_plus_source_pin_lines": 3337,
     "parameter_delta": 0,
-    "retained_test_lines": 13907,
+    "retained_test_lines": 14882,
     "remaining_pin_reason": "Removing the masked_replay.py identity pin changes acceptance/data commitments; migration deferred.",
     "compatibility": "Old native checkpoints require their original source checkout; strict matching remains enforced. Frozen v1 bundles unchanged.",
     "continuation_study_changed_inference_imports": false,
     "alias_studies_changed_inference_imports": false,
     "runtime_net_lines_since_continuation": 2,
     "joint_correlation_study_changed_inference_imports": false,
-    "hidden_cycle_study_changed_inference_imports": false
+    "hidden_cycle_study_changed_inference_imports": false,
+    "timing_entrypoint": {
+      "entrypoint": "timing_session.Session",
+      "opt_in": true,
+      "module_import_files": {
+        "acceptance_contract.py": 423,
+        "active_checkpoint.py": 291,
+        "active_paths.py": 258,
+        "comparison_scoring.py": 177,
+        "context_support.py": 193,
+        "domain_contract.py": 297,
+        "domain_flat.py": 74,
+        "domain_kernel.py": 149,
+        "joint_objective.py": 322,
+        "timing_contract.py": 101,
+        "timing_kernel.py": 72,
+        "timing_session.py": 100
+      },
+      "module_import_source_lines": 2457,
+      "hash_required_but_not_imported": {
+        "masked_replay.py": 185
+      },
+      "import_plus_source_pin_lines": 2642,
+      "new_neural_parameters": 0,
+      "native_sources_changed": false
+    }
   },
   "progress_control": {
     "last_learned_results": [
@@ -1021,8 +1058,8 @@
       "ALIAS_EVIDENCE_DECISION_V2.md"
     ],
     "invariant_count_is_scientific_gate_progress": false,
-    "next_deliverable": "Implement a bounded compound-contact input with explicit ordered/common-snapshot timing, then freeze and execute one fresh timing-twin study using the ten unchanged NAND/NOR checkpoints. Use a shared persistent mode, event-local outputs and an explicitly supplied binary delta-union scheduler; include overlapping chains/cycles and disjoint controls across 3–5 total contacts. Zero fitting or neural parameter growth; no new general audit or workspace.",
-    "another_preparation_only_tranche_requires": "A concrete execution blocker. Hidden-cycle-v1 is complete; next work must implement observable timing and execute the bounded comparison, not repeat closed studies or add another general preparation harness.",
+    "next_deliverable": "Implement one bounded bilingual-grounding tranche into the same frozen learned world: English-like SVO and genuinely different artificial OSV, held-out entity/role/composition transfer, text-only and supervised-parser controls, no gold parser programs or linguistic role labels. Publish fresh source/data/fit plans before encoder training, then complete one fit/evaluate/decision cycle.",
+    "another_preparation_only_tranche_requires": "A concrete execution blocker. Explicit timing is complete; next work must implement and execute the bounded G3 grounding comparison, not repeat closed studies or add another generic harness.",
     "further_refactor_scope": "Only a demonstrated execution blocker or later release packaging milestone.",
     "historical_learned_results": [
       "ALIAS_EVIDENCE_DECISION_V1.md",
@@ -1030,10 +1067,11 @@
       "COMMON_OBJECTIVE_DECISION.md",
       "SENSOR_TRANSFER_DECISION.md"
     ],
-    "last_frozen_decision": "KEEP_HIDDEN_CYCLE",
+    "last_frozen_decision": "KEEP_TIMING",
     "execution_and_artifact_collection_complete": true,
     "participant_complete_run": true,
     "latest_frozen_weight_results": [
+      "TIMING_DECISION_V1.md",
       "HIDDEN_CYCLE_DECISION_V1.md",
       "JOINT_CORRELATION_DECISION_V1.md",
       "G1_G2_PROGRESS_REVIEW.md"
@@ -1043,25 +1081,23 @@
     "bounded_model_architecture_extension_selected": false
   },
   "selected_next_task": {
-    "status": "IMPLEMENTED_PREPARED_TIMING; AWAITING_PUBLIC_FREEZE_AND_COLLECTION",
-    "stage": "G2",
-    "work": "Implement a bounded compound-contact input with explicit ordered/common-snapshot timing, then freeze and execute one fresh timing-twin study using the ten unchanged NAND/NOR checkpoints. Use a shared persistent mode, event-local outputs and an explicitly supplied binary delta-union scheduler; include overlapping chains/cycles and disjoint controls across 3–5 total contacts. Zero fitting or neural parameter growth; no new general audit or workspace.",
-    "details": "TIMING_DECISION_V1.md",
-    "training_permitted": false,
-    "training_prerequisite": "No fitting selected; existing learned pair distributions and ten historical checkpoints stay frozen.",
-    "collection_prerequisite": "Implement and invariant-check the explicit time-group contract, then publish fresh source/data/plans and decision criteria before one collection.",
-    "supplied_new_structure": "Ordered versus common-snapshot scheduling and binary union of event-local changes; this semantics is not learned from isolated pair outcomes.",
-    "preserve_checkpoints": "All historical learned tensors remain unchanged; new scheduling/inference identities require an explicit compatible adapter, not bypassing native source pins.",
-    "completed_previous_task": "hidden-cycle-v1 KEEP_HIDDEN_CYCLE",
+    "status": "SELECTED_G3_BILINGUAL_GROUNDING; NOT_IMPLEMENTED_OR_FROZEN",
+    "stage": "G3",
+    "work": "Implement one bounded bilingual-grounding tranche into the same frozen learned world: English-like SVO and genuinely different artificial OSV, held-out entity/role/composition transfer, text-only and supervised-parser controls, no gold parser programs or linguistic role labels. Publish fresh source/data/fit plans before encoder training, then complete one fit/evaluate/decision cycle.",
+    "details": "TIMING_DECISION_V1.md#development-decision-and-next-work",
+    "world_training_permitted": false,
+    "language_encoder_training_prerequisite": "Fresh public language source/data/fit-plan freeze before one fitting/evaluation cycle.",
+    "preserve_checkpoints": "All historical world checkpoints remain byte-identical; no G1/G2 refitting.",
+    "completed_previous_task": "timing-v1 KEEP_TIMING",
     "historical_decisions_unchanged": true,
     "scientific_admission_unchanged": true,
     "new_open_loop_gate_added": false
   },
-  "current_pr": 66,
+  "current_pr": 67,
   "continuation_pr": 62,
-  "current_study_decision": "KEEP_HIDDEN_CYCLE",
+  "current_study_decision": "KEEP_TIMING",
   "g1_development_readiness": "PROCEED_TO_G2",
-  "current_development_stage": "G2",
+  "current_development_stage": "G3",
   "mixed_composition_study": {
     "version": "mixed-composition-v1",
     "formal_decision": "KEEP_MIXED_COMPOSITION",
@@ -1544,7 +1580,7 @@
   },
   "timing_study": {
     "version": "timing-v1",
-    "stage": "PREPARED",
+    "stage": "COMPLETE",
     "protocol": "timing_protocol_v1.json",
     "report": "TIMING_DECISION_V1.md",
     "data": "data/timing-v1",
@@ -1558,6 +1594,209 @@
     "new_inference_scheduler": true,
     "native_inference_sources_changed": false,
     "historical_checkpoints_changed": false,
-    "scientific_gate_admitted": false
-  }
+    "scientific_gate_admitted": false,
+    "formal_decision": "KEEP_TIMING",
+    "execution_complete": true,
+    "source_data_plan_commit": "86936788d6f90ccb99f719d48e2c9a3b13e03756",
+    "source_tree": "0b899e390bb7e09c7b332f77f923532b490be1cb",
+    "scored_result": "results/timing-v1/decision.json",
+    "validation": "results/timing-validation-v1.json",
+    "forecasts": 46080,
+    "identifiable_complete_worlds": {
+      "correct": 28800,
+      "planned": 28800
+    },
+    "identifiable_role_pairs": {
+      "correct": 8640,
+      "planned": 8640
+    },
+    "critical_timing_pairs": {
+      "passed": 1200,
+      "planned": 1200
+    },
+    "snapshot_permutation_forecasts": {
+      "equal": 15360,
+      "planned": 15360,
+      "nontrivial_equal": 12800,
+      "nontrivial_planned": 12800
+    },
+    "all_action_accuracy": 0.8125,
+    "expected_oracle_map_accuracy": 0.8125,
+    "minimum_critical_true_probability": 0.9836789368242731,
+    "maximum_critical_opposite_probability": 0.0038637992983633746,
+    "minimum_critical_timing_gap": 0.9815341271606933,
+    "maximum_permutation_log_difference": 7.105427357601002e-15,
+    "fits": 0,
+    "completed_training_updates": 0,
+    "resources": {
+      "collection_cpu_seconds": 133.41162366,
+      "collection_wall_seconds": 133.4470380219973,
+      "peak_rss_kib": 525232,
+      "runtime": {
+        "deterministic": true,
+        "interop_threads": 1,
+        "num_threads": 1,
+        "numpy": "2.3.5",
+        "python": "3.13.16",
+        "torch": "2.10.0+cpu"
+      },
+      "scope": "Collection regions; excludes trace compression, scoring, report serialization and publication. RSS is whole-process high-water observed during collection."
+    },
+    "by_law": {
+      "nand": {
+        "forecasts": 23040,
+        "answered": 23040,
+        "correct_all": 18720,
+        "correct_identifiable": 14400,
+        "planned_identifiable": 14400,
+        "correct_ambiguous": 4320,
+        "planned_ambiguous": 8640,
+        "identifiable_role_pairs_correct": 4320,
+        "identifiable_role_pairs_planned": 4320,
+        "critical_passed": 600,
+        "critical_planned": 600,
+        "min_critical_true_probability": 0.9836789368242731,
+        "max_critical_opposite_probability": 0.0038637992983633746,
+        "min_critical_timing_gap": 0.9815341271606933,
+        "worst_cell_stratum_mean_kl": 0.011444173363136198,
+        "max_ambiguous_tv": 0.0065434074608308876,
+        "known_unchanged_errors": 0,
+        "realized_unchanged_errors": 2160,
+        "map_outside_support": 0,
+        "mean_all_nll": 0.2641764336434703,
+        "mean_all_brier": 0.18752515653587185,
+        "max_all_ece": 0.004716870717583449,
+        "permutation_forecasts_planned": 7680,
+        "permutation_forecasts_equal": 7680,
+        "nontrivial_permutation_pairs_planned": 2240,
+        "nontrivial_permutation_forecasts_planned": 6400,
+        "nontrivial_permutation_forecasts_equal": 6400,
+        "timing_pairs": 2880,
+        "acquisition_distribution_mismatches": 0,
+        "timing_group_comparison": {
+          "points": 2880,
+          "nll_increased": 32,
+          "nll_decreased": 2848,
+          "nll_equal": 0,
+          "mean_nll_delta": -0.003685156388870717,
+          "max_nll_increase": 0.0007550948814854094,
+          "max_nll_decrease": -0.009874705284741419,
+          "max_full_vector_tv": 0.9988775497514495,
+          "oracle_equal_worlds": 2280,
+          "ordered_correct_common_wrong": 0,
+          "ordered_wrong_common_correct": 0
+        },
+        "suffix_comparison": {
+          "points": 1920,
+          "nll_increased": 340,
+          "nll_decreased": 1556,
+          "nll_equal": 24,
+          "mean_nll_delta": 6.882371708745272e-05,
+          "max_nll_increase": 0.0024931346946425663,
+          "max_nll_decrease": -0.0012656469681178286,
+          "max_full_vector_tv": 0.9995355178702532,
+          "oracle_equal_worlds": 1440,
+          "ordered_correct_common_wrong": 0,
+          "ordered_wrong_common_correct": 0
+        },
+        "disjoint_group_comparison": {
+          "points": 960,
+          "nll_increased": 0,
+          "nll_decreased": 960,
+          "nll_equal": 0,
+          "mean_nll_delta": -0.004476797092416467,
+          "max_nll_increase": 0.0,
+          "max_nll_decrease": -0.0078292267881893,
+          "max_full_vector_tv": 0.007758526946500513,
+          "oracle_equal_worlds": 960,
+          "ordered_correct_common_wrong": 0,
+          "ordered_wrong_common_correct": 0
+        },
+        "per_seed_wall_p95_range": [
+          0.0020046320005349116,
+          0.0023088529997039586
+        ]
+      },
+      "nor": {
+        "forecasts": 23040,
+        "answered": 23040,
+        "correct_all": 18720,
+        "correct_identifiable": 14400,
+        "planned_identifiable": 14400,
+        "correct_ambiguous": 4320,
+        "planned_ambiguous": 8640,
+        "identifiable_role_pairs_correct": 4320,
+        "identifiable_role_pairs_planned": 4320,
+        "critical_passed": 600,
+        "critical_planned": 600,
+        "min_critical_true_probability": 0.9851143202235894,
+        "max_critical_opposite_probability": 0.0022239752551675603,
+        "min_critical_timing_gap": 0.9842402119341626,
+        "worst_cell_stratum_mean_kl": 0.010158586683818924,
+        "max_ambiguous_tv": 0.007321336783169884,
+        "known_unchanged_errors": 0,
+        "realized_unchanged_errors": 2376,
+        "map_outside_support": 0,
+        "mean_all_nll": 0.2638258830484174,
+        "mean_all_brier": 0.18752062187981516,
+        "max_all_ece": 0.0041627768168464585,
+        "permutation_forecasts_planned": 7680,
+        "permutation_forecasts_equal": 7680,
+        "nontrivial_permutation_pairs_planned": 2240,
+        "nontrivial_permutation_forecasts_planned": 6400,
+        "nontrivial_permutation_forecasts_equal": 6400,
+        "timing_pairs": 2880,
+        "acquisition_distribution_mismatches": 0,
+        "timing_group_comparison": {
+          "points": 2880,
+          "nll_increased": 5,
+          "nll_decreased": 2875,
+          "nll_equal": 0,
+          "mean_nll_delta": -0.0039076609557783795,
+          "max_nll_increase": 7.964062034336973e-05,
+          "max_nll_decrease": -0.00917310366086092,
+          "max_full_vector_tv": 0.9993338126213233,
+          "oracle_equal_worlds": 2280,
+          "ordered_correct_common_wrong": 0,
+          "ordered_wrong_common_correct": 0
+        },
+        "suffix_comparison": {
+          "points": 1920,
+          "nll_increased": 328,
+          "nll_decreased": 1590,
+          "nll_equal": 2,
+          "mean_nll_delta": 2.6033969784463467e-05,
+          "max_nll_increase": 0.00176196890670867,
+          "max_nll_decrease": -0.0009436026030401603,
+          "max_full_vector_tv": 0.9997265701747635,
+          "oracle_equal_worlds": 1440,
+          "ordered_correct_common_wrong": 0,
+          "ordered_wrong_common_correct": 0
+        },
+        "disjoint_group_comparison": {
+          "points": 960,
+          "nll_increased": 0,
+          "nll_decreased": 960,
+          "nll_equal": 0,
+          "mean_nll_delta": -0.004880967435914875,
+          "max_nll_increase": 0.0,
+          "max_nll_decrease": -0.00917310366086092,
+          "max_full_vector_tv": 0.00909432568792545,
+          "oracle_equal_worlds": 960,
+          "ordered_correct_common_wrong": 0,
+          "ordered_wrong_common_correct": 0
+        },
+        "per_seed_wall_p95_range": [
+          0.002017500000874861,
+          0.0021916059995419346
+        ]
+      }
+    },
+    "same_author_public_custody": true,
+    "independent_physical_replication_claimed": false,
+    "scope": "Frozen learned pair dynamics under supplied binary delta-union timing, full endpoint feedback, two-contact groups and 3-5 atomic-contact schedules; no learned concurrency law or general overwrite-conflict claim."
+  },
+  "timing_pr": 67,
+  "g2_development_readiness": "PROCEED_TO_G3",
+  "gate_g2_scientific": "NOT_ADMITTED"
 }
