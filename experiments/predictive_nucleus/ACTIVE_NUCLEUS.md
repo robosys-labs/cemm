@@ -1,8 +1,8 @@
-# Active nucleus: paired saturation study complete; G3 remains open
+# Active nucleus: training failure localized; G3 remains open
 
 Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22),
 [PR #73](https://github.com/robosys-labs/cemm/pull/73). Updated 2026-10-31.
-Latest result: `526c39db7030080cf7c1fd1f8ff7e1f9c6190051`.
+Latest learned-study result: `526c39db7030080cf7c1fd1f8ff7e1f9c6190051`.
 **REVISE_SATURATION_HYPOTHESIS; execution complete, not scientific admission.**
 
 ## Current evidence
@@ -31,25 +31,43 @@ three miss the observed-training NLL <=0.05 criterion despite improved fit.
 Terminal saturation alone is not a reliable repair. Two successful seeds show
 a bounded representable solution, not robust fitting or general language.
 
-[Saved-record verification](results/saturation-validation-v1.json) reproduces the
+PR #73's [saved-record verification](results/saturation-validation-v1.json) reproduces the
 decision with 3,032,778 checks and zero discrepancies: 70 source bindings, 63
 historical bindings, ten checkpoints and every planned record. No model or closed
-collector was rerun. Twenty new tests pass; final local suite has 892 passes and
+collector was rerun. That tranche added twenty passing tests; its local suite has 892 passes and
 one checkout-only skip, with all 30 locks passing. Retained research Python is
 39,036 lines including 17,021 test lines; the inclusive 2,000-line goal is unmet.
 
-## Exact next action
+## Completed training-only diagnostic and next implementation
 
-Perform a training-only loss/gradient audit of the existing passing and failing
-checkpoints on their observed tape, without updates or held-challenge access.
-Localize lexical fit, layout fit and gradient through the latent-action mixture
-before selecting a minimal training intervention. Keep the original observed-
-outcome loss and frozen-world boundary. No further fit or diagnostic model
-execution has occurred after this completed study.
+[Loss/gradient audit and full interpretation](TRAINING_GRADIENT_AUDIT_V1.md).
+All ten saved encoders reproduce their post-training loss on 1,152 observed NAND
+events each, with zero parameter updates or held-challenge reads in the diagnostic.
+The three failing unsaturated seeds all have same-sign learned layout factors;
+the two passing seeds have sign-changing factors. The rank-one readout cannot
+reverse two words' preference ranking across layouts while its layout factors
+retain the same sign. Strong immediate output gradients remain, and the full
+parameter gradients are nonzero. This localizes a fitted-representation failure,
+not a proved lack of model capacity or a reliable repair.
 
-Do not rerun this closed bank, add a workspace or more parameters, select seeds,
-or proceed to G4 to bypass the binding failure. Any later intervention needs a
-new prospective freeze, fresh challenge, equal exposure/budget and all five seeds.
+`binding_centered_init.py` implements a 19-line, opt-in initial-layout centering
+candidate: change one bias scalar, preserve the other 88 initial scalars, retain
+the exact same 89-parameter class/inference/loss. No role or position polarity is
+prescribed. The bias stays trainable. Candidate status is
+**IMPLEMENTED_NOT_SCIENTIFICALLY_EVALUATED**; historical registries are untouched.
+
+Thirteen new tests pass; full local suite: 905 passes/one checkout-only skip;
+all 30 locks pass. Retained research Python: 39,444 lines; the original inclusive
+2,000-line goal remains unmet. Full derivative evidence is in the delivery bundle;
+the committed summary binds all inputs, sources, seeds and its complete-artifact hash.
+
+Next: one fresh prospective standard-unsaturated versus centered-initialization
+comparison at all five seeds. Keep observed histories, 256 updates, optimizer,
+world weights and criteria identical; disclose the single intentionally different
+initial scalar. Freeze the new challenge/source before fitting and actual weights
+before collection. Retain all seeds, exact/probability/retention requirements and
+failures. Do not rerun a closed challenge, add capacity or advance to G4. No new
+candidate fit, challenge bank or collection has occurred in this tranche.
 
 ## Preserved roadmap and boundaries
 
@@ -57,7 +75,7 @@ new prospective freeze, fresh challenge, equal exposure/budget and all five seed
 |---|---|
 | G1 | Development ready for G2; original scientific admission remains NOT_ADMITTED. |
 | G2 | Selected composition, hidden propagation and explicit timing complete for development; formal scientific admission remains open. |
-| G3 | Lexical result retained; paired activation study complete but failed overall. Next: training-only loss/gradient localization. |
+| G3 | Lexical result retained; paired activation study complete but failed overall. Training failure localized; centered-initialization candidate awaits a fresh paired test. |
 | G4 | Held-out goal-directed communication against silent/random/shuffled controls. |
 | G5 | Durable learning, useful clarification and retention across episodes. |
 | G6 | Grounded corpus transfer beyond retrieval/frequency controls. |
