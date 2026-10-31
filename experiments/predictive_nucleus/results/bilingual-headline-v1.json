@@ -1,0 +1,173 @@
+{
+  "candidate_and_control_forecasts": 124800,
+  "candidate_forecasts": 20800,
+  "controls": {
+    "nand": {
+      "grounded": {
+        "correct": 10400,
+        "planned": 10400,
+        "worst_nll": 0.005425536228789135
+      },
+      "parser": {
+        "correct": 10400,
+        "planned": 10400,
+        "worst_nll": 0.005425736285985035
+      },
+      "sequence": {
+        "correct": 1468,
+        "planned": 10400,
+        "worst_nll": 6.486839168696122
+      },
+      "shuffled": {
+        "correct": 5655,
+        "planned": 10400,
+        "worst_nll": 2.272995716049988
+      },
+      "text_only": {
+        "correct": 746,
+        "planned": 10400,
+        "worst_nll": 5.771380419565352
+      },
+      "ungrounded": {
+        "correct": 432,
+        "planned": 10400,
+        "worst_nll": 3.3663726252305173
+      }
+    },
+    "nor": {
+      "grounded": {
+        "correct": 10400,
+        "planned": 10400,
+        "worst_nll": 0.005052413423165951
+      },
+      "parser": {
+        "correct": 10400,
+        "planned": 10400,
+        "worst_nll": 0.005052613612808379
+      },
+      "sequence": {
+        "correct": 1528,
+        "planned": 10400,
+        "worst_nll": 6.369959897749996
+      },
+      "shuffled": {
+        "correct": 6188,
+        "planned": 10400,
+        "worst_nll": 2.4433141390802047
+      },
+      "text_only": {
+        "correct": 505,
+        "planned": 10400,
+        "worst_nll": 5.931595808912025
+      },
+      "ungrounded": {
+        "correct": 460,
+        "planned": 10400,
+        "worst_nll": 3.477831123835211
+      }
+    }
+  },
+  "decision": "KEEP_BILINGUAL_GROUNDING",
+  "metrics": {
+    "max_opposite_probability": 0.0022680414671141223,
+    "max_seed_ece": 0.0054096233916676685,
+    "mean_brier": 2.214546429568292e-05,
+    "mean_nll": 0.004018479617246916,
+    "min_seed_ece": 0.003060918189000115,
+    "min_true_probability": 0.991386863856103,
+    "native_max_nll_increase": 0.00015354979415111358,
+    "native_mean_nll_increase": 9.081799519078982e-05,
+    "native_nll_better_count": 0,
+    "native_nll_worse_count": 20800,
+    "orders_correct": 20800,
+    "orders_planned": 20800,
+    "role_pairs_correct": 2880,
+    "role_pairs_planned": 2880,
+    "trajectories_correct": 5760,
+    "trajectories_planned": 5760,
+    "twins": {
+      "bilingual": {
+        "forecast_pairs": 10400,
+        "map_consistent_pairs": 2880,
+        "max_tv": 9.317549503754129e-05,
+        "planned_pairs": 2880
+      },
+      "synonym": {
+        "forecast_pairs": 10400,
+        "map_consistent_pairs": 2880,
+        "max_tv": 6.63044399349792e-05,
+        "planned_pairs": 2880
+      }
+    },
+    "unchanged_bit_errors": 0,
+    "worlds_correct": 20800,
+    "worlds_planned": 20800,
+    "worst_family_language_mean_nll": 0.005934357065414234
+  },
+  "native_reference_forecasts": 20800,
+  "native_to_language_regressions": 0,
+  "native_to_language_repairs": 0,
+  "new_fits": 25,
+  "parameters": {
+    "candidate_total": 1036,
+    "direct_control": 1048,
+    "encoder": 474,
+    "frozen_world": 562
+  },
+  "resources": {
+    "collection": {
+      "forecast": {
+        "cpu_seconds": 2.522547939999992,
+        "wall_seconds": 2.5261271719718934
+      },
+      "preparation": {
+        "cpu_seconds": 4.663039938999997,
+        "wall_seconds": 4.671201061009924
+      }
+    },
+    "evaluator": {
+      "cpu_seconds": 9.727229746999999,
+      "scope": "Post-collection scoring and separate gold-action native reference; not candidate inference or fitting.",
+      "wall_seconds": 9.734969444998569
+    },
+    "latency": {
+      "grounded": {
+        "max_p95_microseconds": 31.329875014307618,
+        "min_p95_microseconds": 19.325812445458723
+      },
+      "parser": {
+        "max_p95_microseconds": 31.56209379540087,
+        "min_p95_microseconds": 21.013656237300893
+      },
+      "sequence": {
+        "max_p95_microseconds": 19.976156181655824,
+        "min_p95_microseconds": 7.791843700033496
+      },
+      "shuffled": {
+        "max_p95_microseconds": 26.53090632520616,
+        "min_p95_microseconds": 19.17593749567459
+      },
+      "text_only": {
+        "max_p95_microseconds": 13.878062532057811,
+        "min_p95_microseconds": 8.59115630191809
+      },
+      "ungrounded": {
+        "max_p95_microseconds": 33.25896875594481,
+        "min_p95_microseconds": 19.135249999635562
+      }
+    },
+    "peak_recorded_rss_kib": 361800,
+    "training": {
+      "cpu_seconds": 44.247123785,
+      "peak_rss_kib": 310448,
+      "scope": "All cache preparation, 25 fits and checkpoint serialization; no world fitting.",
+      "wall_seconds": 44.24926424900332
+    }
+  },
+  "scientific_admission": false,
+  "scope": "Learned bilingual participant/order binding for one supplied contact relation. Lexical identity necessity and independent synonym semantics are not established.",
+  "source_data_commit": "d1e04fbcb2ff70af10a38ddb42a85a8128df2bcd",
+  "updates": 6400,
+  "version": "bilingual-headline-v1",
+  "weights_commit": "2db941c2dd4fed97d0b5cef718b24f17ba88bb39"
+}

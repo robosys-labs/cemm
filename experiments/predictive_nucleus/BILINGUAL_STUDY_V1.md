@@ -1,7 +1,9 @@
 # G3: outcome-trained bilingual grounding, v1
 
 Tracking: [roadmap #22](https://github.com/robosys-labs/cemm/issues/22).
-Prepared 31 October 2026 (Africa/Lagos). **Not fitted or evaluated.**
+Prepared 31 October 2026 (Africa/Lagos), publicly frozen at `d1e04fb` before fitting.
+**Completed: KEEP_BILINGUAL_GROUNDING.** The versioned protocol and data remain unchanged;
+see [the result and scope](BILINGUAL_DECISION_V1.md) for all outcomes and controls.
 
 ## Why this is the next step
 
@@ -17,8 +19,10 @@ A 474-parameter character-feature GRU learns which of two identity-mention
 permutations an utterance denotes. Its probability distribution enters the same
 562-parameter acquired world, which predicts a complete joint world. Training
 uses observed consequences, with no gold action order, role label, language ID
-or parser program in the candidate. Full feedback updates the joint mode belief;
-the implementation preserves linguistic uncertainty until observations resolve it.
+or parser program in the candidate. The implementation marginalizes uncertainty
+over operand order while retaining the physical-mode/world mixture. Full feedback
+updates the physical-mode belief; it does not update encoder weights or the
+encoder's order distribution during evaluation.
 
 One adapter per seed is trained on NAND outcomes and applied unchanged to both
 the acquired NAND and acquired NOR checkpoints. This tests reuse of the binding,
@@ -51,8 +55,8 @@ sequence model receives the same sufficient observed context and current text,
 without acquired world weights. It has 1,048 parameters against 1,036 total for
 the grounded candidate. New language exposures and updates match, but previous
 world-learning exposure and consumed compute do not. In addition, 5/6-entity
-transfer exposes untrained output coordinates in the direct control; its 3/4-
-entity matched-domain results must be reported separately. These are diagnostic
+transfer exposes untrained output coordinates in the direct control; its results
+at the trained entity counts, 3/4, must be reported separately. These are diagnostic
 controls, not a strong architecture-superiority experiment.
 
 All bilingual/synonym twins remain in the same split. Physical modes, reversals,

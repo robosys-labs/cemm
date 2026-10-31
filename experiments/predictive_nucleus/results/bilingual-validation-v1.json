@@ -1,0 +1,180 @@
+{
+  "auditor_python_lines": 415,
+  "auditor_source_sha256": "925baec5249091c7795629b80692963a9b0a50273afb49812474d55bb448f3de",
+  "checks": 1060066,
+  "counts": {
+    "data_artifacts": 8,
+    "forecast_points": 124800,
+    "native_reference_points": 20800,
+    "new_fits": 25,
+    "result_artifacts": 63,
+    "source_bindings": 57,
+    "tensor_fingerprints": 35,
+    "traces": 60,
+    "updates": 6400
+  },
+  "decision_reconstructed": "KEEP_BILINGUAL_GROUNDING",
+  "deduplicated_costs": {
+    "forecast": {
+      "cpu_seconds": 2.522547939999992,
+      "wall_seconds": 2.5261271719718934
+    },
+    "preparation": {
+      "cpu_seconds": 4.663039938999997,
+      "wall_seconds": 4.671201061009924
+    }
+  },
+  "discrepancies": [],
+  "discrepancy_count": 0,
+  "evaluator_resources": {
+    "cpu_seconds": 9.727229746999999,
+    "scope": "Post-collection scoring and separate gold-action native reference; not candidate inference or fitting.",
+    "wall_seconds": 9.734969444998569
+  },
+  "fitting_updates": 0,
+  "headlines": {
+    "nand": {
+      "grounded": {
+        "correct": 10400,
+        "planned": 10400,
+        "worst_nll": 0.005425536228789135
+      },
+      "parser": {
+        "correct": 10400,
+        "planned": 10400,
+        "worst_nll": 0.005425736285985035
+      },
+      "sequence": {
+        "correct": 1468,
+        "planned": 10400,
+        "worst_nll": 6.486839168696122
+      },
+      "shuffled": {
+        "correct": 5655,
+        "planned": 10400,
+        "worst_nll": 2.272995716049988
+      },
+      "text_only": {
+        "correct": 746,
+        "planned": 10400,
+        "worst_nll": 5.771380419565352
+      },
+      "ungrounded": {
+        "correct": 432,
+        "planned": 10400,
+        "worst_nll": 3.3663726252305173
+      }
+    },
+    "nor": {
+      "grounded": {
+        "correct": 10400,
+        "planned": 10400,
+        "worst_nll": 0.005052413423165951
+      },
+      "parser": {
+        "correct": 10400,
+        "planned": 10400,
+        "worst_nll": 0.005052613612808379
+      },
+      "sequence": {
+        "correct": 1528,
+        "planned": 10400,
+        "worst_nll": 6.369959897749996
+      },
+      "shuffled": {
+        "correct": 6188,
+        "planned": 10400,
+        "worst_nll": 2.4433141390802047
+      },
+      "text_only": {
+        "correct": 505,
+        "planned": 10400,
+        "worst_nll": 5.931595808912025
+      },
+      "ungrounded": {
+        "correct": 460,
+        "planned": 10400,
+        "worst_nll": 3.477831123835211
+      }
+    }
+  },
+  "models_executed": 0,
+  "peak_recorded_rss_kib": 361800,
+  "recorded_at": "2026-10-31T13:50:00.219584+00:00",
+  "result_manifest_sha256": "c650958da148ec0d16d540ffce24ed0b216a27e4bb1328e80b79ae5d41ac7a85",
+  "retention": {
+    "nand/11": {
+      "max_nll_increase": 0.00010154957301039503,
+      "nll_worse": 2080,
+      "regressions": 0,
+      "repairs": 0
+    },
+    "nand/23": {
+      "max_nll_increase": 0.00015354979415111358,
+      "nll_worse": 2080,
+      "regressions": 0,
+      "repairs": 0
+    },
+    "nand/37": {
+      "max_nll_increase": 0.0001078770529182975,
+      "nll_worse": 2080,
+      "regressions": 0,
+      "repairs": 0
+    },
+    "nand/53": {
+      "max_nll_increase": 8.7242182950714e-05,
+      "nll_worse": 2080,
+      "regressions": 0,
+      "repairs": 0
+    },
+    "nand/7": {
+      "max_nll_increase": 0.0001394917751009867,
+      "nll_worse": 2080,
+      "regressions": 0,
+      "repairs": 0
+    },
+    "nor/11": {
+      "max_nll_increase": 0.00010153317485651859,
+      "nll_worse": 2080,
+      "regressions": 0,
+      "repairs": 0
+    },
+    "nor/23": {
+      "max_nll_increase": 0.00015353790723559094,
+      "nll_worse": 2080,
+      "regressions": 0,
+      "repairs": 0
+    },
+    "nor/37": {
+      "max_nll_increase": 0.00010785301778103249,
+      "nll_worse": 2080,
+      "regressions": 0,
+      "repairs": 0
+    },
+    "nor/53": {
+      "max_nll_increase": 8.72342007685982e-05,
+      "nll_worse": 2080,
+      "regressions": 0,
+      "repairs": 0
+    },
+    "nor/7": {
+      "max_nll_increase": 0.00013950800299311508,
+      "nll_worse": 2080,
+      "regressions": 0,
+      "repairs": 0
+    }
+  },
+  "scope": "Independent implementation of saved-byte and arithmetic checks; same team, not independent scientific custody. No learner, collector or repository scorer executed.",
+  "source_data_commit": "d1e04fbcb2ff70af10a38ddb42a85a8128df2bcd",
+  "status": "PASS",
+  "training_manifest_sha256": "d130118f685c7cfed905ef0e57968744be9975ba6063992923ea079ca7138f51",
+  "training_resources": {
+    "cpu_seconds": 44.247123785,
+    "peak_rss_kib": 310448,
+    "scope": "All cache preparation, 25 fits and checkpoint serialization; no world fitting.",
+    "wall_seconds": 44.24926424900332
+  },
+  "version": "bilingual-saved-artifact-audit-v1",
+  "wall_seconds": 8.526046578001115,
+  "weights_commit": "2db941c2dd4fed97d0b5cef718b24f17ba88bb39"
+}
