@@ -1,0 +1,58 @@
+{
+  "audit_passed": true,
+  "auditor_sha256": "f6d4de5a87c76e869fa4058ed30ab693ad1a405d9bfe878e763b9134f574fe3a",
+  "bound_historical_files": 63,
+  "bound_sources": 70,
+  "check_count": 3032778,
+  "collection_resources": {
+    "peak_rss_kib": 477120,
+    "recorded_prediction_cpu_seconds": 4.890074493999976,
+    "recorded_prediction_wall_seconds": 4.891005102000001,
+    "region": "cached batched prediction; excludes preparation, serialization, native references and scoring"
+  },
+  "decision": "REVISE_SATURATION_HYPOTHESIS",
+  "discrepancies": [],
+  "discrepancy_count": 0,
+  "fit_resources": {
+    "completed_fits": 10,
+    "completed_updates": 2560,
+    "cpu_seconds": 22.530949864,
+    "peak_rss_kib": 336120,
+    "wall_seconds": 22.532822029000044
+  },
+  "forecast_count": 209280,
+  "full_audit_file": "saturation-audit-v1.json.xz",
+  "full_audit_sha256": "fc6b0f55fc6521ae261fdb5a26a8fb4c8062ddc6b369a9d2c53f8230a5cc2470",
+  "helper_sha256": "e8175934451ca2e7361046aea97bc1a7b8eb12a0080d22de8fe956b43fee0489",
+  "local_validation": {
+    "locks_passed": 30,
+    "neural_model_parameter_change": 0,
+    "new_audit_source_lines": 131,
+    "new_study_source_lines": 447,
+    "new_test_lines": 287,
+    "new_tests": 20,
+    "passed": 892,
+    "retained_early_attempts": [
+      "prefreeze synthetic empty-retention fixture failure corrected",
+      "prefreeze first full-suite invocation timed out; completed recheck passed",
+      "audit import-isolation fixture used startup with numpy preloaded; corrected to python -S before passing"
+    ],
+    "retained_research_python_lines": 39036,
+    "retained_test_lines": 17021,
+    "skip_reason": "full checkout required; source archive",
+    "skipped": 1,
+    "suite_seconds": 84.51,
+    "tests_discovered": 893
+  },
+  "metric_helper_sha256": "925baec5249091c7795629b80692963a9b0a50273afb49812474d55bb448f3de",
+  "model_execution": false,
+  "native_reference_count": 17280,
+  "new_collections": 0,
+  "new_fits": 0,
+  "scientific_admission": false,
+  "source_publication": "cf6943b552dc7c255e416c47222d97b084b31ea3",
+  "summary_sha256": "154f528ecc20c5a99bd25ef62a8638062bb0c4c0d215a813925cb497ac14398d",
+  "verified_checkpoints": 10,
+  "version": "saturation-saved-audit-v1",
+  "weights_publication": "1b73d3e94406bf5ceb55a5390bfb4b3a1c2f0cf4"
+}
