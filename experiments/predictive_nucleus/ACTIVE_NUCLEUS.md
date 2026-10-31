@@ -1,12 +1,36 @@
-# Active nucleus: G2 timing complete; G3 grounding selected
+# Active nucleus: G3 bilingual roles retained; lexical contrast selected
 
-Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #67](https://github.com/robosys-labs/cemm/pull/67). Updated 2026-10-31 (Africa/Lagos).
-**Timing v1: KEEP_TIMING. G2 development readiness: PROCEED_TO_G3.**
+Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #68](https://github.com/robosys-labs/cemm/pull/68). Updated 2026-10-31 (Africa/Lagos).
+**Bilingual v1: KEEP_BILINGUAL_GROUNDING. G2 development readiness: PROCEED_TO_G3.**
 Formal G1 scientific admission remains NOT_ADMITTED; G2 scientific admission remains open.
 Public timing source/data/plan freeze: `86936788d6f90ccb99f719d48e2c9a3b13e03756`.
 Unchanged checkpoint freeze: `25ae19b317c5b7dbfc487fa5204fb5da5f0e7420`.
 
-## Current result
+## Current G3 result
+
+The [bilingual study](BILINGUAL_DECISION_V1.md) completes 25 prescribed fits and
+all 124,800 candidate/control forecasts. The grounded adapter achieves
+**20,800/20,800 complete worlds**, **20,800/20,800 participant orders** and
+**2,880/2,880 reversed-role trajectory conjunctions**, with zero native-correct
+exact-world regressions. All five NAND-trained encoders transfer unchanged to
+the separately acquired NOR worlds. Source/data were published at `d1e04fb`
+before fitting; all language checkpoints at `2db941c` before collection.
+
+The encoder has 474 parameters and each unchanged acquired world 562. All
+20,800 language forecasts incur a small native-reference NLL increase: mean
+0.0000908180 nats, maximum 0.0001535498. The complete controls, dependent-view
+denominators and probability losses remain in the saved record. A separate
+stdlib audit reconstructs the decision with 1,060,066 checks and no discrepancies.
+
+This establishes outcome-trained participant/order binding with supplied
+identity grounding and a contact-only interface. Token positions alone can
+distinguish the two orders, so lexical identity necessity and independent synonym
+semantics remain untested. **The next G3 task is a fresh fixed-order lexical
+contrast over at least two already acquired native effects**, with no gold action
+kind and a lexical masking/shuffling control. Preserve this successful binding;
+do not reopen G1/G2 fitting. The next task is selected, not frozen or run.
+
+## Retained timing result
 
 The [explicit timing study](TIMING_DECISION_V1.md) completes its one frozen
 collection with **KEEP_TIMING** for both laws at all five seeds. All **46,080
@@ -33,8 +57,8 @@ common-snapshot permutation log difference is **7.11e-15**.
 
 The [decision](results/timing-v1/decision.json), [headline](results/timing-v1/headline.json)
 and [manifest](results/timing-v1/manifest.json) retain the complete denominator.
-**G2 development readiness is PROCEED_TO_G3**: the next bounded work is bilingual
-grounding into the frozen learned world, with SVO/OSV and declared controls.
+**G2 development readiness is PROCEED_TO_G3**: it selected the bounded bilingual
+study now completed above, with SVO/OSV and declared controls.
 Formal G1/G2 scientific admission remains open; no historical failure is relabelled.
 
 ## Retained hidden-cycle result
@@ -149,7 +173,7 @@ uncertain variable along every possible trajectory.
 | [Multisource law v1](MULTISOURCE_LAW_DECISION_V1.md#result-keep_multisource_laws) | KEEP_MULTISOURCE_LAWS |
 | [Hidden cycle v1](HIDDEN_CYCLE_DECISION_V1.md#result-keep_hidden_cycle) | KEEP_HIDDEN_CYCLE |
 
-These are bounded public fixed-law results. Simultaneous interactions,
+These are bounded public fixed-law results. Learned general concurrency physics,
 a unified-law checkpoint, arbitrary multisource physics, general calibration and independent
 scientific admission are not established. All earlier repaired capabilities,
 weights, source pins and failed experiments remain intact.
@@ -629,6 +653,25 @@ the contradiction. Terminal errors retain strict-JSON diagnostics and exit code 
 
 ## Current verification and code size
 
+The bilingual implementation passes **796 isolated tests**, **27 locks**,
+57 source bindings and eight prepared-data hashes. Hosted invariant and source
+checks pass after the documented test-only floating-point portability correction;
+the [PR #68 checks](https://github.com/robosys-labs/cemm/pull/68/checks) track the
+published head. No scientific fit or collection was retried.
+
+The saved [bilingual arithmetic audit](results/bilingual-validation-v1.json)
+performs **1,060,066 checks with zero discrepancies**, reconstructing all 110
+criteria without running a model or repository scorer. It is a separate
+implementation within the same team, not independent scientific custody.
+
+This tranche adds **1,984 Python lines**: 914 study source, 415 audit source and
+655 test lines. Retained research Python totals **35,032 lines**, including
+**15,537 test lines**. The inclusive **2,000-line objective remains unmet**.
+The [bilingual result](BILINGUAL_DECISION_V1.md) records all runtime costs,
+controls, probability regressions and limits.
+
+## Retained timing verification
+
 The public timing freeze passes **760 isolated tests** locally in **64.590
 seconds**, all **26 protocol/manifest locks** and frozen preflight.
 [Invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41198968742) and
@@ -706,7 +749,7 @@ No retained failing historical episode or continuation-v1 study was replayed;
 the alias studies contain neural arms only. Historical empirical completion and
 accuracy are therefore unchanged and no new empirical run-level result is claimed.
 
-## Corrected assumption, completed timing and next G3 experiment
+## Corrected assumption and retained progression
 
 The earlier atomic three-operand locality argument did not establish a limit on
 serial composition: existing contacts `(a,t); (b,t)` already compute
@@ -724,12 +767,14 @@ receives no evaluator law, mode, source orientation or gold write mask. The
 background-duration caveat.
 
 The last selected explicit G2 capability gap is closed for development.
-**PROCEED_TO_G3** means implement one bounded bilingual-grounding tranche with
+**PROCEED_TO_G3** selected the bounded bilingual-grounding tranche with
 frozen world weights, genuinely different SVO/OSV orders, held-out entities,
 reversed roles and new combinations, plus text-only and supervised-parser
-controls. No gold parser programs or linguistic role tags enter the candidate.
-Publish fresh language data/source/fit plans before encoder fitting and complete
-one fit/evaluate/decision cycle. This task is selected, not yet implemented.
+controls. No gold parser programs or linguistic role tags entered the candidate.
+Fresh language data/source/fit plans were published before encoder fitting.
+The one fit/evaluate/decision cycle is now complete with
+[KEEP_BILINGUAL_GROUNDING](BILINGUAL_DECISION_V1.md); fixed-order lexical
+contrast is the selected remaining G3 scope.
 
 Independent challenge custody, strong architecture comparisons at matched
 consumed compute and general calibration remain scientific limits. Fully hidden
@@ -737,13 +782,13 @@ long rollouts remain a separate resource-scaling question; no new G2 prerequisit
 or larger workspace is introduced. Preserve all successful weights and failed
 study history.
 
-## Remaining roadmap after timing v1
+## Remaining roadmap after bilingual v1
 
 | Stage | Current state and remaining evidence |
 |---|---|
 | G1 | Development foundation sufficient for G2. Original scientific admission remains open for baseline adequacy and independent challenge evidence; historical target unchanged. |
 | G2 | Selected bounded composition capabilities, hidden propagation and explicit timing complete. Development readiness PROCEED_TO_G3; formal scientific admission remains open. |
-| G3 | Selected next: one bounded SVO/OSV grounding tranche into the frozen learned world, with held-out role/identity/composition transfer and declared controls. |
+| G3 | Bounded SVO/OSV participant/order binding passes. Next: fixed-order lexical contrasts over acquired effects; no claim of general lexical semantics yet. |
 | G4 | Communication improves held-out external-goal utility against silent/random/shuffled controls. |
 | G5 | Answered experience persists across episodes, reduces later clarification and preserves earlier competence. |
 | G6 | Corpus exposure improves new grounded decisions beyond retrieval/frequency controls. |

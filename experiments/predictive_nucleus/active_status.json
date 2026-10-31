@@ -366,11 +366,11 @@
       "work": "Implement one bounded bilingual-grounding tranche into the same frozen learned world: English-like SVO and genuinely different artificial OSV, held-out entity/role/composition transfer, text-only and supervised-parser controls, no gold parser programs or linguistic role labels. Publish fresh source/data/fit plans before encoder training, then complete one fit/evaluate/decision cycle."
     },
     {
-      "stage": "G4–G5",
+      "stage": "G4\u2013G5",
       "work": "Implement learned communication, durable acquisition, correction, restart and retention in dependency order."
     },
     {
-      "stage": "G6–G8",
+      "stage": "G6\u2013G8",
       "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
     }
   ],
@@ -1081,21 +1081,22 @@
     "bounded_model_architecture_extension_selected": false
   },
   "selected_next_task": {
-    "status": "SELECTED_G3_BILINGUAL_GROUNDING; NOT_IMPLEMENTED_OR_FROZEN",
+    "status": "SELECTED_G3_LEXICAL_CONTRAST; NOT_IMPLEMENTED_OR_FROZEN",
     "stage": "G3",
-    "work": "Implement one bounded bilingual-grounding tranche into the same frozen learned world: English-like SVO and genuinely different artificial OSV, held-out entity/role/composition transfer, text-only and supervised-parser controls, no gold parser programs or linguistic role labels. Publish fresh source/data/fit plans before encoder training, then complete one fit/evaluate/decision cycle.",
-    "details": "TIMING_DECISION_V1.md#development-decision-and-next-work",
+    "work": "Keep entity layout and word order fixed while different lexical items denote at least two already acquired native effects. Train only the text adapter from observed outcomes, without action-kind labels. Include lexical masking/shuffling controls, both languages, held-out combinations and retention of successful role binding.",
+    "details": "BILINGUAL_DECISION_V1.md#what-this-establishes-and-the-next-g3-task",
     "world_training_permitted": false,
-    "language_encoder_training_prerequisite": "Fresh public language source/data/fit-plan freeze before one fitting/evaluation cycle.",
+    "language_encoder_training_prerequisite": "Fresh public source/data/fit-plan freeze before one prescribed fitting/evaluation cycle.",
     "preserve_checkpoints": "All historical world checkpoints remain byte-identical; no G1/G2 refitting.",
-    "completed_previous_task": "timing-v1 KEEP_TIMING",
+    "completed_previous_task": "bilingual-v1 KEEP_BILINGUAL_GROUNDING; participant/order binding only",
     "historical_decisions_unchanged": true,
     "scientific_admission_unchanged": true,
-    "new_open_loop_gate_added": false
+    "new_open_loop_gate_added": false,
+    "new_physics_or_workspace_added": false
   },
-  "current_pr": 67,
+  "current_pr": 68,
   "continuation_pr": 62,
-  "current_study_decision": "KEEP_TIMING",
+  "current_study_decision": "KEEP_BILINGUAL_GROUNDING",
   "g1_development_readiness": "PROCEED_TO_G2",
   "current_development_stage": "G3",
   "mixed_composition_study": {
@@ -1798,5 +1799,88 @@
   },
   "timing_pr": 67,
   "g2_development_readiness": "PROCEED_TO_G3",
-  "gate_g2_scientific": "NOT_ADMITTED"
+  "gate_g2_scientific": "NOT_ADMITTED",
+  "bilingual_study": {
+    "version": "bilingual-v1",
+    "stage": "COMPLETE",
+    "protocol": "bilingual_protocol_v1.json",
+    "report": "BILINGUAL_DECISION_V1.md",
+    "data": "data/bilingual-v1",
+    "fitted": "data/bilingual-fit-v1",
+    "results": "results/bilingual-v1",
+    "training_law": "nand",
+    "transfer_law": "nor",
+    "encoder_parameters": 474,
+    "world_parameters": 562,
+    "direct_control_parameters": 1048,
+    "planned_fits": 25,
+    "planned_updates_each": 256,
+    "planned_forecasts": 124800,
+    "scientific_gate_admitted": false,
+    "historical_checkpoints_changed": false,
+    "learned_result": "Learned bilingual participant/order binding for one supplied contact relation. Lexical identity necessity and independent synonym semantics are not established.",
+    "formal_decision": "KEEP_BILINGUAL_GROUNDING",
+    "design": "BILINGUAL_STUDY_V1.md",
+    "headline": "results/bilingual-headline-v1.json",
+    "validation": "results/bilingual-validation-v1.json",
+    "details": "results/bilingual-detail-v1.json",
+    "source_data_plan_commit": "d1e04fbcb2ff70af10a38ddb42a85a8128df2bcd",
+    "weights_commit": "2db941c2dd4fed97d0b5cef718b24f17ba88bb39",
+    "native_checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
+    "source_freeze_before_fitting": true,
+    "weight_freeze_before_collection": true,
+    "execution_complete": true,
+    "actual_fits": 25,
+    "completed_updates": 6400,
+    "forecasts": 124800,
+    "native_reference_forecasts": 20800,
+    "exact_worlds": {
+      "correct": 20800,
+      "planned": 20800
+    },
+    "participant_orders": {
+      "correct": 20800,
+      "planned": 20800
+    },
+    "whole_trajectories": {
+      "correct": 5760,
+      "planned": 5760
+    },
+    "reversed_role_trajectory_pairs": {
+      "correct": 2880,
+      "planned": 2880
+    },
+    "native_to_language_exact_regressions": 0,
+    "native_to_language_exact_repairs": 0,
+    "unchanged_coordinate_errors": 0,
+    "all_preregistered_criteria_passed": 110,
+    "native_probability_losses": {
+      "nll_worsened": 20800,
+      "nll_improved": 0,
+      "mean_nll_increase": 9.081799519078982e-05,
+      "maximum_nll_increase": 0.00015354979415111358
+    },
+    "result_manifest_sha256": "c650958da148ec0d16d540ffce24ed0b216a27e4bb1328e80b79ae5d41ac7a85",
+    "saved_artifact_audit": {
+      "status": "PASS",
+      "checks": 1060066,
+      "discrepancies": 0,
+      "model_executions": 0,
+      "independent_scientific_custody": false
+    },
+    "test_only_portability_fix_commit": "541c1b2e95e3c0797594ec1c55d85b84ba897dbc",
+    "scientific_runs_retried": false,
+    "python_lines": {
+      "added_study_source": 914,
+      "added_audit_source": 415,
+      "added_tests": 655,
+      "added_total": 1984,
+      "retained_research_total": 35032,
+      "inclusive_2000_target_met": false
+    },
+    "next_lexical_contrast_required": true,
+    "general_language_comprehension_claimed": false
+  },
+  "bilingual_pr": 68,
+  "g3_development_readiness": "ROLE_BINDING_COMPLETE_LEXICAL_GROUNDING_OPEN"
 }
