@@ -38,15 +38,31 @@ inference-source changes. Probability costs of missing feedback remain recorded.
 [PR #66](https://github.com/robosys-labs/cemm/pull/66) retains the public freeze,
 traces, audit and decision. This closes the selected hidden-intermediate task.
 
-Next is the explicit simultaneous/ordered timing requirement: introduce a bounded
-compound-contact input with a declared common-snapshot scheduler, then compare
-fresh timing twins using frozen learned pair distributions. Event-local outputs
-must be combined after each reads the same base world; independently mixing
-fixed modes or forcing overlapping factors onto one final variable is invalid.
-Scheduling semantics are supplied and must be reported separately from learned
-dynamics. The task is selected, not yet implemented or frozen. The
-correlation control excludes unconditional marginals, not representations
-conditioned on the persistent mechanism. No completed gate is reopened.
+The [explicit timing study](../../experiments/predictive_nucleus/TIMING_DECISION_V1.md)
+now has **KEEP_TIMING** under both laws at all five seeds. Its one public-frozen,
+zero-fit collection completes **46,080 forecasts**, with **28,800/28,800
+identifiable worlds**, **8,640/8,640 identifiable role conjunctions**,
+**1,200/1,200 critical timing pairs** and **15,360/15,360 common-snapshot
+permutation forecast comparisons** passing. The unchanged checkpoints remain
+562 parameters each. The separately identified adapter supplies ordered and
+common-snapshot scheduling; it does not claim to learn concurrency physics.
+[PR #67](https://github.com/robosys-labs/cemm/pull/67) retains the freeze, complete
+traces, probability differences, audit and decision.
+
+**G2 development readiness: PROCEED_TO_G3.** The last selected explicit G2
+capability gap is closed for bounded development. The next implementation is one
+bilingual-grounding tranche into the same frozen learned world, with English-like
+SVO, genuinely different artificial OSV, held-out entities/role reversals/new
+combinations and the declared text-only and supervised-parser controls. No gold
+parser programs or linguistic role labels enter the candidate. Freeze fresh
+language data and fit plans before training its encoder, then execute one
+fit/evaluate/decision cycle.
+
+Formal G1/G2 scientific admission remains open. Independent challenge custody,
+strong architecture comparisons at matched consumed compute and general
+calibration are still unestablished. No completed study is reopened, and no
+fully hidden rollout, unified-law checkpoint or larger workspace is added as a
+new development prerequisite. The original gate definitions below are unchanged.
 
 ## 0. Decision
 
