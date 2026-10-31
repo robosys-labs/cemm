@@ -68,8 +68,13 @@ class BilingualModelTests(unittest.TestCase):
         options = text.frozen_options(self.world, self.pre, state, self.mentions)
         actual, pending = text.combine(torch.tensor([[0., -torch.inf]], dtype=DTYPE), options)
         native, native_pending = self.world.predict(self.pre, text.action_candidates(self.mentions)[:, 0], state)
-        self.assertTrue(torch.equal(actual, native))
-        self.assertTrue(torch.equal(pending, native_pending))
+        # Two-order batching and a single native row can choose different CPU
+        # matrix kernels. Preserve numerical equivalence, not reduction order.
+        torch.testing.assert_close(actual, native, atol=1e-14, rtol=0.)
+        torch.testing.assert_close(pending, native_pending, atol=1e-14, rtol=0.)
+        reverse, _ = self.world.predict(self.pre, text.action_candidates(self.mentions)[:, 1], state)
+        self.assertFalse(torch.allclose(actual, reverse, atol=1e-14, rtol=0.))
+        self.assertFalse(torch.allclose(actual, native.flip(-1), atol=1e-14, rtol=0.))
         posterior = self.world.receive(pending, self.pre)
         evidence = pending[:, :, 5]
         self.assertTrue(torch.equal(posterior, evidence - evidence.logsumexp(-1, keepdim=True)))
