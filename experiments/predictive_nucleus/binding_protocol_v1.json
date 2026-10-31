@@ -1,0 +1,52 @@
+{
+  "version": "binding-v1",
+  "base_commit": "e91e2cf42b9024ea117c967e1fd5cc4f48b97ae2",
+  "recorded_on": "2026-10-31",
+  "model_seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "train_forecasts": 1024,
+  "challenge_forecasts_per_law": 1728,
+  "hypothesis": "An explicitly supplied rank-one lexical/layout decomposition learns held word-layout bindings from outcomes, with no role labels; compare unchanged fresh GRU and additive control.",
+  "fit": {
+    "updates": 256,
+    "learning_rate": 0.02,
+    "gradient_clip": 5.0,
+    "cpu_seconds_per_arm": 120.0
+  },
+  "analysis": {
+    "min_accuracy": 0.95,
+    "max_mean_nll": 0.05,
+    "min_true_probability": 0.9,
+    "max_foil_probability": 0.1,
+    "min_gap": 0.8,
+    "max_control_tv": 1e-10,
+    "min_additive_gain": 0.2
+  },
+  "execution": {
+    "runtime": {
+      "python": "3.13.5",
+      "torch": "2.10.0+cpu",
+      "numpy": "2.3.5",
+      "threads": 1,
+      "dtype": "float64",
+      "deterministic_algorithms": true
+    }
+  },
+  "design": {
+    "training": "640 fresh single-contact NAND outcomes plus original 384 bilingual TRAIN outcomes; all arms freshly initialized, equal mean per event. Contacts/receives and dax/vok bridge all three layouts; other pairs learn one home layout.",
+    "holdout": "Eight withheld cells for tav/pel and zun/vek. Third VOS layout, mixed-layout return4/cross5 schedules, 3/6 entities, both modes, core000/111, role reversals, all three layout rotations and opposite final words. No novel physics or independence claim.",
+    "feedback": "Native acquisition/reset context and complete noiseless endpoint readings; no gold participant order, word meaning or mode label enters fitter.",
+    "retention": "Forecast both opened old bilingual and lexical banks with each new arm; compare archived lexical-v1 retention/grounded traces without replaying the old models. Do not train on either old challenge.",
+    "controls": "All three arms collect canonical plus final-only mask/swap views on fresh bank; same true prefix. Additive ablates multiplicative interaction. No capacity/consumed-compute matching claim.",
+    "decision": "Factor must pass each family/word/layout world/order95%, NLL<=.05, critical p>=.9/foil<=.1, lexical gap>=.8, both lexical/role conjunction95%, control invariance, zero native/old exact regressions and20 percentage-point held-order gain over additive at every law/seed. Retain every probability loss and all failed seeds; GRU tie is not a failure.",
+    "publication": "Freeze source/recipe/all data hashes before any fit; publish actual weight bundle before collection. Runner publication SHAs are externally verified caller attestations, not independent network authentication.",
+    "failure": "One fit/collection attempt; exclusive outputs; no retries, checkpoint selection or post-challenge tuning. Missing records or invalid bindings STOP. Result failure does not erase previous studies.",
+    "limits": "Same-team public custody; supplied low-rank model, roster identity, event boundaries, two native contact candidates, full-feedback and mode filtering. No G3 completion/general language claim."
+  },
+  "scientific_admission": false
+}
