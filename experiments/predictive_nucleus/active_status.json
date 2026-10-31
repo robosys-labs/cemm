@@ -363,7 +363,7 @@
   "pending_engineering_in_order": [
     {
       "stage": "G2",
-      "work": "Freeze one fresh three-contact cycle challenge with full-feedback twins and one hidden intermediate participant. Reuse the ten successful NAND/NOR checkpoints, both cycle orders, all anchors/modes/reversals and 3–6 entities: 15,360 forecasts, zero fits, existing observation and inference APIs. Define the nontrivial propagation subset before collection; simultaneous timing remains separate."
+      "work": "Implement a bounded compound-contact input with explicit ordered/common-snapshot timing, then freeze and execute one fresh timing-twin study using the ten unchanged NAND/NOR checkpoints. Use a shared persistent mode, event-local outputs and an explicitly supplied binary delta-union scheduler; include overlapping chains/cycles and disjoint controls across 3–5 total contacts. Zero fitting or neural parameter growth; no new general audit or workspace."
     },
     {
       "stage": "G3",
@@ -407,54 +407,58 @@
       "multisource_law_data.py": 137,
       "multisource_law_oracle.py": 51,
       "multisource_law_run.py": 299,
-      "multisource_law_scoring.py": 137
+      "multisource_law_scoring.py": 137,
+      "hidden_cycle_data.py": 144,
+      "hidden_cycle_run.py": 207,
+      "hidden_cycle_scoring.py": 194
     },
-    "active_source_files_excluding_frozen_dependencies": 5615,
+    "active_source_files_excluding_frozen_dependencies": 6160,
     "new_runtime_source_net": 0,
-    "new_tests_net": 364,
-    "retained_research_python": 29936,
+    "new_tests_net": 471,
+    "retained_research_python": 30952,
     "inclusive_size_goal_met": false,
     "learned_parameter_delta": 0,
-    "new_tests": 19,
-    "scope": "Current multisource-law tranche: 624 lines across four study modules, one net reused-analyzer line, 364 focused test lines. Zero neural inference/learning source or parameter growth. Physical counts include comments/blanks; historical studies remain retained.",
-    "new_study_source_net": 625,
-    "retained_test_lines": 13436
+    "new_tests": 22,
+    "scope": "Hidden-cycle tranche: 545 lines across three bounded study adapters and 471 focused test lines. No runtime, inference, learning or parameter growth. Retained source counts exclude the separately disclosed 292-line temporary internal arithmetic review.",
+    "new_study_source_net": 545,
+    "retained_test_lines": 13907
   },
   "verification": {
-    "scope": "Public prefit source invariants, ten prescribed fits and one prospective collection; standalone same-author byte/arithmetic audit is not independent scientific admission.",
-    "isolated_suite_tests": 700,
+    "scope": "Public source/data/plan freeze, one prospective zero-fit collection and separate stdlib-only internal arithmetic review; not independent scientific admission.",
+    "isolated_suite_tests": 722,
     "isolated_suite_ci_conclusion": "success",
-    "local_committed_suite": {
-      "tests": 700,
-      "passed": 700,
-      "seconds": 89.796,
-      "output_sha256": "38bcac31a937c66f967a6152564c9b77f1c1d8938ee7e367f1487c6ebeaa87e5"
+    "local_prepublication_suite": {
+      "tests": 722,
+      "passed": 722,
+      "seconds": 58.425,
+      "output_sha256": "92b8d2943c57ca28660d66f205522cf7e2d34ef46dabfde0cd5991304ea22e89"
     },
-    "published_source_commit": "682672eb3ff30ceb8437b808b6058c9c673c4380",
-    "published_tree": "f6332c46503b5b430d66b39403471d2cc97b2a27",
+    "published_source_commit": "16a2326491b1add7e3057304d88e430724964584",
+    "published_tree": "0884fc39f29acb0f6ce71bb3853a1d133d344328",
+    "published_tree_matches_tested_tree": true,
     "checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
-    "protocol_manifest_locks": 24,
+    "protocol_manifest_locks": 25,
     "frozen_preflight": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
-    "invariant_ci_run": 41103517083,
+    "invariant_ci_run": 41195738585,
     "invariant_ci_conclusion": "success",
-    "source_ci_run": 41103516949,
+    "source_ci_run": 41195738479,
     "source_ci_conclusion": "success",
-    "checkpoint_invariant_ci_run": 41104430562,
-    "checkpoint_invariant_ci_conclusion": "success",
-    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/65/checks",
-    "internal_artifact_arithmetic": "results/multisource-law-validation-v1.json",
-    "internal_artifact_checks": 4384792,
+    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/66/checks",
+    "internal_artifact_arithmetic": "results/hidden-cycle-validation-v1.json",
+    "internal_artifact_checks": 335781,
     "internal_artifact_defects": 0,
     "independent_scientific_custody": false,
     "closed_study_reruns": false,
-    "new_fits": 10,
-    "completed_training_updates": 1280,
-    "historical_v2_files_unchanged": 46,
-    "historical_trained_checkpoint_files_unchanged": 10
+    "new_fits": 0,
+    "completed_training_updates": 0,
+    "historical_data_result_lock_files_unchanged": 349,
+    "historical_trained_checkpoint_files_unchanged": 10,
+    "temporary_internal_audit_script_lines": 292,
+    "temporary_internal_audit_script_sha256": "fadfdb1debd97a8f71bfb776e61e3eea281388bc1f66035d24db9c67f28694de"
   },
   "limits": [
     "Continuation v1 completed its frozen fits and artifact collection but formally STOPPED: empirical zero-support feedback contradictions terminated episodes and left required forecasts unproduced. G1 remains NOT_ADMITTED; failures and all planned denominators are retained.",
-    "Alias-v2, mixed-composition-v1 and joint-correlation-v1 establish bounded self-contact learning, ordered interoperability and different predictions for equal-marginal histories under one supplied binary law. Joint filtering and persistent modes are supplied. Simultaneous timing, independently varied multi-source laws and independent custody remain open.",
+    "Bounded self-contact, ordered composition, observed-history correlation, separate learned NAND/NOR laws and one hidden-intermediate consequence are established by retained KEEP studies. Joint filtering and persistent modes are supplied. Simultaneous timing, a unified-law model, arbitrary multisource physics, long fully open-loop propagation and independent custody remain unestablished.",
     "Default flat/shared capacities differ. Continuation v1 selected 562 parameters and identical realized exposure for each neural arm; function classes, supplied biases and consumed CPU remain different. Flat mean in-family accuracy was 15%, limiting a specifically compositional interpretation of the full gap.",
     "Legacy flat checkpoints remain three-entity-only and cannot be converted to the new flat architecture.",
     "Positive-mass paths are neither pruned nor merged; missing observations can exhaust the default 64-live-path or 512-candidate budgets.",
@@ -489,16 +493,17 @@
     "Alias-v2 KEEP is scoped to self/continuation queries: all-action accuracy is 88.742604%, with 183 ambiguous-acquisition regressions and 473 unchanged-bit errors. The original 95% in-family complete-world target remains unchanged and unmet.",
     "Empirical v6 recovery is source-localized and synthetic-regression-tested; no retained failing historical episode or empirical study was replayed. Neural-only alias studies do not establish empirical run-level recovery.",
     "Balanced training environment orientations are supplied study design, not learner labels; selection precedes final realization in both arms. Cross-study V1/V2 performance is descriptive because their fresh banks differ.",
-    "Multisource-law-v1 learns NAND/NOR separately and tests full-feedback closed-loop one-step composition. It does not establish one unified law checkpoint, zero-shot new-law transfer, hidden-intermediate propagation, open-loop rollout or simultaneous timing."
+    "Multisource-law-v1 learns NAND/NOR separately and tests full-feedback closed-loop one-step composition. It does not establish one unified law checkpoint, zero-shot new-law transfer, hidden-intermediate propagation, open-loop rollout or simultaneous timing.",
+    "Hidden-cycle-v1 preserves all identifiable MAP forecasts but missing feedback slightly increases final probability loss: 2,512 NLL increases and 48 decreases. Its 83.333333% pooled MAP accuracy equals this bank's expected oracle rate; all MAP errors are ambiguous first forecasts. Timing/group semantics are the next input-contract task and are not inferred from masking feedback."
   ],
-  "local_verified_code_commit": "682672eb3ff30ceb8437b808b6058c9c673c4380",
+  "local_verified_code_commit": "16a2326491b1add7e3057304d88e430724964584",
   "diagnostics_pr": 57,
   "domain_pr": 58,
   "remaining_capability_gaps": {
     "coherent_active_training_checkpoint_evaluation_path": "IMPLEMENTED_FOR_DELIVERED_OBSERVATIONS",
     "expanded_domain_flat_implementation": "IMPLEMENTED_FRESH_ARCHITECTURE",
     "expanded_domain_matched_flat_baseline": "CONTINUATION_V1_COMPLETED_PARAMETER_AND_REALIZED_EXPOSURE_MATCH; CONSUMED_COMPUTE_NOT_MATCHED",
-    "prospective_information_aware_scientific_acceptance_runner": "MIXED, CORRELATION AND MULTISOURCE_LAW_V1_EXECUTED_KEEP; FORMAL_ADMISSION_PENDING",
+    "prospective_information_aware_scientific_acceptance_runner": "MIXED, CORRELATION, MULTISOURCE_LAW AND HIDDEN_CYCLE_V1_EXECUTED_KEEP; FORMAL_ADMISSION_PENDING",
     "fresh_independently_held_challenge": "PENDING",
     "calibrated_expanded_domain_comparison": "CONTINUATION_V1_PROPER_SCORE_AND_ECE_DIAGNOSTICS_RETAINED; GENERAL_CALIBRATION_NOT_ESTABLISHED",
     "expanded_domain_scientific_evaluation": true,
@@ -515,8 +520,8 @@
     "withheld_acquisition_and_mode_coalescence": "TESTED_WITH_FROZEN_WEIGHTS",
     "equal_marginals_different_correlations": "COMPLETED_KEEP_JOINT_CORRELATION_FROM_OBSERVED_HISTORIES_WITH_FROZEN_WEIGHTS",
     "independent_multi_source_laws": "COMPLETED_KEEP_MULTISOURCE_LAWS_FOR_SEPARATE_NAND_NOR_FULL_FEEDBACK_FITS",
-    "simultaneous_timing": "NOT_REPRESENTED_IN_CURRENT_SERIAL_ACTION_CONTRACT; SEPARATE_G2_SCOPE",
-    "hidden_intermediate_new_law_propagation": "SELECTED_FROZEN_CHECKPOINT_CYCLE_CHALLENGE; ZERO_FITS"
+    "simultaneous_timing": "SELECTED_EXPLICIT_COMPOUND_ACTION_TIMING_CONTRACT_AND_FROZEN_WEIGHT_STUDY; NOT_YET_IMPLEMENTED",
+    "hidden_intermediate_new_law_propagation": "COMPLETED_KEEP_HIDDEN_CYCLE_WITH_TEN_FROZEN_CHECKPOINTS; ONE_HIDDEN_INTERMEDIATE_AND_ONE_LATER_STEP"
   },
   "learning_version": "active-learning-v1",
   "checkpoint_format": "cemm-active-checkpoint-v1",
@@ -778,6 +783,42 @@
         "new_fits": 0,
         "checkpoint_files_unchanged": 10
       }
+    },
+    {
+      "study": "multisource-law-v1",
+      "record": "MULTISOURCE_LAW_DECISION_V1.md",
+      "verification": {
+        "scope": "Public prefit source invariants, ten prescribed fits and one prospective collection; standalone same-author byte/arithmetic audit is not independent scientific admission.",
+        "isolated_suite_tests": 700,
+        "isolated_suite_ci_conclusion": "success",
+        "local_committed_suite": {
+          "tests": 700,
+          "passed": 700,
+          "seconds": 89.796,
+          "output_sha256": "38bcac31a937c66f967a6152564c9b77f1c1d8938ee7e367f1487c6ebeaa87e5"
+        },
+        "published_source_commit": "682672eb3ff30ceb8437b808b6058c9c673c4380",
+        "published_tree": "f6332c46503b5b430d66b39403471d2cc97b2a27",
+        "checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
+        "protocol_manifest_locks": 24,
+        "frozen_preflight": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
+        "invariant_ci_run": 41103517083,
+        "invariant_ci_conclusion": "success",
+        "source_ci_run": 41103516949,
+        "source_ci_conclusion": "success",
+        "checkpoint_invariant_ci_run": 41104430562,
+        "checkpoint_invariant_ci_conclusion": "success",
+        "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/65/checks",
+        "internal_artifact_arithmetic": "results/multisource-law-validation-v1.json",
+        "internal_artifact_checks": 4384792,
+        "internal_artifact_defects": 0,
+        "independent_scientific_custody": false,
+        "closed_study_reruns": false,
+        "new_fits": 10,
+        "completed_training_updates": 1280,
+        "historical_v2_files_unchanged": 46,
+        "historical_trained_checkpoint_files_unchanged": 10
+      }
     }
   ],
   "acceptance_version": "active-acceptance-v1",
@@ -965,13 +1006,14 @@
     "previous_imported_source_lines": 3337,
     "previous_import_plus_source_pin_lines": 3337,
     "parameter_delta": 0,
-    "retained_test_lines": 13072,
+    "retained_test_lines": 13907,
     "remaining_pin_reason": "Removing the masked_replay.py identity pin changes acceptance/data commitments; migration deferred.",
     "compatibility": "Old native checkpoints require their original source checkout; strict matching remains enforced. Frozen v1 bundles unchanged.",
     "continuation_study_changed_inference_imports": false,
     "alias_studies_changed_inference_imports": false,
     "runtime_net_lines_since_continuation": 2,
-    "joint_correlation_study_changed_inference_imports": false
+    "joint_correlation_study_changed_inference_imports": false,
+    "hidden_cycle_study_changed_inference_imports": false
   },
   "progress_control": {
     "last_learned_results": [
@@ -979,8 +1021,8 @@
       "ALIAS_EVIDENCE_DECISION_V2.md"
     ],
     "invariant_count_is_scientific_gate_progress": false,
-    "next_deliverable": "Freeze one fresh three-contact cycle challenge with full-feedback twins and one hidden intermediate participant. Reuse the ten successful NAND/NOR checkpoints, both cycle orders, all anchors/modes/reversals and 3–6 entities: 15,360 forecasts, zero fits, existing observation and inference APIs. Define the nontrivial propagation subset before collection; simultaneous timing remains separate.",
-    "another_preparation_only_tranche_requires": "A concrete execution blocker. Current laws pass; the selected follow-on is one zero-fit measurement of hidden-state propagation, not a model or workspace extension.",
+    "next_deliverable": "Implement a bounded compound-contact input with explicit ordered/common-snapshot timing, then freeze and execute one fresh timing-twin study using the ten unchanged NAND/NOR checkpoints. Use a shared persistent mode, event-local outputs and an explicitly supplied binary delta-union scheduler; include overlapping chains/cycles and disjoint controls across 3–5 total contacts. Zero fitting or neural parameter growth; no new general audit or workspace.",
+    "another_preparation_only_tranche_requires": "A concrete execution blocker. Hidden-cycle-v1 is complete; next work must implement observable timing and execute the bounded comparison, not repeat closed studies or add another general preparation harness.",
     "further_refactor_scope": "Only a demonstrated execution blocker or later release packaging milestone.",
     "historical_learned_results": [
       "ALIAS_EVIDENCE_DECISION_V1.md",
@@ -988,10 +1030,11 @@
       "COMMON_OBJECTIVE_DECISION.md",
       "SENSOR_TRANSFER_DECISION.md"
     ],
-    "last_frozen_decision": "KEEP_MULTISOURCE_LAWS",
+    "last_frozen_decision": "KEEP_HIDDEN_CYCLE",
     "execution_and_artifact_collection_complete": true,
     "participant_complete_run": true,
     "latest_frozen_weight_results": [
+      "HIDDEN_CYCLE_DECISION_V1.md",
       "JOINT_CORRELATION_DECISION_V1.md",
       "G1_G2_PROGRESS_REVIEW.md"
     ],
@@ -1000,21 +1043,23 @@
     "bounded_model_architecture_extension_selected": false
   },
   "selected_next_task": {
-    "status": "SELECTED_G2_HIDDEN_INTERMEDIATE_PROPAGATION; PROTOCOL_NOT_YET_FROZEN",
+    "status": "SELECTED_G2_COMPOUND_ACTION_TIMING; NOT_IMPLEMENTED_OR_FROZEN",
     "stage": "G2",
-    "work": "Freeze one fresh three-contact cycle challenge with full-feedback twins and one hidden intermediate participant. Reuse the ten successful NAND/NOR checkpoints, both cycle orders, all anchors/modes/reversals and 3–6 entities: 15,360 forecasts, zero fits, existing observation and inference APIs. Define the nontrivial propagation subset before collection; simultaneous timing remains separate.",
-    "details": "MULTISOURCE_LAW_DECISION_V1.md#next-bounded-g2-task-propagate-a-hidden-learned-consequence",
+    "work": "Implement a bounded compound-contact input with explicit ordered/common-snapshot timing, then freeze and execute one fresh timing-twin study using the ten unchanged NAND/NOR checkpoints. Use a shared persistent mode, event-local outputs and an explicitly supplied binary delta-union scheduler; include overlapping chains/cycles and disjoint controls across 3–5 total contacts. Zero fitting or neural parameter growth; no new general audit or workspace.",
+    "details": "HIDDEN_CYCLE_DECISION_V1.md#next-g2-task-make-interaction-timing-observable",
     "training_permitted": false,
-    "training_prerequisite": "No fitting is selected; preserve all ten successful new law checkpoints and all older weights.",
-    "collection_prerequisite": "Fresh public data/protocol/plan commitment and fixed conditional-probability criteria before one collection.",
-    "preserve_checkpoints": "All historical and new law checkpoints remain frozen.",
-    "completed_previous_task": "multisource-law-v1 KEEP_MULTISOURCE_LAWS",
+    "training_prerequisite": "No fitting selected; existing learned pair distributions and ten historical checkpoints stay frozen.",
+    "collection_prerequisite": "Implement and invariant-check the explicit time-group contract, then publish fresh source/data/plans and decision criteria before one collection.",
+    "supplied_new_structure": "Ordered versus common-snapshot scheduling and binary union of event-local changes; this semantics is not learned from isolated pair outcomes.",
+    "preserve_checkpoints": "All historical learned tensors remain unchanged; new scheduling/inference identities require an explicit compatible adapter, not bypassing native source pins.",
+    "completed_previous_task": "hidden-cycle-v1 KEEP_HIDDEN_CYCLE",
     "historical_decisions_unchanged": true,
-    "scientific_admission_unchanged": true
+    "scientific_admission_unchanged": true,
+    "new_open_loop_gate_added": false
   },
-  "current_pr": 65,
+  "current_pr": 66,
   "continuation_pr": 62,
-  "current_study_decision": "KEEP_MULTISOURCE_LAWS",
+  "current_study_decision": "KEEP_HIDDEN_CYCLE",
   "g1_development_readiness": "PROCEED_TO_G2",
   "current_development_stage": "G2",
   "mixed_composition_study": {
@@ -1361,5 +1406,140 @@
     "independent_physical_replication_claimed": false,
     "feedback_scope": "Fully observed, closed-loop one-step forecasts along longer schedules; hidden-intermediate propagation and open-loop rollout not established."
   },
-  "multisource_law_pr": 65
+  "multisource_law_pr": 65,
+  "hidden_cycle_pr": 66,
+  "hidden_cycle_study": {
+    "version": "hidden-cycle-v1",
+    "stage": "COMPLETE",
+    "protocol": "hidden_cycle_protocol_v1.json",
+    "source_data_plan_commit": "16a2326491b1add7e3057304d88e430724964584",
+    "source_tree": "0884fc39f29acb0f6ce71bb3853a1d133d344328",
+    "checkpoint_commit": "25ae19b317c5b7dbfc487fa5204fb5da5f0e7420",
+    "data": "data/hidden-cycle-v1",
+    "report": "HIDDEN_CYCLE_DECISION_V1.md",
+    "results": "results/hidden-cycle-v1",
+    "scored_result": "results/hidden-cycle-v1/decision.json",
+    "validation": "results/hidden-cycle-validation-v1.json",
+    "formal_decision": "KEEP_HIDDEN_CYCLE",
+    "execution_complete": true,
+    "forecasts": 15360,
+    "identifiable_complete_worlds": {
+      "correct": 10240,
+      "planned": 10240
+    },
+    "hidden_final_worlds": {
+      "correct": 2560,
+      "planned": 2560
+    },
+    "identifiable_role_pairs": {
+      "correct": 2560,
+      "planned": 2560
+    },
+    "critical_hidden_finals": {
+      "passed": 480,
+      "planned": 480
+    },
+    "all_action_accuracy": 0.8333333333333334,
+    "expected_oracle_map_accuracy": 0.8333333333333334,
+    "full_to_hidden_map_regressions": 0,
+    "full_to_hidden_map_repairs": 0,
+    "minimum_critical_true_probability": 0.9904505970745254,
+    "maximum_critical_stale_target_probability": 0.004359621094084437,
+    "fits": 0,
+    "completed_training_updates": 0,
+    "parameters_each": 562,
+    "model_or_inference_changes": false,
+    "historical_checkpoints_changed": false,
+    "scientific_gate_admitted": false,
+    "resources": {
+      "collection_cpu_seconds": 62.512217905,
+      "collection_wall_seconds": 62.55811962500047,
+      "peak_rss_kib": 519152,
+      "runtime": {
+        "cpu_architecture": "x86_64",
+        "deterministic": true,
+        "deterministic_warn_only": false,
+        "interop_threads": 1,
+        "num_threads": 1,
+        "numpy": "2.3.5",
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+        "processor": "x86_64",
+        "python": "3.13.16",
+        "torch": "2.10.0+cpu"
+      }
+    },
+    "by_law": {
+      "nand": {
+        "forecasts": 7680,
+        "answered": 7680,
+        "correct_all": 6400,
+        "correct_identifiable": 5120,
+        "correct_ambiguous": 1280,
+        "identifiable_role_pairs": 1280,
+        "final_twin_pairs": 1280,
+        "critical_passed": 240,
+        "min_critical_true_probability": 0.9904505970745254,
+        "max_critical_stale_target_probability": 0.004359621094084437,
+        "worst_mean_kl_family_condition_stratum": 0.005812610716368572,
+        "max_ambiguous_tv": 0.006518956116932527,
+        "known_unchanged_errors": 0,
+        "realized_unchanged_errors": 640,
+        "unsupported_MAP": 0,
+        "repairs": 0,
+        "regressions": 0,
+        "mean_all_nll": 0.2349044131533958,
+        "mean_all_brier": 0.16668586218033404,
+        "max_all_ece": 0.004284316023177304,
+        "final_nll_worse_count": 1256,
+        "final_nll_better_count": 24,
+        "final_nll_equal_count": 0,
+        "final_nll_mean_delta": 0.0005182862718676659,
+        "final_nll_max_increase": 0.002847856405032134,
+        "final_nll_max_decrease": -1.798254056859655e-08,
+        "final_probability_max_drop": -0.002832982006592877,
+        "prefix_differences": 0,
+        "per_seed_wall_p95_range": [
+          0.0014484259991149884,
+          0.0019221889997425023
+        ]
+      },
+      "nor": {
+        "forecasts": 7680,
+        "answered": 7680,
+        "correct_all": 6400,
+        "correct_identifiable": 5120,
+        "correct_ambiguous": 1280,
+        "identifiable_role_pairs": 1280,
+        "final_twin_pairs": 1280,
+        "critical_passed": 240,
+        "min_critical_true_probability": 0.9926163136456345,
+        "max_critical_stale_target_probability": 0.0018828052974445572,
+        "worst_mean_kl_family_condition_stratum": 0.004826609329027286,
+        "max_ambiguous_tv": 0.007076009921283274,
+        "known_unchanged_errors": 0,
+        "realized_unchanged_errors": 704,
+        "unsupported_MAP": 0,
+        "repairs": 0,
+        "regressions": 0,
+        "mean_all_nll": 0.23461008320899354,
+        "mean_all_brier": 0.16668233404553792,
+        "max_all_ece": 0.00385512917080022,
+        "final_nll_worse_count": 1256,
+        "final_nll_better_count": 24,
+        "final_nll_equal_count": 0,
+        "final_nll_mean_delta": 0.00030400037988803603,
+        "final_nll_max_increase": 0.0012473633736680024,
+        "final_nll_max_decrease": -8.511376355536254e-08,
+        "final_probability_max_drop": -0.0012442139854077494,
+        "prefix_differences": 0,
+        "per_seed_wall_p95_range": [
+          0.0014119629995548166,
+          0.0017149320010503288
+        ]
+      }
+    },
+    "same_author_public_custody": true,
+    "independent_physical_replication_claimed": false,
+    "scope": "One hidden learned consequence and one subsequent step after full feedback identifies the persistent mode. Does not establish simultaneous timing, fully open-loop rollout, a unified-law checkpoint or independent scientific admission."
+  }
 }

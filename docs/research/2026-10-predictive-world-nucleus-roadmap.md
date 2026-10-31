@@ -6,7 +6,7 @@
 **Implementation boundary:** independent experiment first; no root runtime or Hybrid cutover  
 **Companion foundation:** [draft PR #21](https://github.com/robosys-labs/cemm/pull/21)
 
-## Current development checkpoint — 2026-10-30
+## Current development checkpoint — 2026-10-31
 
 G1's verified development foundation is sufficient to proceed into **G2**. The
 frozen mixed-composition challenge retained **KEEP_MIXED_COMPOSITION**; the
@@ -29,10 +29,22 @@ now has **KEEP_MULTISOURCE_LAWS**: all 30,720 planned forecasts completed, with
 inference implementations remain unchanged. [PR #65](https://github.com/robosys-labs/cemm/pull/65)
 retains the full results and local regressions.
 
-This establishes separately learned laws under full-feedback one-step composition.
-Next is a frozen-weight cycle challenge with one hidden intermediate participant,
-paired against full feedback: zero fitting and the existing observation API.
-Simultaneous timing remains a separate observable-input distinction. The
+The subsequent [hidden-cycle study](../../experiments/predictive_nucleus/HIDDEN_CYCLE_DECISION_V1.md)
+now has **KEEP_HIDDEN_CYCLE**: all 15,360 planned forecasts completed;
+10,240/10,240 identifiable complete worlds, 2,560/2,560 hidden final worlds and
+480/480 critical propagation cases are correct, with zero full-to-hidden MAP
+regressions. It reused all ten checkpoints with zero fits, parameter growth or
+inference-source changes. Probability costs of missing feedback remain recorded.
+[PR #66](https://github.com/robosys-labs/cemm/pull/66) retains the public freeze,
+traces, audit and decision. This closes the selected hidden-intermediate task.
+
+Next is the explicit simultaneous/ordered timing requirement: introduce a bounded
+compound-contact input with a declared common-snapshot scheduler, then compare
+fresh timing twins using frozen learned pair distributions. Event-local outputs
+must be combined after each reads the same base world; independently mixing
+fixed modes or forcing overlapping factors onto one final variable is invalid.
+Scheduling semantics are supplied and must be reported separately from learned
+dynamics. The task is selected, not yet implemented or frozen. The
 correlation control excludes unconditional marginals, not representations
 conditioned on the persistent mechanism. No completed gate is reopened.
 

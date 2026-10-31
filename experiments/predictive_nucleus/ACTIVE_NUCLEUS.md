@@ -1,12 +1,39 @@
-# Active nucleus: G2 learned laws completed
+# Active nucleus: G2 hidden-intermediate propagation completed
 
-Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #65](https://github.com/robosys-labs/cemm/pull/65). Updated 2026-10-30 (Africa/Lagos).
-**G1 development readiness: PROCEED_TO_G2. Multisource law v1: KEEP_MULTISOURCE_LAWS.**
+Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22), [PR #66](https://github.com/robosys-labs/cemm/pull/66). Updated 2026-10-31 (Africa/Lagos).
+**G1 development readiness: PROCEED_TO_G2. Hidden cycle v1: KEEP_HIDDEN_CYCLE.**
 Formal G1 scientific admission remains NOT_ADMITTED; full G2 remains open.
-Public prefit freeze: `682672eb3ff30ceb8437b808b6058c9c673c4380`.
-Public trained-checkpoint/plan freeze: `25ae19b317c5b7dbfc487fa5204fb5da5f0e7420`.
+Public source/data/plan freeze: `16a2326491b1add7e3057304d88e430724964584`.
+Unchanged checkpoint freeze: `25ae19b317c5b7dbfc487fa5204fb5da5f0e7420`.
 
-## Current result and retained foundations
+## Current result
+
+The [hidden-cycle study](HIDDEN_CYCLE_DECISION_V1.md) completed all **15,360
+forecasts** in one collection with the ten frozen NAND/NOR checkpoints. It
+achieves **10,240/10,240 identifiable complete worlds**, **2,560/2,560 hidden
+final worlds**, **2,560/2,560 identifiable reversed-role conjunctions** and
+**480/480 critical propagation cases**, with zero full-to-hidden MAP regressions.
+All five seeds pass under both laws. The minimum critical true-world probability
+is **0.990451**; maximum stale-target probability is **0.004360**. A predicted
+consequence survives one withheld intermediate reading and informs a later contact.
+
+The architecture remains **562 parameters**; this tranche adds **zero fits,
+zero parameter growth and zero inference/learning/checkpoint implementation changes**.
+All previous weights, source pins and decisions are intact. The observed run
+is a bounded one-hidden-intermediate result, not a fully open-loop rollout or
+simultaneous timing. The explicit timing requirement is the next selected task.
+
+The [decision](results/hidden-cycle-v1/decision.json) and
+[trace manifest](results/hidden-cycle-v1/manifest.json) retain every planned
+forecast. Pooled MAP accuracy is **83.3333%**, matching this bank's expected
+oracle result. All MAP errors are ambiguous first forecasts. There are zero
+known-fixed-value errors, while realized unchanged-bit errors remain **640 NAND /
+704 NOR**. Missing feedback worsens final NLL on **2,512** twins and improves it
+on 48; mean increases are **0.000518286 / 0.000304000 nats** and the largest
+increase is **0.002847856 nats**. No probability regressions are hidden by the
+perfect identifiable exactness result.
+
+## Retained foundations
 
 The [NAND/NOR learning study](MULTISOURCE_LAW_DECISION_V1.md) completed all
 **30,720 forecasts** in one collection. Across five seeds for each law, matched
@@ -21,8 +48,8 @@ initial tensors and prescribed exposure. The architecture remains **562 paramete
 with the same native loss, checkpoint and inference implementation. Ten fits
 completed **1,280 updates**. This is fully observed, closed-loop one-step
 composition along three-to-five-contact schedules. Intermediate observations
-carry earlier effects; propagation through hidden intermediate state is the next
-selected test. No simultaneous timing or unified-law checkpoint is claimed.
+carry earlier effects in that earlier study; hidden-cycle-v1 now adds the bounded
+missing-feedback result above. No simultaneous timing or unified-law checkpoint is claimed.
 
 Compared with crossed-law checkpoints, the matched models retain **5,912
 identifiable repairs / zero identifiable regressions**, plus **768 ambiguous
@@ -89,9 +116,10 @@ uncertain variable along every possible trajectory.
 | [Mixed composition v1](G1_G2_PROGRESS_REVIEW.md#result-keep_mixed_composition) | KEEP_MIXED_COMPOSITION |
 | [Joint correlation v1](JOINT_CORRELATION_DECISION_V1.md#result-keep_joint_correlation) | KEEP_JOINT_CORRELATION |
 | [Multisource law v1](MULTISOURCE_LAW_DECISION_V1.md#result-keep_multisource_laws) | KEEP_MULTISOURCE_LAWS |
+| [Hidden cycle v1](HIDDEN_CYCLE_DECISION_V1.md#result-keep_hidden_cycle) | KEEP_HIDDEN_CYCLE |
 
 These are bounded public fixed-law results. Simultaneous interactions,
-independently varied multi-source laws, general calibration and independent
+a unified-law checkpoint, arbitrary multisource physics, general calibration and independent
 scientific admission are not established. All earlier repaired capabilities,
 weights, source pins and failed experiments remain intact.
 
@@ -570,27 +598,27 @@ the contradiction. Terminal errors retain strict-JSON diagnostics and exit code 
 
 ## Current verification and code size
 
-The public prefit source passed **700 isolated tests** locally in **89.796 seconds**,
-all **24 protocol/manifest locks** and frozen preflight in
-[invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41103517083).
-[Source snapshot CI](https://github.com/robosys-labs/cemm/actions/runs/41103516949)
-also passed. The checkpoint freeze passed
-[invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41104430562);
-final result-head checks are linked in PR #65.
+The public hidden-cycle freeze passed **722 isolated tests** locally in
+**58.425 seconds**, all **25 protocol/manifest locks** and frozen preflight.
+[Invariant CI](https://github.com/robosys-labs/cemm/actions/runs/41195738585) and
+[source snapshot CI](https://github.com/robosys-labs/cemm/actions/runs/41195738479)
+passed; final result-commit checks are linked in PR #66.
 
-The [internal arithmetic audit](results/multisource-law-validation-v1.json)
-reconstructs the decision without executing a model: 30,720 forecast receipts,
-41 source bindings, 15 checkpoint fingerprints, 25 result artifacts and 46
-unchanged historical V2 files pass with zero discrepancies. This is internal
+The [internal arithmetic audit](results/hidden-cycle-validation-v1.json)
+reconstructs the decision without executing a model: 15,360 forecast vectors and
+receipts, 3,072 oracle distributions, 50 source bindings, ten checkpoint
+fingerprints and 349 unchanged historical data/result/lock files pass with zero
+discrepancies. This is internal
 review, not independent scientific custody or additional learned evidence.
 
 This tranche adds **zero neural inference/learning lines and zero parameters per
-model**. Four study modules add 624 lines and the reused analyzer grows by one
-net line; 19 focused tests add 364 lines. The active import closure remains
+model**. Three study adapters add 545 lines; 22 focused tests add 471 lines.
+The active import closure remains
 **2,732 physical lines**, or **2,917** with its historical source pin. All retained
-research Python is **29,936 lines**, including **13,436 test lines**; the inclusive
-**2,000-line goal remains unmet**. The selected next measurement reuses frozen
-weights and the existing partial-observation API.
+research Python is **30,952 lines**, including **13,907 test lines**; the inclusive
+**2,000-line goal remains unmet**. The temporary internal arithmetic-review script
+is a separate 292-line analysis, identified by its digest in the audit report.
+The next selected input-contract change adds timing, with frozen neural weights.
 
 ## Historical verification records
 
@@ -604,6 +632,7 @@ unchanged.
 
 | Tranche | Retained verification | CI reference |
 |---|---|---|
+| Multisource law v1 | [Retained decision](MULTISOURCE_LAW_DECISION_V1.md): 700 tests, 24 locks; KEEP_MULTISOURCE_LAWS | [PR #65](https://github.com/robosys-labs/cemm/pull/65/checks) |
 | Joint correlation v1 | [Retained decision](JOINT_CORRELATION_DECISION_V1.md): 681 tests, 23 locks; KEEP_JOINT_CORRELATION | [PR #64](https://github.com/robosys-labs/cemm/pull/64/checks) |
 | Mixed composition v1 | [Retained decision](G1_G2_PROGRESS_REVIEW.md): 669 tests, 87.920 seconds; KEEP_MIXED_COMPOSITION | [PR #63](https://github.com/robosys-labs/cemm/pull/63/checks) |
 | Continuation v1 | [Retained decision](CONTINUATION_DECISION_V1.md): 645 tests, 76.670 seconds; frozen `STOP_INCOMPLETE_RUN` | [CI 41031823696](https://github.com/robosys-labs/cemm/actions/runs/41031823696) |
@@ -652,26 +681,33 @@ The proposed ternary action/factor extension was therefore withdrawn. The fresh
 NAND/NOR study now passes on the unchanged model. The correlation result also
 remains valid within its clarified unconditional-factorization scope.
 
-Next, use the ten new frozen law checkpoints in a fresh **three-contact cycle
-with one hidden intermediate participant**, paired against full-feedback twins.
-This tests whether a learned consequence is carried into the final prediction
-when it was not directly observed. The selected design has both cycle orders,
-all anchors, modes, role reversals and entity counts 3–6, for **15,360 forecasts
-and zero fits**. Predeclare the nontrivial propagation subset from the oracle,
-preserve all-action probability/coverage accounting, and stay within the existing
-path and expansion bounds. [Concrete witnesses and scope](MULTISOURCE_LAW_DECISION_V1.md#next-bounded-g2-task-propagate-a-hidden-learned-consequence)
-show why this adds evidence. It is selected, not yet frozen or run.
+The zero-fit hidden-cycle task has completed with **KEEP_HIDDEN_CYCLE**. Do not
+reopen its collection or prior successful fitting. The next explicit G2 gap is
+**simultaneous versus ordered timing**. Introduce a bounded compound-contact input
+with observable timing, then freeze and execute a fresh timing-twin challenge
+using the ten successful checkpoints. One acquisition contact, one two-contact
+group and zero to two suffix contacts cover three-to-five-contact schedules.
 
-Simultaneous timing still requires an explicit observable time-group contract.
-The serial Session does not represent that distinction. Masking feedback does
-not establish simultaneous semantics, and no neural capacity failure is claimed.
+Both common-snapshot events read one base world and predict separate event-local
+outputs conditional on the same persistent mode. Combine their proposed changes
+afterward, using an explicitly supplied binary delta-union scheduler. Never
+multiply overlapping pair factors against one shared final variable or resample
+the fixed mode per event. No law-specific rule, source orientation, gold write
+mask or neural parameter is supplied. See the [selected contract and study](HIDDEN_CYCLE_DECISION_V1.md#next-g2-task-make-interaction-timing-observable).
 
-## Remaining roadmap after learned laws v1
+Timing is not expressible in the current serial API; missing feedback alone does
+not encode it. The scheduling contract is supplied computation, not a claim that
+simultaneous physics was learned from isolated events. This next task is selected,
+not yet implemented or frozen. Fully hidden long rollouts remain a separate
+resource-scaling question; their path explosion does not justify a new G2 gate
+or a larger neural architecture.
+
+## Remaining roadmap after hidden cycle v1
 
 | Stage | Current state and remaining evidence |
 |---|---|
 | G1 | Development foundation sufficient for G2. Original scientific admission remains open for baseline adequacy and independent challenge evidence; historical target unchanged. |
-| G2 | Ordinary continuation, mixed alias/ordinary uncertainty, correlation dependencies and separate NAND/NOR full-feedback composition complete. Next: hidden-intermediate state propagation with frozen law checkpoints; simultaneous timing remains subsequent scope. |
+| G2 | Ordered continuation, mixed alias/ordinary uncertainty, correlation dependencies, separate NAND/NOR composition and bounded hidden-intermediate propagation complete. Next: explicit compound-action timing and one frozen simultaneous/ordered comparison. Full G2 remains open. |
 | G3 | Teach a relation nonverbally, then transfer it through two languages on the same world model after composition evidence. |
 | G4 | Communication improves held-out external-goal utility against silent/random/shuffled controls. |
 | G5 | Answered experience persists across episodes, reduces later clarification and preserves earlier competence. |
