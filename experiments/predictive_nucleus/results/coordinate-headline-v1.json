@@ -1,0 +1,589 @@
+{
+  "aggregate": {
+    "centered": {
+      "all": {
+        "accuracy": 0.8841435185185185,
+        "correct": 15278,
+        "mean_brier": 0.15148988816201933,
+        "mean_nll": 0.37170915166650065,
+        "order_correct": 15488,
+        "planned": 17280
+      },
+      "archive_retention": {
+        "bilingual_retention": {
+          "all": {
+            "accuracy": 1.0,
+            "correct": 20800,
+            "mean_brier": 0.01967001477233296,
+            "mean_nll": 0.04090211413272776,
+            "order_correct": 20800,
+            "planned": 20800
+          },
+          "mean_nll_change": 0.03620332808712653,
+          "nll_better": 17680,
+          "nll_ties": 0,
+          "nll_undefined_difference": 0,
+          "nll_worse": 3120,
+          "planned": 20800,
+          "regressions": 0,
+          "repairs": 0
+        },
+        "binding_retention": {
+          "all": {
+            "accuracy": 0.9070601851851852,
+            "correct": 15674,
+            "mean_brier": 0.1491349674083519,
+            "mean_nll": 0.335119929605665,
+            "order_correct": 15744,
+            "planned": 17280
+          },
+          "mean_nll_change": -0.7058498034318695,
+          "nll_better": 15840,
+          "nll_ties": 0,
+          "nll_undefined_difference": 0,
+          "nll_worse": 1440,
+          "planned": 17280,
+          "regressions": 464,
+          "repairs": 4458
+        },
+        "centering_retention": {
+          "all": {
+            "accuracy": 0.8835648148148149,
+            "correct": 15268,
+            "mean_brier": 0.152308931860669,
+            "mean_nll": 0.3707979071355844,
+            "order_correct": 15488,
+            "planned": 17280
+          },
+          "mean_nll_change": 0.0,
+          "nll_better": 0,
+          "nll_ties": 17280,
+          "nll_undefined_difference": 0,
+          "nll_worse": 0,
+          "planned": 17280,
+          "regressions": 0,
+          "repairs": 0
+        },
+        "lexical_retention": {
+          "all": {
+            "accuracy": 0.95,
+            "correct": 39520,
+            "mean_brier": 0.06120823675554312,
+            "mean_nll": 0.08838885021656628,
+            "order_correct": 39520,
+            "planned": 41600
+          },
+          "mean_nll_change": 0.08230881241296831,
+          "nll_better": 34320,
+          "nll_ties": 0,
+          "nll_undefined_difference": 0,
+          "nll_worse": 7280,
+          "planned": 41600,
+          "regressions": 2080,
+          "repairs": 0
+        },
+        "saturation_retention": {
+          "all": {
+            "accuracy": 0.8835648148148149,
+            "correct": 15268,
+            "mean_brier": 0.15261410668319816,
+            "mean_nll": 0.37508563461225974,
+            "order_correct": 15488,
+            "planned": 17280
+          },
+          "mean_nll_change": -1.117952999451589,
+          "nll_better": 9894,
+          "nll_ties": 155,
+          "nll_undefined_difference": 0,
+          "nll_worse": 7231,
+          "planned": 17280,
+          "regressions": 8,
+          "repairs": 3390
+        }
+      },
+      "held": {
+        "accuracy": 0.8463541666666666,
+        "correct": 9750,
+        "mean_brier": 0.1995085700064882,
+        "mean_nll": 0.510890120409673,
+        "order_correct": 9728,
+        "planned": 11520
+      },
+      "native": {
+        "mean_nll_change": 0.36793000372765267,
+        "nll_better": 149,
+        "nll_ties": 0,
+        "nll_undefined_difference": 0,
+        "nll_worse": 17131,
+        "planned": 17280,
+        "regressions": 2002,
+        "repairs": 0
+      }
+    },
+    "coordinates": {
+      "all": {
+        "accuracy": 1.0,
+        "correct": 17280,
+        "mean_brier": 2.6217202145726004e-05,
+        "mean_nll": 0.004349189679042244,
+        "order_correct": 17280,
+        "planned": 17280
+      },
+      "archive_retention": {
+        "bilingual_retention": {
+          "all": {
+            "accuracy": 1.0,
+            "correct": 20800,
+            "mean_brier": 2.1765530790395292e-05,
+            "mean_nll": 0.003974298185268108,
+            "order_correct": 20800,
+            "planned": 20800
+          },
+          "mean_nll_change": -0.0007244878603331333,
+          "nll_better": 20800,
+          "nll_ties": 0,
+          "nll_undefined_difference": 0,
+          "nll_worse": 0,
+          "planned": 20800,
+          "regressions": 0,
+          "repairs": 0
+        },
+        "binding_retention": {
+          "all": {
+            "accuracy": 1.0,
+            "correct": 17280,
+            "mean_brier": 2.7165375542161196e-05,
+            "mean_nll": 0.004222764117473484,
+            "order_correct": 17280,
+            "planned": 17280
+          },
+          "mean_nll_change": -1.0367469689200612,
+          "nll_better": 17280,
+          "nll_ties": 0,
+          "nll_undefined_difference": 0,
+          "nll_worse": 0,
+          "planned": 17280,
+          "regressions": 0,
+          "repairs": 5600
+        },
+        "centering_retention": {
+          "all": {
+            "accuracy": 1.0,
+            "correct": 17280,
+            "mean_brier": 2.631570105827102e-05,
+            "mean_nll": 0.0043601324300985,
+            "order_correct": 17280,
+            "planned": 17280
+          },
+          "mean_nll_change": -0.3664377747054859,
+          "nll_better": 10522,
+          "nll_ties": 4,
+          "nll_undefined_difference": 0,
+          "nll_worse": 6754,
+          "planned": 17280,
+          "regressions": 0,
+          "repairs": 2012
+        },
+        "lexical_retention": {
+          "all": {
+            "accuracy": 1.0,
+            "correct": 41600,
+            "mean_brier": 2.3333255973405478e-05,
+            "mean_nll": 0.0041209153611168736,
+            "order_correct": 41600,
+            "planned": 41600
+          },
+          "mean_nll_change": -0.0019591224424810936,
+          "nll_better": 41600,
+          "nll_ties": 0,
+          "nll_undefined_difference": 0,
+          "nll_worse": 0,
+          "planned": 41600,
+          "regressions": 0,
+          "repairs": 0
+        },
+        "saturation_retention": {
+          "all": {
+            "accuracy": 1.0,
+            "correct": 17280,
+            "mean_brier": 2.6284776261679733e-05,
+            "mean_nll": 0.004352810845826576,
+            "order_correct": 17280,
+            "planned": 17280
+          },
+          "mean_nll_change": -1.4886858232180225,
+          "nll_better": 11735,
+          "nll_ties": 20,
+          "nll_undefined_difference": 0,
+          "nll_worse": 5525,
+          "planned": 17280,
+          "regressions": 0,
+          "repairs": 5394
+        }
+      },
+      "held": {
+        "accuracy": 1.0,
+        "correct": 11520,
+        "mean_brier": 2.792219198491787e-05,
+        "mean_nll": 0.004443642955703981,
+        "order_correct": 11520,
+        "planned": 11520
+      },
+      "native": {
+        "mean_nll_change": 0.0005700417401943517,
+        "nll_better": 20,
+        "nll_ties": 0,
+        "nll_undefined_difference": 0,
+        "nll_worse": 17260,
+        "planned": 17280,
+        "regressions": 0,
+        "repairs": 0
+      }
+    }
+  },
+  "audit": {
+    "audit_passed": true,
+    "bound_historical_files": 99,
+    "bound_sources": 82,
+    "centered_archive_final_sha256_equal_by_seed": {
+      "11": true,
+      "23": true,
+      "37": true,
+      "53": true,
+      "7": true
+    },
+    "check_count": 3966958,
+    "discrepancy_count": 0,
+    "verified_checkpoints": 10,
+    "verified_initial_states": 10
+  },
+  "code_size": {
+    "inclusive_2000_line_goal_met": false,
+    "retained_research_python": 41850,
+    "retained_research_test_python": 18110,
+    "total_python_added": 1132
+  },
+  "decision": "KEEP_LAYOUT_COORDINATES",
+  "dependence": "Law, seed, role and lexical views are dependent; counts are not independent physical trials. Public same-team custody.",
+  "execution_complete": true,
+  "fit_updates_per_arm_seed": 256,
+  "forecast_count": 278400,
+  "fresh_pair": {
+    "mean_nll_change": -0.36735996198745835,
+    "nll_better": 10503,
+    "nll_ties": 4,
+    "nll_undefined_difference": 0,
+    "nll_worse": 6773,
+    "planned": 17280,
+    "regressions": 0,
+    "repairs": 2002
+  },
+  "model_parameters": {
+    "centered": 89,
+    "coordinates": 88
+  },
+  "native_reference_count": 17280,
+  "next_action": "Acquire the existing native set effect nonverbally with 68 existing permitted update scalars, preserving contacts, before effect-and-role language. Planned, not implemented or fitted.",
+  "novelty": "Fresh ordered event structures only; words/layouts and training-withheld cells were opened in previous studies. Earlier banks are retention.",
+  "paired_retention": {
+    "bilingual_retention": {
+      "mean_nll_change": -0.03692781594745966,
+      "nll_better": 12761,
+      "nll_ties": 1161,
+      "nll_undefined_difference": 0,
+      "nll_worse": 6878,
+      "planned": 20800,
+      "regressions": 0,
+      "repairs": 0
+    },
+    "binding_retention": {
+      "mean_nll_change": -0.3308971654881915,
+      "nll_better": 11292,
+      "nll_ties": 0,
+      "nll_undefined_difference": 0,
+      "nll_worse": 5988,
+      "planned": 17280,
+      "regressions": 0,
+      "repairs": 1606
+    },
+    "centering_retention": {
+      "mean_nll_change": -0.3664377747054859,
+      "nll_better": 10522,
+      "nll_ties": 4,
+      "nll_undefined_difference": 0,
+      "nll_worse": 6754,
+      "planned": 17280,
+      "regressions": 0,
+      "repairs": 2012
+    },
+    "lexical_retention": {
+      "mean_nll_change": -0.08426793485544941,
+      "nll_better": 23692,
+      "nll_ties": 1070,
+      "nll_undefined_difference": 0,
+      "nll_worse": 16838,
+      "planned": 41600,
+      "regressions": 0,
+      "repairs": 2080
+    },
+    "saturation_retention": {
+      "mean_nll_change": -0.37073282376643313,
+      "nll_better": 10511,
+      "nll_ties": 0,
+      "nll_undefined_difference": 0,
+      "nll_worse": 6769,
+      "planned": 17280,
+      "regressions": 0,
+      "repairs": 2012
+    }
+  },
+  "per_seed": {
+    "11": {
+      "fresh": {
+        "centered": {
+          "nand": {
+            "correct": 716,
+            "mean_brier": 0.7550144283402789,
+            "mean_nll": 1.7837365855634109,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 738,
+            "mean_brier": 0.7595791214254138,
+            "mean_nll": 1.8940953888190908,
+            "planned": 1728
+          }
+        },
+        "coordinates": {
+          "nand": {
+            "correct": 1728,
+            "mean_brier": 2.530116299453672e-05,
+            "mean_nll": 0.004424865553921831,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_brier": 1.9477969060032343e-05,
+            "mean_nll": 0.0038762578396349867,
+            "planned": 1728
+          }
+        }
+      },
+      "passes_all_laws": true,
+      "training_nll": {
+        "centered": 0.3360422606432063,
+        "coordinates": 0.0036120951979949165
+      }
+    },
+    "23": {
+      "fresh": {
+        "centered": {
+          "nand": {
+            "correct": 1728,
+            "mean_brier": 3.13733433871312e-05,
+            "mean_nll": 0.004631570548134592,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_brier": 2.8689266327794033e-05,
+            "mean_nll": 0.0044168025805364905,
+            "planned": 1728
+          }
+        },
+        "coordinates": {
+          "nand": {
+            "correct": 1728,
+            "mean_brier": 1.9626134495921414e-05,
+            "mean_nll": 0.003918298508396843,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_brier": 1.7513121940286244e-05,
+            "mean_nll": 0.003703381265629542,
+            "planned": 1728
+          }
+        }
+      },
+      "passes_all_laws": true,
+      "training_nll": {
+        "centered": 0.003398139450375576,
+        "coordinates": 0.0033425347512651606
+      }
+    },
+    "37": {
+      "fresh": {
+        "centered": {
+          "nand": {
+            "correct": 1728,
+            "mean_brier": 6.576338236462207e-05,
+            "mean_nll": 0.00657915015578282,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_brier": 5.777388999378362e-05,
+            "mean_nll": 0.006144825803007773,
+            "planned": 1728
+          }
+        },
+        "coordinates": {
+          "nand": {
+            "correct": 1728,
+            "mean_brier": 4.420206186720381e-05,
+            "mean_nll": 0.0057904939627334414,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_brier": 3.7944485534639615e-05,
+            "mean_nll": 0.0053556654765347465,
+            "planned": 1728
+          }
+        }
+      },
+      "passes_all_laws": true,
+      "training_nll": {
+        "centered": 0.004345489700414716,
+        "coordinates": 0.004331006215060624
+      }
+    },
+    "53": {
+      "fresh": {
+        "centered": {
+          "nand": {
+            "correct": 1728,
+            "mean_brier": 2.8678531669640167e-05,
+            "mean_nll": 0.004566599184452171,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_brier": 2.502230218182732e-05,
+            "mean_nll": 0.004255629662145749,
+            "planned": 1728
+          }
+        },
+        "coordinates": {
+          "nand": {
+            "correct": 1728,
+            "mean_brier": 2.5622818865015762e-05,
+            "mean_nll": 0.004403179837142581,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_brier": 2.2230156971400056e-05,
+            "mean_nll": 0.0040921338656910436,
+            "planned": 1728
+          }
+        }
+      },
+      "passes_all_laws": true,
+      "training_nll": {
+        "centered": 0.0033762526834404637,
+        "coordinates": 0.003354824741217412
+      }
+    },
+    "7": {
+      "fresh": {
+        "centered": {
+          "nand": {
+            "correct": 1728,
+            "mean_brier": 3.341317299137879e-05,
+            "mean_nll": 0.004267647822874941,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_brier": 3.461796558450407e-05,
+            "mean_nll": 0.0043973165255702116,
+            "planned": 1728
+          }
+        },
+        "coordinates": {
+          "nand": {
+            "correct": 1728,
+            "mean_brier": 2.4567701117508415e-05,
+            "mean_nll": 0.0038989835889834163,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_brier": 2.5686408610715665e-05,
+            "mean_nll": 0.004028636891754015,
+            "planned": 1728
+          }
+        }
+      },
+      "passes_all_laws": true,
+      "training_nll": {
+        "centered": 0.0024692201369858544,
+        "coordinates": 0.002392528141150991
+      }
+    }
+  },
+  "prediction_scope": "Per-step full-world forecasts conditioned on observed-prefix feedback, not autonomous open-loop rollout.",
+  "raw_forecasts_commit": "52b66d6b81c05f72d1cab559406f95940fbd0c08",
+  "resources": {
+    "collection_cached_prediction_regions": {
+      "cpu_seconds": 6.339827373000023,
+      "p95_batch_amortized_seconds_range": [
+        5.5926614663803775e-06,
+        7.961574999626464e-05
+      ],
+      "peak_rss_kib": 430960,
+      "scope": "Cached batched prediction only; excludes preparation, serialization, scoring and native references. Not service latency or matched consumed compute.",
+      "wall_seconds": 6.643136680999305
+    },
+    "fit": {
+      "cpu_seconds": 33.903276113000004,
+      "peak_rss_kib": 351364,
+      "wall_seconds": 37.34960063299877
+    }
+  },
+  "runtime": {
+    "cpu_architecture": "x86_64",
+    "deterministic_algorithms": true,
+    "dtype": "float64",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "python": "3.13.5",
+    "threads": 1,
+    "torch": "2.10.0+cpu"
+  },
+  "saved_audit_sha256": "3ec9ae6e387ea2c04500b00e444925bab26ba41c7490225a18090d7bc0b0ed5e",
+  "scientific_admission": false,
+  "source_publication": "9ee7f240d00d896c012217dbcdca6db684f27f64",
+  "summary_sha256": "e460aaf29331216b12a8a66505b5a4b41c64c7addec1ac43e02f0f4562032adf",
+  "training_events_per_update": 1152,
+  "verification": {
+    "full_suite": {
+      "errors": 0,
+      "exit_code": 0,
+      "failures": 0,
+      "log": "results/coordinate-v1/logs/tests.log",
+      "seconds": 87.392,
+      "skips": 0,
+      "subsequent_changes": "Results and documentation only; frozen Python source unchanged.",
+      "tested_source_tree_sha": "00c90fe324af4ab8096fc5c375b09941961f1228",
+      "tests": 954
+    },
+    "original_protocol_verified": true,
+    "protocol_locks_passed": 32,
+    "separate_result_review": {
+      "discrepancies": 0,
+      "reconstructed_gate_checks": 130,
+      "scope": "Same-team saved-result review; not independent scientific custody."
+    },
+    "source_freeze": {
+      "all_unchanged": true,
+      "historical_bindings": 99,
+      "source_bindings": 82
+    }
+  },
+  "version": "coordinate-headline-v1",
+  "weights_publication": "c71afe2d7f83230a7980e5b0a946c397c38e87ac",
+  "world_parameters_per_checkpoint": 562
+}

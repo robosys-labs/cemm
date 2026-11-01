@@ -1,0 +1,11 @@
+Audit nand/7
+Audit nand/11
+Audit nand/23
+Audit nand/37
+Audit nand/53
+Audit nor/7
+Audit nor/11
+Audit nor/23
+Audit nor/37
+Audit nor/53
+{"decision": "KEEP_LAYOUT_COORDINATES", "audit_passed": true, "check_count": 3966958, "discrepancy_count": 0}

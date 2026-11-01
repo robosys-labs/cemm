@@ -1,0 +1,99 @@
+{
+  "code_size": {
+    "inclusive_2000_line_goal_met": false,
+    "retained_research_python": 41850,
+    "retained_research_test_python": 18110,
+    "total_python_added": 1132
+  },
+  "date": "2026-11-01",
+  "execution": {
+    "collection_invocations": 1,
+    "completed_arm_seed_fits": 10,
+    "fit_invocations": 1,
+    "research_retries": 0,
+    "saved_record_audit_invocations": 1,
+    "scoring_invocations": 1
+  },
+  "frozen_code_ci": {
+    "commit": "52b66d6b81c05f72d1cab559406f95940fbd0c08",
+    "invariants_preflight": {
+      "conclusion": "success",
+      "url": "https://github.com/robosys-labs/cemm/actions/runs/41320680865"
+    },
+    "scope": "Published raw-evidence commit; final-head hosted checks are tracked separately in PR76. Frozen Python source unchanged.",
+    "source_snapshot": {
+      "conclusion": "success",
+      "url": "https://github.com/robosys-labs/cemm/actions/runs/41320680822"
+    }
+  },
+  "logs": {
+    "results/coordinate-v1/logs/audit.log": {
+      "bytes": 243,
+      "sha256": "1d996eee505eb0ef5c57d0b06b98dbb8fb53c53038ed9af50d09da47f4699b0d"
+    },
+    "results/coordinate-v1/logs/collect.log": {
+      "bytes": 243,
+      "sha256": "9ea06e68ba42140e5bea95b467c18299a1d3244188e93db07bb59e9715424c0e"
+    },
+    "results/coordinate-v1/logs/fit.log": {
+      "bytes": 8765,
+      "sha256": "5d64c61c950ec26dcde76bc2894e14ed3f89799cffe72c9ee94853f8ba4aa211"
+    },
+    "results/coordinate-v1/logs/original-protocol.log": {
+      "bytes": 166,
+      "sha256": "cadb9f2c91b7b2fdd3d13d2032b2b3e90b7d734e1ad8591fdc14857d8c03dcbf"
+    },
+    "results/coordinate-v1/logs/preflight.json": {
+      "bytes": 26429,
+      "sha256": "2beef7b928ff004136e5e28beb51b6513e15e31fd09771bc0189d7052509b39f"
+    },
+    "results/coordinate-v1/logs/protocol-locks.log": {
+      "bytes": 1092,
+      "sha256": "cd426d1c7d1d0acb88c11d3913c9f6916ba3eafa1b1ccb3eca4a2f081cde6fb2"
+    },
+    "results/coordinate-v1/logs/score.log": {
+      "bytes": 4123,
+      "sha256": "dac846a23cb9899388584780bab79fa49b2d3dfa2c131b69c7c91bc0a3eb56a0"
+    },
+    "results/coordinate-v1/logs/tests.log": {
+      "bytes": 162960,
+      "sha256": "504fef4239d707d96fa43da1515f333f60723231c03cf065d01b72aafe95442f"
+    }
+  },
+  "raw_forecasts_commit": "52b66d6b81c05f72d1cab559406f95940fbd0c08",
+  "scope": "KEEP_LAYOUT_COORDINATES closes the bounded fitting comparison. G3 remains open for learned effect expansion; no independent scientific admission or production integration.",
+  "setup_notes": [
+    "Initial local environment lacked pinned dependencies; isolated exact versions installed before any fit.",
+    "Direct git push had no credentials; GitHub connector publication was verified to have the identical local git tree at every boundary.",
+    "An extra nonexistent PROTOCOL.sha256 path was requested after all 32 real locks passed; original protocol verified through its actual CLI.",
+    "The first historical preflight invocation lacked PYTHONHASHSEED=0; it failed before research and passed with the required startup environment."
+  ],
+  "source_publication": "9ee7f240d00d896c012217dbcdca6db684f27f64",
+  "verification": {
+    "full_suite": {
+      "errors": 0,
+      "exit_code": 0,
+      "failures": 0,
+      "log": "results/coordinate-v1/logs/tests.log",
+      "seconds": 87.392,
+      "skips": 0,
+      "subsequent_changes": "Results and documentation only; frozen Python source unchanged.",
+      "tested_source_tree_sha": "00c90fe324af4ab8096fc5c375b09941961f1228",
+      "tests": 954
+    },
+    "original_protocol_verified": true,
+    "protocol_locks_passed": 32,
+    "separate_result_review": {
+      "discrepancies": 0,
+      "reconstructed_gate_checks": 130,
+      "scope": "Same-team saved-result review; not independent scientific custody."
+    },
+    "source_freeze": {
+      "all_unchanged": true,
+      "historical_bindings": 99,
+      "source_bindings": 82
+    }
+  },
+  "version": "coordinate-execution-v1",
+  "weights_publication": "c71afe2d7f83230a7980e5b0a946c397c38e87ac"
+}
