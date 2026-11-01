@@ -1,0 +1,55 @@
+{
+  "version": "centering-v1",
+  "base_commit": "db354af1f904f626648f32e7d43fb1519eff80b0",
+  "recorded_on": "2026-11-01",
+  "model_seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "train_forecasts": 1152,
+  "challenge_forecasts_per_law": 1728,
+  "hypothesis": "Center only one initial layout bias, holding the other 88 of 89 initial scalars, observed histories, inference, loss and update budget fixed; test fitting stability and transfer to fresh ordered event structures.",
+  "fit": {
+    "updates": 256,
+    "learning_rate": 0.02,
+    "gradient_clip": 5.0,
+    "cpu_seconds_per_arm": 120.0
+  },
+  "analysis": {
+    "min_accuracy": 0.95,
+    "max_mean_nll": 0.05,
+    "min_true_probability": 0.9,
+    "max_foil_probability": 0.1,
+    "min_gap": 0.8,
+    "max_control_tv": 1e-10
+  },
+  "execution": {
+    "runtime": {
+      "python": "3.13.5",
+      "torch": "2.10.0+cpu",
+      "numpy": "2.3.5",
+      "threads": 1,
+      "dtype": "float64",
+      "deterministic_algorithms": true
+    }
+  },
+  "design": {
+    "training": "Exact saturation-v1 1152-event observed NAND training tape; identical bytes, order and full outcome likelihood for both arms. No additional examples, gold roles or participant-order labels.",
+    "initialization": "Standard UnsaturatedFactorOrderEncoder versus existing centered_encoder: change only layout.0.bias to -(2/3)*sum(layout.0.weight). Other 88 scalars identical; same 89 trainable parameters. Bias remains trainable, no prescribed word/layout polarity. Verify exact initial tensors and the prescribed one-scalar difference, not equal whole-model fingerprints.",
+    "holdout": "Two new ordered interaction families relay4/fork_return5, four/five active participants and four/five events, same existing kef/ruz and wom/jit words. Guard against prior ordered graphs up to active-entity relabeling even ignoring edge direction. All layouts, laws, modes, role reversals and four nonuniform anchor patterns retained without outcome filtering. Withheld cells mean absent from TRAINING; these lexical-layout cells have already been opened in prior studies and are not fresh lexical-generalization evidence.",
+    "retention": "Opened bilingual-v1, lexical-v1, binding-v1 and saturation-v1 banks. Compare original archived lexical-v1, binding factor-v1 and saturation unsaturated-v1 predictions respectively, plus paired current standard predictions. Archived weights/traces never refitted or recollected.",
+    "controls": "Paired standard-unsaturated initialization. Final-only lexical mask/swap with the same canonical prefix. Separate evaluator-only native-action references. Historical GRU/additive outcomes remain context, not fresh-bank architecture comparators.",
+    "decision": "Centered candidate must pass unchanged per-cell/pair/probability/control thresholds at EVERY seed/law; observed train mean NLL<=.05, zero native/archived/paired exact regressions, and no mean fresh NLL increase versus paired standard. Otherwise REVISE_CENTERING_HYPOTHESIS. Retain every seed and adverse probability change. KEEP_CENTERED_INITIALIZATION would support only this bounded initialization comparison; ties do not establish exclusive advantage.",
+    "publication": "Publish source/protocol/recipe/all data hashes before fitting; publish all ten actual checkpoints before collection. Offline publication SHA arguments are attestations verified against GitHub outside the runner.",
+    "failure": "One research fit/collection attempt with exclusive output directories. No retries, seed selection, extra fitting or early stopping. Collect all completed seeds including training-fit failures. Invalid or incomplete inventories stop. Synthetic invariant tests are labeled separately.",
+    "limits": "Public same-team experiment, not independent scientific custody. Known binary physics, supplied identity resolution/token boundaries, two directed contact alternatives, full endpoint feedback and existing rank-one structure. Equal exposure/update budgets do not establish matched consumed compute. G3 stays open; no production promotion or G4 advance."
+  },
+  "scientific_admission": false,
+  "arms": [
+    "unsaturated",
+    "centered"
+  ]
+}

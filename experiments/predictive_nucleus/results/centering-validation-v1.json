@@ -1,0 +1,1334 @@
+{
+  "audit_passed": true,
+  "auditor_sha256": "8b1c9d1d13f71a301a332f97deafdd092764f4f4bf5ec88c6a9ff73498a3179b",
+  "bound_historical_files": 81,
+  "bound_sources": 76,
+  "check_count": 3430239,
+  "decision": "REVISE_CENTERING_HYPOTHESIS",
+  "details": {
+    "nand/11": {
+      "centered": {
+        "all": {
+          "accuracy": 0.41203703703703703,
+          "answered": 1728,
+          "correct": 712,
+          "critical_planned": 1728,
+          "ece_10": 0.366560165701871,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            349,
+            444,
+            147,
+            184,
+            604
+          ],
+          "max_wrong_order_probability": 0.9967765054123017,
+          "mean_brier": 0.7592589305155321,
+          "mean_nll": 1.7797164038025062,
+          "min_critical_true_probability": 4.351986807981797e-07,
+          "order_correct": 832,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 800,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 224,
+          "lexical_retention": 1040,
+          "saturation_retention": 8
+        },
+        "held": {
+          "accuracy": 0.2222222222222222,
+          "answered": 1152,
+          "correct": 256,
+          "critical_planned": 1152,
+          "ece_10": 0.5021185053116992,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            315,
+            396,
+            117,
+            8,
+            316
+          ],
+          "max_wrong_order_probability": 0.9967765054123017,
+          "mean_brier": 0.9995532654215934,
+          "mean_nll": 2.4303038856833075,
+          "min_critical_true_probability": 4.351986807981797e-07,
+          "order_correct": 256,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 701,
+          "unchanged_bits": 4384
+        }
+      },
+      "unsaturated": {
+        "all": {
+          "accuracy": 0.4166666666666667,
+          "answered": 1728,
+          "correct": 720,
+          "critical_planned": 1728,
+          "ece_10": 0.35999050127721893,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            363,
+            438,
+            131,
+            194,
+            602
+          ],
+          "max_wrong_order_probability": 0.9967765053886042,
+          "mean_brier": 0.7580957352530993,
+          "mean_nll": 1.765753545247645,
+          "min_critical_true_probability": 4.3615505674899653e-07,
+          "order_correct": 832,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 794,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 224,
+          "lexical_retention": 1040,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 0.2222222222222222,
+          "answered": 1152,
+          "correct": 256,
+          "critical_planned": 1152,
+          "ece_10": 0.5029860639518041,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            315,
+            396,
+            113,
+            12,
+            316
+          ],
+          "max_wrong_order_probability": 0.9967765053886042,
+          "mean_brier": 1.00117058126286,
+          "mean_nll": 2.413342923727163,
+          "min_critical_true_probability": 4.3615505674899653e-07,
+          "order_correct": 256,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 701,
+          "unchanged_bits": 4384
+        }
+      }
+    },
+    "nand/23": {
+      "centered": {
+        "all": {
+          "accuracy": 1.0,
+          "answered": 1728,
+          "correct": 1728,
+          "critical_planned": 1728,
+          "ece_10": 0.004630576540768261,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1728
+          ],
+          "max_wrong_order_probability": 0.0055036526204837255,
+          "mean_brier": 3.155255068111886e-05,
+          "mean_nll": 0.004642496134768365,
+          "min_critical_true_probability": 0.991365440811943,
+          "order_correct": 1728,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 0,
+          "lexical_retention": 0,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 1.0,
+          "answered": 1152,
+          "correct": 1152,
+          "critical_planned": 1152,
+          "ece_10": 0.004882391068432468,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1152
+          ],
+          "max_wrong_order_probability": 0.0055036526204837255,
+          "mean_brier": 3.6134011346428385e-05,
+          "mean_nll": 0.00489582783114178,
+          "min_critical_true_probability": 0.991365440811943,
+          "order_correct": 1152,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 4384
+        }
+      },
+      "unsaturated": {
+        "all": {
+          "accuracy": 0.53125,
+          "answered": 1728,
+          "correct": 918,
+          "critical_planned": 1728,
+          "ece_10": 0.414083171056562,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            244,
+            10,
+            16,
+            8,
+            1450
+          ],
+          "max_wrong_order_probability": 0.997455336114115,
+          "mean_brier": 0.8771734088563143,
+          "mean_nll": 2.7374388853360383,
+          "min_critical_true_probability": 1.7068287595186414e-07,
+          "order_correct": 960,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 642,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 144,
+          "lexical_retention": 520,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 0.4635416666666667,
+          "answered": 1152,
+          "correct": 534,
+          "critical_planned": 1152,
+          "ece_10": 0.5453364026967058,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            148,
+            4,
+            8,
+            2,
+            990
+          ],
+          "max_wrong_order_probability": 0.997455336114115,
+          "mean_brier": 1.0657707279180295,
+          "mean_nll": 3.43973373263092,
+          "min_critical_true_probability": 1.7068287595186414e-07,
+          "order_correct": 384,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 488,
+          "unchanged_bits": 4384
+        }
+      }
+    },
+    "nand/37": {
+      "centered": {
+        "all": {
+          "accuracy": 1.0,
+          "answered": 1728,
+          "correct": 1728,
+          "critical_planned": 1728,
+          "ece_10": 0.006569886017887772,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1728
+          ],
+          "max_wrong_order_probability": 0.008428159039485586,
+          "mean_brier": 6.596524412314573e-05,
+          "mean_nll": 0.006594702332588621,
+          "min_critical_true_probability": 0.9865595641322585,
+          "order_correct": 1728,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 0,
+          "lexical_retention": 0,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 1.0,
+          "answered": 1152,
+          "correct": 1152,
+          "critical_planned": 1152,
+          "ece_10": 0.007059547342233463,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1152
+          ],
+          "max_wrong_order_probability": 0.008428159039485586,
+          "mean_brier": 7.882863424274289e-05,
+          "mean_nll": 0.007088653108882816,
+          "min_critical_true_probability": 0.9865595641322585,
+          "order_correct": 1152,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 4384
+        }
+      },
+      "unsaturated": {
+        "all": {
+          "accuracy": 1.0,
+          "answered": 1728,
+          "correct": 1728,
+          "critical_planned": 1728,
+          "ece_10": 0.006793000821168849,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1728
+          ],
+          "max_wrong_order_probability": 0.010875318476987538,
+          "mean_brier": 7.797198686729017e-05,
+          "mean_nll": 0.006821325824888836,
+          "min_critical_true_probability": 0.9841155577135863,
+          "order_correct": 1728,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 0,
+          "lexical_retention": 0,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 1.0,
+          "answered": 1152,
+          "correct": 1152,
+          "critical_planned": 1152,
+          "ece_10": 0.00746545179633662,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1152
+          ],
+          "max_wrong_order_probability": 0.010875318476987538,
+          "mean_brier": 9.783087864195591e-05,
+          "mean_nll": 0.007500218835895296,
+          "min_critical_true_probability": 0.9841155577135863,
+          "order_correct": 1152,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 4384
+        }
+      }
+    },
+    "nand/53": {
+      "centered": {
+        "all": {
+          "accuracy": 1.0,
+          "answered": 1728,
+          "correct": 1728,
+          "critical_planned": 1728,
+          "ece_10": 0.004572087315715789,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1728
+          ],
+          "max_wrong_order_probability": 0.005075545917892745,
+          "mean_brier": 2.8856447328551997e-05,
+          "mean_nll": 0.004583350220771599,
+          "min_critical_true_probability": 0.9916344615905884,
+          "order_correct": 1728,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 0,
+          "lexical_retention": 0,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 1.0,
+          "answered": 1152,
+          "correct": 1152,
+          "critical_planned": 1152,
+          "ece_10": 0.004707898203119565,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1152
+          ],
+          "max_wrong_order_probability": 0.005075545917892745,
+          "mean_brier": 3.128799771403433e-05,
+          "mean_nll": 0.004719986177836681,
+          "min_critical_true_probability": 0.9916344615905884,
+          "order_correct": 1152,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 4384
+        }
+      },
+      "unsaturated": {
+        "all": {
+          "accuracy": 0.4826388888888889,
+          "answered": 1728,
+          "correct": 834,
+          "critical_planned": 1728,
+          "ece_10": 0.4349355663214346,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            179,
+            70,
+            15,
+            42,
+            1422
+          ],
+          "max_wrong_order_probability": 0.9974629974728837,
+          "mean_brier": 0.8841309256116977,
+          "mean_nll": 2.6938505319682466,
+          "min_critical_true_probability": 6.240698577175048e-07,
+          "order_correct": 864,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 705,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 240,
+          "lexical_retention": 520,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 0.3628472222222222,
+          "answered": 1152,
+          "correct": 418,
+          "critical_planned": 1152,
+          "ece_10": 0.5637587979089229,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            131,
+            24,
+            2,
+            27,
+            968
+          ],
+          "max_wrong_order_probability": 0.9974629974728837,
+          "mean_brier": 1.0915332281855148,
+          "mean_nll": 3.4377374834752823,
+          "min_critical_true_probability": 6.240698577175048e-07,
+          "order_correct": 288,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 577,
+          "unchanged_bits": 4384
+        }
+      }
+    },
+    "nand/7": {
+      "centered": {
+        "all": {
+          "accuracy": 1.0,
+          "answered": 1728,
+          "correct": 1728,
+          "critical_planned": 1728,
+          "ece_10": 0.004265166396389519,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1728
+          ],
+          "max_wrong_order_probability": 0.007738111697838655,
+          "mean_brier": 3.35260796793728e-05,
+          "mean_nll": 0.0042769206911820725,
+          "min_critical_true_probability": 0.9891398746136226,
+          "order_correct": 1728,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 0,
+          "lexical_retention": 0,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 1.0,
+          "answered": 1152,
+          "correct": 1152,
+          "critical_planned": 1152,
+          "ece_10": 0.004541739243216991,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1152
+          ],
+          "max_wrong_order_probability": 0.007738111697838655,
+          "mean_brier": 4.083913535254745e-05,
+          "mean_nll": 0.004555681073308247,
+          "min_critical_true_probability": 0.9891398746136226,
+          "order_correct": 1152,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 4384
+        }
+      },
+      "unsaturated": {
+        "all": {
+          "accuracy": 1.0,
+          "answered": 1728,
+          "correct": 1728,
+          "critical_planned": 1728,
+          "ece_10": 0.005033584800276603,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1728
+          ],
+          "max_wrong_order_probability": 0.01194857519628958,
+          "mean_brier": 6.247850007497495e-05,
+          "mean_nll": 0.005053616890470891,
+          "min_critical_true_probability": 0.9849328300644005,
+          "order_correct": 1728,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 0,
+          "lexical_retention": 0,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 1.0,
+          "answered": 1152,
+          "correct": 1152,
+          "critical_planned": 1152,
+          "ece_10": 0.005776490366229736,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1152
+          ],
+          "max_wrong_order_probability": 0.01194857519628958,
+          "mean_brier": 8.536284131090244e-05,
+          "mean_nll": 0.005803224113660289,
+          "min_critical_true_probability": 0.9849328300644005,
+          "order_correct": 1152,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 4384
+        }
+      }
+    },
+    "nor/11": {
+      "centered": {
+        "all": {
+          "accuracy": 0.4236111111111111,
+          "answered": 1728,
+          "correct": 732,
+          "critical_planned": 1728,
+          "ece_10": 0.3625778315119622,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            288,
+            463,
+            169,
+            210,
+            598
+          ],
+          "max_wrong_order_probability": 0.9973386551175164,
+          "mean_brier": 0.7635241056040422,
+          "mean_nll": 1.8889137750885856,
+          "min_critical_true_probability": 4.1128034880718985e-06,
+          "order_correct": 832,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 787,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 240,
+          "lexical_retention": 1040,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 0.2361111111111111,
+          "answered": 1152,
+          "correct": 272,
+          "critical_planned": 1152,
+          "ece_10": 0.49604687841133266,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            264,
+            438,
+            120,
+            10,
+            320
+          ],
+          "max_wrong_order_probability": 0.9973386551175164,
+          "mean_brier": 0.9971544981078786,
+          "mean_nll": 2.6084052379193463,
+          "min_critical_true_probability": 4.1128034880718985e-06,
+          "order_correct": 256,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 692,
+          "unchanged_bits": 4384
+        }
+      },
+      "unsaturated": {
+        "all": {
+          "accuracy": 0.4236111111111111,
+          "answered": 1728,
+          "correct": 732,
+          "critical_planned": 1728,
+          "ece_10": 0.3604854386729658,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            296,
+            458,
+            172,
+            206,
+            596
+          ],
+          "max_wrong_order_probability": 0.9973322240051766,
+          "mean_brier": 0.7628600912802783,
+          "mean_nll": 1.8707134040957425,
+          "min_critical_true_probability": 4.1101428430341985e-06,
+          "order_correct": 832,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 787,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 240,
+          "lexical_retention": 1040,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 0.2361111111111111,
+          "answered": 1152,
+          "correct": 272,
+          "critical_planned": 1152,
+          "ece_10": 0.49642530615951413,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            264,
+            438,
+            118,
+            12,
+            320
+          ],
+          "max_wrong_order_probability": 0.9973322240051766,
+          "mean_brier": 0.998685902447962,
+          "mean_nll": 2.585248723371191,
+          "min_critical_true_probability": 4.1101428430341985e-06,
+          "order_correct": 256,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 692,
+          "unchanged_bits": 4384
+        }
+      }
+    },
+    "nor/23": {
+      "centered": {
+        "all": {
+          "accuracy": 1.0,
+          "answered": 1728,
+          "correct": 1728,
+          "critical_planned": 1728,
+          "ece_10": 0.004422705522824533,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1728
+          ],
+          "max_wrong_order_probability": 0.005020679601516575,
+          "mean_brier": 2.8889697490964346e-05,
+          "mean_nll": 0.004433723289453843,
+          "min_critical_true_probability": 0.9914401880246436,
+          "order_correct": 1728,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 0,
+          "lexical_retention": 0,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 1.0,
+          "answered": 1152,
+          "correct": 1152,
+          "critical_planned": 1152,
+          "ece_10": 0.004674610797939294,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1152
+          ],
+          "max_wrong_order_probability": 0.005020679601516575,
+          "mean_brier": 3.3293983722912124e-05,
+          "mean_nll": 0.00468710279119258,
+          "min_critical_true_probability": 0.9914401880246436,
+          "order_correct": 1152,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 4384
+        }
+      },
+      "unsaturated": {
+        "all": {
+          "accuracy": 0.5277777777777778,
+          "answered": 1728,
+          "correct": 912,
+          "critical_planned": 1728,
+          "ece_10": 0.4415797668371944,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            146,
+            100,
+            6,
+            21,
+            1455
+          ],
+          "max_wrong_order_probability": 0.99785377222275,
+          "mean_brier": 0.890940668048347,
+          "mean_nll": 2.6856441381646734,
+          "min_critical_true_probability": 2.8851256623085445e-05,
+          "order_correct": 960,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 652,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 140,
+          "lexical_retention": 520,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 0.4652777777777778,
+          "answered": 1152,
+          "correct": 536,
+          "critical_planned": 1152,
+          "ece_10": 0.5675850222209458,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            112,
+            34,
+            2,
+            8,
+            996
+          ],
+          "max_wrong_order_probability": 0.99785377222275,
+          "mean_brier": 1.0846329863795168,
+          "mean_nll": 3.474827100097534,
+          "min_critical_true_probability": 2.8851256623085445e-05,
+          "order_correct": 384,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 486,
+          "unchanged_bits": 4384
+        }
+      }
+    },
+    "nor/37": {
+      "centered": {
+        "all": {
+          "accuracy": 1.0,
+          "answered": 1728,
+          "correct": 1728,
+          "critical_planned": 1728,
+          "ece_10": 0.006122025491873684,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1728
+          ],
+          "max_wrong_order_probability": 0.007061412688095323,
+          "mean_brier": 5.767342092041087e-05,
+          "mean_nll": 0.006143826842572366,
+          "min_critical_true_probability": 0.9872652269099171,
+          "order_correct": 1728,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 0,
+          "lexical_retention": 0,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 1.0,
+          "answered": 1152,
+          "correct": 1152,
+          "critical_planned": 1152,
+          "ece_10": 0.006612216483736333,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1152
+          ],
+          "max_wrong_order_probability": 0.007061412688095323,
+          "mean_brier": 6.95021365967405e-05,
+          "mean_nll": 0.006638095226868787,
+          "min_critical_true_probability": 0.9872652269099171,
+          "order_correct": 1152,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 4384
+        }
+      },
+      "unsaturated": {
+        "all": {
+          "accuracy": 1.0,
+          "answered": 1728,
+          "correct": 1728,
+          "critical_planned": 1728,
+          "ece_10": 0.006345386896062233,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1728
+          ],
+          "max_wrong_order_probability": 0.009516191199135483,
+          "mean_brier": 6.91786525579329e-05,
+          "mean_nll": 0.006370594061200267,
+          "min_critical_true_probability": 0.9848152784138591,
+          "order_correct": 1728,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 0,
+          "lexical_retention": 0,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 1.0,
+          "answered": 1152,
+          "correct": 1152,
+          "critical_planned": 1152,
+          "ece_10": 0.007018564116430981,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1152
+          ],
+          "max_wrong_order_probability": 0.009516191199135483,
+          "mean_brier": 8.75984256159408e-05,
+          "mean_nll": 0.007049918499418037,
+          "min_critical_true_probability": 0.9848152784138591,
+          "order_correct": 1152,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 4384
+        }
+      }
+    },
+    "nor/53": {
+      "centered": {
+        "all": {
+          "accuracy": 1.0,
+          "answered": 1728,
+          "correct": 1728,
+          "critical_planned": 1728,
+          "ece_10": 0.004257142073568976,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1728
+          ],
+          "max_wrong_order_probability": 0.00395566234932161,
+          "mean_brier": 2.5129591412113163e-05,
+          "mean_nll": 0.004266996636807008,
+          "min_critical_true_probability": 0.9920053667414358,
+          "order_correct": 1728,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 0,
+          "lexical_retention": 0,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 1.0,
+          "answered": 1152,
+          "correct": 1152,
+          "critical_planned": 1152,
+          "ece_10": 0.004393049417738548,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1152
+          ],
+          "max_wrong_order_probability": 0.00395566234932161,
+          "mean_brier": 2.7366656773312773e-05,
+          "mean_nll": 0.004403691908059246,
+          "min_critical_true_probability": 0.9920053667414358,
+          "order_correct": 1152,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 4384
+        }
+      },
+      "unsaturated": {
+        "all": {
+          "accuracy": 0.4861111111111111,
+          "answered": 1728,
+          "correct": 840,
+          "critical_planned": 1728,
+          "ece_10": 0.4451055691145768,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            126,
+            40,
+            39,
+            63,
+            1460
+          ],
+          "max_wrong_order_probability": 0.9976103053756197,
+          "mean_brier": 0.8956233922728463,
+          "mean_nll": 2.971683608693504,
+          "min_critical_true_probability": 1.174861793337573e-05,
+          "order_correct": 864,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 704,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 220,
+          "lexical_retention": 520,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 0.3680555555555556,
+          "answered": 1152,
+          "correct": 424,
+          "critical_planned": 1152,
+          "ece_10": 0.568896654188575,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            112,
+            22,
+            8,
+            34,
+            976
+          ],
+          "max_wrong_order_probability": 0.9976103053756197,
+          "mean_brier": 1.1095176548412011,
+          "mean_nll": 3.88205998130786,
+          "min_critical_true_probability": 1.174861793337573e-05,
+          "order_correct": 288,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 570,
+          "unchanged_bits": 4384
+        }
+      }
+    },
+    "nor/7": {
+      "centered": {
+        "all": {
+          "accuracy": 1.0,
+          "answered": 1728,
+          "correct": 1728,
+          "critical_planned": 1728,
+          "ece_10": 0.004394523046590604,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1728
+          ],
+          "max_wrong_order_probability": 0.007991002288065372,
+          "mean_brier": 3.468945547996579e-05,
+          "mean_nll": 0.0044068763166081,
+          "min_critical_true_probability": 0.988976004261556,
+          "order_correct": 1728,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 0,
+          "lexical_retention": 0,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 1.0,
+          "answered": 1152,
+          "correct": 1152,
+          "critical_planned": 1152,
+          "ece_10": 0.0046710789442241385,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1152
+          ],
+          "max_wrong_order_probability": 0.007991002288065372,
+          "mean_brier": 4.20336183627158e-05,
+          "mean_nll": 0.004685654238629027,
+          "min_critical_true_probability": 0.988976004261556,
+          "order_correct": 1152,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 4384
+        }
+      },
+      "unsaturated": {
+        "all": {
+          "accuracy": 1.0,
+          "answered": 1728,
+          "correct": 1728,
+          "critical_planned": 1728,
+          "ece_10": 0.005162891427867966,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1728
+          ],
+          "max_wrong_order_probability": 0.01220375438099503,
+          "mean_brier": 6.373411472601422e-05,
+          "mean_nll": 0.005183621441905998,
+          "min_critical_true_probability": 0.9847685977181517,
+          "order_correct": 1728,
+          "order_planned": 1728,
+          "planned": 1728,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 6576
+        },
+        "archive_regressions": {
+          "bilingual_retention": 0,
+          "binding_retention": 0,
+          "lexical_retention": 0,
+          "saturation_retention": 0
+        },
+        "held": {
+          "accuracy": 1.0,
+          "answered": 1152,
+          "correct": 1152,
+          "critical_planned": 1152,
+          "ece_10": 0.005905748597755278,
+          "ece_bin_counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1152
+          ],
+          "max_wrong_order_probability": 0.01220375438099503,
+          "mean_brier": 8.670784461193892e-05,
+          "mean_nll": 0.005933275460037814,
+          "min_critical_true_probability": 0.9847685977181517,
+          "order_correct": 1152,
+          "order_planned": 1152,
+          "planned": 1152,
+          "unchanged_bit_errors": 0,
+          "unchanged_bits": 4384
+        }
+      }
+    }
+  },
+  "discrepancies": [],
+  "discrepancy_count": 0,
+  "forecast_count": 243840,
+  "helper_sha256": "e8175934451ca2e7361046aea97bc1a7b8eb12a0080d22de8fe956b43fee0489",
+  "initialization_scope": "Saved actual tensors, fingerprints, archived standard initial hashes and one-bias formula verified; no RNG replay or independent custody.",
+  "metric_helper_sha256": "925baec5249091c7795629b80692963a9b0a50273afb49812474d55bb448f3de",
+  "model_execution": false,
+  "native_reference_count": 17280,
+  "new_collections": 0,
+  "new_fits": 0,
+  "scientific_admission": false,
+  "source_publication": "4bbbc1148d70ddefb8813b0c435f9ef22c6c5016",
+  "standard_archive_final_sha256_equal_by_seed": {
+    "11": true,
+    "23": true,
+    "37": true,
+    "53": true,
+    "7": true
+  },
+  "summary_sha256": "0e161fd6bec9b0f7097144fdec39f4314486dc43542fba4dafef0afca93900a1",
+  "verified_checkpoints": 10,
+  "verified_initial_states": 10,
+  "version": "centering-saved-audit-v1",
+  "weights_publication": "7826726ff67e1c743c0a3cccbe7a9d35574642cb"
+}

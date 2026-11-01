@@ -1,0 +1,449 @@
+{
+  "aggregate": {
+    "centered": {
+      "all": {
+        "accuracy": 0.8835648148148149,
+        "correct": 15268,
+        "mean_nll": 0.3707979071355844,
+        "order_correct": 15488,
+        "planned": 17280
+      },
+      "archive_retention": {
+        "bilingual_retention": {
+          "mean_nll_change": 0.03620332808712653,
+          "nll_better": 17680,
+          "nll_ties": 0,
+          "nll_undefined_difference": 0,
+          "nll_worse": 3120,
+          "planned": 20800,
+          "regressions": 0,
+          "repairs": 0
+        },
+        "binding_retention": {
+          "mean_nll_change": -0.7058498034318695,
+          "nll_better": 15840,
+          "nll_ties": 0,
+          "nll_undefined_difference": 0,
+          "nll_worse": 1440,
+          "planned": 17280,
+          "regressions": 464,
+          "repairs": 4458
+        },
+        "lexical_retention": {
+          "mean_nll_change": 0.08230881241296831,
+          "nll_better": 34320,
+          "nll_ties": 0,
+          "nll_undefined_difference": 0,
+          "nll_worse": 7280,
+          "planned": 41600,
+          "regressions": 2080,
+          "repairs": 0
+        },
+        "saturation_retention": {
+          "mean_nll_change": -1.117952999451589,
+          "nll_better": 9894,
+          "nll_ties": 155,
+          "nll_undefined_difference": 0,
+          "nll_worse": 7231,
+          "planned": 17280,
+          "regressions": 8,
+          "repairs": 3390
+        }
+      },
+      "held": {
+        "accuracy": 0.8458333333333333,
+        "correct": 9744,
+        "mean_nll": 0.5080383815958572,
+        "order_correct": 9728,
+        "planned": 11520
+      },
+      "native": {
+        "mean_nll_change": 0.3670078187123815,
+        "nll_better": 146,
+        "nll_ties": 0,
+        "nll_undefined_difference": 0,
+        "nll_worse": 17134,
+        "planned": 17280,
+        "regressions": 2012,
+        "repairs": 0
+      }
+    },
+    "unsaturated": {
+      "all": {
+        "accuracy": 0.6868055555555556,
+        "correct": 11868,
+        "mean_nll": 1.4748513271724313,
+        "order_correct": 12224,
+        "planned": 17280
+      },
+      "archive_retention": {
+        "bilingual_retention": {
+          "mean_nll_change": 0.07598561680292705,
+          "nll_better": 11440,
+          "nll_ties": 0,
+          "nll_undefined_difference": 0,
+          "nll_worse": 9360,
+          "planned": 20800,
+          "regressions": 0,
+          "repairs": 0
+        },
+        "binding_retention": {
+          "mean_nll_change": 0.4173098891630814,
+          "nll_better": 12230,
+          "nll_ties": 0,
+          "nll_undefined_difference": 0,
+          "nll_worse": 5050,
+          "planned": 17280,
+          "regressions": 1208,
+          "repairs": 1580
+        },
+        "lexical_retention": {
+          "mean_nll_change": 0.18294228475427315,
+          "nll_better": 20800,
+          "nll_ties": 0,
+          "nll_undefined_difference": 0,
+          "nll_worse": 20800,
+          "planned": 41600,
+          "regressions": 4160,
+          "repairs": 0
+        },
+        "saturation_retention": {
+          "mean_nll_change": 0.0,
+          "nll_better": 0,
+          "nll_ties": 17280,
+          "nll_undefined_difference": 0,
+          "nll_worse": 0,
+          "planned": 17280,
+          "regressions": 0,
+          "repairs": 0
+        }
+      },
+      "held": {
+        "accuracy": 0.6118055555555556,
+        "correct": 7048,
+        "mean_nll": 1.9259236581518961,
+        "order_correct": 6464,
+        "planned": 11520
+      },
+      "native": {
+        "mean_nll_change": 1.4710612387492288,
+        "nll_better": 218,
+        "nll_ties": 4,
+        "nll_undefined_difference": 0,
+        "nll_worse": 17058,
+        "planned": 17280,
+        "regressions": 5412,
+        "repairs": 0
+      }
+    }
+  },
+  "audit": {
+    "audit_passed": true,
+    "bound_historical_files": 81,
+    "bound_sources": 76,
+    "check_count": 3430239,
+    "discrepancy_count": 0,
+    "standard_archive_final_sha256_equal_by_seed": {
+      "11": true,
+      "23": true,
+      "37": true,
+      "53": true,
+      "7": true
+    },
+    "verified_checkpoints": 10,
+    "verified_initial_states": 10
+  },
+  "decision": "REVISE_CENTERING_HYPOTHESIS",
+  "dependence": "Law, seed, role and lexical views are dependent; pooled counts are not independent physical trials. Public same-team custody.",
+  "execution_complete": true,
+  "fit_updates_per_arm_seed": 256,
+  "forecast_count": 243840,
+  "fresh_pair": {
+    "mean_nll_change": -1.104053420036847,
+    "nll_better": 9900,
+    "nll_ties": 150,
+    "nll_undefined_difference": 0,
+    "nll_worse": 7230,
+    "planned": 17280,
+    "regressions": 8,
+    "repairs": 3408
+  },
+  "model_parameters_per_arm": 89,
+  "native_reference_count": 17280,
+  "next_candidate": {
+    "initial_function": "Matches centered on all three legal identity masks; other 85 scalars preserved. Full legal-mask response class retained.",
+    "module": "binding_layout_coordinates.py",
+    "parameters": 88,
+    "research_fits": 0,
+    "status": "IMPLEMENTED_NOT_SCIENTIFICALLY_EVALUATED"
+  },
+  "novelty": "Fresh ordered event structures only; words/layouts and training-withheld cells appeared in previous open evaluations. Previous banks are retention.",
+  "paired_retention": {
+    "bilingual_retention": {
+      "mean_nll_change": -0.03978228871580053,
+      "nll_better": 14506,
+      "nll_ties": 1094,
+      "nll_undefined_difference": 0,
+      "nll_worse": 5200,
+      "planned": 20800,
+      "regressions": 0,
+      "repairs": 0
+    },
+    "binding_retention": {
+      "mean_nll_change": -1.1231596925949512,
+      "nll_better": 7852,
+      "nll_ties": 256,
+      "nll_undefined_difference": 0,
+      "nll_worse": 9172,
+      "planned": 17280,
+      "regressions": 22,
+      "repairs": 3644
+    },
+    "lexical_retention": {
+      "mean_nll_change": -0.10063347234130486,
+      "nll_better": 27401,
+      "nll_ties": 996,
+      "nll_undefined_difference": 0,
+      "nll_worse": 13203,
+      "planned": 41600,
+      "regressions": 0,
+      "repairs": 2080
+    },
+    "saturation_retention": {
+      "mean_nll_change": -1.117952999451589,
+      "nll_better": 9894,
+      "nll_ties": 155,
+      "nll_undefined_difference": 0,
+      "nll_worse": 7231,
+      "planned": 17280,
+      "regressions": 8,
+      "repairs": 3390
+    }
+  },
+  "per_seed": {
+    "11": {
+      "fresh": {
+        "centered": {
+          "nand": {
+            "correct": 712,
+            "mean_nll": 1.7797164038025064,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 732,
+            "mean_nll": 1.8889137750885856,
+            "planned": 1728
+          }
+        },
+        "unsaturated": {
+          "nand": {
+            "correct": 720,
+            "mean_nll": 1.7657535452476447,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 732,
+            "mean_nll": 1.8707134040957425,
+            "planned": 1728
+          }
+        }
+      },
+      "passes_all_laws": false,
+      "training_nll": {
+        "centered": 0.3360422606432063,
+        "unsaturated": 0.33806419179426483
+      }
+    },
+    "23": {
+      "fresh": {
+        "centered": {
+          "nand": {
+            "correct": 1728,
+            "mean_nll": 0.004642496134768365,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_nll": 0.004433723289453843,
+            "planned": 1728
+          }
+        },
+        "unsaturated": {
+          "nand": {
+            "correct": 918,
+            "mean_nll": 2.737438885336038,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 912,
+            "mean_nll": 2.6856441381646734,
+            "planned": 1728
+          }
+        }
+      },
+      "passes_all_laws": true,
+      "training_nll": {
+        "centered": 0.003398139450375576,
+        "unsaturated": 0.15157276781071957
+      }
+    },
+    "37": {
+      "fresh": {
+        "centered": {
+          "nand": {
+            "correct": 1728,
+            "mean_nll": 0.006594702332588622,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_nll": 0.006143826842572366,
+            "planned": 1728
+          }
+        },
+        "unsaturated": {
+          "nand": {
+            "correct": 1728,
+            "mean_nll": 0.0068213258248888365,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_nll": 0.006370594061200267,
+            "planned": 1728
+          }
+        }
+      },
+      "passes_all_laws": true,
+      "training_nll": {
+        "centered": 0.004345489700414716,
+        "unsaturated": 0.004346417896176499
+      }
+    },
+    "53": {
+      "fresh": {
+        "centered": {
+          "nand": {
+            "correct": 1728,
+            "mean_nll": 0.004583350220771599,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_nll": 0.004266996636807008,
+            "planned": 1728
+          }
+        },
+        "unsaturated": {
+          "nand": {
+            "correct": 834,
+            "mean_nll": 2.6938505319682466,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 840,
+            "mean_nll": 2.9716836086935037,
+            "planned": 1728
+          }
+        }
+      },
+      "passes_all_laws": true,
+      "training_nll": {
+        "centered": 0.0033762526834404637,
+        "unsaturated": 0.15762365015665256
+      }
+    },
+    "7": {
+      "fresh": {
+        "centered": {
+          "nand": {
+            "correct": 1728,
+            "mean_nll": 0.0042769206911820725,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_nll": 0.0044068763166081,
+            "planned": 1728
+          }
+        },
+        "unsaturated": {
+          "nand": {
+            "correct": 1728,
+            "mean_nll": 0.00505361689047089,
+            "planned": 1728
+          },
+          "nor": {
+            "correct": 1728,
+            "mean_nll": 0.005183621441905997,
+            "planned": 1728
+          }
+        }
+      },
+      "passes_all_laws": true,
+      "training_nll": {
+        "centered": 0.0024692201369858544,
+        "unsaturated": 0.002459373396659406
+      }
+    }
+  },
+  "resources": {
+    "collection_cached_prediction_regions": {
+      "cpu_seconds": 4.8421470919999985,
+      "p95_batch_amortized_seconds_range": [
+        5.260177083243889e-06,
+        4.0077093743207115e-05
+      ],
+      "peak_rss_kib": 434128,
+      "scope": "Cached batched prediction regions only; excludes preparation, serialization, scoring and native references. Not service latency or matched consumed compute.",
+      "wall_seconds": 4.84360587099809
+    },
+    "fit": {
+      "cpu_seconds": 21.786085880999998,
+      "peak_rss_kib": 352208,
+      "wall_seconds": 21.78888138100001
+    }
+  },
+  "runtime": {
+    "cpu_architecture": "x86_64",
+    "deterministic_algorithms": true,
+    "dtype": "float64",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "python": "3.13.5",
+    "threads": 1,
+    "torch": "2.10.0+cpu"
+  },
+  "saved_audit_sha256": "bf6a444511ea0c4733c48bf72d982252120cc101f87662ad7e981061e760eced",
+  "scientific_admission": false,
+  "source_publication": "4bbbc1148d70ddefb8813b0c435f9ef22c6c5016",
+  "summary_sha256": "0e161fd6bec9b0f7097144fdec39f4314486dc43542fba4dafef0afca93900a1",
+  "training_events_per_update": 1152,
+  "verification": {
+    "full_suite": {
+      "errors": 0,
+      "exit_code": 0,
+      "failures": 0,
+      "log": "centering-final-suite.log",
+      "seconds": 78.865,
+      "skips": 0,
+      "subsequent_changes": "Documentation, verification metadata and archived logs only; Python source unchanged.",
+      "tested_code_commit": "4208f6fdb64ee52c1575b3d3545dee6ec3d00a91",
+      "tests": 934
+    },
+    "independent_saved_result_review": {
+      "assertions": 189,
+      "discrepancies": 0
+    },
+    "original_protocol_verified": true,
+    "protocol_locks_passed": 31,
+    "source_freeze": {
+      "all_unchanged": true,
+      "historical_bindings": 81,
+      "source_bindings": 76
+    }
+  },
+  "version": "centering-headline-v1",
+  "weights_publication": "7826726ff67e1c743c0a3cccbe7a9d35574642cb",
+  "world_parameters_per_checkpoint": 562
+}
