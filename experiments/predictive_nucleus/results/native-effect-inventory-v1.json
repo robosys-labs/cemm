@@ -1,0 +1,172 @@
+{
+  "bound_files": {
+    "bilingual_run.py": "4c52e54d77e05d5c7b0579885c17907e9d8e36a0e1a5a0b1ae2666fb6801c8de",
+    "data/multisource-law-fit-v1/initial-11.json": "008a34f294e3c15263502b204bef3f7d3dcbbe6541f22feb14dec58d39af1b91",
+    "data/multisource-law-fit-v1/initial-23.json": "3dd01440a3592b71d2b1d50a6884358bd5add04fa32e3010c1fafb2b619aecfa",
+    "data/multisource-law-fit-v1/initial-37.json": "dacaad893fba0933e3a3854c9b487b9a5afd0d504abe9c2c5d8199f15dec23f2",
+    "data/multisource-law-fit-v1/initial-53.json": "aaf8fefc4cb70e461863341679fab1076e78152fdd753167495c2df98ee94b00",
+    "data/multisource-law-fit-v1/initial-7.json": "9e3e3ac93ff3e35f1951bc5aa2d5a54f251de262843862a391ae6facbc00258f",
+    "data/multisource-law-fit-v1/nand-11.json": "4e71f592991202373ba2f6cac6e12061c814076fb366dcbd263d55172baceff2",
+    "data/multisource-law-fit-v1/nand-23.json": "849fd4c86c33392077ed29cf20e30f8c10477f2206cbb17a3ccbbae34a850eb0",
+    "data/multisource-law-fit-v1/nand-37.json": "01de7eb749ee20300c91c1cdab42f6e776365cf7a3157d85532ee1cb34e75b6e",
+    "data/multisource-law-fit-v1/nand-53.json": "12636f87ad265929c50ff17fd9f3fa5a1ec696e3cc6988216f7ab770d53f47c2",
+    "data/multisource-law-fit-v1/nand-7.json": "6e3fdbe93f0de74af49b5600a6000eb7023982d7b305abb8ab7f7ad3091774f1",
+    "data/multisource-law-fit-v1/nor-11.json": "b82c57062a6ca878138ae98aed6c854222b00ce8c169d36efb92d8d766c172c8",
+    "data/multisource-law-fit-v1/nor-23.json": "6cae81984bb78704a31a92b1dc7a1f3e0c2d8bec5752143f708a2217216a1456",
+    "data/multisource-law-fit-v1/nor-37.json": "c1836df708f1f310039eb81004c0c1310104c2f893ebfc09623e882b159aecee",
+    "data/multisource-law-fit-v1/nor-53.json": "a31c0875a00cacf7378689f15a48b81ede50fcaa55985d7df61161434b2c7fc0",
+    "data/multisource-law-fit-v1/nor-7.json": "70f264ee403fd72b83eda688409b70705d1c062630282eec7568ca0f8f10cc70",
+    "data/multisource-law-v1/nand-train-inputs.json": "9523dcacf5b7f444b09634d8ecd25c0b0a93d29cc5ef3e4a13bb6a96c3702631",
+    "data/multisource-law-v1/nor-train-inputs.json": "b198d362f6b39f1a42e1dea9033159191cecddbf109caccf41d6609722204746",
+    "domain_kernel.py": "c2ce94522acfe931134a6bf8d90a0f2874fed0fa6a72e81e3ec8f9cc14f29eb3",
+    "joint_objective.py": "c00551ac3f0cff682b2dcd415929d8e8b7279f7fe92494fd07a2411a29ad1f4f",
+    "multisource_law_run.py": "8a6c31ce95e616a9eb5438c1deb6d7150317b4b4eb616081bb9a911ad0ac90d2"
+  },
+  "checkpoints": {
+    "nand/11": {
+      "final_state_sha256": "1fc4a59aa6d631e3e22bf957748f8c14f126520ff182c01dfed62a29620e32d7",
+      "initial_state_sha256": "a54bdee4d6da41bd5d7fd9e10b7bb3194a9907fc212c404bab563dab035d5fdd",
+      "intervention_scalars": 57,
+      "intervention_tensors_unchanged": {
+        "intervention.0.bias": true,
+        "intervention.0.weight": true,
+        "intervention.2.bias": true,
+        "intervention.2.weight": true
+      },
+      "set_background_column_scalars": 11,
+      "set_background_column_unchanged": true
+    },
+    "nand/23": {
+      "final_state_sha256": "5acd4fde9e27a266dd3ca4cdd17bbf3b6c18c1a4e585707e88a3c458d7a5939f",
+      "initial_state_sha256": "6997094834fa503dc9a177c9eb297db2ffdf3fa1e6fc15e94020489a16b9ee59",
+      "intervention_scalars": 57,
+      "intervention_tensors_unchanged": {
+        "intervention.0.bias": true,
+        "intervention.0.weight": true,
+        "intervention.2.bias": true,
+        "intervention.2.weight": true
+      },
+      "set_background_column_scalars": 11,
+      "set_background_column_unchanged": true
+    },
+    "nand/37": {
+      "final_state_sha256": "155da39be5bfacf82dc8559d0aef9634f05c9a6fe88414a19f3fb960f8712310",
+      "initial_state_sha256": "507ccb3ded0fe56f5f062370827105aa25c706a6bf6efc96d3a981ddd33cc2e2",
+      "intervention_scalars": 57,
+      "intervention_tensors_unchanged": {
+        "intervention.0.bias": true,
+        "intervention.0.weight": true,
+        "intervention.2.bias": true,
+        "intervention.2.weight": true
+      },
+      "set_background_column_scalars": 11,
+      "set_background_column_unchanged": true
+    },
+    "nand/53": {
+      "final_state_sha256": "55be87a594fc2f45f2884783273a342c8e0ea9836bbbf5bc0d9d12f1fa9db89d",
+      "initial_state_sha256": "1f5fac7e8d9c9b71f94d97df747b16efdcb77e29f6b0d9f9b813aafd11debaac",
+      "intervention_scalars": 57,
+      "intervention_tensors_unchanged": {
+        "intervention.0.bias": true,
+        "intervention.0.weight": true,
+        "intervention.2.bias": true,
+        "intervention.2.weight": true
+      },
+      "set_background_column_scalars": 11,
+      "set_background_column_unchanged": true
+    },
+    "nand/7": {
+      "final_state_sha256": "ae74ae65599232f614b37260b793d62a1d663ee66cd0b2dd8827c7a3921058fa",
+      "initial_state_sha256": "0c8febd7badf04d5184374040e50adb1f211eb327313cc98ea47afa2af496fae",
+      "intervention_scalars": 57,
+      "intervention_tensors_unchanged": {
+        "intervention.0.bias": true,
+        "intervention.0.weight": true,
+        "intervention.2.bias": true,
+        "intervention.2.weight": true
+      },
+      "set_background_column_scalars": 11,
+      "set_background_column_unchanged": true
+    },
+    "nor/11": {
+      "final_state_sha256": "cdcb5d60079adbe86fc3a7e97d627a0ce91e5e7243d271e5179caca219b0b5a3",
+      "initial_state_sha256": "a54bdee4d6da41bd5d7fd9e10b7bb3194a9907fc212c404bab563dab035d5fdd",
+      "intervention_scalars": 57,
+      "intervention_tensors_unchanged": {
+        "intervention.0.bias": true,
+        "intervention.0.weight": true,
+        "intervention.2.bias": true,
+        "intervention.2.weight": true
+      },
+      "set_background_column_scalars": 11,
+      "set_background_column_unchanged": true
+    },
+    "nor/23": {
+      "final_state_sha256": "28438ab99a92231996125184431c6b971581cc63ffb049950d36b27bcebab751",
+      "initial_state_sha256": "6997094834fa503dc9a177c9eb297db2ffdf3fa1e6fc15e94020489a16b9ee59",
+      "intervention_scalars": 57,
+      "intervention_tensors_unchanged": {
+        "intervention.0.bias": true,
+        "intervention.0.weight": true,
+        "intervention.2.bias": true,
+        "intervention.2.weight": true
+      },
+      "set_background_column_scalars": 11,
+      "set_background_column_unchanged": true
+    },
+    "nor/37": {
+      "final_state_sha256": "cc5beedbcdecfb4e3b04f3dfc5a6fc1a89ba9682920ee2300d90ff525c23d893",
+      "initial_state_sha256": "507ccb3ded0fe56f5f062370827105aa25c706a6bf6efc96d3a981ddd33cc2e2",
+      "intervention_scalars": 57,
+      "intervention_tensors_unchanged": {
+        "intervention.0.bias": true,
+        "intervention.0.weight": true,
+        "intervention.2.bias": true,
+        "intervention.2.weight": true
+      },
+      "set_background_column_scalars": 11,
+      "set_background_column_unchanged": true
+    },
+    "nor/53": {
+      "final_state_sha256": "49906ff93938b00fce1d90fc832c69d9154ea32768acdbc00806583e584859d2",
+      "initial_state_sha256": "1f5fac7e8d9c9b71f94d97df747b16efdcb77e29f6b0d9f9b813aafd11debaac",
+      "intervention_scalars": 57,
+      "intervention_tensors_unchanged": {
+        "intervention.0.bias": true,
+        "intervention.0.weight": true,
+        "intervention.2.bias": true,
+        "intervention.2.weight": true
+      },
+      "set_background_column_scalars": 11,
+      "set_background_column_unchanged": true
+    },
+    "nor/7": {
+      "final_state_sha256": "ccc1082ac481af3282dd16c9f66997753ccfbf4087a933d9a53acdf01ad9e1f3",
+      "initial_state_sha256": "0c8febd7badf04d5184374040e50adb1f211eb327313cc98ea47afa2af496fae",
+      "intervention_scalars": 57,
+      "intervention_tensors_unchanged": {
+        "intervention.0.bias": true,
+        "intervention.0.weight": true,
+        "intervention.2.bias": true,
+        "intervention.2.weight": true
+      },
+      "set_background_column_scalars": 11,
+      "set_background_column_unchanged": true
+    }
+  },
+  "date": "2026-11-01",
+  "finding": "Current acquired NAND/NOR worlds have no trained set-intervention parameters. Context set actions receive full observations; they are not evidence of accurate set forecasts.",
+  "limits": "Read-only training/checkpoint inventory, not predictive evaluation. Native action family/locality are supplied. Restricting parameter updates is a proposed retention mechanism, not measured success.",
+  "new_fits": 0,
+  "new_forecasts": 0,
+  "next_scope": "Acquire set from a fresh nonverbal training tape by updating only the existing 57 intervention scalars and 11 set-only background input weights; retain contact paths. Validate before any lexical contact-vs-set study.",
+  "training_action_counts_per_law": {
+    "nand": {
+      "contact": 256
+    },
+    "nor": {
+      "contact": 256
+    }
+  },
+  "version": "native-effect-inventory-v1"
+}
