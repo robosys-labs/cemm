@@ -1,0 +1,142 @@
+{
+  "code_size": {
+    "inclusive_2000_line_goal_met": false,
+    "next_candidate_source_added": 47,
+    "next_candidate_tests_added": 93,
+    "retained_research_python": 40718,
+    "retained_research_test_python": 17732,
+    "study_source_and_audit_added": 694,
+    "study_tests_added": 440,
+    "total_python_added": 1274
+  },
+  "date": "2026-11-01",
+  "execution": {
+    "collection_invocations": 1,
+    "completed_arm_seed_fits": 10,
+    "fit_invocations": 1,
+    "next_coordinate_candidate_research_fits": 0,
+    "research_retries": 0,
+    "saved_record_audit_invocations": 1,
+    "scoring_invocations": 1
+  },
+  "log_archive": {
+    "bytes": 28772,
+    "members": [
+      {
+        "bytes": 3147,
+        "path": "centering-focused.log",
+        "sha256": "fe6055d99198d954b60b69bda721930e628014df1d9ef3acad9895f8c38d5281"
+      },
+      {
+        "bytes": 60,
+        "path": "centering-full-suite.log",
+        "sha256": "3e737f6a9117cec194b02103b357f8668fae9adb86a8a8cd0bf25efab8948548"
+      },
+      {
+        "bytes": 159790,
+        "path": "centering-full-suite-v1.log",
+        "sha256": "efe605a0e76ea9304b2db0aa8f9ca1d01227b8f03181d8ac4daf1832b56c270b"
+      },
+      {
+        "bytes": 564,
+        "path": "centering-preflight-gate.log",
+        "sha256": "6976f05e17c625d43281f6370c078063c1af9bfb9ed6015a060a1a91ecc902a4"
+      },
+      {
+        "bytes": 26429,
+        "path": "centering-prefit-preflight.json",
+        "sha256": "0ca3a365200bcd98cf4ba8d52c8a37ab68f392a8572e347ab6b8ce3d58366874"
+      },
+      {
+        "bytes": 158504,
+        "path": "centering-full-suite-committed.log",
+        "sha256": "e548ea3c7bc74ee73e32fa6a2779cecd19a322aac79d2a9d8df88ce16764681f"
+      },
+      {
+        "bytes": 8697,
+        "path": "centering-fit-v1.log",
+        "sha256": "bd8a93997b8f95f5a867e4c3b26f29233afa92eec82f79574a39f3e49fa247e0"
+      },
+      {
+        "bytes": 243,
+        "path": "centering-collect-v1.log",
+        "sha256": "9ea06e68ba42140e5bea95b467c18299a1d3244188e93db07bb59e9715424c0e"
+      },
+      {
+        "bytes": 4106,
+        "path": "centering-score-v1.log",
+        "sha256": "109ab93806a31ec427a67cd87144545adb244a95ce391b71734314deeef42372"
+      },
+      {
+        "bytes": 247,
+        "path": "centering-audit-v1.log",
+        "sha256": "e3bf4e6c7f9e0437008b503222007354fe319f04ba95446e590e9dc6586e66ff"
+      },
+      {
+        "bytes": 159440,
+        "path": "centering-final-suite.log",
+        "sha256": "7e644dd5c0c19be67b99fdb5801b19050dc63d474a1fb8c3971a29246cd8bbae"
+      }
+    ],
+    "path": "centering-verification-logs-v1.tar.xz",
+    "sha256": "28a5d5a885e2017b9a455e258579b5ef9cab548521d92bb115e3edf8d4c5756d"
+  },
+  "raw_forecasts_commit": "964ea54abbf0c84ef89f8bd05f770dbd3e418bbd",
+  "retained_setup_and_verification_failures": [
+    {
+      "log": "centering-full-suite.log",
+      "reason": "/usr/bin/time unavailable; no tests or research executed."
+    },
+    {
+      "log": "centering-full-suite-v1.log",
+      "reason": "Precommit snapshot provenance gate rejected uncommitted source; 928 tests passed, one error. The same complete suite passed after source publication."
+    },
+    {
+      "log": "centering-preflight-gate.log",
+      "reason": "Ad hoc selector referenced nonexistent ComparisonExecutionTests class; invocation error, not a scientific retry."
+    },
+    {
+      "log": null,
+      "reason": "One ad hoc result-review script looked for arms instead of aggregate; corrected to existing saved-result schema. No research rerun."
+    }
+  ],
+  "scope": "Completed controlled initialization comparison; REVISE_CENTERING_HYPOTHESIS. G3 remains open; next coordinate candidate has no research fit. Verification is internal, not independent scientific custody.",
+  "source_commit_ci": {
+    "invariants_preflight": {
+      "conclusion": "success",
+      "url": "https://github.com/robosys-labs/cemm/actions/runs/41297210819"
+    },
+    "scope": "Source-publication SHA only; final-head hosted checks are tracked separately in PR #75.",
+    "source_snapshot": {
+      "conclusion": "success",
+      "url": "https://github.com/robosys-labs/cemm/actions/runs/41297210908"
+    }
+  },
+  "source_publication": "4bbbc1148d70ddefb8813b0c435f9ef22c6c5016",
+  "verification": {
+    "full_suite": {
+      "errors": 0,
+      "exit_code": 0,
+      "failures": 0,
+      "log": "centering-final-suite.log",
+      "seconds": 78.865,
+      "skips": 0,
+      "subsequent_changes": "Documentation, verification metadata and archived logs only; Python source unchanged.",
+      "tested_code_commit": "4208f6fdb64ee52c1575b3d3545dee6ec3d00a91",
+      "tests": 934
+    },
+    "independent_saved_result_review": {
+      "assertions": 189,
+      "discrepancies": 0
+    },
+    "original_protocol_verified": true,
+    "protocol_locks_passed": 31,
+    "source_freeze": {
+      "all_unchanged": true,
+      "historical_bindings": 81,
+      "source_bindings": 76
+    }
+  },
+  "version": "centering-execution-v1",
+  "weights_publication": "7826726ff67e1c743c0a3cccbe7a9d35574642cb"
+}

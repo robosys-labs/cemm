@@ -1,95 +1,101 @@
-# Active nucleus: training failure localized; G3 remains open
+# Active nucleus: centering passes four seeds; G3 fitting remains open
 
 Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22),
-[PR #73](https://github.com/robosys-labs/cemm/pull/73). Updated 2026-10-31.
-Latest learned-study result: `526c39db7030080cf7c1fd1f8ff7e1f9c6190051`.
-**REVISE_SATURATION_HYPOTHESIS; execution complete, not scientific admission.**
+[PR #75](https://github.com/robosys-labs/cemm/pull/75), stacked on #74.
+Updated 2026-11-01. **REVISE_CENTERING_HYPOTHESIS; execution complete.**
 
-## Current evidence
+## Latest completed evidence
 
-[Decision and full accounting](SATURATION_DECISION_V1.md).
-Ten paired original/unsaturated-factor fits completed 2,560 updates; the single
-collection produced all 209,280 candidate/control/retention records plus 17,280
-separate native-action references. Each language model has 89 parameters and
-identical initial tensors, observed NAND histories and prescribed update budget.
-Only the two terminal tanh operations differ. No world-model weights changed.
+[Decision and regression accounting](CENTERING_DECISION_V1.md) ·
+[headline](results/centering-headline-v1.json) ·
+[saved-record audit](results/centering-validation-v1.json).
 
-Source/data freeze: `cf6943b552dc7c255e416c47222d97b084b31ea3`.
-Checkpoint freeze: `1b73d3e94406bf5ceb55a5390bfb4b3a1c2f0cf4`.
-The encoders transfer unchanged from NAND to NOR. New evidence concerns four
-fresh words, eight withheld word-layout cells and diamond/bridge sequences;
-opened banks are labeled retention. This is public same-team custody.
+Standard unsaturated versus centered initialization: ten 89-parameter encoders,
+256 updates each, the identical 1,152-event NAND training tape and frozen world
+weights. Only one initial layout bias differs; the other 88 scalars, inference,
+loss and optimizer are fixed. No gold participant-order labels enter training.
+All five standard controls exactly reproduce archived final checkpoints.
 
-The candidate improves pooled fresh exactness from 8,809/17,280 to 11,886/17,280
-and withheld-cell exactness from 4,272/11,520 to 7,064/11,520. Against the paired
-original it repairs 4,148 fresh worlds but breaks 1,071. It also breaks 4,160
-archived lexical and 1,208 archived binding predictions. These dependent counts
-have different comparison references; aggregate gains do not justify replacement.
+Source/data freeze: `4bbbc1148d70ddefb8813b0c435f9ef22c6c5016`.
+Actual checkpoint freeze: `7826726ff67e1c743c0a3cccbe7a9d35574642cb`.
+One fit, collection and score completed; no research retry or seed selection.
+All 243,840 planned forecasts and 17,280 evaluator-only native references exist.
+Fresh evidence covers relay4/fork_return5 event structures; words/layouts were
+already opened. Old bilingual, lexical, binding and saturation banks are retention.
 
-Seeds 7/37 pass every criterion under both laws; seeds 11/23/53 fail. The same
-three miss the observed-training NLL <=0.05 criterion despite improved fit.
-Terminal saturation alone is not a reliable repair. Two successful seeds show
-a bounded representable solution, not robust fitting or general language.
+| Same-bank metric | Standard unsaturated | Centered |
+|---|---:|---:|
+| Fresh complete worlds correct | 11,868/17,280 | 15,268/17,280 |
+| Training-withheld-cell worlds correct | 7,048/11,520 | 9,744/11,520 |
+| Fresh mean NLL | 1.474851 | 0.370798 |
 
-PR #73's [saved-record verification](results/saturation-validation-v1.json) reproduces the
-decision with 3,032,778 checks and zero discrepancies: 70 source bindings, 63
-historical bindings, ten checkpoints and every planned record. No model or closed
-collector was rerun. That tranche added twenty passing tests; its local suite has 892 passes and
-one checkout-only skip, with all 30 locks passing. Retained research Python is
-39,036 lines including 17,021 test lines; the inclusive 2,000-line goal is unmet.
+Seeds **7, 23, 37 and 53 pass every criterion under both laws; seed 11 fails**.
+The candidate repairs 3,408 fresh worlds but breaks eight and worsens NLL on
+7,230 records. Archived exact regressions remain: bilingual 0, lexical 2,080,
+binding 464, saturation eight. Paired retention breaks 22 binding and eight
+saturation predictions. All remaining exact regressions belong to seed 11.
+These are dependent law/seed/view counts, not independent trials or G3 admission.
 
-## Completed training-only diagnostic and next implementation
+Seed 11 still has all-positive learned layout factors and training NLL 0.336042,
+above the frozen 0.05 limit. Centering repairs two earlier failing seeds without
+solving robust fitting. The observed rank-one layout failure remains localized;
+more capacity or additional fitting is not justified by this pooled gain.
 
-[Loss/gradient audit and full interpretation](TRAINING_GRADIENT_AUDIT_V1.md).
-All ten saved encoders reproduce their post-training loss on 1,152 observed NAND
-events each, with zero parameter updates or held-challenge reads in the diagnostic.
-The three failing unsaturated seeds all have same-sign learned layout factors;
-the two passing seeds have sign-changing factors. The rank-one readout cannot
-reverse two words' preference ranking across layouts while its layout factors
-retain the same sign. Strong immediate output gradients remain, and the full
-parameter gradients are nonzero. This localizes a fitted-representation failure,
-not a proved lack of model capacity or a reliable repair.
+## Implemented next candidate; no research fit
 
-`binding_centered_init.py` implements a 19-line, opt-in initial-layout centering
-candidate: change one bias scalar, preserve the other 88 initial scalars, retain
-the exact same 89-parameter class/inference/loss. No role or position polarity is
-prescribed. The bias stays trainable. Candidate status is
-**IMPLEMENTED_NOT_SCIENTIFICALLY_EVALUATED**; historical registries are untouched.
+[binding_layout_coordinates.py](binding_layout_coordinates.py) replaces the four
+redundant affine layout scalars with three unconstrained response coordinates:
+**88 parameters**, versus 89. It preserves the centered initial function on all
+three legal identity masks and the other 85 scalars. No sign, zero mean, word
+meaning or role is forced; the full legal-mask response class R^3 is preserved.
 
-Thirteen new tests pass; full local suite: 905 passes/one checkout-only skip;
-all 30 locks pass. Retained research Python: 39,444 lines; the original inclusive
-2,000-line goal remains unmet. Full derivative evidence is in the delivery bundle;
-the committed summary binds all inputs, sources, seeds and its complete-artifact hash.
+The old layout Jacobian has `J J^T = I + 2 11^T`, with common/contrast
+sensitivities 7/1/1 under unpreconditioned gradient descent. Direct coordinates
+remove this coupling. This is a testable parameterization hypothesis, not an
+Adam convergence proof. Candidate: **IMPLEMENTED_NOT_SCIENTIFICALLY_EVALUATED**.
 
-Next: one fresh prospective standard-unsaturated versus centered-initialization
-comparison at all five seeds. Keep observed histories, 256 updates, optimizer,
-world weights and criteria identical; disclose the single intentionally different
-initial scalar. Freeze the new challenge/source before fitting and actual weights
-before collection. Retain all seeds, exact/probability/retention requirements and
-failures. Do not rerun a closed challenge, add capacity or advance to G4. No new
-candidate fit, challenge bank or collection has occurred in this tranche.
+Next: freeze one fresh centered-versus-coordinate comparison with matching
+initial functions, the same observed tape, optimizer, 256 updates and all five
+seeds. Publish source/challenge before fitting and actual weights before collection.
+Preserve exact, probability, paired/archived retention and masking/swap criteria.
+Use fresh event structures and label opened banks as retention. No closed-study
+rerun, extra capacity, G4 advance or G1/G2 backtracking.
 
-## Preserved roadmap and boundaries
+## Verification and limits
+
+The separate stdlib audit reproduces the result with **3,430,239 checks and zero
+discrepancies**, covering 76 source bindings, 81 historical bindings, all ten
+initial states/checkpoints and every saved record. It runs no model or original
+scorer. This remains internal verification under public same-team custody.
+
+The final suite passed all **934 tests** in 78.865 seconds, including the five
+coordinate-candidate tests; **31 protocol locks pass**. The
+[execution receipt](results/centering-execution-v1.json) retains verification
+provenance and setup failures. Retained research Python is **40,718 lines**,
+including 17,732 test lines. The inclusive 2,000-line target remains unmet;
+compact parameter count and compact implementation are separate objectives.
+Fitting consumed 21.786086 CPU seconds; cached prediction regions 4.842147 CPU
+seconds, excluding preparation, serialization, scoring and native references.
+No matched-consumed-compute or service-latency claim follows.
+
+## Preserved roadmap
 
 | Stage | Current state / remaining work |
 |---|---|
 | G1 | Development ready for G2; original scientific admission remains NOT_ADMITTED. |
-| G2 | Selected composition, hidden propagation and explicit timing complete for development; formal scientific admission remains open. |
-| G3 | Lexical result retained; paired activation study complete but failed overall. Training failure localized; centered-initialization candidate awaits a fresh paired test. |
+| G2 | Selected composition, hidden propagation and timing complete for development; formal admission remains open. |
+| G3 | Bilingual/lexical results retained. Centering study complete but fails all-seed gate; coordinate candidate awaits prospective comparison. |
 | G4 | Held-out goal-directed communication against silent/random/shuffled controls. |
 | G5 | Durable learning, useful clarification and retention across episodes. |
 | G6 | Grounded corpus transfer beyond retrieval/frequency controls. |
 | G7 | Frozen-bank 3x supported utility with precision, retention and cost gates. |
 | G8 | Independent reproduction and reviewed integration/rollback. |
 
-The [previous complete handoff and retained decisions](https://github.com/robosys-labs/cemm/blob/594dc715d7562587568858be4ad62bc51c581786/experiments/predictive_nucleus/ACTIVE_NUCLEUS.md),
-[full native API guide](https://github.com/robosys-labs/cemm/blob/2336a0bbaedca1840a2ab8e1616ebbdf3e26f82b/experiments/predictive_nucleus/ACTIVE_NUCLEUS.md),
-and [ACCEPTANCE.md](ACCEPTANCE.md) remain authoritative for their declared scope.
-All earlier KEEP/REVISE/STOP results, source pins, data and checkpoints are intact.
-The prior binding study's original STOP_INCOMPLETE_EXECUTION is not relabeled.
-
-Native active-inference-v6, active-evidence-v2, active-learning-v1 and native
-checkpoint v1 are unchanged. Supplied identity resolution, two contact alternatives,
-world filtering and full endpoint feedback are not learned general language or a
-clarification policy. Domain/resource limits and production authority stay intact.
-No AGENTS, production runtime, external-effect or integration change is implied.
+[Prior centering rationale](TRAINING_GRADIENT_AUDIT_V1.md),
+[activation-study result](SATURATION_DECISION_V1.md) and
+[ACCEPTANCE.md](ACCEPTANCE.md) retain their declared scope. Earlier KEEP/REVISE/STOP
+results, protocols, data and checkpoints remain intact. The binding study's
+STOP_INCOMPLETE_EXECUTION is not relabeled. Native inference/evidence/learning
+APIs, production authority and the 562-parameter acquired worlds are unchanged.
+Supplied identity resolution, two contact alternatives, filtering and endpoint
+feedback do not establish unrestricted language or a learned clarification policy.
