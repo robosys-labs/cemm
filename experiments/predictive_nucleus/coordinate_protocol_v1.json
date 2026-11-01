@@ -1,0 +1,60 @@
+{
+  "version": "coordinate-v1",
+  "base_commit": "6efdc97164dafb45b82718688bf8dbb275987518",
+  "recorded_on": "2026-11-01",
+  "model_seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "train_forecasts": 1152,
+  "challenge_forecasts_per_law": 1728,
+  "hypothesis": "Replace the four redundant affine layout scalars with three unrestricted response coordinates, preserving the initial function and all other 85 scalars; test whether the changed optimization geometry improves all-seed fitting at the unchanged budget.",
+  "fit": {
+    "updates": 256,
+    "learning_rate": 0.02,
+    "gradient_clip": 5.0,
+    "cpu_seconds_per_arm": 120.0
+  },
+  "analysis": {
+    "min_accuracy": 0.95,
+    "max_mean_nll": 0.05,
+    "min_true_probability": 0.9,
+    "max_foil_probability": 0.1,
+    "min_gap": 0.8,
+    "max_control_tv": 1e-10
+  },
+  "execution": {
+    "runtime": {
+      "python": "3.13.5",
+      "torch": "2.10.0+cpu",
+      "numpy": "2.3.5",
+      "threads": 1,
+      "dtype": "float64",
+      "deterministic_algorithms": true
+    }
+  },
+  "design": {
+    "training": "Exact saturation-v1 1152-event observed NAND training tape; identical bytes, order and full outcome likelihood for both arms. No additional examples, gold roles or participant-order labels.",
+    "initialization": "Centered89 versus existing coordinate_encoder88. Same 85 nonlayout scalars and equal initial responses on the three legal identity masks. All real training token features must match initial order probabilities within 1e-14. No sign or zero-mean constraint; full legal-mask response class preserved. Keep actual initial tensors and response-equivalence receipts.",
+    "optimization": "Same Adam settings and parameter-space gradient clipping; changing coordinates intentionally changes effective optimizer and clipping geometry. This is not an identical-gradient or matched-consumed-compute claim.",
+    "holdout": "Fresh ordered fanout_cross4 and chain_shortcut5 event families. Novelty guard includes all bilingual/binding/saturation/centering schedules, ignoring edge direction and active-entity renaming while preserving event order. Same laws, four anchors, layouts and paired reversals; no outcome filtering. Words and training-withheld lexical-layout cells already opened.",
+    "retention": "Opened bilingual-v1, lexical-v1, binding-v1, saturation-v1 and centering-v1. Original lexical, binding-factor, saturation-unsaturated and centering-centered forecasts are archived references. Preserve paired current-centered exact predictions too. No archived fits/forecasts are changed or recollected.",
+    "controls": "Paired centered89 control must exactly reproduce archived centering initial/final fingerprints for all seeds; mismatch invalidates the experiment. Same canonical-prefix final-word mask/swap probes and separate evaluator-only native-action references. Historical GRU/additive results are context, not fresh-bank architecture comparators.",
+    "decision": "Coordinate88 must pass unchanged per-cell, pair, probability, mask/swap criteria at every seed/law; observed training mean NLL<=.05, zero native/archived/paired exact regressions and no mean fresh NLL increase versus paired centered89. KEEP_LAYOUT_COORDINATES only if all pass, otherwise REVISE_COORDINATE_HYPOTHESIS. Individual adverse probability changes reported without a new veto. A pass closes only this bounded fitting/transfer question, not full G3.",
+    "publication": "Publish source/protocol/recipe/all data hashes before fitting; publish all ten actual checkpoints before collection. Offline publication SHA arguments are attestations verified against GitHub outside the runner.",
+    "failure": "One research fit/collection attempt with exclusive output directories. No retries, seed selection, extra fitting or early stopping. Collect all completed seeds including training-fit failures. Invalid or incomplete inventories stop. Synthetic invariant tests are labeled separately.",
+    "limits": "Public same-team experiment, not independent scientific custody. Known binary physics, supplied identity resolution/token boundaries, two directed contact alternatives, full endpoint feedback and existing rank-one structure. Equal exposure/update budgets do not establish matched consumed compute. G3 stays open; no production promotion or G4 advance."
+  },
+  "scientific_admission": false,
+  "arms": [
+    "centered",
+    "coordinates"
+  ],
+  "parameters": {
+    "centered": 89,
+    "coordinates": 88
+  }
+}
