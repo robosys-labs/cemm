@@ -8,39 +8,38 @@
 
 ## Current development checkpoint — 2026-11-02
 
-**Native SET acquisition is accepted; complete the remaining G3 language and goal
-transfer study next.** G1/G2 development readiness remains **PROCEED_TO_G2 /
-PROCEED_TO_G3**. The original scientific criteria below are unchanged.
+**G3 effect/role v1 is complete: REVISE_EFFECT_ROLE_GROUNDING in all ten
+law/seed conditions. Development G3 remains open; neutral-normalization v2 is
+prospective.** G1/G2 development readiness and original scientific criteria below
+are unchanged.
+
+The [completed v1 decision](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V1.md)
+records all 15 fits and 408,000 formal forecast rows. The saved-record audit passes
+12,946,593 checks with zero discrepancies. Every seed fails bilingual TV and
+conditional KL; seed 7 also fails fresh competence/goals. Seeds 23/37/53 fail
+retained NLL in three banks, with seed 37 causing 525 world regressions and
+768 action changes. All negative evidence remains immutable.
 
 [Coordinate transfer](../../experiments/predictive_nucleus/COORDINATE_DECISION_V1.md),
-[PR #76](https://github.com/robosys-labs/cemm/pull/76), remains
-**KEEP_LAYOUT_COORDINATES** across all seeds and both laws.
+[PR #76](https://github.com/robosys-labs/cemm/pull/76), and
+[native SET v2](../../experiments/predictive_nucleus/SET_ACQUISITION_DECISION_V2.md),
+[PR #78](https://github.com/robosys-labs/cemm/pull/78), retain their KEEP decisions.
+All ten acquired native worlds remain unchanged. Native SET v1 remains
+SCORING_ABORTED / REVISE under its original immutable rule.
 
-The [native SET v2 decision](../../experiments/predictive_nucleus/SET_ACQUISITION_DECISION_V2.md),
-[PR #78](https://github.com/robosys-labs/cemm/pull/78), is now
-**KEEP_NATIVE_SET_ACQUISITION**. All ten fits and every criterion pass:
-16,640/16,640 identifiable worlds, 11,520/11,520 SET worlds and 131,520/131,520
-retained language worlds are correct. Ambiguous cases retain conditional
-uncertainty. Exact world/order decisions are unchanged. Source, checkpoints and
-all 189,120 raw forecasts were public before each next stage. The saved-record
-audit passes 5,201,663 checks with zero discrepancies.
-
-Explicit user approval resolved the earlier publication block. V1 remains
-**SCORING_ABORTED / REVISE_NATIVE_SET_ACQUISITION** under its immutable rule;
-its evidence was not changed or rescored.
-
-The authorized continuation freezes these worlds and tests effect/role language,
-fresh participants/reversals, untaught word-order combinations, goals and lexical
-identity preservation. Its direct four-action encoder uses 92 parameters. A
-separate source/data/runtime/criteria freeze must precede fitting. Native
-acquisition alone does not close G3. The
-[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) records
-next work and preserved boundaries.
+Post-publication TRAIN diagnostics add 17,520 forecast rows and zero optimizer
+updates; later saved-curve/result review adds no forecasts. These support a
+prospective normalization hypothesis, not acceptance. The next study must retain
+92 parameters, the same TRAIN tapes, five seeds, 256 updates and thresholds;
+freeze/publish fresh compositions and opened-v1 regression checks before new
+execution. The [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md)
+records the remaining sequence. Do not advance G4 on this evidence.
 
 Formal scientific admission, independent custody, matched consumed compute and
-general calibration remain open. Completed native studies are not reopened.
-Completed code retains 45,093 Python lines, including 19,165 tests; the inclusive
-2,000-line target remains unmet. Original gate definitions follow unchanged.
+general calibration remain open. Frozen v1 code has 48,323 Python lines including
+20,486 test lines; archived diagnostic scripts bring the inclusive total to
+48,724. The 2,000-line objective remains unmet. Original gate definitions follow
+unchanged.
 
 ## 0. Decision
 

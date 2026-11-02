@@ -1,0 +1,173 @@
+{
+  "source": "/workspace/scratch/2d722e4a2602/cemm-g3/experiments/predictive_nucleus/data/effect-role-fit-v1/training.json",
+  "saved_curves_only": true,
+  "new_forecasts": 0,
+  "new_updates": 0,
+  "rows": [
+    {
+      "arm": "grounded",
+      "seed": 7,
+      "teach192": 2.8977256938367955,
+      "teach240": 2.889808473039711,
+      "teach_final": 2.888162424037785,
+      "relative_drop_192_final": 0.0033002674543525234,
+      "relative_drop_240_final": 0.000569604877722063,
+      "rehearsal192": 0.0046701721955647564,
+      "rehearsal_final": 0.003427141985653662
+    },
+    {
+      "arm": "grounded",
+      "seed": 11,
+      "teach192": 0.13608271204844233,
+      "teach240": 0.07892119214471982,
+      "teach_final": 0.06651405093297538,
+      "relative_drop_192_final": 0.5112233587077695,
+      "relative_drop_240_final": 0.1572092472829496,
+      "rehearsal192": 0.041107807860033346,
+      "rehearsal_final": 0.019030289175664104
+    },
+    {
+      "arm": "grounded",
+      "seed": 23,
+      "teach192": 0.10659914994890626,
+      "teach240": 0.06381566983378356,
+      "teach_final": 0.05458054418957322,
+      "relative_drop_192_final": 0.48798330741160634,
+      "relative_drop_240_final": 0.1447156422280681,
+      "rehearsal192": 0.028409878021402643,
+      "rehearsal_final": 0.01481763418562058
+    },
+    {
+      "arm": "grounded",
+      "seed": 37,
+      "teach192": 0.10739943858245163,
+      "teach240": 0.06716941551375179,
+      "teach_final": 0.05806619073544168,
+      "relative_drop_192_final": 0.4593436287763861,
+      "relative_drop_240_final": 0.13552633603676922,
+      "rehearsal192": 0.03047155314305717,
+      "rehearsal_final": 0.01621414281432146
+    },
+    {
+      "arm": "grounded",
+      "seed": 53,
+      "teach192": 0.10632065647612503,
+      "teach240": 0.0664687989561697,
+      "teach_final": 0.05746092894171922,
+      "relative_drop_192_final": 0.4595506569824235,
+      "relative_drop_240_final": 0.13552027651936926,
+      "rehearsal192": 0.028866347517035516,
+      "rehearsal_final": 0.015340145659425625
+    },
+    {
+      "arm": "parser",
+      "seed": 7,
+      "teach192": 0.25748645610050247,
+      "teach240": 0.1611896606524634,
+      "teach_final": 0.13692262456476634,
+      "relative_drop_192_final": 0.46823368250746944,
+      "relative_drop_240_final": 0.15054958233343863,
+      "rehearsal192": 0.09023312844836397,
+      "rehearsal_final": 0.037050640339775044
+    },
+    {
+      "arm": "parser",
+      "seed": 11,
+      "teach192": 0.211671368227412,
+      "teach240": 0.1310310482764041,
+      "teach_final": 0.11193489710498317,
+      "relative_drop_192_final": 0.47118546054502564,
+      "relative_drop_240_final": 0.145737605114312,
+      "rehearsal192": 0.06711656842800579,
+      "rehearsal_final": 0.029715676161155738
+    },
+    {
+      "arm": "parser",
+      "seed": 23,
+      "teach192": 0.16414765639128567,
+      "teach240": 0.10251517567837,
+      "teach_final": 0.0883550115726887,
+      "relative_drop_192_final": 0.46173455341894654,
+      "relative_drop_240_final": 0.13812749197355179,
+      "rehearsal192": 0.044280920426852895,
+      "rehearsal_final": 0.02084405449807574
+    },
+    {
+      "arm": "parser",
+      "seed": 37,
+      "teach192": 0.14149600178892585,
+      "teach240": 0.08961694363401065,
+      "teach_final": 0.07775776533173581,
+      "relative_drop_192_final": 0.4504596289036521,
+      "relative_drop_240_final": 0.13233187633252586,
+      "rehearsal192": 0.033610661474363215,
+      "rehearsal_final": 0.01628163457959796
+    },
+    {
+      "arm": "parser",
+      "seed": 53,
+      "teach192": 0.13051716796239624,
+      "teach240": 0.08280627903943069,
+      "teach_final": 0.07195445645869883,
+      "relative_drop_192_final": 0.44869738148601357,
+      "relative_drop_240_final": 0.13105072111215677,
+      "rehearsal192": 0.03040791975277292,
+      "rehearsal_final": 0.015053882527794937
+    },
+    {
+      "arm": "text_only",
+      "seed": 7,
+      "teach192": 0.2178909571292387,
+      "teach240": 0.20827779869729476,
+      "teach_final": 0.2062476912911652,
+      "relative_drop_192_final": 0.053436204932394094,
+      "relative_drop_240_final": 0.00974711380102522,
+      "rehearsal192": 1.9157040208989906,
+      "rehearsal_final": 1.844443020534334
+    },
+    {
+      "arm": "text_only",
+      "seed": 11,
+      "teach192": 0.23047368167350699,
+      "teach240": 0.20815844559023383,
+      "teach_final": 0.2048378549027604,
+      "relative_drop_192_final": 0.11123103768118192,
+      "relative_drop_240_final": 0.015952226574607042,
+      "rehearsal192": 1.9452230336163499,
+      "rehearsal_final": 1.8815438988009692
+    },
+    {
+      "arm": "text_only",
+      "seed": 23,
+      "teach192": 0.20818833016866495,
+      "teach240": 0.200366643322269,
+      "teach_final": 0.1995279020135719,
+      "relative_drop_192_final": 0.04159900868639832,
+      "relative_drop_240_final": 0.004186032638916259,
+      "rehearsal192": 1.9476334568182212,
+      "rehearsal_final": 1.9006982293975554
+    },
+    {
+      "arm": "text_only",
+      "seed": 37,
+      "teach192": 0.23535662777316985,
+      "teach240": 0.2234968699068014,
+      "teach_final": 0.2216295785734531,
+      "relative_drop_192_final": 0.058324464152955446,
+      "relative_drop_240_final": 0.008354888075734368,
+      "rehearsal192": 1.9295482465613587,
+      "rehearsal_final": 1.8550631072459107
+    },
+    {
+      "arm": "text_only",
+      "seed": 53,
+      "teach192": 0.21968511925700823,
+      "teach240": 0.2065625760728672,
+      "teach_final": 0.20128448240823119,
+      "relative_drop_192_final": 0.08375914086037961,
+      "relative_drop_240_final": 0.025552032536494518,
+      "rehearsal192": 2.0441179729833188,
+      "rehearsal_final": 1.9098031888506586
+    }
+  ]
+}

@@ -1,45 +1,43 @@
-# G3 effect/role and goal transfer — frozen execution handoff
+# G3 effect/role v1 — completed negative result and next handoff
 
-The user approved publication and requested completion of G3. The accepted native
-world is [PR #78](https://github.com/robosys-labs/cemm/pull/78), commit
-`444300f70509d74371e32ce789450c532149fb6c`. Do not refit it.
+**V1 is complete: `REVISE_EFFECT_ROLE_GROUNDING` in all ten law/seed conditions.**
+Development G3 remains open. Preserve the accepted native SET world at
+[PR #78](https://github.com/robosys-labs/cemm/pull/78), commit
+`444300f70509d74371e32ce789450c532149fb6c`; do not refit it.
 
-[Study](EFFECT_ROLE_STUDY_V1.md) · [protocol](effect_role_protocol_v1.json) ·
-[runner](effect_role_run.py) · [saved-record auditor](audit_effect_role_saved.py).
+[Decision](EFFECT_ROLE_DECISION_V1.md) · [headline](results/effect-role-headline-v1.json) ·
+[execution receipt](results/effect-role-execution-v1.json) ·
+[full audit](results/effect-role-saved-audit-v1.json) ·
+[diagnostics](diagnostics/effect-role-v1/README.md).
 
-Freeze SHA256: `7b500d3bb1811dd484ea0af9ce7131776e7aea6d7a60a33f0e8490e34d494dca`.
-The frozen source inventory contains 68 files; 186 historical files are bound.
+## Completed v1 execution
 
-## Execution
+Source `75fe2474fcbf103a569f3f9375fa899922931b2d`, weights `6742c7df5b00f966c99c2a93d885d91eb21034e6` and raw forecasts `dbdd8ab95588913be5b647e0be789f8ed93c07c7` were published
+before their next research stage. Freeze SHA256:
+`7b500d3bb1811dd484ea0af9ce7131776e7aea6d7a60a33f0e8490e34d494dca`.
+All 15 fits and 408,000 formal forecast rows completed once, with no retries.
+Software verification passed 1,073 tests and 35 locks. The pre-score/full audits
+pass 2,773/12,946,593 checks with zero discrepancies. Every v1 failure remains
+in the complete scored reports; do not repeat fitting, collection or scoring.
 
-Use `/tmp/cemm-venv/bin/python` with `OMP_NUM_THREADS=1`, `MKL_NUM_THREADS=1`,
-`OPENBLAS_NUM_THREADS=1`, `PYTHONHASHSEED=0`. The complete numerical runtime must
-match the prepared receipt. Stages use exclusive outputs and permit no retry.
+Every seed fails bilingual TV and conditional KL. Seed 7 additionally fails fresh
+competence and goals. Seeds 23/37/53 fail historical NLL in three banks; seed 37
+causes 525 world regressions and 768 action changes. The accepted native worlds
+and lexical-identity controls remain intact. TRAIN-only diagnosis adds 17,520
+forecast rows and zero updates; later saved-evidence reviews add no forecasts.
 
-1. Verify the full isolated suite, all protocol locks and original preflight;
-   publish source/data/runtime on a new branch stacked on #78.
-2. Run `effect_role_run fit --data experiments/predictive_nucleus/data/effect-role-v1
-   --output experiments/predictive_nucleus/data/effect-role-fit-v1 --publication SOURCE_SHA`.
-   This fits all 15 language/control checkpoints once; worlds are immutable.
-3. Publish all actual checkpoint and training files before collection.
-4. Run `effect_role_run collect` with data, fitted directory, output
-   `experiments/predictive_nucleus/results/effect-role-v1/traces` and weights SHA.
-5. Publish all 408,000 raw forecast rows and the lexical control receipt.
-6. Run `audit_effect_role_saved --pre-score --repo REPO --publication RAW_SHA
-   --output OUTSIDE_REPO_PATH`. No evaluator targets are parsed in this mode.
-7. Run `effect_role_run score` with data, fitted and traces directories, output
-   `experiments/predictive_nucleus/results/effect-role-v1/scored` and RAW_SHA.
-8. Run the saved-record auditor without `--pre-score`, using the same RAW_SHA.
-9. Publish the complete decision, adverse records, resource/line accounting and
-   roadmap/issue/PR updates. Only a complete prospective pass closes development
-   G3. Formal scientific admission remains separate and open.
+## Authorized continuation
 
-Invoke stages with `python -m experiments.predictive_nucleus.MODULE`.
-At this handoff the study is prepared and no G3 research execution has begun.
+Publish this complete v1 result package before preparing/freezing the next study.
+The neutral-normalization v2 is a separate prospective hypothesis in an isolated
+worktree. Keep 92 parameters, all inherited values, 16/1,152 TRAIN exposures,
+five seeds, 256 updates, optimizer and acceptance thresholds unchanged. Require
+fresh challenge compositions plus the opened v1 regression bank; explicitly label
+archived controls and retain every adverse result. Source/data/runtime publication
+must precede any new fitting, actual weights must precede collection, and all raw
+forecasts must precede scoring. No real v2 outcome is established here.
 
-## Software verification before research execution
-
-All 1,073 isolated tests pass in 144.907 seconds, all 35 protocol locks verify,
-and original protocol/frozen-input preflight pass. The final freeze binds all
-68 source and 186 historical dependencies; prepared data are unchanged by that
-coverage extension. [Validation](results/effect-role-validation-v1.json).
+Complete development G3 only if every prospective v2 gate passes. Formal
+scientific admission, independent custody, matched consumed compute, G4–G8 and
+production integration remain separate. The frozen v1 protocol and reports are
+immutable; this handoff changes execution status only.
