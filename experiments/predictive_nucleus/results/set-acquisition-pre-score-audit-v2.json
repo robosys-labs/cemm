@@ -1,0 +1,26 @@
+{
+  "audit_passed": true,
+  "auditor_sha256": "954c07b22e36c05ffe69d784f5ee052ef20b4a35b37c04039008b7e9e2e1d748",
+  "check_count": 17967,
+  "decision": null,
+  "discrepancies": [],
+  "discrepancy_count": 0,
+  "evaluator_bytes_hashed": true,
+  "evaluator_targets_parsed": false,
+  "forecast_counts": {
+    "language": 131520,
+    "native": 57600
+  },
+  "helper_sha256": "925baec5249091c7795629b80692963a9b0a50273afb49812474d55bb448f3de",
+  "independent_custody": false,
+  "model_execution": false,
+  "new_collections": 0,
+  "new_fits": 0,
+  "original_scorer_execution": false,
+  "scientific_admission": false,
+  "scope": "All actual checkpoint masks, bound source/data/trace hashes and runtime receipts; every native and language point inventory, header, geometry and normalization. Targets are not decoded or parsed; frozen evaluator files are hashed as opaque bytes. No score files are read and no acceptance conclusion is drawn.",
+  "score_files_read": false,
+  "source_publication": "aabea061388d10ab9ad255983075464d9e8401db",
+  "version": "set-acquisition-v2-pre-score-audit",
+  "weights_publication": "59fb13bfd57b575bdf5ee0212afe53df2388e213"
+}

@@ -8,52 +8,39 @@
 
 ## Current development checkpoint — 2026-11-02
 
-**Continue G3 native-effect acquisition and retention.** G1/G2 development
-readiness remains **PROCEED_TO_G2 / PROCEED_TO_G3**; the original scientific
-admission criteria below are unchanged. Completed native-world studies are not
-reopened.
+**Native SET acquisition is accepted; complete the remaining G3 language and goal
+transfer study next.** G1/G2 development readiness remains **PROCEED_TO_G2 /
+PROCEED_TO_G3**. The original scientific criteria below are unchanged.
 
-The [coordinate comparison](../../experiments/predictive_nucleus/COORDINATE_DECISION_V1.md),
-[PR #76](https://github.com/robosys-labs/cemm/pull/76), is complete:
-**KEEP_LAYOUT_COORDINATES**. The 88-parameter encoder passes all five seeds and
-both laws; the bounded layout-fitting problem is closed. Full G3 remains open.
+[Coordinate transfer](../../experiments/predictive_nucleus/COORDINATE_DECISION_V1.md),
+[PR #76](https://github.com/robosys-labs/cemm/pull/76), remains
+**KEEP_LAYOUT_COORDINATES** across all seeds and both laws.
 
-The [native SET v1 study](../../experiments/predictive_nucleus/SET_ACQUISITION_DECISION_V1.md),
-[PR #77](https://github.com/robosys-labs/cemm/pull/77), fitted the existing 68-scalar
-mask and collected every planned forecast, then stopped at exact language-order
-retention. Review remains **REVISE_NATIVE_SET_ACQUISITION**, execution
-**SCORING_ABORTED**. Tiny numerical drift does not meet its frozen exact-equality
-rule; its post-stop endpoint diagnostics do not establish acceptance.
+The [native SET v2 decision](../../experiments/predictive_nucleus/SET_ACQUISITION_DECISION_V2.md),
+[PR #78](https://github.com/robosys-labs/cemm/pull/78), is now
+**KEEP_NATIVE_SET_ACQUISITION**. All ten fits and every criterion pass:
+16,640/16,640 identifiable worlds, 11,520/11,520 SET worlds and 131,520/131,520
+retained language worlds are correct. Ambiguous cases retain conditional
+uncertainty. Exact world/order decisions are unchanged. Source, checkpoints and
+all 189,120 raw forecasts were public before each next stage. The saved-record
+audit passes 5,201,663 checks with zero discrepancies.
 
-The [prospective v2 correction](../../experiments/predictive_nucleus/SET_ACQUISITION_STUDY_V2.md)
-is implemented and frozen locally. It reuses the same 562-parameter world,
-68-scalar mask, exact 48-event observed tape, optimizer and 256 updates. New action
-compositions have zero audited overlap with the explicitly listed earlier native
-banks. World/order log comparisons use declared absolute 1e-10 bounds while
-requiring exact weight identity and unchanged MAP decisions. Valid retention
-failures produce all reports; invalid evidence stops. Native scientific thresholds
-and all v1 evidence stay unchanged.
+Explicit user approval resolved the earlier publication block. V1 remains
+**SCORING_ABORTED / REVISE_NATIVE_SET_ACQUISITION** under its immutable rule;
+its evidence was not changed or rescored.
 
-**Current execution blocker:** automatic approval review rejected publication
-of local commit `c3fed8193e619c275229d65a41825ceae876b64c` to the public CEMM
-repository pending fresh explicit approval. No v2 fitting, collection or scoring
-has occurred. Preserve the source-publication-before-fitting requirement; do not
-substitute a local-only acceptance run. The
-[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) and
-[execution handoff](../../experiments/predictive_nucleus/SET_ACQUISITION_V2_HANDOFF.md)
-record the exact remaining sequence and audit commands.
+The authorized continuation freezes these worlds and tests effect/role language,
+fresh participants/reversals, untaught word-order combinations, goals and lexical
+identity preservation. Its direct four-action encoder uses 92 parameters. A
+separate source/data/runtime/criteria freeze must precede fitting. Native
+acquisition alone does not close G3. The
+[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) records
+next work and preserved boundaries.
 
-Only a native acquisition pass unlocks the separate effect-and-role language
-study. The 88-parameter target remains prospective; a direct four-action head
-would use 92 parameters. Cross-context evidence is required because distinct
-NAND contact/SET actions can share an endpoint. No candidate has been implemented
-or fitted for that later stage; do not advance G4.
-
-Formal scientific admission, independent custody, matched consumed-compute
-architecture comparisons and general calibration remain open. The research
-implementation retains **45,093 Python lines**, including **19,165 test lines**;
-the inclusive 2,000-line objective remains unmet. The original gate definitions
-follow unchanged.
+Formal scientific admission, independent custody, matched consumed compute and
+general calibration remain open. Completed native studies are not reopened.
+Completed code retains 45,093 Python lines, including 19,165 tests; the inclusive
+2,000-line target remains unmet. Original gate definitions follow unchanged.
 
 ## 0. Decision
 
