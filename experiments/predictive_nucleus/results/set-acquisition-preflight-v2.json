@@ -1,0 +1,1118 @@
+{
+  "data_sha256": {
+    "informative_same_pair": "ef56a8d9b23b904323de95d737938f832a942256367930aa8e2a928bd5f6316e",
+    "informative_second_pair": "a10748428184b1834275efb2e82da1da566356193c77af25cdac1e44be40a3ca",
+    "uninformative_same_pair": "fe89cf2a609fa36d6ad4cb65048b56934fdc4f62cda86455e49f3cc3dfbecd1d",
+    "uninformative_second_pair": "4f52d492c03c60eac8416ba7a7a4328f78b0eb731a0b9980e67c4c3499ee783c"
+  },
+  "environment": {
+    "cpu_model": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "default_dtype": "torch.float32",
+    "deterministic_algorithms": true,
+    "deterministic_warn_only": false,
+    "interop_threads": 1,
+    "intraop_threads": 1,
+    "peak_rss": 312616,
+    "peak_rss_unit": "KiB",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "python": "3.13.16",
+    "torch": "2.10.0+cpu",
+    "torch_config_sha256": "4f3cd65dc58472ed223329fa5ab743d0a360e777accb4001b511fc418c78128b"
+  },
+  "fit_plan": [
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 0,
+      "regime": "fixed_exposure",
+      "seed": 7,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 1,
+      "regime": "fixed_exposure",
+      "seed": 7,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 2,
+      "regime": "fixed_exposure",
+      "seed": 7,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 3,
+      "regime": "fixed_exposure",
+      "seed": 7,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "flat",
+      "ordinal": 4,
+      "regime": "fixed_exposure",
+      "seed": 7,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 5,
+      "regime": "fixed_exposure",
+      "seed": 7,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 6,
+      "regime": "fixed_exposure",
+      "seed": 11,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 7,
+      "regime": "fixed_exposure",
+      "seed": 11,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 8,
+      "regime": "fixed_exposure",
+      "seed": 11,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "flat",
+      "ordinal": 9,
+      "regime": "fixed_exposure",
+      "seed": 11,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 10,
+      "regime": "fixed_exposure",
+      "seed": 11,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 11,
+      "regime": "fixed_exposure",
+      "seed": 11,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 12,
+      "regime": "fixed_exposure",
+      "seed": 23,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 13,
+      "regime": "fixed_exposure",
+      "seed": 23,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "flat",
+      "ordinal": 14,
+      "regime": "fixed_exposure",
+      "seed": 23,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 15,
+      "regime": "fixed_exposure",
+      "seed": 23,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 16,
+      "regime": "fixed_exposure",
+      "seed": 23,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 17,
+      "regime": "fixed_exposure",
+      "seed": 23,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 18,
+      "regime": "fixed_exposure",
+      "seed": 37,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "flat",
+      "ordinal": 19,
+      "regime": "fixed_exposure",
+      "seed": 37,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 20,
+      "regime": "fixed_exposure",
+      "seed": 37,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 21,
+      "regime": "fixed_exposure",
+      "seed": 37,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 22,
+      "regime": "fixed_exposure",
+      "seed": 37,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 23,
+      "regime": "fixed_exposure",
+      "seed": 37,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "flat",
+      "ordinal": 24,
+      "regime": "fixed_exposure",
+      "seed": 53,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 25,
+      "regime": "fixed_exposure",
+      "seed": 53,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 26,
+      "regime": "fixed_exposure",
+      "seed": 53,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 27,
+      "regime": "fixed_exposure",
+      "seed": 53,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 28,
+      "regime": "fixed_exposure",
+      "seed": 53,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 29,
+      "regime": "fixed_exposure",
+      "seed": 53,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 30,
+      "regime": "fixed_exposure",
+      "seed": 7,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 31,
+      "regime": "fixed_exposure",
+      "seed": 7,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 32,
+      "regime": "fixed_exposure",
+      "seed": 7,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "flat",
+      "ordinal": 33,
+      "regime": "fixed_exposure",
+      "seed": 7,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 34,
+      "regime": "fixed_exposure",
+      "seed": 7,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 35,
+      "regime": "fixed_exposure",
+      "seed": 7,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 36,
+      "regime": "fixed_exposure",
+      "seed": 11,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 37,
+      "regime": "fixed_exposure",
+      "seed": 11,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "flat",
+      "ordinal": 38,
+      "regime": "fixed_exposure",
+      "seed": 11,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 39,
+      "regime": "fixed_exposure",
+      "seed": 11,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 40,
+      "regime": "fixed_exposure",
+      "seed": 11,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 41,
+      "regime": "fixed_exposure",
+      "seed": 11,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 42,
+      "regime": "fixed_exposure",
+      "seed": 23,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "flat",
+      "ordinal": 43,
+      "regime": "fixed_exposure",
+      "seed": 23,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 44,
+      "regime": "fixed_exposure",
+      "seed": 23,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 45,
+      "regime": "fixed_exposure",
+      "seed": 23,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 46,
+      "regime": "fixed_exposure",
+      "seed": 23,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 47,
+      "regime": "fixed_exposure",
+      "seed": 23,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "flat",
+      "ordinal": 48,
+      "regime": "fixed_exposure",
+      "seed": 37,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 49,
+      "regime": "fixed_exposure",
+      "seed": 37,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 50,
+      "regime": "fixed_exposure",
+      "seed": 37,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 51,
+      "regime": "fixed_exposure",
+      "seed": 37,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 52,
+      "regime": "fixed_exposure",
+      "seed": 37,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 53,
+      "regime": "fixed_exposure",
+      "seed": 37,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 54,
+      "regime": "fixed_exposure",
+      "seed": 53,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 55,
+      "regime": "fixed_exposure",
+      "seed": 53,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 56,
+      "regime": "fixed_exposure",
+      "seed": 53,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 57,
+      "regime": "fixed_exposure",
+      "seed": 53,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 58,
+      "regime": "fixed_exposure",
+      "seed": 53,
+      "updates": 128
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 60.0,
+      "model": "flat",
+      "ordinal": 59,
+      "regime": "fixed_exposure",
+      "seed": 53,
+      "updates": 128
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 60,
+      "regime": "cpu_budget",
+      "seed": 7,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 61,
+      "regime": "cpu_budget",
+      "seed": 7,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 62,
+      "regime": "cpu_budget",
+      "seed": 7,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "flat",
+      "ordinal": 63,
+      "regime": "cpu_budget",
+      "seed": 7,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 64,
+      "regime": "cpu_budget",
+      "seed": 7,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 65,
+      "regime": "cpu_budget",
+      "seed": 7,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 66,
+      "regime": "cpu_budget",
+      "seed": 11,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 67,
+      "regime": "cpu_budget",
+      "seed": 11,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "flat",
+      "ordinal": 68,
+      "regime": "cpu_budget",
+      "seed": 11,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 69,
+      "regime": "cpu_budget",
+      "seed": 11,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 70,
+      "regime": "cpu_budget",
+      "seed": 11,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 71,
+      "regime": "cpu_budget",
+      "seed": 11,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 72,
+      "regime": "cpu_budget",
+      "seed": 23,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "flat",
+      "ordinal": 73,
+      "regime": "cpu_budget",
+      "seed": 23,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 74,
+      "regime": "cpu_budget",
+      "seed": 23,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 75,
+      "regime": "cpu_budget",
+      "seed": 23,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 76,
+      "regime": "cpu_budget",
+      "seed": 23,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 77,
+      "regime": "cpu_budget",
+      "seed": 23,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "flat",
+      "ordinal": 78,
+      "regime": "cpu_budget",
+      "seed": 37,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 79,
+      "regime": "cpu_budget",
+      "seed": 37,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 80,
+      "regime": "cpu_budget",
+      "seed": 37,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 81,
+      "regime": "cpu_budget",
+      "seed": 37,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 82,
+      "regime": "cpu_budget",
+      "seed": 37,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 83,
+      "regime": "cpu_budget",
+      "seed": 37,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 84,
+      "regime": "cpu_budget",
+      "seed": 53,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 85,
+      "regime": "cpu_budget",
+      "seed": 53,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 86,
+      "regime": "cpu_budget",
+      "seed": 53,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 87,
+      "regime": "cpu_budget",
+      "seed": 53,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 88,
+      "regime": "cpu_budget",
+      "seed": 53,
+      "updates": 100000
+    },
+    {
+      "condition": "uninformative",
+      "cpu_seconds": 2.0,
+      "model": "flat",
+      "ordinal": 89,
+      "regime": "cpu_budget",
+      "seed": 53,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 90,
+      "regime": "cpu_budget",
+      "seed": 7,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 91,
+      "regime": "cpu_budget",
+      "seed": 7,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "flat",
+      "ordinal": 92,
+      "regime": "cpu_budget",
+      "seed": 7,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 93,
+      "regime": "cpu_budget",
+      "seed": 7,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 94,
+      "regime": "cpu_budget",
+      "seed": 7,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 95,
+      "regime": "cpu_budget",
+      "seed": 7,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 96,
+      "regime": "cpu_budget",
+      "seed": 11,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "flat",
+      "ordinal": 97,
+      "regime": "cpu_budget",
+      "seed": 11,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 98,
+      "regime": "cpu_budget",
+      "seed": 11,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 99,
+      "regime": "cpu_budget",
+      "seed": 11,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 100,
+      "regime": "cpu_budget",
+      "seed": 11,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 101,
+      "regime": "cpu_budget",
+      "seed": 11,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "flat",
+      "ordinal": 102,
+      "regime": "cpu_budget",
+      "seed": 23,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 103,
+      "regime": "cpu_budget",
+      "seed": 23,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 104,
+      "regime": "cpu_budget",
+      "seed": 23,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 105,
+      "regime": "cpu_budget",
+      "seed": 23,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 106,
+      "regime": "cpu_budget",
+      "seed": 23,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 107,
+      "regime": "cpu_budget",
+      "seed": 23,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 108,
+      "regime": "cpu_budget",
+      "seed": 37,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 109,
+      "regime": "cpu_budget",
+      "seed": 37,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 110,
+      "regime": "cpu_budget",
+      "seed": 37,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 111,
+      "regime": "cpu_budget",
+      "seed": 37,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 112,
+      "regime": "cpu_budget",
+      "seed": 37,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "flat",
+      "ordinal": 113,
+      "regime": "cpu_budget",
+      "seed": 37,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_supplied_persistence",
+      "ordinal": 114,
+      "regime": "cpu_budget",
+      "seed": 53,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_learned_persistence",
+      "ordinal": 115,
+      "regime": "cpu_budget",
+      "seed": 53,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_untied_roles",
+      "ordinal": 116,
+      "regime": "cpu_budget",
+      "seed": 53,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "kernel_memory_reset",
+      "ordinal": 117,
+      "regime": "cpu_budget",
+      "seed": 53,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "flat",
+      "ordinal": 118,
+      "regime": "cpu_budget",
+      "seed": 53,
+      "updates": 100000
+    },
+    {
+      "condition": "informative",
+      "cpu_seconds": 2.0,
+      "model": "flat_supplied_persistence",
+      "ordinal": 119,
+      "regime": "cpu_budget",
+      "seed": 53,
+      "updates": 100000
+    }
+  ],
+  "gate_g1": "HOLD_REVISE",
+  "lineage": {
+    "complete_history": true,
+    "execution_commit": "a784795b97cc05a2002e95f27e088e8999b40e4b",
+    "protocol_commit": "2eeae6323d8123da5ded40a56e77ef68e6aac5ac",
+    "runner_commit": "fd64a5b1a9efc460086cfe21c4f62fe631135298",
+    "runner_sha256": "143a29e7fee901a009674ef271e779c126300e6496f7c26d79fe222540772213",
+    "source_commit": "3bbce83121386501ae39567b48fc9aa62325de79",
+    "tracked_tree_clean": true,
+    "untracked_present": false
+  },
+  "protocol_sha256": "15732afe065f19f3b412a7638e386373eb586ddaa273104e2de63c14a782b1f3",
+  "status": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES",
+  "study_execution_enabled": false
+}

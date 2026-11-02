@@ -6,57 +6,41 @@
 **Implementation boundary:** independent experiment first; no root runtime or Hybrid cutover  
 **Companion foundation:** [draft PR #21](https://github.com/robosys-labs/cemm/pull/21)
 
-## Current development checkpoint — 2026-11-01
+## Current development checkpoint — 2026-11-02
 
-**Continue G3 fitting reliability and structural transfer.** The completed G1/G2
-foundation is retained: development readiness remains **PROCEED_TO_G2** and
-**PROCEED_TO_G3**, respectively. Original scientific-admission requirements below
-are unchanged. Do not reopen completed native-world studies or require extra
-capacity, a unified-law model or fully hidden rollouts before continuing G3.
+**Native SET acquisition is accepted; complete the remaining G3 language and goal
+transfer study next.** G1/G2 development readiness remains **PROCEED_TO_G2 /
+PROCEED_TO_G3**. The original scientific criteria below are unchanged.
 
-| Completed evidence | Retained conclusion |
-|---|---|
-| [Mixed composition / G1-G2 review](../../experiments/predictive_nucleus/G1_G2_PROGRESS_REVIEW.md) | KEEP_MIXED_COMPOSITION; observed uncertainty remains distinct from model failure. |
-| [Joint correlation](../../experiments/predictive_nucleus/JOINT_CORRELATION_DECISION_V1.md) | KEEP_JOINT_CORRELATION with equal marginals and distinct dependencies. |
-| [NAND/NOR acquisition](../../experiments/predictive_nucleus/MULTISOURCE_LAW_DECISION_V1.md) | KEEP_MULTISOURCE_LAWS; unchanged 562-parameter architecture. |
-| [Hidden propagation](../../experiments/predictive_nucleus/HIDDEN_CYCLE_DECISION_V1.md) | KEEP_HIDDEN_CYCLE with zero additional fitting. |
-| [Explicit timing](../../experiments/predictive_nucleus/TIMING_DECISION_V1.md) | KEEP_TIMING; supplied scheduling semantics are not learned concurrency physics. |
+[Coordinate transfer](../../experiments/predictive_nucleus/COORDINATE_DECISION_V1.md),
+[PR #76](https://github.com/robosys-labs/cemm/pull/76), remains
+**KEEP_LAYOUT_COORDINATES** across all seeds and both laws.
 
-The bilingual tranche [#68](https://github.com/robosys-labs/cemm/pull/68) and
-fixed-order lexical contrast [#69](https://github.com/robosys-labs/cemm/pull/69)
-are already complete. They established bounded grounded behavior while exposing
-withheld-layout transfer failure. The subsequent binding comparison retained
-REVISE_STRUCTURAL_BINDING; its recovered arithmetic does not erase the original
-STOP_INCOMPLETE_EXECUTION. [The saturation comparison](../../experiments/predictive_nucleus/SATURATION_DECISION_V1.md)
-retained REVISE_SATURATION_HYPOTHESIS. The [training-only gradient audit](../../experiments/predictive_nucleus/TRAINING_GRADIENT_AUDIT_V1.md)
-localized same-sign learned layout factors at failing seeds without establishing
-an architectural capacity impossibility.
+The [native SET v2 decision](../../experiments/predictive_nucleus/SET_ACQUISITION_DECISION_V2.md),
+[PR #78](https://github.com/robosys-labs/cemm/pull/78), is now
+**KEEP_NATIVE_SET_ACQUISITION**. All ten fits and every criterion pass:
+16,640/16,640 identifiable worlds, 11,520/11,520 SET worlds and 131,520/131,520
+retained language worlds are correct. Ambiguous cases retain conditional
+uncertainty. Exact world/order decisions are unchanged. Source, checkpoints and
+all 189,120 raw forecasts were public before each next stage. The saved-record
+audit passes 5,201,663 checks with zero discrepancies.
 
-The latest [centering study](../../experiments/predictive_nucleus/CENTERING_DECISION_V1.md),
-[PR #75](https://github.com/robosys-labs/cemm/pull/75), is complete:
-**REVISE_CENTERING_HYPOTHESIS**. Changing one initial bias in the same 89-parameter
-encoder improves fresh complete-world exactness from 11,868/17,280 to
-15,268/17,280. Seeds 7/23/37/53 pass all criteria under both laws; seed 11 fails.
-Eight new fresh exact errors and remaining retention losses prevent replacement.
-All 243,840 forecasts and 17,280 native references are retained; the saved-record
-audit reproduces the decision with 3,430,239 checks and zero discrepancies.
-These are dependent views, not independent trials or scientific G3 admission.
+Explicit user approval resolved the earlier publication block. V1 remains
+**SCORING_ABORTED / REVISE_NATIVE_SET_ACQUISITION** under its immutable rule;
+its evidence was not changed or rescored.
 
-**Next implementation is already isolated:** an 88-parameter layout-coordinate
-candidate preserves the centered initial function and full legal-mask response
-class while removing one redundant scalar and common-direction gradient coupling.
-It is implemented, not scientifically evaluated. Freeze one fresh paired
-centered-versus-coordinate study with the same observed tape, optimizer, 256
-updates and all five seeds; publish source/data before fitting and actual weights
-before collection. Preserve every probability/exact/retention criterion and all
-failures. Keep opened banks labeled retention and do not advance G4.
+The authorized continuation freezes these worlds and tests effect/role language,
+fresh participants/reversals, untaught word-order combinations, goals and lexical
+identity preservation. Its direct four-action encoder uses 92 parameters. A
+separate source/data/runtime/criteria freeze must precede fitting. Native
+acquisition alone does not close G3. The
+[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) records
+next work and preserved boundaries.
 
-The [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) names
-current files, exact freezes, limitations and the next executable task. G1/G2
-formal scientific admission, independent custody, strong matched-compute
-architecture comparisons and general calibration remain open. The research
-implementation is 40,718 Python lines including 17,732 test lines; the inclusive
-2,000-line objective remains unmet. The original gate definitions follow unchanged.
+Formal scientific admission, independent custody, matched consumed compute and
+general calibration remain open. Completed native studies are not reopened.
+Completed code retains 45,093 Python lines, including 19,165 tests; the inclusive
+2,000-line target remains unmet. Original gate definitions follow unchanged.
 
 ## 0. Decision
 
