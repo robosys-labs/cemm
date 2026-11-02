@@ -1,0 +1,91 @@
+{
+  "version": "set-acquisition-v2",
+  "recorded_on": "2026-11-02",
+  "timezone": "Africa/Lagos",
+  "base_commit": "9ad9656e0f47209082556fa7f3602dc4f8ed5b54",
+  "scope": "FRESH_NATIVE_EFFECT_ACQUISITION_WITH_PROSPECTIVE_NUMERICAL_RETENTION",
+  "model_seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "parameters": 562,
+  "permitted_scalars": 68,
+  "immutable_scalars": 494,
+  "parameter_mask": {
+    "intervention.*": "all 57 scalars",
+    "background.0.weight": "column 2 only, 11 scalars"
+  },
+  "train_forecasts": 48,
+  "fresh_forecasts_per_law": 1920,
+  "fresh_episodes_per_law": 384,
+  "identifiable_forecasts_per_law": 1664,
+  "ambiguous_forecasts_per_law": 256,
+  "language_retention_forecasts_per_law_seed": 13152,
+  "planned_native_forecasts": 57600,
+  "planned_language_retention_forecasts": 131520,
+  "arms": [
+    "parent",
+    "acquired",
+    "no_change"
+  ],
+  "fit": {
+    "updates": 256,
+    "learning_rate": 0.02,
+    "cpu_seconds": 180,
+    "gradient_clip": 1.0,
+    "live_path_limit": 64,
+    "candidate_expansions": 512
+  },
+  "analysis": {
+    "identifiable_accuracy": 0.95,
+    "mean_oracle_kl": 0.05,
+    "max_ambiguous_total_variation": 0.1,
+    "max_set_mean_nll": 0.05,
+    "min_changed_set_nll_gain": 0.1,
+    "max_retention_logp_change": 1e-10,
+    "max_retention_order_logp_change": 1e-10
+  },
+  "execution": {
+    "runtime": {
+      "python": "3.13.16",
+      "torch": "2.10.0+cpu",
+      "numpy": "2.3.5",
+      "threads": 1,
+      "dtype": "float64",
+      "deterministic_algorithms": true
+    },
+    "fits": 10,
+    "one_attempt": true,
+    "retries": 0,
+    "source_data_publication_before_fitting": true,
+    "actual_weights_publication_before_collection": true,
+    "raw_forecasts_publication_before_scoring": true,
+    "runtime_identity": "Exact prepared receipt: versions, Python build/compiler, CPU capability/model/flags, libc/kernel, torch build/parallel backends, intra/inter-op threads, float properties, allowlisted numerical environment. Fit, collection and score must match.",
+    "raw_publication_bound_in_score": true
+  },
+  "design": {
+    "hypothesis": "The existing world acquires the previously untrained native set effect from observed transitions by moving only 68 existing scalars, while preserving the previously learned contact and bilingual/lexical predictions.",
+    "training": "Reuse the exact v1 48-event observed tape, SHA256 7fbdddbe4efd188da6f6d0c82c31010a11cabd82b3038dda4e3513260e9c793a, at all ten original inherited law/seed checkpoints, not v1 acquired weights. The optimizer, 256 updates and 68-scalar mask are unchanged. This isolates the numerical/reporting revision; no new training-evidence or new atomic-outcome claim.",
+    "challenge": "Evaluation seed 20261102182. Fresh interleaved-set, rotating-set and contact-set-feedback five-action compositions, with 3-6 entities, all eight first-three-bit anchors and two requests. 384 episodes and 1920 predictions per law, 1664 identifiable and 256 ambiguous, 128 contact-reversal pairs. Audited zero canonical template, blueprint and identity overlap with training and both-law set-acquisition-v1, multisource-law-v1 and hidden-cycle-v1 inputs. No exhaustive cross-project novelty claim. Complete observed-prefix feedback, no autonomous rollout.",
+    "optimization": "Fresh Adam betas .9/.999, eps 1e-8, weight_decay 0, amsgrad false. Mask gradients before clip. Verify the 494-scalar complement bitwise after every step; never restore forbidden changes to conceal them. 256 fixed updates, no loss-based early stopping, selection, extra examples or retries. Retain every seed even when fitting criteria fail.",
+    "controls": "Inherited no-update parent and deterministic no-change control on identical delivered histories. The no-change forecast is computed once per law and explicitly reused across seed labels. No architecture or matched-consumed-compute comparison is claimed.",
+    "retention": "Unchanged accepted 88-parameter coordinate weights and the six opened language banks; compare all 131520 canonical forecasts with archived accepted coordinate forecasts. Both world and order log-probabilities use absolute difference <=1e-10, no relative term. This rule is prospective v2 only. Exact world MAP and selected-order MAP must stay identical, alongside zero exact regressions and byte-identical language tensors. Every drift and adverse NLL change remains reported. Equal negative infinities have zero distance; finite-versus-zero probability has infinite distance and fails; both infinite NLLs produce an undefined delta. Malformed evidence aborts; acceptance failures return complete reports.",
+    "criteria": "Every law/seed must meet identifiable complete-world and identifiable trajectory/role-pair accuracy >=.95, full coverage, zero unsupported MAP worlds and zero known-fixed-coordinate errors. Mean oracle KL <=.05 in each nonempty family/information stratum, maximum ambiguous TV <=.1. SET NLL <=.05 in every nonempty family/entity-count/prior/request/changed cell, with changed-SET mean NLL improvement >=.1 over parent and no-change. Zero identifiable regressions against parent. Training NLL <=.05 and all six language retention gates must pass. Since unsupported MAP is forbidden, singleton support requires exact correctness despite the .95 floor. V2 additionally requires exact retained world MAP and selected-order MAP equality; numerical bounds never excuse a changed decision. All native scientific thresholds and the prior world-log bound are unchanged. Every retention bank exposes its individual failed checks.",
+    "probabilities": "Unconditioned full joint distributions, no oracle-support truncation or clipped zero probabilities. Ambiguous actual-world errors remain reported but do not alone fail acquisition. Whole-trajectory metrics use actual intermediate feedback and are not autonomous rollouts.",
+    "publication": "Publish source/protocol/data, actual weights, then all raw forecasts in separate commits before the next stage. Remote commit visibility is verified outside the runner. Hashes and same-team review do not constitute independent custody.",
+    "failure": "Exclusive output paths; no research retry. Invalid provenance, checkpoint mutation, runtime mismatch, malformed/duplicate/missing/non-normalized predictions or incomplete execution stop. Valid scientific failures, including numerical retention failure, must finish all 10 native and 60 retention reports and emit REVISE_NATIVE_SET_ACQUISITION. Keep v1 immutable as SCORING_ABORTED/REVISE; do not rerun or reclassify it.",
+    "limits": "Action family, stable identity addressing, requested bit, factorization, two persistent modes and Bayesian filtering are supplied. This tests observed effect acquisition and retention; learned effect selection from words is a later frozen study. No new operator, architecture, workspace or production path. Original G1/G2 scientific gates, G3 full exit and G4 remain unchanged. The inclusive 2000-line research goal remains unmet.",
+    "runtime": "Freeze richer runtime identity before fitting. Bind it in fit receipts, collection manifest, every trace and scoring receipt. This narrows reproducibility uncertainty without asserting that any specific Python/CPU/library difference caused v1 drift.",
+    "reused_implementation": "Reuse the frozen v1 562-parameter predictor, masked fitter, native scorer and set-acquisition-v1-information record schema without modification. Study identity is v2 and is bound by separate source/data/law/protocol digests. No generic experiment framework or additional model parameters."
+  },
+  "decision_order": [
+    "STOP_INCOMPLETE_EXECUTION on incomplete fitting, invalid provenance or missing forecasts",
+    "REVISE_NATIVE_SET_ACQUISITION if any completed-fit, competence, probability or retention criterion fails",
+    "KEEP_NATIVE_SET_ACQUISITION otherwise; proceed to effect-and-role grounding only in a new frozen tranche"
+  ],
+  "scientific_admission": false,
+  "g3_complete": false
+}

@@ -1,0 +1,57 @@
+{
+  "code_size": {
+    "added_model_parameters": 0,
+    "added_python_lines": 1537,
+    "added_test_lines": 591,
+    "inclusive_2000_line_objective_met": false,
+    "test_lines": 19165,
+    "total_python_lines": 45093
+  },
+  "freeze_sha256": "fff7bdc0423ddf46840473c29a4852d3e95e23a23541949d0639754204f8f807",
+  "frozen_preflight": {
+    "file": "set-acquisition-preflight-v2.json",
+    "sha256": "e68e143d7e63ed8dd5d3bda088e7e08873bff10de76c417be852ea307c6f0e27",
+    "status": "PREFLIGHT_ONLY_NO_FITS_OR_SCORES"
+  },
+  "g3_complete": false,
+  "manifest_locks": {
+    "all_pass": true,
+    "checked": 34
+  },
+  "original_protocol_verified": true,
+  "publication_block": {
+    "automatic_review_rejections": 2,
+    "destination": "https://github.com/robosys-labs/cemm",
+    "reason": "Fresh explicit end-user approval required by automatic review for this public payload; no workaround used.",
+    "visibility": "public"
+  },
+  "recorded_at": "2026-11-02T12:51:25.824700+01:00",
+  "research_execution": {
+    "collection_attempts": 0,
+    "fit_attempts": 0,
+    "published": false,
+    "remote_pr_created": false,
+    "scientific_decision": null,
+    "score_attempts": 0
+  },
+  "scientific_admission": false,
+  "source_data_freeze_commit": "c3fed8193e619c275229d65a41825ceae876b64c",
+  "status": "IMPLEMENTATION_VERIFIED_PUBLICATION_BLOCKED",
+  "synthetic_audit": {
+    "arithmetic_comparisons": 6620,
+    "discrepancies": 0,
+    "real_study_result": false
+  },
+  "tests": {
+    "count": 1013,
+    "errors": 0,
+    "failures": 0,
+    "full_suite": true,
+    "log_file": "set-acquisition-invariant-tests-v2.txt.xz",
+    "log_sha256": "898061a5669c90933633cb8bb6fdfee230bf03f43b20ac34639078de5624491c",
+    "seconds": 137.553
+  },
+  "v1_unchanged": true,
+  "verified_code_commit": "a784795b97cc05a2002e95f27e088e8999b40e4b",
+  "version": "set-acquisition-v2-implementation-validation"
+}

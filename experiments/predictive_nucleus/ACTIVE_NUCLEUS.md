@@ -1,4 +1,4 @@
-# Active nucleus: native set acquisition ran; retention revision required
+# Active nucleus: v2 implemented and frozen; publication approval blocked
 
 Tracking: [#22](https://github.com/robosys-labs/cemm/issues/22),
 [draft PR #77](https://github.com/robosys-labs/cemm/pull/77), stacked on #76.
@@ -77,23 +77,46 @@ correct. The [coordinate decision](COORDINATE_DECISION_V1.md) retains all probab
 changes, limitations and its smaller-parameter comparison. The selected bounded
 layout-fitting problem is closed. This native acquisition failure does not reopen it.
 
-## Selected next step — revision not yet implemented or fitted
+## Current prospective revision — implemented and frozen; fitting awaits publication
 
-Resolve the numerical-retention contract before another acquisition decision.
-Keep v1 source, protocol, weights, records and failure immutable. Use synthetic
-fixtures to distinguish tensor identity, harmless numerical drift and actual
-behavior/probability changes. Specify a reproducible numerical execution path or
-an explicit order-log comparison rule prospectively. Expected retention failures
-should produce a complete failed report, preserving all other diagnostics.
+[Native set study v2](SET_ACQUISITION_STUDY_V2.md) now isolates the numerical and
+reporting correction. V1 remains immutable and unaccepted. The new version reuses
+the same 562-parameter world, 68-scalar mask, exact 48-event observed training tape
+and 256 updates. New interleaved-set, rotating-set and contact-set-feedback
+compositions have zero audited template/blueprint/identity overlap with training
+and the explicitly listed earlier native banks.
 
-Freeze the revised source, runtime, full reporting behavior and a fresh challenge
-before any new fit or collection. Keep the current world, 68-scalar learning mask
-and observed learning hypothesis unless further evidence justifies a change.
-Do not retry the opened v1 bank or promote its diagnostic accuracy to acceptance.
+Both order/world logs use prospective absolute bounds of 1e-10, with exact
+language tensor identity and unchanged world/order MAP decisions required.
+Valid scientific failures produce all ten native and sixty retention reports;
+invalid evidence still stops. The complete numerical runtime is frozen before
+execution and checked in each stage. All native criteria remain unchanged.
+
+Local source/data/runtime freeze: `c3fed8193e619c275229d65a41825ceae876b64c`.
+Automatic approval review rejected publication to the public CEMM repository,
+including after verifying the user's repository admin/push rights and that the
+payload is isolated source/tests plus deterministic synthetic binary-world data.
+A fresh explicit user approval is required by that review before remote publication.
+The study's publication gate remains intact: **zero fit, collection or score attempts**.
+
+A separate stdlib auditor and synthetic fixtures are now implemented. Its
+input-only pre-score mode verifies all rows and runtime/checkpoint bindings
+before decoding targets; its full mode reconstructs the eventual decision from
+saved records without the model or original scorer. No real v2 audit result exists.
+[Exact handoff](SET_ACQUISITION_V2_HANDOFF.md).
+
+Next execution after publication approval: publish the prepared changes, fit all
+ten checkpoints once, publish weights, collect/publish all 189,120 forecasts,
+run the input-only audit, score once, then audit the saved result. No result or
+admission is implied by prepared code or synthetic tests.
 
 Only after a native acquisition pass should the worlds be frozen for the planned
 outcome-grounded effect-and-role language study. The current **88-parameter**
-language budget is a prospective target, not established feasibility. Use
+language budget is a prospective target, not established feasibility. Static
+review finds that the smallest direct four-action readout widens it to **92**
+parameters; no such candidate is implemented or trained. Under NAND, SET(A,1)
+cannot always be identified from a single endpoint, so the future design must
+use contrasting contexts and preserve observationally equivalent alternatives. Use
 word-independent contact/set alternatives and observed endpoint feedback without
 gold action-kind/order labels; preserve ambiguity where alternatives share an
 endpoint. No new operator, workspace, generic harness or production path is selected.
@@ -111,3 +134,17 @@ endpoint. No new operator, workspace, generic harness or production path is sele
 Independent challenge custody, matched consumed-compute comparisons and general
 calibration remain open. Original scientific gate definitions and prior failed
 decisions are preserved.
+
+## Current code accounting
+
+The local revision adds **1,537 Python lines**, including **591 test lines**;
+**45,093** research lines are retained, including **19,165** test lines. The
+inclusive 2,000-line objective remains unmet; new learned parameters = **0**.
+
+## Final local verification
+
+[Software validation](results/set-acquisition-validation-v2.json): **1,013 tests
+pass** on clean committed code, all **34 protocol locks** verify, the original
+protocol and frozen-input preflight pass. The saved-record auditor also passes
+6,620 synthetic arithmetic comparisons. These are implementation checks; v2
+research fitting, collection and scoring counts remain **zero**.
