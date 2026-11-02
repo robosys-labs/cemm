@@ -1,0 +1,354 @@
+{
+  "decision": "STOP_INCOMPLETE_EVIDENCE",
+  "evaluation": {
+    "full_saved_record_audit_completed": false,
+    "pre_score_audit_completed": false,
+    "scientific_gate_results": null,
+    "scored_condition_reports": 0,
+    "target_scoring_executed": false
+  },
+  "execution_complete": false,
+  "freeze_sha256": "be204b7a610a892ce0f62a83f8144159512f36d29da0339eb12591c4a8f73a4a",
+  "g3_complete": false,
+  "g4_unlocked": false,
+  "next_study": {
+    "all_new_parameters_initial_value": 0.0,
+    "candidate": "Exact-identity lexical effect and role coordinates with protected coordinate parent",
+    "fresh_compositions_required": true,
+    "learned_parameters": 4,
+    "legacy_behavior_protected": true,
+    "limits": [
+      "Structural legacy retention",
+      "Explicit per-identity storage growth",
+      "No shared-parameter lexical acquisition claim",
+      "No zero-shot word-meaning claim",
+      "No unrestricted polysemy claim"
+    ],
+    "new_coordinates_per_identity": [
+      "effect_logit",
+      "role_coordinate"
+    ],
+    "new_identities": 2,
+    "original_g3_gates_preserved": true,
+    "previously_presented_banks_remain_opened": true,
+    "protected_parameters": 88,
+    "reference_weights_publication": "30880caf676c10773857221d9d5bc2437651fb6f",
+    "required_controls": "Fresh current-runtime controls plus the published v2 weights evaluated as an explicit new-study reference",
+    "required_new_runtime_freeze": "AMD EPYC 9V74",
+    "research_execution_requires_new_source_data_runtime_publication": true,
+    "status": "PROSPECTIVE",
+    "total_parameters": 92,
+    "unchanged_model_seeds": [
+      7,
+      11,
+      23,
+      37,
+      53
+    ],
+    "unchanged_training_forecasts": {
+      "rehearsal": 1152,
+      "teach": 16
+    },
+    "unchanged_updates": 256,
+    "unknown_tokens": "Distinct exact identity and typed unresolved status; no semantic prediction"
+  },
+  "original_collection": {
+    "actual_row_inventory_reverified": false,
+    "evidence_status": "SESSION_REPORTED_RAW_BYTES_UNAVAILABLE",
+    "expected_forecast_rows": {
+      "fresh_and_controls": 276480,
+      "opened_v1": 138240,
+      "retention": 131520,
+      "total": 546240
+    },
+    "intended_raw_git_tree": "c5df023722a4843ff62096d5cd8a0aa83f065cbb",
+    "original_raw_commitment_recovered": false,
+    "raw_publication_verified": false,
+    "reported_artifacts": 101,
+    "reported_bytes": 32162048,
+    "reported_complete": true,
+    "reported_files_including_attempt_and_manifest": 103,
+    "reported_lexical_identity_receipts": 1,
+    "reported_resources": {
+      "cpu_seconds": 401.62604972400004,
+      "peak_rss_kib": 502448,
+      "wall_seconds": 404.48114579299727
+    },
+    "reported_trace_files": 100,
+    "resources_provenance": "Original collection completion report retained in session; original raw manifest and telemetry bytes lost."
+  },
+  "package_review_scope": {
+    "challenge_or_evaluator_records_read": 0,
+    "collections": 0,
+    "fits": 0,
+    "model_forwards": 0,
+    "model_imports": 0,
+    "saved_training_json_and_checkpoint_bytes_only": true,
+    "scoring_runs": 0
+  },
+  "post_reset_research": {
+    "additional_fits": 0,
+    "additional_model_forecasts": 0,
+    "replay_collections": 0,
+    "v2_target_scoring_runs": 0
+  },
+  "preserved_decisions": {
+    "G1_G2": "DEVELOPMENT_RESULTS_UNCHANGED",
+    "coordinate_transfer": "ACCEPTED_UNCHANGED",
+    "effect_role_v1": "REVISE_EFFECT_ROLE_GROUNDING",
+    "native_set_v2": "KEEP_NATIVE_SET_ACQUISITION"
+  },
+  "publication_interruption": {
+    "intended_tree_lookup_http_status": 404,
+    "public_head_after_interruption": "30880caf676c10773857221d9d5bc2437651fb6f",
+    "publication_wait_hours": 5,
+    "remote_lookup_provenance": "Session-reported publication/recovery check; this receipt does not claim a recovered tree.",
+    "scratch_and_temporary_storage_reset": true,
+    "unpublished_recovery_proposals_executed": false
+  },
+  "reason": "Original raw collection was lost before publication; the complete raw commitment remains unrecovered and no v2 target scoring occurred.",
+  "recorded_on": "2026-11-02",
+  "runtime_restoration": {
+    "frozen_runtime_guard_rejected": true,
+    "guard_rejected_before_predictions": true,
+    "numpy": "2.3.5",
+    "original_cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "original_runtime_guard_modified": false,
+    "python": "3.13.16",
+    "restored_cpu": "AMD EPYC 9V74",
+    "torch": "2.10.0+cpu"
+  },
+  "scientific_admission": "NOT_ADMITTED",
+  "scientific_decision": null,
+  "source_publication": "26d8d54ab0748e70d8981acc14e6351a5a279ab1",
+  "training": {
+    "all_world_unchanged_receipts": true,
+    "arms": [
+      "grounded",
+      "parser",
+      "text_only"
+    ],
+    "checkpoint_inventory": {
+      "grounded/11": {
+        "bytes": 2077,
+        "file": "grounded-11.json",
+        "sha256": "01f43b6472f975774787473fa0930f33540d7de82afa99d21da2964d64b92175",
+        "verified_against_public_weights_commit": true
+      },
+      "grounded/23": {
+        "bytes": 2069,
+        "file": "grounded-23.json",
+        "sha256": "724bd691220c1ecd165f120f2ad76d6839518755b716be18dbe4013e1a887492",
+        "verified_against_public_weights_commit": true
+      },
+      "grounded/37": {
+        "bytes": 2065,
+        "file": "grounded-37.json",
+        "sha256": "97dbbd36fc2329ce3b2d8e08a32620e0579afaa4035e7b7b950f0dade3609f44",
+        "verified_against_public_weights_commit": true
+      },
+      "grounded/53": {
+        "bytes": 2051,
+        "file": "grounded-53.json",
+        "sha256": "4db48f04a7784043c598fd7f5f1fbf2274f525dfd4745478df285ae35b3b6ca0",
+        "verified_against_public_weights_commit": true
+      },
+      "grounded/7": {
+        "bytes": 2070,
+        "file": "grounded-7.json",
+        "sha256": "2e87d49bd96e94f90f8712037c6e163769ef5556cf331c5688e1b87258fbd47b",
+        "verified_against_public_weights_commit": true
+      },
+      "parser/11": {
+        "bytes": 2081,
+        "file": "parser-11.json",
+        "sha256": "d696a9f6b2f77e28bb70dd4b39f80da1e030fd5d929b79f74d822aadd13d4e9a",
+        "verified_against_public_weights_commit": true
+      },
+      "parser/23": {
+        "bytes": 2065,
+        "file": "parser-23.json",
+        "sha256": "11e1d835b9fb37875a22a5b0cf85b8a8541bcdeeaa82fc52dde3d6b2b4f44899",
+        "verified_against_public_weights_commit": true
+      },
+      "parser/37": {
+        "bytes": 2065,
+        "file": "parser-37.json",
+        "sha256": "38931aaf1a295013ba983c04f3c646c564e3707ab5cb345206dc910cc8a364ce",
+        "verified_against_public_weights_commit": true
+      },
+      "parser/53": {
+        "bytes": 2067,
+        "file": "parser-53.json",
+        "sha256": "9d1e15a910bb617c16eab39abeb5360e2c152994144409fad0e4ffed7f71d03b",
+        "verified_against_public_weights_commit": true
+      },
+      "parser/7": {
+        "bytes": 2066,
+        "file": "parser-7.json",
+        "sha256": "b57f038f3422e4b9135486a8e4cd6ee60165fe75263ee15d98a24e130e8d8f25",
+        "verified_against_public_weights_commit": true
+      },
+      "text_only/11": {
+        "bytes": 21486,
+        "file": "text_only-11.json",
+        "sha256": "a9191578b09bb098cbe361d173593c5ca466013c11d83e9f9a85d5462beb6ffe",
+        "verified_against_public_weights_commit": true
+      },
+      "text_only/23": {
+        "bytes": 21409,
+        "file": "text_only-23.json",
+        "sha256": "17c348d0304dd859fae580a9493489f4b1d77be00c01adb6e7179807914b0fd7",
+        "verified_against_public_weights_commit": true
+      },
+      "text_only/37": {
+        "bytes": 21411,
+        "file": "text_only-37.json",
+        "sha256": "0ffee5bb2849c447559ded13ae23ad9cad5a2aa3eb5f24bd2e5a19e2ce397419",
+        "verified_against_public_weights_commit": true
+      },
+      "text_only/53": {
+        "bytes": 21411,
+        "file": "text_only-53.json",
+        "sha256": "a7be60f42686ca42220cca2f4c42e80c3c7f6b32389e7aa2907212c725d49b40",
+        "verified_against_public_weights_commit": true
+      },
+      "text_only/7": {
+        "bytes": 21400,
+        "file": "text_only-7.json",
+        "sha256": "8c32dc3fa3ba4cadb4d2ba93eac473f78802f394ff4187f6abfae06a0dfc1029",
+        "verified_against_public_weights_commit": true
+      }
+    },
+    "complete": true,
+    "final_train_objectives": {
+      "grounded/11": {
+        "rehearsal": 0.2659647931024407,
+        "teach": 0.5139536237356721
+      },
+      "grounded/23": {
+        "rehearsal": 0.03392926983870444,
+        "teach": 0.005194264691999386
+      },
+      "grounded/37": {
+        "rehearsal": 0.03787835630399904,
+        "teach": 0.007890210868959344
+      },
+      "grounded/53": {
+        "rehearsal": 0.038471521754311795,
+        "teach": 0.007959857515849645
+      },
+      "grounded/7": {
+        "rehearsal": 0.2638649463257141,
+        "teach": 0.5124923285834018
+      },
+      "parser/11": {
+        "rehearsal": 0.046997480373038726,
+        "teach": 0.008013798594410072
+      },
+      "parser/23": {
+        "rehearsal": 0.04931187513136656,
+        "teach": 0.005455730951683422
+      },
+      "parser/37": {
+        "rehearsal": 0.05489852858224659,
+        "teach": 0.008178319158077662
+      },
+      "parser/53": {
+        "rehearsal": 0.05499349867023534,
+        "teach": 0.006274768044019258
+      },
+      "parser/7": {
+        "rehearsal": 0.04399318173471055,
+        "teach": 0.003956228240831382
+      },
+      "text_only/11": {
+        "rehearsal": 1.8815438988009692,
+        "teach": 0.2048378549027604
+      },
+      "text_only/23": {
+        "rehearsal": 1.9006982293975554,
+        "teach": 0.1995279020135719
+      },
+      "text_only/37": {
+        "rehearsal": 1.8550631072459107,
+        "teach": 0.2216295785734531
+      },
+      "text_only/53": {
+        "rehearsal": 1.9098031888506586,
+        "teach": 0.20128448240823119
+      },
+      "text_only/7": {
+        "rehearsal": 1.844443020534334,
+        "teach": 0.2062476912911652
+      }
+    },
+    "fits": 15,
+    "interpretation": "TRAIN objectives and original-runtime control reproduction do not establish challenge acceptance or failure.",
+    "observed_forecasts_per_update": {
+      "rehearsal": 1152,
+      "teach": 16
+    },
+    "parameters": {
+      "grounded": 92,
+      "parser": 92,
+      "text_only": 1048,
+      "world": 562
+    },
+    "receipt": "data/effect-role-fit-v2/training.json",
+    "receipt_sha256": "b7a6a607c414535251e0c8b169614a29c21128f653f6559c1c654213ffc184af",
+    "resources": {
+      "cpu_seconds": 82.318406338,
+      "peak_rss_kib": 367960,
+      "wall_seconds": 82.33598428299956
+    },
+    "saved_text_only_bytes_and_nonresource_reports_reverified": true,
+    "seeds": [
+      7,
+      11,
+      23,
+      37,
+      53
+    ],
+    "text_only_reproduction_original_receipt": {
+      "passed": true,
+      "resources_excluded": true,
+      "seeds": {
+        "11": {
+          "checkpoint_bytes_equal": true,
+          "checkpoint_sha256": "a9191578b09bb098cbe361d173593c5ca466013c11d83e9f9a85d5462beb6ffe",
+          "report_except_resources_equal": true,
+          "state_sha256": "40ce866aa8182b5b2907759a070acf1858b69f348b3712a57f2ed9578c68f9e1"
+        },
+        "23": {
+          "checkpoint_bytes_equal": true,
+          "checkpoint_sha256": "17c348d0304dd859fae580a9493489f4b1d77be00c01adb6e7179807914b0fd7",
+          "report_except_resources_equal": true,
+          "state_sha256": "751f70018cba70dbc3292efd46980cc4a46c801a36c2429b11becee3c0e4cd3e"
+        },
+        "37": {
+          "checkpoint_bytes_equal": true,
+          "checkpoint_sha256": "0ffee5bb2849c447559ded13ae23ad9cad5a2aa3eb5f24bd2e5a19e2ce397419",
+          "report_except_resources_equal": true,
+          "state_sha256": "0c6588e06ba90be8ff12bd20161582fcf34801a2f2d87852f759011caebddfcd"
+        },
+        "53": {
+          "checkpoint_bytes_equal": true,
+          "checkpoint_sha256": "a7be60f42686ca42220cca2f4c42e80c3c7f6b32389e7aa2907212c725d49b40",
+          "report_except_resources_equal": true,
+          "state_sha256": "cfac17ee464f7eb596ef1e1a663923fd00aa0158d1f4f40535efb7b89d229546"
+        },
+        "7": {
+          "checkpoint_bytes_equal": true,
+          "checkpoint_sha256": "8c32dc3fa3ba4cadb4d2ba93eac473f78802f394ff4187f6abfae06a0dfc1029",
+          "report_except_resources_equal": true,
+          "state_sha256": "3d6b6560f9adfcc5419b4df8ca354bc9f7887054a0727d1dc06b019495553f73"
+        }
+      },
+      "version": "effect-role-text-only-reproduction-v2"
+    },
+    "updates_per_fit": 256
+  },
+  "version": "effect-role-interruption-v2",
+  "weights_publication": "30880caf676c10773857221d9d5bc2437651fb6f"
+}
