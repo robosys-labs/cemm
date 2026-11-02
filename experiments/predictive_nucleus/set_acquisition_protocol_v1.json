@@ -1,0 +1,73 @@
+{
+  "version": "set-acquisition-v1",
+  "recorded_on": "2026-11-02",
+  "timezone": "Africa/Lagos",
+  "base_commit": "2ba2843b3a456957b9c4f0b789e42e90387354c8",
+  "scope": "NATIVE_EFFECT_ACQUISITION_WITH_CONTACT_AND_LANGUAGE_RETENTION",
+  "model_seeds": [7, 11, 23, 37, 53],
+  "parameters": 562,
+  "permitted_scalars": 68,
+  "immutable_scalars": 494,
+  "parameter_mask": {"intervention.*": "all 57 scalars", "background.0.weight": "column 2 only, 11 scalars"},
+  "train_forecasts": 48,
+  "fresh_forecasts_per_law": 1920,
+  "fresh_episodes_per_law": 384,
+  "identifiable_forecasts_per_law": 1664,
+  "ambiguous_forecasts_per_law": 256,
+  "language_retention_forecasts_per_law_seed": 13152,
+  "planned_native_forecasts": 57600,
+  "planned_language_retention_forecasts": 131520,
+  "arms": ["parent", "acquired", "no_change"],
+  "fit": {
+    "updates": 256,
+    "learning_rate": 0.02,
+    "cpu_seconds": 180,
+    "gradient_clip": 1.0,
+    "live_path_limit": 64,
+    "candidate_expansions": 512
+  },
+  "analysis": {
+    "identifiable_accuracy": 0.95,
+    "mean_oracle_kl": 0.05,
+    "max_ambiguous_total_variation": 0.1,
+    "max_set_mean_nll": 0.05,
+    "min_changed_set_nll_gain": 0.1,
+    "max_retention_logp_change": 1e-10
+  },
+  "execution": {
+    "runtime": {
+      "python": "3.13.16",
+      "torch": "2.10.0+cpu",
+      "numpy": "2.3.5",
+      "threads": 1,
+      "dtype": "float64",
+      "deterministic_algorithms": true
+    },
+    "fits": 10,
+    "one_attempt": true,
+    "retries": 0,
+    "source_data_publication_before_fitting": true,
+    "actual_weights_publication_before_collection": true,
+    "raw_forecasts_publication_before_scoring": true
+  },
+  "design": {
+    "hypothesis": "The existing world acquires the previously untrained native set effect from observed transitions by moving only 68 existing scalars, while preserving the previously learned contact and bilingual/lexical predictions.",
+    "training": "Identical fresh 48-event tape at all ten inherited law/seed checkpoints: all eight binary 3-entity anchors, all three addressed slots, both requested bits. Full before/action/after observations; no hidden mode, oracle target, action-effect formula or language label supplied to fitting. One event per episode; all four atomic prior/request tuples covered.",
+    "challenge": "Fresh opaque IDs and coherent five-action repeated-set, alternating-set and set-contact-bridge sequences over 3-6 entities. Set-only duplicate hidden-mode/reversal views omitted. 128 contact-reversal pairs per law. All 1920 actions retained, including 256 ambiguous forecasts. Atomic tuples and both laws are familiar; no unseen atomic truth-table or independent world-replication claim.",
+    "optimization": "Fresh Adam betas .9/.999, eps 1e-8, weight_decay 0, amsgrad false. Mask gradients before clip. Verify the 494-scalar complement bitwise after every step; never restore forbidden changes to conceal them. 256 fixed updates, no loss-based early stopping, selection, extra examples or retries. Retain every seed even when fitting criteria fail.",
+    "controls": "Inherited no-update parent and deterministic no-change control on identical delivered histories. The no-change forecast is computed once per law and explicitly reused across seed labels. No architecture or matched-consumed-compute comparison is claimed.",
+    "retention": "Use unchanged accepted 88-parameter coordinate language weights across six opened banks: bilingual, lexical, binding, saturation, centering and coordinates. Compare with their saved coordinate forecasts, not earlier failed encoders. Zero exact regressions, identical language order probabilities, maximum world-log-probability change <=1e-10. Keep individual probability changes. No old model is refitted or old baseline recollected.",
+    "criteria": "Every law/seed must meet identifiable complete-world and identifiable trajectory/role-pair accuracy >=.95, full coverage, zero unsupported MAP worlds and zero known-fixed-coordinate errors. Mean oracle KL <=.05 in each nonempty family/information stratum, maximum ambiguous TV <=.1. SET NLL <=.05 in every nonempty family/entity-count/prior/request/changed cell, with changed-SET mean NLL improvement >=.1 over parent and no-change. Zero identifiable regressions against parent. Training NLL <=.05 and all six language retention gates must pass. Since unsupported MAP is forbidden, singleton support requires exact correctness despite the .95 floor.",
+    "probabilities": "Unconditioned full joint distributions, no oracle-support truncation or clipped zero probabilities. Ambiguous actual-world errors remain reported but do not alone fail acquisition. Whole-trajectory metrics use actual intermediate feedback and are not autonomous rollouts.",
+    "publication": "Publish source/protocol/data, actual weights, then all raw forecasts in separate commits before the next stage. Remote commit visibility is verified outside the runner. Hashes and same-team review do not constitute independent custody.",
+    "failure": "Exclusive output paths; retain attempts, completed checkpoints, raw records and failure details. Any incomplete update/collection inventory stops without refitting or retry. A completed scientific failure yields REVISE_NATIVE_SET_ACQUISITION, never revised thresholds on the opened bank.",
+    "limits": "Action family, stable identity addressing, requested bit, factorization, two persistent modes and Bayesian filtering are supplied. This tests observed effect acquisition and retention; learned effect selection from words is a later frozen study. No new operator, architecture, workspace or production path. Original G1/G2 scientific gates, G3 full exit and G4 remain unchanged. The inclusive 2000-line research goal remains unmet."
+  },
+  "decision_order": [
+    "STOP_INCOMPLETE_EXECUTION on incomplete fitting, invalid provenance or missing forecasts",
+    "REVISE_NATIVE_SET_ACQUISITION if any completed-fit, competence, probability or retention criterion fails",
+    "KEEP_NATIVE_SET_ACQUISITION otherwise; proceed to effect-and-role grounding only in a new frozen tranche"
+  ],
+  "scientific_admission": false,
+  "g3_complete": false
+}

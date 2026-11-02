@@ -1,0 +1,1131 @@
+{
+  "created_utc": "2026-11-02T09:13:59.653514+00:00",
+  "diagnostic_script_sha256": "f9737cb95bb3d0a6e8b5f7a9a1f6ff5907956247b2644c097c6cc8be816bf187",
+  "execution": "POST_STOP_SAVED_RECORD_ARITHMETIC_AUDIT",
+  "failure": {
+    "error": "ValueError",
+    "message": "frozen language output changed",
+    "stage": "score"
+  },
+  "limitations": "Post-stop diagnostic of already collected dependent views. Complete observed feedback supplies targets; this is not independent custody, a repaired scorer, a completed acceptance run, or a KEEP decision.",
+  "models_executed": false,
+  "oracle_or_evaluator_files_read": false,
+  "original_scorer_executed": false,
+  "per_law_seed": {
+    "nand/11": {
+      "acquired_vs_no_change": {
+        "nll_better": 736,
+        "nll_equal": 0,
+        "nll_worse": 416,
+        "regressions": 0,
+        "repairs": 736
+      },
+      "acquired_vs_parent": {
+        "nll_better": 1152,
+        "nll_equal": 0,
+        "nll_worse": 0,
+        "regressions": 0,
+        "repairs": 576
+      },
+      "arms": {
+        "acquired": {
+          "correct": 1152,
+          "finite_nll_count": 1152,
+          "max_nll": 0.005970127986974083,
+          "mean_nll": 0.004184286725445653,
+          "min_nll": 0.0025031884369125226,
+          "planned": 1152
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": -0.0,
+          "planned": 1152
+        },
+        "parent": {
+          "correct": 576,
+          "finite_nll_count": 1152,
+          "max_nll": 1.5569245333640025,
+          "mean_nll": 0.9699587439253369,
+          "min_nll": 0.42963017760826566,
+          "planned": 1152
+        }
+      },
+      "changed": {
+        "acquired": {
+          "correct": 736,
+          "finite_nll_count": 736,
+          "max_nll": 0.005757701800167161,
+          "mean_nll": 0.004122187789624502,
+          "min_nll": 0.0025031884369125226,
+          "planned": 736
+        },
+        "no_change": {
+          "correct": 0,
+          "finite_nll_count": 0,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": "positive_infinity",
+          "planned": 736
+        },
+        "parent": {
+          "correct": 368,
+          "finite_nll_count": 736,
+          "max_nll": 1.5569245333640025,
+          "mean_nll": 1.0174148796476168,
+          "min_nll": 0.5250362410006151,
+          "planned": 736
+        }
+      },
+      "changed_sets": 736,
+      "planned": 1152,
+      "unchanged": {
+        "acquired": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": 0.005970127986974083,
+          "mean_nll": 0.0042941540734369186,
+          "min_nll": 0.0026299568998048783,
+          "planned": 416
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": -0.0,
+          "mean_nll": 0.0,
+          "min_nll": -0.0,
+          "planned": 416
+        },
+        "parent": {
+          "correct": 208,
+          "finite_nll_count": 416,
+          "max_nll": 1.394404416575935,
+          "mean_nll": 0.8859978884166877,
+          "min_nll": 0.42963017760826566,
+          "planned": 416
+        }
+      },
+      "unchanged_sets": 416
+    },
+    "nand/23": {
+      "acquired_vs_no_change": {
+        "nll_better": 736,
+        "nll_equal": 0,
+        "nll_worse": 416,
+        "regressions": 0,
+        "repairs": 736
+      },
+      "acquired_vs_parent": {
+        "nll_better": 1152,
+        "nll_equal": 0,
+        "nll_worse": 0,
+        "regressions": 0,
+        "repairs": 576
+      },
+      "arms": {
+        "acquired": {
+          "correct": 1152,
+          "finite_nll_count": 1152,
+          "max_nll": 0.004867146458108293,
+          "mean_nll": 0.003453924576696754,
+          "min_nll": 0.0020944456389449173,
+          "planned": 1152
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": -0.0,
+          "planned": 1152
+        },
+        "parent": {
+          "correct": 576,
+          "finite_nll_count": 1152,
+          "max_nll": 1.0013727116015698,
+          "mean_nll": 0.7405868710422783,
+          "min_nll": 0.5125228578005894,
+          "planned": 1152
+        }
+      },
+      "changed": {
+        "acquired": {
+          "correct": 736,
+          "finite_nll_count": 736,
+          "max_nll": 0.004789850944333255,
+          "mean_nll": 0.003435741010552848,
+          "min_nll": 0.0020944456389449173,
+          "planned": 736
+        },
+        "no_change": {
+          "correct": 0,
+          "finite_nll_count": 0,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": "positive_infinity",
+          "planned": 736
+        },
+        "parent": {
+          "correct": 368,
+          "finite_nll_count": 736,
+          "max_nll": 0.9756786269040874,
+          "mean_nll": 0.7306955187271285,
+          "min_nll": 0.5125228578005894,
+          "planned": 736
+        }
+      },
+      "changed_sets": 736,
+      "planned": 1152,
+      "unchanged": {
+        "acquired": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": 0.004867146458108293,
+          "mean_nll": 0.0034860955014128945,
+          "min_nll": 0.0021141827156230275,
+          "planned": 416
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": -0.0,
+          "mean_nll": 0.0,
+          "min_nll": -0.0,
+          "planned": 416
+        },
+        "parent": {
+          "correct": 208,
+          "finite_nll_count": 416,
+          "max_nll": 1.0013727116015698,
+          "mean_nll": 0.7580869559075432,
+          "min_nll": 0.5444034475978472,
+          "planned": 416
+        }
+      },
+      "unchanged_sets": 416
+    },
+    "nand/37": {
+      "acquired_vs_no_change": {
+        "nll_better": 736,
+        "nll_equal": 0,
+        "nll_worse": 416,
+        "regressions": 0,
+        "repairs": 736
+      },
+      "acquired_vs_parent": {
+        "nll_better": 1152,
+        "nll_equal": 0,
+        "nll_worse": 0,
+        "regressions": 0,
+        "repairs": 576
+      },
+      "arms": {
+        "acquired": {
+          "correct": 1152,
+          "finite_nll_count": 1152,
+          "max_nll": 0.0071479807170160585,
+          "mean_nll": 0.0049910088695169965,
+          "min_nll": 0.0029024247928094125,
+          "planned": 1152
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": -0.0,
+          "planned": 1152
+        },
+        "parent": {
+          "correct": 576,
+          "finite_nll_count": 1152,
+          "max_nll": 1.3334056589744874,
+          "mean_nll": 0.7913224429078966,
+          "min_nll": 0.4231031410939789,
+          "planned": 1152
+        }
+      },
+      "changed": {
+        "acquired": {
+          "correct": 736,
+          "finite_nll_count": 736,
+          "max_nll": 0.007063067149029623,
+          "mean_nll": 0.004964765676734739,
+          "min_nll": 0.0029024247928094125,
+          "planned": 736
+        },
+        "no_change": {
+          "correct": 0,
+          "finite_nll_count": 0,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": "positive_infinity",
+          "planned": 736
+        },
+        "parent": {
+          "correct": 368,
+          "finite_nll_count": 736,
+          "max_nll": 1.1432445354667746,
+          "mean_nll": 0.7470816737354653,
+          "min_nll": 0.4231031410939789,
+          "planned": 736
+        }
+      },
+      "changed_sets": 736,
+      "planned": 1152,
+      "unchanged": {
+        "acquired": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": 0.0071479807170160585,
+          "mean_nll": 0.005037439133670224,
+          "min_nll": 0.002952541345091961,
+          "planned": 416
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": -0.0,
+          "mean_nll": 0.0,
+          "min_nll": -0.0,
+          "planned": 416
+        },
+        "parent": {
+          "correct": 208,
+          "finite_nll_count": 416,
+          "max_nll": 1.3334056589744874,
+          "mean_nll": 0.8695945729821979,
+          "min_nll": 0.48548444635959737,
+          "planned": 416
+        }
+      },
+      "unchanged_sets": 416
+    },
+    "nand/53": {
+      "acquired_vs_no_change": {
+        "nll_better": 736,
+        "nll_equal": 0,
+        "nll_worse": 416,
+        "regressions": 0,
+        "repairs": 736
+      },
+      "acquired_vs_parent": {
+        "nll_better": 1152,
+        "nll_equal": 0,
+        "nll_worse": 0,
+        "regressions": 0,
+        "repairs": 416
+      },
+      "arms": {
+        "acquired": {
+          "correct": 1152,
+          "finite_nll_count": 1152,
+          "max_nll": 0.005626250098400512,
+          "mean_nll": 0.00401474785410418,
+          "min_nll": 0.002414814731824847,
+          "planned": 1152
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": -0.0,
+          "planned": 1152
+        },
+        "parent": {
+          "correct": 736,
+          "finite_nll_count": 1152,
+          "max_nll": 1.1995725272827258,
+          "mean_nll": 0.8212785265220074,
+          "min_nll": 0.608855994337838,
+          "planned": 1152
+        }
+      },
+      "changed": {
+        "acquired": {
+          "correct": 736,
+          "finite_nll_count": 736,
+          "max_nll": 0.005589067852841409,
+          "mean_nll": 0.003997458914941638,
+          "min_nll": 0.002414814731824847,
+          "planned": 736
+        },
+        "no_change": {
+          "correct": 0,
+          "finite_nll_count": 0,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": "positive_infinity",
+          "planned": 736
+        },
+        "parent": {
+          "correct": 736,
+          "finite_nll_count": 736,
+          "max_nll": 1.0236954104043416,
+          "mean_nll": 0.782176386839329,
+          "min_nll": 0.608855994337838,
+          "planned": 736
+        }
+      },
+      "changed_sets": 736,
+      "planned": 1152,
+      "unchanged": {
+        "acquired": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": 0.005626250098400512,
+          "mean_nll": 0.004045335977237908,
+          "min_nll": 0.002474320120224414,
+          "planned": 416
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": -0.0,
+          "mean_nll": 0.0,
+          "min_nll": -0.0,
+          "planned": 416
+        },
+        "parent": {
+          "correct": 0,
+          "finite_nll_count": 416,
+          "max_nll": 1.1995725272827258,
+          "mean_nll": 0.8904592351913618,
+          "min_nll": 0.7157087352876995,
+          "planned": 416
+        }
+      },
+      "unchanged_sets": 416
+    },
+    "nand/7": {
+      "acquired_vs_no_change": {
+        "nll_better": 736,
+        "nll_equal": 0,
+        "nll_worse": 416,
+        "regressions": 0,
+        "repairs": 736
+      },
+      "acquired_vs_parent": {
+        "nll_better": 1152,
+        "nll_equal": 0,
+        "nll_worse": 0,
+        "regressions": 0,
+        "repairs": 576
+      },
+      "arms": {
+        "acquired": {
+          "correct": 1152,
+          "finite_nll_count": 1152,
+          "max_nll": 0.004622648824379556,
+          "mean_nll": 0.0032332453896772913,
+          "min_nll": 0.0019254360878969905,
+          "planned": 1152
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": -0.0,
+          "planned": 1152
+        },
+        "parent": {
+          "correct": 576,
+          "finite_nll_count": 1152,
+          "max_nll": 1.1791742942969026,
+          "mean_nll": 0.7496473218294585,
+          "min_nll": 0.4524085240681922,
+          "planned": 1152
+        }
+      },
+      "changed": {
+        "acquired": {
+          "correct": 736,
+          "finite_nll_count": 736,
+          "max_nll": 0.004520590155170289,
+          "mean_nll": 0.0032133360249697413,
+          "min_nll": 0.0019254360878969905,
+          "planned": 736
+        },
+        "no_change": {
+          "correct": 0,
+          "finite_nll_count": 0,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": "positive_infinity",
+          "planned": 736
+        },
+        "parent": {
+          "correct": 368,
+          "finite_nll_count": 736,
+          "max_nll": 1.010633133504837,
+          "mean_nll": 0.7061635927018044,
+          "min_nll": 0.4524085240681922,
+          "planned": 736
+        }
+      },
+      "changed_sets": 736,
+      "planned": 1152,
+      "unchanged": {
+        "acquired": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": 0.004622648824379556,
+          "mean_nll": 0.0032684696503137256,
+          "min_nll": 0.0019280921123986988,
+          "planned": 416
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": -0.0,
+          "mean_nll": 0.0,
+          "min_nll": -0.0,
+          "planned": 416
+        },
+        "parent": {
+          "correct": 208,
+          "finite_nll_count": 416,
+          "max_nll": 1.1791742942969026,
+          "mean_nll": 0.8265800733630002,
+          "min_nll": 0.5299812760452199,
+          "planned": 416
+        }
+      },
+      "unchanged_sets": 416
+    },
+    "nor/11": {
+      "acquired_vs_no_change": {
+        "nll_better": 736,
+        "nll_equal": 0,
+        "nll_worse": 416,
+        "regressions": 0,
+        "repairs": 736
+      },
+      "acquired_vs_parent": {
+        "nll_better": 1152,
+        "nll_equal": 0,
+        "nll_worse": 0,
+        "regressions": 0,
+        "repairs": 576
+      },
+      "arms": {
+        "acquired": {
+          "correct": 1152,
+          "finite_nll_count": 1152,
+          "max_nll": 0.006114885122018546,
+          "mean_nll": 0.004293686217691536,
+          "min_nll": 0.0025771142071774823,
+          "planned": 1152
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": -0.0,
+          "planned": 1152
+        },
+        "parent": {
+          "correct": 576,
+          "finite_nll_count": 1152,
+          "max_nll": 1.5682035282981268,
+          "mean_nll": 0.9776962128898552,
+          "min_nll": 0.42962516510708776,
+          "planned": 1152
+        }
+      },
+      "changed": {
+        "acquired": {
+          "correct": 736,
+          "finite_nll_count": 736,
+          "max_nll": 0.0059024589352113495,
+          "mean_nll": 0.0042323706399419545,
+          "min_nll": 0.0025771142071774823,
+          "planned": 736
+        },
+        "no_change": {
+          "correct": 0,
+          "finite_nll_count": 0,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": "positive_infinity",
+          "planned": 736
+        },
+        "parent": {
+          "correct": 368,
+          "finite_nll_count": 736,
+          "max_nll": 1.5682035282981268,
+          "mean_nll": 1.0243842855397376,
+          "min_nll": 0.5250312284994374,
+          "planned": 736
+        }
+      },
+      "changed_sets": 736,
+      "planned": 1152,
+      "unchanged": {
+        "acquired": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": 0.006114885122018546,
+          "mean_nll": 0.004402167624479258,
+          "min_nll": 0.0027038826700698133,
+          "planned": 416
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": -0.0,
+          "mean_nll": 0.0,
+          "min_nll": -0.0,
+          "planned": 416
+        },
+        "parent": {
+          "correct": 208,
+          "finite_nll_count": 416,
+          "max_nll": 1.4056834115100594,
+          "mean_nll": 0.8950942382016019,
+          "min_nll": 0.42962516510708776,
+          "planned": 416
+        }
+      },
+      "unchanged_sets": 416
+    },
+    "nor/23": {
+      "acquired_vs_no_change": {
+        "nll_better": 736,
+        "nll_equal": 0,
+        "nll_worse": 416,
+        "regressions": 0,
+        "repairs": 736
+      },
+      "acquired_vs_parent": {
+        "nll_better": 1152,
+        "nll_equal": 0,
+        "nll_worse": 0,
+        "regressions": 0,
+        "repairs": 576
+      },
+      "arms": {
+        "acquired": {
+          "correct": 1152,
+          "finite_nll_count": 1152,
+          "max_nll": 0.004873140211497219,
+          "mean_nll": 0.003463864818410404,
+          "min_nll": 0.0021085568349885286,
+          "planned": 1152
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": -0.0,
+          "planned": 1152
+        },
+        "parent": {
+          "correct": 576,
+          "finite_nll_count": 1152,
+          "max_nll": 0.9836323988427736,
+          "mean_nll": 0.7362262966517698,
+          "min_nll": 0.5127320889590056,
+          "planned": 1152
+        }
+      },
+      "changed": {
+        "acquired": {
+          "correct": 736,
+          "finite_nll_count": 736,
+          "max_nll": 0.004795844697721953,
+          "mean_nll": 0.0034462875555850087,
+          "min_nll": 0.0021085568349885286,
+          "planned": 736
+        },
+        "no_change": {
+          "correct": 0,
+          "finite_nll_count": 0,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": "positive_infinity",
+          "planned": 736
+        },
+        "parent": {
+          "correct": 368,
+          "finite_nll_count": 736,
+          "max_nll": 0.9579383141452907,
+          "mean_nll": 0.7258810750495875,
+          "min_nll": 0.5127320889590056,
+          "planned": 736
+        }
+      },
+      "changed_sets": 736,
+      "planned": 1152,
+      "unchanged": {
+        "acquired": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": 0.004873140211497219,
+          "mean_nll": 0.0034949630526399512,
+          "min_nll": 0.002128293911666511,
+          "planned": 416
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": -0.0,
+          "mean_nll": 0.0,
+          "min_nll": -0.0,
+          "planned": 416
+        },
+        "parent": {
+          "correct": 208,
+          "finite_nll_count": 416,
+          "max_nll": 0.9836323988427736,
+          "mean_nll": 0.7545293810248613,
+          "min_nll": 0.5446126787562635,
+          "planned": 416
+        }
+      },
+      "unchanged_sets": 416
+    },
+    "nor/37": {
+      "acquired_vs_no_change": {
+        "nll_better": 736,
+        "nll_equal": 0,
+        "nll_worse": 416,
+        "regressions": 0,
+        "repairs": 736
+      },
+      "acquired_vs_parent": {
+        "nll_better": 1152,
+        "nll_equal": 0,
+        "nll_worse": 0,
+        "regressions": 0,
+        "repairs": 576
+      },
+      "arms": {
+        "acquired": {
+          "correct": 1152,
+          "finite_nll_count": 1152,
+          "max_nll": 0.00837014628247651,
+          "mean_nll": 0.005816740613892152,
+          "min_nll": 0.003360285059126055,
+          "planned": 1152
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": -0.0,
+          "planned": 1152
+        },
+        "parent": {
+          "correct": 576,
+          "finite_nll_count": 1152,
+          "max_nll": 1.5024598452620497,
+          "mean_nll": 0.8593457897899297,
+          "min_nll": 0.42311933164713467,
+          "planned": 1152
+        }
+      },
+      "changed": {
+        "acquired": {
+          "correct": 736,
+          "finite_nll_count": 736,
+          "max_nll": 0.008285232714489615,
+          "mean_nll": 0.005792061730939306,
+          "min_nll": 0.003360285059126055,
+          "planned": 736
+        },
+        "no_change": {
+          "correct": 0,
+          "finite_nll_count": 0,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": "positive_infinity",
+          "planned": 736
+        },
+        "parent": {
+          "correct": 368,
+          "finite_nll_count": 736,
+          "max_nll": 1.312298721754337,
+          "mean_nll": 0.8140328960727529,
+          "min_nll": 0.42311933164713467,
+          "planned": 736
+        }
+      },
+      "changed_sets": 736,
+      "planned": 1152,
+      "unchanged": {
+        "acquired": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": 0.00837014628247651,
+          "mean_nll": 0.005860403252962574,
+          "min_nll": 0.0034104016114082964,
+          "planned": 416
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": -0.0,
+          "mean_nll": 0.0,
+          "min_nll": -0.0,
+          "planned": 416
+        },
+        "parent": {
+          "correct": 208,
+          "finite_nll_count": 416,
+          "max_nll": 1.5024598452620497,
+          "mean_nll": 0.9395147555972424,
+          "min_nll": 0.48550063691275325,
+          "planned": 416
+        }
+      },
+      "unchanged_sets": 416
+    },
+    "nor/53": {
+      "acquired_vs_no_change": {
+        "nll_better": 736,
+        "nll_equal": 0,
+        "nll_worse": 416,
+        "regressions": 0,
+        "repairs": 736
+      },
+      "acquired_vs_parent": {
+        "nll_better": 1152,
+        "nll_equal": 0,
+        "nll_worse": 0,
+        "regressions": 0,
+        "repairs": 416
+      },
+      "arms": {
+        "acquired": {
+          "correct": 1152,
+          "finite_nll_count": 1152,
+          "max_nll": 0.0066718647521655855,
+          "mean_nll": 0.004706961929884853,
+          "min_nll": 0.0027841021149128454,
+          "planned": 1152
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": -0.0,
+          "planned": 1152
+        },
+        "parent": {
+          "correct": 736,
+          "finite_nll_count": 1152,
+          "max_nll": 1.2156891276184596,
+          "mean_nll": 0.8364899005449645,
+          "min_nll": 0.6088976024660663,
+          "planned": 1152
+        }
+      },
+      "changed": {
+        "acquired": {
+          "correct": 736,
+          "finite_nll_count": 736,
+          "max_nll": 0.006634682506606816,
+          "mean_nll": 0.004689609496216364,
+          "min_nll": 0.0027841021149128454,
+          "planned": 736
+        },
+        "no_change": {
+          "correct": 0,
+          "finite_nll_count": 0,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": "positive_infinity",
+          "planned": 736
+        },
+        "parent": {
+          "correct": 736,
+          "finite_nll_count": 736,
+          "max_nll": 1.0398120107400755,
+          "mean_nll": 0.7953956161056773,
+          "min_nll": 0.6088976024660663,
+          "planned": 736
+        }
+      },
+      "changed_sets": 736,
+      "planned": 1152,
+      "unchanged": {
+        "acquired": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": 0.0066718647521655855,
+          "mean_nll": 0.004737662389452179,
+          "min_nll": 0.002843607503312252,
+          "planned": 416
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": -0.0,
+          "mean_nll": 0.0,
+          "min_nll": -0.0,
+          "planned": 416
+        },
+        "parent": {
+          "correct": 0,
+          "finite_nll_count": 416,
+          "max_nll": 1.2156891276184596,
+          "mean_nll": 0.9091951730144726,
+          "min_nll": 0.7157503434159277,
+          "planned": 416
+        }
+      },
+      "unchanged_sets": 416
+    },
+    "nor/7": {
+      "acquired_vs_no_change": {
+        "nll_better": 736,
+        "nll_equal": 0,
+        "nll_worse": 416,
+        "regressions": 0,
+        "repairs": 736
+      },
+      "acquired_vs_parent": {
+        "nll_better": 1152,
+        "nll_equal": 0,
+        "nll_worse": 0,
+        "regressions": 0,
+        "repairs": 576
+      },
+      "arms": {
+        "acquired": {
+          "correct": 1152,
+          "finite_nll_count": 1152,
+          "max_nll": 0.004706016402001873,
+          "mean_nll": 0.0032756613276012335,
+          "min_nll": 0.0019422188694891696,
+          "planned": 1152
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": -0.0,
+          "planned": 1152
+        },
+        "parent": {
+          "correct": 576,
+          "finite_nll_count": 1152,
+          "max_nll": 1.16306541887141,
+          "mean_nll": 0.7475485292555047,
+          "min_nll": 0.45243376240269984,
+          "planned": 1152
+        }
+      },
+      "changed": {
+        "acquired": {
+          "correct": 736,
+          "finite_nll_count": 736,
+          "max_nll": 0.0046039577327925485,
+          "mean_nll": 0.0032565941480819415,
+          "min_nll": 0.0019422188694891696,
+          "planned": 736
+        },
+        "no_change": {
+          "correct": 0,
+          "finite_nll_count": 0,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": "positive_infinity",
+          "planned": 736
+        },
+        "parent": {
+          "correct": 368,
+          "finite_nll_count": 736,
+          "max_nll": 0.9945242580793446,
+          "mean_nll": 0.7032188855370458,
+          "min_nll": 0.45243376240269984,
+          "planned": 736
+        }
+      },
+      "changed_sets": 736,
+      "planned": 1152,
+      "unchanged": {
+        "acquired": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": 0.004706016402001873,
+          "mean_nll": 0.0033093955682892114,
+          "min_nll": 0.0019448748939908844,
+          "planned": 416
+        },
+        "no_change": {
+          "correct": 416,
+          "finite_nll_count": 416,
+          "max_nll": -0.0,
+          "mean_nll": 0.0,
+          "min_nll": -0.0,
+          "planned": 416
+        },
+        "parent": {
+          "correct": 208,
+          "finite_nll_count": 416,
+          "max_nll": 1.16306541887141,
+          "mean_nll": 0.8259778989112397,
+          "min_nll": 0.5300065143797276,
+          "planned": 416
+        }
+      },
+      "unchanged_sets": 416
+    }
+  },
+  "points": {
+    "bytes": 178260,
+    "contents": "Every SET point ID, observed target, all three MAP/NLL results, exact repairs/regressions and probability changes.",
+    "path": "points.json.xz",
+    "records": 11520,
+    "sha256": "80c14ef0cbe3c57203a4a611399ad500d121b599af1f2bc64d60cad027f0791a"
+  },
+  "scientific_decision": null,
+  "scope": "Observed native SET action endpoints only; all contacts, language retention, and other acceptance gates excluded.",
+  "source_sha256": {
+    "data/set-acquisition-v1/freeze.json": "23a28bc4f6ea1959279d8467f27879bc4130a50dd867f3c5e99a1b5cfe1b86b2",
+    "data/set-acquisition-v1/nand-inputs.json.xz": "3aafe41f1643b921c9e97a02cc09b74cc9674d3f8e4079beedb160fd41212c67",
+    "data/set-acquisition-v1/nor-inputs.json.xz": "4582ef99f27ac32be3c985e9b42dc6365e3e9e41de0819af68c3cb2bc4873283",
+    "results/set-acquisition-v1/scored/failure.json": "d358ad429bd9630988d05df22c5d351f4565d0a87aac72d077af73f769e8396f",
+    "results/set-acquisition-v1/traces/manifest.json": "21a56941dce9013bc8020540b7daae991ff62f6b098f4d1a50085c7cd198ef5e",
+    "results/set-acquisition-v1/traces/trace-nand-11-acquired-fresh.json.xz": "6e2642af2d494a20374c92c040b1433d8e0c4c5424f4773903a23cdb193bd197",
+    "results/set-acquisition-v1/traces/trace-nand-11-no_change-fresh.json.xz": "2a120f90969544a37e8f692123fff0e6861e2da57013be30e59123d32f0401b5",
+    "results/set-acquisition-v1/traces/trace-nand-11-parent-fresh.json.xz": "81cc8578242e288b8a08820638f9f8ecac88b3a443887916b67bb746b1839b67",
+    "results/set-acquisition-v1/traces/trace-nand-23-acquired-fresh.json.xz": "e9cdfa6418c7c2356d1b10e83c525c3c544561b616f688cc143365b2f1537715",
+    "results/set-acquisition-v1/traces/trace-nand-23-no_change-fresh.json.xz": "a3968dd471216b9e798912d7e8949cc48a846673da178b7f99a66891965b6a43",
+    "results/set-acquisition-v1/traces/trace-nand-23-parent-fresh.json.xz": "7ac46f24cc747d6225f54aefde694b994e83966707ad780d9c5803b197b371c6",
+    "results/set-acquisition-v1/traces/trace-nand-37-acquired-fresh.json.xz": "cc90f6e9334e8afdff965cf0816c7307c9d950799ddad05926d25a837262cb24",
+    "results/set-acquisition-v1/traces/trace-nand-37-no_change-fresh.json.xz": "3605c81e4441d6b995a8e6bdab9e1c64d608266740328ce28ce7a90efd04731d",
+    "results/set-acquisition-v1/traces/trace-nand-37-parent-fresh.json.xz": "337107432c4586fd05fadaa7c34f16cf4d7a748d22f343ea60c973a056731fb0",
+    "results/set-acquisition-v1/traces/trace-nand-53-acquired-fresh.json.xz": "095dffdd40856fef7b5c0fe2e906ef5c0add623f92773dd32982a25bcc82c65b",
+    "results/set-acquisition-v1/traces/trace-nand-53-no_change-fresh.json.xz": "352e215e693800c99839e63273f0b27df2011f54b2d2350e6663fcafb37cb73f",
+    "results/set-acquisition-v1/traces/trace-nand-53-parent-fresh.json.xz": "295471ee5ba5a9317a6cc3f876324111bba88ab024333cb8eb45728ac85ade0b",
+    "results/set-acquisition-v1/traces/trace-nand-7-acquired-fresh.json.xz": "7eabcd2d8d7c6b5630c6f044c6175dea45cd9e0aa212d6194d3eb735deba8f8f",
+    "results/set-acquisition-v1/traces/trace-nand-7-no_change-fresh.json.xz": "08183d0269e3cc3e0f273f5768c11f15800ea442919f089c4fd3f4ae85839ef0",
+    "results/set-acquisition-v1/traces/trace-nand-7-parent-fresh.json.xz": "25e9e40844a9d9e0bc10fa5654893c159e583eb71c687c48e553c2966f4b58ea",
+    "results/set-acquisition-v1/traces/trace-nor-11-acquired-fresh.json.xz": "a57f54e5840ea937cd865acb04b4012fcc5ef37bd4799efd0099ebb881bec84c",
+    "results/set-acquisition-v1/traces/trace-nor-11-no_change-fresh.json.xz": "536bfd69b6b2640f1e9b9f4b43886ac9853e9a9ba801b878c47af31987eb7444",
+    "results/set-acquisition-v1/traces/trace-nor-11-parent-fresh.json.xz": "efe6edee5b7d3b790ec1485c22e77029d407081a22cac8b515d3f7b13640bb7e",
+    "results/set-acquisition-v1/traces/trace-nor-23-acquired-fresh.json.xz": "48cf34a83682b15c956afbc65cade015d758b6ae2c6520d42754b5c86b695b2d",
+    "results/set-acquisition-v1/traces/trace-nor-23-no_change-fresh.json.xz": "57bcb45224a9e5f7886e81c231ced6f19d289ea597fb20fe0590ffea2f4a6f62",
+    "results/set-acquisition-v1/traces/trace-nor-23-parent-fresh.json.xz": "d95dd236edeee9bf033dc40f1628e7e410d1d39e58a3bd4aebec39db387a4063",
+    "results/set-acquisition-v1/traces/trace-nor-37-acquired-fresh.json.xz": "2e08182d3289729c0218f7f4051a51f9ba4a95b95787028f610b5ff1a7232e90",
+    "results/set-acquisition-v1/traces/trace-nor-37-no_change-fresh.json.xz": "6bdd2e09cefe9be3ebe268c5cf5eb24976c48fc569d4ebb39989aadbf8dd261f",
+    "results/set-acquisition-v1/traces/trace-nor-37-parent-fresh.json.xz": "48f20f4d53ebe3cde466f881b71b4d4ba7528a103313a2060c7900af48cad8c5",
+    "results/set-acquisition-v1/traces/trace-nor-53-acquired-fresh.json.xz": "856479a581ce215e7281cc54fb7f246efd9e47ce75a6d2b230613b7cbe9e9734",
+    "results/set-acquisition-v1/traces/trace-nor-53-no_change-fresh.json.xz": "4ba1e0667d0de527b012e2874df0198d633b3d345b41085e8cd7d47144710733",
+    "results/set-acquisition-v1/traces/trace-nor-53-parent-fresh.json.xz": "bf32129c5793c798dc86b018ceb599c1f08dc8f5fca82e65eb8c7e14e14da370",
+    "results/set-acquisition-v1/traces/trace-nor-7-acquired-fresh.json.xz": "171d5481b4571ea4f66e0924d2b41ed419500a8aaf3f752bd12150b1a9a39140",
+    "results/set-acquisition-v1/traces/trace-nor-7-no_change-fresh.json.xz": "3255ffc188eeec4b15e2ebe9b7971f75c6d382c581c94586e53de9bdbec2d747",
+    "results/set-acquisition-v1/traces/trace-nor-7-parent-fresh.json.xz": "6ea403c6fbb0bf95ed1df88380d217fa4997e5f711ed69fa5d66efc53ed66016"
+  },
+  "status": "POST_STOP_SAVED_RECORD_DIAGNOSTIC_ONLY",
+  "stopped_attempt_unchanged": true,
+  "summary": {
+    "acquired_vs_no_change": {
+      "nll_better": 7360,
+      "nll_equal": 0,
+      "nll_worse": 4160,
+      "regressions": 0,
+      "repairs": 7360
+    },
+    "acquired_vs_parent": {
+      "nll_better": 11520,
+      "nll_equal": 0,
+      "nll_worse": 0,
+      "regressions": 0,
+      "repairs": 5440
+    },
+    "arms": {
+      "acquired": {
+        "correct": 11520,
+        "finite_nll_count": 11520,
+        "max_nll": 0.00837014628247651,
+        "mean_nll": 0.004143412832292106,
+        "min_nll": 0.0019254360878969905,
+        "planned": 11520
+      },
+      "no_change": {
+        "correct": 4160,
+        "finite_nll_count": 4160,
+        "max_nll": "positive_infinity",
+        "mean_nll": "positive_infinity",
+        "min_nll": -0.0,
+        "planned": 11520
+      },
+      "parent": {
+        "correct": 6080,
+        "finite_nll_count": 11520,
+        "max_nll": 1.5682035282981268,
+        "mean_nll": 0.8230100635359002,
+        "min_nll": 0.4231031410939789,
+        "planned": 11520
+      }
+    },
+    "changed": {
+      "acquired": {
+        "correct": 7360,
+        "finite_nll_count": 7360,
+        "max_nll": 0.008285232714489615,
+        "mean_nll": 0.004115041298758804,
+        "min_nll": 0.0019254360878969905,
+        "planned": 7360
+      },
+      "no_change": {
+        "correct": 0,
+        "finite_nll_count": 0,
+        "max_nll": "positive_infinity",
+        "mean_nll": "positive_infinity",
+        "min_nll": "positive_infinity",
+        "planned": 7360
+      },
+      "parent": {
+        "correct": 4416,
+        "finite_nll_count": 7360,
+        "max_nll": 1.5682035282981268,
+        "mean_nll": 0.8046444809956145,
+        "min_nll": 0.4231031410939789,
+        "planned": 7360
+      }
+    },
+    "changed_sets": 7360,
+    "planned": 11520,
+    "unchanged": {
+      "acquired": {
+        "correct": 4160,
+        "finite_nll_count": 4160,
+        "max_nll": 0.00837014628247651,
+        "mean_nll": 0.004193608622389484,
+        "min_nll": 0.0019280921123986988,
+        "planned": 4160
+      },
+      "no_change": {
+        "correct": 4160,
+        "finite_nll_count": 4160,
+        "max_nll": -0.0,
+        "mean_nll": 0.0,
+        "min_nll": -0.0,
+        "planned": 4160
+      },
+      "parent": {
+        "correct": 1664,
+        "finite_nll_count": 4160,
+        "max_nll": 1.5024598452620497,
+        "mean_nll": 0.8555030172610208,
+        "min_nll": 0.42962516510708776,
+        "planned": 4160
+      }
+    },
+    "unchanged_sets": 4160
+  }
+}

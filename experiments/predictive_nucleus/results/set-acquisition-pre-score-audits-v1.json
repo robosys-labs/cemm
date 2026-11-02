@@ -1,0 +1,206 @@
+{
+  "artifact_writes_during_audits": 0,
+  "bindings": {
+    "collection_manifest_sha256": "21a56941dce9013bc8020540b7daae991ff62f6b098f4d1a50085c7cd198ef5e",
+    "freeze_sha256": "23a28bc4f6ea1959279d8467f27879bc4130a50dd867f3c5e99a1b5cfe1b86b2",
+    "source_publication": "23acab3e0f269906e0803e41673a3b3132e95d22",
+    "training_sha256": "4e7e63e83bf3a74d7287d183d3b1772d64460279553f63b4af9e39348c9eb520",
+    "weights_publication": "ad6e6936ceb3170660e50687fa1e1456e4717025"
+  },
+  "fit_audit": {
+    "checks": 178,
+    "checks_scope": [
+      "Exact ten-trial inventory and attempt/training identity.",
+      "Checkpoint byte hashes and independently reconstructed serialized float64 tensor fingerprints.",
+      "Parent/final state identity, saved provenance and checkpoint metadata agreement.",
+      "Observed-batch fingerprint independently reconstructed from observations/actions/masks/coverage/episode IDs.",
+      "Exactly 68 permitted scalar changes and no bitwise changes to the 494-scalar complement at each saved final checkpoint.",
+      "Both contact pair modules and inference-source identities unchanged in all ten saved checkpoints.",
+      "All 256 prescribed updates, settings, exposure, loss-curve indices/endpoints and resource fields internally consistent."
+    ],
+    "complete_stage_resources": {
+      "cpu_seconds": 30.468454203999997,
+      "peak_rss_kib": 343232,
+      "wall_seconds": 30.46970683100062
+    },
+    "discrepancies": 0,
+    "expected_trials": 10,
+    "final_reported_nll": {
+      "maximum": 0.0035085049320270393,
+      "mean": 0.002559422791593995,
+      "minimum": 0.002010591245330892
+    },
+    "historical_bindings": 84,
+    "initial_reported_nll": {
+      "maximum": 0.9302858755489593,
+      "mean": 0.7927952254037338,
+      "minimum": 0.7270930379183208
+    },
+    "limits": "Saved endpoints do not independently reconstruct every optimizer step. NLL values were checked for saved-record consistency, not recomputed by inference.",
+    "source_bindings": 37,
+    "sum_individual_fit_cpu_seconds": 30.166588588000003,
+    "trials": [
+      {
+        "completed_updates": 256,
+        "curve_measurements": 257,
+        "final_reported_nll": 0.002645346562174141,
+        "fit_cpu_seconds": 3.0130792389999996,
+        "forbidden_scalars_changed": 0,
+        "initial_reported_nll": 0.9280325828127234,
+        "permitted_scalars_changed": 68,
+        "recorded_loss_increase_steps": 0,
+        "trial": "nand/11"
+      },
+      {
+        "completed_updates": 256,
+        "curve_measurements": 257,
+        "final_reported_nll": 0.0021440427470438284,
+        "fit_cpu_seconds": 3.050257555,
+        "forbidden_scalars_changed": 0,
+        "initial_reported_nll": 0.7305364848908719,
+        "permitted_scalars_changed": 68,
+        "recorded_loss_increase_steps": 0,
+        "trial": "nand/23"
+      },
+      {
+        "completed_updates": 256,
+        "curve_measurements": 257,
+        "final_reported_nll": 0.0030312659407933083,
+        "fit_cpu_seconds": 2.962903412000001,
+        "forbidden_scalars_changed": 0,
+        "initial_reported_nll": 0.7721788455429132,
+        "permitted_scalars_changed": 68,
+        "recorded_loss_increase_steps": 0,
+        "trial": "nand/37"
+      },
+      {
+        "completed_updates": 256,
+        "curve_measurements": 257,
+        "final_reported_nll": 0.0024814461448742476,
+        "fit_cpu_seconds": 2.8965662289999994,
+        "forbidden_scalars_changed": 0,
+        "initial_reported_nll": 0.7758416971863381,
+        "permitted_scalars_changed": 68,
+        "recorded_loss_increase_steps": 0,
+        "trial": "nand/53"
+      },
+      {
+        "completed_updates": 256,
+        "curve_measurements": 257,
+        "final_reported_nll": 0.002010591245330892,
+        "fit_cpu_seconds": 2.997836754,
+        "forbidden_scalars_changed": 0,
+        "initial_reported_nll": 0.7410546433302271,
+        "permitted_scalars_changed": 68,
+        "recorded_loss_increase_steps": 0,
+        "trial": "nand/7"
+      },
+      {
+        "completed_updates": 256,
+        "curve_measurements": 257,
+        "final_reported_nll": 0.002709258009784601,
+        "fit_cpu_seconds": 2.9459012290000004,
+        "forbidden_scalars_changed": 0,
+        "initial_reported_nll": 0.9302858755489593,
+        "permitted_scalars_changed": 68,
+        "recorded_loss_increase_steps": 0,
+        "trial": "nor/11"
+      },
+      {
+        "completed_updates": 256,
+        "curve_measurements": 257,
+        "final_reported_nll": 0.0021508328839071954,
+        "fit_cpu_seconds": 3.1343573140000025,
+        "forbidden_scalars_changed": 0,
+        "initial_reported_nll": 0.7270930379183208,
+        "permitted_scalars_changed": 68,
+        "recorded_loss_increase_steps": 0,
+        "trial": "nor/23"
+      },
+      {
+        "completed_updates": 256,
+        "curve_measurements": 257,
+        "final_reported_nll": 0.0035085049320270393,
+        "fit_cpu_seconds": 3.098628215999998,
+        "forbidden_scalars_changed": 0,
+        "initial_reported_nll": 0.8059977780770035,
+        "permitted_scalars_changed": 68,
+        "recorded_loss_increase_steps": 0,
+        "trial": "nor/37"
+      },
+      {
+        "completed_updates": 256,
+        "curve_measurements": 257,
+        "final_reported_nll": 0.002875212767171257,
+        "fit_cpu_seconds": 3.0773704820000027,
+        "forbidden_scalars_changed": 0,
+        "initial_reported_nll": 0.7790858213175991,
+        "permitted_scalars_changed": 68,
+        "recorded_loss_increase_steps": 0,
+        "trial": "nor/53"
+      },
+      {
+        "completed_updates": 256,
+        "curve_measurements": 257,
+        "final_reported_nll": 0.002037726682833442,
+        "fit_cpu_seconds": 2.989688158,
+        "forbidden_scalars_changed": 0,
+        "initial_reported_nll": 0.7378454874123824,
+        "permitted_scalars_changed": 68,
+        "recorded_loss_increase_steps": 0,
+        "trial": "nor/7"
+      }
+    ]
+  },
+  "independent_scientific_custody": false,
+  "model_executions": 0,
+  "raw_collection_audit": {
+    "bank_forecasts": {
+      "bilingual_retention": 20800,
+      "binding_retention": 17280,
+      "centering_retention": 17280,
+      "coordinate_retention": 17280,
+      "fresh": 57600,
+      "lexical_retention": 41600,
+      "saturation_retention": 17280
+    },
+    "checks": 1792861,
+    "checks_scope": [
+      "Exact directory and manifest inventories, all file SHA256 values and byte sizes.",
+      "Publication/runtime/freeze/training/input headers and accepted language state identities.",
+      "Complete observed-input episode/step coverage with no missing, duplicate or extra forecasts.",
+      "World-vector and order-vector dimensions, allowed log-value types and normalization.",
+      "No-change point records identical across repeated seed labels."
+    ],
+    "collection_resources": {
+      "cpu_seconds": 65.747421257,
+      "peak_rss_kib": 430456,
+      "wall_seconds": 65.7703413449999
+    },
+    "compressed_trace_bytes": 12430616,
+    "discrepancies": 0,
+    "evaluator_files_opened": false,
+    "files": 90,
+    "language_retention_forecasts": 131520,
+    "limits": "Manifest oracle_opened=false was checked as a declaration; read-only audit itself opened no evaluator/oracle files. No scientific correctness or retention score is inferred from raw integrity.",
+    "maximum_log_normalization_residual": 9.115971866258121e-16,
+    "model_executions": 0,
+    "native_forecasts": 57600,
+    "native_trace_files": 30,
+    "neural_nan_positive_infinity_or_explicit_negative_infinity_values": 0,
+    "no_change_explicit_negative_infinity_values": 556800,
+    "no_change_reused_across_seed_labels": true,
+    "oracle_joins": 0,
+    "oracle_unopened": true,
+    "retention_trace_files": 60,
+    "score_executions": 0,
+    "total_forecasts": 189120
+  },
+  "recorded_on": "2026-11-02",
+  "report_note": "This file preserves earlier completed read-only audit findings. It is not a scientific score or an independent replication.",
+  "review_type": "SAME_TEAM_SAVED_RECORD_AUDIT",
+  "stdlib_only": true,
+  "study": "set-acquisition-v1",
+  "torch_imported": false,
+  "version": "set-acquisition-pre-score-audits-v1"
+}

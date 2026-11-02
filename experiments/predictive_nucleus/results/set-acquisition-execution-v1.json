@@ -1,0 +1,171 @@
+{
+  "version": "set-acquisition-execution-v1",
+  "recorded_on": "2026-11-02",
+  "base_commit": "2ba2843b3a456957b9c4f0b789e42e90387354c8",
+  "pr": 77,
+  "publications": {
+    "source_protocol_data": "23acab3e0f269906e0803e41673a3b3132e95d22",
+    "actual_weights": "ad6e6936ceb3170660e50687fa1e1456e4717025",
+    "raw_forecasts": "47e2cd4218358bee1e5fdd993920ce38955fc05f",
+    "remote_trees_match_local_trees": true
+  },
+  "execution_status": "SCORING_ABORTED",
+  "execution_complete": false,
+  "runner_decision": null,
+  "review_disposition": "REVISE_NATIVE_SET_ACQUISITION",
+  "review_disposition_source": "Post-stop review of the frozen retention-failure clause; not a runner-emitted result.",
+  "scientific_admission": false,
+  "g3_complete": false,
+  "stage_attempts": {
+    "prepare": 1,
+    "fit": 1,
+    "collect": 1,
+    "score": 1,
+    "research_retries": 0
+  },
+  "fit": {
+    "complete": true,
+    "checkpoints": 10,
+    "updates_each": 256,
+    "completed_updates": 2560,
+    "parameters_each": 562,
+    "permitted_scalars_each": 68,
+    "immutable_scalars_each": 494,
+    "permitted_changed_each": 68,
+    "forbidden_changed_each": 0,
+    "resources": {
+      "cpu_seconds": 30.468454203999997,
+      "peak_rss_kib": 343232,
+      "wall_seconds": 30.46970683100062
+    },
+    "initial_training_nll": {
+      "maximum": 0.9302858755489593,
+      "mean": 0.7927952254037338,
+      "minimum": 0.7270930379183208
+    },
+    "final_training_nll": {
+      "maximum": 0.0035085049320270393,
+      "mean": 0.002559422791593995,
+      "minimum": 0.002010591245330892
+    }
+  },
+  "collection": {
+    "complete": true,
+    "trace_files": 90,
+    "native_forecasts": 57600,
+    "language_forecasts": 131520,
+    "total_forecasts": 189120,
+    "resources": {
+      "cpu_seconds": 65.747421257,
+      "peak_rss_kib": 430456,
+      "wall_seconds": 65.7703413449999
+    }
+  },
+  "score": {
+    "exit_code": 1,
+    "complete": false,
+    "failure": {
+      "path": "results/set-acquisition-v1/scored/failure.json",
+      "sha256": "d358ad429bd9630988d05df22c5d351f4565d0a87aac72d077af73f769e8396f",
+      "bytes": 1455
+    },
+    "per_seed_reports_written": 0,
+    "decision_written": false,
+    "resources": null,
+    "reason": "frozen language output changed",
+    "retries": 0
+  },
+  "post_stop_diagnostics": {
+    "scope": "Saved observed SET endpoints and archived/current language records only. No full acceptance reconstruction.",
+    "models_executed": 0,
+    "original_scorer_executed": 0,
+    "oracle_or_evaluator_files_read": false,
+    "native_summary": {
+      "path": "results/set-acquisition-v1/native-diagnostic/summary.json",
+      "sha256": "4efe7ec6bdb5b9453b6ddbc20794eeae436ca42bd89a84d8cdf9962333d26021",
+      "bytes": 35402
+    },
+    "native_points": {
+      "path": "results/set-acquisition-v1/native-diagnostic/points.json.xz",
+      "sha256": "80c14ef0cbe3c57203a4a611399ad500d121b599af1f2bc64d60cad027f0791a",
+      "bytes": 178260
+    },
+    "retention_summary": {
+      "path": "results/set-acquisition-v1/retention-diagnostic/summary.json",
+      "sha256": "72b0d27de5cea3bc33e38ecbb3bfda74719a5d8c09b7c4a12ad200e379fd16d1",
+      "bytes": 80581
+    },
+    "retention_points": {
+      "path": "results/set-acquisition-v1/retention-diagnostic/points.json.xz",
+      "sha256": "f511b6df4dee808c01cf176ad923a145160da9ed152c39beafc8e884e2057457",
+      "bytes": 2086208
+    },
+    "arithmetic_reproduction_is_not_research_retry": true
+  },
+  "verification": {
+    "scope": "Published source software validation and saved-record integrity; scoring aborted on exact retention.",
+    "isolated_suite_tests": 979,
+    "new_tests": 25,
+    "protocol_manifest_locks": 33,
+    "initial_local_suite": {
+      "tests": 979,
+      "passed": 978,
+      "errors": 1,
+      "reason": "Shallow Git history blocked the existing frozen preflight. Exact failed test passed after full history fetch, with no implementation change."
+    },
+    "published_source_commit": "23acab3e0f269906e0803e41673a3b3132e95d22",
+    "published_tree": "800b178c34c59170b7643655b7466b5a423fadac",
+    "published_tree_matches_tested_tree": true,
+    "invariant_ci_run": 41416804302,
+    "invariant_ci_conclusion": "success",
+    "invariant_ci_tests": 979,
+    "invariant_ci_seconds": 103.194,
+    "source_ci_run": 41416804346,
+    "source_ci_conclusion": "success",
+    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/77/checks",
+    "final_result_head_checks_scope": "Live PR check link; recorded success above is for the source commit.",
+    "pre_score_audits": "results/set-acquisition-pre-score-audits-v1.json",
+    "fit_integrity_checks": 178,
+    "raw_integrity_checks": 1792861,
+    "integrity_discrepancies": 0,
+    "independent_scientific_custody": false,
+    "scientific_runs_retried": false,
+    "new_fits": 10,
+    "completed_training_updates": 2560,
+    "source_bindings": 37,
+    "historical_bindings": 84,
+    "result_traces": 90,
+    "post_stop_diagnostics_use_models_or_original_scorer": false,
+    "post_stop_arithmetic_reproduced": true,
+    "scientific_acceptance_completed": false
+  },
+  "code_size": {
+    "study_source": 911,
+    "audit_source": 331,
+    "tests": 464,
+    "added_total": 1706,
+    "retained_research_python": 43556,
+    "retained_test_lines": 18574,
+    "inclusive_size_goal_met": false,
+    "learned_parameter_delta": 0,
+    "new_tests": 25,
+    "scope": "Physical Python lines including blank lines. Frozen study plus tests adds 1375 lines; post-stop reproducible arithmetic auditors add 331. All historical research remains retained."
+  },
+  "commands": {
+    "fit": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONHASHSEED=0 python -m experiments.predictive_nucleus.set_acquisition_run fit --data experiments/predictive_nucleus/data/set-acquisition-v1 --output experiments/predictive_nucleus/data/set-acquisition-fit-v1 --publication 23acab3e0f269906e0803e41673a3b3132e95d22",
+    "collect": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONHASHSEED=0 python -m experiments.predictive_nucleus.set_acquisition_run collect --data experiments/predictive_nucleus/data/set-acquisition-v1 --fitted experiments/predictive_nucleus/data/set-acquisition-fit-v1 --output experiments/predictive_nucleus/results/set-acquisition-v1/traces --publication ad6e6936ceb3170660e50687fa1e1456e4717025",
+    "score": "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONHASHSEED=0 python -m experiments.predictive_nucleus.set_acquisition_run score --data experiments/predictive_nucleus/data/set-acquisition-v1 --fitted experiments/predictive_nucleus/data/set-acquisition-fit-v1 --traces experiments/predictive_nucleus/results/set-acquisition-v1/traces --output experiments/predictive_nucleus/results/set-acquisition-v1/scored"
+  },
+  "runtime": {
+    "cpu_architecture": "x86_64",
+    "deterministic_algorithms": true,
+    "dtype": "float64",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "python": "3.13.16",
+    "threads": 1,
+    "torch": "2.10.0+cpu"
+  },
+  "resource_limits": "Reported fit and collection costs exclude preparation, scoring, publication and diagnostics. Scoring cost was not instrumented. No matched consumed-compute or service-latency claim.",
+  "next_action": "Resolve numerical language retention and complete failure reporting in a new prospective native-set study. Preserve the stopped v1 attempt; freeze the comparison rule, runtime, fresh challenge lineage and full gates before any new fit or collection. Keep the 562-parameter world and 68-scalar update mask unless new evidence justifies a change."
+}
