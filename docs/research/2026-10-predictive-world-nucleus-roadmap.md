@@ -8,10 +8,17 @@
 
 ## Current development checkpoint — 2026-11-02
 
-**G3 effect/role v1 is complete: REVISE_EFFECT_ROLE_GROUNDING in all ten
-law/seed conditions. Development G3 remains open; neutral-normalization v2 is
-prospective.** G1/G2 development readiness and original scientific criteria below
-are unchanged.
+**G3 normalization v2 is STOP_INCOMPLETE_EVIDENCE. All 15 fit checkpoints
+survive, but its original raw collection was lost before publication; no v2
+scoring occurred. Development G3 remains open.** The
+[v2 interruption decision](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V2.md)
+records public weights `30880caf676c10773857221d9d5bc2437651fb6f` and unrecovered
+intended raw tree `c5df023722a4843ff62096d5cd8a0aa83f065cbb`. The publication wait
+was interrupted after five hours and scratch storage reset. The restored CPU
+changed from Intel Xeon Platinum 8573C to AMD EPYC 9V74; the frozen runtime guard
+rejected it before predictions. No replay occurred. This is neither a scientific
+REVISE nor a G3 pass. TRAIN loss does not establish challenge failure. G1/G2
+development readiness and original scientific criteria below are unchanged.
 
 The [completed v1 decision](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V1.md)
 records all 15 fits and 408,000 formal forecast rows. The saved-record audit passes
@@ -27,13 +34,20 @@ retained NLL in three banks, with seed 37 causing 525 world regressions and
 All ten acquired native worlds remain unchanged. Native SET v1 remains
 SCORING_ABORTED / REVISE under its original immutable rule.
 
-Post-publication TRAIN diagnostics add 17,520 forecast rows and zero optimizer
-updates; later saved-curve/result review adds no forecasts. These support a
-prospective normalization hypothesis, not acceptance. The next study must retain
-92 parameters, the same TRAIN tapes, five seeds, 256 updates and thresholds;
-freeze/publish fresh compositions and opened-v1 regression checks before new
-execution. The [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md)
-records the remaining sequence. Do not advance G4 on this evidence.
+Post-publication v1 TRAIN diagnostics add 17,520 forecast rows and zero optimizer
+updates; later saved-curve/result review adds no forecasts. V2's original text-only
+checkpoint and curve reproduction receipt remains valid on its original runtime.
+Neither that receipt nor the surviving weights replaces the missing raw evidence.
+
+The next prospective candidate keeps the entire 88-parameter coordinate parent
+protected and learns four neutral effect/role coordinates for two exact new
+identities: 92 total, 88 frozen, four trained. Freeze and publish a separate AMD
+runtime, fresh compositions and controls, and evaluation of the published v2
+weights as a current-runtime reference. These forecasts belong to a new study.
+Retain the same TRAIN tapes, five seeds, 256 updates, original gates and opened-bank
+provenance; disclose structural legacy retention and per-identity storage growth.
+The [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md)
+records the remaining sequence. G4 is not unlocked.
 
 Formal scientific admission, independent custody, matched consumed compute and
 general calibration remain open. Frozen v1 code has 48,323 Python lines including
