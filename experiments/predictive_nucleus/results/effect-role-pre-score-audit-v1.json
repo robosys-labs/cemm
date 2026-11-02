@@ -1,0 +1,37 @@
+{
+  "audit_passed": true,
+  "auditor_sha256": "ac0d01de76b5942eebc32439a850ead989333da5def8fd3a6842298d3bb2447a",
+  "check_count": 2773,
+  "decision": null,
+  "details": {},
+  "discrepancies": [],
+  "discrepancy_count": 0,
+  "evaluator_bytes_hashed": true,
+  "evaluator_targets_parsed": false,
+  "forecast_counts": {
+    "fresh": 276480,
+    "retention": 131520
+  },
+  "helper_sha256": "925baec5249091c7795629b80692963a9b0a50273afb49812474d55bb448f3de",
+  "independent_custody": false,
+  "lexical_identity_checks": {
+    "known_features_distinct": true,
+    "known_identities_distinct": true,
+    "no_semantic_forecast": true,
+    "registry_bound": true,
+    "registry_unchanged": true,
+    "unknown_identities_unresolved": true
+  },
+  "mode": "pre-score",
+  "model_execution": false,
+  "new_collections": 0,
+  "new_fits": 0,
+  "original_oracle_execution": false,
+  "original_scorer_execution": false,
+  "raw_publication": "dbdd8ab95588913be5b647e0be789f8ed93c07c7",
+  "scientific_admission": false,
+  "scope": "Complete source/data/weights/raw publication and runtime bindings; all raw rows, dimensions, normalization and views. Full mode also checks every decision gate, critical world/action summaries, every fresh point metric, all goal and retention records. Saved conditional targets are validated but not regenerated. ECE, omitted rich summaries, timing and memory costs are not independently recomputed. Lexical receipts and deterministic registry assignments are checked without invoking the tokenizer. Publication is verified in local git objects, not remote custody.",
+  "score_files_read": false,
+  "trace_files": 90,
+  "version": "effect-role-saved-audit-v1"
+}

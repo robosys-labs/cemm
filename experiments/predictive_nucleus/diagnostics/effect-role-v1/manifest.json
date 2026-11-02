@@ -1,0 +1,84 @@
+{
+  "broader_saved_review_scope": {
+    "candidate_checkpoint_or_forecast_reads": 0,
+    "challenge_input_reads": 0,
+    "evaluator_file_reads": 0,
+    "evidence": "completed saved v1 reports, saved v1 TRAIN-derived language weights and registry, frozen source/protocol only",
+    "interpretation": "Saved scored reports already contain opened v1 evaluation evidence; this is post-outcome diagnosis, not a fresh validation.",
+    "new_collections": 0,
+    "new_fits": 0,
+    "new_forward_forecasts": 0,
+    "new_gradient_evaluations": 0,
+    "new_model_executions": 0,
+    "optimizer_steps": 0,
+    "prior_train_only_diagnostic_is_separate": true
+  },
+  "diagnostic_resources": {
+    "cpu_seconds": null,
+    "peak_rss_kib": null,
+    "reason": "Not recorded in the original diagnostic receipt; no estimate substituted.",
+    "wall_seconds": null
+  },
+  "exposure_counts": {
+    "five_native_worlds_packed_on_two_original_training_tapes": true,
+    "language_forward_conditions": 15,
+    "parameter_gradient_conditions": 15,
+    "rehearsal_forecasts_per_condition": 1152,
+    "teach_forecasts_per_condition": 16,
+    "total_train_forecasts": 17520,
+    "updates": 0
+  },
+  "files": {
+    "BROADER_SAVED_DIAGNOSIS.md": {
+      "bytes": 9441,
+      "original_path": "/tmp/cemm-g3-v1-broader-diagnosis.md",
+      "sha256": "469e08091417169c5973933a477a3178d2f7c4430bdc8879d988bc8c32417c2b"
+    },
+    "TRAIN_ONLY_DIAGNOSTIC.md": {
+      "bytes": 9316,
+      "original_path": "/tmp/cemm_g3_v1_train_diagnostic.md",
+      "sha256": "a312d941a2a85df74bdf192b8fc702852b845f95376ead14ab6f5da5e51f7940"
+    },
+    "broader-saved-diagnosis.json": {
+      "bytes": 65138,
+      "original_path": "/tmp/cemm-g3-v1-broader-diagnosis.json",
+      "sha256": "545f0e0cf6f17f271a0233c4695cde50232a15dc45ff34dcd827d1ec3877dbd0"
+    },
+    "curve-arithmetic.json": {
+      "bytes": 5766,
+      "original_path": "/tmp/cemm_g3_v1_curve_arithmetic.json",
+      "sha256": "e4d4a566ef9772b967e0d38f33d5e9f33be3a6245769b9721b7b3d7d410227ad"
+    },
+    "summarize-saved-results.py": {
+      "bytes": 15964,
+      "original_path": "/tmp/cemm-g3-summarize.py",
+      "sha256": "28ae0fba27b25d1e8eb7dad76caddc1cbf92b294cf7b920290dacc6a94844bdd"
+    },
+    "train-only-diagnostic.json": {
+      "bytes": 547527,
+      "original_path": "/tmp/cemm_g3_v1_train_diagnostic.json",
+      "sha256": "3285249fff3c438b038ae871f5142b50626a4f7bcc978b31d4d498f493f7426d"
+    },
+    "train-only-diagnostic.py": {
+      "bytes": 8189,
+      "original_path": "/tmp/cemm_g3_v1_train_diagnostic.py",
+      "sha256": "2ff5d8e503c6903bd40013b2762580f3f64fc6fe96d6d3ea45809d8cc5f84662"
+    }
+  },
+  "formal_v1_decision_unchanged": true,
+  "new_acceptance_evidence": false,
+  "saved_curve_arithmetic": {
+    "new_forecasts": 0,
+    "new_updates": 0
+  },
+  "scientific_admission": false,
+  "scope": {
+    "challenge_access": false,
+    "evaluator_access": false,
+    "new_fits": 0,
+    "optimizer_steps": 0,
+    "prospective_fix_evaluated_only_at_initialization": true,
+    "training_only": true
+  },
+  "version": "effect-role-diagnostics-manifest-v1"
+}

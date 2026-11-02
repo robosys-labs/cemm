@@ -1,0 +1,156 @@
+{
+  "audit": {
+    "discrepancies": 0,
+    "independent_custody": false,
+    "pre_score_checks": 2773,
+    "saved_auditor_model_execution": false,
+    "saved_auditor_original_scorer_execution": false,
+    "saved_result_checks": 12946593
+  },
+  "broader_saved_review": {
+    "new_collections": 0,
+    "new_fits": 0,
+    "new_forward_forecasts": 0,
+    "new_gradient_evaluations": 0,
+    "new_model_executions": 0,
+    "optimizer_steps": 0,
+    "scope": "Completed saved v1 reports, TRAIN-derived weights/registry and frozen source; post-outcome interpretation only."
+  },
+  "code_accounting": {
+    "frozen_pre_execution_python_lines": 48323,
+    "inclusive_2000_target_met": false,
+    "post_execution_diagnostic_python_lines": 401,
+    "python_lines": 48724,
+    "test_lines": 20486
+  },
+  "collection_attempts": 1,
+  "decision": "REVISE_EFFECT_ROLE_GROUNDING",
+  "evidence": {
+    "diagnostics/effect-role-v1/manifest.json": {
+      "bytes": 3101,
+      "sha256": "6172b9cde11cca4e4a18ce27a32e63a92a175c496c54b9378c91bcaf0474e4e3"
+    },
+    "results/effect-role-headline-v1.json": {
+      "bytes": 356753,
+      "sha256": "db51fd33683a3a5261cd7a6fe8b98626c7d7c1b82d37dadc0edb8c4e37469358"
+    },
+    "results/effect-role-pre-score-audit-v1.json": {
+      "bytes": 1674,
+      "sha256": "7ae9a11b3498ea3d3014a38b9026e32757012dd6a758e75e0a688ed0d6ceac69"
+    },
+    "results/effect-role-saved-audit-v1.json": {
+      "bytes": 26792,
+      "sha256": "49969dba91049f7416ed9f41c20906a4e244b59ed6bebf7f088cd4d2f7bad649"
+    },
+    "results/effect-role-v1/scored/decision.json": {
+      "bytes": 14186,
+      "sha256": "6d451ab5f121d1d58ecb7afa100c03ebfa3f72ce31d40f0a7becc7201b4b1e82"
+    },
+    "results/effect-role-v1/scored/manifest.json": {
+      "bytes": 5016,
+      "sha256": "684ee8984bed1d7be62cf2395fedcc1d625eb11d2d2757d0cd7fccfa6c1fa93c"
+    }
+  },
+  "execution_complete": true,
+  "final_objective_target_presentations": 17520,
+  "fit_attempts": 1,
+  "fits": 15,
+  "formal_plus_diagnostic_forecast_rows": 425520,
+  "formal_saved_forecasts": 408000,
+  "freeze_sha256": "7b500d3bb1811dd484ea0af9ce7131776e7aea6d7a60a33f0e8490e34d494dca",
+  "fresh_forecasts": 276480,
+  "g3_complete": false,
+  "grounded_parameters": 92,
+  "native_immutability": {
+    "all_fits_record_world_unchanged": true,
+    "basis": "Saved fit immutability receipts and completed collection; optional full saved audit also verifies all ten native checkpoints. This summarizer does not reopen checkpoint bytes.",
+    "collection_completed": true,
+    "collection_oracle_opened": false,
+    "fit_receipts": 15,
+    "full_saved_audit_passed": true,
+    "matching_native_hash_per_seed": true,
+    "training_native_hashes_by_seed": {
+      "11": [
+        "c756736d975e7ec02483db08da795f6715b7fd376afc99dded774247fb0f3ca4"
+      ],
+      "23": [
+        "8827f273fde53a1da91a02d6f65cc4c5120e34f2f2e5f1dcda76a86669f5e0a1"
+      ],
+      "37": [
+        "e69fc15dfeafecd24e0fe2033e9ba9c832a28f562071ff86f585c5fad4f9b1c9"
+      ],
+      "53": [
+        "7ba21ce1f59bbcc39c4435f03c08bb600f4122e558ea856105f6fb99f7050a01"
+      ],
+      "7": [
+        "8fd8fcb122e1cc90d67fe18c808d57dc4602d35c1173e54d2d4247ca72b39bf8"
+      ]
+    }
+  },
+  "parser_parameters": 92,
+  "post_publication_diagnostic_updates": 0,
+  "post_publication_train_diagnostic_forecasts": 17520,
+  "publication": {
+    "raw": "dbdd8ab95588913be5b647e0be789f8ed93c07c7",
+    "source": "75fe2474fcbf103a569f3f9375fa899922931b2d",
+    "weights": "6742c7df5b00f966c99c2a93d885d91eb21034e6"
+  },
+  "resources": {
+    "fit_report_subtotal": {
+      "cpu_seconds": 65.73468559,
+      "peak_rss_kib": 368444,
+      "wall_seconds": 65.74182452999594
+    },
+    "note": "Pipeline totals sum stage CPU/wall receipts only. Fit subtotals are already inside training. Peak RSS is the maximum, never the sum. Preparation, tests, publication and audits are excluded.",
+    "pipeline_totals": {
+      "cpu_seconds": 545.598196186,
+      "peak_rss_kib": 733232,
+      "wall_seconds": 545.838591134001
+    },
+    "stages": {
+      "collection": {
+        "cpu_seconds": 288.57885111400003,
+        "peak_rss_kib": 495464,
+        "wall_seconds": 288.70668511599797
+      },
+      "scoring": {
+        "cpu_seconds": 189.800669177,
+        "peak_rss_kib": 733232,
+        "wall_seconds": 189.905300937
+      },
+      "training": {
+        "cpu_seconds": 67.21867589499999,
+        "peak_rss_kib": 368444,
+        "wall_seconds": 67.22660508100307
+      }
+    }
+  },
+  "retention_forecasts": 131520,
+  "retries": 0,
+  "saved_curve_arithmetic_forecasts": 0,
+  "saved_curve_arithmetic_updates": 0,
+  "scientific_admission": false,
+  "scoring_attempts": 1,
+  "software_verification": {
+    "historical_files_bound": 186,
+    "original_frozen_preflight_passed": true,
+    "protocol_locks_verified": 35,
+    "sources_bound": 68,
+    "test_seconds": 144.907,
+    "tests_passed": 1073
+  },
+  "text_only_parameters": 1048,
+  "training_target_presentations_in_optimizer_updates": 4485120,
+  "unrecorded_resources": {
+    "audits": "CPU/wall/RSS not recorded in saved audit receipts; excluded from recorded stage totals.",
+    "train_only_diagnostic": {
+      "cpu_seconds": null,
+      "peak_rss_kib": null,
+      "reason": "Not recorded in the original diagnostic receipt; no estimate substituted.",
+      "wall_seconds": null
+    }
+  },
+  "updates_per_fit": 256,
+  "version": "effect-role-execution-v1",
+  "world_parameters": 562
+}

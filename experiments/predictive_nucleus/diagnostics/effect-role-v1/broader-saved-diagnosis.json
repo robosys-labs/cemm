@@ -1,0 +1,2056 @@
+{
+  "conditional_next_mechanism_only": {
+    "contact_roles": "retain learned parent conditional contact distribution",
+    "description": "Separate a lexical-only effect gate from conditional role distributions using four additional scalars.",
+    "effect_gate": "g=sigmoid(a*c*c+b)",
+    "initialization": "four new scalars zero; family mass .5/.5 and SET directions .25 each",
+    "joint": "[(1-g)*P(contact roles),g*P(SET roles)]",
+    "parameters": "88 inherited + 2 effect gate + 2 SET role = 92",
+    "qualification": "A supplied factorization hypothesis, not a word lookup, fixed semantic label, proof of successful learning, or authorized next study.",
+    "set_roles": "softmax([d*c*q+e,-(d*c*q+e)])",
+    "status": "proposal only, no implementation or execution",
+    "trigger": "persistent layout-dependent effect leakage after complete v2 evidence"
+  },
+  "decision": "REVISE_EFFECT_ROLE_GROUNDING",
+  "established": [
+    "All ten law/seed conditions fail the frozen complete G3 criteria.",
+    "Seeds 11/23/37/53 pass the fresh MAP/action/goal checks but fail bilingual probability agreement and conditional probability quality.",
+    "For those four seeds the worst bilingual pair contains a new SET expression at VOS and a physically equivalent expression at a taught layout, with correct action MAP at both points.",
+    "New SET probability quality also fails in taught SVO/OSV cells; held VOS is not the only defect.",
+    "Seeds 23/37/53 fail mean NLL retention on saturation/centering/coordinate banks under both laws.",
+    "Seed 37 has 128 action MAP changes per failing bank/law, all to menu index 3 (SET second), plus exact-world regressions.",
+    "The implemented scalar interaction c(word)*q(layout) enters both effect selection and role selection."
+  ],
+  "failed_checks": {
+    "nand/11": [
+      "bilingual_probability_agreement",
+      "conditional_probability_quality"
+    ],
+    "nand/23": [
+      "bilingual_probability_agreement",
+      "centering_retention/retention_mean_nll",
+      "conditional_probability_quality",
+      "coordinate_retention/retention_mean_nll",
+      "saturation_retention/retention_mean_nll"
+    ],
+    "nand/37": [
+      "bilingual_probability_agreement",
+      "centering_retention/no_exact_regressions",
+      "centering_retention/retention_action_MAP",
+      "centering_retention/retention_mean_nll",
+      "conditional_probability_quality",
+      "coordinate_retention/no_exact_regressions",
+      "coordinate_retention/retention_action_MAP",
+      "coordinate_retention/retention_mean_nll",
+      "saturation_retention/no_exact_regressions",
+      "saturation_retention/retention_action_MAP",
+      "saturation_retention/retention_mean_nll"
+    ],
+    "nand/53": [
+      "bilingual_probability_agreement",
+      "centering_retention/retention_mean_nll",
+      "conditional_probability_quality",
+      "coordinate_retention/retention_mean_nll",
+      "saturation_retention/retention_mean_nll"
+    ],
+    "nand/7": [
+      "ambiguous_no_collapse",
+      "bilingual_probability_agreement",
+      "conditional_probability_quality",
+      "globally_taught_action_identity",
+      "goal_max_regret",
+      "goal_mean_regret",
+      "goal_optimal_choices",
+      "identifiable_accuracy",
+      "identifiable_role_pairs",
+      "identifiable_trajectories",
+      "known_unchanged_preserved",
+      "supported_MAP_worlds"
+    ],
+    "nor/11": [
+      "bilingual_probability_agreement",
+      "conditional_probability_quality"
+    ],
+    "nor/23": [
+      "bilingual_probability_agreement",
+      "centering_retention/retention_mean_nll",
+      "conditional_probability_quality",
+      "coordinate_retention/retention_mean_nll",
+      "saturation_retention/retention_mean_nll"
+    ],
+    "nor/37": [
+      "bilingual_probability_agreement",
+      "centering_retention/no_exact_regressions",
+      "centering_retention/retention_action_MAP",
+      "centering_retention/retention_mean_nll",
+      "conditional_probability_quality",
+      "coordinate_retention/no_exact_regressions",
+      "coordinate_retention/retention_action_MAP",
+      "coordinate_retention/retention_mean_nll",
+      "saturation_retention/no_exact_regressions",
+      "saturation_retention/retention_action_MAP",
+      "saturation_retention/retention_mean_nll"
+    ],
+    "nor/53": [
+      "bilingual_probability_agreement",
+      "centering_retention/retention_mean_nll",
+      "conditional_probability_quality",
+      "coordinate_retention/retention_mean_nll",
+      "saturation_retention/retention_mean_nll"
+    ],
+    "nor/7": [
+      "ambiguous_no_collapse",
+      "bilingual_probability_agreement",
+      "conditional_probability_quality",
+      "globally_taught_action_identity",
+      "goal_max_regret",
+      "goal_mean_regret",
+      "goal_optimal_choices",
+      "identifiable_accuracy",
+      "identifiable_role_pairs",
+      "identifiable_trajectories",
+      "known_unchanged_preserved",
+      "supported_MAP_worlds"
+    ]
+  },
+  "hypotheses": [
+    "Learned layout magnitude changes effect confidence, contributing to VOS probability drift and old-word effect leakage; saved evidence supports this but does not isolate causality.",
+    "Residual finite-budget probability calibration contributes alongside layout coupling; saved training curves were still improving.",
+    "The isolated probability-neutral normalization may improve optimization and confidence, but still makes family probability depend on c*q and therefore cannot structurally guarantee all broader gates."
+  ],
+  "layout_weights": {
+    "11": {
+      "abs_osv_over_svo": 0.9514945542292444,
+      "abs_vos_over_svo": 1.4160663885926994,
+      "q": {
+        "osv": -2.181031696772341,
+        "svo": 2.292216689079298,
+        "vos": -3.2459310087764357
+      }
+    },
+    "23": {
+      "abs_osv_over_svo": 0.9547606870657305,
+      "abs_vos_over_svo": 1.4381520390554001,
+      "q": {
+        "osv": 2.544619212621148,
+        "svo": -2.6651906044032203,
+        "vos": 3.8329493021937857
+      }
+    },
+    "37": {
+      "abs_osv_over_svo": 0.8978001512510413,
+      "abs_vos_over_svo": 1.6576896646153927,
+      "q": {
+        "osv": 2.613777757785634,
+        "svo": -2.9113135636516216,
+        "vos": 4.8260544049199
+      }
+    },
+    "53": {
+      "abs_osv_over_svo": 0.90886424356703,
+      "abs_vos_over_svo": 1.4230763701731426,
+      "q": {
+        "osv": 2.8480796974276603,
+        "svo": -3.133668991366377,
+        "vos": 4.459450293557797
+      }
+    },
+    "7": {
+      "abs_osv_over_svo": 0.920633064135123,
+      "abs_vos_over_svo": 1.0284348156402048,
+      "q": {
+        "osv": -3.60825967117092,
+        "svo": 3.9193244428611234,
+        "vos": -4.030769710828028
+      }
+    }
+  },
+  "lexical_identity_checks": {
+    "known_features_distinct": true,
+    "known_identities_distinct": true,
+    "no_semantic_forecast": true,
+    "registry_bound": true,
+    "registry_unchanged": true,
+    "unknown_identities_unresolved": true
+  },
+  "saved_reports": [
+    {
+      "KL_by_layout": {
+        "osv": 1.8568451048645198,
+        "svo": 1.2649890365231544,
+        "vos": 1.313972132771759
+      },
+      "failed_KL_strata": [
+        {
+          "cell": "cycle_tail5",
+          "group": "by_family",
+          "kl": 0.7766745307073175,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "cycle_tail5",
+          "group": "by_family",
+          "kl": 1.5614879784098623,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4",
+          "group": "by_family",
+          "kl": 0.7757687563691545,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "interleaved_return4",
+          "group": "by_family",
+          "kl": 1.5727146503130527,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "osv",
+          "group": "by_layout",
+          "kl": 0.5826433830845326,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "osv",
+          "group": "by_layout",
+          "kl": 2.016120320087018,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "svo",
+          "group": "by_layout",
+          "kl": 0.58305862111309,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "svo",
+          "group": "by_layout",
+          "kl": 1.3502303384494125,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "vos",
+          "group": "by_layout",
+          "kl": 1.1629629264170853,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "vos",
+          "group": "by_layout",
+          "kl": 1.3328482835660933,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "contact",
+          "group": "by_effect",
+          "kl": 0.776221643538236,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "contact",
+          "group": "by_effect",
+          "kl": 0.5730279007375676,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "set",
+          "group": "by_effect",
+          "kl": 2.339022116968573,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "new",
+          "group": "by_lexicon",
+          "kl": 2.339022116968573,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "old",
+          "group": "by_lexicon",
+          "kl": 0.776221643538236,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "old",
+          "group": "by_lexicon",
+          "kl": 0.5730279007375676,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/osv/contact/old",
+          "group": "by_cell",
+          "kl": 1.1632350622276606,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "cycle_tail5/osv/contact/old",
+          "group": "by_cell",
+          "kl": 1.014827446714169,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/osv/set/new",
+          "group": "by_cell",
+          "kl": 2.8168233539488936,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/svo/contact/old",
+          "group": "by_cell",
+          "kl": 0.6085075161720921,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/svo/set/new",
+          "group": "by_cell",
+          "kl": 2.5835427301721734,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/vos/contact/old",
+          "group": "by_cell",
+          "kl": 1.163362580254296,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "cycle_tail5/vos/contact/old",
+          "group": "by_cell",
+          "kl": 0.4830530966090932,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/vos/set/new",
+          "group": "by_cell",
+          "kl": 1.3465585516959067,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/osv/contact/old",
+          "group": "by_cell",
+          "kl": 0.28079102317588606,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/osv/set/new",
+          "group": "by_cell",
+          "kl": 3.3180313738158724,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/svo/contact/old",
+          "group": "by_cell",
+          "kl": 1.1626912925861845,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "interleaved_return4/svo/contact/old",
+          "group": "by_cell",
+          "kl": 0.49299494715121145,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/svo/set/new",
+          "group": "by_cell",
+          "kl": 1.193239214546933,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/vos/contact/old",
+          "group": "by_cell",
+          "kl": 1.1625632725798747,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "interleaved_return4/vos/contact/old",
+          "group": "by_cell",
+          "kl": 0.42889192217540334,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/vos/set/new",
+          "group": "by_cell",
+          "kl": 2.8434729064038446,
+          "stratum": "identifiable"
+        }
+      ],
+      "law": "nand",
+      "max_bilingual_TV": 0.9989441608792776,
+      "mean_bilingual_TV": 0.4018638434992458,
+      "overall_KL": 1.4786020913864777,
+      "retention": {
+        "bilingual_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0029817287498971243,
+          "max_SET_mass": 0.0020985134054615894,
+          "mean_SET_mass": 0.0007959001328750917,
+          "mean_nll": 0.0034757808563470683,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "binding_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0030967520304595133,
+          "max_SET_mass": 0.008397237025803177,
+          "mean_SET_mass": 0.0031600839956653854,
+          "mean_nll": 0.004887679156587289,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "centering_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003908260250245162,
+          "max_SET_mass": 0.009427589023591493,
+          "mean_SET_mass": 0.0026242249449947314,
+          "mean_nll": 0.00463431958830059,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "coordinate_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003898983588983417,
+          "max_SET_mass": 0.009427589023591493,
+          "mean_SET_mass": 0.0026242249449947314,
+          "mean_nll": 0.004578012477633777,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "lexical_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0032495551379201583,
+          "max_SET_mass": 0.008437050294748984,
+          "mean_SET_mass": 0.0032849412396739118,
+          "mean_nll": 0.005161696809225689,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "saturation_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0039082448262410426,
+          "max_SET_mass": 0.009427589023591493,
+          "mean_SET_mass": 0.0026242249449947314,
+          "mean_nll": 0.004559689641690425,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        }
+      },
+      "seed": 7,
+      "worst_bilingual": {
+        "TV": 0.9989441608792776,
+        "points": [
+          {
+            "action_correct": true,
+            "action_kind": "contact",
+            "layout": "osv",
+            "new_word": false,
+            "oracle_kl": 0.0025712245356894767,
+            "word": "dax"
+          },
+          {
+            "action_correct": true,
+            "action_kind": "contact",
+            "layout": "vos",
+            "new_word": false,
+            "oracle_kl": 7.273856772914769,
+            "word": "contacts"
+          }
+        ],
+        "step": 1
+      }
+    },
+    {
+      "KL_by_layout": {
+        "osv": 0.03779123794560454,
+        "svo": 0.03776027779077919,
+        "vos": 0.05066169245181393
+      },
+      "failed_KL_strata": [
+        {
+          "cell": "vos",
+          "group": "by_layout",
+          "kl": 0.0565657061608637,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "set",
+          "group": "by_effect",
+          "kl": 0.07954619027072823,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "new",
+          "group": "by_lexicon",
+          "kl": 0.07954619027072823,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.07315619460947284,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.07202063815146853,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.09691712672975022,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.06916071081967642,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.06818017021933848,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.09697845392503616,
+          "stratum": "identifiable"
+        }
+      ],
+      "law": "nand",
+      "max_bilingual_TV": 0.06881528146105395,
+      "mean_bilingual_TV": 0.013005174765699082,
+      "overall_KL": 0.042071069396065884,
+      "retention": {
+        "bilingual_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004314814935604457,
+          "max_SET_mass": 0.04745507751354394,
+          "mean_SET_mass": 0.01629411476300196,
+          "mean_nll": 0.01511590669830454,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "binding_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004881055587451396,
+          "max_SET_mass": 0.20225962785869553,
+          "mean_SET_mass": 0.04034852310199726,
+          "mean_nll": 0.032331198843529134,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "centering_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004441886239107851,
+          "max_SET_mass": 0.22073262377742398,
+          "mean_SET_mass": 0.027525189271931885,
+          "mean_nll": 0.024326494296720055,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "coordinate_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004424865553921835,
+          "max_SET_mass": 0.22073262377742398,
+          "mean_SET_mass": 0.027525189271931885,
+          "mean_nll": 0.02372515890955312,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "lexical_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004460243383683803,
+          "max_SET_mass": 0.13181558470422602,
+          "mean_SET_mass": 0.038825341541991784,
+          "mean_nll": 0.03134528910562519,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "saturation_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004453411438190187,
+          "max_SET_mass": 0.22073262377742398,
+          "mean_SET_mass": 0.027525189271931885,
+          "mean_nll": 0.023398675287005358,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        }
+      },
+      "seed": 11,
+      "worst_bilingual": {
+        "TV": 0.06881528146105395,
+        "points": [
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "osv",
+            "new_word": true,
+            "oracle_kl": 0.061910332474093964,
+            "word": "lights"
+          },
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "vos",
+            "new_word": true,
+            "oracle_kl": 0.13746029479436478,
+            "word": "zef"
+          }
+        ],
+        "step": 2
+      }
+    },
+    {
+      "KL_by_layout": {
+        "osv": 0.031251049751228915,
+        "svo": 0.031452056372481774,
+        "vos": 0.044173010977045526
+      },
+      "failed_KL_strata": [
+        {
+          "cell": "set",
+          "group": "by_effect",
+          "kl": 0.06678261658808499,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "new",
+          "group": "by_lexicon",
+          "kl": 0.06678261658808499,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.06022124095847429,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.05863631954696249,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.08443287683439932,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.05713985541486323,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.05520106851024077,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.08432869136967457,
+          "stratum": "identifiable"
+        }
+      ],
+      "law": "nand",
+      "max_bilingual_TV": 0.06605379345575531,
+      "mean_bilingual_TV": 0.013470272632120675,
+      "overall_KL": 0.035625372366918734,
+      "retention": {
+        "bilingual_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0037751936177113244,
+          "max_SET_mass": 0.027275557074203677,
+          "mean_SET_mass": 0.0084965567813218,
+          "mean_nll": 0.009368501613984552,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "binding_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003993958007304238,
+          "max_SET_mass": 0.11388352531240648,
+          "mean_SET_mass": 0.02694802592878763,
+          "mean_nll": 0.021804921674174,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "centering_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003929229982036035,
+          "max_SET_mass": 0.4473767681660448,
+          "mean_SET_mass": 0.08366936622998686,
+          "mean_nll": 0.07026674225858529,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "coordinate_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003918298508396851,
+          "max_SET_mass": 0.4473767681660448,
+          "mean_SET_mass": 0.08366936622998686,
+          "mean_nll": 0.06857708584165746,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "lexical_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003907081715872403,
+          "max_SET_mass": 0.061876754740439056,
+          "mean_SET_mass": 0.027143757301353436,
+          "mean_nll": 0.022338551373563716,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "saturation_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003932507006405337,
+          "max_SET_mass": 0.4473767681660448,
+          "mean_SET_mass": 0.08366936622998686,
+          "mean_nll": 0.06764067147226495,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        }
+      },
+      "seed": 23,
+      "worst_bilingual": {
+        "TV": 0.06605379345575531,
+        "points": [
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "vos",
+            "new_word": true,
+            "oracle_kl": 0.11761559947946232,
+            "word": "lights"
+          },
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "svo",
+            "new_word": true,
+            "oracle_kl": 0.04613261756657322,
+            "word": "zef"
+          }
+        ],
+        "step": 2
+      }
+    },
+    {
+      "KL_by_layout": {
+        "osv": 0.03571646259509997,
+        "svo": 0.031467634212142236,
+        "vos": 0.0690196933896474
+      },
+      "failed_KL_strata": [
+        {
+          "cell": "cycle_tail5",
+          "group": "by_family",
+          "kl": 0.05068264568229179,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4",
+          "group": "by_family",
+          "kl": 0.05015523898739584,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "vos",
+          "group": "by_layout",
+          "kl": 0.07709348431773376,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "set",
+          "group": "by_effect",
+          "kl": 0.08514916331159138,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "new",
+          "group": "by_lexicon",
+          "kl": 0.08514916331159138,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.06759951106691123,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.05829597493904167,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.13238339045200748,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.06433060585567262,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.054579582878076446,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.13299806804704234,
+          "stratum": "identifiable"
+        }
+      ],
+      "law": "nand",
+      "max_bilingual_TV": 0.13079367550500584,
+      "mean_bilingual_TV": 0.02592518992291709,
+      "overall_KL": 0.0454012633989632,
+      "retention": {
+        "bilingual_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.005383293879863037,
+          "max_SET_mass": 0.024331012398303316,
+          "mean_SET_mass": 0.007352461378353725,
+          "mean_nll": 0.010213991900781618,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "binding_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.005562457611480257,
+          "max_SET_mass": 0.11733303165520775,
+          "mean_SET_mass": 0.03178427514411239,
+          "mean_nll": 0.026880234222931464,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "centering_retention": {
+          "action_MAP_changes": 128,
+          "archived_mean_nll": 0.005806050060463268,
+          "max_SET_mass": 0.5957201413032346,
+          "mean_SET_mass": 0.10557275629557496,
+          "mean_nll": 0.09659241602577441,
+          "new_MAPs": {
+            "3": 128
+          },
+          "nll_mean_changed": 0.6270299993850544,
+          "regressions": 88
+        },
+        "coordinate_retention": {
+          "action_MAP_changes": 128,
+          "archived_mean_nll": 0.005790493962733436,
+          "max_SET_mass": 0.5957201413032346,
+          "mean_SET_mass": 0.10557275629557496,
+          "mean_nll": 0.09419868024668208,
+          "new_MAPs": {
+            "3": 128
+          },
+          "nll_mean_changed": 0.6058104101849542,
+          "regressions": 85
+        },
+        "lexical_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0055300588077140216,
+          "max_SET_mass": 0.05802503017950854,
+          "mean_SET_mass": 0.026458521186512193,
+          "mean_nll": 0.023430194651532593,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "saturation_retention": {
+          "action_MAP_changes": 128,
+          "archived_mean_nll": 0.005810175563578199,
+          "max_SET_mass": 0.5957201413032346,
+          "mean_SET_mass": 0.10557275629557496,
+          "mean_nll": 0.09285230944165102,
+          "new_MAPs": {
+            "3": 128
+          },
+          "nll_mean_changed": 0.5916499090738963,
+          "regressions": 83
+        }
+      },
+      "seed": 37,
+      "worst_bilingual": {
+        "TV": 0.13079367550500584,
+        "points": [
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "vos",
+            "new_word": true,
+            "oracle_kl": 0.19332752454274013,
+            "word": "lights"
+          },
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "svo",
+            "new_word": true,
+            "oracle_kl": 0.04652070051059762,
+            "word": "zef"
+          }
+        ],
+        "step": 2
+      }
+    },
+    {
+      "KL_by_layout": {
+        "osv": 0.03413048550919957,
+        "svo": 0.03062028160608471,
+        "vos": 0.04901039958730238
+      },
+      "failed_KL_strata": [
+        {
+          "cell": "vos",
+          "group": "by_layout",
+          "kl": 0.05473469732968861,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "set",
+          "group": "by_effect",
+          "kl": 0.07172755121715887,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "new",
+          "group": "by_lexicon",
+          "kl": 0.07172755121715887,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.06575600408672495,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.05829663100163831,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.09402335531902731,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.0625769820824435,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.05493661863583116,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.09405238198830947,
+          "stratum": "identifiable"
+        }
+      ],
+      "law": "nand",
+      "max_bilingual_TV": 0.07788502793455868,
+      "mean_bilingual_TV": 0.015472922680141393,
+      "overall_KL": 0.037920388900862224,
+      "retention": {
+        "bilingual_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004018653514220368,
+          "max_SET_mass": 0.030794761239287732,
+          "mean_SET_mass": 0.00999783666061633,
+          "mean_nll": 0.010623571202044385,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "binding_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0042580552549105035,
+          "max_SET_mass": 0.13070392400181105,
+          "mean_SET_mass": 0.03029836034667232,
+          "mean_nll": 0.024602232029316475,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "centering_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004419928959702479,
+          "max_SET_mass": 0.42182688560004883,
+          "mean_SET_mass": 0.07879697186816484,
+          "mean_nll": 0.06551832261310964,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "coordinate_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004403179837142577,
+          "max_SET_mass": 0.42182688560004883,
+          "mean_SET_mass": 0.07879697186816484,
+          "mean_nll": 0.06393175680646546,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "lexical_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0041370682242889,
+          "max_SET_mass": 0.06594470079596107,
+          "mean_SET_mass": 0.026624439780038447,
+          "mean_nll": 0.02221205852123708,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "saturation_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.00442775306445152,
+          "max_SET_mass": 0.42182688560004883,
+          "mean_SET_mass": 0.07879697186816484,
+          "mean_nll": 0.06304104893317089,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        }
+      },
+      "seed": 53,
+      "worst_bilingual": {
+        "TV": 0.07788502793455868,
+        "points": [
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "vos",
+            "new_word": true,
+            "oracle_kl": 0.1324472382035155,
+            "word": "lights"
+          },
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "svo",
+            "new_word": true,
+            "oracle_kl": 0.04752298892169705,
+            "word": "zef"
+          }
+        ],
+        "step": 2
+      }
+    },
+    {
+      "KL_by_layout": {
+        "osv": 2.2715728037576577,
+        "svo": 1.4137407035069727,
+        "vos": 1.5271389023367474
+      },
+      "failed_KL_strata": [
+        {
+          "cell": "cycle_tail5",
+          "group": "by_family",
+          "kl": 0.5615091475788431,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "cycle_tail5",
+          "group": "by_family",
+          "kl": 1.7270818403247288,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4",
+          "group": "by_family",
+          "kl": 0.5449222020550439,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "interleaved_return4",
+          "group": "by_family",
+          "kl": 2.089220935007403,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "osv",
+          "group": "by_layout",
+          "kl": 0.4290190486619745,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "osv",
+          "group": "by_layout",
+          "kl": 2.501892023144618,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "svo",
+          "group": "by_layout",
+          "kl": 0.40645440140775146,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "svo",
+          "group": "by_layout",
+          "kl": 1.5396514912693753,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "vos",
+          "group": "by_layout",
+          "kl": 0.8241735743811045,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "vos",
+          "group": "by_layout",
+          "kl": 1.615009568331203,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "contact",
+          "group": "by_effect",
+          "kl": 0.5532156748169436,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "contact",
+          "group": "by_effect",
+          "kl": 0.09892302384300657,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "set",
+          "group": "by_effect",
+          "kl": 3.275091326785926,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "new",
+          "group": "by_lexicon",
+          "kl": 3.275091326785926,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "old",
+          "group": "by_lexicon",
+          "kl": 0.5532156748169436,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "old",
+          "group": "by_lexicon",
+          "kl": 0.09892302384300657,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/osv/contact/old",
+          "group": "by_cell",
+          "kl": 0.8558422064162403,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "cycle_tail5/osv/contact/old",
+          "group": "by_cell",
+          "kl": 0.15783218860303366,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/osv/set/new",
+          "group": "by_cell",
+          "kl": 3.7977236900337474,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/svo/contact/old",
+          "group": "by_cell",
+          "kl": 0.08106065533654569,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/svo/set/new",
+          "group": "by_cell",
+          "kl": 3.5112022925225865,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/vos/contact/old",
+          "group": "by_cell",
+          "kl": 0.8245860217801421,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "cycle_tail5/vos/contact/old",
+          "group": "by_cell",
+          "kl": 0.0823844497082395,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/vos/set/new",
+          "group": "by_cell",
+          "kl": 1.7602941202789466,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/osv/contact/old",
+          "group": "by_cell",
+          "kl": 0.06810861754381153,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/osv/set/new",
+          "group": "by_cell",
+          "kl": 5.051499828275396,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/svo/contact/old",
+          "group": "by_cell",
+          "kl": 0.808809588275356,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "interleaved_return4/svo/contact/old",
+          "group": "by_cell",
+          "kl": 0.07452871645920973,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/svo/set/new",
+          "group": "by_cell",
+          "kl": 1.632645906743315,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/vos/contact/old",
+          "group": "by_cell",
+          "kl": 0.823761126982067,
+          "stratum": "ambiguous"
+        },
+        {
+          "cell": "interleaved_return4/vos/contact/old",
+          "group": "by_cell",
+          "kl": 0.12145410803426622,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/vos/set/new",
+          "group": "by_cell",
+          "kl": 4.086195592242189,
+          "stratum": "identifiable"
+        }
+      ],
+      "law": "nor",
+      "max_bilingual_TV": 0.9995663702209545,
+      "mean_bilingual_TV": 0.3912566577306382,
+      "overall_KL": 1.7374841365337927,
+      "retention": {
+        "bilingual_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.00314811110752955,
+          "max_SET_mass": 0.0020985134054615894,
+          "mean_SET_mass": 0.0007959001328750917,
+          "mean_nll": 0.0036865955450355887,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "binding_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003251322356925227,
+          "max_SET_mass": 0.008397237025803177,
+          "mean_SET_mass": 0.0031600839956653854,
+          "mean_nll": 0.005248696760897662,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "centering_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004038200521840222,
+          "max_SET_mass": 0.009427589023591493,
+          "mean_SET_mass": 0.0026242249449947314,
+          "mean_nll": 0.004849185358152528,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "coordinate_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004028636891754018,
+          "max_SET_mass": 0.009427589023591493,
+          "mean_SET_mass": 0.0026242249449947314,
+          "mean_nll": 0.004840640717549819,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "lexical_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0033973121337070047,
+          "max_SET_mass": 0.008437050294748984,
+          "mean_SET_mass": 0.0032849412396739118,
+          "mean_nll": 0.005563939173741895,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "saturation_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004022729015177726,
+          "max_SET_mass": 0.009427589023591493,
+          "mean_SET_mass": 0.0026242249449947314,
+          "mean_nll": 0.0049160209049522365,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        }
+      },
+      "seed": 7,
+      "worst_bilingual": {
+        "TV": 0.9995663702209545,
+        "points": [
+          {
+            "action_correct": true,
+            "action_kind": "contact",
+            "layout": "svo",
+            "new_word": false,
+            "oracle_kl": 0.004618505007905623,
+            "word": "contacts"
+          },
+          {
+            "action_correct": true,
+            "action_kind": "contact",
+            "layout": "osv",
+            "new_word": false,
+            "oracle_kl": 8.839163791850963,
+            "word": "dax"
+          }
+        ],
+        "step": 3
+      }
+    },
+    {
+      "KL_by_layout": {
+        "osv": 0.04120157363212329,
+        "svo": 0.04121954585821505,
+        "vos": 0.0539071798531805
+      },
+      "failed_KL_strata": [
+        {
+          "cell": "interleaved_return4",
+          "group": "by_family",
+          "kl": 0.051845456971926704,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "vos",
+          "group": "by_layout",
+          "kl": 0.060232530462825486,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "set",
+          "group": "by_effect",
+          "kl": 0.08690994205230501,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "new",
+          "group": "by_lexicon",
+          "kl": 0.08690994205230501,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.07966991726529363,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.0787007059007263,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.09953517204324358,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.07782453734671341,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.07663513323898648,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.10980019425577947,
+          "stratum": "identifiable"
+        }
+      ],
+      "law": "nor",
+      "max_bilingual_TV": 0.06886540366626055,
+      "mean_bilingual_TV": 0.013990683509838299,
+      "overall_KL": 0.045442766447839615,
+      "retention": {
+        "bilingual_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0037928872360871403,
+          "max_SET_mass": 0.04745507751354394,
+          "mean_SET_mass": 0.01629411476300196,
+          "mean_nll": 0.015522988615006963,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "binding_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004335410502590434,
+          "max_SET_mass": 0.20225962785869553,
+          "mean_SET_mass": 0.04034852310199726,
+          "mean_nll": 0.03502536691339548,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "centering_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003879286190699163,
+          "max_SET_mass": 0.22073262377742398,
+          "mean_SET_mass": 0.027525189271931885,
+          "mean_nll": 0.02439161007144624,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "coordinate_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.00387625783963498,
+          "max_SET_mass": 0.22073262377742398,
+          "mean_SET_mass": 0.027525189271931885,
+          "mean_nll": 0.02432941517506968,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "lexical_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0038879100639197155,
+          "max_SET_mass": 0.13181558470422602,
+          "mean_SET_mass": 0.038825341541991784,
+          "mean_nll": 0.03386170158891722,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "saturation_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0038588715629801506,
+          "max_SET_mass": 0.22073262377742398,
+          "mean_SET_mass": 0.027525189271931885,
+          "mean_nll": 0.025482217203411657,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        }
+      },
+      "seed": 11,
+      "worst_bilingual": {
+        "TV": 0.06886540366626055,
+        "points": [
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "osv",
+            "new_word": true,
+            "oracle_kl": 0.06091429692851838,
+            "word": "lights"
+          },
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "vos",
+            "new_word": true,
+            "oracle_kl": 0.1364953142120336,
+            "word": "zef"
+          }
+        ],
+        "step": 1
+      }
+    },
+    {
+      "KL_by_layout": {
+        "osv": 0.03402039650646566,
+        "svo": 0.03445070530987831,
+        "vos": 0.046984323771272714
+      },
+      "failed_KL_strata": [
+        {
+          "cell": "vos",
+          "group": "by_layout",
+          "kl": 0.05248716331824332,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "set",
+          "group": "by_effect",
+          "kl": 0.07273617759853665,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "new",
+          "group": "by_lexicon",
+          "kl": 0.07273617759853665,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.0651145936523052,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.06409042405079222,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.08640548311207909,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.06419221031380971,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.0619125738315014,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.0953512886258406,
+          "stratum": "identifiable"
+        }
+      ],
+      "law": "nor",
+      "max_bilingual_TV": 0.06611744486189591,
+      "mean_bilingual_TV": 0.014457684071945828,
+      "overall_KL": 0.038485141862538895,
+      "retention": {
+        "bilingual_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003579857986369306,
+          "max_SET_mass": 0.027275557074203677,
+          "mean_SET_mass": 0.0084965567813218,
+          "mean_nll": 0.009653470009381004,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "binding_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0037874706088791197,
+          "max_SET_mass": 0.11388352531240648,
+          "mean_SET_mass": 0.02694802592878763,
+          "mean_nll": 0.023633266442067438,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "centering_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003720312219114578,
+          "max_SET_mass": 0.4473767681660448,
+          "mean_SET_mass": 0.08366936622998686,
+          "mean_nll": 0.07321378572736228,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "coordinate_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0037033812656295352,
+          "max_SET_mass": 0.4473767681660448,
+          "mean_SET_mass": 0.08366936622998686,
+          "mean_nll": 0.0732730665536134,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "lexical_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003676874124747812,
+          "max_SET_mass": 0.061876754740439056,
+          "mean_SET_mass": 0.027143757301353436,
+          "mean_nll": 0.024243592868487335,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "saturation_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0036917594029756283,
+          "max_SET_mass": 0.4473767681660448,
+          "mean_SET_mass": 0.08366936622998686,
+          "mean_nll": 0.07638150043070696,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        }
+      },
+      "seed": 23,
+      "worst_bilingual": {
+        "TV": 0.06611744486189591,
+        "points": [
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "vos",
+            "new_word": true,
+            "oracle_kl": 0.12514354841956535,
+            "word": "lights"
+          },
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "svo",
+            "new_word": true,
+            "oracle_kl": 0.08477157617149181,
+            "word": "zef"
+          }
+        ],
+        "step": 3
+      }
+    },
+    {
+      "KL_by_layout": {
+        "osv": 0.03894010014231807,
+        "svo": 0.03447369848351037,
+        "vos": 0.07363477076409787
+      },
+      "failed_KL_strata": [
+        {
+          "cell": "cycle_tail5",
+          "group": "by_family",
+          "kl": 0.0531216647273952,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4",
+          "group": "by_family",
+          "kl": 0.0562945039334664,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "vos",
+          "group": "by_layout",
+          "kl": 0.08226755711400034,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "set",
+          "group": "by_effect",
+          "kl": 0.0929052706135277,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "new",
+          "group": "by_lexicon",
+          "kl": 0.0929052706135277,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.07325894760990172,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.06436589770147774,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.13541231817558427,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.07290750761691259,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.06171473405014459,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.1511918806155501,
+          "stratum": "identifiable"
+        }
+      ],
+      "law": "nor",
+      "max_bilingual_TV": 0.13101505900454782,
+      "mean_bilingual_TV": 0.02744291442170932,
+      "overall_KL": 0.0490161897966421,
+      "retention": {
+        "bilingual_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.005010143109225748,
+          "max_SET_mass": 0.024331012398303316,
+          "mean_SET_mass": 0.007352461378353725,
+          "mean_nll": 0.010259137645714376,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "binding_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.005124743647109922,
+          "max_SET_mass": 0.11733303165520775,
+          "mean_SET_mass": 0.03178427514411239,
+          "mean_nll": 0.028885413519067434,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "centering_retention": {
+          "action_MAP_changes": 128,
+          "archived_mean_nll": 0.005354669934923438,
+          "max_SET_mass": 0.5957201413032346,
+          "mean_SET_mass": 0.10557275629557496,
+          "mean_nll": 0.10008966925395696,
+          "new_MAPs": {
+            "3": 128
+          },
+          "nll_mean_changed": 0.6271736259510835,
+          "regressions": 88
+        },
+        "coordinate_retention": {
+          "action_MAP_changes": 128,
+          "archived_mean_nll": 0.005355665476534743,
+          "max_SET_mass": 0.5957201413032346,
+          "mean_SET_mass": 0.10557275629557496,
+          "mean_nll": 0.10011481028107272,
+          "new_MAPs": {
+            "3": 128
+          },
+          "nll_mean_changed": 0.620146779845509,
+          "regressions": 87
+        },
+        "lexical_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.005130357866749447,
+          "max_SET_mass": 0.05802503017950854,
+          "mean_SET_mass": 0.026458521186512193,
+          "mean_nll": 0.02512580967778467,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "saturation_retention": {
+          "action_MAP_changes": 128,
+          "archived_mean_nll": 0.005332462547708887,
+          "max_SET_mass": 0.5957201413032346,
+          "mean_SET_mass": 0.10557275629557496,
+          "mean_nll": 0.10465950688492592,
+          "new_MAPs": {
+            "3": 128
+          },
+          "nll_mean_changed": 0.6696340884938535,
+          "regressions": 94
+        }
+      },
+      "seed": 37,
+      "worst_bilingual": {
+        "TV": 0.13101505900454782,
+        "points": [
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "vos",
+            "new_word": true,
+            "oracle_kl": 0.19761855401451314,
+            "word": "lights"
+          },
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "svo",
+            "new_word": true,
+            "oracle_kl": 0.08412244514908193,
+            "word": "zef"
+          }
+        ],
+        "step": 3
+      }
+    },
+    {
+      "KL_by_layout": {
+        "osv": 0.03740154560228361,
+        "svo": 0.03368513746933849,
+        "vos": 0.052443014495504946
+      },
+      "failed_KL_strata": [
+        {
+          "cell": "vos",
+          "group": "by_layout",
+          "kl": 0.058584821398156406,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "set",
+          "group": "by_effect",
+          "kl": 0.07864156443714622,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "new",
+          "group": "by_lexicon",
+          "kl": 0.07864156443714622,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.07156349739169604,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.06425616628817223,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "cycle_tail5/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.09679996985485959,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/osv/set/new",
+          "group": "by_cell",
+          "kl": 0.07093300946886424,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/svo/set/new",
+          "group": "by_cell",
+          "kl": 0.06216344503355865,
+          "stratum": "identifiable"
+        },
+        {
+          "cell": "interleaved_return4/vos/set/new",
+          "group": "by_cell",
+          "kl": 0.10695956352990427,
+          "stratum": "identifiable"
+        }
+      ],
+      "law": "nor",
+      "max_bilingual_TV": 0.0780063641060794,
+      "mean_bilingual_TV": 0.016584132504629975,
+      "overall_KL": 0.041176565855709016,
+      "retention": {
+        "bilingual_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003738297716173142,
+          "max_SET_mass": 0.030794761239287732,
+          "mean_SET_mass": 0.00999783666061633,
+          "mean_nll": 0.010910861710161984,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "binding_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.003936415567624225,
+          "max_SET_mass": 0.13070392400181105,
+          "mean_SET_mass": 0.03029836034667232,
+          "mean_nll": 0.026673996330169494,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "centering_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0041034999428528045,
+          "max_SET_mass": 0.42182688560004883,
+          "mean_SET_mass": 0.07879697186816484,
+          "mean_nll": 0.06786021598410993,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "coordinate_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004092133865691048,
+          "max_SET_mass": 0.42182688560004883,
+          "mean_SET_mass": 0.07879697186816484,
+          "mean_nll": 0.06782544865237128,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "lexical_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.0038326921525655235,
+          "max_SET_mass": 0.06594470079596107,
+          "mean_SET_mass": 0.026624439780038447,
+          "mean_nll": 0.023992918030780002,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        },
+        "saturation_retention": {
+          "action_MAP_changes": 0,
+          "archived_mean_nll": 0.004090194030557067,
+          "max_SET_mass": 0.42182688560004883,
+          "mean_SET_mass": 0.07879697186816484,
+          "mean_nll": 0.07091617809769256,
+          "new_MAPs": {},
+          "nll_mean_changed": null,
+          "regressions": 0
+        }
+      },
+      "seed": 53,
+      "worst_bilingual": {
+        "TV": 0.0780063641060794,
+        "points": [
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "vos",
+            "new_word": true,
+            "oracle_kl": 0.13314110377405228,
+            "word": "lights"
+          },
+          {
+            "action_correct": true,
+            "action_kind": "set",
+            "layout": "svo",
+            "new_word": true,
+            "oracle_kl": 0.0481432656925805,
+            "word": "zef"
+          }
+        ],
+        "step": 2
+      }
+    }
+  ],
+  "scope": {
+    "candidate_checkpoint_or_forecast_reads": 0,
+    "challenge_input_reads": 0,
+    "evaluator_file_reads": 0,
+    "evidence": "completed saved v1 reports, saved v1 TRAIN-derived language weights and registry, frozen source/protocol only",
+    "interpretation": "Saved scored reports already contain opened v1 evaluation evidence; this is post-outcome diagnosis, not a fresh validation.",
+    "new_collections": 0,
+    "new_fits": 0,
+    "new_forward_forecasts": 0,
+    "new_gradient_evaluations": 0,
+    "new_model_executions": 0,
+    "optimizer_steps": 0,
+    "prior_train_only_diagnostic_is_separate": true
+  },
+  "source_sha256": {
+    "binding_layout_coordinates.py": "fea01cd8b4597222299709f52c767e0612b5a3a534798837927c2a34ce6bff89",
+    "data/effect-role-fit-v1/grounded-11.json": "a05053351d5d899d89342b580dca40fb04b3747e63df7597e76046612a5cd86c",
+    "data/effect-role-fit-v1/grounded-23.json": "8c57aaefba6ce3d385835743a7c9e39455617965d9759780b1b46e142f1756f5",
+    "data/effect-role-fit-v1/grounded-37.json": "867a577b687ba26d38dc9f9eb19f931b2491b183a0c4e3308948fb5ca843cf03",
+    "data/effect-role-fit-v1/grounded-53.json": "453fed5246f8453b3e44602ada01837ab89dc52bb88f4324837ea488c9b79528",
+    "data/effect-role-fit-v1/grounded-7.json": "de58119c264fb1ad803f1bee26c908930ca701426e7e18b5da99c5cf9eef48c5",
+    "data/effect-role-v1/lexical-registry.json": "314cc2e5dbac5ed657959a70bc3d53e6874288b2f50999c7713e29f9d86795b5",
+    "effect_role_model.py": "6e91ed19fba40277d551321cd659315956678be3d49c4147fc71377359027929",
+    "effect_role_protocol_v1.json": "aa92959360bdca4a5c837b438f3847fab6dfbc0334951a7ec6116866b91d9474",
+    "effect_role_scoring.py": "b1d1afdff563c8e0214e81ee667e4e4113176d3143931fc838549b52934f5e3c",
+    "results/effect-role-v1/scored/decision.json": "6d451ab5f121d1d58ecb7afa100c03ebfa3f72ce31d40f0a7becc7201b4b1e82",
+    "results/effect-role-v1/scored/report-nand-11.json.xz": "05eddc23d272583911a7228452185a042c2e8d3c9d60ae693a241b33071c70ae",
+    "results/effect-role-v1/scored/report-nand-23.json.xz": "b893e950de9a9e274ed6ad9bee8c004dacafe4dfd3c6b2e4676c7ba99f612e77",
+    "results/effect-role-v1/scored/report-nand-37.json.xz": "643a1d5f2ea9436ef1a2881a811deff7357261e41f71b967fbaf17f4f53df556",
+    "results/effect-role-v1/scored/report-nand-53.json.xz": "4fcd72281d3c1d4378309209a150410ca099529ce70ee3e1681697228103f004",
+    "results/effect-role-v1/scored/report-nand-7.json.xz": "1bcb215482a8398693d9660fae348a29875800e7042e25e7f1116b10b31988e2",
+    "results/effect-role-v1/scored/report-nor-11.json.xz": "3cab2eb0e16ae5f2e1e0a4c4a5473b95f45c620d17acc91dc0aa3f42e761dc78",
+    "results/effect-role-v1/scored/report-nor-23.json.xz": "957130604a78e434f38a2ddf937d338dacd75b4a12617986ad682d92ea2935a6",
+    "results/effect-role-v1/scored/report-nor-37.json.xz": "02121ccc78bf2f52308764440c83477ea5a80685f60ee444441e4c14641d102b",
+    "results/effect-role-v1/scored/report-nor-53.json.xz": "21633d0174c2323313bc2085ebd3ae03c1db5f2c1b877ee92150cc1af1f80e25",
+    "results/effect-role-v1/scored/report-nor-7.json.xz": "4bf579d2cc3d2469389e0ec1408633345237fcf603690bbda77ddf1f39407307"
+  },
+  "unchanged_v2_hypothesis": {
+    "criteria": "unchanged",
+    "normalization": "softmax(concat(log_softmax(contact_logits)+log(2),new_set_logits))",
+    "parameters": 92,
+    "set_mass_formula": "S(c*q)/(2+S(c*q)), where S(z)=exp(w2*z+b2)+exp(w3*z+b3)",
+    "updates": 256,
+    "world": "immutable accepted native checkpoints"
+  },
+  "version": "effect-role-v1-broader-saved-evidence-diagnosis-v1"
+}
