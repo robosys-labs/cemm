@@ -1,7 +1,19 @@
-# Active nucleus: G3 v1 completed REVISE; neutral v2 remains prospective
+# Active nucleus: G3 normalization v2 frozen; v1 remains REVISE
 
 Updated 2026-11-02. Tracking [#22](https://github.com/robosys-labs/cemm/issues/22).
 The user's authorized goal remains completion of development G3.
+
+## Current prospective study
+
+[Normalization v2](EFFECT_ROLE_STUDY_V2.md) is prepared under freeze
+`be204b7a610a892ce0f62a83f8144159512f36d29da0339eb12591c4a8f73a4a`,
+binding 93 source files, 347 historical files and nine prepared artifacts.
+The complete failed v1 result is published at
+`09094f94b92c1d3d33d1b222fd1494d44293375c`. The new candidate retains the same
+92 language parameters, training tapes, five seeds, 256 updates and criteria.
+It plans 546,240 raw rows, including opened-v1 regression evidence.
+No v2 research fitting, collection or scoring has started. Follow the
+[v2 handoff](EFFECT_ROLE_HANDOFF_V2.md); completion remains evidence-dependent.
 
 ## Latest completed result
 
@@ -41,7 +53,7 @@ values, the same 16 teaching and 1,152 rehearsal events, five seeds, 256 updates
 optimizer and scientific thresholds. The TRAIN diagnostic supports this as a
 hypothesis; it does not establish fresh generalization or retention success.
 
-Publish v1 negative evidence, then freeze/publish v2 source, fresh compositions,
+V1 negative evidence is published. Publish frozen v2 source, fresh compositions,
 opened-v1 regression checks and runtime before any real v2 fitting. Preserve
 archived-control provenance. All new weights must be published before collection,
 and all raw forecasts before scoring. Do not change v1 or treat its opened bank
@@ -62,3 +74,11 @@ open. Production runtime, authority and ABIs are unchanged. Verification retains
 1,073 isolated tests, 35 locks and original frozen-input preflight. Frozen v1 code
 has 48,323 Python lines, including 20,486 test lines; archived diagnostic scripts
 bring the inclusive total to 48,724. The 2,000-line objective remains unmet.
+
+## V2 source validation
+
+The final clean source tree passes 1108 isolated tests, all 36 protocol locks,
+and original frozen-input preflight. The [validation receipt](results/effect-role-validation-v2.json)
+retains the initial checkout-state validation error and its successful clean rerun.
+Frozen v2 code contains 50,552 Python lines including 21,320 test lines;
+the inclusive 2,000-line objective remains unmet. No v2 research execution has begun.
