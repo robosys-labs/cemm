@@ -1,0 +1,73 @@
+{
+  "version": "effect-role-v1",
+  "recorded_on": "2026-11-02",
+  "scope": "BOUNDED_DEVELOPMENT_G3_EFFECT_ROLE_AND_GOAL_TRANSFER",
+  "model_seeds": [7, 11, 23, 37, 53],
+  "parameters": {"world": 562, "grounded": 92, "parser": 92, "text_only": 1048},
+  "training_forecasts": {"teach": 16, "rehearsal": 1152},
+  "fresh_episodes_per_law": 1536,
+  "fresh_forecasts_per_law": 6912,
+  "identifiable_forecasts_per_law": 6144,
+  "ambiguous_forecasts_per_law": 768,
+  "held_new_word_forecasts_per_law": 1152,
+  "goal_groups_per_law": 384,
+  "goal_decisions_per_law": 1536,
+  "fresh_saved_forecasts": 276480,
+  "retention_saved_forecasts": 131520,
+  "arms": ["grounded", "parser", "text_only"],
+  "unknown_tokens": ["g3_unknown_alpha", "g3_unknown_beta"],
+  "fit": {
+    "updates": 256,
+    "learning_rate": 0.02,
+    "gradient_clip": 5.0,
+    "teach_weight": 0.5,
+    "cpu_seconds_per_fit": 400
+  },
+  "analysis": {
+    "identifiable_accuracy": 0.95,
+    "mean_oracle_kl": 0.05,
+    "max_ambiguous_total_variation": 0.1,
+    "identifiable_trajectory_accuracy": 0.95,
+    "identifiable_role_pair_accuracy": 0.95,
+    "action_accuracy": 0.95,
+    "max_bilingual_total_variation": 0.05,
+    "goal_optimal_accuracy": 0.95,
+    "mean_goal_regret": 0.01,
+    "max_goal_regret": 0.05,
+    "min_effect_sensitive_goal_gain": 0.1,
+    "min_effect_sensitive_goals": 16,
+    "max_retention_mean_nll": 0.05
+  },
+  "execution": {
+    "runtime": {"python": "3.13.16", "torch": "2.10.0+cpu", "numpy": "2.3.5", "threads": 1,
+      "dtype": "float64", "deterministic_algorithms": true},
+    "fits": 15,
+    "one_attempt": true,
+    "retries": 0,
+    "source_data_publication_before_fitting": true,
+    "actual_weights_publication_before_collection": true,
+    "raw_forecasts_publication_before_scoring": true,
+    "independent_custody": false
+  },
+  "design": {
+    "hypothesis": "After native SET acquisition is accepted, a small language model can learn effect and participant roles from a handful of endpoint observations, retain old language, transfer to unseen people/word-layout compositions and choose utterances for supplied goals without changing the world model.",
+    "world": "Require all ten accepted native SET v2 checkpoints and their complete KEEP decision. All 562 native parameters remain frozen. NAND language training uses each matching seed's acquired NAND world; the same fitted language weights are tested with both acquired NAND and NOR worlds.",
+    "language": "Copy every one of the accepted 88 coordinate encoder scalars. Widen only the bilinear output from two to four generic native action alternatives; initialize exactly four new scalars to zero. No literal word selects an effect, role or POS. The fixed menu is contact(A,B), contact(B,A), set(A,1), set(B,1) for the two mentioned identities. All 92 language scalars may train.",
+    "teaching": "Sixteen new observed episodes: two words lights/zef, SVO/OSV, two contrasting anchors and both physically exposed persistent modes. Each endpoint alone admits multiple actions; the intersection across four examples identifies each taught word/layout cell. New words never occur in VOS training. Rehearse only the exact previously accepted 1152-event TRAIN tape, never an evaluation bank. Grounded and text-only see observed readings; only the parser control loads action labels.",
+    "optimization": "One fixed 256-update Adam fit per arm/seed. Objective is .5 mean new-teaching NLL plus .5 mean old-rehearsal NLL (parser action NLL instead of endpoint NLL). Fresh Adam betas .9/.999, eps 1e-8, weight_decay 0, amsgrad false. Clip norm5, learning rate.02, CPU ceiling400seconds per fit. No selection, early stopping, retries or added examples after opening.",
+    "challenge": "Fresh interleaved-return4 and cycle-tail5 ordered participant schedules, rotating SVO/OSV/VOS through each mixed contact/SET episode. Both directions, physical modes, known/unresolved mode contexts, four anchors, two effect phases, and four final action alternatives. Held-out newword/VOS cells and fresh participants are audited. Every forecast precedes its reading; later forecasts receive actual earlier feedback. Report dependent views as such, not independent trials or autonomous rollouts.",
+    "goals": "Each final group supplies four hypothetical messages from one identical observed prefix. Score all four two-bit goals with spectator coordinates fixed, including impossible goals. Choose the message maximizing its saved full-world target probability; deterministic first-index ties. Measure oracle-optimal choice and regret under the frozen conditional oracle. Effect-sensitive cases are determined before opening by unequal best contact/SET utilities; report SET-required and contact-required subsets separately. Goal selection is over supplied meanings and candidates, not natural-language goal parsing or autonomous planning.",
+    "lexical_identity": "Build a bounded exact-string registry from observed training tokens, preserving legacy features. Distinct identities cannot share the effective vector: only newly colliding vectors are replaced by deterministic identity-derived features. No semantics/POS/sense are registered. Explicit unknown probes return separate exact typed unresolved identities and no forecast. This is bounded lexical storage and abstention, not a claim of unrestricted polysemy learning.",
+    "controls": "The parser has the same 92 parameters and privileged action supervision. The 1048-parameter text-only model receives words and identity positions but no state readings or mode context. Current-word masking zeros lexical features while preserving supplied identities, layout and canonical prefix belief. All controls are reported. Neither parameter matching with text-only nor matched consumed compute is claimed.",
+    "criteria": "Every law/seed and every nonempty family/layout/new-old/effect stratum must meet the frozen identifiable, action and probability thresholds. Zero unsupported MAP worlds and zero known-fixed-coordinate errors. Whole identifiable trajectories and paired reversals >=.95; bilingual aligned world TV<=.05. All goal strata >=.95 optimal choices, mean regret<=.01 and maximum regret<=.05. Grounded effect-sensitive goal accuracy must improve over masked and text-only by>=.1, with both effect directions present. All scientific failures produce complete reports.",
+    "retention": "Compare all six historical language banks against accepted native SET v2 forecasts on identical acquired worlds. Zero exact-world regressions, mean truth NLL<=.05 per bank/law/seed, and exact equality of candidate four-action MAP with archived two-order MAP. Never renormalize away new SET mass. Report every NLL/truth-probability/vector-drift delta and SET probability mass; no exact language tensor/probability equality is required after language training.",
+    "provenance": "Publish frozen source/data/runtime before fitting, all 15 actual language checkpoints before collection, and every fresh/retention forecast before opening evaluator targets. Exclusive output directories, strict complete inventories, immutable native checkpoints and complete runtime identity. A separate stdlib saved-record auditor validates raw evidence before target parsing and checks the scored decision without running the model or original scorer.",
+    "limits": "Development G3 completion is bounded to the supplied two-mode world, stable identity markers, action candidates, token/layout features, controlled three-token forms and finite goal candidates. G1/G2 development readiness is inherited. Formal scientific admission remains open, independent custody and matched consumed compute are absent, and the inclusive 2000-line target remains unmet. No production runtime, authority or ABI changes."
+  },
+  "decision_order": [
+    "STOP_INCOMPLETE_EXECUTION for malformed evidence, provenance/mutation/runtime failures or incomplete execution",
+    "REVISE_EFFECT_ROLE_GROUNDING if any valid completed-fit competence, goal or retention criterion fails",
+    "DEVELOPMENT_G3_COMPLETE / PROCEED_TO_G4 only if every prospective criterion and identity control passes"
+  ],
+  "scientific_admission": false
+}

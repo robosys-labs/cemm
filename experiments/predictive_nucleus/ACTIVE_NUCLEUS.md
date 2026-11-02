@@ -1,4 +1,4 @@
-# Active nucleus: native SET accepted; complete G3 effect, role and goal transfer
+# Active nucleus: G3 effect, role and goal study frozen; native SET accepted
 
 Updated 2026-11-02. Tracking [#22](https://github.com/robosys-labs/cemm/issues/22).
 Latest completed study: [PR #78](https://github.com/robosys-labs/cemm/pull/78),
@@ -44,11 +44,24 @@ participants, reversals, untaught word-order combinations, goal-based choices an
 distinct lexical identities. Include parser, text-only and lexical-masking
 controls and all six historical language banks.
 
-The separate prospective implementation uses 92 language parameters: the 88
-accepted values plus four neutral head values. Contrasting endpoints identify
-effects across contexts; individual ambiguous endpoints supply no gold labels.
-Publish its source/data/runtime before fitting, actual weights before collection,
-and every raw forecast before scoring. Native SET alone does not close G3.
+The [prospective G3 study](EFFECT_ROLE_STUDY_V1.md) is now implemented and frozen:
+92 language parameters, 16 new teaching examples plus the exact 1,152-event TRAIN
+rehearsal, five seeds and three arms. The four-action head copies all 88 inherited
+values and adds four neutral values. Contrasting endpoints identify effects;
+individual ambiguous endpoints supply no gold labels.
+
+The fresh challenge has 6,912 events per law, including 1,152 newword/VOS cases
+withheld from teaching, plus 384 same-prefix four-alternative goal groups. Save
+276,480 fresh/control forecasts and 131,520 historical retention forecasts. A
+separate lexical receipt preserves 18 registered and two unresolved identities.
+All 68 sources and 186 historical files are hash-bound. Freeze SHA256:
+`7b500d3bb1811dd484ea0af9ce7131776e7aea6d7a60a33f0e8490e34d494dca`.
+
+Run full software verification, publish source/data/runtime before the one fitting
+stage, actual weights before collection, and all raw forecasts before scoring.
+No G3 research fit, collection or scoring has occurred yet. A complete pass is
+required for DEVELOPMENT_G3_COMPLETE / PROCEED_TO_G4. Native SET alone does not
+close G3.
 
 ## Roadmap state
 
