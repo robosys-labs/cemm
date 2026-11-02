@@ -1,0 +1,149 @@
+{
+  "version": "effect-role-v3",
+  "recorded_on": "2026-11-02",
+  "scope": "BOUNDED_DEVELOPMENT_G3_EFFECT_ROLE_AND_GOAL_TRANSFER",
+  "model_seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "parameters": {
+    "world": 562,
+    "grounded": 92,
+    "parser": 92,
+    "text_only": 1048
+  },
+  "training_forecasts": {
+    "teach": 16,
+    "rehearsal": 1152
+  },
+  "fresh_episodes_per_law": 1536,
+  "fresh_forecasts_per_law": 6912,
+  "identifiable_forecasts_per_law": 6144,
+  "ambiguous_forecasts_per_law": 768,
+  "held_new_word_forecasts_per_law": 1152,
+  "goal_groups_per_law": 384,
+  "goal_decisions_per_law": 1536,
+  "fresh_saved_forecasts": 276480,
+  "retention_saved_forecasts": 131520,
+  "arms": [
+    "grounded",
+    "parser",
+    "text_only"
+  ],
+  "unknown_tokens": [
+    "g3_unknown_alpha",
+    "g3_unknown_beta"
+  ],
+  "fit": {
+    "updates": 256,
+    "learning_rate": 0.02,
+    "gradient_clip": 5.0,
+    "teach_weight": 0.5,
+    "cpu_seconds_per_fit": 400
+  },
+  "analysis": {
+    "identifiable_accuracy": 0.95,
+    "mean_oracle_kl": 0.05,
+    "max_ambiguous_total_variation": 0.1,
+    "identifiable_trajectory_accuracy": 0.95,
+    "identifiable_role_pair_accuracy": 0.95,
+    "action_accuracy": 0.95,
+    "max_bilingual_total_variation": 0.05,
+    "goal_optimal_accuracy": 0.95,
+    "mean_goal_regret": 0.01,
+    "max_goal_regret": 0.05,
+    "min_effect_sensitive_goal_gain": 0.1,
+    "min_effect_sensitive_goals": 16,
+    "max_retention_mean_nll": 0.05
+  },
+  "execution": {
+    "runtime": {
+      "python": "3.13.16",
+      "torch": "2.10.0+cpu",
+      "numpy": "2.3.5",
+      "threads": 1,
+      "dtype": "float64",
+      "deterministic_algorithms": true
+    },
+    "fits": 15,
+    "one_attempt": true,
+    "retries": 0,
+    "source_data_publication_before_fitting": true,
+    "actual_weights_publication_before_collection": true,
+    "raw_forecasts_publication_before_scoring": true,
+    "independent_custody": false,
+    "collection_shards": 10,
+    "trace_files": 160,
+    "raw_files": 183,
+    "one_attempt_scope": "One fit stage, one collection execution per law/seed shard, one seal and one score; zero research retries. Publish completed shards before the next shard.",
+    "runtime_scope": "Freeze the complete actual AMD EPYC 9V74 execution identity during preparation, including CPU flags, numerical builds, kernel and allowed environment. Verify exact equality before research execution. Original Intel v2 freeze remains immutable.",
+    "raw_shard_publication_before_next_shard": true,
+    "pre_score_saved_record_audit_required": true
+  },
+  "design": {
+    "hypothesis": "Separate effect-family probability from lexical role confidence while protecting acquired competence. Preserve the entire accepted 88-scalar coordinate parent; each of two exact new identities learns a neutral effect logit and role coordinate from observed endpoints. This is prospective lexical acquisition, not recovery or reinterpretation of incomplete v2.",
+    "prior_status": "Effect/role v1 is a complete REVISE in every law/seed. V2 has 15 published actual fits but lost raw evidence and no scientific pass/fail decision. Its training losses motivate a prospective hypothesis without determining challenge outcomes. Publish the v2 interruption record before preparing this study.",
+    "world": "Require all ten accepted native SET v2 checkpoints and their complete KEEP decision. All 562 native parameters remain frozen. NAND language training uses each matching seed's acquired NAND world; the same fitted language weights are tested with both acquired NAND and NOR worlds.",
+    "language": "92 total scalars in each grounded/parser model: all 88 accepted coordinate-parent scalars remain bitwise frozen and four new identity coordinates start at zero. Legacy registered identities use the inherited two-action contact support with zero SET mass. Each new identity independently learns one effect-family logit and one role coordinate; new role logits use the inherited learned layout coordinates and bilinear readout without its offset, then normalize separately from the effect family. Zero new coordinates give an exactly uniform four-action distribution. Effect and role remain probabilistic; no new identity is assigned a gold action or role. The inherited support restriction and factorization are supplied architectural choices. No shared-parameter lexical acquisition is claimed.",
+    "identity_storage": "The exact TRAIN registry and features are reused byte-for-byte. Explicit legacy/new membership supplies provenance and allocates two scalar slots per new identity, never a gold effect/role label. Distinct exact identities have distinct storage; both new rows initialize independently to zero. Unknown raw identities remain typed unresolved and receive no semantic forecast. Current-word masking uses the explicit all-zero feature sentinel, producing a uniform four-action control; it does not convert a raw unknown into a known meaning. No zero-shot word meaning or unrestricted polysemy claim.",
+    "protected_retention": "Legacy distributions are protected structurally by frozen parent tensors and inherited two-action support. This is not evidence that shared trainable parameters learned to resist forgetting. Preserve and audit every parent tensor, and still collect all historical banks under the actual new runtime to expose numerical and world/action differences. Growth is explicitly two scalar coordinates per added exact identity.",
+    "initial_function": "For each new identity let e be its effect logit and r its role coordinate. Compute role_logp=log_softmax(parent.order(r, inherited_layout)-parent.order.bias), family_logp=log_softmax([0,e]); concatenate family_logp[0]+role_logp and family_logp[1]+role_logp. All four new coordinates initially zero. The parent learned layout signs and scale are inherited, not supplied labels; role r can learn either sign.",
+    "matched_exposure": "All four TRAIN artifact bytes, five seeds, updates, optimizer settings, total model scalar counts and numerical decision thresholds exactly match v1/v2. Only four grounded/parser scalars now train instead of 92; this intentional capacity/update-mask change is declared. The text-only model retains 1048 trainable scalars. Equal examples and nominal update budgets do not imply matched consumed compute or trainable capacity.",
+    "world_first_order": "Ten accepted native SET v2 worlds were learned nonverbally and published before the first language fitting. This study freezes them, attaches language through endpoint likelihoods, and tests those same language tensors against both acquired NAND and NOR worlds. No simulator law table is imported into language inference.",
+    "breakdown": {
+      "teaching_events": 16,
+      "rehearsal_events": 1152,
+      "new_identities": 2,
+      "new_scalars_per_identity": 2,
+      "new_initial_value": 0.0,
+      "parent_scalars_frozen": 88
+    },
+    "teaching": "The same sixteen published v1 observed teaching episodes: two words lights/zef, SVO/OSV, two contrasting anchors and both physically exposed persistent modes. Each endpoint alone admits multiple actions; the intersection across four examples identifies each taught word/layout cell. New words never occur in VOS training. Rehearse only the exact previously accepted 1152-event TRAIN tape, never an evaluation bank. Grounded and text-only see observed readings; only the parser control loads action labels.",
+    "optimization": "One 256-update Adam fit per arm/seed. Grounded objective is .5 mean new-teaching endpoint NLL plus .5 mean old-rehearsal endpoint NLL; parser uses privileged action NLL. The rehearsal contribution is constant for the frozen legacy parent but remains recorded. Fresh Adam betas .9/.999, eps 1e-8, weight_decay0, amsgrad false, gradient clip5, learning rate .02, CPU ceiling400seconds per fit. No selection, early stopping, additional observations, retries or extra updates.",
+    "challenge": "Fresh path_return4 and branch_return5 ordered participant schedules with four/five events and participants. Rotate SVO/OSV/VOS through each mixed contact/SET episode; retain both role directions, physical modes, known/unresolved contexts, four anchors, two effect phases and four final alternatives. Preserve previously opened TRAIN-withheld new-word/VOS provenance. Forecast before each reading, then assimilate actual earlier feedback: dependent teacher-forced trajectories, not autonomous rollouts.",
+    "freshness": "Identity seed20261102601 and challenge seed20261102602. Fresh ordered participant structures and unordered multigraphs are disjoint from 72 prior source-defined recipe entries (46 distinct ordered,35 unordered). V1/v2 episode and entity overlap is zero; TRAIN entity overlap is zero. All words/layouts/laws were previously opened, so no fresh lexical-cell claim. The same four published TRAIN files are copied exactly.",
+    "goals": "Each final group supplies four hypothetical messages from one identical observed prefix. Score all four two-bit goals with spectator coordinates fixed, including impossible goals. Choose the message maximizing its saved full-world target probability; deterministic first-index ties. Measure oracle-optimal choice and regret under the frozen conditional oracle. Effect-sensitive cases are determined before opening by unequal best contact/SET utilities; report SET-required and contact-required subsets separately. Goal selection is over supplied meanings and candidates, not natural-language goal parsing or autonomous planning.",
+    "controls": "Freshly fit grounded, same-architecture supervised parser and 1048-scalar text-only controls on the same new AMD runtime. Collect every current arm on fresh and both opened challenge banks; grounded also supplies current-word-masked views and six legacy-bank canonical views. Record fresh text-only weights/curves instead of requiring cross-runtime bit equality with Intel v1/v2. No archived parser or text-only forecast substitutes for a current control. Frozen published v2 grounded weights are additionally collected in canonical/masked views on opened v2 under the v3 runtime, with zero updates and explicit original source/checkpoint publications.",
+    "criteria": "Every law/seed and every nonempty family/layout/new-old/effect stratum must meet the frozen identifiable, action and probability thresholds. Zero unsupported MAP worlds and zero known-fixed-coordinate errors. Whole identifiable trajectories and paired reversals >=.95; bilingual aligned world TV<=.05. All goal strata >=.95 optimal choices, mean regret<=.01 and maximum regret<=.05. Grounded effect-sensitive goal accuracy must improve over masked and text-only by>=.1, with both effect directions present. All scientific failures produce complete reports.",
+    "retention": "Compare all six historical language banks against accepted native SET v2 forecasts on identical acquired worlds. Zero exact-world regressions, mean truth NLL<=.05 per bank/law/seed, and exact equality of candidate four-action MAP with archived two-order MAP. Never renormalize away new SET mass. Report every NLL/truth-probability/vector-drift delta and SET probability mass; no exact language tensor/probability equality is required after language training.",
+    "opened_regression": "Both opened v1 and v2 banks must pass all unchanged candidate probability/competence/goal/control gates, using current v3 parser/text-only controls. Compare canonical candidate predictions with archived v1 grounded forecasts or newly collected frozen-v2 reference forecasts, respectively. Require zero formerly correct identifiable-world regressions and zero formerly correct globally taught-action regressions on each bank/law/seed. Report all ambiguous actual-world and masked repairs/regressions descriptively. V2 references belong to v3; they do not recover the original lost v2 run.",
+    "provenance": "Publish interruption record; publish v3 source/data/runtime freeze; fit all 15 models once; publish actual checkpoints/curves; execute and publish ten law/seed shards once each; seal and publish complete raw inventory; run pre-score saved-record audit; score once; run full saved-record audit; publish complete result. A dirty checkout, wrong runtime, orphan/duplicate shard, failed shard, missing inventory, mutation or evidence inconsistency blocks progression. No partial shard retry or post-challenge adjustment. Bind all original source/data/history and actual v2 weights. 160 trace files, one lexical receipt, ten shard attempts, ten completion receipts, common attempt and sealed manifest give 183 raw files and 1099200 current saved rows.",
+    "limits": "Bounded development only: supplied two-mode world, stable identity markers, action alternatives, token/layout features, controlled three-token forms and finite supplied goals. Frozen legacy support and per-identity growth are explicit. No shared-parameter continual learning, zero-shot lexical semantics, general polysemy, unrestricted language, natural-language goal parsing or architecture-superiority claim. Same-team challenge custody; no independent custody or matched consumed-compute comparison. General calibration and inclusive 2000-line target remain open. Production runtime, semantic authority, ABIs and accepted G1/G2 gains remain unchanged."
+  },
+  "decision_order": [
+    "STOP_INCOMPLETE_EXECUTION for malformed evidence, provenance/mutation/runtime failures or incomplete execution",
+    "REVISE_EFFECT_ROLE_GROUNDING if any valid completed-fit competence, goal or retention criterion fails",
+    "DEVELOPMENT_G3_COMPLETE / PROCEED_TO_G4 only if every prospective criterion and identity control passes"
+  ],
+  "scientific_admission": false,
+  "parent_result_publication": "1e15e1e6d82c7417ede2a6398de84510078502ab",
+  "total_saved_forecasts": 1099200,
+  "opened_v1_saved_forecasts": 276480,
+  "opened_v2_saved_forecasts": 276480,
+  "reference_v2_saved_forecasts": 138240,
+  "reference_v2": {
+    "implementation_publication": "26d8d54ab0748e70d8981acc14e6351a5a279ab1",
+    "checkpoint_publication": "30880caf676c10773857221d9d5bc2437651fb6f",
+    "source_status": "STOP_INCOMPLETE_EVIDENCE",
+    "bank": "opened_effect_role_v2",
+    "views": [
+      "canonical",
+      "masked"
+    ],
+    "model_updates": 0,
+    "scope": "New-study forecasts of frozen published v2 weights under the v3 runtime; not recovered original v2 evidence or a completed v2 decision."
+  },
+  "protected_parameters": {
+    "grounded": 88,
+    "parser": 88,
+    "world": 562
+  },
+  "learned_parameters": {
+    "grounded": 4,
+    "parser": 4,
+    "text_only": 1048
+  }
+}

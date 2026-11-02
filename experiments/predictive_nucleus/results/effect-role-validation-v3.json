@@ -1,0 +1,66 @@
+{
+  "evidence": {
+    "v3-focused-tests.log.xz": {
+      "bytes": 108,
+      "sha256": "950caf367767ff559b00e0bb15f69bc927130054e19e197c70f337b6f623481e"
+    },
+    "v3-full-tests.log.xz": {
+      "bytes": 27912,
+      "sha256": "9fa37f36640f168f16cf108d069d896627434f854c8a892a7da8f9dcd43e578d"
+    },
+    "v3-lock-check.json.xz": {
+      "bytes": 212,
+      "sha256": "8bf3c86492a265725063b4bcb8f25cc1d22743eaae175afe7721d7cdb204c40c"
+    },
+    "v3-preflight.json.xz": {
+      "bytes": 1800,
+      "sha256": "4833f0f04cc57645134fd4780b865461544f3f5e0604b0c7729a46b78dc0f83a"
+    }
+  },
+  "focused_suite": {
+    "passed": true,
+    "seconds": 18.899,
+    "tests": 44
+  },
+  "full_suite": {
+    "failures": 0,
+    "passed": true,
+    "seconds": 145.772,
+    "skips": 0,
+    "tests": 1152
+  },
+  "independent_custody": false,
+  "original_preflight_passed": true,
+  "phase": "before_research_execution",
+  "preflight_initial_invocation": {
+    "passed": false,
+    "reason": "PYTHONHASHSEED=0 required at process startup",
+    "resolution": "Reran the prescribed preflight with PYTHONHASHSEED=0 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1; research runtime freeze remained unchanged",
+    "stage": "software preflight only; no research execution"
+  },
+  "protocol_and_freeze": {
+    "bound_files": 37,
+    "locks": 37,
+    "locks_pass": true,
+    "v3_freeze": "5380210e7957c8b170c8e8ee39d8b4be130e32eb81dad52e9cff7d9f392b5922",
+    "v3_historical": 392,
+    "v3_sources": 108
+  },
+  "research_collections": 0,
+  "research_fits": 0,
+  "research_scores": 0,
+  "review_correction": {
+    "applied_before_source_freeze": true,
+    "fix": "Reject existing shard attempt/completion/failure receipts and any trace for the target law/seed before model execution",
+    "issue": "Orphaned shard traces could reach predictions before exclusive file-write failure",
+    "synthetic_regression_tests_passed": true
+  },
+  "scientific_admission": false,
+  "source_size": {
+    "inclusive_2000_line_goal_met": false,
+    "python_files": 294,
+    "python_lines": 52901,
+    "test_python_lines": 22522
+  },
+  "version": "effect-role-validation-v3"
+}
