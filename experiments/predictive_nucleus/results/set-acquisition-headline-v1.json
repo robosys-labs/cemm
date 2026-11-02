@@ -1,0 +1,219 @@
+{
+  "version": "set-acquisition-headline-v1",
+  "recorded_on": "2026-11-02",
+  "execution_status": "SCORING_ABORTED",
+  "execution_complete": false,
+  "runner_decision": null,
+  "review_disposition": "REVISE_NATIVE_SET_ACQUISITION",
+  "review_disposition_source": "Post-stop review of the frozen retention-failure clause; not a runner-emitted result.",
+  "scientific_admission": false,
+  "g3_complete": false,
+  "publications": {
+    "source_protocol_data": "23acab3e0f269906e0803e41673a3b3132e95d22",
+    "actual_weights": "ad6e6936ceb3170660e50687fa1e1456e4717025",
+    "raw_forecasts": "47e2cd4218358bee1e5fdd993920ce38955fc05f",
+    "remote_trees_match_local_trees": true
+  },
+  "fits": 10,
+  "completed_updates": 2560,
+  "world_parameters_each": 562,
+  "permitted_scalars_each": 68,
+  "immutable_scalars_each": 494,
+  "language_parameters": 88,
+  "forecasts": {
+    "native": 57600,
+    "language_retention": 131520,
+    "total": 189120
+  },
+  "failed_requirement": "Exact equality of unchanged language-order log probabilities against archived coordinates.",
+  "formal_complete_native_evaluation_available": false,
+  "post_stop_diagnostic_only": {
+    "native_set": {
+      "acquired_vs_no_change": {
+        "nll_better": 7360,
+        "nll_equal": 0,
+        "nll_worse": 4160,
+        "regressions": 0,
+        "repairs": 7360
+      },
+      "acquired_vs_parent": {
+        "nll_better": 11520,
+        "nll_equal": 0,
+        "nll_worse": 0,
+        "regressions": 0,
+        "repairs": 5440
+      },
+      "arms": {
+        "acquired": {
+          "correct": 11520,
+          "finite_nll_count": 11520,
+          "max_nll": 0.00837014628247651,
+          "mean_nll": 0.004143412832292106,
+          "min_nll": 0.0019254360878969905,
+          "planned": 11520
+        },
+        "no_change": {
+          "correct": 4160,
+          "finite_nll_count": 4160,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": -0.0,
+          "planned": 11520
+        },
+        "parent": {
+          "correct": 6080,
+          "finite_nll_count": 11520,
+          "max_nll": 1.5682035282981268,
+          "mean_nll": 0.8230100635359002,
+          "min_nll": 0.4231031410939789,
+          "planned": 11520
+        }
+      },
+      "changed": {
+        "acquired": {
+          "correct": 7360,
+          "finite_nll_count": 7360,
+          "max_nll": 0.008285232714489615,
+          "mean_nll": 0.004115041298758804,
+          "min_nll": 0.0019254360878969905,
+          "planned": 7360
+        },
+        "no_change": {
+          "correct": 0,
+          "finite_nll_count": 0,
+          "max_nll": "positive_infinity",
+          "mean_nll": "positive_infinity",
+          "min_nll": "positive_infinity",
+          "planned": 7360
+        },
+        "parent": {
+          "correct": 4416,
+          "finite_nll_count": 7360,
+          "max_nll": 1.5682035282981268,
+          "mean_nll": 0.8046444809956145,
+          "min_nll": 0.4231031410939789,
+          "planned": 7360
+        }
+      },
+      "changed_sets": 7360,
+      "planned": 11520,
+      "unchanged": {
+        "acquired": {
+          "correct": 4160,
+          "finite_nll_count": 4160,
+          "max_nll": 0.00837014628247651,
+          "mean_nll": 0.004193608622389484,
+          "min_nll": 0.0019280921123986988,
+          "planned": 4160
+        },
+        "no_change": {
+          "correct": 4160,
+          "finite_nll_count": 4160,
+          "max_nll": -0.0,
+          "mean_nll": 0.0,
+          "min_nll": -0.0,
+          "planned": 4160
+        },
+        "parent": {
+          "correct": 1664,
+          "finite_nll_count": 4160,
+          "max_nll": 1.5024598452620497,
+          "mean_nll": 0.8555030172610208,
+          "min_nll": 0.42962516510708776,
+          "planned": 4160
+        }
+      },
+      "unchanged_sets": 4160
+    },
+    "language": {
+      "archived_correct": 131520,
+      "current_correct": 131520,
+      "exact_regressions": 0,
+      "exact_repairs": 0,
+      "nll_better": 17406,
+      "nll_equal": 97376,
+      "nll_worse": 16738,
+      "order_components_unequal": 86288,
+      "order_vectors_unequal": 84208,
+      "planned": 131520,
+      "world_vectors_unequal": 127495
+    },
+    "maximum_language_absolute_differences": {
+      "order_logp": 1.0658141036401503e-14,
+      "world_logp": 1.4210854715202004e-14,
+      "world_probability": 3.3306690738754696e-16
+    },
+    "individual_retention_records": 128976,
+    "all_ten_law_seed_set_correct": true,
+    "all_sixty_retention_cells_contain_order_differences": true,
+    "accepted_language_checkpoint_bytes_unchanged": true,
+    "numerical_root_cause_established": false,
+    "models_or_original_scorer_executed": false,
+    "oracle_or_evaluator_files_opened": false
+  },
+  "source_review": {
+    "first_bank_same_grouping_and_grounded_forecast_path": true,
+    "first_bank_source_hashes_checked": 9,
+    "language_order_head_uses_world_parameters": false,
+    "archived_python": "3.13.5",
+    "current_python": "3.13.16",
+    "python_difference_is_proven_cause": false
+  },
+  "code_size": {
+    "study_source": 911,
+    "audit_source": 331,
+    "tests": 464,
+    "added_total": 1706,
+    "retained_research_python": 43556,
+    "retained_test_lines": 18574,
+    "inclusive_size_goal_met": false,
+    "learned_parameter_delta": 0,
+    "new_tests": 25,
+    "scope": "Physical Python lines including blank lines. Frozen study plus tests adds 1375 lines; post-stop reproducible arithmetic auditors add 331. All historical research remains retained."
+  },
+  "verification": {
+    "scope": "Published source software validation and saved-record integrity; scoring aborted on exact retention.",
+    "isolated_suite_tests": 979,
+    "new_tests": 25,
+    "protocol_manifest_locks": 33,
+    "initial_local_suite": {
+      "tests": 979,
+      "passed": 978,
+      "errors": 1,
+      "reason": "Shallow Git history blocked the existing frozen preflight. Exact failed test passed after full history fetch, with no implementation change."
+    },
+    "published_source_commit": "23acab3e0f269906e0803e41673a3b3132e95d22",
+    "published_tree": "800b178c34c59170b7643655b7466b5a423fadac",
+    "published_tree_matches_tested_tree": true,
+    "invariant_ci_run": 41416804302,
+    "invariant_ci_conclusion": "success",
+    "invariant_ci_tests": 979,
+    "invariant_ci_seconds": 103.194,
+    "source_ci_run": 41416804346,
+    "source_ci_conclusion": "success",
+    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/77/checks",
+    "final_result_head_checks_scope": "Live PR check link; recorded success above is for the source commit.",
+    "pre_score_audits": "results/set-acquisition-pre-score-audits-v1.json",
+    "fit_integrity_checks": 178,
+    "raw_integrity_checks": 1792861,
+    "integrity_discrepancies": 0,
+    "independent_scientific_custody": false,
+    "scientific_runs_retried": false,
+    "new_fits": 10,
+    "completed_training_updates": 2560,
+    "source_bindings": 37,
+    "historical_bindings": 84,
+    "result_traces": 90,
+    "post_stop_diagnostics_use_models_or_original_scorer": false,
+    "post_stop_arithmetic_reproduced": true,
+    "scientific_acceptance_completed": false
+  },
+  "next_action": "Resolve numerical language retention and complete failure reporting in a new prospective native-set study. Preserve the stopped v1 attempt; freeze the comparison rule, runtime, fresh challenge lineage and full gates before any new fit or collection. Keep the 562-parameter world and 68-scalar update mask unless new evidence justifies a change.",
+  "limits": [
+    "All four atomic set tuples were covered in training; novelty is in identities and compositions.",
+    "Actual observed-prefix feedback, dependent views and same-team public challenge custody.",
+    "No full contact/ambiguity/trajectory acceptance metrics were retained before the score failure.",
+    "Post-stop observed endpoint diagnostics are not a completed acceptance decision.",
+    "Action family, requested value, identity addressing, filtering and persistent modes remain supplied."
+  ]
+}

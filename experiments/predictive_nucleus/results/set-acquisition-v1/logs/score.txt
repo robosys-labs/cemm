@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/scratch/6eed44faba29/cemm/experiments/predictive_nucleus/set_acquisition_run.py", line 364, in <module>
+    if __name__ == '__main__': main()
+                               ~~~~^^
+  File "/workspace/scratch/6eed44faba29/cemm/experiments/predictive_nucleus/set_acquisition_run.py", line 356, in main
+    else: score(args.data, args.fitted, args.traces, args.output)
+          ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/6eed44faba29/cemm/experiments/predictive_nucleus/set_acquisition_run.py", line 328, in score
+    retained[bank] = retention(observed, read('acquired', bank, observed), old['points'],
+                     ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                               config['analysis']['max_retention_logp_change'])
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/6eed44faba29/cemm/experiments/predictive_nucleus/set_acquisition_run.py", line 278, in retention
+    c.require(point['order_logp'] == old['order_logp'], 'frozen language output changed')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/6eed44faba29/cemm/experiments/predictive_nucleus/acceptance_contract.py", line 18, in require
+    if not condition: raise ValueError(message)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: frozen language output changed

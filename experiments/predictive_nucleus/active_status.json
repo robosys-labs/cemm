@@ -363,62 +363,66 @@
   "pending_engineering_in_order": [
     {
       "stage": "G3",
-      "work": "Compare a learned lexical-content factor plus learned layout/mention-binding factor and small learned interaction against the GRU architecture, each with at most 474 actual parameters, through the same prospectively frozen observed curriculum, initialization policy and training history. Use only observed-outcome likelihood, a fresh word-by-layout holdout and existing acquired worlds/collector; preserve successful checkpoints and opened failure cases as references."
+      "work": "Resolve numerical language retention and complete failure reporting in a new prospective native-set study. Preserve the stopped v1 attempt; freeze the comparison rule, runtime, fresh challenge lineage and full gates before any new fit or collection. Keep the 562-parameter world and 68-scalar update mask unless new evidence justifies a change."
     },
     {
-      "stage": "G4–G5",
+      "stage": "G4\u2013G5",
       "work": "Implement learned communication, durable acquisition, correction, restart and retention in dependency order."
     },
     {
-      "stage": "G6–G8",
+      "stage": "G6\u2013G8",
       "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
     }
   ],
   "external_issue_55": "Independent challenge custody/review remains required for scientific admission. Retained KEEP decisions establish bounded capabilities under supplied structure; continuation-v1 STOP and alias-v1 REVISE remain unchanged. Historical models and scientific collections were not rerun. Lexical-v1 explicitly uses the opened bilingual bank for updated-encoder retention against archived forecasts, not fresh generalization.",
   "line_counts": {
-    "study_source": 697,
-    "audit_source": 237,
-    "tests": 547,
-    "retained_research_python": 36513,
-    "added_total": 1481,
-    "retained_test_lines": 16084,
+    "study_source": 911,
+    "audit_source": 331,
+    "tests": 464,
+    "added_total": 1706,
+    "retained_research_python": 43556,
+    "retained_test_lines": 18574,
     "inclusive_size_goal_met": false,
     "learned_parameter_delta": 0,
-    "new_tests": 21,
-    "scope": "Lexical-v1 physical Python lines: 697 study, 237 saved-artifact auditor, 547 tests. Retained total includes all historical research Python and tests; the inclusive 2000-line objective remains unmet."
+    "new_tests": 25,
+    "scope": "Physical Python lines including blank lines. Frozen study plus tests adds 1375 lines; post-stop reproducible arithmetic auditors add 331. All historical research remains retained."
   },
   "verification": {
-    "scope": "Lexical source/data/protocol freeze and one fit/collection cycle; separate stdlib saved-artifact arithmetic, not independent scientific custody.",
-    "isolated_suite_tests": 817,
-    "new_tests": 21,
-    "protocol_manifest_locks": 28,
+    "scope": "Published source software validation and saved-record integrity; scoring aborted on exact retention.",
+    "isolated_suite_tests": 979,
+    "new_tests": 25,
+    "protocol_manifest_locks": 33,
     "initial_local_suite": {
-      "tests": 817,
-      "passed": 816,
+      "tests": 979,
+      "passed": 978,
       "errors": 1,
-      "seconds": 68.621,
-      "reason": "Existing preflight requires a clean committed checkout; documentation was uncommitted. Exact preflight test passed after commit in 2.833 seconds; no implementation change."
+      "reason": "Shallow Git history blocked the existing frozen preflight. Exact failed test passed after full history fetch, with no implementation change."
     },
-    "published_source_commit": "7645485bd75c80051a480d6b24aa459a1c8c0d48",
-    "published_tree": "01847b2240001069287273eb582b5b17a9360ab4",
+    "published_source_commit": "23acab3e0f269906e0803e41673a3b3132e95d22",
+    "published_tree": "800b178c34c59170b7643655b7466b5a423fadac",
     "published_tree_matches_tested_tree": true,
-    "invariant_ci_run": 41214328710,
+    "invariant_ci_run": 41416804302,
     "invariant_ci_conclusion": "success",
-    "source_ci_run": 41214328655,
+    "invariant_ci_tests": 979,
+    "invariant_ci_seconds": 103.194,
+    "source_ci_run": 41416804346,
     "source_ci_conclusion": "success",
-    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/69/checks",
-    "internal_artifact_arithmetic": "results/lexical-validation-v1.json",
-    "internal_artifact_checks": 2787821,
-    "internal_artifact_defects": 0,
+    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/77/checks",
+    "final_result_head_checks_scope": "Live PR check link; recorded success above is for the source commit.",
+    "pre_score_audits": "results/set-acquisition-pre-score-audits-v1.json",
+    "fit_integrity_checks": 178,
+    "raw_integrity_checks": 1792861,
+    "integrity_discrepancies": 0,
     "independent_scientific_custody": false,
     "scientific_runs_retried": false,
-    "new_fits": 5,
-    "completed_training_updates": 1280,
-    "source_bindings": 62,
-    "prepared_artifacts": 6,
-    "historical_bindings": 23,
-    "result_traces": 60,
-    "tensor_fingerprints": 20
+    "new_fits": 10,
+    "completed_training_updates": 2560,
+    "source_bindings": 37,
+    "historical_bindings": 84,
+    "result_traces": 90,
+    "post_stop_diagnostics_use_models_or_original_scorer": false,
+    "post_stop_arithmetic_reproduced": true,
+    "scientific_acceptance_completed": false
   },
   "limits": [
     "Continuation v1 completed its frozen fits and artifact collection but formally STOPPED: empirical zero-support feedback contradictions terminated episodes and left required forecasts unproduced. G1 remains NOT_ADMITTED; failures and all planned denominators are retained.",
@@ -433,7 +437,7 @@
     "If final fingerprinting also fails after a training interruption, current-state hashes are explicitly unavailable; the original failure is preserved.",
     "The active command remains repository-backed; frozen standalone v1 exports and scientific evidence are unchanged.",
     "Evidence remains conditional, uncalibrated and advisory; observed context counts are not posterior support or learned reliability.",
-    "Historical active-file subtotals excluded frozen dependencies. Current total retained research Python is 36,513 lines including tests and audit source; the inclusive 2000-line goal remains unmet.",
+    "Historical active-file subtotals excluded frozen dependencies. Current total retained research Python is 43,556 lines including tests and audit source; the inclusive 2000-line goal remains unmet.",
     "The collector freezes forecasts in memory before feedback and writes its trace after collection; it does not provide crash-durable per-forecast journaling or an OS isolation boundary.",
     "Source/input/checkpoint hashes and declared split tokens enforce identities and consistency, not independent authorship, authenticated physical events or undisclosed lineage completeness.",
     "Oracle support must be complete under the declared information law. The evaluator checks consistency only and neither assumes uniform support probabilities nor derives Bayes floors.",
@@ -460,7 +464,11 @@
     "Multisource-law-v1 learns NAND/NOR separately and tests full-feedback closed-loop one-step composition. It does not establish one unified law checkpoint, zero-shot new-law transfer, hidden-intermediate propagation, open-loop rollout or simultaneous timing.",
     "Hidden-cycle-v1 preserves all identifiable MAP forecasts but missing feedback slightly increases final probability loss: 2,512 NLL increases and 48 decreases. Its 83.333333% pooled MAP accuracy equals the bank expected oracle rate; all MAP errors are ambiguous first forecasts. Explicit timing was subsequently completed in timing-v1 under a supplied binary scheduler; it is not inferred from masking feedback.",
     "Lexical-v1 retains all 41,600 primary worlds and 20,800 opened-bank worlds, but NLL worsens on all old-bank predictions and all fresh predictions relative to gold-action native references; exact retention is not zero probability degradation.",
-    "Lexical-v1 held-out word-by-layout combinations achieve only 2,016/5,760 correct worlds and 576/2,880 both-correct pairs. Every wrong world chooses the wrong operand order. G3 structural reuse and general language comprehension remain unestablished; a matched small neural binding comparison is selected, not implemented or frozen."
+    "Historical lexical-v1 word-by-layout failure remains retained (2016/5760 worlds, 576/2880 pairs). PR76 later establishes the bounded coordinate/layout comparison. General language comprehension and full G3 remain open.",
+    "Native set v1 scoring aborted on exact language-order equality despite unchanged language weights. The review disposition is REVISE; the runner emitted no completed decision.",
+    "Post-stop SET endpoint and language-world arithmetic is limited diagnostic evidence, not full contact/ambiguity/trajectory acceptance or independent custody.",
+    "The recorded Python runtime differs from the archive, but the precise numerical execution cause is unresolved. No criterion was changed and no research stage retried.",
+    "Native acquisition must receive a complete accepted result before effect-and-role language training; the later 88-parameter language budget remains prospective."
   ],
   "local_verified_code_commit": "16a2326491b1add7e3057304d88e430724964584",
   "diagnostics_pr": 57,
@@ -490,8 +498,10 @@
     "hidden_intermediate_new_law_propagation": "COMPLETED_KEEP_HIDDEN_CYCLE_WITH_TEN_FROZEN_CHECKPOINTS; ONE_HIDDEN_INTERMEDIATE_AND_ONE_LATER_STEP",
     "bilingual_grounding": "COMPLETE_KEEP_BILINGUAL_GROUNDING; SUPPLIED_CONTACT_INTERFACE_AND_IDENTITY_GROUNDING",
     "fixed_order_lexical_grounding": "COMPLETE_KEEP_LEXICAL_GROUNDING; 41600_OF_41600_FRESH_WORLDS; ZERO_NEW_PARAMETERS",
-    "word_layout_structural_transfer": "NOT_ESTABLISHED; 2016_OF_5760_HELD_OUT_WORLDS; ALL_40_HELD_OUT_CHECKS_FAIL",
-    "exact_retention_probability_limit": "20800_OF_20800_OLD_WORLDS_RETAINED; ALL_20800_NLLS_WORSE"
+    "word_layout_structural_transfer": "BOUNDED_COORDINATE_TRANSFER_ESTABLISHED: 17280/17280 fresh and 11520/11520 training-withheld-cell worlds; full G3 open. Historical lexical failure unchanged.",
+    "exact_retention_probability_limit": "Native set v1 saved-record diagnostic: 131520/131520 exact worlds retained, zero exact regressions; 84208 order vectors differ by up to 1.0658141036401503e-14, violating frozen exact equality. No complete acceptance result.",
+    "native_set_acquisition": "REVISION_REQUIRED: fits and collection complete; scorer aborted on numerical language-order equality. SET-only diagnostic is not acceptance.",
+    "effect_and_role_language_grounding": "DEFERRED_UNTIL_NATIVE_ACQUISITION_PASS; no new language model trained."
   },
   "learning_version": "active-learning-v1",
   "checkpoint_format": "cemm-active-checkpoint-v1",
@@ -580,36 +590,35 @@
     "automatic_scientific_admission": false,
     "prospective_data_conditional_oracle_and_law_audit": true,
     "law_audit_is_learned_model_score": false,
-    "complete_scientific_study_runner_scope": "Current multisource-law driver composes existing native fitting/checkpoint/collection/scoring APIs; earlier mixed/correlation and historical continuation records remain retained.",
+    "complete_scientific_study_runner_scope": "Native set v1 fit/collection completed; exact-order retention assertion aborted scoring before any report/decision. No full current acceptance result.",
     "participant_complete_scientific_run": true,
     "continuation_fixed_query_summary": true,
-    "participant_complete_scientific_run_scope": "Current multisource-law-v1 completed 30,720 forecasts with KEEP_MULTISOURCE_LAWS; historical continuation-v1 remains STOP_INCOMPLETE_RUN. Full-feedback one-step composition only."
+    "participant_complete_scientific_run_scope": "All 57600 native plus 131520 language forecasts exist; this records collection completeness only. Scoring and acquisition acceptance are incomplete."
   },
   "comparison_scope": {
-    "record_role": "CURRENT_MULTISOURCE_LAW_V1_COMPARISON",
-    "study": "multisource-law-v1",
-    "formal_decision": "KEEP_MULTISOURCE_LAWS",
+    "record_role": "CURRENT_NATIVE_SET_ACQUISITION_V1",
+    "study": "set-acquisition-v1",
+    "execution_status": "SCORING_ABORTED",
+    "runner_decision": null,
+    "review_disposition": "REVISE_NATIVE_SET_ACQUISITION",
     "laws": [
       "nand",
       "nor"
     ],
     "arms": [
-      "crossed",
-      "matched"
+      "parent",
+      "acquired",
+      "no_change"
     ],
-    "parameters_each": 562,
-    "identical_architecture": true,
-    "paired_initial_tensors": true,
-    "equal_prescribed_exposure": true,
+    "parameters_each_neural": 562,
+    "permitted_trainable_scalars": 68,
+    "immutable_scalars": 494,
+    "new_training_updates": 2560,
+    "no_change_computed_once_per_law_and_reused": true,
     "actual_consumed_compute_equality_claimed": false,
-    "new_training_updates": 1280,
-    "matched_laws_pass_all_criteria": true,
-    "shared_initial_checkpoints_scored": false,
-    "same_history_contrast_pairs": 320,
-    "same_history_contrast_pairs_passed": 320,
     "architecture_superiority_claimed": false,
-    "historical_baseline_comparison": "historical_continuation_comparison_scope",
-    "independent_scientific_admission": false
+    "independent_scientific_admission": false,
+    "historical_baseline_comparison": "historical_multisource_comparison_scope"
   },
   "verification_history": [
     {
@@ -885,6 +894,105 @@
         "new_study_source_net": 848,
         "retained_test_lines": 14882
       }
+    },
+    {
+      "version": "lexical-v1-stale-handoff-preserved",
+      "reason": "Machine-readable current fields remained at PR69 through accepted PR76; preserved before reconciliation.",
+      "current_pr": 69,
+      "current_study_decision": "KEEP_LEXICAL_GROUNDING",
+      "g3_development_readiness": "LEXICAL_GROUNDING_COMPLETE_STRUCTURAL_TRANSFER_OPEN",
+      "structural_transfer_decision": "STRUCTURAL_TRANSFER_NOT_ESTABLISHED",
+      "selected_next_task": {
+        "status": "SELECTED_NOT_IMPLEMENTED_OR_FROZEN",
+        "stage": "G3",
+        "work": "Compare a learned lexical-content factor plus learned layout/mention-binding factor and small learned interaction against the GRU architecture, each with at most 474 actual parameters, through the same prospectively frozen observed curriculum, initialization policy and training history. Use only observed-outcome likelihood, a fresh word-by-layout holdout and existing acquired worlds/collector; preserve successful checkpoints and opened failure cases as references.",
+        "details": "LEXICAL_DECISION_V1.md#roadmap-decision",
+        "world_training_permitted": false,
+        "language_parameter_ceiling_each": 474,
+        "new_generic_runner_planned": false,
+        "supervision": "Observed complete-world outcomes only for linguistic events; no gold linguistic participant-order, action-kind, language ID, parser labels, teacher logits, literal-word dispatch or handwritten inverse rule.",
+        "comparison_fairness": "Both architectures traverse the same declared observed training history from a declared initialization policy. A fresh architecture versus only a warm-start GRU is not a fair architecture comparison. Report actual parameters and consumed compute.",
+        "freshness": "Fresh prospectively frozen word-by-layout holdout; lexical-v1 failures remain opened diagnostic/regression cases, not new generalization evidence.",
+        "hypothesis_limit": "Learned factorization may still fit exceptions; current results do not prove a GRU capacity limit or distinguish all effects of evidence allocation and optimization.",
+        "language_encoder_training_prerequisite": "Publish new source/data/protocol and matched observed curriculum before any new fits; publish all prescribed checkpoints before collection.",
+        "preserve_checkpoints": "All historical native/language checkpoint files and source pins remain byte-identical.",
+        "completed_previous_task": "lexical-v1 KEEP_LEXICAL_GROUNDING; STRUCTURAL_TRANSFER_NOT_ESTABLISHED",
+        "historical_decisions_unchanged": true,
+        "scientific_admission_unchanged": true,
+        "new_open_loop_gate_added": false,
+        "new_physics_or_workspace_added": false
+      },
+      "verification": {
+        "scope": "Lexical source/data/protocol freeze and one fit/collection cycle; separate stdlib saved-artifact arithmetic, not independent scientific custody.",
+        "isolated_suite_tests": 817,
+        "new_tests": 21,
+        "protocol_manifest_locks": 28,
+        "initial_local_suite": {
+          "tests": 817,
+          "passed": 816,
+          "errors": 1,
+          "seconds": 68.621,
+          "reason": "Existing preflight requires a clean committed checkout; documentation was uncommitted. Exact preflight test passed after commit in 2.833 seconds; no implementation change."
+        },
+        "published_source_commit": "7645485bd75c80051a480d6b24aa459a1c8c0d48",
+        "published_tree": "01847b2240001069287273eb582b5b17a9360ab4",
+        "published_tree_matches_tested_tree": true,
+        "invariant_ci_run": 41214328710,
+        "invariant_ci_conclusion": "success",
+        "source_ci_run": 41214328655,
+        "source_ci_conclusion": "success",
+        "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/69/checks",
+        "internal_artifact_arithmetic": "results/lexical-validation-v1.json",
+        "internal_artifact_checks": 2787821,
+        "internal_artifact_defects": 0,
+        "independent_scientific_custody": false,
+        "scientific_runs_retried": false,
+        "new_fits": 5,
+        "completed_training_updates": 1280,
+        "source_bindings": 62,
+        "prepared_artifacts": 6,
+        "historical_bindings": 23,
+        "result_traces": 60,
+        "tensor_fingerprints": 20
+      },
+      "line_counts": {
+        "study_source": 697,
+        "audit_source": 237,
+        "tests": 547,
+        "retained_research_python": 36513,
+        "added_total": 1481,
+        "retained_test_lines": 16084,
+        "inclusive_size_goal_met": false,
+        "learned_parameter_delta": 0,
+        "new_tests": 21,
+        "scope": "Lexical-v1 physical Python lines: 697 study, 237 saved-artifact auditor, 547 tests. Retained total includes all historical research Python and tests; the inclusive 2000-line objective remains unmet."
+      },
+      "comparison_scope": {
+        "record_role": "CURRENT_MULTISOURCE_LAW_V1_COMPARISON",
+        "study": "multisource-law-v1",
+        "formal_decision": "KEEP_MULTISOURCE_LAWS",
+        "laws": [
+          "nand",
+          "nor"
+        ],
+        "arms": [
+          "crossed",
+          "matched"
+        ],
+        "parameters_each": 562,
+        "identical_architecture": true,
+        "paired_initial_tensors": true,
+        "equal_prescribed_exposure": true,
+        "actual_consumed_compute_equality_claimed": false,
+        "new_training_updates": 1280,
+        "matched_laws_pass_all_criteria": true,
+        "shared_initial_checkpoints_scored": false,
+        "same_history_contrast_pairs": 320,
+        "same_history_contrast_pairs_passed": 320,
+        "architecture_superiority_claimed": false,
+        "historical_baseline_comparison": "historical_continuation_comparison_scope",
+        "independent_scientific_admission": false
+      }
     }
   ],
   "acceptance_version": "active-acceptance-v1",
@@ -1108,14 +1216,16 @@
   },
   "progress_control": {
     "last_learned_results": [
+      "SET_ACQUISITION_DECISION_V1.md",
+      "COORDINATE_DECISION_V1.md",
       "LEXICAL_DECISION_V1.md",
       "BILINGUAL_DECISION_V1.md",
       "MULTISOURCE_LAW_DECISION_V1.md",
       "ALIAS_EVIDENCE_DECISION_V2.md"
     ],
     "invariant_count_is_scientific_gate_progress": false,
-    "next_deliverable": "Compare a learned lexical-content factor plus learned layout/mention-binding factor and small learned interaction against the GRU architecture, each with at most 474 actual parameters, through the same prospectively frozen observed curriculum, initialization policy and training history. Use only observed-outcome likelihood, a fresh word-by-layout holdout and existing acquired worlds/collector; preserve successful checkpoints and opened failure cases as references.",
-    "another_preparation_only_tranche_requires": "A concrete execution blocker. Lexical-v1 is complete with a structural failure; next work should change and test the small neural binding hypothesis using existing infrastructure, not repeat closed collections or add a generic harness.",
+    "next_deliverable": "Resolve numerical language retention and complete failure reporting in a new prospective native-set study. Preserve the stopped v1 attempt; freeze the comparison rule, runtime, fresh challenge lineage and full gates before any new fit or collection. Keep the 562-parameter world and 68-scalar update mask unless new evidence justifies a change.",
+    "another_preparation_only_tranche_requires": "Concrete blocker is demonstrated: exact archived language-order equality fails at floating-point scale and aborts all score reporting. Resolve only numerical-retention/reporting behavior before a new frozen attempt.",
     "further_refactor_scope": "Only a demonstrated execution blocker or later release packaging milestone.",
     "historical_learned_results": [
       "ALIAS_EVIDENCE_DECISION_V1.md",
@@ -1123,8 +1233,8 @@
       "COMMON_OBJECTIVE_DECISION.md",
       "SENSOR_TRANSFER_DECISION.md"
     ],
-    "last_frozen_decision": "KEEP_LEXICAL_GROUNDING",
-    "execution_and_artifact_collection_complete": true,
+    "last_frozen_decision": "REVISE_NATIVE_SET_ACQUISITION",
+    "execution_and_artifact_collection_complete": false,
     "participant_complete_run": true,
     "latest_frozen_weight_results": [
       "TIMING_DECISION_V1.md",
@@ -1132,34 +1242,39 @@
       "JOINT_CORRELATION_DECISION_V1.md",
       "G1_G2_PROGRESS_REVIEW.md"
     ],
-    "next_bounded_representation_extension": "Learned lexical-content and layout/mention-binding factors with learned interaction, at most 474 parameters per language model.",
+    "next_bounded_representation_extension": "Effect-and-role language remains deferred until native acquisition acceptance; 88 parameters is a prospective target.",
     "new_generic_runner_planned": false,
-    "bounded_model_architecture_extension_selected": true,
-    "last_structural_transfer_decision": "STRUCTURAL_TRANSFER_NOT_ESTABLISHED"
+    "bounded_model_architecture_extension_selected": false,
+    "last_structural_transfer_decision": "KEEP_LAYOUT_COORDINATES_BOUNDED_SCOPE_FULL_G3_OPEN",
+    "last_frozen_decision_origin": "POST_STOP_REVIEW_NOT_RUNNER",
+    "fitting_and_collection_complete": true,
+    "scoring_complete": false
   },
   "selected_next_task": {
-    "status": "SELECTED_NOT_IMPLEMENTED_OR_FROZEN",
+    "status": "SELECTED_REVISION_NOT_IMPLEMENTED_OR_FROZEN",
     "stage": "G3",
-    "work": "Compare a learned lexical-content factor plus learned layout/mention-binding factor and small learned interaction against the GRU architecture, each with at most 474 actual parameters, through the same prospectively frozen observed curriculum, initialization policy and training history. Use only observed-outcome likelihood, a fresh word-by-layout holdout and existing acquired worlds/collector; preserve successful checkpoints and opened failure cases as references.",
-    "details": "LEXICAL_DECISION_V1.md#roadmap-decision",
-    "world_training_permitted": false,
-    "language_parameter_ceiling_each": 474,
+    "work": "Resolve numerical language retention and complete failure reporting in a new prospective native-set study. Preserve the stopped v1 attempt; freeze the comparison rule, runtime, fresh challenge lineage and full gates before any new fit or collection. Keep the 562-parameter world and 68-scalar update mask unless new evidence justifies a change.",
+    "details": "SET_ACQUISITION_DECISION_V1.md#selected-next-step",
+    "same_bank_retry_permitted": false,
+    "current_study_source_mutation_permitted": false,
+    "world_architecture_change_selected": false,
     "new_generic_runner_planned": false,
-    "supervision": "Observed complete-world outcomes only for linguistic events; no gold linguistic participant-order, action-kind, language ID, parser labels, teacher logits, literal-word dispatch or handwritten inverse rule.",
-    "comparison_fairness": "Both architectures traverse the same declared observed training history from a declared initialization policy. A fresh architecture versus only a warm-start GRU is not a fair architecture comparison. Report actual parameters and consumed compute.",
-    "freshness": "Fresh prospectively frozen word-by-layout holdout; lexical-v1 failures remain opened diagnostic/regression cases, not new generalization evidence.",
-    "hypothesis_limit": "Learned factorization may still fit exceptions; current results do not prove a GRU capacity limit or distinguish all effects of evidence allocation and optimization.",
-    "language_encoder_training_prerequisite": "Publish new source/data/protocol and matched observed curriculum before any new fits; publish all prescribed checkpoints before collection.",
-    "preserve_checkpoints": "All historical native/language checkpoint files and source pins remain byte-identical.",
-    "completed_previous_task": "lexical-v1 KEEP_LEXICAL_GROUNDING; STRUCTURAL_TRANSFER_NOT_ESTABLISHED",
+    "language_training_unlocked": false,
+    "later_language_target_parameters": 88,
+    "later_language_target_feasibility_established": false,
+    "later_language_task": "After native acquisition passes, freeze worlds and learn effect selection plus roles from outcomes without gold action-kind/order labels.",
+    "supervision": "Observed native before/action/after outcomes only; no gold future state or language semantics supplied to fitting.",
+    "freshness": "Freeze a new challenge lineage; opened v1 records remain diagnostics/regressions, never a retuned acceptance bank.",
+    "preserve_checkpoints": "All historical and v1 checkpoint bytes and frozen sources remain unchanged.",
+    "completed_previous_task": "Coordinate v1 KEEP; native set v1 fitting/collection complete but scoring aborted.",
     "historical_decisions_unchanged": true,
     "scientific_admission_unchanged": true,
     "new_open_loop_gate_added": false,
     "new_physics_or_workspace_added": false
   },
-  "current_pr": 69,
+  "current_pr": 77,
   "continuation_pr": 62,
-  "current_study_decision": "KEEP_LEXICAL_GROUNDING",
+  "current_study_decision": "REVISE_NATIVE_SET_ACQUISITION",
   "g1_development_readiness": "PROCEED_TO_G2",
   "current_development_stage": "G3",
   "mixed_composition_study": {
@@ -1946,7 +2061,7 @@
     "next_lexical_contrast_completed_by": "lexical-v1 KEEP_LEXICAL_GROUNDING; structural transfer remains open"
   },
   "bilingual_pr": 68,
-  "g3_development_readiness": "LEXICAL_GROUNDING_COMPLETE_STRUCTURAL_TRANSFER_OPEN",
+  "g3_development_readiness": "BOUNDED_LAYOUT_TRANSFER_ACCEPTED_NATIVE_SET_RETENTION_REVISION_REQUIRED",
   "lexical_study": {
     "version": "lexical-v1",
     "stage": "COMPLETE",
@@ -2134,5 +2249,130 @@
     "general_language_comprehension_claimed": false
   },
   "lexical_pr": 69,
-  "structural_transfer_decision": "STRUCTURAL_TRANSFER_NOT_ESTABLISHED"
+  "structural_transfer_decision": "KEEP_LAYOUT_COORDINATES_BOUNDED_SCOPE_FULL_G3_OPEN",
+  "historical_multisource_comparison_scope": {
+    "record_role": "CURRENT_MULTISOURCE_LAW_V1_COMPARISON",
+    "study": "multisource-law-v1",
+    "formal_decision": "KEEP_MULTISOURCE_LAWS",
+    "laws": [
+      "nand",
+      "nor"
+    ],
+    "arms": [
+      "crossed",
+      "matched"
+    ],
+    "parameters_each": 562,
+    "identical_architecture": true,
+    "paired_initial_tensors": true,
+    "equal_prescribed_exposure": true,
+    "actual_consumed_compute_equality_claimed": false,
+    "new_training_updates": 1280,
+    "matched_laws_pass_all_criteria": true,
+    "shared_initial_checkpoints_scored": false,
+    "same_history_contrast_pairs": 320,
+    "same_history_contrast_pairs_passed": 320,
+    "architecture_superiority_claimed": false,
+    "historical_baseline_comparison": "historical_continuation_comparison_scope",
+    "independent_scientific_admission": false
+  },
+  "current_study_decision_origin": "POST_STOP_REVIEW_NOT_RUNNER",
+  "current_study_execution_status": "SCORING_ABORTED",
+  "current_study_execution_complete": false,
+  "current_study_runner_decision": null,
+  "coordinate_study": {
+    "pr": 76,
+    "formal_decision": "KEEP_LAYOUT_COORDINATES",
+    "report": "COORDINATE_DECISION_V1.md",
+    "headline": "results/coordinate-headline-v1.json",
+    "validation": "results/coordinate-validation-v1.json",
+    "result_commit": "2ba2843b3a456957b9c4f0b789e42e90387354c8",
+    "encoder_parameters": 88,
+    "world_parameters": 562,
+    "fresh_correct": 17280,
+    "fresh_planned": 17280,
+    "training_withheld_cell_correct": 11520,
+    "training_withheld_cell_planned": 11520,
+    "historical_retention_correct": 114240,
+    "historical_retention_planned": 114240,
+    "exact_regressions": 0,
+    "all_five_seeds_both_laws_pass": true,
+    "full_g3_complete": false,
+    "scientific_admission": false,
+    "scope": "Bounded layout-fitting comparison; prior failed studies remain historical."
+  },
+  "coordinate_pr": 76,
+  "set_acquisition_study": {
+    "version": "set-acquisition-v1",
+    "pr": 77,
+    "protocol": "set_acquisition_protocol_v1.json",
+    "design": "SET_ACQUISITION_STUDY_V1.md",
+    "report": "SET_ACQUISITION_DECISION_V1.md",
+    "headline": "results/set-acquisition-headline-v1.json",
+    "execution": "results/set-acquisition-execution-v1.json",
+    "failure": "results/set-acquisition-v1/scored/failure.json",
+    "publications": {
+      "source_protocol_data": "23acab3e0f269906e0803e41673a3b3132e95d22",
+      "actual_weights": "ad6e6936ceb3170660e50687fa1e1456e4717025",
+      "raw_forecasts": "47e2cd4218358bee1e5fdd993920ce38955fc05f",
+      "remote_trees_match_local_trees": true
+    },
+    "execution_status": "SCORING_ABORTED",
+    "execution_complete": false,
+    "runner_decision": null,
+    "review_disposition": "REVISE_NATIVE_SET_ACQUISITION",
+    "review_disposition_source": "Post-stop review of the frozen retention-failure clause; not a runner-emitted result.",
+    "fits": {
+      "complete": true,
+      "checkpoints": 10,
+      "updates_each": 256,
+      "completed_updates": 2560,
+      "parameters_each": 562,
+      "permitted_scalars_each": 68,
+      "immutable_scalars_each": 494,
+      "permitted_changed_each": 68,
+      "forbidden_changed_each": 0,
+      "resources": {
+        "cpu_seconds": 30.468454203999997,
+        "peak_rss_kib": 343232,
+        "wall_seconds": 30.46970683100062
+      },
+      "initial_training_nll": {
+        "maximum": 0.9302858755489593,
+        "mean": 0.7927952254037338,
+        "minimum": 0.7270930379183208
+      },
+      "final_training_nll": {
+        "maximum": 0.0035085049320270393,
+        "mean": 0.002559422791593995,
+        "minimum": 0.002010591245330892
+      }
+    },
+    "collection": {
+      "complete": true,
+      "trace_files": 90,
+      "native_forecasts": 57600,
+      "language_forecasts": 131520,
+      "total_forecasts": 189120,
+      "resources": {
+        "cpu_seconds": 65.747421257,
+        "peak_rss_kib": 430456,
+        "wall_seconds": 65.7703413449999
+      }
+    },
+    "diagnostic_only_native_set_correct": 11520,
+    "diagnostic_only_native_set_planned": 11520,
+    "diagnostic_only_parent_repairs": 5440,
+    "diagnostic_only_parent_regressions": 0,
+    "diagnostic_only_language_worlds_correct": 131520,
+    "diagnostic_only_language_exact_regressions": 0,
+    "order_vectors_not_exactly_equal": 84208,
+    "maximum_order_logp_difference": 1.0658141036401503e-14,
+    "historical_checkpoints_changed": false,
+    "language_weights_changed": false,
+    "scientific_runs_retried": false,
+    "scientific_gate_admitted": false,
+    "g3_complete": false
+  },
+  "set_acquisition_pr": 77
 }
