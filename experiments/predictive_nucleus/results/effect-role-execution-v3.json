@@ -1,0 +1,431 @@
+{
+  "audit": {
+    "discrepancies": 0,
+    "model_execution": false,
+    "new_collections": 0,
+    "new_fits": 0,
+    "original_oracle_execution": false,
+    "original_scorer_execution": false,
+    "passed": true,
+    "pre_score_checks": 22646,
+    "saved_result_checks": 42658751,
+    "scope": "Complete source/data/weights/raw publication and runtime bindings; all current and frozen-v2 reforecast rows plus archived v1 grounded rows, dimensions, normalization and views. All ten saved language extensions contain exactly unchanged parent88 plus four learned coordinates and no extra saved weights. Full mode also checks every fresh/opened decision gate, critical world/action summaries, every fresh/opened point metric, all goal and retention records. Canonical opened regressions are gated; masked regressions and ambiguous actual-world changes are descriptive. All four TRAIN artifacts remain identical. Current v3 parser/text-only controls are collected on every challenge bank. No cross-runtime bit reproduction is required. Archived v1 keeps its original runtime; frozen-v2 reforecasts use the v3 runtime. Saved conditional targets are validated but not regenerated. ECE, omitted rich summaries, timing and memory costs are not independently recomputed. Lexical receipts and deterministic registry assignments are checked without invoking the tokenizer. Publication is verified in local git objects, not remote custody."
+  },
+  "code_accounting": {
+    "inclusive_2000_line_goal_met": false,
+    "new_learner_and_fitter_lines": 193,
+    "note": "Retained research source accounting; no post-result production implementation added. Scratch assembly/summarization helpers are not repository runtime or retained research Python.",
+    "python_files": 294,
+    "python_lines": 52901,
+    "test_python_lines": 22522,
+    "v3_python_lines_including_tests_audit_and_reporting": 2349
+  },
+  "collection_seal_attempts": 1,
+  "collection_shard_attempts": 10,
+  "decision": "DEVELOPMENT_G3_COMPLETE",
+  "decision_gate_checks": {
+    "all_pass": true,
+    "conditions": 10,
+    "lexical_identity_controls": 6,
+    "per_condition": [
+      73
+    ],
+    "total_condition_checks": 730
+  },
+  "evidence": {
+    "data/effect-role-fit-v3/training.json": {
+      "bytes": 53264,
+      "sha256": "766a8315d66e4a0bfca0079183d3966fbc7a0b4ed65c98177650d245a10671ed"
+    },
+    "data/effect-role-v3/freeze.json": {
+      "bytes": 186186,
+      "sha256": "5380210e7957c8b170c8e8ee39d8b4be130e32eb81dad52e9cff7d9f392b5922"
+    },
+    "results/effect-role-execution-v3/audit-full-resources.json": {
+      "bytes": 123,
+      "sha256": "9ce786ac5913f6ec27f52fc606e15c2c945a8d5c9a0d48f6320b9492d3869325"
+    },
+    "results/effect-role-execution-v3/audit-full.log.xz": {
+      "bytes": 208,
+      "sha256": "cf7b91be5b52b37dc2031bb4cf6dce44e7224bace87bab5a57da6e74855c8e3d"
+    },
+    "results/effect-role-execution-v3/audit-prescore.log.xz": {
+      "bytes": 136,
+      "sha256": "1092e681b8ede32ae34eb4f74750846c603845a70f8af9ceebf2084cad0d8481"
+    },
+    "results/effect-role-execution-v3/collect-nand-11.log.xz": {
+      "bytes": 100,
+      "sha256": "87a402993d4cacea799e0f5a3eaa9d2819f2f300127817707d9ae0cb821fecb5"
+    },
+    "results/effect-role-execution-v3/collect-nand-23.log.xz": {
+      "bytes": 100,
+      "sha256": "3e749fdb262fb9c374698249bf67ad889640a0b98ec1704c86e896f75c7e1dd5"
+    },
+    "results/effect-role-execution-v3/collect-nand-37.log.xz": {
+      "bytes": 100,
+      "sha256": "b964f55214187708b57c8efa11f1ed1d58a056c5c6d623ae2b90600ff2084f5f"
+    },
+    "results/effect-role-execution-v3/collect-nand-53.log.xz": {
+      "bytes": 100,
+      "sha256": "d409b6acb2e5b3a3743b2dc1e83e9738c6fedbc1e81e24136455aaeba8c71c51"
+    },
+    "results/effect-role-execution-v3/collect-nand-7.log.xz": {
+      "bytes": 100,
+      "sha256": "b1b971c4715c0bf2780bdcb37d40520bc396ec6c57d2c27f725c68b5c98b76bf"
+    },
+    "results/effect-role-execution-v3/collect-nor-11.log.xz": {
+      "bytes": 100,
+      "sha256": "da0d26f112c0f449a222fab44eaaaf8c1bc085c8b8151fdba90faf4529592c56"
+    },
+    "results/effect-role-execution-v3/collect-nor-23.log.xz": {
+      "bytes": 100,
+      "sha256": "39dbbd52136e07f89c7d25daac8f76963b63ff3e742c35d30e5b1441beb6b20a"
+    },
+    "results/effect-role-execution-v3/collect-nor-37.log.xz": {
+      "bytes": 100,
+      "sha256": "c784ccc1578dc88c74a63a3289434a34431a7d7c78919eb5ed5f8c104a67fcd9"
+    },
+    "results/effect-role-execution-v3/collect-nor-53.log.xz": {
+      "bytes": 100,
+      "sha256": "872dff2a485827a007c0bd14a0e14e692a063cb13c8d7341995ae67edd62986c"
+    },
+    "results/effect-role-execution-v3/collect-nor-7.log.xz": {
+      "bytes": 100,
+      "sha256": "2499355f7dd78e6b3c03c7612ab606ab5e0141f904909d2be1a4455b4742c8af"
+    },
+    "results/effect-role-execution-v3/fit.log.xz": {
+      "bytes": 512,
+      "sha256": "6380252ca24f949a2a184f87d0298895f499326056e6e04b65e65621581fdaaa"
+    },
+    "results/effect-role-execution-v3/score.log.xz": {
+      "bytes": 880,
+      "sha256": "8c474937421444e5696bbb495dcba581e44f0373f4f7fa8f0f810a6bb21f07b9"
+    },
+    "results/effect-role-execution-v3/seal.log.xz": {
+      "bytes": 108,
+      "sha256": "a365ad300e21a8b4233b5a6e0123b686b8639cde60ea88f829343a84f33616e8"
+    },
+    "results/effect-role-headline-v3.json": {
+      "bytes": 308223,
+      "sha256": "73735f4a57993afa77c96467167d702e143d7fdf1a44c101cd38be43cc03466b"
+    },
+    "results/effect-role-pre-score-audit-v3.json": {
+      "bytes": 22582,
+      "sha256": "08e621f979285b97626c0eada342b927f01c9bd3b3a836b1decbc6866ba0730a"
+    },
+    "results/effect-role-saved-audit-v3.json": {
+      "bytes": 86141,
+      "sha256": "b2255857896461aa3f0a6bd3d8439ac2eff341e047e46ac8b962057b6c8b9a29"
+    },
+    "results/effect-role-v3/scored/decision.json": {
+      "bytes": 29910,
+      "sha256": "c894adb636505fee4a1d8700b425896fc75a34f83038c0225a5cc4a9a5b5b5d9"
+    },
+    "results/effect-role-v3/scored/manifest.json": {
+      "bytes": 5142,
+      "sha256": "409640ef117418f59ba749919a50d618af6839c30587899c9b9b390e38ea7065"
+    },
+    "results/effect-role-v3/traces/manifest.json": {
+      "bytes": 30022,
+      "sha256": "71f92c8fa36e8fc346d7e24d1a14a1abb1e74ed820c96dbfe688f158e52761b0"
+    },
+    "results/effect-role-validation-v3.json": {
+      "bytes": 2122,
+      "sha256": "1fa00c7ad22a6e36310add0e1cf9a7530f4dad779fd6c7adee62a30fcfd3873d"
+    }
+  },
+  "execution_complete": true,
+  "final_objective_target_presentations": 17520,
+  "fit_attempts": 1,
+  "fits": 15,
+  "fits_by_arm": {
+    "grounded": 5,
+    "parser": 5,
+    "text_only": 5
+  },
+  "forecasts": {
+    "archived_v1_reference_rows_audited_separately": 138240,
+    "fresh": 276480,
+    "opened_v1": 276480,
+    "opened_v2": 276480,
+    "reference_v2": 138240,
+    "retention": 131520,
+    "total_current_rows": 1099200
+  },
+  "formal_admission_status": "NOT_ADMITTED",
+  "freeze_sha256": "5380210e7957c8b170c8e8ee39d8b4be130e32eb81dad52e9cff7d9f392b5922",
+  "g3_complete": true,
+  "immutability": {
+    "all_fit_reports_world_unchanged": true,
+    "all_ten_grounded_and_parser_parent_states_unchanged": true,
+    "audit_saved_language_states": 10,
+    "full_saved_audit_validates_ten_native_checkpoints": true
+  },
+  "limits": [
+    "Bounded development gate, not formal scientific admission or independent replication.",
+    "Freshness is participant and structural lineage; words and layout cells were opened in prior studies. New-word/VOS is TRAIN-withheld, not fresh lexical validation.",
+    "Inherited lexical contact support and parent88 parameters are protected structurally. This is not proof of shared-weight continual learning.",
+    "Learned exact-identity extension uses two scalars per new identity; registry and lexical storage grow. No zero-shot semantics or unrestricted polysemy claim.",
+    "Grounded fitting uses observed endpoints; privileged action/order labels are available only to the supervised parser control.",
+    "Action candidates, referents, layouts, observations, goals and costs are supplied. Goal counts measure oracle-optimal choices, including impossible goals; they do not count guaranteed goal achievement.",
+    "All identifiable fresh outcomes pass, but actual ambiguous outcomes remain 3840/7680. Complete realized-world MAP count is 65280/69120.",
+    "Pointwise NLL worsenings and ambiguous/masked changes remain in complete saved reports and headline; zero exact retained-world regressions does not mean every probability improved.",
+    "Inclusive 2000-line objective remains unmet; matched consumed-compute, independent challenge custody, general calibration and production admission remain open."
+  ],
+  "model_seeds": [
+    7,
+    11,
+    23,
+    37,
+    53
+  ],
+  "new_diagnostic_model_executions": 0,
+  "next_stage": "G4",
+  "observed_target_presentations_per_update": {
+    "rehearsal": 1152,
+    "teaching": 16
+  },
+  "parameters": {
+    "extension_identity_count": 2,
+    "grounded_and_parser_learned_extension": 4,
+    "grounded_and_parser_protected_parent": 88,
+    "grounded_total": 92,
+    "legacy_retention_is_structural": true,
+    "parser_total": 92,
+    "text_only_total": 1048,
+    "world_checkpoints": 10,
+    "world_per_checkpoint": 562
+  },
+  "prior_results_preserved": {
+    "v1": "REVISE_EFFECT_ROLE_GROUNDING",
+    "v2": "STOP_INCOMPLETE_EVIDENCE",
+    "v2_reference": {
+      "bank": "opened_effect_role_v2",
+      "checkpoint_publication": "30880caf676c10773857221d9d5bc2437651fb6f",
+      "implementation_publication": "26d8d54ab0748e70d8981acc14e6351a5a279ab1",
+      "model_updates": 0,
+      "scope": "New-study forecasts of frozen published v2 weights under the v3 runtime; not recovered original v2 evidence or a completed v2 decision.",
+      "source_status": "STOP_INCOMPLETE_EVIDENCE",
+      "views": [
+        "canonical",
+        "masked"
+      ]
+    }
+  },
+  "publication": {
+    "independent_custody": false,
+    "method": "GitHub Git data API; each published tree matched the local committed tree, each returned commit object was verified and restored exactly locally; ref checked at source, weights and sealed raw stages.",
+    "ordered_commits": [
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 1270718,
+        "files": 31,
+        "message": "research: freeze and validate protected lexical G3 v3 before fitting",
+        "parent": "1e15e1e6d82c7417ede2a6398de84510078502ab",
+        "sha": "2c5cdbe2c6293298545f59e6d8ac002a4c079fdb",
+        "tree": "1e7add9b9dd7e898b938fe1af91d0ad64eebe074"
+      },
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 233119,
+        "files": 33,
+        "message": "research: publish all fifteen protected lexical checkpoints before collection",
+        "parent": "2c5cdbe2c6293298545f59e6d8ac002a4c079fdb",
+        "sha": "66a749218195365e32f3f23c86823bbcedaafdad",
+        "tree": "d6ae495719bf9fc527baa94da66e63becc279bcc"
+      },
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 5059361,
+        "files": 21,
+        "message": "research: preserve G3 v3 raw nand seed 7 before next shard",
+        "parent": "66a749218195365e32f3f23c86823bbcedaafdad",
+        "sha": "fa7f22c4a1ab599465e8b6e2a592dfd8e46f37c9",
+        "tree": "b1f6b06bba0389f201e1b3ae470c16a891aecf40"
+      },
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 5133886,
+        "files": 19,
+        "message": "research: preserve G3 v3 raw nand seed 11 before next shard",
+        "parent": "fa7f22c4a1ab599465e8b6e2a592dfd8e46f37c9",
+        "sha": "89034c7b844be96619303510c559501be13962bc",
+        "tree": "31e58b8228e88d07db721a2506c1a55896f2ac5b"
+      },
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 5067042,
+        "files": 19,
+        "message": "research: preserve G3 v3 raw nand seed 23 before next shard",
+        "parent": "89034c7b844be96619303510c559501be13962bc",
+        "sha": "9fcf04f6b7809f109bb00d12ec79083885146929",
+        "tree": "d9bb83efc0cfc26f729e10b7c566f9358a3bc1f0"
+      },
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 5041057,
+        "files": 19,
+        "message": "research: preserve G3 v3 raw nand seed 37 before next shard",
+        "parent": "9fcf04f6b7809f109bb00d12ec79083885146929",
+        "sha": "869b9d8818e4aca447eb81ce49ea037580955bd6",
+        "tree": "a8debc679a08a20a11fec7fbbded1053f855e228"
+      },
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 4995528,
+        "files": 19,
+        "message": "research: preserve G3 v3 raw nand seed 53 before next shard",
+        "parent": "869b9d8818e4aca447eb81ce49ea037580955bd6",
+        "sha": "3d7a6623d1fd975c73786c8986360c052597a933",
+        "tree": "1e33d231c7d1eb42406fe8589d02c1775b3a71c5"
+      },
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 5002684,
+        "files": 19,
+        "message": "research: preserve G3 v3 raw nor seed 7 before next shard",
+        "parent": "3d7a6623d1fd975c73786c8986360c052597a933",
+        "sha": "0ae08b9d773e8de94898cb33bbcce1e8a938312b",
+        "tree": "e652ca9b99458b1f6db5835d17eb035ddc7eee41"
+      },
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 5104585,
+        "files": 19,
+        "message": "research: preserve G3 v3 raw nor seed 11 before next shard",
+        "parent": "0ae08b9d773e8de94898cb33bbcce1e8a938312b",
+        "sha": "4165e00b2fe6d25f610f05b820b53b9f77a84098",
+        "tree": "3c413d0fcaa8cd7928a236ea99302806b78086a0"
+      },
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 5117122,
+        "files": 19,
+        "message": "research: preserve G3 v3 raw nor seed 23 before next shard",
+        "parent": "4165e00b2fe6d25f610f05b820b53b9f77a84098",
+        "sha": "6b5ece2f0579987bf5b253c413d0f70296a870c7",
+        "tree": "c467e59e8acf1af7ef0c16fe0de0538f25bea8c5"
+      },
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 4998510,
+        "files": 19,
+        "message": "research: preserve G3 v3 raw nor seed 37 before next shard",
+        "parent": "6b5ece2f0579987bf5b253c413d0f70296a870c7",
+        "sha": "0213a7f2902de2300dfd71841ec20c1d0587898d",
+        "tree": "01c280ab4d8e41adda4844a79b9c0f3672c75806"
+      },
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 4959402,
+        "files": 19,
+        "message": "research: preserve G3 v3 raw nor seed 53 before next shard",
+        "parent": "0213a7f2902de2300dfd71841ec20c1d0587898d",
+        "sha": "922f815db65d68fa0be3936afc6647fef24f8a78",
+        "tree": "f57a0ca40749717cea008a6077ce3b57a307f0db"
+      },
+      {
+        "branch": "research/predictive-nucleus-g3-lexical-20261102",
+        "bytes": 30022,
+        "files": 1,
+        "message": "research: seal complete G3 v3 raw evidence before scoring",
+        "parent": "922f815db65d68fa0be3936afc6647fef24f8a78",
+        "sha": "6622c653c9dc521dd4fa3cfc5a6f9cd468ea48e0",
+        "tree": "229b88a18105b2f7d5b9f99c0094977bc632cfac"
+      }
+    ],
+    "raw": "6622c653c9dc521dd4fa3cfc5a6f9cd468ea48e0",
+    "source": "2c5cdbe2c6293298545f59e6d8ac002a4c079fdb",
+    "weights": "66a749218195365e32f3f23c86823bbcedaafdad"
+  },
+  "raw_evidence": {
+    "all_files": 183,
+    "bytes": 50508199,
+    "evaluator_opened_by_collection": false,
+    "sealed": true,
+    "trace_files": 160
+  },
+  "resources": {
+    "full_saved_audit_separately_measured": {
+      "cpu_seconds": 246.19979600000002,
+      "exit_code": 0,
+      "peak_rss_kib": 1054292,
+      "wall_seconds": 246.22229412900015
+    },
+    "note": "Pipeline CPU/wall are sums of training, shard collection and scoring receipts. Peak RSS is their maximum, never a sum. Preparation, software tests, publication gaps and both audits are excluded from pipeline totals. Full saved-audit process CPU/wall/RSS is recorded separately. Resource costs are not independently recomputed by the saved auditor.",
+    "pipeline_totals": {
+      "cpu_seconds": 988.123391079,
+      "peak_rss_kib": 1019132,
+      "wall_seconds": 988.422389152005
+    },
+    "stages": {
+      "collection": {
+        "cpu_seconds": 492.255197038,
+        "peak_rss_kib": 487124,
+        "wall_seconds": 492.46207341000445
+      },
+      "scoring": {
+        "cpu_seconds": 447.37198316300004,
+        "peak_rss_kib": 1019132,
+        "wall_seconds": 447.4483239500005
+      },
+      "training": {
+        "cpu_seconds": 48.496210878,
+        "peak_rss_kib": 354908,
+        "wall_seconds": 48.51199179200012
+      }
+    }
+  },
+  "retries": 0,
+  "scientific_admission": false,
+  "scoring_attempts": 1,
+  "software_verification": {
+    "focused_suite": {
+      "passed": true,
+      "seconds": 18.899,
+      "tests": 44
+    },
+    "full_suite": {
+      "failures": 0,
+      "passed": true,
+      "seconds": 145.772,
+      "skips": 0,
+      "tests": 1152
+    },
+    "original_preflight_passed": true,
+    "preflight_initial_invocation": {
+      "passed": false,
+      "reason": "PYTHONHASHSEED=0 required at process startup",
+      "resolution": "Reran the prescribed preflight with PYTHONHASHSEED=0 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1; research runtime freeze remained unchanged",
+      "stage": "software preflight only; no research execution"
+    },
+    "protocol_and_freeze": {
+      "bound_files": 37,
+      "locks": 37,
+      "locks_pass": true,
+      "v3_freeze": "5380210e7957c8b170c8e8ee39d8b4be130e32eb81dad52e9cff7d9f392b5922",
+      "v3_historical": 392,
+      "v3_sources": 108
+    },
+    "raw_publication_ci": [
+      {
+        "conclusion": "success",
+        "run_id": 41536981277,
+        "workflow": "invariant suite and frozen preflight"
+      },
+      {
+        "conclusion": "success",
+        "run_id": 41536981285,
+        "workflow": "source snapshot"
+      }
+    ]
+  },
+  "training_target_presentations_in_optimizer_updates": 4485120,
+  "unrecorded_resources": {
+    "comparison": "No matched consumed-compute claim.",
+    "latency": "No service p50/p95 latency measurement.",
+    "pre_score_audit": "CPU/wall/RSS not recorded; no estimate substituted."
+  },
+  "updates_per_fit": 256,
+  "version": "effect-role-execution-v3"
+}

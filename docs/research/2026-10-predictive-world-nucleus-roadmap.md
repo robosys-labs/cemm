@@ -8,52 +8,76 @@
 
 ## Current development checkpoint — 2026-11-02
 
-**G3 normalization v2 is STOP_INCOMPLETE_EVIDENCE. All 15 fit checkpoints
-survive, but its original raw collection was lost before publication; no v2
-scoring occurred. Development G3 remains open.** The
-[v2 interruption decision](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V2.md)
-records public weights `30880caf676c10773857221d9d5bc2437651fb6f` and unrecovered
-intended raw tree `c5df023722a4843ff62096d5cd8a0aa83f065cbb`. The publication wait
-was interrupted after five hours and scratch storage reset. The restored CPU
-changed from Intel Xeon Platinum 8573C to AMD EPYC 9V74; the frozen runtime guard
-rejected it before predictions. No replay occurred. This is neither a scientific
-REVISE nor a G3 pass. TRAIN loss does not establish challenge failure. G1/G2
-development readiness and original scientific criteria below are unchanged.
+**Bounded development G3 is complete.** The
+[v3 decision](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V3.md),
+[PR #81](https://github.com/robosys-labs/cemm/pull/81), records all ten NAND/NOR
+× seed conditions passing all 73 condition gates and all six lexical controls.
+All 15 fits and **1,099,200 new-study forecast rows** are retained. The
+[full saved-record audit](../../experiments/predictive_nucleus/results/effect-role-saved-audit-v3.json)
+passes **42,658,751 checks with zero discrepancies** and reproduces
+`DEVELOPMENT_G3_COMPLETE` without running models, the original scorer or oracle.
+Formal scientific admission remains **NOT_ADMITTED / false**. G1/G2 bounded
+development readiness and every original gate below remain unchanged.
 
-The [completed v1 decision](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V1.md)
-records all 15 fits and 408,000 formal forecast rows. The saved-record audit passes
-12,946,593 checks with zero discrepancies. Every seed fails bilingual TV and
-conditional KL; seed 7 also fails fresh competence/goals. Seeds 23/37/53 fail
-retained NLL in three banks, with seed 37 causing 525 world regressions and
-768 action changes. All negative evidence remains immutable.
+The frozen 88-scalar coordinate parent plus four endpoint-trained lexical
+coordinates gives **92 language scalars: 88 protected, four learned**. All ten
+562-parameter native worlds stay frozen. Across fresh conditions, all 61,440
+identifiable outcomes are correct and all 15,360 supplied-goal choices are
+oracle-optimal, with zero regret.
+All 131,520 historical worlds remain correct with zero world/action MAP changes.
+Both opened banks also pass their unchanged gates with zero canonical
+identifiable-world or taught-action regressions. The
+[headline](../../experiments/predictive_nucleus/results/effect-role-headline-v3.json)
+and [execution receipt](../../experiments/predictive_nucleus/results/effect-role-execution-v3.json)
+retain ambiguous outcomes, adverse probability changes, masked regressions and
+costs. No pooled score replaces a condition or stratum gate.
 
-[Coordinate transfer](../../experiments/predictive_nucleus/COORDINATE_DECISION_V1.md),
-[PR #76](https://github.com/robosys-labs/cemm/pull/76), and
-[native SET v2](../../experiments/predictive_nucleus/SET_ACQUISITION_DECISION_V2.md),
-[PR #78](https://github.com/robosys-labs/cemm/pull/78), retain their KEEP decisions.
-All ten acquired native worlds remain unchanged. Native SET v1 remains
-SCORING_ABORTED / REVISE under its original immutable rule.
+Legacy retention is structural, with explicit per-identity storage growth; it
+does not establish shared-parameter continual learning or unrestricted polysemy.
+The task still supplies entity markers, finite action alternatives, controlled
+SVO/OSV/VOS forms and external goals. New-word/VOS cells remain TRAIN-withheld
+but previously opened. Only v3 participant structures and identities are fresh.
+These are bounded generalization and probability results, not unrestricted
+language, natural-language goal parsing or general calibration.
 
-Post-publication v1 TRAIN diagnostics add 17,520 forecast rows and zero optimizer
-updates; later saved-curve/result review adds no forecasts. V2's original text-only
-checkpoint and curve reproduction receipt remains valid on its original runtime.
-Neither that receipt nor the surviving weights replaces the missing raw evidence.
+Publication order was preserved: source/data/runtime
+`2c5cdbe2c6293298545f59e6d8ac002a4c079fdb`, all actual weights
+`66a749218195365e32f3f23c86823bbcedaafdad`, then sealed raw forecasts
+`6622c653c9dc521dd4fa3cfc5a6f9cd468ea48e0` before scoring. Each of ten collection
+shards was published before the next shard. No research retry occurred.
 
-The next prospective candidate keeps the entire 88-parameter coordinate parent
-protected and learns four neutral effect/role coordinates for two exact new
-identities: 92 total, 88 frozen, four trained. Freeze and publish a separate AMD
-runtime, fresh compositions and controls, and evaluation of the published v2
-weights as a current-runtime reference. These forecasts belong to a new study.
-Retain the same TRAIN tapes, five seeds, 256 updates, original gates and opened-bank
-provenance; disclose structural legacy retention and per-identity storage growth.
-The [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md)
-records the remaining sequence. G4 is not unlocked.
+The [v1 decision](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V1.md)
+remains **REVISE_EFFECT_ROLE_GROUNDING** in all ten conditions, including its
+original probability, retained-NLL and exact-world/action failures. The
+[v2 interruption](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V2.md)
+remains **STOP_INCOMPLETE_EVIDENCE**: its 15 published checkpoints survive, but
+its original raw collection was lost before publication and never scored. V3's
+AMD-runtime reference forecasts do not recover or retroactively complete v2;
+its original runtime guard and evidence remain unchanged. Accepted
+[coordinate transfer](../../experiments/predictive_nucleus/COORDINATE_DECISION_V1.md)
+and [native SET v2](../../experiments/predictive_nucleus/SET_ACQUISITION_DECISION_V2.md)
+remain intact; native SET v1 retains its SCORING_ABORTED / REVISE outcome.
 
-Formal scientific admission, independent custody, matched consumed compute and
-general calibration remain open. Frozen v1 code has 48,323 Python lines including
-20,486 test lines; archived diagnostic scripts bring the inclusive total to
-48,724. The 2,000-line objective remains unmet. Original gate definitions follow
-unchanged.
+**G4 is selected next, not yet executed:** use the frozen accepted G3 models in
+one small two-agent communication task with different observations, one bounded
+information gap, a costly communication turn and externally supplied goals.
+Keep source/time/context-attributed message events separate from physical sensor
+evidence; untrusted utterances must not commit their content as observed truth
+or mutate sensor belief. Do not seed ASK/ASSERT/COMMAND labels. Outcome-trained
+communicative policy, improved held-out net utility and a causal effect of
+messages against matched silent/random/shuffled controls are required; a
+hand-coded trusted channel or information-gain rule alone is insufficient.
+Useful/useless questions, misleading messages, conflicting sources, delayed
+evidence and changed focus remain in the complete G4 gate. Reuse existing
+prediction, evidence and scoring components without another general parser or
+duplicate study framework. The
+[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) records
+this boundary. G5, corpus ingestion and Wikipedia utility remain later work.
+
+Independent custody, matched consumed compute, general calibration and formal
+scientific admission remain open. The inclusive **2,000-line objective remains
+unmet**. Production runtime, semantic authority and ABIs are unchanged. Original
+G0–G8 definitions follow unchanged.
 
 ## 0. Decision
 
