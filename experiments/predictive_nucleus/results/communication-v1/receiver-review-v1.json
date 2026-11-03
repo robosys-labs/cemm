@@ -1,0 +1,34 @@
+{
+  "by_law": {
+    "nand": {
+      "menu_goal_cases": 66,
+      "parent_lineages": 8,
+      "physical_menus": 45
+    },
+    "nor": {
+      "menu_goal_cases": 30,
+      "parent_lineages": 4,
+      "physical_menus": 18
+    }
+  },
+  "checks": {
+    "checkpoint_arm_decisions": 207360,
+    "handcoded_physical_action_matches": 34560,
+    "handcoded_query_matches": 34560,
+    "rounds": 34560,
+    "selected_training_payoffs": 46440
+  },
+  "comparator_scope": "Post hoc, privileged source polarity and fixed price threshold. No training.",
+  "distinct_unknown_token_counts_by_true_bit": {
+    "unregistered-0": [
+      384,
+      0
+    ],
+    "unregistered-1": [
+      0,
+      384
+    ]
+  },
+  "result": "Frozen decisions reproduced. Narrow to menu-goal cases and decoder-unresolved replies.",
+  "reviewed_commit": "f654226c11d22accfa4c161aa5997053f0e5011f"
+}

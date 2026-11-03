@@ -1,16 +1,23 @@
-# Active nucleus: G4 receiver retained; goal-dependent sender next
+# Active nucleus: bounded G4 sender retained; unseen bindings next
 
 Updated 2026-11-03. Tracking [#22](https://github.com/robosys-labs/cemm/issues/22),
-[PR #82](https://github.com/robosys-labs/cemm/pull/82).
+[PR #83](https://github.com/robosys-labs/cemm/pull/83).
 
 ## Latest G4 result
 
-[Receiver v1](COMMUNICATION_DECISION_V1.md) passed all 150 prospective gates.
-Mean held-out net utility was 0.761111 versus 0.666667 for free silence and
-0.650000 for matched shuffled delivery. All 3,840 unreadable replies were
-purchased without a gross benefit. The speaker and wire code are supplied.
-G4 remains open. The next study targets goal-dependent sending and an
-ablation of the receiver's supplied opportunity cue.
+[Sender v1](SENDER_DECISION_V1.md) passed all 230 registered gates. The learned
+one-bit sender achieved 38,400/46,080 goals. Mean held-out net utility was
+0.816667, versus 0.733333 for the strongest fixed goal-blind code and 0.816667
+for an explicit goal-aware router. All 16 sender-visible configurations had
+occurred in TRAIN. The next test is transfer to unseen badge identities and
+sender-visible bindings with shared parameters. G4 remains open.
+
+[Receiver review](RECEIVER_REVIEW_V1.md) reproduced every PR #82 decision.
+Its 96 menu–goal cases use 63 physical menus, its decoder-unresolved tokens
+encode the physical bit, and a supplied source-polarity rule ties the learned
+receiver. In a same-task request refit, removing the opportunity cue doubled
+queries with identical success. A public margin recovered two thirds of the
+extra cost while still buying irrelevant replies.
 
 ## Accepted G3 result
 
@@ -99,7 +106,7 @@ Accepted G1/G2 development gains and all historical source/data locks remain int
 | G1 | Development ready for G2; original scientific admission NOT_ADMITTED. |
 | G2 | Accepted bounded composition, hidden propagation and supplied timing retained; no full scientific-admission claim. |
 | G3 | Bounded development COMPLETE by audited v3; v1 REVISE and v2 STOP_INCOMPLETE_EVIDENCE remain unchanged. |
-| G4 | Bounded outcome-trained receiver retained. Goal-dependent sending, broader source conflict and general communication remain open. |
+| G4 | Bounded receiver and finite goal-dependent sender retained. Unseen sender-visible bindings, broader source conflict and general communication remain open. |
 | G5 | Durable acquisition, correction and lifelong retention remain open. |
 | G6–G8 | Corpus bridge, measured Wikipedia utility and guarded integration remain open. |
 

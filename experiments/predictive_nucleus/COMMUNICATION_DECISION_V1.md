@@ -23,17 +23,20 @@ delivered arm repaired 3,840 incorrect free-silent choices with zero gross
 success regressions. The source-blind literal shortcut lost the gain from
 informative replies by interpreting the inverted source literally.
 
-**Adverse result.** The receiver paid for all 3,840 unreadable replies and
+**Adverse result.** The receiver paid for all 3,840 decoder-unresolved replies and
 achieved 1,920 goals, the same as silence. This consumed 192 units, one third
 of the entire communication spend. The public request features in these
 episodes match a potentially useful source. The unknown code becomes visible
 only after delivery. The measured result gives no evidence of recognizing
-unreadability in advance. On stale, shifted and overly costly rounds, both
+whether the frozen decoder will resolve a reply in advance. The raw token names encode the private bit exactly. On stale, shifted and overly costly rounds, both
 the receiver and free silence achieved 50% gross success.
+
+The [subsequent receiver review](RECEIVER_REVIEW_V1.md) found that a post hoc
+zero-fit rule with supplied source polarity reproduced every query and physical choice.
 
 ## Evidence and scope
 
-There are 96 held-out physical menus, nine communication conditions, two
+There are 96 held-out menu–goal cases across 63 physical menus, nine communication conditions, two
 possible readings and four replicates. The 6,912 distinct communication
 scenarios are each evaluated with five inherited model seeds. The five seeds
 share scenario assignments and terminal payoffs. Training used 46,440
