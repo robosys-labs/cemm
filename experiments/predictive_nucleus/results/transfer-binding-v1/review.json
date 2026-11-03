@@ -1,0 +1,68 @@
+{
+  "artifact_hashes_verified": 31,
+  "checkpoints_reconstructed": 10,
+  "code_envelopes_verified": 20,
+  "condition_partition_arm_cells": 200,
+  "discrepancies": 0,
+  "finite_sender_posthoc": {
+    "by_hamming_distance": {
+      "1": {
+        "correct": 512,
+        "signals": 512
+      },
+      "2": {
+        "correct": 768,
+        "signals": 768
+      },
+      "3": {
+        "correct": 512,
+        "signals": 512
+      },
+      "4": {
+        "correct": 128,
+        "signals": 128
+      }
+    },
+    "correct": 1920,
+    "errors": 0,
+    "min_oriented_margin": 0.24999999963378916,
+    "n": 1920,
+    "opposed_readings_outside_registered_splits": 704,
+    "outside_all_registered_splits": 1408,
+    "privileged_inverse_router_disagreements": 0,
+    "unique_matrices": 1,
+    "universe_inputs": 1920
+  },
+  "gross_losses_against_any_comparator": 0,
+  "heldout_arm_decisions": 614400,
+  "input_commits": {
+    "checkpoints": "423ae3a5842fd59aefa9c2ba1d0befc8f142a3a7",
+    "frozen": "6873d9b3aaabc4ccade524ded128d4764b8f9360",
+    "raw_bank": "9de76d4fd0124b21cb854cff1b98a9ae9c6b1948",
+    "scored": "617631c7272d87eb92b011dfee10a3d0c4bca0d9"
+  },
+  "lookup_entries_verified": 2560,
+  "max_allowed_matrix_absolute_error": 1e-12,
+  "misses": {
+    "costly": 7680,
+    "hidden": 0,
+    "indifferent": 0,
+    "known": 0
+  },
+  "registered_checks_passed": 400,
+  "registered_checks_reproduced": 400,
+  "scope": "Same-team post-score independent replay, no experiment-module imports",
+  "scored_decision_sha256": "560e1c6c440887342e1527a0db98a272d4393aedda6758efe585ad6fb63ab8f5",
+  "script_sha256": {
+    "cemm84exhaust.py": "fb59cc991b6b3227430678355b4f313041e5b7586862ed656b5f3ca134711935",
+    "cemm84fit_audit.py": "d08541e4cb7ac921f2b46aef230d1b42c38eb22b4f89c24d2598839b640125b0",
+    "cemm84raw_audit.py": "e9dea33485ea57ea4cad0b6e6d5bc70fe4a999bbeeb6782a9419681769452006",
+    "gates.py": "25f3e9244c703d4c1fc7dccc14cf706762892a15d071a9dc76813edd5206ec64",
+    "geometry.py": "d3df3ffd54ca9ed117d0c5de01bf246f4e42837ecca5a0dd7c6d66bf1e8eba4e",
+    "peer.py": "1b01233513d8e7f8a620c9e15c95788ab89254c9c4f11ee75b823fcd52db83e8"
+  },
+  "selected_action_brier_cells_reproduced": 200,
+  "svd_reconstruction_max_abs_error": 3.3306690738754696e-16,
+  "train_feedback_replayed": 61440,
+  "unique_round_ids": 12288
+}

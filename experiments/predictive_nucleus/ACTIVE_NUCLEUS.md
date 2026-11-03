@@ -1,16 +1,26 @@
-# Active nucleus: bounded G4 sender retained; unseen bindings next
+# Active nucleus — G4 sender transfers to unseen bindings
 
 Updated 2026-11-03. Tracking [#22](https://github.com/robosys-labs/cemm/issues/22),
-[PR #83](https://github.com/robosys-labs/cemm/pull/83).
+[PR #84](https://github.com/robosys-labs/cemm/pull/84).
 
 ## Latest G4 result
 
-[Sender v1](SENDER_DECISION_V1.md) passed all 230 registered gates. The learned
-one-bit sender achieved 38,400/46,080 goals. Mean held-out net utility was
-0.816667, versus 0.733333 for the strongest fixed goal-blind code and 0.816667
-for an explicit goal-aware router. All 16 sender-visible configurations had
-occurred in TRAIN. The next test is transfer to unseen badge identities and
-sender-visible bindings with shared parameters. G4 remains open.
+[Transfer binding v1](TRANSFER_BINDING_DECISION_V1.md) passed all 400
+registered checks on new pairings of familiar badges and on fresh badges.
+The pair achieved 53,760/61,440 goals at a mean net utility of 0.8625,
+compared with 0.8000 for the strongest goal-blind code and 0.7500 for free
+silence. A post hoc sender learned the same routing from TRAIN co-occurrences
+alone. With the original requester it reproduced every message and action.
+The 61,440 evaluations reuse 12,288 scenarios, and all ten fits have identical
+sender weights. The earlier [finite sender](SENDER_DECISION_V1.md) had seen
+all 16 of its possible inputs in TRAIN.
+
+The next G4 experiment should require the receiver to learn which conflicting
+source to use from previous physical outcomes. A [TRAIN-only preflight](conflict_preflight.py)
+constructs matched histories on 19 physical menus. Either masking the earlier
+outcome or anonymizing the sources caps target success at 50%. The reference
+using both reaches 100%. The learned policy and held-out conflict evaluation
+are pending.
 
 [Receiver review](RECEIVER_REVIEW_V1.md) reproduced every PR #82 decision.
 Its 96 menu–goal cases use 63 physical menus, its decoder-unresolved tokens
@@ -106,7 +116,7 @@ Accepted G1/G2 development gains and all historical source/data locks remain int
 | G1 | Development ready for G2; original scientific admission NOT_ADMITTED. |
 | G2 | Accepted bounded composition, hidden propagation and supplied timing retained; no full scientific-admission claim. |
 | G3 | Bounded development COMPLETE by audited v3; v1 REVISE and v2 STOP_INCOMPLETE_EVIDENCE remain unchanged. |
-| G4 | Bounded receiver and finite goal-dependent sender retained. Unseen sender-visible bindings, broader source conflict and general communication remain open. |
+| G4 | Bounded receiver and shared sender transfer retained. Next are learned use of source history under conflict, delayed reports and changed focus. |
 | G5 | Durable acquisition, correction and lifelong retention remain open. |
 | G6–G8 | Corpus bridge, measured Wikipedia utility and guarded integration remain open. |
 
