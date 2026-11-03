@@ -6,7 +6,7 @@
 **Implementation boundary:** independent experiment first; no root runtime or Hybrid cutover  
 **Companion foundation:** [draft PR #21](https://github.com/robosys-labs/cemm/pull/21)
 
-## Current development checkpoint — 2026-11-02
+## Current development checkpoint — 2026-11-03
 
 **Bounded development G3 is complete.** The
 [v3 decision](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V3.md),
@@ -58,21 +58,30 @@ its original runtime guard and evidence remain unchanged. Accepted
 and [native SET v2](../../experiments/predictive_nucleus/SET_ACQUISITION_DECISION_V2.md)
 remain intact; native SET v1 retains its SCORING_ABORTED / REVISE outcome.
 
-**G4 is selected next, not yet executed:** use the frozen accepted G3 models in
-one small two-agent communication task with different observations, one bounded
-information gap, a costly communication turn and externally supplied goals.
-Keep source/time/context-attributed message events separate from physical sensor
-evidence; untrusted utterances must not commit their content as observed truth
-or mutate sensor belief. Do not seed ASK/ASSERT/COMMAND labels. Outcome-trained
-communicative policy, improved held-out net utility and a causal effect of
-messages against matched silent/random/shuffled controls are required; a
-hand-coded trusted channel or information-gain rule alone is insufficient.
-Useful/useless questions, misleading messages, conflicting sources, delayed
-evidence and changed focus remain in the complete G4 gate. Reuse existing
-prediction, evidence and scoring components without another general parser or
-duplicate study framework. The
-[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) records
-this boundary. G5, corpus ingestion and Wikipedia utility remain later work.
+**G4 is in progress.** Studies [#82](https://github.com/robosys-labs/cemm/pull/82)
+and [#83](https://github.com/robosys-labs/cemm/pull/83) retained a bounded
+requester and finite sender. The [unseen binding study](../../experiments/predictive_nucleus/TRANSFER_BINDING_DECISION_V1.md)
+passed all 400 registered checks with a shared sender and a requester that
+avoided indifferent goals. Mean held-out net utility was 0.8625. A post hoc
+sender recovered the same mapping from training inputs alone and tied on
+every action with the same requester. The result establishes transfer under
+the supplied perceptual encoding. Whether outcomes teach the sender something
+the input structure alone cannot reveal remains open.
+
+**Next G4 experiment.** Test two conflicting attributed sources with identical
+observable histories under opposite reliability regimes. Counterbalance
+source identity, report order and private bits. A
+[TRAIN-only preflight](../../experiments/predictive_nucleus/conflict_preflight.py)
+found 7,680 matched twins on 19 physical menus. A reference using source
+identity and the earlier selected-action outcome chose correctly on both
+members of every twin. Hiding either kind of evidence bounds accuracy at 50%.
+Freeze the source assignment, held-out histories, query costs and comparator
+budgets before any fit. Compare the learned policy against outcome-blind,
+source-blind, always-latest and matched silence/shuffle controls. Include
+useful and useless clarification, delayed and off-focus reports. Preserve
+separate claim and physical-evidence receipts. The
+[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) tracks
+this gate. Durable retention, corpus ingestion and Wikipedia utility remain later work.
 
 Independent custody, matched consumed compute, general calibration and formal
 scientific admission remain open. The inclusive **2,000-line objective remains
