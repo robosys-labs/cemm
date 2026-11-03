@@ -1,0 +1,229 @@
+{
+  "arms": {
+    "action_code": {
+      "fee_hundredths": 76800,
+      "n": 46080,
+      "net_hundredths": 2995200,
+      "requests": 15360,
+      "successes": 30720
+    },
+    "delivered": {
+      "fee_hundredths": 76800,
+      "n": 46080,
+      "net_hundredths": 3763200,
+      "requests": 15360,
+      "successes": 38400
+    },
+    "fixed0": {
+      "fee_hundredths": 76800,
+      "n": 46080,
+      "net_hundredths": 3379200,
+      "requests": 15360,
+      "successes": 34560
+    },
+    "fixed1": {
+      "fee_hundredths": 76800,
+      "n": 46080,
+      "net_hundredths": 3379200,
+      "requests": 15360,
+      "successes": 34560
+    },
+    "free_silent": {
+      "fee_hundredths": 0,
+      "n": 46080,
+      "net_hundredths": 3072000,
+      "requests": 0,
+      "successes": 30720
+    },
+    "public_router": {
+      "fee_hundredths": 76800,
+      "n": 46080,
+      "net_hundredths": 3763200,
+      "requests": 15360,
+      "successes": 38400
+    },
+    "random": {
+      "fee_hundredths": 76800,
+      "n": 46080,
+      "net_hundredths": 2982700,
+      "requests": 15360,
+      "successes": 30595
+    },
+    "shuffled": {
+      "fee_hundredths": 76800,
+      "n": 46080,
+      "net_hundredths": 2995200,
+      "requests": 15360,
+      "successes": 30720
+    },
+    "silent": {
+      "fee_hundredths": 76800,
+      "n": 46080,
+      "net_hundredths": 2995200,
+      "requests": 15360,
+      "successes": 30720
+    }
+  },
+  "causal": {
+    "changed_goal_disagreement": 1920,
+    "changed_goal_flip_when_disagree": 1920,
+    "changed_goal_flips": 1920,
+    "changed_goal_pairs": 3840,
+    "irrelevant_flips": 0,
+    "irrelevant_pairs": 7680,
+    "relevant_flips": 7680,
+    "relevant_pairs": 7680
+  },
+  "counts": {
+    "conditions": 10,
+    "sender_signature_challenge_sum": 160,
+    "sender_signature_novel_sum": 0,
+    "sender_signature_train_sum": 160
+  },
+  "distinct_menu_goal_cases": 48,
+  "distinct_physical_menus": {
+    "nand": 21,
+    "nor": 17
+  },
+  "distinct_rounds": 9216,
+  "independent_profile_coverage": {
+    "challenge": 16,
+    "heldout_only": 0,
+    "train": 16
+  },
+  "physical_lineage": {
+    "challenge_sensor_ids": 24,
+    "entity_overlap": 0,
+    "sensor_id_overlap": 0,
+    "train_sensor_ids": 28
+  },
+  "physical_pairs": 24,
+  "profiles": {
+    "challenge_paid_hidden": {
+      "hits": 15360,
+      "n": 15360
+    },
+    "challenge_seen_source_goal": {
+      "fee_hundredths": 38400,
+      "n": 7680,
+      "net_hundredths": 729600,
+      "requests": 7680,
+      "successes": 7680
+    },
+    "challenge_unseen_source_goal": {
+      "fee_hundredths": 38400,
+      "n": 7680,
+      "net_hundredths": 729600,
+      "requests": 7680,
+      "successes": 7680
+    },
+    "train_phase2_paid_hidden": {
+      "hits": 3840,
+      "n": 3840
+    }
+  },
+  "request_gain_tables": {
+    "nand/11": [
+      [
+        0,
+        0.5
+      ],
+      [
+        3,
+        0.0
+      ]
+    ],
+    "nand/23": [
+      [
+        0,
+        0.5
+      ],
+      [
+        3,
+        0.0
+      ]
+    ],
+    "nand/37": [
+      [
+        0,
+        0.5
+      ],
+      [
+        3,
+        0.0
+      ]
+    ],
+    "nand/53": [
+      [
+        0,
+        0.5
+      ],
+      [
+        3,
+        0.0
+      ]
+    ],
+    "nand/7": [
+      [
+        0,
+        0.5
+      ],
+      [
+        3,
+        0.0
+      ]
+    ],
+    "nor/11": [
+      [
+        0,
+        0.5
+      ],
+      [
+        3,
+        0.0
+      ]
+    ],
+    "nor/23": [
+      [
+        0,
+        0.5
+      ],
+      [
+        3,
+        0.0
+      ]
+    ],
+    "nor/37": [
+      [
+        0,
+        0.5
+      ],
+      [
+        3,
+        0.0
+      ]
+    ],
+    "nor/53": [
+      [
+        0,
+        0.5
+      ],
+      [
+        3,
+        0.0
+      ]
+    ],
+    "nor/7": [
+      [
+        0,
+        0.5
+      ],
+      [
+        3,
+        0.0
+      ]
+    ]
+  },
+  "scope": "Same-team record reconstruction. Causal goal-swap counts in this review cover cheap hidden rounds for W0. Frozen scorer additionally covers all strata.",
+  "verified_stage_files": 42
+}
