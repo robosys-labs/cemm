@@ -1,9 +1,18 @@
-# Active nucleus: bounded development G3 complete; G4 communication selected
+# Active nucleus: G4 receiver retained; goal-dependent sender next
 
-Updated 2026-11-02. Tracking [#22](https://github.com/robosys-labs/cemm/issues/22),
-[PR #81](https://github.com/robosys-labs/cemm/pull/81).
+Updated 2026-11-03. Tracking [#22](https://github.com/robosys-labs/cemm/issues/22),
+[PR #82](https://github.com/robosys-labs/cemm/pull/82).
 
-## Current completed result
+## Latest G4 result
+
+[Receiver v1](COMMUNICATION_DECISION_V1.md) passed all 150 prospective gates.
+Mean held-out net utility was 0.761111 versus 0.666667 for free silence and
+0.650000 for matched shuffled delivery. All 3,840 unreadable replies were
+purchased without a gross benefit. The speaker and wire code are supplied.
+G4 remains open. The next study targets goal-dependent sending and an
+ablation of the receiver's supplied opportunity cue.
+
+## Accepted G3 result
 
 [Lexical effect/role v3](EFFECT_ROLE_DECISION_V3.md) is
 **DEVELOPMENT_G3_COMPLETE**. All ten NAND/NOR × seed conditions pass every one
@@ -83,27 +92,6 @@ and original text-only reproduction receipt retain their original scope.
 decisions. Native SET v1 remains SCORING_ABORTED / REVISE under its original rule.
 Accepted G1/G2 development gains and all historical source/data locks remain intact.
 
-## Next task: useful source-attributed communication
-
-G4 is **selected, not executed**. Freeze the accepted G3 models and begin one
-small two-agent task: different observations of one bounded event, externally
-supplied goals, and at most one costly communication turn before an action.
-Keep communication events with source, time, context and exact evidence identity
-separate from sensor observations. An untrusted utterance must not commit its
-content as observed world truth, mutate the sensor posterior or grant an effect.
-Do not pass messages through G3's event/endpoint replay as though they happened.
-
-Reuse the learned lexical decoder, native predictive distributions, bounded
-possible-world filtering, receipt discipline and goal-utility arithmetic.
-Do not seed ASK/ASSERT/COMMAND classes. The policy must learn from communication
-outcomes; a hand-coded trusted channel or information-gain rule alone cannot
-satisfy G4. Freeze useful/useless questions, misleading messages, changed goals
-and matched silent/random/shuffled-message controls before training. Require
-improved held-out net utility and a causal contribution from delivered messages
-at matched query/step budgets. Conflicting sources, delayed evidence and changed
-focus remain explicit parts of the complete G4 gate, not optional exclusions.
-No new general parser or duplicate study framework is selected.
-
 ## Roadmap state
 
 | Stage | State |
@@ -111,7 +99,7 @@ No new general parser or duplicate study framework is selected.
 | G1 | Development ready for G2; original scientific admission NOT_ADMITTED. |
 | G2 | Accepted bounded composition, hidden propagation and supplied timing retained; no full scientific-admission claim. |
 | G3 | Bounded development COMPLETE by audited v3; v1 REVISE and v2 STOP_INCOMPLETE_EVIDENCE remain unchanged. |
-| G4 | Useful source-attributed communication selected next; no communication experiment executed or admitted. |
+| G4 | Bounded outcome-trained receiver retained. Goal-dependent sending, broader source conflict and general communication remain open. |
 | G5 | Durable acquisition, correction and lifelong retention remain open. |
 | G6–G8 | Corpus bridge, measured Wikipedia utility and guarded integration remain open. |
 

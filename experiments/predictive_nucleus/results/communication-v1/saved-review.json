@@ -1,0 +1,188 @@
+{
+  "conditions": {
+    "nand/11": {
+      "delivered": 0.7611111111111111,
+      "free_silent": 0.6666666666666666,
+      "random": 0.6487373737373737,
+      "shortcut": 0.65,
+      "shuffled": 0.65,
+      "silent": 0.65
+    },
+    "nand/23": {
+      "delivered": 0.7611111111111111,
+      "free_silent": 0.6666666666666666,
+      "random": 0.6487373737373737,
+      "shortcut": 0.65,
+      "shuffled": 0.65,
+      "silent": 0.65
+    },
+    "nand/37": {
+      "delivered": 0.7611111111111111,
+      "free_silent": 0.6666666666666666,
+      "random": 0.6487373737373737,
+      "shortcut": 0.65,
+      "shuffled": 0.65,
+      "silent": 0.65
+    },
+    "nand/53": {
+      "delivered": 0.7611111111111111,
+      "free_silent": 0.6666666666666666,
+      "random": 0.6487373737373737,
+      "shortcut": 0.65,
+      "shuffled": 0.65,
+      "silent": 0.65
+    },
+    "nand/7": {
+      "delivered": 0.7611111111111111,
+      "free_silent": 0.6666666666666666,
+      "random": 0.6487373737373737,
+      "shortcut": 0.65,
+      "shuffled": 0.65,
+      "silent": 0.65
+    },
+    "nor/11": {
+      "delivered": 0.7611111111111111,
+      "free_silent": 0.6666666666666666,
+      "random": 0.6537037037037037,
+      "shortcut": 0.65,
+      "shuffled": 0.65,
+      "silent": 0.65
+    },
+    "nor/23": {
+      "delivered": 0.7611111111111111,
+      "free_silent": 0.6666666666666666,
+      "random": 0.6537037037037037,
+      "shortcut": 0.65,
+      "shuffled": 0.65,
+      "silent": 0.65
+    },
+    "nor/37": {
+      "delivered": 0.7611111111111111,
+      "free_silent": 0.6666666666666666,
+      "random": 0.6537037037037037,
+      "shortcut": 0.65,
+      "shuffled": 0.65,
+      "silent": 0.65
+    },
+    "nor/53": {
+      "delivered": 0.7611111111111111,
+      "free_silent": 0.6666666666666666,
+      "random": 0.6537037037037037,
+      "shortcut": 0.65,
+      "shuffled": 0.65,
+      "silent": 0.65
+    },
+    "nor/7": {
+      "delivered": 0.7611111111111111,
+      "free_silent": 0.6666666666666666,
+      "random": 0.6537037037037037,
+      "shortcut": 0.65,
+      "shuffled": 0.65,
+      "silent": 0.65
+    }
+  },
+  "coverage": 34560,
+  "distinct_queried_scenarios": 2304,
+  "distinct_scenarios": 6912,
+  "pooled": {
+    "delivered": {
+      "mean_brier": 0.11137199613620699,
+      "mean_net": 0.7611111111111111,
+      "n": 34560,
+      "queries": 11520,
+      "successes": 26880
+    },
+    "free_silent": {
+      "mean_brier": 0.16685907287202906,
+      "mean_net": 0.6666666666666666,
+      "n": 34560,
+      "queries": 0,
+      "successes": 23040
+    },
+    "random": {
+      "mean_brier": 0.2203309399243272,
+      "mean_net": 0.6502893518518519,
+      "n": 34560,
+      "queries": 11520,
+      "successes": 23050
+    },
+    "shortcut": {
+      "mean_brier": 0.21943930837229017,
+      "mean_net": 0.65,
+      "n": 34560,
+      "queries": 11520,
+      "successes": 23040
+    },
+    "shuffled": {
+      "mean_brier": 0.22055255638597088,
+      "mean_net": 0.65,
+      "n": 34560,
+      "queries": 11520,
+      "successes": 23040
+    },
+    "silent": {
+      "mean_brier": 0.16685907287202906,
+      "mean_net": 0.65,
+      "n": 34560,
+      "queries": 11520,
+      "successes": 23040
+    }
+  },
+  "scope": "Post-score, same-team saved-record review. Five seed evaluations share each scenario and its environment receipts.",
+  "stage_checks": {
+    "artifact_hashes": 71,
+    "asked_records": 11520,
+    "informative_deliveries": 7680,
+    "informative_payload_altered_by_shuffle": 3840,
+    "no_request_checks": 138240,
+    "potential_claim_chains": 34560,
+    "wire_receipts": 34560
+  },
+  "strata": {
+    "conflict": {
+      "asked": 0,
+      "n": 3840,
+      "success": 3840
+    },
+    "costly": {
+      "asked": 0,
+      "n": 3840,
+      "success": 1920
+    },
+    "irrelevant": {
+      "asked": 0,
+      "n": 3840,
+      "success": 3840
+    },
+    "known": {
+      "asked": 0,
+      "n": 3840,
+      "success": 3840
+    },
+    "misleading": {
+      "asked": 3840,
+      "n": 3840,
+      "success": 3840
+    },
+    "shifted": {
+      "asked": 0,
+      "n": 3840,
+      "success": 1920
+    },
+    "stale": {
+      "asked": 0,
+      "n": 3840,
+      "success": 1920
+    },
+    "unknown": {
+      "asked": 3840,
+      "n": 3840,
+      "success": 1920
+    },
+    "useful": {
+      "asked": 3840,
+      "n": 3840,
+      "success": 3840
+    }
+  }
+}
