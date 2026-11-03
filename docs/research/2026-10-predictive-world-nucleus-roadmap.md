@@ -68,20 +68,24 @@ every action with the same requester. The result establishes transfer under
 the supplied perceptual encoding. Whether outcomes teach the sender something
 the input structure alone cannot reveal remains open.
 
-**Next G4 experiment.** Test two conflicting attributed sources with identical
-observable histories under opposite reliability regimes. Counterbalance
-source identity, report order and private bits. A
-[TRAIN-only preflight](../../experiments/predictive_nucleus/conflict_preflight.py)
-found 7,680 matched twins on 19 physical menus. A reference using source
-identity and the earlier selected-action outcome chose correctly on both
-members of every twin. Hiding either kind of evidence bounds accuracy at 50%.
-Freeze the source assignment, held-out histories, query costs and comparator
-budgets before any fit. Compare the learned policy against outcome-blind,
-source-blind, always-latest and matched silence/shuffle controls. Include
-useful and useless clarification, delayed and off-focus reports. Preserve
-separate claim and physical-evidence receipts. The
-[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) tracks
-this gate. Durable retention, corpus ingestion and Wikipedia utility remain later work.
+**G4 matched source conventions passed.** The [registered experiment](../../experiments/predictive_nucleus/MATCHED_CONFLICT_DECISION_V1.md)
+used two environments with identical visible experience and different
+selected-action training payoffs. All 15,360 informative held-out twins had
+both opposite choices correct. The one-bit empirical receiver matched the
+neural receiver at 0.9125 net utility and is retained. Verification price
+and forecast-based query selection were supplied. Broader timing, focus
+and open-ended communication remain outside this bounded decision.
+
+**G5 is the next development priority.** A [TRAIN-only preflight](../../experiments/predictive_nucleus/revision_preflight.py)
+constructed identical observed histories under a lasting revision and a
+single exception. After a distinguishing physical probe and an episode reset,
+the latest distinct physically verified record by event time resolved 1,536
+of 1,536 decisions and preserved a second meaning. The last-arriving duplicate
+or the last unverified claim resolved only half. Freeze a held-out study of
+reduced clarification at matched final correctness that includes competing
+scopes, unresolved contradictions and a dated, scoped evidence baseline.
+The [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md)
+records the remaining gates. Corpus ingestion and Wikipedia utility follow G5.
 
 Independent custody, matched consumed compute, general calibration and formal
 scientific admission remain open. The inclusive **2,000-line objective remains

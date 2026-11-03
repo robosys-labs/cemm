@@ -1,0 +1,15 @@
+{
+  "dated_verified_hits": 1536,
+  "indistinguishable_prepayoff_twins": 768,
+  "last_arrival_hits": 768,
+  "last_claim_hits": 768,
+  "no_later_payoff_max_hits": 768,
+  "no_later_payoff_unresolved": 1536,
+  "post_reset_additional_queries_reset": 1536,
+  "post_reset_additional_queries_retained": 0,
+  "reset_after_query_hits": 1536,
+  "sentinel_retained": 1536,
+  "target_decisions": 1536,
+  "target_scope": "TRAIN only, seed 7; two known directed interpretations per term",
+  "triples": 12
+}
