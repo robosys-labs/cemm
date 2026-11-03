@@ -1,0 +1,207 @@
+{
+  "arms": {
+    "blind": {
+      "fees": [
+        {
+          "gross": 122880,
+          "net_hundredths": 11980800,
+          "q": 61440
+        },
+        {
+          "gross": 92160,
+          "net_hundredths": 9216000,
+          "q": 0
+        },
+        {
+          "gross": 92160,
+          "net_hundredths": 9216000,
+          "q": 0
+        }
+      ],
+      "pre_correct": 92160
+    },
+    "crossed": {
+      "fees": [
+        {
+          "gross": 92160,
+          "net_hundredths": 9062400,
+          "q": 30720
+        },
+        {
+          "gross": 76800,
+          "net_hundredths": 7680000,
+          "q": 0
+        },
+        {
+          "gross": 76800,
+          "net_hundredths": 7680000,
+          "q": 0
+        }
+      ],
+      "pre_correct": 76800
+    },
+    "empirical": {
+      "fees": [
+        {
+          "gross": 122880,
+          "net_hundredths": 12134400,
+          "q": 30720
+        },
+        {
+          "gross": 107520,
+          "net_hundredths": 10752000,
+          "q": 0
+        },
+        {
+          "gross": 107520,
+          "net_hundredths": 10752000,
+          "q": 0
+        }
+      ],
+      "pre_correct": 107520
+    },
+    "fixed0": {
+      "fees": [
+        {
+          "gross": 122880,
+          "net_hundredths": 11750400,
+          "q": 107520
+        },
+        {
+          "gross": 92160,
+          "net_hundredths": 9216000,
+          "q": 0
+        },
+        {
+          "gross": 92160,
+          "net_hundredths": 9216000,
+          "q": 0
+        }
+      ],
+      "pre_correct": 92160
+    },
+    "fixed1": {
+      "fees": [
+        {
+          "gross": 122880,
+          "net_hundredths": 11750400,
+          "q": 107520
+        },
+        {
+          "gross": 92160,
+          "net_hundredths": 9216000,
+          "q": 0
+        },
+        {
+          "gross": 92160,
+          "net_hundredths": 9216000,
+          "q": 0
+        }
+      ],
+      "pre_correct": 92160
+    },
+    "free_silent": {
+      "fees": [
+        {
+          "gross": 61440,
+          "net_hundredths": 6144000,
+          "q": 0
+        },
+        {
+          "gross": 61440,
+          "net_hundredths": 6144000,
+          "q": 0
+        },
+        {
+          "gross": 61440,
+          "net_hundredths": 6144000,
+          "q": 0
+        }
+      ],
+      "pre_correct": 61440
+    },
+    "learned": {
+      "fees": [
+        {
+          "gross": 122880,
+          "net_hundredths": 12134400,
+          "q": 30720
+        },
+        {
+          "gross": 107520,
+          "net_hundredths": 10752000,
+          "q": 0
+        },
+        {
+          "gross": 107520,
+          "net_hundredths": 10752000,
+          "q": 0
+        }
+      ],
+      "pre_correct": 107520
+    },
+    "shuffled": {
+      "fees": [
+        {
+          "gross": 107520,
+          "net_hundredths": 10598400,
+          "q": 30720
+        },
+        {
+          "gross": 107520,
+          "net_hundredths": 10752000,
+          "q": 0
+        },
+        {
+          "gross": 107520,
+          "net_hundredths": 10752000,
+          "q": 0
+        }
+      ],
+      "pre_correct": 107520
+    },
+    "suppressed": {
+      "fees": [
+        {
+          "gross": 107520,
+          "net_hundredths": 10598400,
+          "q": 30720
+        },
+        {
+          "gross": 107520,
+          "net_hundredths": 10752000,
+          "q": 0
+        },
+        {
+          "gross": 107520,
+          "net_hundredths": 10752000,
+          "q": 0
+        }
+      ],
+      "pre_correct": 107520
+    }
+  },
+  "checker_sha256": "5994ff8f28a2b47b2f19c0a4b73e3754b589c44e81e833ff9c0aaf48ce0acbf5",
+  "counts": {
+    "ambiguous": 30720,
+    "ambiguous_correct": 15360,
+    "chosen_train_target_rewards": 122880,
+    "critical": 30720,
+    "critical_correct": 30720,
+    "critical_crossed": 0,
+    "fee_specific_arm_actions": 3317760,
+    "fits_each_kind": 20,
+    "git_stage_files": 40,
+    "identical_visible_rechecks": 30720,
+    "physical_tape_site_action_checks": 384,
+    "probe_outcomes_train": 61440,
+    "raw_scenarios": 61440,
+    "twin_hits": 15360,
+    "twins": 15360,
+    "unassisted_arm_choices": 1105920,
+    "verified_outputs": 37
+  },
+  "max_abs_fit_error": 8.881784197001252e-16,
+  "stage": "scored",
+  "unique_held_case_ids": 12288
+}

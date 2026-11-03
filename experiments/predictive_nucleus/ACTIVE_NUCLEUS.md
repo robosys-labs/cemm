@@ -1,9 +1,18 @@
-# Active nucleus — G4 sender transfers to unseen bindings
+# Active nucleus — G4 source conventions retained, bounded G5 underway
 
 Updated 2026-11-03. Tracking [#22](https://github.com/robosys-labs/cemm/issues/22),
-[PR #84](https://github.com/robosys-labs/cemm/pull/84).
+[PR #85](https://github.com/robosys-labs/cemm/pull/85).
 
 ## Latest G4 result
+
+[Matched source conventions](MATCHED_CONFLICT_DECISION_V1.md) passed all 460
+registered checks. On 15,360 held-out pairs with the same test inputs and
+opposite correct choices, both fitted receivers made both choices correctly
+every time. Crossed checkpoints failed every critical choice. At 0.05 the
+receiver verified every unresolved case. At 0.75 it preserved uncertainty
+and declined. The one-bit outcome-trained empirical policy tied the neural
+receiver on every choice and request and is retained at 0.9125 mean net
+utility. Live G3 probabilities matched the archive exactly.
 
 [Transfer binding v1](TRANSFER_BINDING_DECISION_V1.md) passed all 400
 registered checks on new pairings of familiar badges and on fresh badges.
@@ -15,12 +24,12 @@ The 61,440 evaluations reuse 12,288 scenarios, and all ten fits have identical
 sender weights. The earlier [finite sender](SENDER_DECISION_V1.md) had seen
 all 16 of its possible inputs in TRAIN.
 
-The next G4 experiment should require the receiver to learn which conflicting
-source to use from previous physical outcomes. A [TRAIN-only preflight](conflict_preflight.py)
-constructs matched histories on 19 physical menus. Either masking the earlier
-outcome or anonymizing the sources caps target success at 50%. The reference
-using both reaches 100%. The learned policy and held-out conflict evaluation
-are pending.
+G5 development begins with correction of a physically corroborated meaning
+and retention across episode resets. The [TRAIN-only revision preflight](revision_preflight.py)
+separates a lasting revision from a single exception. A simple dated-evidence
+reference transferred all 1,536 post-probe choices without requerying. A
+prospective held-out learner must now address scope and preserve an existing
+second meaning at matched correctness.
 
 [Receiver review](RECEIVER_REVIEW_V1.md) reproduced every PR #82 decision.
 Its 96 menu–goal cases use 63 physical menus, its decoder-unresolved tokens
@@ -116,8 +125,8 @@ Accepted G1/G2 development gains and all historical source/data locks remain int
 | G1 | Development ready for G2; original scientific admission NOT_ADMITTED. |
 | G2 | Accepted bounded composition, hidden propagation and supplied timing retained; no full scientific-admission claim. |
 | G3 | Bounded development COMPLETE by audited v3; v1 REVISE and v2 STOP_INCOMPLETE_EVIDENCE remain unchanged. |
-| G4 | Bounded receiver and shared sender transfer retained. Next are learned use of source history under conflict, delayed reports and changed focus. |
-| G5 | Durable acquisition, correction and lifelong retention remain open. |
+| G4 | Bounded matched-convention receiver retained. Broader conflict, delay, off-topic communication and formal admission remain open. |
+| G5 | Revision and reset preflight verified on TRAIN. Held-out durable correction and retention remain open. |
 | G6–G8 | Corpus bridge, measured Wikipedia utility and guarded integration remain open. |
 
 Independent custody, matched consumed compute, general calibration and formal

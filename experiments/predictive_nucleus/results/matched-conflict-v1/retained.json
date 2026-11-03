@@ -1,0 +1,95 @@
+{
+  "checkpoint_field": "empirical",
+  "checkpoints": {
+    "nand-11": {
+      "file": "fit/nand-11.json",
+      "sha256": "27539f87bd666a2c20c2ae1dff4515d253a39ed22465bd270120976829ed0984",
+      "weights": [
+        1,
+        -1
+      ]
+    },
+    "nand-23": {
+      "file": "fit/nand-23.json",
+      "sha256": "b70f43bd8b43cc7f747a6cfc771cf5d2fb75e7c821373903a9747d6f1a7881a5",
+      "weights": [
+        1,
+        -1
+      ]
+    },
+    "nand-37": {
+      "file": "fit/nand-37.json",
+      "sha256": "827c5e061fba70a3f7190d11fe71c964d06940d8b9ba360933d14e272d7cf10f",
+      "weights": [
+        1,
+        -1
+      ]
+    },
+    "nand-53": {
+      "file": "fit/nand-53.json",
+      "sha256": "231fd0fdc038af539c3e1b0631023a67cd2bc4b35cff0c81e5a045b7ba56ca29",
+      "weights": [
+        1,
+        -1
+      ]
+    },
+    "nand-7": {
+      "file": "fit/nand-7.json",
+      "sha256": "9297d2e34367444e5d9ab8ce3de10520480c3605eb7bf6735aff7c0e579dcb39",
+      "weights": [
+        1,
+        -1
+      ]
+    },
+    "nor-11": {
+      "file": "fit/nor-11.json",
+      "sha256": "47d0b7d25e05315af200c1b8689683960beed8bc003042d1dcb5e12c12fb9e7c",
+      "weights": [
+        1,
+        -1
+      ]
+    },
+    "nor-23": {
+      "file": "fit/nor-23.json",
+      "sha256": "24c0a2b4ff0671690588244b7064b92cca0a3233afdf348163fb1686c3d273d4",
+      "weights": [
+        1,
+        -1
+      ]
+    },
+    "nor-37": {
+      "file": "fit/nor-37.json",
+      "sha256": "a92cc075e6b86bfcbb88ffdeef7ceb94561710294f37c197aea006cc9dd709e5",
+      "weights": [
+        1,
+        -1
+      ]
+    },
+    "nor-53": {
+      "file": "fit/nor-53.json",
+      "sha256": "87cdf4729b63c3f2a1c35384d9e26d4c3405824f979df8c340ea2eee82bafb85",
+      "weights": [
+        1,
+        -1
+      ]
+    },
+    "nor-7": {
+      "file": "fit/nor-7.json",
+      "sha256": "ca3c761b98f65ecd382baa496cca442fe5dbf42f5013fce425c09333a57b4fb3",
+      "weights": [
+        1,
+        -1
+      ]
+    }
+  },
+  "convention_order": [
+    "persist",
+    "switch"
+  ],
+  "decision": "RETAIN_ONE_BIT_EMPIRICAL_RECEIVER",
+  "decision_commit": "f8b2942be735679576d4dd4dcb34457bb26ce541",
+  "fit_commit": "a817b9e446f7ff610a267af6f28b73525bf4e437",
+  "implementation": "experiments.predictive_nucleus.conflict_policy.Receiver",
+  "kind": "empirical",
+  "scope": "Load the sign fitted from the observed training outcomes for the applicable receiver, without exposing the convention ID during a decision."
+}
