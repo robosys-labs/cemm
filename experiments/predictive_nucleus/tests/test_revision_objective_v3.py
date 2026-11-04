@@ -13,7 +13,7 @@ class BalancedObjectiveDiagnostic(unittest.TestCase):
                    wraps=catalogue) as watched:
             results=run()
         self.assertEqual(len(results),10)
-        self.assertEqual(len(watched.call_args_list),2)
+        self.assertEqual(len(watched.call_args_list),10)  # one call per law/seed
         self.assertTrue(all(call.args[1]=='train' for call in watched.call_args_list))
         total_previous=0
         for key,record in results.items():
