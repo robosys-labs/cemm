@@ -1,0 +1,5648 @@
+{
+  "version": "g5-v4-switch-boundary",
+  "stage": "posthoc_train_only",
+  "protocol_freeze_commit": "0ef599a3e0f8edbb2bb4e78c6be75eb53dba6b2e",
+  "source_commit": "e5ec25f8cd79773f677431dfb375a42cbae87fd0",
+  "hosted_run": 41811098322,
+  "hosted_job": 126510249186,
+  "hosted_tests_passed": 1211,
+  "no_g5_challenge_scored": true,
+  "no_parameter_fitted_or_promoted": true,
+  "conditions": {
+    "nand-11": {
+      "decision": "BOUNDED_REPRESENTATION_FEASIBLE_ON_TRAIN",
+      "feasible_rates": [
+        0.0004,
+        0.0006,
+        0.0008,
+        0.001,
+        0.00125,
+        0.0015,
+        0.00175,
+        0.002,
+        0.00225,
+        0.0025
+      ],
+      "grid": {
+        "0.0001": {
+          "balanced_mean_nll": 0.38729320592712174,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0000952385575029302,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 16,
+            "confident": 176,
+            "correct_confident": 176,
+            "mean_nll": 0.01580632764084605,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.141561733207487,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004511556933032307,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0002": {
+          "balanced_mean_nll": 0.33624874614993905,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00018139730414368227,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 8,
+            "confident": 184,
+            "correct_confident": 184,
+            "mean_nll": 0.00977697751556455,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 176,
+            "confident": 16,
+            "correct_confident": 8,
+            "mean_nll": 0.9945140762715797,
+            "observations": 192,
+            "wrong_confident": 8
+          },
+          "pre_confident_pairs": 8,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004455184662672857,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0004": {
+          "balanced_mean_nll": 0.2925579905255234,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0003288866583418537,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.00670427231594535,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.866601990177457,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004367709083167838,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0006": {
+          "balanced_mean_nll": 0.27267474859746604,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0004467796353635478,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.005723733167818441,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8079977150324508,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004302797592128862,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0008": {
+          "balanced_mean_nll": 0.26205214783743286,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0005386865457528422,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.005285167436590598,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7766186824570953,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004252593618612761,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.001": {
+          "balanced_mean_nll": 0.25616539689770684,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0006076534394289235,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.005068891791585344,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7592147634856555,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0042125354158795945,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00125": {
+          "balanced_mean_nll": 0.2525673452127241,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0006963661401897803,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004951857150225574,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7485776709251523,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0041725075627944384,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0015": {
+          "balanced_mean_nll": 0.2514591376136361,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0008644204941749556,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004927459797221822,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.745309489908159,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004140463135527325,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00175": {
+          "balanced_mean_nll": 0.2518806176946227,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0010410668594141859,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004956960157560763,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7465706905865338,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004114202339773708,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.002": {
+          "balanced_mean_nll": 0.2532920147975784,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0012254664465631837,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0050206548508373,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7507631171346197,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0040922724072782295,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00225": {
+          "balanced_mean_nll": 0.25536672542427247,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.001416787254472418,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.005107422966627807,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7569190795276558,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004073673778533777,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0025": {
+          "balanced_mean_nll": 0.25789608571288497,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0016142451983376938,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.005210487613597021,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7644200742687954,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004057695256262533,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "1e-05": {
+          "balanced_mean_nll": 0.5737016884189082,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000009951250607320716,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 48,
+            "confident": 144,
+            "correct_confident": 144,
+            "mean_nll": 0.09752080752325203,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 96,
+            "confident": 96,
+            "correct_confident": 48,
+            "mean_nll": 1.6190116984236427,
+            "observations": 192,
+            "wrong_confident": 48
+          },
+          "pre_confident_pairs": 48,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004572559309829831,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "2.5e-05": {
+          "balanced_mean_nll": 0.4982473897369691,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000024696822054859346,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 40,
+            "confident": 152,
+            "correct_confident": 152,
+            "mean_nll": 0.047701817640639,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 96,
+            "confident": 96,
+            "correct_confident": 48,
+            "mean_nll": 1.4424787623931454,
+            "observations": 192,
+            "wrong_confident": 48
+          },
+          "pre_confident_pairs": 48,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004561589177122821,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "5e-05": {
+          "balanced_mean_nll": 0.4419456068677306,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00004879509489275069,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 36,
+            "confident": 156,
+            "correct_confident": 156,
+            "mean_nll": 0.027181106746461955,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 128,
+            "confident": 64,
+            "correct_confident": 32,
+            "mean_nll": 1.2941116568067093,
+            "observations": 192,
+            "wrong_confident": 32
+          },
+          "pre_confident_pairs": 32,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004544057050020599,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        }
+      },
+      "law": "nand",
+      "matched_prefix_pairs": 96,
+      "previous_v3_boundary": {
+        "balanced_mean_nll": 0.25789608571288497,
+        "joint_pass": true,
+        "no_info": {
+          "changed_confident_decisions": 0,
+          "maximum_abs_posterior_drift": 0.0016142451983376938,
+          "trials": 192
+        },
+        "post": {
+          "abstained": 0,
+          "confident": 192,
+          "correct_confident": 192,
+          "mean_nll": 0.005210487613597021,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "abstained": 192,
+          "confident": 0,
+          "correct_confident": 0,
+          "mean_nll": 0.7644200742687954,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre_confident_pairs": 0,
+        "retain": {
+          "abstained": 0,
+          "confident": 576,
+          "correct_confident": 576,
+          "mean_nll": 0.004057695256262533,
+          "observations": 576,
+          "wrong_confident": 0
+        }
+      },
+      "seed": 11,
+      "train_only": true
+    },
+    "nand-23": {
+      "decision": "BOUNDED_REPRESENTATION_FEASIBLE_ON_TRAIN",
+      "feasible_rates": [
+        0.0002,
+        0.0004,
+        0.0006,
+        0.0008,
+        0.001,
+        0.00125,
+        0.0015,
+        0.00175,
+        0.002,
+        0.00225,
+        0.0025
+      ],
+      "grid": {
+        "0.0001": {
+          "balanced_mean_nll": 0.3721857859314565,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0000942922325209497,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 12,
+            "confident": 180,
+            "correct_confident": 180,
+            "mean_nll": 0.011803783301317495,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.100927899114456,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0038256753785959638,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0002": {
+          "balanced_mean_nll": 0.32266248585085516,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00017780145802944597,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.007420820187678452,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9567982808206453,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0037683565442417372,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0004": {
+          "balanced_mean_nll": 0.28201634342523224,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0003158614620072664,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.00523332188152223,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8371327179616391,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0036829904325354143,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0006": {
+          "balanced_mean_nll": 0.2648557262327284,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00042011696654314923,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004567281782353363,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7863776539551092,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003622242960722737,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0008": {
+          "balanced_mean_nll": 0.25659592977001655,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0004953784622422908,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004294467464912905,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7619166464206222,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0035766754245145876,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.001": {
+          "balanced_mean_nll": 0.2527596670639169,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0005455850425915842,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0041827135031602125,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7505551261977356,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003541161490854931,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00125": {
+          "balanced_mean_nll": 0.2513689646182379,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0006143805392321844,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004153891392380369,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7464466047235417,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003506397738791551,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0015": {
+          "balanced_mean_nll": 0.2521560077127823,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0008019329848775458,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004191883580047921,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7487970642606666,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003479075297632271,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00175": {
+          "balanced_mean_nll": 0.25422835300810837,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.001000015075904137,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.00426860648240759,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7549594378798119,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0034570146621056698,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.002": {
+          "balanced_mean_nll": 0.25709591824052197,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0012063591003364793,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004369788118619352,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7634791489303274,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0034388176726191802,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00225": {
+          "balanced_mean_nll": 0.2604687922364828,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0014192757821862023,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004487376700886062,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7734954552693352,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0034235447392270894,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0025": {
+          "balanced_mean_nll": 0.26416583862547277,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.001637487133240384,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0046164633762944595,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7844705122139347,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003410540286189176,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "1e-05": {
+          "balanced_mean_nll": 0.5575306142856968,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000009941366145270643,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 48,
+            "confident": 144,
+            "correct_confident": 144,
+            "mean_nll": 0.0748005905884737,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 96,
+            "confident": 96,
+            "correct_confident": 48,
+            "mean_nll": 1.59390133410584,
+            "observations": 192,
+            "wrong_confident": 48
+          },
+          "pre_confident_pairs": 48,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003889918162776964,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "2.5e-05": {
+          "balanced_mean_nll": 0.48217464532530574,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000024635371851809175,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 36,
+            "confident": 156,
+            "correct_confident": 156,
+            "mean_nll": 0.03570898278849985,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 96,
+            "confident": 96,
+            "correct_confident": 48,
+            "mean_nll": 1.406936765811582,
+            "observations": 192,
+            "wrong_confident": 48
+          },
+          "pre_confident_pairs": 48,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0038781873758354283,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "5e-05": {
+          "balanced_mean_nll": 0.4261585952068448,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00004855231906023168,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 18,
+            "confident": 174,
+            "correct_confident": 174,
+            "mean_nll": 0.020207109462783705,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 136,
+            "confident": 56,
+            "correct_confident": 28,
+            "mean_nll": 1.2544090722081307,
+            "observations": 192,
+            "wrong_confident": 28
+          },
+          "pre_confident_pairs": 28,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0038596039496200246,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        }
+      },
+      "law": "nand",
+      "matched_prefix_pairs": 96,
+      "previous_v3_boundary": {
+        "balanced_mean_nll": 0.26416583862547277,
+        "joint_pass": true,
+        "no_info": {
+          "changed_confident_decisions": 0,
+          "maximum_abs_posterior_drift": 0.001637487133240384,
+          "trials": 192
+        },
+        "post": {
+          "abstained": 0,
+          "confident": 192,
+          "correct_confident": 192,
+          "mean_nll": 0.0046164633762944595,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "abstained": 192,
+          "confident": 0,
+          "correct_confident": 0,
+          "mean_nll": 0.7844705122139347,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre_confident_pairs": 0,
+        "retain": {
+          "abstained": 0,
+          "confident": 576,
+          "correct_confident": 576,
+          "mean_nll": 0.003410540286189176,
+          "observations": 576,
+          "wrong_confident": 0
+        }
+      },
+      "seed": 23,
+      "train_only": true
+    },
+    "nand-37": {
+      "decision": "BOUNDED_REPRESENTATION_FEASIBLE_ON_TRAIN",
+      "feasible_rates": [
+        0.0006,
+        0.0008,
+        0.001,
+        0.00125,
+        0.0015,
+        0.00175,
+        0.002,
+        0.00225,
+        0.0025
+      ],
+      "grid": {
+        "0.0001": {
+          "balanced_mean_nll": 0.40704657440761843,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0000964245002882079,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 28,
+            "confident": 164,
+            "correct_confident": 164,
+            "mean_nll": 0.023689074581619392,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.191572641231116,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.005878007410119975,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0002": {
+          "balanced_mean_nll": 0.35468520229785455,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00018594966482811393,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 12,
+            "confident": 180,
+            "correct_confident": 180,
+            "mean_nll": 0.014396768148726155,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 152,
+            "confident": 40,
+            "correct_confident": 20,
+            "mean_nll": 1.0438609597224664,
+            "observations": 192,
+            "wrong_confident": 20
+          },
+          "pre_confident_pairs": 20,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.005797879022371142,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0004": {
+          "balanced_mean_nll": 0.30840926230465776,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00034569907292618385,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 4,
+            "confident": 188,
+            "correct_confident": 188,
+            "mean_nll": 0.00955476726215944,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9099974172633414,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.005675602388472509,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0006": {
+          "balanced_mean_nll": 0.28616465863743396,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0004818143402065267,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.007967639864815265,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8449404962157469,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.005585839831739787,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0008": {
+          "balanced_mean_nll": 0.2734239707391381,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0005965370684423987,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.007228462457752441,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8075268355182187,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.005516614241443252,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.001": {
+          "balanced_mean_nll": 0.26563770063088593,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0006918340712325499,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.00683725499833706,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7846145240231435,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0054613228711771645,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00125": {
+          "balanced_mean_nll": 0.25992480967305304,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0007862583524020361,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.006588055612066883,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7677804861048649,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.005405887302227317,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0015": {
+          "balanced_mean_nll": 0.2569385103052733,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0008807012272197823,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.006483546540982504,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7589706971833837,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.00536128719145378,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00175": {
+          "balanced_mean_nll": 0.25567376874461695,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.001073005748233824,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.006463019410698601,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7552337485830986,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.005324538240053649,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.002": {
+          "balanced_mean_nll": 0.25555618262575824,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0012726565060439121,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.006495597023517368,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7548792686409979,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0052936822127595635,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00225": {
+          "balanced_mean_nll": 0.2562326686725379,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0014784608652040065,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0065638574748366285,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7568667736814682,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.005267374861308914,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0025": {
+          "balanced_mean_nll": 0.2574742150669303,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.001689456431403391,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.006657195597684379,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7605207900447896,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.005244659558316998,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "1e-05": {
+          "balanced_mean_nll": 0.5944216231651523,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000009963575626805322,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 48,
+            "confident": 144,
+            "correct_confident": 144,
+            "mean_nll": 0.13636577865536356,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 96,
+            "confident": 96,
+            "correct_confident": 48,
+            "mean_nll": 1.640932737144107,
+            "observations": 192,
+            "wrong_confident": 48
+          },
+          "pre_confident_pairs": 48,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.005966353695986594,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "2.5e-05": {
+          "balanced_mean_nll": 0.5188869036814462,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00002477332893687737,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 40,
+            "confident": 152,
+            "correct_confident": 152,
+            "mean_nll": 0.0700155261911385,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 96,
+            "confident": 96,
+            "correct_confident": 48,
+            "mean_nll": 1.4806948626849117,
+            "observations": 192,
+            "wrong_confident": 48
+          },
+          "pre_confident_pairs": 48,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.00595032216828817,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "5e-05": {
+          "balanced_mean_nll": 0.4623178253759704,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000049097866787568487,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 36,
+            "confident": 156,
+            "correct_confident": 156,
+            "mean_nll": 0.0406934105614907,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 112,
+            "confident": 80,
+            "correct_confident": 40,
+            "mean_nll": 1.3403352280621057,
+            "observations": 192,
+            "wrong_confident": 40
+          },
+          "pre_confident_pairs": 40,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.00592483750431491,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        }
+      },
+      "law": "nand",
+      "matched_prefix_pairs": 96,
+      "previous_v3_boundary": {
+        "balanced_mean_nll": 0.2574742150669303,
+        "joint_pass": true,
+        "no_info": {
+          "changed_confident_decisions": 0,
+          "maximum_abs_posterior_drift": 0.001689456431403391,
+          "trials": 192
+        },
+        "post": {
+          "abstained": 0,
+          "confident": 192,
+          "correct_confident": 192,
+          "mean_nll": 0.006657195597684379,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "abstained": 192,
+          "confident": 0,
+          "correct_confident": 0,
+          "mean_nll": 0.7605207900447896,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre_confident_pairs": 0,
+        "retain": {
+          "abstained": 0,
+          "confident": 576,
+          "correct_confident": 576,
+          "mean_nll": 0.005244659558316998,
+          "observations": 576,
+          "wrong_confident": 0
+        }
+      },
+      "seed": 37,
+      "train_only": true
+    },
+    "nand-53": {
+      "decision": "BOUNDED_REPRESENTATION_FEASIBLE_ON_TRAIN",
+      "feasible_rates": [
+        0.0004,
+        0.0006,
+        0.0008,
+        0.001,
+        0.00125,
+        0.0015,
+        0.00175,
+        0.002,
+        0.00225,
+        0.0025
+      ],
+      "grid": {
+        "0.0001": {
+          "balanced_mean_nll": 0.3829260086161894,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0000949190483251483,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 12,
+            "confident": 180,
+            "correct_confident": 180,
+            "mean_nll": 0.014469715713433555,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.130007453749864,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004300856385270526,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0002": {
+          "balanced_mean_nll": 0.33224994388693885,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0001801796637214345,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 4,
+            "confident": 188,
+            "correct_confident": 188,
+            "mean_nll": 0.008968139186097316,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 184,
+            "confident": 8,
+            "correct_confident": 4,
+            "mean_nll": 0.9835462820484312,
+            "observations": 192,
+            "wrong_confident": 4
+          },
+          "pre_confident_pairs": 4,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004235410426287974,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0004": {
+          "balanced_mean_nll": 0.2895601161292233,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0003244512720795012,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.00618363624248986,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8583580519849505,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004138660160229488,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0006": {
+          "balanced_mean_nll": 0.2706606669469316,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00043765396884271057,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.005310345997824304,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8026017297542318,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004069925088738658,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0008": {
+          "balanced_mean_nll": 0.26092455454531144,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0005237947505408735,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004932113943234415,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7738233300243622,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004018219668337668,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.001": {
+          "balanced_mean_nll": 0.2558230550431407,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0005862199654376732,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004756741895077883,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.758734680348553,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003977742885791243,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00125": {
+          "balanced_mean_nll": 0.2530801273250892,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0007202130656453198,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004677117723285115,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7506253604393267,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003937903812655805,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0015": {
+          "balanced_mean_nll": 0.2527086131687501,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0009173268694713244,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004681527654376545,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7495379096248757,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.00390640222699808,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00175": {
+          "balanced_mean_nll": 0.25376935703848896,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.001123257654061821,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004734576573609335,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7526926720123001,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003880822529557589,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.002": {
+          "balanced_mean_nll": 0.2557398763456111,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0013361399796926465,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004818297392805398,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7585417189317236,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003859612712304103,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00225": {
+          "balanced_mean_nll": 0.2583075030067344,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0015545748042789798,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004922575151290316,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7661582073062781,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003841726562634656,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0025": {
+          "balanced_mean_nll": 0.2612747434264033,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0017774974757154283,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.005041262190762018,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7749565367732546,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003826431315193126,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "1e-05": {
+          "balanced_mean_nll": 0.5700069954362746,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000009947915810065537,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 48,
+            "confident": 144,
+            "correct_confident": 144,
+            "mean_nll": 0.09025623127596492,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 96,
+            "confident": 96,
+            "correct_confident": 48,
+            "mean_nll": 1.615389701636646,
+            "observations": 192,
+            "wrong_confident": 48
+          },
+          "pre_confident_pairs": 48,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004375053396213044,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "2.5e-05": {
+          "balanced_mean_nll": 0.4940501183352663,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00002467610952949003,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 36,
+            "confident": 156,
+            "correct_confident": 156,
+            "mean_nll": 0.04383241081498712,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 96,
+            "confident": 96,
+            "correct_confident": 48,
+            "mean_nll": 1.4339565227531006,
+            "observations": 192,
+            "wrong_confident": 48
+          },
+          "pre_confident_pairs": 48,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004361421437711202,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "5e-05": {
+          "balanced_mean_nll": 0.4375639344115449,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000048713236879494026,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 28,
+            "confident": 164,
+            "correct_confident": 164,
+            "mean_nll": 0.024898244169442346,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 120,
+            "confident": 72,
+            "correct_confident": 36,
+            "mean_nll": 1.2834536515449575,
+            "observations": 192,
+            "wrong_confident": 36
+          },
+          "pre_confident_pairs": 36,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.004339907520234729,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        }
+      },
+      "law": "nand",
+      "matched_prefix_pairs": 96,
+      "previous_v3_boundary": {
+        "balanced_mean_nll": 0.2612747434264033,
+        "joint_pass": true,
+        "no_info": {
+          "changed_confident_decisions": 0,
+          "maximum_abs_posterior_drift": 0.0017774974757154283,
+          "trials": 192
+        },
+        "post": {
+          "abstained": 0,
+          "confident": 192,
+          "correct_confident": 192,
+          "mean_nll": 0.005041262190762018,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "abstained": 192,
+          "confident": 0,
+          "correct_confident": 0,
+          "mean_nll": 0.7749565367732546,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre_confident_pairs": 0,
+        "retain": {
+          "abstained": 0,
+          "confident": 576,
+          "correct_confident": 576,
+          "mean_nll": 0.003826431315193126,
+          "observations": 576,
+          "wrong_confident": 0
+        }
+      },
+      "seed": 53,
+      "train_only": true
+    },
+    "nand-7": {
+      "decision": "BOUNDED_REPRESENTATION_FEASIBLE_ON_TRAIN",
+      "feasible_rates": [
+        0.0002,
+        0.0004,
+        0.0006,
+        0.0008,
+        0.001,
+        0.00125,
+        0.0015,
+        0.00175,
+        0.002,
+        0.00225,
+        0.0025
+      ],
+      "grid": {
+        "0.0001": {
+          "balanced_mean_nll": 0.35715154456146747,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00009387752953341974,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 8,
+            "confident": 184,
+            "correct_confident": 184,
+            "mean_nll": 0.008102179389260887,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.0601679187528017,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0031845355423398883,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0002": {
+          "balanced_mean_nll": 0.31080717843149297,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00017623569559550856,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.005287345685085094,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9240373404432973,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003096849166096473,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0004": {
+          "balanced_mean_nll": 0.2765825033228735,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00031025825530568707,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003956790284615771,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8228027147630899,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0029880049209148624,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0006": {
+          "balanced_mean_nll": 0.264732505594838,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00040877323679205935,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0036214973385093135,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7876544762559335,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0029215431900712564,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0008": {
+          "balanced_mean_nll": 0.2607805655224847,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0005472484583039228,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0035439288872203874,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7759216200021024,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0028761476781312277,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.001": {
+          "balanced_mean_nll": 0.26049745560812926,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0007188462511306948,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0035717140943251715,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7750776922390729,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0028429604909896568,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00125": {
+          "balanced_mean_nll": 0.262773322727413,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0009415501105937835,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0036784660726791457,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7818294083133895,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002812093796170218,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0015": {
+          "balanced_mean_nll": 0.26659805351742755,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.001170631920081086,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003828015116052267,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.793177300771709,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0027888446645212782,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00175": {
+          "balanced_mean_nll": 0.2712441604604214,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.001404208319236891,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004001761798491417,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8069600506370279,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002770668945744743,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.002": {
+          "balanced_mean_nll": 0.2763314926382195,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0016410521877085193,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004190211906054941,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8220482130333302,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002756052975273314,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00225": {
+          "balanced_mean_nll": 0.28164608841739935,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0018803338288052446,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004387967964536219,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8378062609824708,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002744036305191081,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0025": {
+          "balanced_mean_nll": 0.28706109982006395,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.002121474622412564,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0045916968489153566,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8538576240916805,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002733978519596047,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "1e-05": {
+          "balanced_mean_nll": 0.5415953816616318,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00000993702672371765,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 36,
+            "confident": 156,
+            "correct_confident": 156,
+            "mean_nll": 0.05086702630996659,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 96,
+            "confident": 96,
+            "correct_confident": 48,
+            "mean_nll": 1.57061441000712,
+            "observations": 192,
+            "wrong_confident": 48
+          },
+          "pre_confident_pairs": 48,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0033047086678088668,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "2.5e-05": {
+          "balanced_mean_nll": 0.46600304965535516,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00002460834233428133,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 28,
+            "confident": 164,
+            "correct_confident": 164,
+            "mean_nll": 0.023923303635623745,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 112,
+            "confident": 80,
+            "correct_confident": 40,
+            "mean_nll": 1.370805340441212,
+            "observations": 192,
+            "wrong_confident": 40
+          },
+          "pre_confident_pairs": 40,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0032805048892298257,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "5e-05": {
+          "balanced_mean_nll": 0.4100810719946373,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00004844561367319672,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 12,
+            "confident": 180,
+            "correct_confident": 180,
+            "mean_nll": 0.013597664392725209,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.2134011311787607,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003244420412425907,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        }
+      },
+      "law": "nand",
+      "matched_prefix_pairs": 96,
+      "previous_v3_boundary": {
+        "balanced_mean_nll": 0.28706109982006395,
+        "joint_pass": true,
+        "no_info": {
+          "changed_confident_decisions": 0,
+          "maximum_abs_posterior_drift": 0.002121474622412564,
+          "trials": 192
+        },
+        "post": {
+          "abstained": 0,
+          "confident": 192,
+          "correct_confident": 192,
+          "mean_nll": 0.0045916968489153566,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "abstained": 192,
+          "confident": 0,
+          "correct_confident": 0,
+          "mean_nll": 0.8538576240916805,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre_confident_pairs": 0,
+        "retain": {
+          "abstained": 0,
+          "confident": 576,
+          "correct_confident": 576,
+          "mean_nll": 0.002733978519596047,
+          "observations": 576,
+          "wrong_confident": 0
+        }
+      },
+      "seed": 7,
+      "train_only": true
+    },
+    "nor-11": {
+      "decision": "BOUNDED_REPRESENTATION_FEASIBLE_ON_TRAIN",
+      "feasible_rates": [
+        0.0002,
+        0.0004,
+        0.0006,
+        0.0008,
+        0.001,
+        0.00125,
+        0.0015,
+        0.00175,
+        0.002,
+        0.00225,
+        0.0025
+      ],
+      "grid": {
+        "0.0001": {
+          "balanced_mean_nll": 0.3474734040363139,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00009403246282891839,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.005506828686922743,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.0339944177428748,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0029189656791440786,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0002": {
+          "balanced_mean_nll": 0.30852584713810777,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00017681949590023227,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003960790508543844,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9187468951344752,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002869855771304398,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0004": {
+          "balanced_mean_nll": 0.282319725156495,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0003123418098385927,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0031861720419209677,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8409587165443079,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0028142868832561944,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0006": {
+          "balanced_mean_nll": 0.27451862165500857,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00041298208371037815,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.002967303713913438,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8178054361786402,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002783125072472101,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0008": {
+          "balanced_mean_nll": 0.27278952543041957,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0005532415285611769,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0029007386295626467,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8127049384680509,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002762899193645167,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.001": {
+          "balanced_mean_nll": 0.2737848345612921,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0007222725495227289,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.00289999964245442,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8157059275611123,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0027485764803095733,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00125": {
+          "balanced_mean_nll": 0.2769623341981184,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0009418345094627245,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.002946815573902662,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8252046415715243,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0027355454489282243,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0015": {
+          "balanced_mean_nll": 0.2812867051598048,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0011680542545348116,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003023791108976858,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8381104481027997,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0027258762676379226,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00175": {
+          "balanced_mean_nll": 0.2862288522342323,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.001399105435497594,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003118907237612661,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8528492677126761,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.00271838175240802,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.002": {
+          "balanced_mean_nll": 0.29150673448272024,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0016337500266531135,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003225689679175942,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8685821301521418,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002712383616842975,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00225": {
+          "balanced_mean_nll": 0.2969561075902767,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0018711244625286838,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.00334027314732017,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8848205855079617,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0027074641155481814,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0025": {
+          "balanced_mean_nll": 0.3024756389421038,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0021106112785956865,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003460172030484603,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9012633940119451,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0027033507838816312,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "1e-05": {
+          "balanced_mean_nll": 0.5199229008217718,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000009938671594387875,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 48,
+            "confident": 144,
+            "correct_confident": 144,
+            "mean_nll": 0.030514901104551014,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 96,
+            "confident": 96,
+            "correct_confident": 48,
+            "mean_nll": 1.5262614681140045,
+            "observations": 192,
+            "wrong_confident": 48
+          },
+          "pre_confident_pairs": 48,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0029923332467600345,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "2.5e-05": {
+          "balanced_mean_nll": 0.4470204384154304,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000024618495469404776,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 16,
+            "confident": 176,
+            "correct_confident": 176,
+            "mean_nll": 0.01424834152171766,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 128,
+            "confident": 64,
+            "correct_confident": 32,
+            "mean_nll": 1.3238359439399863,
+            "observations": 192,
+            "wrong_confident": 32
+          },
+          "pre_confident_pairs": 32,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0029770297845872944,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "5e-05": {
+          "balanced_mean_nll": 0.3947954714873012,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00004848556403845225,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.008490014330019266,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.1729417072083164,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0029546929235680017,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        }
+      },
+      "law": "nor",
+      "matched_prefix_pairs": 96,
+      "previous_v3_boundary": {
+        "balanced_mean_nll": 0.3024756389421038,
+        "joint_pass": true,
+        "no_info": {
+          "changed_confident_decisions": 0,
+          "maximum_abs_posterior_drift": 0.0021106112785956865,
+          "trials": 192
+        },
+        "post": {
+          "abstained": 0,
+          "confident": 192,
+          "correct_confident": 192,
+          "mean_nll": 0.003460172030484603,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "abstained": 192,
+          "confident": 0,
+          "correct_confident": 0,
+          "mean_nll": 0.9012633940119451,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre_confident_pairs": 0,
+        "retain": {
+          "abstained": 0,
+          "confident": 576,
+          "correct_confident": 576,
+          "mean_nll": 0.0027033507838816312,
+          "observations": 576,
+          "wrong_confident": 0
+        }
+      },
+      "seed": 11,
+      "train_only": true
+    },
+    "nor-23": {
+      "decision": "BOUNDED_REPRESENTATION_FEASIBLE_ON_TRAIN",
+      "feasible_rates": [
+        0.0002,
+        0.0004,
+        0.0006,
+        0.0008,
+        0.001,
+        0.00125,
+        0.0015,
+        0.00175,
+        0.002,
+        0.00225,
+        0.0025
+      ],
+      "grid": {
+        "0.0001": {
+          "balanced_mean_nll": 0.33746891334355605,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0000930241424465239,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.00497486478606744,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.0047934252976394,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002638449946961479,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0002": {
+          "balanced_mean_nll": 0.297674874126646,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0001730347284343986,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0035610866857278545,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8868570781039198,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0026064575902902867,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0004": {
+          "balanced_mean_nll": 0.2707589594365257,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0002989336811062837,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.00286185375782967,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8068488644357461,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0025661601160013947,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0006": {
+          "balanced_mean_nll": 0.262814790720257,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0003860764561959551,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0026631595622486344,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7832397649266553,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0025414476718669723,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0008": {
+          "balanced_mean_nll": 0.26115982054761344,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0004792263641211769,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0025995625812300417,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7783553513136213,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0025245477479889054,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.001": {
+          "balanced_mean_nll": 0.2623217384710157,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0006400056894934614,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0025939566131889745,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7818590917354656,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002512167064392466,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00125": {
+          "balanced_mean_nll": 0.2657677510511291,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0008518163907930143,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0026289924709277037,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.7921736506621877,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0025006100202718917,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0015": {
+          "balanced_mean_nll": 0.2703932487613625,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0010722534442901277,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.002690766647466659,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8059971194120097,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0024918602246111476,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00175": {
+          "balanced_mean_nll": 0.2756505931978507,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0012988803844682373,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0027688453764057766,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8216979531672105,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002484981049935751,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.002": {
+          "balanced_mean_nll": 0.2812466712900333,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.001530063704109838,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.00285761523578168,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8384029810200828,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0024794176142354436,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00225": {
+          "balanced_mean_nll": 0.28701009016534684,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0017646763435982815,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0029537202805824114,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8556017315775678,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002474818637890315,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0025": {
+          "balanced_mean_nll": 0.29283496024282535,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.002001920758750095,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0030549987137681953,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8729789320090732,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002470950005634647,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "1e-05": {
+          "balanced_mean_nll": 0.5112798666469925,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000009927975586667727,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 48,
+            "confident": 144,
+            "correct_confident": 144,
+            "mean_nll": 0.028584053996581787,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 96,
+            "confident": 96,
+            "correct_confident": 48,
+            "mean_nll": 1.5025746894099623,
+            "observations": 192,
+            "wrong_confident": 48
+          },
+          "pre_confident_pairs": 48,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0026808565344336953,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "2.5e-05": {
+          "balanced_mean_nll": 0.438090254730396,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00002455230679179049,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 16,
+            "confident": 176,
+            "correct_confident": 176,
+            "mean_nll": 0.013141066858868044,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 120,
+            "confident": 72,
+            "correct_confident": 36,
+            "mean_nll": 1.2984572053517653,
+            "observations": 192,
+            "wrong_confident": 36
+          },
+          "pre_confident_pairs": 36,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0026724919805544453,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "5e-05": {
+          "balanced_mean_nll": 0.38544912063336406,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00004822513776945453,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.007742234057021277,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.1459452842730358,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002659843570035141,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        }
+      },
+      "law": "nor",
+      "matched_prefix_pairs": 96,
+      "previous_v3_boundary": {
+        "balanced_mean_nll": 0.29283496024282535,
+        "joint_pass": true,
+        "no_info": {
+          "changed_confident_decisions": 0,
+          "maximum_abs_posterior_drift": 0.002001920758750095,
+          "trials": 192
+        },
+        "post": {
+          "abstained": 0,
+          "confident": 192,
+          "correct_confident": 192,
+          "mean_nll": 0.0030549987137681953,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "abstained": 192,
+          "confident": 0,
+          "correct_confident": 0,
+          "mean_nll": 0.8729789320090732,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre_confident_pairs": 0,
+        "retain": {
+          "abstained": 0,
+          "confident": 576,
+          "correct_confident": 576,
+          "mean_nll": 0.002470950005634647,
+          "observations": 576,
+          "wrong_confident": 0
+        }
+      },
+      "seed": 23,
+      "train_only": true
+    },
+    "nor-37": {
+      "decision": "BOUNDED_REPRESENTATION_FEASIBLE_ON_TRAIN",
+      "feasible_rates": [
+        0.0004,
+        0.0006,
+        0.0008,
+        0.001,
+        0.00125,
+        0.0015,
+        0.00175
+      ],
+      "grid": {
+        "0.0001": {
+          "balanced_mean_nll": 0.3438202343243541,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00009513756814283347,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004712298122749697,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.0233050947426932,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003443310107619376,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0002": {
+          "balanced_mean_nll": 0.3168963045759892,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00018101021345318102,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0036166331127659734,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 176,
+            "confident": 16,
+            "correct_confident": 8,
+            "mean_nll": 0.9436844711782629,
+            "observations": 192,
+            "wrong_confident": 8
+          },
+          "pre_confident_pairs": 8,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0033878094369388396,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0004": {
+          "balanced_mean_nll": 0.3058104499201558,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00032747053852211216,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003070254306048993,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9110268253490598,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003334270105358698,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0006": {
+          "balanced_mean_nll": 0.3065266428357852,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0004607591103824582,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0029291720221559007,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9133431896960942,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0033075667891054685,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0008": {
+          "balanced_mean_nll": 0.3098829976503149,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0006444585726284036,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.002898987844522886,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9234586468830357,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0032913582233861727,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.001": {
+          "balanced_mean_nll": 0.3140594563575527,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0008328474975954903,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0029163863153091173,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9359815848140692,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0032803979432797763,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00125": {
+          "balanced_mean_nll": 0.31969386125764215,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0010723863004497014,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0029723964039369507,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9528383884509722,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003270798918017165,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0015": {
+          "balanced_mean_nll": 0.3254965655702356,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0013147893344243045,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.00304979517600323,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9701759922825789,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.003263909252124653,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00175": {
+          "balanced_mean_nll": 0.3313392832296005,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0015590607714284221,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0031397820347705287,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9876193587519118,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0032587089021192226,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.002": {
+          "balanced_mean_nll": 0.3371574118038813,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 8,
+            "maximum_abs_posterior_drift": 0.0018046135288898313,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0032375928308459056,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 184,
+            "confident": 8,
+            "correct_confident": 4,
+            "mean_nll": 1.0049800050995918,
+            "observations": 192,
+            "wrong_confident": 4
+          },
+          "pre_confident_pairs": 4,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0032546374812060506,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00225": {
+          "balanced_mean_nll": 0.34291259568880156,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.002051079981946091,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0033403738994225896,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 176,
+            "confident": 16,
+            "correct_confident": 8,
+            "mean_nll": 1.0221460525879662,
+            "observations": 192,
+            "wrong_confident": 8
+          },
+          "pre_confident_pairs": 8,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0032513605790159,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0025": {
+          "balanced_mean_nll": 0.3485805199087327,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 16,
+            "maximum_abs_posterior_drift": 0.002298218750158232,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0034462875190171566,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 152,
+            "confident": 40,
+            "correct_confident": 20,
+            "mean_nll": 1.0390466064537633,
+            "observations": 192,
+            "wrong_confident": 20
+          },
+          "pre_confident_pairs": 20,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0032486657534175232,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "1e-05": {
+          "balanced_mean_nll": 0.5011001659307001,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000009950287042537198,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 24,
+            "confident": 168,
+            "correct_confident": 168,
+            "mean_nll": 0.021772097595021814,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 120,
+            "confident": 72,
+            "correct_confident": 36,
+            "mean_nll": 1.4779792691726146,
+            "observations": 192,
+            "wrong_confident": 36
+          },
+          "pre_confident_pairs": 36,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0035491310244636833,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "2.5e-05": {
+          "balanced_mean_nll": 0.43110306333725323,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000024690465703414155,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.01067637833543583,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.2791088475856844,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0035239640906394943,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "5e-05": {
+          "balanced_mean_nll": 0.3833565809048092,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00004876947935672504,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.006771382879909957,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.1398078653234933,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0034904945110242913,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        }
+      },
+      "law": "nor",
+      "matched_prefix_pairs": 96,
+      "previous_v3_boundary": {
+        "balanced_mean_nll": 0.3485805199087327,
+        "joint_pass": false,
+        "no_info": {
+          "changed_confident_decisions": 16,
+          "maximum_abs_posterior_drift": 0.002298218750158232,
+          "trials": 192
+        },
+        "post": {
+          "abstained": 0,
+          "confident": 192,
+          "correct_confident": 192,
+          "mean_nll": 0.0034462875190171566,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "abstained": 152,
+          "confident": 40,
+          "correct_confident": 20,
+          "mean_nll": 1.0390466064537633,
+          "observations": 192,
+          "wrong_confident": 20
+        },
+        "pre_confident_pairs": 20,
+        "retain": {
+          "abstained": 0,
+          "confident": 576,
+          "correct_confident": 576,
+          "mean_nll": 0.0032486657534175232,
+          "observations": 576,
+          "wrong_confident": 0
+        }
+      },
+      "seed": 37,
+      "train_only": true
+    },
+    "nor-53": {
+      "decision": "NO_FEASIBLE_RATE_IN_REGISTERED_SUBGRID",
+      "feasible_rates": [],
+      "grid": {
+        "0.0001": {
+          "balanced_mean_nll": 0.39341805236296773,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00009342506495352981,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004972517112686709,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 128,
+            "confident": 64,
+            "correct_confident": 32,
+            "mean_nll": 1.1725264100325778,
+            "observations": 192,
+            "wrong_confident": 32
+          },
+          "pre_confident_pairs": 32,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002755229943638495,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0002": {
+          "balanced_mean_nll": 0.3617272624959352,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00018913788124474973,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003755367076340381,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 176,
+            "confident": 16,
+            "correct_confident": 8,
+            "mean_nll": 1.0787601507539348,
+            "observations": 192,
+            "wrong_confident": 8
+          },
+          "pre_confident_pairs": 8,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0026662696575302605,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0004": {
+          "balanced_mean_nll": 0.3419759111169107,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0003839397775227821,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0032463617125922713,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 168,
+            "confident": 24,
+            "correct_confident": 12,
+            "mean_nll": 1.0200801220765725,
+            "observations": 192,
+            "wrong_confident": 12
+          },
+          "pre_confident_pairs": 12,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0026012495615673507,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0006": {
+          "balanced_mean_nll": 0.33770739331830074,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0005809509650787394,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003212082317709426,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 160,
+            "confident": 32,
+            "correct_confident": 16,
+            "mean_nll": 1.0073377497670062,
+            "observations": 192,
+            "wrong_confident": 16
+          },
+          "pre_confident_pairs": 16,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0025723478701866363,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0008": {
+          "balanced_mean_nll": 0.33851620166416446,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0007790409208967026,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003304552090362631,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 160,
+            "confident": 32,
+            "correct_confident": 16,
+            "mean_nll": 1.0096887051504801,
+            "observations": 192,
+            "wrong_confident": 16
+          },
+          "pre_confident_pairs": 16,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0025553477516506475,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.001": {
+          "balanced_mean_nll": 0.3415187165804265,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00097773267113856,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003445802271158614,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 160,
+            "confident": 32,
+            "correct_confident": 16,
+            "mean_nll": 1.018566393128818,
+            "observations": 192,
+            "wrong_confident": 16
+          },
+          "pre_confident_pairs": 16,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0025439543413028373,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00125": {
+          "balanced_mean_nll": 0.3467216388084513,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.001226596941167576,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003649266226050404,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 160,
+            "confident": 32,
+            "correct_confident": 16,
+            "mean_nll": 1.0339816699873032,
+            "observations": 192,
+            "wrong_confident": 16
+          },
+          "pre_confident_pairs": 16,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002533980212000202,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0015": {
+          "balanced_mean_nll": 0.35268968756393587,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0014758017623807962,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.003860904131854677,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 160,
+            "confident": 32,
+            "correct_confident": 16,
+            "mean_nll": 1.0516813654235317,
+            "observations": 192,
+            "wrong_confident": 16
+          },
+          "pre_confident_pairs": 16,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0025267931364212656,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00175": {
+          "balanced_mean_nll": 0.35899213616036835,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0017252213249234578,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 2,
+            "confident": 190,
+            "correct_confident": 190,
+            "mean_nll": 0.0040693892539191085,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 160,
+            "confident": 32,
+            "correct_confident": 16,
+            "mean_nll": 1.0703856817342696,
+            "observations": 192,
+            "wrong_confident": 16
+          },
+          "pre_confident_pairs": 16,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0025213374929162822,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.002": {
+          "balanced_mean_nll": 0.36541106584622357,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0019747838321691417,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 2,
+            "confident": 190,
+            "correct_confident": 190,
+            "mean_nll": 0.0042690282349944365,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 160,
+            "confident": 32,
+            "correct_confident": 16,
+            "mean_nll": 1.0894471294418742,
+            "observations": 192,
+            "wrong_confident": 16
+          },
+          "pre_confident_pairs": 16,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002517039861802178,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00225": {
+          "balanced_mean_nll": 0.3718273592588148,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0022244455825706057,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 4,
+            "confident": 188,
+            "correct_confident": 188,
+            "mean_nll": 0.004456996453912973,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 160,
+            "confident": 32,
+            "correct_confident": 16,
+            "mean_nll": 1.1085115217836925,
+            "observations": 192,
+            "wrong_confident": 16
+          },
+          "pre_confident_pairs": 16,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002513559538838924,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0025": {
+          "balanced_mean_nll": 0.37817294016189856,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0024741786005544747,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 4,
+            "confident": 188,
+            "correct_confident": 188,
+            "mean_nll": 0.00463210259551422,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 160,
+            "confident": 32,
+            "correct_confident": 16,
+            "mean_nll": 1.1273760376810467,
+            "observations": 192,
+            "wrong_confident": 16
+          },
+          "pre_confident_pairs": 16,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0025106802091348027,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "1e-05": {
+          "balanced_mean_nll": 0.549203528875187,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000009932066219587796,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 30,
+            "confident": 162,
+            "correct_confident": 162,
+            "mean_nll": 0.023177838422218672,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 88,
+            "confident": 104,
+            "correct_confident": 52,
+            "mean_nll": 1.6212360655526965,
+            "observations": 192,
+            "wrong_confident": 52
+          },
+          "pre_confident_pairs": 52,
+          "retain": {
+            "abstained": 4,
+            "confident": 572,
+            "correct_confident": 572,
+            "mean_nll": 0.0031966826506458703,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "2.5e-05": {
+          "balanced_mean_nll": 0.48072503617912293,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00002457756280818159,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 16,
+            "confident": 176,
+            "correct_confident": 176,
+            "mean_nll": 0.011664979313694512,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 108,
+            "confident": 84,
+            "correct_confident": 42,
+            "mean_nll": 1.4274978494889148,
+            "observations": 192,
+            "wrong_confident": 42
+          },
+          "pre_confident_pairs": 42,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0030122797347594613,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "5e-05": {
+          "balanced_mean_nll": 0.43385230150434406,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00004832437049944599,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.007327971257188689,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 124,
+            "confident": 68,
+            "correct_confident": 34,
+            "mean_nll": 1.2913567093301939,
+            "observations": 192,
+            "wrong_confident": 34
+          },
+          "pre_confident_pairs": 34,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0028722239256497445,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        }
+      },
+      "law": "nor",
+      "matched_prefix_pairs": 96,
+      "previous_v3_boundary": {
+        "balanced_mean_nll": 0.37817294016189856,
+        "joint_pass": false,
+        "no_info": {
+          "changed_confident_decisions": 0,
+          "maximum_abs_posterior_drift": 0.0024741786005544747,
+          "trials": 192
+        },
+        "post": {
+          "abstained": 4,
+          "confident": 188,
+          "correct_confident": 188,
+          "mean_nll": 0.00463210259551422,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "abstained": 160,
+          "confident": 32,
+          "correct_confident": 16,
+          "mean_nll": 1.1273760376810467,
+          "observations": 192,
+          "wrong_confident": 16
+        },
+        "pre_confident_pairs": 16,
+        "retain": {
+          "abstained": 0,
+          "confident": 576,
+          "correct_confident": 576,
+          "mean_nll": 0.0025106802091348027,
+          "observations": 576,
+          "wrong_confident": 0
+        }
+      },
+      "seed": 53,
+      "train_only": true
+    },
+    "nor-7": {
+      "decision": "BOUNDED_REPRESENTATION_FEASIBLE_ON_TRAIN",
+      "feasible_rates": [
+        0.0002,
+        0.0004,
+        0.0006,
+        0.0008,
+        0.001,
+        0.00125
+      ],
+      "grid": {
+        "0.0001": {
+          "balanced_mean_nll": 0.3572940140263852,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00009289836806403162,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.004882920121072422,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 152,
+            "confident": 40,
+            "correct_confident": 20,
+            "mean_nll": 1.0644828914714566,
+            "observations": 192,
+            "wrong_confident": 20
+          },
+          "pre_confident_pairs": 20,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002516230486626664,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0002": {
+          "balanced_mean_nll": 0.32058620852232605,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00017256506998519772,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0035364046058796637,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.9557601115330562,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0024621094280422202,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0004": {
+          "balanced_mean_nll": 0.29656287966835837,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00033213981968172046,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.002857454305254416,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8844199922044492,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0024111924953714487,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0006": {
+          "balanced_mean_nll": 0.2898530383667994,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0005101705095860165,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.002674977065818375,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8644989217915248,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0023852162430549845,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0008": {
+          "balanced_mean_nll": 0.2889933388775794,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0006932716422219931,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.002631204760500058,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8619799906964669,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0023688211757712007,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.001": {
+          "balanced_mean_nll": 0.2908392906848378,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0008800636145471774,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.002648246699020995,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8675123262429465,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002357299112546007,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00125": {
+          "balanced_mean_nll": 0.2950856374258966,
+          "joint_pass": true,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.001117302734262915,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.002713723152529797,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 192,
+            "confident": 0,
+            "correct_confident": 0,
+            "mean_nll": 0.8801963714746908,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre_confident_pairs": 0,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.00234681765046921,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0015": {
+          "balanced_mean_nll": 0.30045902676563646,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 4,
+            "maximum_abs_posterior_drift": 0.0013575357474931993,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.00280669360156459,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 184,
+            "confident": 8,
+            "correct_confident": 4,
+            "mean_nll": 0.8962313706808301,
+            "observations": 192,
+            "wrong_confident": 4
+          },
+          "pre_confident_pairs": 4,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002339016014514681,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00175": {
+          "balanced_mean_nll": 0.30640371699652286,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0015999128383554773,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.002915653744641554,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 184,
+            "confident": 8,
+            "correct_confident": 4,
+            "mean_nll": 0.9139625518226057,
+            "observations": 192,
+            "wrong_confident": 4
+          },
+          "pre_confident_pairs": 4,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0023329454223212595,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.002": {
+          "balanced_mean_nll": 0.31262309121547044,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.0018438595509900901,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0030343619204379418,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 176,
+            "confident": 16,
+            "correct_confident": 8,
+            "mean_nll": 0.9325068426371504,
+            "observations": 192,
+            "wrong_confident": 8
+          },
+          "pre_confident_pairs": 8,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.00232806908882286,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.00225": {
+          "balanced_mean_nll": 0.3189475725065671,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.002088978647383888,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0031590826841242613,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 168,
+            "confident": 24,
+            "correct_confident": 12,
+            "mean_nll": 0.9513595776776312,
+            "observations": 192,
+            "wrong_confident": 12
+          },
+          "pre_confident_pairs": 12,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.002324057157945669,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "0.0025": {
+          "balanced_mean_nll": 0.32527596710120177,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 12,
+            "maximum_abs_posterior_drift": 0.0023349894754177702,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0032874133840944037,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 156,
+            "confident": 36,
+            "correct_confident": 18,
+            "mean_nll": 0.9702197937496574,
+            "observations": 192,
+            "wrong_confident": 18
+          },
+          "pre_confident_pairs": 18,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0023206941698535144,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "1e-05": {
+          "balanced_mean_nll": 0.5265910830053376,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000009926641857394003,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 24,
+            "confident": 168,
+            "correct_confident": 168,
+            "mean_nll": 0.02521596062259796,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 120,
+            "confident": 72,
+            "correct_confident": 36,
+            "mean_nll": 1.5519278342560046,
+            "observations": 192,
+            "wrong_confident": 36
+          },
+          "pre_confident_pairs": 36,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0026294541374102497,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "2.5e-05": {
+          "balanced_mean_nll": 0.4542745344703216,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.000024544030000739347,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 24,
+            "confident": 168,
+            "correct_confident": 168,
+            "mean_nll": 0.01211384779980712,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 120,
+            "confident": 72,
+            "correct_confident": 36,
+            "mean_nll": 1.3481087113098063,
+            "observations": 192,
+            "wrong_confident": 36
+          },
+          "pre_confident_pairs": 36,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0026010443013514363,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        },
+        "5e-05": {
+          "balanced_mean_nll": 0.40299314643283396,
+          "joint_pass": false,
+          "no_info": {
+            "changed_confident_decisions": 0,
+            "maximum_abs_posterior_drift": 0.00004819257953148082,
+            "trials": 192
+          },
+          "post": {
+            "abstained": 0,
+            "confident": 192,
+            "correct_confident": 192,
+            "mean_nll": 0.0073990926151321565,
+            "observations": 192,
+            "wrong_confident": 0
+          },
+          "pre": {
+            "abstained": 144,
+            "confident": 48,
+            "correct_confident": 24,
+            "mean_nll": 1.1990155701277272,
+            "observations": 192,
+            "wrong_confident": 24
+          },
+          "pre_confident_pairs": 24,
+          "retain": {
+            "abstained": 0,
+            "confident": 576,
+            "correct_confident": 576,
+            "mean_nll": 0.0025647765556425003,
+            "observations": 576,
+            "wrong_confident": 0
+          }
+        }
+      },
+      "law": "nor",
+      "matched_prefix_pairs": 96,
+      "previous_v3_boundary": {
+        "balanced_mean_nll": 0.32527596710120177,
+        "joint_pass": false,
+        "no_info": {
+          "changed_confident_decisions": 12,
+          "maximum_abs_posterior_drift": 0.0023349894754177702,
+          "trials": 192
+        },
+        "post": {
+          "abstained": 0,
+          "confident": 192,
+          "correct_confident": 192,
+          "mean_nll": 0.0032874133840944037,
+          "observations": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "abstained": 156,
+          "confident": 36,
+          "correct_confident": 18,
+          "mean_nll": 0.9702197937496574,
+          "observations": 192,
+          "wrong_confident": 18
+        },
+        "pre_confident_pairs": 18,
+        "retain": {
+          "abstained": 0,
+          "confident": 576,
+          "correct_confident": 576,
+          "mean_nll": 0.0023206941698535144,
+          "observations": 576,
+          "wrong_confident": 0
+        }
+      },
+      "seed": 7,
+      "train_only": true
+    }
+  }
+}
