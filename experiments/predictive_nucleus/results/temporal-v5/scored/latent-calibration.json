@@ -1,0 +1,74 @@
+{
+  "version": "g5-v5-posthoc-balanced-twin-proper-scores",
+  "source": "sealed raw pre-probe probabilities only; two opposite latent outcomes per identical public prefix",
+  "posthoc": true,
+  "scored_before_parameter_change": false,
+  "raw_commit": "0988a525a8c315f4ba245400ab81d438857717d8",
+  "pairs": 960,
+  "candidate_brier": 0.40845097362460686,
+  "ideal_brier": 0.25,
+  "candidate_nll": 1.1954865457137702,
+  "ideal_nll": 0.6931471805599453,
+  "per_condition": {
+    "nand-11": {
+      "pairs": 96,
+      "mean_brier": 0.40827094485630044,
+      "mean_nll": 1.19449723046895,
+      "confident_pairs": 0
+    },
+    "nand-23": {
+      "pairs": 96,
+      "mean_brier": 0.4083858509416031,
+      "mean_nll": 1.195119084103193,
+      "confident_pairs": 0
+    },
+    "nand-37": {
+      "pairs": 96,
+      "mean_brier": 0.40730853732444516,
+      "mean_nll": 1.18931214563226,
+      "confident_pairs": 0
+    },
+    "nand-53": {
+      "pairs": 96,
+      "mean_brier": 0.4082323395822755,
+      "mean_nll": 1.1942892285224709,
+      "confident_pairs": 0
+    },
+    "nand-7": {
+      "pairs": 96,
+      "mean_brier": 0.4085050761351708,
+      "mean_nll": 1.1957652947996256,
+      "confident_pairs": 0
+    },
+    "nor-11": {
+      "pairs": 96,
+      "mean_brier": 0.40873477087325333,
+      "mean_nll": 1.1970243968601464,
+      "confident_pairs": 0
+    },
+    "nor-23": {
+      "pairs": 96,
+      "mean_brier": 0.40879982933535447,
+      "mean_nll": 1.1973729443590881,
+      "confident_pairs": 0
+    },
+    "nor-37": {
+      "pairs": 96,
+      "mean_brier": 0.4083942875270608,
+      "mean_nll": 1.1951990993869253,
+      "confident_pairs": 0
+    },
+    "nor-53": {
+      "pairs": 96,
+      "mean_brier": 0.40880889354828054,
+      "mean_nll": 1.1974381624415675,
+      "confident_pairs": 0
+    },
+    "nor-7": {
+      "pairs": 96,
+      "mean_brier": 0.4090692061223171,
+      "mean_nll": 1.198847870563472,
+      "confident_pairs": 0
+    }
+  }
+}

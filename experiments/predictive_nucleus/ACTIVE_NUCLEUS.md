@@ -1,4 +1,42 @@
-# Active nucleus — G5 baseline retained; scalar boundary diagnosed, no promotion
+# Active nucleus — G5 v5 temporal comparison reviewed; rule baseline retained
+
+## Latest G5 v5 — temporal alternatives, bounded development only
+
+[PR #90](https://github.com/robosys-labs/cemm/pull/90) froze a
+two-scalar outcome-trained model of persistent change versus transient
+observation exceptions. All ten TRAIN fits selected `h=0.5, e=0.1`
+from 2,880 selected payoffs per condition. The first challenge collection
+was sealed at `0988a525a8c315f4ba245400ab81d438857717d8` before
+evaluator scoring. The corrected hosted score and 1,217 software tests
+passed. On 9,600 **dependent** decision contexts, cheap verification
+reached 9,580 successes with 4,420 requests versus 9,380 successes
+with 2,480 requests for the zero-parameter G5 rule. The temporal
+candidate buys more correct results, but also **1,940 extra queries**,
+failing the declared query-efficiency gate.
+
+All 960 indistinguishable pre-probe pairs abstain under the frozen .95
+decision threshold, but the **meaning probabilities are miscalibrated**
+on the equal-latent twin bank: mean Brier **0.40845** vs the proper
+50/50 benchmark **0.25**. There are 20 confident post-probe mistakes,
+zero confident wrong parent/sentinel decisions, and a posthoc
+source-integrity finding: law/seed conditions reuse the **same hashed
+noise schedule**. The event selection is also explicitly forced
+contradictory, which the learner's causal observation model does not
+represent. Thus results are not ten independent environments or
+formal scientific admission. The first evaluator miscounted PRE
+confidence through a tuple index; its original run is retained and
+the scorer was repaired without altering sealed raw forecasts or
+retraining.
+
+**Disposition: `REVISE_TEMPORAL_CANDIDATE;`
+`STOP_CONFOUNDED_FOR_INDEPENDENT_REPLICATION`. Keep the simpler G5 v1
+scoped evidence baseline.** No G1–G4 reopened, no production activation,
+and no G6 corpus ingestion. [Decision](TEMPORAL_DECISION_V5.md) ·
+[full corrected scoring](results/temporal-v5/scored/results.json) ·
+[latent calibration](results/temporal-v5/scored/latent-calibration.json) ·
+[raw manifest](results/temporal-v5/raw/manifest.json).
+
+
 
 ## Latest G5 v4 review — stop switch-rate tuning
 
