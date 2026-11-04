@@ -233,5 +233,5 @@ def assess(reports):
         'stationary_nll':{a:d['nll_sum']/d['n']
                           for a,d in stationary_payoffs.items()},
         'stationary_stable_B_mid_brier':{a:d['brier_sum']/d['n']
-                                       for a,d in first_stable_b.items()},
+                                       for a,d in first_stable_b.items() if d['n']},
         'limitations':'same-team challenge over previously opened G3 physical menus'}
