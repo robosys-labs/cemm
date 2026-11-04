@@ -1,0 +1,386 @@
+{
+  "arms": {
+    "historical_temporal": {
+      "abstained_95": 447,
+      "action_count": 384,
+      "belief_cases": 960,
+      "brier_sum": 48.077701697467354,
+      "episodes": 192,
+      "gross_regret_sum": 13.2,
+      "mean_brier": 0.05008093926819516,
+      "mean_gross_regret_per_action": 0.034374999999999996,
+      "mean_net_per_action": 0.8423177083333339,
+      "optimal_action_rate": 0.9557291666666666,
+      "optimal_actions": 367,
+      "queries": 29,
+      "query_after_beneficial_goal": 29,
+      "question_cost_sum": 1.4500000000000006,
+      "utility_sum": 323.4500000000002,
+      "wrong_confident": 2
+    },
+    "latest": {
+      "abstained_95": 0,
+      "action_count": 384,
+      "belief_cases": 960,
+      "brier_sum": 123,
+      "episodes": 192,
+      "gross_regret_sum": 21.500000000000004,
+      "mean_brier": 0.128125,
+      "mean_gross_regret_per_action": 0.05598958333333334,
+      "mean_net_per_action": 0.8244791666666679,
+      "optimal_action_rate": 0.9192708333333334,
+      "optimal_actions": 353,
+      "queries": 0,
+      "query_after_beneficial_goal": 0,
+      "question_cost_sum": 0,
+      "utility_sum": 316.6000000000005,
+      "wrong_confident": 123
+    },
+    "no_memory": {
+      "abstained_95": 960,
+      "action_count": 384,
+      "belief_cases": 960,
+      "brier_sum": 240,
+      "episodes": 192,
+      "gross_regret_sum": 63.699999999999974,
+      "mean_brier": 0.25,
+      "mean_gross_regret_per_action": 0.1658854166666666,
+      "mean_net_per_action": 0.7108072916666668,
+      "optimal_action_rate": 0.75,
+      "optimal_actions": 288,
+      "queries": 29,
+      "query_after_beneficial_goal": 29,
+      "question_cost_sum": 1.4500000000000006,
+      "utility_sum": 272.95000000000005,
+      "wrong_confident": 0
+    },
+    "scoped_rule": {
+      "abstained_95": 141,
+      "action_count": 384,
+      "belief_cases": 960,
+      "brier_sum": 65.25,
+      "episodes": 192,
+      "gross_regret_sum": 17.250000000000004,
+      "mean_brier": 0.06796875,
+      "mean_gross_regret_per_action": 0.04492187500000001,
+      "mean_net_per_action": 0.8351562500000012,
+      "optimal_action_rate": 0.9427083333333334,
+      "optimal_actions": 362,
+      "queries": 3,
+      "query_after_beneficial_goal": 3,
+      "question_cost_sum": 0.15000000000000002,
+      "utility_sum": 320.70000000000044,
+      "wrong_confident": 30
+    },
+    "temporal": {
+      "abstained_95": 258,
+      "action_count": 384,
+      "belief_cases": 960,
+      "brier_sum": 46.48887023713963,
+      "episodes": 192,
+      "gross_regret_sum": 13.2,
+      "mean_belief_nll": 0.1704117824218159,
+      "mean_brier": 0.04842590649702045,
+      "mean_gross_regret_per_action": 0.034374999999999996,
+      "mean_net_per_action": 0.845572916666668,
+      "nll_sum": 163.59531112494327,
+      "optimal_action_rate": 0.9557291666666666,
+      "optimal_actions": 367,
+      "queries": 4,
+      "query_after_beneficial_goal": 4,
+      "question_cost_sum": 0.2,
+      "utility_sum": 324.7000000000005,
+      "wrong_confident": 9
+    }
+  },
+  "calibration": {
+    "bins": [
+      [
+        386,
+        3.984404385903197,
+        2
+      ],
+      [
+        83,
+        8.458412521887508,
+        11
+      ],
+      [
+        20,
+        5.692119878616551,
+        6
+      ],
+      [
+        16,
+        6.215773269062758,
+        1
+      ],
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        12,
+        7.350897531557038,
+        6
+      ],
+      [
+        16,
+        11.44488024574217,
+        13
+      ],
+      [
+        86,
+        77.25748465536039,
+        72
+      ],
+      [
+        341,
+        337.33234629936317,
+        330
+      ]
+    ],
+    "description": "descriptive 10-bin ECE across 5 correlated meaning views",
+    "ece": 0.026609889057291967
+  },
+  "epoch_change": {
+    "False": {
+      "belief_brier_sum": 32.930711319494954,
+      "belief_cases": 810,
+      "episodes": 162,
+      "mean_brier": 0.040655199159870314
+    },
+    "True": {
+      "belief_brier_sum": 13.558158917644645,
+      "belief_cases": 150,
+      "episodes": 30,
+      "mean_brier": 0.09038772611763096
+    }
+  },
+  "law": "nor",
+  "limitations": "opened inherited G3 physical banks; no external blind challenge",
+  "payoff": {
+    "epoch_mean_nll": 0.5362303875324779,
+    "epoch_n": 192,
+    "mean_brier": 0.18877924930685386,
+    "mean_nll": 0.56289977818429,
+    "n": 2880
+  },
+  "seed": 23,
+  "sources": {
+    "A": {
+      "brier_sum": 217.22205764402923,
+      "mean_brier": 0.1493961882008454,
+      "mean_nll": 0.4628502449486443,
+      "nll_sum": 672.9842561553288,
+      "observations": 1454,
+      "realized_one": 715
+    },
+    "B": {
+      "brier_sum": 326.4621803597127,
+      "mean_brier": 0.22893561035042967,
+      "mean_nll": 0.664913818383886,
+      "nll_sum": 948.1671050154214,
+      "observations": 1426,
+      "realized_one": 710
+    }
+  },
+  "view_scores": {
+    "final_local": {
+      "historical_temporal": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 7.210964726379723,
+        "mean_brier": 0.03755710794989439,
+        "wrong_confident": 1
+      },
+      "latest": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 26,
+        "mean_brier": 0.13541666666666666,
+        "wrong_confident": 26
+      },
+      "no_memory": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 48,
+        "mean_brier": 0.25,
+        "wrong_confident": 0
+      },
+      "scoped_rule": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 11.5,
+        "mean_brier": 0.059895833333333336,
+        "wrong_confident": 5
+      },
+      "temporal": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 6.7000690002269145,
+        "mean_brier": 0.03489619270951518,
+        "nll_sum": 24.55311694046468,
+        "wrong_confident": 3
+      }
+    },
+    "final_root": {
+      "historical_temporal": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 3.8372434002146667,
+        "mean_brier": 0.019985642709451388,
+        "wrong_confident": 0
+      },
+      "latest": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 25,
+        "mean_brier": 0.13020833333333334,
+        "wrong_confident": 25
+      },
+      "no_memory": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 48,
+        "mean_brier": 0.25,
+        "wrong_confident": 0
+      },
+      "scoped_rule": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 8.25,
+        "mean_brier": 0.04296875,
+        "wrong_confident": 2
+      },
+      "temporal": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 3.8372434002146667,
+        "mean_brier": 0.019985642709451388,
+        "nll_sum": 15.650396560906362,
+        "wrong_confident": 0
+      }
+    },
+    "final_sentinel": {
+      "historical_temporal": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 13.632503812606869,
+        "mean_brier": 0.07100262402399411,
+        "wrong_confident": 1
+      },
+      "latest": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 30,
+        "mean_brier": 0.15625,
+        "wrong_confident": 30
+      },
+      "no_memory": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 48,
+        "mean_brier": 0.25,
+        "wrong_confident": 0
+      },
+      "scoped_rule": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 17.5,
+        "mean_brier": 0.09114583333333333,
+        "wrong_confident": 12
+      },
+      "temporal": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 13.632503812606869,
+        "mean_brier": 0.07100262402399411,
+        "nll_sum": 46.46704078105352,
+        "wrong_confident": 1
+      }
+    },
+    "final_sibling": {
+      "historical_temporal": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 8.665885004987642,
+        "mean_brier": 0.045134817734310634,
+        "wrong_confident": 0
+      },
+      "latest": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 26,
+        "mean_brier": 0.13541666666666666,
+        "wrong_confident": 26
+      },
+      "no_memory": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 48,
+        "mean_brier": 0.25,
+        "wrong_confident": 0
+      },
+      "scoped_rule": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 12.75,
+        "mean_brier": 0.06640625,
+        "wrong_confident": 4
+      },
+      "temporal": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 8.665885004987642,
+        "mean_brier": 0.045134817734310634,
+        "nll_sum": 29.08974366082033,
+        "wrong_confident": 0
+      }
+    },
+    "mid_local": {
+      "historical_temporal": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 14.731104753278375,
+        "mean_brier": 0.07672450392332487,
+        "wrong_confident": 0
+      },
+      "latest": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 16,
+        "mean_brier": 0.08333333333333333,
+        "wrong_confident": 16
+      },
+      "no_memory": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 48,
+        "mean_brier": 0.25,
+        "wrong_confident": 0
+      },
+      "scoped_rule": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 15.25,
+        "mean_brier": 0.07942708333333333,
+        "wrong_confident": 7
+      },
+      "temporal": {
+        "abstained_95": 0,
+        "belief_cases": 192,
+        "brier_sum": 13.653169019103505,
+        "mean_brier": 0.07111025530783076,
+        "nll_sum": 47.835013181698166,
+        "wrong_confident": 5
+      }
+    }
+  }
+}

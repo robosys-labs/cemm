@@ -1,0 +1,24 @@
+{
+  "version": "g5-v6-scored",
+  "source_commit": "bf2895b1c7a25bfcd3ae545ba0dc7ebe0d2f43cc",
+  "raw_seal_commit": "3f0d247d88c51132ff63e1fde34dfca1b45747ab",
+  "fit_commit": "8fa94db75e610a1dec451a9049bb88c36405a53e",
+  "scoring_run": 41861748467,
+  "scoring_job": 126685096093,
+  "software_tests_passed": 1224,
+  "retained_evidence": "TEN complete law/seed condition reports, raw bank unchanged",
+  "research_scope": "same-team G3 opened physical menu families; distinct new noise/world draws",
+  "status": "BOUNDED_DEVELOPMENT_SCORE_ONLY; FORMAL_G5_NOT_ADMITTED",
+  "files": {
+    "nand-11": "930726fc06f93cda8cd113fb55ba8ebb6f5af0fe",
+    "nand-23": "ad17858fe1cc2b4e27cc542a85714aec374185b5",
+    "nand-37": "e351c45fe9f03d0d2c897532b310de1f5a2a568a",
+    "nand-53": "9840c0da03d6228db28740352c3556e6b35d0b7f",
+    "nand-7": "014b3bcab02a53c0fab338e1e563e38cf5176489",
+    "nor-11": "78e6774033a9f33f059b77b112819727ab27c48e",
+    "nor-23": "718e5670a4a40e547a835bc987b51d8e5183ac82",
+    "nor-37": "479f2596e3ee37b25068a6d325e490cf9b21259e",
+    "nor-53": "b52e62bbd6d27824f88e21b47b2ce566269aa409",
+    "nor-7": "794ec0e3bc6a9b45ce53ae9345295e63b795f2a3"
+  }
+}
