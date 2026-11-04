@@ -32,7 +32,7 @@ def _condition(record,ea,eb):
 def probability(records,term,scope,h,ea,eb):
     _check(h,ea,eb)
     return _v6_probability(
-        (_condition(r,ea,eb) for r in records),term,scope,h,0.)
+        tuple(_condition(r,ea,eb) for r in records),term,scope,h,0.)
 
 def payoff_forecasts(records,h,ea,eb):
     _check(h,ea,eb)
