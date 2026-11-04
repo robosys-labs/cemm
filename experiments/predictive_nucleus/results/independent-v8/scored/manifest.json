@@ -1,0 +1,66 @@
+{
+  "version": "g5-v8-scored",
+  "stage": "SCORED_AFTER_RAW_SEAL",
+  "decision": "REVISE_JOINT_V8",
+  "g5_scientific_admission": false,
+  "preregistered_protocol_commit": "9d6710e7179821d71ae3302ee7ec6f1d50c8b7d6",
+  "train_lock_commit": "4c3a9d5ee63e824029b48a9cb32235a9e46964c5",
+  "frozen_model_generator_collector_scorer_commit": "771c66df1ce6a15c16ead6b279367594bfbccdce",
+  "collector_driver_commit": "d0ee3fdd70cf8cfc1b81514f1d67eebe5ab478d4",
+  "sealed_raw_commit": "21324519573b917af4ab1e13ed2b45027b7ef513",
+  "scoring_driver_commit": "0b00b6d31fbbf9aefef18d742400ad2bc7a3cbbb",
+  "hosted_scoring_run": 41900242561,
+  "hosted_scoring_job": 126820384646,
+  "hosted_software_tests_passed": 1235,
+  "hosted_source_snapshot_run": 41900242558,
+  "worlds": 1920,
+  "paired_pre_epoch_twins": 960,
+  "payoff_forecasts": 28800,
+  "correlated_meaning_views": 9600,
+  "gate_passes": 6,
+  "gate_failures": 7,
+  "files": {
+    "nand-7": {
+      "path": "experiments/predictive_nucleus/results/independent-v8/scored/nand-7.json",
+      "blob_sha": "1e0f04dc7af4627229dcbc0c705e540f9604bebb"
+    },
+    "nand-11": {
+      "path": "experiments/predictive_nucleus/results/independent-v8/scored/nand-11.json",
+      "blob_sha": "4fa2c1aa87c36ce9e5f1ac4328ece8f9764678ca"
+    },
+    "nand-23": {
+      "path": "experiments/predictive_nucleus/results/independent-v8/scored/nand-23.json",
+      "blob_sha": "26b5e7c09692b92868f8414b07d3e19d074e637f"
+    },
+    "nand-37": {
+      "path": "experiments/predictive_nucleus/results/independent-v8/scored/nand-37.json",
+      "blob_sha": "6e8b363d20f34ec02a8996bb722d583225887938"
+    },
+    "nand-53": {
+      "path": "experiments/predictive_nucleus/results/independent-v8/scored/nand-53.json",
+      "blob_sha": "8a1f6f38ca8169b2cbde6ca9d1a0fdb06240cdfd"
+    },
+    "nor-7": {
+      "path": "experiments/predictive_nucleus/results/independent-v8/scored/nor-7.json",
+      "blob_sha": "c7fe2a254d5082d9b3bb0424ce3398010116738c"
+    },
+    "nor-11": {
+      "path": "experiments/predictive_nucleus/results/independent-v8/scored/nor-11.json",
+      "blob_sha": "a7264ed5ab0f804f26543c145665f86d9c6c1d2c"
+    },
+    "nor-23": {
+      "path": "experiments/predictive_nucleus/results/independent-v8/scored/nor-23.json",
+      "blob_sha": "866e469f8a53029ed710186e47db0e3d4fdca808"
+    },
+    "nor-37": {
+      "path": "experiments/predictive_nucleus/results/independent-v8/scored/nor-37.json",
+      "blob_sha": "b088ac772056563931837121c79e74e504d55b08"
+    },
+    "nor-53": {
+      "path": "experiments/predictive_nucleus/results/independent-v8/scored/nor-53.json",
+      "blob_sha": "19f199ab09428f19a7086dbfc8f336d5e85939f3"
+    }
+  },
+  "decision_blob_sha": "ff127ba57a5e58a17e4e26e575b52674ae7d8249",
+  "retained_baseline": "zero-parameter G5 v1 scoped rule; v7/v8 NOT_PROMOTED; G6 UNSTARTED"
+}
