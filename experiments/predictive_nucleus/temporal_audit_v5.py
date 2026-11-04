@@ -162,7 +162,11 @@ def score(raw,law,seed,bank,fit):
         if (left[:2]!=right[:2] or left[2]==right[2]):
             raise ValueError('prefeedback indistinguishability broken')
         totals['pre_twin_pairs']+=1
-        totals['pre_confident_pairs']+=left[2] is not None
+        totals['pre_confident_pairs']+=left[1] is not None
+    independent_pre=sum(1 for row in raw['rows'][::2]
+                        if decision(row[2][0][0]) is not None)
+    if totals['pre_confident_pairs'] != independent_pre:
+        raise ValueError('pre-confidence accounting disagrees with sealed raw bank')
     h,e=fit['h'],fit['e']
     observed=[ep.records for ep in source]
     n=totals['episodes']*15
