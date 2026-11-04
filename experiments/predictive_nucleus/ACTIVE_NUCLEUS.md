@@ -1,4 +1,18 @@
-# Active nucleus — G5 scoped memory baseline retained; learned revision remains open
+# Active nucleus — G5 scoped baseline retained; outcome-fitted v2 not promoted
+
+## Latest G5 v2 review — TRAIN-only failure, no challenge opened
+
+[PR #87](https://github.com/robosys-labs/cemm/pull/87) froze a one-scalar,
+selected-payoff-trained revision update and published ten fitted values. A
+post-fit TRAIN-only matched-prefix audit found premature confident commitments
+on **864/960** indistinguishable pairs (nine conditions 96/96, one 0/96).
+Each confident pair necessarily misclassifies one of two opposite latent
+worlds with the same public evidence. All **1,209** software tests pass, but
+the scientific decision is **REVISE_OUTCOME_UPDATE_TRAIN_ONLY**; the G5 v1
+scoped rule remains selected. [Decision](REVISION_DECISION_V2.md) ·
+[Data](results/revision-v2/train-prefix-audit.json). The new challenge was
+not scored, no model was promoted and formal admission remains open.
+
 
 Updated 2026-11-04. Tracking [#22](https://github.com/robosys-labs/cemm/issues/22),
 [PR #85](https://github.com/robosys-labs/cemm/pull/85) and [PR #86](https://github.com/robosys-labs/cemm/pull/86).
