@@ -187,6 +187,7 @@ def assess(reports):
     totals={arm:Counter() for arm in ARMS}
     seeds={s:{arm:Counter() for arm in ARMS} for s in (7,11,23,37,53)}
     regimes={reg:{arm:Counter() for arm in ARMS} for reg in set(REGIME.values())}
+    regime_first={reg:{arm:Counter() for arm in ARMS} for reg in set(REGIME.values())}
     local_flips={arm:Counter() for arm in ARMS}
     pairs=0;premature=0
     mode=Counter()
@@ -201,6 +202,9 @@ def assess(reports):
                     'belief_cases','brier_sum','meaning_nll_sum','episodes',
                     'action_count','optimal_actions','utility_sum','queries',
                     'wrong_confident','new_retained_confident_wrong')})
+            first=r['views']['mid_local'][arm]
+            regime_first[r['regime']][arm]['brier_sum']+=first['brier_sum']
+            regime_first[r['regime']][arm]['n']+=first['n']
             part=r['source_epoch_subgroups']
             for key,groups in part.items():
                 if key.startswith('flip_'):
@@ -211,9 +215,9 @@ def assess(reports):
     def good(reg,arm,metric):
         z=regimes[reg][arm]
         return z[metric]
-    def rate(reg,arm,metric,den):
-        z=regimes[reg][arm]
-        return z[metric]/z[den]
+    def first_brier(reg,arm):
+        z=regime_first[reg][arm]
+        return z['brier_sum']/z['n']
     def seed_ok(s):
         x=seeds[s]
         return x['joint']['utility_sum']+1e-12>=max(
@@ -230,11 +234,11 @@ def assess(reports):
             min(local_flips['frozen_v7']['mid_brier_sum'],
                 local_flips['neutral']['mid_brier_sum'])+1e-12,
         'reversed_mid_brier_improves':
-            rate(reversed_reg,'joint','brier_sum','belief_cases')<
-            rate(reversed_reg,'frozen_v7','brier_sum','belief_cases'),
+            first_brier(reversed_reg,'joint')<
+            first_brier(reversed_reg,'frozen_v7'),
         'shifted_mid_brier_improves':
-            rate(shifted_reg,'joint','brier_sum','belief_cases')<
-            rate(shifted_reg,'frozen_v7','brier_sum','belief_cases'),
+            first_brier(shifted_reg,'joint')<
+            first_brier(shifted_reg,'frozen_v7'),
         'reversed_utility_improves':
             good(reversed_reg,'joint','utility_sum')>
             good(reversed_reg,'frozen_v7','utility_sum')+1e-12,
@@ -287,6 +291,9 @@ def assess(reports):
                  'new_retained_confident_wrong':
                      z['new_retained_confident_wrong']}
             for arm,z in group.items()} for reg,group in regimes.items()},
+        'per_regime_first_local_brier':{
+            reg:{arm:z['brier_sum']/z['n'] for arm,z in armdata.items()}
+            for reg,armdata in regime_first.items()},
         'true_flip_first_brier':{
             arm:z['mid_brier_sum']/z['mid_n']
             for arm,z in local_flips.items()},
