@@ -103,7 +103,7 @@ def inventory(law,seed,split,bank):
         records=ep.records
         if (len(records)!=16 or sum(r.physical for r in records)!=15
             or sum(bool(r.epoch) for r in records)!=1
-            or not records[13].epoch
+            or not records[12].epoch
             or records[-1].physical
             or len(set(r.evidence_id for r in records))!=len(records)
             or len(ep.observed_sources)!=15):
