@@ -1,0 +1,110 @@
+{
+  "version": "g5-v7-collected-raw",
+  "stage": "COLLECTED_NOT_SCORED",
+  "protocol_commit": "4bf1e61efd22c4789ee94dcd570c74e74b16c4a8",
+  "fit_commit": "9dcb3e0be3b9090d0a7f57b60cc470744ad6c2c7",
+  "frozen_scientific_source_commit": "a772d23570848ff51517fc481c2b22f996f0109b",
+  "collection_driver_commit": "c6c7c632d228b0614003dba07a0eac7ee7f2db3d",
+  "hosted_run": 41888678508,
+  "hosted_job": 126779905380,
+  "hosted_full_software_tests_passed": 1229,
+  "hosted_source_snapshot_run": 41888678487,
+  "worlds_total": 1920,
+  "physical_forecasts_total": 28800,
+  "meaning_views_total": 9600,
+  "distinct_source_signatures": 10,
+  "public_world_id_overlap_with_v6": 0,
+  "oracle_truth_used_in_collection": false,
+  "files": {
+    "nand-7": {
+      "path": "experiments/predictive_nucleus/results/independent-v7/raw/nand-7.json",
+      "rows_digest": "1c83974fcc6f341dfc9e42e0f8d087fc9acb00a396aa963ade7d29997c47468f",
+      "source_pattern_digest": "b63248f7372195297bd18595962900d33e0cefe554ea03a9225114a66e504f85",
+      "raw_blob_sha": "88de64ab6f3cc79ce1e212da465fdc099ad27467",
+      "worlds": 192,
+      "regime": "stationary",
+      "cpu_seconds": 0.2915443549999992
+    },
+    "nand-11": {
+      "path": "experiments/predictive_nucleus/results/independent-v7/raw/nand-11.json",
+      "rows_digest": "ca7c724ad505fe0833d73ae0cd788a29270ca262bf0e905be7d99c5d0a418fc1",
+      "source_pattern_digest": "9330495e85476a6738296c31d9c1f9ee17ee515bb0a74924bda011a7f90a2fd9",
+      "raw_blob_sha": "1a118969c5d9e75a94b5bda467726a833abf6193",
+      "worlds": 192,
+      "regime": "stationary",
+      "cpu_seconds": 0.2943807289999967
+    },
+    "nand-23": {
+      "path": "experiments/predictive_nucleus/results/independent-v7/raw/nand-23.json",
+      "rows_digest": "856351963be076d0caa7cdfff1ecbca792a8905e17bd15d5c390744addf54d4b",
+      "source_pattern_digest": "e177a82f15343429225b6b41834f801732e46f3241450ba9afa5f65221a0d40d",
+      "raw_blob_sha": "e7e142c1fe387e9b83ca279dd391105baba40e55",
+      "worlds": 192,
+      "regime": "B-degraded",
+      "cpu_seconds": 0.29714239899999484
+    },
+    "nand-37": {
+      "path": "experiments/predictive_nucleus/results/independent-v7/raw/nand-37.json",
+      "rows_digest": "a73c1cdbff0f6c4170b6f8f9ded4fded29c50a996c5a15da4fc33704cf0cb918",
+      "source_pattern_digest": "339a756b2684b013d3e5cf35408468fc31821119ee039256d0fbf06a713c5211",
+      "raw_blob_sha": "2927bdfecf0c72999fca8537d95edc85d7c57cd7",
+      "worlds": 192,
+      "regime": "B-degraded",
+      "cpu_seconds": 0.30484544400000857
+    },
+    "nand-53": {
+      "path": "experiments/predictive_nucleus/results/independent-v7/raw/nand-53.json",
+      "rows_digest": "2084ef734b01e24f9d8dd82e22e69a98d7b05db4e65c7626fea28bae35b35dd5",
+      "source_pattern_digest": "24392e9ad120975e22d43ae66156a9c646d8603d332f0fbe9d0561906948d923",
+      "raw_blob_sha": "9d01469a13f46e697cc75bd41e0e881bee6d0928",
+      "worlds": 192,
+      "regime": "reversed",
+      "cpu_seconds": 0.30253400100001215
+    },
+    "nor-7": {
+      "path": "experiments/predictive_nucleus/results/independent-v7/raw/nor-7.json",
+      "rows_digest": "26040dd544913c117d75696067aa52b8259b866700f167f1498aa616d3124b39",
+      "source_pattern_digest": "3d2b1c94bba08145646a30972ec00c58d4c9b852d47c0c832ecdf85373d34bc3",
+      "raw_blob_sha": "ee214e88dfef3035cd9338f104a2c9a8587a86b1",
+      "worlds": 192,
+      "regime": "stationary",
+      "cpu_seconds": 0.33172991000000707
+    },
+    "nor-11": {
+      "path": "experiments/predictive_nucleus/results/independent-v7/raw/nor-11.json",
+      "rows_digest": "ad796f0cb4a0325b33e9e55c606e86083e54357a2f12b9e018ce2f9955fd844c",
+      "source_pattern_digest": "e8455795cb449cfe7a272f57d908f2d7923c9e4ed8f3158c863c6358d76b65fa",
+      "raw_blob_sha": "0332ee79d362f69ae4a15c18348bec08099fc919",
+      "worlds": 192,
+      "regime": "stationary",
+      "cpu_seconds": 0.33015007899999205
+    },
+    "nor-23": {
+      "path": "experiments/predictive_nucleus/results/independent-v7/raw/nor-23.json",
+      "rows_digest": "0a764e5e9752369f56ba587669923f002ad6698bb29a2b65624a5a54fa4fa768",
+      "source_pattern_digest": "5005e07fda6b6cf8544ac1ddf130e8de9c327eb895d39c62acf4080515cabc95",
+      "raw_blob_sha": "8998badca6e1fdad7bf2439394bae4128cecfaf7",
+      "worlds": 192,
+      "regime": "B-degraded",
+      "cpu_seconds": 0.3263373569999999
+    },
+    "nor-37": {
+      "path": "experiments/predictive_nucleus/results/independent-v7/raw/nor-37.json",
+      "rows_digest": "ce9d01d4c48a3903e2be2c1e79b7aecdadd7a5697fcfdaa50c50496fb6e3dff1",
+      "source_pattern_digest": "6cc438f8533cc4b056d032820c1a951045e3403f3874093fe275ed4fde768d9d",
+      "raw_blob_sha": "2fc096fb7d851d71443832e283de979a09bae178",
+      "worlds": 192,
+      "regime": "B-degraded",
+      "cpu_seconds": 0.3373645780000061
+    },
+    "nor-53": {
+      "path": "experiments/predictive_nucleus/results/independent-v7/raw/nor-53.json",
+      "rows_digest": "8c4617724a62a4fd7b526848a8b596fc86ab177137d33408f2b6d0ee83c6edc6",
+      "source_pattern_digest": "86f146208b554e87f0a61d27516221a3654487963131350aafb7d322372f44b9",
+      "raw_blob_sha": "35257e43d9747a8aa0f787f712bb4bccd6fbf78c",
+      "worlds": 192,
+      "regime": "reversed",
+      "cpu_seconds": 0.3395264830000002
+    }
+  }
+}

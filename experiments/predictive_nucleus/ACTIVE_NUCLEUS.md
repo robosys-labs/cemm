@@ -1,4 +1,70 @@
-# Active nucleus — G5 v6 source-trust failure attributed; G5 baseline retained
+# Active nucleus — G5 v7 source conditioning challenged; G5 baseline retained
+
+## G5 v7: sealed source-conditioned challenge completed — no promotion (2026-11-04)
+
+[Draft PR #93](https://github.com/robosys-labs/cemm/pull/93) directly
+tests the failure attributed in PR #92 without altering G1–G4,
+v5/v6 evidence, production runtime or the existing G5 rule.
+The preregistered one-extra-scalar
+`(h,e_A,e_B)` model fixed a **physical observation-noise likelihood
+mismatch** discovered before TEST, retained the two-state temporal
+recursion and compared an equally TRAIN-fitted physics-matched
+two-scalar control. All fits used observed selected physical payoffs
+only; no gold meanings or participant labels.
+
+Frozen TRAIN fit: v7 `h=.15,e_A=.03,e_B=.20`, causal NLL
+**.49980**; neutral `h=.15,e=.10`, **.52251**; TRAIN-smoothed
+G5 rule `delta=.20`, **.56904**.
+The [ten raw challenge banks](results/independent-v7/raw/manifest.json)
+were committed at `79a62ce8dc25b5421672a0a0b77d8f1f27866dd3`
+**before evaluator scoring**: 1,920 distinct worlds, 28,800
+one-step payoff forecasts, 9,600 correlated scope views,
+no public-world-ID overlap with v6.
+[The scored decision](results/independent-v7/scored/decision.json)
+was independently rerun from frozen raw at
+`41890264288` with **1,230 tests passing**; a prior
+formatting-only scorer failure and repair remain disclosed.
+
+**Decision: `REVISE_SOURCE_V7` (6/10 gates pass), G5
+`NOT_ADMITTED`.** The source-aware model improves five-view meaning
+Brier to **.04807** (neutral **.05221**; retained rule **.07211**),
+but has **148 vs 127** paid queries, **94.32% vs 94.87%**
+optimal actions, **152 vs 102** ≥95%-confident meaning errors
+and **53 newly wrong parent/sentinel confident states** versus
+frozen v6. Net/action **.85250 vs .85181** buys too little to
+offset adverse calibration/cost/retention gates. Seed 53 with
+reversed source reliability falls to **.83105 vs .85306** net/action.
+Of the 53 newly confident retained mistakes, **36** occur in the
+reversed regime.
+
+The key mechanism is **stable-B versus true-change-B tension**:
+stationary first-post-epoch Brier improves from **.07424** to
+**.04155** when meaning stayed stable under noisy B, yet worsens
+from **.29548** to **.42946** when B reports a *real* revision.
+Static source trust cannot separate transient sensor corruption
+from durable change and does not transfer when source reliabilities
+reverse. The v7 model gains on proper average calibration but fails
+the **query**, **optimal-action**, **retention-safety**, and
+**worst-seed** gates. TRAIN-smoothed rule also fails efficiency
+(355 queries versus 100 original G5 rule queries).
+
+**Next highest-information tranche:** one *representation* diagnostic,
+not another sweep of fixed h/e. Prospectively measure whether a minimal
+learned source-trust state jointly maintained with time-indexed
+competing meaning hypotheses can distinguish single noisy receipts from
+durable change, adapt after source shifts from observed selected
+payoffs and reduce genuinely useless questions. Include an
+**identical-history fixed-trust control**, newly seeded matched
+stable/flip/source-switch challenges, adversarial calibration,
+per-seed/query value, and explicit abstention before information
+becomes discriminative. Do not reuse the opened v7 challenge to fit
+or tune. Keep original G5 rule as active bounded baseline;
+no G6, no production integration, no formal scientific admission.
+[Full adverse decision](SOURCE_CONDITIONED_DECISION_V7.md) ·
+[raw custody](results/independent-v7/raw/manifest.json) ·
+[scored custody](results/independent-v7/scored/manifest.json) ·
+[pre-fit physical erratum](SOURCE_CONDITIONED_PREFIT_ERRATUM_V7.md) ·
+[post-score presentation erratum](SOURCE_CONDITIONED_SCORING_ERRATUM_V7.md).
 
 ## Latest G5 v6 scored and diagnosed — no promotion
 
