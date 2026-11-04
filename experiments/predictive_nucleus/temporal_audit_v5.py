@@ -11,13 +11,14 @@ import time
 
 from .revision_memory import Memory
 from .revision_study import scoped_latest
+from .revision_outcome import posterior as old_scalar_posterior, decision as old_scalar_decision
 from .temporal_belief_v5 import probability, decision, causal_nll
 from .temporal_task_v5 import episodes, inventory
 
 
 VIEWS=('pre_unit','post_unit','post_sibling','post_outside','post_nav')
 FEES=(.05,.75,None)
-ARMS=('temporal','scoped_rule','latest','no_memory')
+ARMS=('temporal','scoped_rule','latest','v4_scalar','no_memory')
 
 
 def case_id(law,seed,i):
@@ -47,7 +48,8 @@ def collect(law,seed,bank,fit):
         for term,scope,memory in views:
             p=probability(memory.snapshot(),term,scope,h,e)
             cell.append((p,memory.belief(term,scope),
-                         scoped_latest(memory,term,scope)))
+                         scoped_latest(memory,term,scope),
+                         old_scalar_posterior(memory,term,scope,.0025)))
         saved.append((case_id(law,seed,i),record_digest(ep.records),cell))
     if len(saved)!=192:
         raise ValueError('incomplete recorded TEST decision bank')
@@ -92,11 +94,11 @@ def score(raw,law,seed,bank,fit):
             raise ValueError('challenge source / row identity mismatch')
         outcomes=(ep.truth[2],ep.truth[2],ep.truth[1],ep.truth[0],ep.truth[3])
         for j,(cell,target) in enumerate(zip(cells,outcomes,strict=True)):
-            if len(cell)!=3 or not 0<=cell[0]<=1 or any(v is not None and
-               (type(v) is not int or v not in (0,1)) for v in cell[1:]):
+            if len(cell)!=4 or not 0<=cell[0]<=1 or not 0<=cell[3]<=1 or any(v is not None and
+               (type(v) is not int or v not in (0,1)) for v in cell[1:3]):
                 raise ValueError('invalid collected probability/rule')
-            p,rule,latest=cell
-            states=(decision(p),rule,latest,None)
+            p,rule,latest,older=cell
+            states=(decision(p),rule,latest,old_scalar_decision(older),None)
             v=VIEWS[j]
             # An epistemic twin has two equally likely hidden worlds and
             # the same public prefix; retain both in all denominators.
