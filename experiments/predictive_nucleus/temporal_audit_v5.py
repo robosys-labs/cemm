@@ -12,7 +12,8 @@ import time
 from .revision_memory import Memory
 from .revision_study import scoped_latest
 from .revision_outcome import posterior as old_scalar_posterior, decision as old_scalar_decision
-from .temporal_belief_v5 import probability, decision, causal_nll
+from .temporal_belief_v5 import (probability, decision, causal_nll,
+                                 predictive_payoff, TimedReceipt, _update, _likelihoods)
 from .temporal_task_v5 import episodes, inventory
 
 
@@ -29,6 +30,27 @@ def record_digest(records):
     rows=[(r.evidence_id,r.term,r.scope,r.event_time,r.source,r.probabilities,
            r.outcome,r.physical,getattr(r,'epoch',False)) for r in records]
     return sha256(json.dumps(rows,separators=(',',':')).encode()).hexdigest()
+
+
+def payoff_forecasts(records,h,e):
+    """Freeze every one-step action-payoff probability before its observation."""
+    states={}
+    timed=set()
+    saved=[]
+    for rec in records:
+        if _likelihoods(rec) is None:
+            continue
+        key=(rec.term,rec.scope)
+        p=states.get(key,.5)
+        stamp=(key,rec.event_time)
+        boundary=getattr(rec,'epoch',False) and stamp not in timed
+        saved.append(predictive_payoff(p,rec.probabilities,e,boundary,h))
+        if boundary:
+            timed.add(stamp)
+        current=TimedReceipt(rec.evidence_id,rec.term,rec.scope,rec.event_time,
+                             rec.source,rec.probabilities,rec.outcome,True,boundary)
+        states[key]=_update(p,current,h,e)
+    return tuple(saved)
 
 
 def collect(law,seed,bank,fit):
@@ -50,7 +72,8 @@ def collect(law,seed,bank,fit):
             cell.append((p,memory.belief(term,scope),
                          scoped_latest(memory,term,scope),
                          old_scalar_posterior(memory,term,scope,.0025)))
-        saved.append((case_id(law,seed,i),record_digest(ep.records),cell))
+        saved.append((case_id(law,seed,i),record_digest(ep.records),cell,
+                      payoff_forecasts(ep.records,h,e)))
     if len(saved)!=192:
         raise ValueError('incomplete recorded TEST decision bank')
     return {'law':law,'seed':seed,'source':'challenge',
@@ -88,10 +111,27 @@ def score(raw,law,seed,bank,fit):
     totals=Counter()
     view_totals={v:Counter() for v in VIEWS}
     pre_twins=[]
+    proper_nll=proper_brier=0.
+    bins=[[0,0.,0.] for _ in range(10)]
+    from math import log
     for i,(ep,entry) in enumerate(zip(source,raw['rows'],strict=True)):
-        ident,sha,cells=entry
-        if ident!=case_id(law,seed,i) or sha!=record_digest(ep.records) or len(cells)!=5:
+        ident,sha,cells,payoff_preds=entry
+        if (ident!=case_id(law,seed,i) or sha!=record_digest(ep.records)
+                or len(cells)!=5 or len(payoff_preds)!=15):
             raise ValueError('challenge source / row identity mismatch')
+        actual=[r.outcome for r in ep.records if _likelihoods(r) is not None]
+        if len(actual)!=15 or any(type(v) is not int or v not in (0,1)
+                                  for v in actual):
+            raise ValueError('invalid complete payoff record')
+        for p,y in zip(payoff_preds,actual,strict=True):
+            if type(p) not in (int,float) or not 0<=p<=1:
+                raise ValueError('invalid saved causal probability')
+            proper_nll-=log(max(p if y else 1-p,1e-12))
+            proper_brier+=(p-y)**2
+            bucket=min(9,int(p*10))
+            bins[bucket][0]+=1
+            bins[bucket][1]+=p
+            bins[bucket][2]+=y
         outcomes=(ep.truth[2],ep.truth[2],ep.truth[1],ep.truth[0],ep.truth[3])
         for j,(cell,target) in enumerate(zip(cells,outcomes,strict=True)):
             if len(cell)!=4 or not 0<=cell[0]<=1 or not 0<=cell[3]<=1 or any(v is not None and
@@ -125,7 +165,11 @@ def score(raw,law,seed,bank,fit):
         totals['pre_confident_pairs']+=left[2] is not None
     h,e=fit['h'],fit['e']
     observed=[ep.records for ep in source]
-    model_nll,n=causal_nll(observed,h,e)
+    n=totals['episodes']*15
+    model_nll=proper_nll/n
+    model_brier=proper_brier/n
+    model_ece=sum(count/n*abs(p_sum/count-y_sum/count)
+        for count,p_sum,y_sum in bins if count)
     plain_nll=_nll(source)
     no_exception_nll,_=causal_nll(observed,h,0)
     no_transition_nll,_=causal_nll(observed,0,e)
@@ -142,6 +186,7 @@ def score(raw,law,seed,bank,fit):
     totals.update({'candidate_causal_nll':model_nll,'uniform_causal_nll':plain_nll,
                    'no_exception_causal_nll':no_exception_nll,
                    'no_transition_causal_nll':no_transition_nll,
-                   'causal_payoffs':n})
+                   'causal_payoffs':n,'candidate_brier':model_brier,
+                   'candidate_ece_10bin_descriptive':model_ece})
     return {'law':law,'seed':seed,'totals':dict(totals),
             'views':{k:dict(v) for k,v in view_totals.items()}}
