@@ -93,6 +93,19 @@ def audit(rows,gold,s):
     counts['pre']['confident_pairs']=counts['pre']['confident']//2
     return counts
 
+def audit_rule(rows,gold):
+    """Previously retained rule; decisions only, without invented probabilities."""
+    out={}
+    for band in STRATA:
+        valid=wrong=0
+        for row,target in zip(rows[band],gold[band],strict=True):
+            pred=row.memory.belief(row.term,row.scope)
+            valid+=pred is not None
+            wrong+=pred is not None and pred!=target
+        out[band]={'confident':valid,'wrong_confident':wrong}
+    out['pre']['confident_pairs']=out['pre']['confident']//2
+    return out
+
 def diagnose(law,seed,bank,previous):
     rows,gold,pairs=train_rows(bank,seed)
     selected,losses=fit(rows)
@@ -110,6 +123,7 @@ def diagnose(law,seed,bank,previous):
              'REVISE_OBJECTIVE' if selected not in possible else
              'KEEP_BALANCED_OBJECTIVE_TRAIN_DIAGNOSTIC')
     return {'law':law,'seed':seed,'train_only':True,'matched_prefix_pairs':pairs,
+            'v1_rule_audit':audit_rule(rows,gold),
             'rows':{x:len(rows[x]) for x in STRATA},'v2_switch':previous,
             'balanced_switch':selected,'feasible_switches':possible,
             'decision':verdict,'grid':grid}
