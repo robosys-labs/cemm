@@ -10,7 +10,7 @@ from .independent_task_v7 import episodes
 from .goal_policy_v6 import public_task
 
 VIEWS=('mid_local','final_local','final_sibling','final_root','final_sentinel')
-ARMS=('source_temporal','v6_frozen','rule_smoothed','scoped_rule','latest','no_memory')
+ARMS=('source_temporal','sensor_neutral','v6_frozen','rule_smoothed','scoped_rule','latest','no_memory')
 
 def views(ep):
     before=Memory(ep.records[:13])
@@ -36,6 +36,7 @@ def collect(law,seed,bank,fitted):
             history=mem.snapshot()
             cells.append((
                 source_probability(history,term,scope,h,ea,eb),
+                source_probability(history,term,scope,.15,.1,.1),
                 v6_probability(history,term,scope,.15,.1),
                 rule_probability(mem,term,scope,d),
                 mem.belief(term,scope),
@@ -45,11 +46,12 @@ def collect(law,seed,bank,fitted):
             'id':ep.uid,'record_hash':record_digest(ep.records),
             'lineage':ep.lineage,'beliefs':cells,
             'payoff_p':payoff_forecasts(ep.records,h,ea,eb),
+            'sensor_payoff_p':payoff_forecasts(ep.records,.15,.1,.1),
             'v6_payoff_p':v6_forecasts(ep.records,.15,.1),
             'source_ids':ep.observed_sources,'goals':(g0,g1),'fee':fee})
     if len(rows)!=192 or len(seen)!=192 or any(
         len(r['beliefs'])!=5 or len(r['payoff_p'])!=15 or
-        len(r['v6_payoff_p'])!=15 or len(r['source_ids'])!=15
+        len(r['v6_payoff_p'])!=15 or len(r['sensor_payoff_p'])!=15 or len(r['source_ids'])!=15
         for r in rows):
         raise ValueError('incomplete v7 raw collection')
     return {'version':'g5-v7-raw','law':law,'seed':seed,

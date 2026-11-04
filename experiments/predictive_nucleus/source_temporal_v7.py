@@ -25,9 +25,9 @@ def _condition(record,ea,eb):
         raise ValueError('unrecognized physical source')
     e = ea if record.source == 'sensor-A' else eb
     a,b = record.probabilities
-    # P(observed payoff=1 | persistent meaning) marginalizes an
-    # event-local inversion. This commutes with complement for outcome=0.
-    return replace(record, probabilities=((1-e)*a+e*b,(1-e)*b+e*a))
+    # Sensor flips the OBSERVED BINARY REWARD, not the hidden meaning.
+    # Mixing meaning columns would be wrong if a+b != 1.
+    return replace(record, probabilities=(e+(1-2*e)*a,e+(1-2*e)*b))
 
 def probability(records,term,scope,h,ea,eb):
     _check(h,ea,eb)

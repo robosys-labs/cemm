@@ -9,8 +9,8 @@ from .independent_collection_v7 import VIEWS,ARMS
 
 def _p(cell,arm):
     i=ARMS.index(arm)
-    if i in (3,4): return .5 if cell[i] is None else float(cell[i])
-    if i==5: return .5
+    if i in (4,5): return .5 if cell[i] is None else float(cell[i])
+    if i==6: return .5
     return cell[i]
 
 def _wrong(p,y):
@@ -40,7 +40,7 @@ def score(raw,law,seed,bank,freeze):
     views={v:{a:Counter() for a in ARMS} for v in VIEWS}
     subgroups=defaultdict(lambda:{a:Counter() for a in ARMS})
     questions={a:Counter() for a in ARMS}
-    payoffs={name:{s:Counter() for s in ('A','B')} for name in ('source_temporal','v6_frozen')}
+    payoffs={name:{s:Counter() for s in ('A','B')} for name in ('source_temporal','sensor_neutral','v6_frozen')}
     seen=set()
     for ep,saved in zip(episodes,raw['rows'],strict=True):
         if (ep.uid in seen or ep.uid!=saved['id']
@@ -50,7 +50,7 @@ def score(raw,law,seed,bank,freeze):
             raise ValueError('evidence identity/source/lineage mismatched')
         seen.add(ep.uid)
         if (len(saved['beliefs'])!=5 or len(saved['payoff_p'])!=15
-            or len(saved['v6_payoff_p'])!=15):
+            or len(saved['sensor_payoff_p'])!=15 or len(saved['v6_payoff_p'])!=15):
             raise ValueError('incomplete public forecast')
         goals=public_task(ep.uid)
         if (saved['fee']!=goals[2] or
@@ -60,9 +60,9 @@ def score(raw,law,seed,bank,freeze):
         changed=ep.truth[2]!=ep.truth[3]
         subgroup=('flip' if changed else 'stable')+'_'+ep.observed_sources[12]
         for vi,(view,cell,y) in enumerate(zip(VIEWS,saved['beliefs'],targets,strict=True)):
-            if len(cell)!=5 or any(
+            if len(cell)!=6 or any(
                 type(p) is not int or p not in (0,1)
-                for p in cell[3:] if p is not None):
+                for p in cell[4:] if p is not None):
                 raise ValueError('invalid raw meaning cell')
             for arm in ARMS:
                 p=_p(cell,arm)
@@ -86,11 +86,12 @@ def score(raw,law,seed,bank,freeze):
         physical=[r for r in ep.records if r.physical]
         if len(physical)!=15:
             raise ValueError('changed physical observation inventory')
-        for rec,p,q in zip(physical,saved['payoff_p'],saved['v6_payoff_p'],strict=True):
+        for rec,p,n,q in zip(physical,saved['payoff_p'],saved['sensor_payoff_p'],saved['v6_payoff_p'],strict=True):
             source=rec.source.removeprefix('sensor-')
             if source not in ('A','B'):
                 raise ValueError('unrecognized raw sensor ID')
             _add_payoff(payoffs['source_temporal'][source],p,rec.outcome)
+            _add_payoff(payoffs['sensor_neutral'][source],n,rec.outcome)
             _add_payoff(payoffs['v6_frozen'][source],q,rec.outcome)
         truth=ep.truth[3]
         for arm in ARMS:
@@ -165,7 +166,7 @@ def assess(reports):
     totals={a:Counter() for a in ARMS}
     byseed={s:{a:Counter() for a in ARMS} for s in (7,11,23,37,53)}
     first_stable_b={a:Counter() for a in ARMS}
-    stationary_payoffs={a:Counter() for a in ('source_temporal','v6_frozen')}
+    stationary_payoffs={a:Counter() for a in ('source_temporal','sensor_neutral','v6_frozen')}
     for r in reports:
         for arm in ARMS:
             totals[arm].update({k:r['arms'][arm].get(k,0) for k in (
@@ -180,20 +181,26 @@ def assess(reports):
                 stratum=r['subgroups']['stable_B'][arm]
                 first_stable_b[arm]['brier_sum']+=stratum['mid_local_brier_sum']
                 first_stable_b[arm]['n']+=stratum['mid_local_n']
-    c=totals['source_temporal'];v=totals['v6_frozen'];r=totals['rule_smoothed']
+    c=totals['source_temporal'];v=totals['v6_frozen'];r=totals['rule_smoothed'];s=totals['sensor_neutral']
     gates={
         'stationary_payoff_nll_improved':
             stationary_payoffs['source_temporal']['nll_sum'] <
             stationary_payoffs['v6_frozen']['nll_sum'],
+        'stationary_nll_vs_physics_matched_two_scalar':
+            stationary_payoffs['source_temporal']['nll_sum'] <
+            stationary_payoffs['sensor_neutral']['nll_sum'],
         'stationary_stable_B_first_brier_improved':
             first_stable_b['source_temporal']['n']>0 and
             first_stable_b['source_temporal']['brier_sum'] <
             first_stable_b['v6_frozen']['brier_sum'],
+        'stable_B_brier_vs_physics_matched_two_scalar':
+            first_stable_b['source_temporal']['brier_sum'] <
+            first_stable_b['sensor_neutral']['brier_sum'],
         'overall_brier_vs_calibrated_rule':
             c['brier_sum']/c['belief_cases'] <=
             r['brier_sum']/r['belief_cases']+1e-12,
-        'net_vs_both_controls':c['utility_sum']+1e-12>=
-            max(v['utility_sum'],r['utility_sum']),
+        'net_vs_all_controls':c['utility_sum']+1e-12>=
+            max(v['utility_sum'],r['utility_sum'],s['utility_sum']),
         'query_budget_vs_frozen_v6':c['queries']<=v['queries'],
         'optimal_actions_vs_frozen_v6':
             c['optimal_actions']>=v['optimal_actions'],
@@ -202,7 +209,8 @@ def assess(reports):
         'worst_seed_nonregression':
             all(byseed[s]['source_temporal']['utility_sum']+1e-12>=
                 max(byseed[s]['v6_frozen']['utility_sum'],
-                    byseed[s]['rule_smoothed']['utility_sum'])
+                    byseed[s]['rule_smoothed']['utility_sum'],
+                    byseed[s]['sensor_neutral']['utility_sum'])
                 for s in byseed)
     }
     return {'version':'g5-v7-prespecified-decision','worlds':1920,

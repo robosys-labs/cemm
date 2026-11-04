@@ -19,6 +19,10 @@ class V7NoGoldTraining(unittest.TestCase):
         self.assertAlmostEqual(source.probability((a,b), 'qor',scope,.15,.1,.1),
                                p_v6((a,b),'qor',scope,.15,.1))
         self.assertEqual(len(source.payoff_forecasts((a,b),.15,.1,.1)),2)
+        # Crucial non-complementary physical menu: output inversion is
+        # not a hidden-meaning swap. p(0)=p(1)=1 must become 1-e.
+        flat=TimedReceipt('flat','qor',scope,2,'sensor-B',(1.,1.),0)
+        self.assertAlmostEqual(source.payoff_forecasts((flat,),.15,.1,.2)[0],.8)
         self.assertAlmostEqual(
             source.causal_nll(((a,b),),.15,.1,.1)[0],
             loss_v6(((a,b),),.15,.1)[0])
@@ -38,6 +42,8 @@ class V7NoGoldTraining(unittest.TestCase):
         ids=set()
         evidence=[]
         samples={'A':0,'B':0}
+        noncomplementary=0
+        same_meaning_forecast=0
         for seed in (7,11,23):
             bank=catalogue('nand','train')
             for ep in inventory('nand',seed,'train',bank):
@@ -49,6 +55,11 @@ class V7NoGoldTraining(unittest.TestCase):
                 self.assertEqual(len(ep.observed_sources),15)
                 for s in ep.observed_sources:
                     samples[s]+=1
+                for rec in ep.records:
+                    if rec.physical:
+                        a,b=rec.probabilities
+                        noncomplementary+=abs(a+b-1)>1e-10
+                        same_meaning_forecast+=abs(a-b)<1e-10
                 # None of the fit functions sees ep.truth or an oracle.
                 evidence.append(ep.records)
         self.assertEqual(len(evidence),576)
@@ -66,6 +77,8 @@ class V7NoGoldTraining(unittest.TestCase):
         print('G5_V7_TRAIN_FIT '+json.dumps(
             {'stage':'TRAIN_ONLY','worlds':576,'law':'nand',
              'seeds':[7,11,23],'samples':samples,
+             'noncomplementary_forecast_rows':noncomplementary,
+             'same_meaning_forecast_rows':same_meaning_forecast,
              'fit':fit,'rule':control,'no_oracle_labels':True},
             separators=(',',':'),sort_keys=True),flush=True)
 

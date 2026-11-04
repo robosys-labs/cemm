@@ -19,8 +19,9 @@ class V7BeforeSealPreflight(unittest.TestCase):
             again=collection.collect('nand',7,bank,freeze)
         self.assertEqual(raw['rows'],again['rows'])
         self.assertEqual(len(raw['rows']),192)
-        self.assertEqual(len(raw['rows'][0]['beliefs'][0]),5)
+        self.assertEqual(len(raw['rows'][0]['beliefs'][0]),6)
         self.assertEqual(len(raw['rows'][0]['v6_payoff_p']),15)
+        self.assertEqual(len(raw['rows'][0]['sensor_payoff_p']),15)
         wire=json.loads(json.dumps(raw))
         with patch.object(scoring,'inventory',side_effect=lambda law,seed,split,b:
                           inventory(law,seed,'train',b)):
