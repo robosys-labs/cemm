@@ -1,0 +1,87 @@
+{
+  "version": "g5-v2-train-prefix-audit",
+  "status": "REVISE_OUTCOME_UPDATE_TRAIN_ONLY",
+  "protocol_freeze_commit": "7697a7f37692f8e5acb5d08a48e503a6c16fcef9",
+  "fitted_parameter_commit": "4e3090f256440f10e8416f0943d451a839663cc4",
+  "review_source_commit": "6447eac62087b6be45066b4e824ccdd8380b9281",
+  "hosted_run": 41808077247,
+  "hosted_job": 126500032983,
+  "tests_passed": 1209,
+  "identical_prefix_pairs": 960,
+  "premature_confident_pairs": 864,
+  "necessarily_wrong_high_confidence_twin_cases": 864,
+  "maximum_confidence": 0.9999705753527056,
+  "challenge_scored": false,
+  "per_condition": {
+    "nand-11": {
+      "identical_prefix_pairs": 96,
+      "max_posterior_confidence": 0.9983193681282165,
+      "necessarily_wrong_high_confidence_cases": 96,
+      "premature_confident_pairs": 96,
+      "switch": 0.32
+    },
+    "nand-23": {
+      "identical_prefix_pairs": 96,
+      "max_posterior_confidence": 0.9987032700595215,
+      "necessarily_wrong_high_confidence_cases": 96,
+      "premature_confident_pairs": 96,
+      "switch": 0.32
+    },
+    "nand-37": {
+      "identical_prefix_pairs": 96,
+      "max_posterior_confidence": 0.8378912862806761,
+      "necessarily_wrong_high_confidence_cases": 0,
+      "premature_confident_pairs": 0,
+      "switch": 0.0025
+    },
+    "nand-53": {
+      "identical_prefix_pairs": 96,
+      "max_posterior_confidence": 0.9989162704566819,
+      "necessarily_wrong_high_confidence_cases": 96,
+      "premature_confident_pairs": 96,
+      "switch": 0.32
+    },
+    "nand-7": {
+      "identical_prefix_pairs": 96,
+      "max_posterior_confidence": 0.9995131439754679,
+      "necessarily_wrong_high_confidence_cases": 96,
+      "premature_confident_pairs": 96,
+      "switch": 0.32
+    },
+    "nor-11": {
+      "identical_prefix_pairs": 96,
+      "max_posterior_confidence": 0.9994843419574883,
+      "necessarily_wrong_high_confidence_cases": 96,
+      "premature_confident_pairs": 96,
+      "switch": 0.32
+    },
+    "nor-23": {
+      "identical_prefix_pairs": 96,
+      "max_posterior_confidence": 0.999345474966338,
+      "necessarily_wrong_high_confidence_cases": 96,
+      "premature_confident_pairs": 96,
+      "switch": 0.32
+    },
+    "nor-37": {
+      "identical_prefix_pairs": 96,
+      "max_posterior_confidence": 0.9997599785005571,
+      "necessarily_wrong_high_confidence_cases": 96,
+      "premature_confident_pairs": 96,
+      "switch": 0.32
+    },
+    "nor-53": {
+      "identical_prefix_pairs": 96,
+      "max_posterior_confidence": 0.9999705753527056,
+      "necessarily_wrong_high_confidence_cases": 96,
+      "premature_confident_pairs": 96,
+      "switch": 0.32
+    },
+    "nor-7": {
+      "identical_prefix_pairs": 96,
+      "max_posterior_confidence": 0.9997916524387627,
+      "necessarily_wrong_high_confidence_cases": 96,
+      "premature_confident_pairs": 96,
+      "switch": 0.32
+    }
+  }
+}
