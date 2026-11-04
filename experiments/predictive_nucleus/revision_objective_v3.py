@@ -28,7 +28,7 @@ def train_rows(bank, seed):
     pair_count = 0
     for k,(earlier,probe,later) in enumerate(select_triples(bank,seed)):
         for old,regional,sentinel,action in product((0,1),repeat=4):
-            key = f'balanced-{k}-{old}-{regional}-{sentinel}-{action}'
+            key = f'balanced-{k}'  # identical opaque scope IDs across latent variants
             pair = []
             for reversal in (0,1):
                 full,scopes,truth = history(earlier,probe,key,old,regional,
