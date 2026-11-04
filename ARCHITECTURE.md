@@ -1,5 +1,13 @@
 # CEMM Active Architecture — Recursive Native Semantic Composition
 
+## Research north star — learned causal-law reuse (proposed, not an active ABI change)
+
+This runtime's five semantic operators, authority, claim placement and exact admission boundaries remain unchanged. The broader CEMM research goal is **native causal computation**: learn reusable event/state transition laws from observed physical outcomes; map language and other modalities onto candidate grounded events; distinguish claims from verified occurrences; retain uncertainty when causation or interpretations are not identifiable.
+
+**Proposed primary architectural evidence** is transfer of a learned operation to unseen identities, role permutations, operation sequences and alternate expressions, compared against size/compute-matched unstructured neural and generic rule-induction baselines receiving the **same** realized observations. No benchmark-specific symbolic transition implementation or generator truth may reach the learner. Word order and prosody affect candidate interpretation and focus, never automatically prove an embedded proposition or authorize a state transition.
+
+This is a **research direction only**, not a claim that the currently shipped kernel or G5 research has learned arbitrary laws; no runtime contracts or frozen G5 gates change. See [the causal-law reuse direction](docs/research/NATIVE_CAUSAL_LAW_REUSE.md) and [the prospective benchmark](docs/research/CAUSAL_LAW_REUSE_BENCHMARK.md).
+
 ## 1. Thesis
 
 CEMM models a semantic cognition substrate rather than a language-first response engine. Signals provide evidence; evidence proposes semantic candidates; exact graphs settle into meaning; epistemic policy controls admission; goals and operations act on settled semantics; realization projects response semantics back into language.
