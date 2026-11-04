@@ -93,6 +93,6 @@ def inventory(law,seed,split,bank):
                 or a.truth[2]==b.truth[2]
                 or a.records[13:15]==b.records[13:15]
                 or any(r.source=='unverified-witness' and r.physical for r in a.records)
-                or len(a.records)!=len(b.records)!=16):
+                or len(a.records)!=16 or len(b.records)!=16):
             raise ValueError('invalid matched exception/revision twins')
     return items
