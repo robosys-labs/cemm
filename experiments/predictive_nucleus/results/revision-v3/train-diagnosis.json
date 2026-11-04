@@ -1,0 +1,2514 @@
+{
+  "version": "g5-v3-train-objective",
+  "status": "TRAIN_DIAGNOSTIC",
+  "protocol_freeze_commit": "10e049c683b7810561db80cb18421ba1ce3edd1c",
+  "source_and_test_commit": "80c556581fa53bb80fed3d687115d7c1a4a5a28d",
+  "ci_run": 41810117256,
+  "ci_job": 126506983857,
+  "hosted_tests_passed": 1210,
+  "source": "PRE/POST/RETAIN selected physical TRAIN payoffs; no held-out G5 challenge used",
+  "total_conditions": 10,
+  "results": {
+    "nand-11": {
+      "balanced_switch": 0.0025,
+      "decision": "KEEP_BALANCED_OBJECTIVE_TRAIN_DIAGNOSTIC",
+      "feasible_switches": [
+        0.0025,
+        0.005,
+        0.01
+      ],
+      "grid": {
+        "0.0025": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9997433357403006,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.8228490396675354,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999980065745415,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.257896085712885,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.00521048761359702,
+            "pre": 0.7644200742687955,
+            "retain": 0.004057695256262515
+          }
+        },
+        "0.005": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.999859727495183,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.8802683145114016,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999960037797354,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.29094692898493024,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.006594182341087486,
+            "pre": 0.8622761247245241,
+            "retain": 0.003970479889179189
+          }
+        },
+        "0.01": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999225400757853,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.9304086944690585,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999919678696522,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.3520121599081913,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.009540791699346336,
+            "pre": 1.0425802667911699,
+            "retain": 0.003915421234057701
+          }
+        },
+        "0.02": {
+          "audit": {
+            "post": {
+              "confident": 184,
+              "max_confidence": 0.9999491590319276,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 80,
+              "confident_pairs": 40,
+              "max_confidence": 0.9631260403669941,
+              "wrong_confident": 40
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999837726056694,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.43567483751845054,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.013611080003824182,
+            "pre": 1.289525108548936,
+            "retain": 0.0038883240025914256
+          }
+        },
+        "0.04": {
+          "audit": {
+            "post": {
+              "confident": 180,
+              "max_confidence": 0.9999499232599338,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9814166195574059,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999668703332497,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.5327130920704676,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.015424494930126592,
+            "pre": 1.5788295865607858,
+            "retain": 0.003885194720490391
+          }
+        },
+        "0.08": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999228333665086,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9909854062069029,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999308633729131,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.6354923607774058,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.012572648743172448,
+            "pre": 1.8899950591705517,
+            "retain": 0.003909374418493335
+          }
+        },
+        "0.16": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9998451186704229,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9958613690680266,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.999848575002273,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.7407272834415567,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.00814730563108315,
+            "pre": 2.2100519486659578,
+            "retain": 0.00398259602762927
+          }
+        },
+        "0.32": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9996251252345971,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9983193681282165,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.99962603750817,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.8479269534074984,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.005249598778847237,
+            "pre": 2.534339258917394,
+            "retain": 0.004192002526253788
+          }
+        }
+      },
+      "law": "nand",
+      "matched_prefix_pairs": 96,
+      "rows": {
+        "post": 192,
+        "pre": 192,
+        "retain": 576
+      },
+      "seed": 11,
+      "train_only": true,
+      "v1_rule_audit": {
+        "post": {
+          "confident": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "confident": 0,
+          "confident_pairs": 0,
+          "wrong_confident": 0
+        },
+        "retain": {
+          "confident": 576,
+          "wrong_confident": 0
+        }
+      },
+      "v2_switch": 0.32
+    },
+    "nand-23": {
+      "balanced_switch": 0.0025,
+      "decision": "KEEP_BALANCED_OBJECTIVE_TRAIN_DIAGNOSTIC",
+      "feasible_switches": [
+        0.0025,
+        0.005,
+        0.01
+      ],
+      "grid": {
+        "0.0025": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.999787722511717,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.8274974266480832,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999984624439101,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.2641658386254727,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.004616463376294456,
+            "pre": 0.7844705122139345,
+            "retain": 0.0034105402861891636
+          }
+        },
+        "0.005": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9998890691341635,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.8970413653112493,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999969179208459,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.3047588265024556,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.006142465703556597,
+            "pre": 0.904792518770122,
+            "retain": 0.003341495033688186
+          }
+        },
+        "0.01": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999396384580135,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.9439544194219415,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999938054878669,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.3721862124301263,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.009138294560074622,
+            "pre": 1.1041205169020891,
+            "retain": 0.003299825828215082
+          }
+        },
+        "0.02": {
+          "audit": {
+            "post": {
+              "confident": 180,
+              "max_confidence": 0.9999605976900322,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 80,
+              "confident_pairs": 40,
+              "max_confidence": 0.9710919825148758,
+              "wrong_confident": 40
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999874854070264,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.4600704058081706,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.012890985880895843,
+            "pre": 1.3640397287649508,
+            "retain": 0.0032805027786650567
+          }
+        },
+        "0.04": {
+          "audit": {
+            "post": {
+              "confident": 184,
+              "max_confidence": 0.9999612789896415,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9855757357921621,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999744505264762,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.5593570918869106,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.013980516357335939,
+            "pre": 1.660810682959035,
+            "retain": 0.003280076344360886
+          }
+        },
+        "0.08": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.999940388524303,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9930290359140204,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999466820060985,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.663322037283506,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.010928770523323696,
+            "pre": 1.9757355537081616,
+            "retain": 0.0033017876190328376
+          }
+        },
+        "0.16": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9998803861399049,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9968044309027019,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9998832202517584,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.7691553403308196,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.006933167501626514,
+            "pre": 2.2971684155130534,
+            "retain": 0.003364437977778952
+          }
+        },
+        "0.32": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9997107245886514,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9987032700595215,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9997115952424818,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.8763871304046827,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.004439611550409642,
+            "pre": 2.6211796837133354,
+            "retain": 0.0035420959503030345
+          }
+        }
+      },
+      "law": "nand",
+      "matched_prefix_pairs": 96,
+      "rows": {
+        "post": 192,
+        "pre": 192,
+        "retain": 576
+      },
+      "seed": 23,
+      "train_only": true,
+      "v1_rule_audit": {
+        "post": {
+          "confident": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "confident": 0,
+          "confident_pairs": 0,
+          "wrong_confident": 0
+        },
+        "retain": {
+          "confident": 576,
+          "wrong_confident": 0
+        }
+      },
+      "v2_switch": 0.32
+    },
+    "nand-37": {
+      "balanced_switch": 0.0025,
+      "decision": "KEEP_BALANCED_OBJECTIVE_TRAIN_DIAGNOSTIC",
+      "feasible_switches": [
+        0.0025,
+        0.005
+      ],
+      "grid": {
+        "0.0025": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9996949055409405,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.8378912862806761,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999983357555081,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.2574742150669304,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.006657195597684378,
+            "pre": 0.7605207900447898,
+            "retain": 0.00524465955831698
+          }
+        },
+        "0.005": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.999805229910647,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.8964612743872558,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999966647256038,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.2813927904237322,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.008127513996301673,
+            "pre": 0.8309325740791457,
+            "retain": 0.005118283195749309
+          }
+        },
+        "0.01": {
+          "audit": {
+            "post": {
+              "confident": 184,
+              "max_confidence": 0.9998945544053802,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.9412243101044157,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.99999329736494,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.33334730998207346,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.011409521924468589,
+            "pre": 0.9835970804736935,
+            "retain": 0.005035327548058353
+          }
+        },
+        "0.02": {
+          "audit": {
+            "post": {
+              "confident": 180,
+              "max_confidence": 0.9999370272337083,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 32,
+              "confident_pairs": 16,
+              "max_confidence": 0.9690976996667064,
+              "wrong_confident": 16
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999864596371638,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.40986817012795923,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.015993801036088353,
+            "pre": 1.2086188475703772,
+            "retain": 0.004991861777412158
+          }
+        },
+        "0.04": {
+          "audit": {
+            "post": {
+              "confident": 176,
+              "max_confidence": 0.9999481257327456,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9844713502324861,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999723571704118,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.5021845930492406,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.01833733350077717,
+            "pre": 1.4832339527069873,
+            "retain": 0.004982492939957139
+          }
+        },
+        "0.08": {
+          "audit": {
+            "post": {
+              "confident": 184,
+              "max_confidence": 0.9999308295818693,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 144,
+              "confident_pairs": 72,
+              "max_confidence": 0.9924777407870836,
+              "wrong_confident": 72
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999423145782657,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.6016802141733727,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.015515803501452563,
+            "pre": 1.7845143175600136,
+            "retain": 0.005010521458651938
+          }
+        },
+        "0.16": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9998687140657595,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9965490003730523,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9998736576302075,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.7040595679521674,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.01034175469943424,
+            "pre": 2.0967340386975466,
+            "retain": 0.0051029104595211455
+          }
+        },
+        "0.32": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9996867048433803,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9985989833972195,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9996880093917616,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.8086712797857379,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.006719918295792493,
+            "pre": 2.4139230939449887,
+            "retain": 0.005370827116432392
+          }
+        }
+      },
+      "law": "nand",
+      "matched_prefix_pairs": 96,
+      "rows": {
+        "post": 192,
+        "pre": 192,
+        "retain": 576
+      },
+      "seed": 37,
+      "train_only": true,
+      "v1_rule_audit": {
+        "post": {
+          "confident": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "confident": 0,
+          "confident_pairs": 0,
+          "wrong_confident": 0
+        },
+        "retain": {
+          "confident": 576,
+          "wrong_confident": 0
+        }
+      },
+      "v2_switch": 0.0025
+    },
+    "nand-53": {
+      "balanced_switch": 0.0025,
+      "decision": "KEEP_BALANCED_OBJECTIVE_TRAIN_DIAGNOSTIC",
+      "feasible_switches": [
+        0.0025,
+        0.005
+      ],
+      "grid": {
+        "0.0025": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9997935032523898,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.8554994951430879,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999987139416706,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.26127474342640317,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.0050412621907620185,
+            "pre": 0.7749565367732544,
+            "retain": 0.0038264313151931176
+          }
+        },
+        "0.005": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.999892577895223,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.9135357226146404,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999974224159197,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.297009185231698,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.006528848673291202,
+            "pre": 0.8807546895337796,
+            "retain": 0.0037440174880232304
+          }
+        },
+        "0.01": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999421773524947,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 16,
+              "confident_pairs": 8,
+              "max_confidence": 0.9529450981472204,
+              "wrong_confident": 8
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999948198065407,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.36019782822016694,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.009544609615691426,
+            "pre": 1.0673559580510679,
+            "retain": 0.003692916993741543
+          }
+        },
+        "0.02": {
+          "audit": {
+            "post": {
+              "confident": 184,
+              "max_confidence": 0.9999634028936212,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 64,
+              "confident_pairs": 32,
+              "max_confidence": 0.9757655347560025,
+              "wrong_confident": 32
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999895349620752,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.44526115468828037,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.013462558243500669,
+            "pre": 1.3186526812465755,
+            "retain": 0.0036682245747650596
+          }
+        },
+        "0.04": {
+          "audit": {
+            "post": {
+              "confident": 188,
+              "max_confidence": 0.9999658309566583,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9879248963235557,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999786351825758,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.5431394498045489,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.014949347979456212,
+            "pre": 1.61080304608766,
+            "retain": 0.003665955346530395
+          }
+        },
+        "0.08": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999492913569771,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9941698980583303,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.999955415031135,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.646564480009127,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.012021002773621154,
+            "pre": 1.923983069599747,
+            "retain": 0.003689367654012814
+          }
+        },
+        "0.16": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9998995772129295,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9973288444093518,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999023479758653,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.7523537318975019,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.0077323081819291465,
+            "pre": 2.245569631628095,
+            "retain": 0.0037592558824814143
+          }
+        },
+        "0.32": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9997579281339973,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9989162704566819,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.999758840339708,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.8599348827375658,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.004962769131435764,
+            "pre": 2.5708832512051094,
+            "retain": 0.003958627876152515
+          }
+        }
+      },
+      "law": "nand",
+      "matched_prefix_pairs": 96,
+      "rows": {
+        "post": 192,
+        "pre": 192,
+        "retain": 576
+      },
+      "seed": 53,
+      "train_only": true,
+      "v1_rule_audit": {
+        "post": {
+          "confident": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "confident": 0,
+          "confident_pairs": 0,
+          "wrong_confident": 0
+        },
+        "retain": {
+          "confident": 576,
+          "wrong_confident": 0
+        }
+      },
+      "v2_switch": 0.32
+    },
+    "nand-7": {
+      "balanced_switch": 0.0025,
+      "decision": "KEEP_BALANCED_OBJECTIVE_TRAIN_DIAGNOSTIC",
+      "feasible_switches": [
+        0.0025
+      ],
+      "grid": {
+        "0.0025": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999396191205883,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.9242949244825146,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999994240032261,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.287061099820064,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.0045916968489153566,
+            "pre": 0.8538576240916806,
+            "retain": 0.0027339785195960487
+          }
+        },
+        "0.005": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999684035853553,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 16,
+              "confident_pairs": 8,
+              "max_confidence": 0.9579941196367379,
+              "wrong_confident": 8
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999988452175055,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.3381171141537281,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.006672377080025617,
+            "pre": 1.004995836651519,
+            "retain": 0.002683128729639735
+          }
+        },
+        "0.01": {
+          "audit": {
+            "post": {
+              "confident": 184,
+              "max_confidence": 0.9999824283346626,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 44,
+              "confident_pairs": 22,
+              "max_confidence": 0.9780816640239027,
+              "wrong_confident": 22
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999976788787326,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.4133730487205914,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.010014867195967784,
+            "pre": 1.2274496510930837,
+            "retain": 0.0026546278727227358
+          }
+        },
+        "0.02": {
+          "audit": {
+            "post": {
+              "confident": 180,
+              "max_confidence": 0.9999877505433524,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.988935220338321,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999953105062156,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.5054347587653422,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.012887770155483322,
+            "pre": 1.500773852327366,
+            "retain": 0.0026426538131770726
+          }
+        },
+        "0.04": {
+          "audit": {
+            "post": {
+              "confident": 184,
+              "max_confidence": 0.9999867305495671,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 112,
+              "confident_pairs": 56,
+              "max_confidence": 0.9945361829043234,
+              "wrong_confident": 56
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999904257809693,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.6058905713811602,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.012465693197700413,
+            "pre": 1.8025615750968982,
+            "retain": 0.0026444458488819626
+          }
+        },
+        "0.08": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999782692128366,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9973726897281615,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999800194217116,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.7092612748225475,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.00910504774409024,
+            "pre": 2.1160157018453436,
+            "retain": 0.0026630748782085632
+          }
+        },
+        "0.16": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999554816754345,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9987985879242959,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999562350352299,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.8131291330278203,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.0056259653503698825,
+            "pre": 2.4310473681814124,
+            "retain": 0.0027140655516786623
+          }
+        },
+        "0.32": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9998916964950261,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9995131439754679,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9998918954168927,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.91759983147722,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.0035830530483645356,
+            "pre": 2.7463591916485086,
+            "retain": 0.002857249734786994
+          }
+        }
+      },
+      "law": "nand",
+      "matched_prefix_pairs": 96,
+      "rows": {
+        "post": 192,
+        "pre": 192,
+        "retain": 576
+      },
+      "seed": 7,
+      "train_only": true,
+      "v1_rule_audit": {
+        "post": {
+          "confident": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "confident": 0,
+          "confident_pairs": 0,
+          "wrong_confident": 0
+        },
+        "retain": {
+          "confident": 576,
+          "wrong_confident": 0
+        }
+      },
+      "v2_switch": 0.32
+    },
+    "nor-11": {
+      "balanced_switch": 0.0025,
+      "decision": "KEEP_BALANCED_OBJECTIVE_TRAIN_DIAGNOSTIC",
+      "feasible_switches": [
+        0.0025
+      ],
+      "grid": {
+        "0.0025": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9998207528836698,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.9221222557191202,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999993874402189,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.3024756389421038,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.003460172030484602,
+            "pre": 0.9012633940119451,
+            "retain": 0.0027033507838816273
+          }
+        },
+        "0.005": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9998917892594601,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 40,
+              "confident_pairs": 20,
+              "max_confidence": 0.9560413660556965,
+              "wrong_confident": 20
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999987731956288,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.35414459901009615,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.00473006346133187,
+            "pre": 1.0550211766397324,
+            "retain": 0.002682556929224216
+          }
+        },
+        "0.01": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999413443807197,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 64,
+              "confident_pairs": 32,
+              "max_confidence": 0.9768868712380764,
+              "wrong_confident": 32
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999975354025079,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.42993767686573947,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.006866022744832307,
+            "pre": 1.2802756465255765,
+            "retain": 0.0026713613268096975
+          }
+        },
+        "0.02": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999668248497782,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9882989285443742,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999950219377874,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.5228983867423572,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.009142811762243954,
+            "pre": 1.5568836428463164,
+            "retain": 0.0026687056185113827
+          }
+        },
+        "0.04": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999760141323216,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9942163439898744,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999898379867516,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.6257164524362271,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.010204099960707485,
+            "pre": 1.86426975379681,
+            "retain": 0.0026755035511636526
+          }
+        },
+        "0.08": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999722425690551,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9972179448295371,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999787943660666,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.7329593521652874,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.008612321082355314,
+            "pre": 2.187568590196786,
+            "retain": 0.0026971452167211802
+          }
+        },
+        "0.16": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999507356191557,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9987276537061468,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999535556217782,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.8420146023358585,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.005643504823834502,
+            "pre": 2.5176495247400257,
+            "retain": 0.0027507774437153707
+          }
+        },
+        "0.32": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9998845718699193,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9994843419574883,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9998853159110137,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.9524107372815326,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.0036344065425208817,
+            "pre": 2.850699323625669,
+            "retain": 0.0028984816764076986
+          }
+        }
+      },
+      "law": "nor",
+      "matched_prefix_pairs": 96,
+      "rows": {
+        "post": 192,
+        "pre": 192,
+        "retain": 576
+      },
+      "seed": 11,
+      "train_only": true,
+      "v1_rule_audit": {
+        "post": {
+          "confident": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "confident": 0,
+          "confident_pairs": 0,
+          "wrong_confident": 0
+        },
+        "retain": {
+          "confident": 576,
+          "wrong_confident": 0
+        }
+      },
+      "v2_switch": 0.32
+    },
+    "nor-23": {
+      "balanced_switch": 0.0025,
+      "decision": "KEEP_BALANCED_OBJECTIVE_TRAIN_DIAGNOSTIC",
+      "feasible_switches": [
+        0.0025,
+        0.005
+      ],
+      "grid": {
+        "0.0025": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.999750876656091,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.9003841517500223,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999992222949106,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.29283496024282535,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.003054998713768194,
+            "pre": 0.8729789320090733,
+            "retain": 0.0024709500056346472
+          }
+        },
+        "0.005": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9998586433842751,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 0,
+              "confident_pairs": 0,
+              "max_confidence": 0.9441601395758369,
+              "wrong_confident": 0
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999984424297146,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.34686430589423484,
+          "joint_pass": true,
+          "strata_nll": {
+            "post": 0.00415983378359589,
+            "pre": 1.0339819582937329,
+            "retain": 0.0024511256053757363
+          }
+        },
+        "0.01": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999252991528632,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 80,
+              "confident_pairs": 40,
+              "max_confidence": 0.9707130999862663,
+              "wrong_confident": 40
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999968708875119,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.4249951066839424,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.006168801520995315,
+            "pre": 1.266376218179668,
+            "retain": 0.0024403003511640304
+          }
+        },
+        "0.02": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999580062270614,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9851736104419098,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999936797145604,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.519889885667601,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.008589794824246886,
+            "pre": 1.5486422931502144,
+            "retain": 0.0024375690283414456
+          }
+        },
+        "0.04": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999696384398717,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9926669429142142,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999870980225727,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.6242605994669573,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.009709103590420895,
+            "pre": 1.8606290547435436,
+            "retain": 0.002443640066907322
+          }
+        },
+        "0.08": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999648053009147,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9964707362291816,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.999973076786194,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.7330412948411068,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.008023817276925247,
+            "pre": 2.1886367240602644,
+            "retain": 0.0024633431861308275
+          }
+        },
+        "0.16": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999374735850419,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9983853685955651,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999410333832004,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.844092097004276,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.005179177864739016,
+            "pre": 2.5245848191953106,
+            "retain": 0.0025122939527782422
+          }
+        },
+        "0.32": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9998534580893476,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.999345474966338,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9998543972734416,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.9567537760639199,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.0033211569539487265,
+            "pre": 2.8642929964054686,
+            "retain": 0.0026471748323423183
+          }
+        }
+      },
+      "law": "nor",
+      "matched_prefix_pairs": 96,
+      "rows": {
+        "post": 192,
+        "pre": 192,
+        "retain": 576
+      },
+      "seed": 23,
+      "train_only": true,
+      "v1_rule_audit": {
+        "post": {
+          "confident": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "confident": 0,
+          "confident_pairs": 0,
+          "wrong_confident": 0
+        },
+        "retain": {
+          "confident": 576,
+          "wrong_confident": 0
+        }
+      },
+      "v2_switch": 0.32
+    },
+    "nor-37": {
+      "balanced_switch": 0.0025,
+      "decision": "REVISE_REPRESENTATION",
+      "feasible_switches": [],
+      "grid": {
+        "0.0025": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9998723877675125,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 40,
+              "confident_pairs": 20,
+              "max_confidence": 0.9596437500316136,
+              "wrong_confident": 20
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999997138367396,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.3485805199087327,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.0034462875190171584,
+            "pre": 1.0390466064537633,
+            "retain": 0.0032486657534175267
+          }
+        },
+        "0.005": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999291132038951,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 48,
+              "confident_pairs": 24,
+              "max_confidence": 0.9785551431519094,
+              "wrong_confident": 24
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999994274419207,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.3989635544157725,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.004515501887739211,
+            "pre": 1.1891393360711588,
+            "retain": 0.003235825288419365
+          }
+        },
+        "0.01": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999628439396343,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9890332791480615,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999988503138104,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.4715509655897428,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.006212482309590945,
+            "pre": 1.4052101673447321,
+            "retain": 0.0032302471149054353
+          }
+        },
+        "0.02": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999797324589778,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9945113952605505,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999976783949187,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.5617094919363922,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.008243914315835701,
+            "pre": 1.6736528582836028,
+            "retain": 0.0032317032097378823
+          }
+        },
+        "0.04": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999864784289108,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.997299754230929,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999952613404121,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.6632764220471269,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.010082869881957095,
+            "pre": 1.9765038949271938,
+            "retain": 0.003242501332229918
+          }
+        },
+        "0.08": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999859514234051,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9987037166359342,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999901121757679,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.7706698430619713,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.00959112358485911,
+            "pre": 2.2991483125912686,
+            "retain": 0.003270093009786449
+          }
+        },
+        "0.16": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999765541910678,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9994076692135985,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999783447098443,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.8807019171635129,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.006707204691498904,
+            "pre": 2.6320627033122457,
+            "retain": 0.0033358434867939695
+          }
+        },
+        "0.32": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999460623857215,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9997599785005571,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999465346366232,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.9926503560859468,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.004397346716784025,
+            "pre": 2.9700383594405473,
+            "retain": 0.0035153621005088
+          }
+        }
+      },
+      "law": "nor",
+      "matched_prefix_pairs": 96,
+      "rows": {
+        "post": 192,
+        "pre": 192,
+        "retain": 576
+      },
+      "seed": 37,
+      "train_only": true,
+      "v1_rule_audit": {
+        "post": {
+          "confident": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "confident": 0,
+          "confident_pairs": 0,
+          "wrong_confident": 0
+        },
+        "retain": {
+          "confident": 576,
+          "wrong_confident": 0
+        }
+      },
+      "v2_switch": 0.32
+    },
+    "nor-53": {
+      "balanced_switch": 0.0025,
+      "decision": "REVISE_REPRESENTATION",
+      "feasible_switches": [],
+      "grid": {
+        "0.0025": {
+          "audit": {
+            "post": {
+              "confident": 188,
+              "max_confidence": 0.9999863054312846,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 32,
+              "confident_pairs": 16,
+              "max_confidence": 0.9948357201108943,
+              "wrong_confident": 16
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999999650200742,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.37817294016189856,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.004632102595514221,
+            "pre": 1.1273760376810467,
+            "retain": 0.0025106802091347923
+          }
+        },
+        "0.005": {
+          "audit": {
+            "post": {
+              "confident": 188,
+              "max_confidence": 0.9999926673280658,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 48,
+              "confident_pairs": 24,
+              "max_confidence": 0.9973103817990031,
+              "wrong_confident": 24
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999999299664198,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.4339990967954648,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.0057906172121532686,
+            "pre": 1.293710063003256,
+            "retain": 0.002496610170984981
+          }
+        },
+        "0.01": {
+          "audit": {
+            "post": {
+              "confident": 188,
+              "max_confidence": 0.9999961792787432,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 64,
+              "confident_pairs": 32,
+              "max_confidence": 0.9986403969527639,
+              "wrong_confident": 32
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999998593280363,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.5113837544440488,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.006904736830510793,
+            "pre": 1.5247567715558372,
+            "retain": 0.0024897549457984984
+          }
+        },
+        "0.02": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999978866377729,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9993235341283795,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999997158891446,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.6038630621079802,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.008325221897837945,
+            "pre": 1.8007745107605864,
+            "retain": 0.0024894536655165975
+          }
+        },
+        "0.04": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999985253815877,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9996681319647732,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999994200485199,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.7046576082091005,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.009337056184600144,
+            "pre": 2.102138745392522,
+            "retain": 0.0024970230501794883
+          }
+        },
+        "0.08": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999983660187759,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9998408969905548,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999987897974618,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.8085690507795062,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.007999469561894084,
+            "pre": 2.415189799222618,
+            "retain": 0.0025178835540064465
+          }
+        },
+        "0.16": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999971670379192,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9999273477340519,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999973494146154,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.9135853274132018,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.005264273792139847,
+            "pre": 2.732923404543172,
+            "retain": 0.002568303904293447
+          }
+        },
+        "0.32": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999934068529427,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9999705753527056,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999934549694975,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 1.0203914739907478,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.0033930269341544586,
+            "pre": 3.055074984103546,
+            "retain": 0.0027064109345426263
+          }
+        }
+      },
+      "law": "nor",
+      "matched_prefix_pairs": 96,
+      "rows": {
+        "post": 192,
+        "pre": 192,
+        "retain": 576
+      },
+      "seed": 53,
+      "train_only": true,
+      "v1_rule_audit": {
+        "post": {
+          "confident": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "confident": 0,
+          "confident_pairs": 0,
+          "wrong_confident": 0
+        },
+        "retain": {
+          "confident": 576,
+          "wrong_confident": 0
+        }
+      },
+      "v2_switch": 0.32
+    },
+    "nor-7": {
+      "balanced_switch": 0.0025,
+      "decision": "REVISE_REPRESENTATION",
+      "feasible_switches": [],
+      "grid": {
+        "0.0025": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999422262579831,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 36,
+              "confident_pairs": 18,
+              "max_confidence": 0.9669978950835288,
+              "wrong_confident": 18
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999997529822366,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.3252759671012019,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.003287413384094405,
+            "pre": 0.9702197937496577,
+            "retain": 0.002320694169853513
+          }
+        },
+        "0.005": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999674131187426,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 48,
+              "confident_pairs": 24,
+              "max_confidence": 0.9817212677700393,
+              "wrong_confident": 24
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999995050169356,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.3822919779989518,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.004558549017564042,
+            "pre": 1.1400137693749783,
+            "retain": 0.0023036156043131726
+          }
+        },
+        "0.01": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999824838355963,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 48,
+              "confident_pairs": 24,
+              "max_confidence": 0.9905210380366615,
+              "wrong_confident": 24
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999990053297952,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.46227414370632025,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.006445264392439779,
+            "pre": 1.3780826729106597,
+            "retain": 0.0022944938158613705
+          }
+        },
+        "0.02": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999897414365877,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 96,
+              "confident_pairs": 48,
+              "max_confidence": 0.9952383280377826,
+              "wrong_confident": 48
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.999997990661555,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.5578185722242766,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.008406068183105178,
+            "pre": 1.6627570826901437,
+            "retain": 0.002292565799580852
+          }
+        },
+        "0.04": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999918585277054,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 128,
+              "confident_pairs": 64,
+              "max_confidence": 0.9976555300216445,
+              "wrong_confident": 64
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999958979234252,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.6619859945361706,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.00931210765180191,
+            "pre": 1.9743472390331795,
+            "retain": 0.0022986369235301956
+          }
+        },
+        "0.08": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999895255984859,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9988744032422702,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999914395885173,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.7697584442556328,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.007609882267638886,
+            "pre": 2.299348085204359,
+            "retain": 0.0023173652949006842
+          }
+        },
+        "0.16": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999804262487119,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9994856953472496,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999812501009268,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.8790507096505474,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.004881201394059801,
+            "pre": 2.629907409852899,
+            "retain": 0.0023635177046833927
+          }
+        },
+        "0.32": {
+          "audit": {
+            "post": {
+              "confident": 192,
+              "max_confidence": 0.9999534758231255,
+              "wrong_confident": 0
+            },
+            "pre": {
+              "confident": 192,
+              "confident_pairs": 96,
+              "max_confidence": 0.9997916524387627,
+              "wrong_confident": 96
+            },
+            "retain": {
+              "confident": 576,
+              "max_confidence": 0.9999536932729324,
+              "wrong_confident": 0
+            }
+          },
+          "balanced_nll": 0.9896521271138802,
+          "joint_pass": false,
+          "strata_nll": {
+            "post": 0.0031250755779481756,
+            "pre": 2.9633408383566255,
+            "retain": 0.002490467407066653
+          }
+        }
+      },
+      "law": "nor",
+      "matched_prefix_pairs": 96,
+      "rows": {
+        "post": 192,
+        "pre": 192,
+        "retain": 576
+      },
+      "seed": 7,
+      "train_only": true,
+      "v1_rule_audit": {
+        "post": {
+          "confident": 192,
+          "wrong_confident": 0
+        },
+        "pre": {
+          "confident": 0,
+          "confident_pairs": 0,
+          "wrong_confident": 0
+        },
+        "retain": {
+          "confident": 576,
+          "wrong_confident": 0
+        }
+      },
+      "v2_switch": 0.32
+    }
+  }
+}
