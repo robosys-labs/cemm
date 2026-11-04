@@ -1,0 +1,52 @@
+{
+  "version": "g5-v6-global-train-fit",
+  "stage": "TRAIN_ONLY",
+  "protocol_commit": "972ca4fbc6f9e0376b1a1253e5ac2ddd08aad89b",
+  "train_generator_commit": "1c1b17f4a18deebf86dd71d07cf3e719fd2d74aa",
+  "source_test_commit": "d0282418f158af2c31d06c4b121cad2d4fb5fa84",
+  "hosted_job": 126670125212,
+  "hosted_workflow": 41857549140,
+  "hosted_tests_passed": 1218,
+  "model": "unchanged temporal_belief_v5.py two-scalar fitter",
+  "scientific_scope": "same-team independent nuisance draws, reused opened G3 physical families",
+  "challenge_opened": false,
+  "no_oracle_meaning_used_to_select_parameters": true,
+  "fit": {
+    "e": 0.1,
+    "grid": {
+      "0.05:0.01": 0.6431341849277824,
+      "0.05:0.05": 0.5401747826255645,
+      "0.05:0.1": 0.5207569040657577,
+      "0.05:0.2": 0.5483431911810436,
+      "0.15:0.01": 0.6334108604962394,
+      "0.15:0.05": 0.5330074227339754,
+      "0.15:0.1": 0.5153410006491926,
+      "0.15:0.2": 0.5460089126824648,
+      "0.35:0.01": 0.6345847276332857,
+      "0.35:0.05": 0.535022968280419,
+      "0.35:0.1": 0.5180561526682561,
+      "0.35:0.2": 0.5496429088601055,
+      "0.5:0.01": 0.6425765384164525,
+      "0.5:0.05": 0.542854807912797,
+      "0.5:0.1": 0.5256354766064298,
+      "0.5:0.2": 0.5564244741609894
+    },
+    "h": 0.15,
+    "nll": 0.5153410006491926,
+    "outcomes": 8640
+  },
+  "worlds": 576,
+  "meaning_switch_count_evaluator_audit_only": 117,
+  "observed_source_counts": {
+    "A": 4359,
+    "B": 4281
+  },
+  "physical_lineages": 3,
+  "training_law": "nand",
+  "training_seeds": [
+    7,
+    11,
+    23
+  ],
+  "measurement_notes": "Full regression suite 208.063s; isolated fit CPU time not recorded; do not equate suite time with fit time."
+}

@@ -1,0 +1,29 @@
+{
+  "version": "g5-v6-sealed-raw",
+  "stage": "COLLECTED_NOT_SCORED",
+  "protocol_commit": "972ca4fbc6f9e0376b1a1253e5ac2ddd08aad89b",
+  "train_fit_commit": "8fa94db75e610a1dec451a9049bb88c36405a53e",
+  "collector_commit": "9e738c9899f6cf173f9e0fe40dca497b12766707",
+  "hosted_run": 41860786482,
+  "hosted_tests_passed": 1223,
+  "conditions": 10,
+  "worlds_per_condition": 192,
+  "payoff_forecasts_per_world": 15,
+  "worlds_total": 1920,
+  "payoff_forecasts_total": 28800,
+  "distinct_source_patterns": 10,
+  "source_selection": "without conditioning on meaning, payoff, or contradiction",
+  "scored": false,
+  "files": {
+    "nand-11": "d4545f3981bc1836f57e7b1b20e57507a183bf3a",
+    "nand-23": "03dc923138499aaddb9220df1379e20a5abe1bb3",
+    "nand-37": "fa9520ddcb106aae4e2e970f844d1fde1aba6a9c",
+    "nand-53": "83bd04538840bfe81109d25932e5becc8c1484ac",
+    "nand-7": "5213d825d805cbaa5ae0724108dc31c06d98ff61",
+    "nor-11": "f93a938e47674f068eef5550abf4c93a2475d9bb",
+    "nor-23": "c1de5c261cd3948fe76273c759524fe02500a421",
+    "nor-37": "c710ba2a08a48d45f7339e03fd6b5cc49ce8c6ab",
+    "nor-53": "11de8cda6206e3999cfc95b2fdc1848c4d2a8d73",
+    "nor-7": "951609531f2f9ed392f60db30f6a502c56013604"
+  }
+}
