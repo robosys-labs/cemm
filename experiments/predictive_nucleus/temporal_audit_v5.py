@@ -1,0 +1,145 @@
+"""G5 v5 collection/scoring boundary: forecasts precede evaluator-only truth.
+
+This scorer consumes saved probabilities, not a candidate fit or oracle at
+collection time. The challenge's physical bank is previously opened; this
+only gives bounded development evidence, not independent scientific custody.
+"""
+from collections import Counter
+from hashlib import sha256
+import json
+import time
+
+from .revision_memory import Memory
+from .revision_study import scoped_latest
+from .temporal_belief_v5 import probability, decision, causal_nll
+from .temporal_task_v5 import episodes, inventory
+
+
+VIEWS=('pre_unit','post_unit','post_sibling','post_outside','post_nav')
+FEES=(.05,.75,None)
+ARMS=('temporal','scoped_rule','latest','no_memory')
+
+
+def case_id(law,seed,i):
+    return sha256(f'g5-v5:{law}:{seed}:{i}'.encode()).hexdigest()[:20]
+
+
+def record_digest(records):
+    rows=[(r.evidence_id,r.term,r.scope,r.event_time,r.source,r.probabilities,
+           r.outcome,r.physical,getattr(r,'epoch',False)) for r in records]
+    return sha256(json.dumps(rows,separators=(',',':')).encode()).hexdigest()
+
+
+def collect(law,seed,bank,fit):
+    """No reference to Episode.truth or Episode.variant in collection."""
+    h,e=fit['h'],fit['e']
+    t0=time.process_time()
+    saved=[]
+    for i,ep in enumerate(episodes(law,seed,'challenge',bank)):
+        pre=Memory(ep.records[:13])
+        post=Memory(ep.records[:15])
+        post.add(ep.records[15])   # unverified false assertion
+        views=(
+            ('qor',ep.unit,pre),('qor',ep.unit,post),
+            ('qor',ep.sibling,post),('qor',ep.outside,post),
+            ('nav',ep.unit,post))
+        cell=[]
+        for term,scope,memory in views:
+            p=probability(memory.snapshot(),term,scope,h,e)
+            cell.append((p,memory.belief(term,scope),
+                         scoped_latest(memory,term,scope)))
+        saved.append((case_id(law,seed,i),record_digest(ep.records),cell))
+    if len(saved)!=192:
+        raise ValueError('incomplete recorded TEST decision bank')
+    return {'law':law,'seed':seed,'source':'challenge',
+            'fit':(h,e),'rows':saved,'cpu_seconds':time.process_time()-t0}
+
+
+def _price(state,truth,fee):
+    ask=state is None and fee is not None and fee < .5
+    chosen=truth if ask else (state if state is not None else 0)
+    return int(chosen==truth),int(ask),int(state is None),int(state is not None and state!=truth)
+
+
+def _nll(rows):
+    from math import log
+    total=0.;n=0
+    for ep in rows:
+        for r in ep.records:
+            if not r.physical or r.probabilities is None:continue
+            a,b=r.probabilities
+            p=.5*(a+b)
+            total-=log(max(p if r.outcome else 1-p,1e-12))
+            n+=1
+    return total/n
+
+
+def score(raw,law,seed,bank,fit):
+    """All truth access and policy utility joins occur after raw publication."""
+    if (raw['law'],raw['seed'],raw['source'])!=(law,seed,'challenge'):
+        raise ValueError('wrong saved challenge condition')
+    if tuple(raw['fit'])!=(fit['h'],fit['e']):
+        raise ValueError('published TRAIN fit differs from collected policy')
+    source=inventory(law,seed,'challenge',bank)
+    if len(raw['rows'])!=len(source):
+        raise ValueError('missing planned physical decisions')
+    totals=Counter()
+    view_totals={v:Counter() for v in VIEWS}
+    pre_twins=[]
+    for i,(ep,entry) in enumerate(zip(source,raw['rows'],strict=True)):
+        ident,sha,cells=entry
+        if ident!=case_id(law,seed,i) or sha!=record_digest(ep.records) or len(cells)!=5:
+            raise ValueError('challenge source / row identity mismatch')
+        outcomes=(ep.truth[2],ep.truth[2],ep.truth[1],ep.truth[0],ep.truth[3])
+        for j,(cell,target) in enumerate(zip(cells,outcomes,strict=True)):
+            if len(cell)!=3 or not 0<=cell[0]<=1 or any(v is not None and
+               (type(v) is not int or v not in (0,1)) for v in cell[1:]):
+                raise ValueError('invalid collected probability/rule')
+            p,rule,latest=cell
+            states=(decision(p),rule,latest,None)
+            v=VIEWS[j]
+            # An epistemic twin has two equally likely hidden worlds and
+            # the same public prefix; retain both in all denominators.
+            if j==0:
+                pre_twins.append((ident,p,states[0],target))
+            for arm,state in zip(ARMS,states,strict=True):
+                for index,fee in enumerate(FEES):
+                    ok,ask,abstain,wrong=_price(state,target,fee)
+                    prefix=f'{arm}_{index}'
+                    view_totals[v][f'{prefix}_correct']+=ok
+                    view_totals[v][f'{prefix}_ask']+=ask
+                    view_totals[v][f'{prefix}_abstain']+=abstain
+                    view_totals[v][f'{prefix}_wrong_confident']+=wrong
+                    view_totals[v][f'{prefix}_net100']+=100*ok-int((fee or 0)*100)*ask
+            totals['contexts']+=1
+        totals['episodes']+=1
+    if len(pre_twins)!=192 or totals['contexts']!=960:
+        raise ValueError('wrong test denominator')
+    # Consecutive same-source public twins with opposing oracle meanings.
+    for left,right in zip(pre_twins[::2],pre_twins[1::2],strict=True):
+        if (left[:3]!=right[:3] or left[3]==right[3]):
+            raise ValueError('prefeedback indistinguishability broken')
+        totals['pre_twin_pairs']+=1
+        totals['pre_confident_pairs']+=left[2] is not None
+    h,e=fit['h'],fit['e']
+    observed=[ep.records for ep in source]
+    model_nll,n=causal_nll(observed,h,e)
+    plain_nll=_nll(source)
+    no_exception_nll,_=causal_nll(observed,h,0)
+    no_transition_nll,_=causal_nll(observed,0,e)
+    baseline=totals['contexts']
+    for arm in ARMS:
+        for i in range(3):
+            label=f'{arm}_{i}'
+            correct=sum(z[f'{label}_correct'] for z in view_totals.values())
+            questions=sum(z[f'{label}_ask'] for z in view_totals.values())
+            net=sum(z[f'{label}_net100'] for z in view_totals.values())/100/baseline
+            totals[f'{label}_correct']=correct
+            totals[f'{label}_questions']=questions
+            totals[f'{label}_mean_net']=net
+    totals.update({'candidate_causal_nll':model_nll,'uniform_causal_nll':plain_nll,
+                   'no_exception_causal_nll':no_exception_nll,
+                   'no_transition_causal_nll':no_transition_nll,
+                   'causal_payoffs':n})
+    return {'law':law,'seed':seed,'totals':dict(totals),
+            'views':{k:dict(v) for k,v in view_totals.items()}}
