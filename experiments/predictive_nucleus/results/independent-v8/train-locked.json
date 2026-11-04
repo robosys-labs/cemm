@@ -1,0 +1,33 @@
+{
+  "version": "g5-v8-unchanged-v7-fit-and-train-preflight",
+  "stage": "TRAIN_ONLY_NO_V8_TEST_OPENED",
+  "prospective_protocol_commit": "9d6710e7179821d71ae3302ee7ec6f1d50c8b7d6",
+  "model_generator_collector_scorer_train_test_commit": "771c66df1ce6a15c16ead6b279367594bfbccdce",
+  "inherited_v7_frozen_fit_commit": "9dcb3e0be3b9090d0a7f57b60cc470744ad6c2c7",
+  "inherited_v7_source_parameters": {
+    "h": 0.15,
+    "e_A": 0.03,
+    "e_B": 0.2
+  },
+  "inherited_v7_neutral_parameters": {
+    "h": 0.15,
+    "e": 0.1
+  },
+  "joint_state_count": 32,
+  "new_v8_fitted_parameters": 0,
+  "trust_mode_prior": "uniform over normal and swapped source-reliability orientations",
+  "trust_mode_epoch_transition": "inherited h=0.15 independently from local-meaning transition",
+  "training_data_split": "NAND source-v8 TRAIN only, seed 7 matched preflight",
+  "training_worlds_preflight": 192,
+  "training_pairs_preflight": 96,
+  "train_preflight_test_counts": 1233,
+  "train_preflight_hosted_run": 41898200265,
+  "train_preflight_hosted_job": 126813270650,
+  "source_snapshot_hosted_run": 41898200515,
+  "exact_pre_epoch_matched_twin_prefix": true,
+  "matched_twin_pre_epoch_confident_predictions": 0,
+  "no_gold_in_model_or_collector": true,
+  "challenge_opened": false,
+  "scientific_scope": "same-team exact latent world construction over already opened G3 menus",
+  "scientific_admission": "NOT_ADMITTED"
+}

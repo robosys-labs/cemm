@@ -1,0 +1,235 @@
+{
+  "correlated_meaning_views": 9600,
+  "decision": "REVISE_JOINT_V8",
+  "g5_scientific_admission": false,
+  "gates": {
+    "matched_twin_premature_confidence_zero": true,
+    "meaning_brier_better_than_temporals": true,
+    "optimal_actions_nonworse": false,
+    "overall_goal_utility_nonworse": false,
+    "query_budget_nonworse": false,
+    "reversed_mid_brier_improves": true,
+    "reversed_shifted_retention_safe": false,
+    "reversed_utility_improves": true,
+    "shifted_mid_brier_improves": true,
+    "shifted_utility_improves": true,
+    "true_flip_first_brier_nonworse": false,
+    "worst_seed_nonregression": false,
+    "zero_new_parent_sentinel_errors": false
+  },
+  "limitation": "same-team world and inherited opened physical menus; formal G5 admission false",
+  "matched_twin_pairs": 960,
+  "mean": {
+    "frozen_v7": {
+      "goal_net_per_action": 0.8107291666666676,
+      "meaning_brier": 0.06491646056956414,
+      "new_retained_confident_wrong": 0,
+      "optimal_action_rate": 0.8848958333333333,
+      "queries": 155,
+      "wrong_confident": 221
+    },
+    "joint": {
+      "goal_net_per_action": 0.8299609375000008,
+      "meaning_brier": 0.0604791867027402,
+      "new_retained_confident_wrong": 21,
+      "optimal_action_rate": 0.9184895833333333,
+      "queries": 156,
+      "wrong_confident": 185
+    },
+    "neutral": {
+      "goal_net_per_action": 0.8476822916666678,
+      "meaning_brier": 0.0628306187524148,
+      "new_retained_confident_wrong": 0,
+      "optimal_action_rate": 0.9442708333333333,
+      "queries": 148,
+      "wrong_confident": 176
+    },
+    "scoped_rule": {
+      "goal_net_per_action": 0.8072395833333341,
+      "meaning_brier": 0.083359375,
+      "new_retained_confident_wrong": 0,
+      "optimal_action_rate": 0.8861979166666667,
+      "queries": 124,
+      "wrong_confident": 342
+    }
+  },
+  "per_regime": {
+    "B-degraded": {
+      "frozen_v7": {
+        "meaning_brier": 0.06289843167548954,
+        "net_per_action": 0.8143229166666676,
+        "new_retained_confident_wrong": 0,
+        "queries": 29
+      },
+      "joint": {
+        "meaning_brier": 0.07416986161286317,
+        "net_per_action": 0.8257812500000007,
+        "new_retained_confident_wrong": 8,
+        "queries": 31
+      },
+      "neutral": {
+        "meaning_brier": 0.08318246039129894,
+        "net_per_action": 0.8403645833333342,
+        "new_retained_confident_wrong": 0,
+        "queries": 29
+      },
+      "scoped_rule": {
+        "meaning_brier": 0.10455729166666666,
+        "net_per_action": 0.7892578125000007,
+        "new_retained_confident_wrong": 0,
+        "queries": 22
+      }
+    },
+    "reversed": {
+      "frozen_v7": {
+        "meaning_brier": 0.10011669418390694,
+        "net_per_action": 0.7953125000000006,
+        "new_retained_confident_wrong": 0,
+        "queries": 32
+      },
+      "joint": {
+        "meaning_brier": 0.05657071250230261,
+        "net_per_action": 0.8385416666666674,
+        "new_retained_confident_wrong": 2,
+        "queries": 32
+      },
+      "neutral": {
+        "meaning_brier": 0.06128973623202296,
+        "net_per_action": 0.8519531250000009,
+        "new_retained_confident_wrong": 0,
+        "queries": 28
+      },
+      "scoped_rule": {
+        "meaning_brier": 0.07838541666666667,
+        "net_per_action": 0.803515625000001,
+        "new_retained_confident_wrong": 0,
+        "queries": 25
+      }
+    },
+    "stationary": {
+      "frozen_v7": {
+        "meaning_brier": 0.04692259732748773,
+        "net_per_action": 0.8266927083333341,
+        "new_retained_confident_wrong": 0,
+        "queries": 62
+      },
+      "joint": {
+        "meaning_brier": 0.05727725462554615,
+        "net_per_action": 0.8304687500000009,
+        "new_retained_confident_wrong": 6,
+        "queries": 63
+      },
+      "neutral": {
+        "meaning_brier": 0.058136154218728614,
+        "net_per_action": 0.8480143229166676,
+        "new_retained_confident_wrong": 0,
+        "queries": 61
+      },
+      "scoped_rule": {
+        "meaning_brier": 0.07923177083333334,
+        "net_per_action": 0.8147460937500007,
+        "new_retained_confident_wrong": 0,
+        "queries": 51
+      }
+    },
+    "within-epoch-source-switch": {
+      "frozen_v7": {
+        "meaning_brier": 0.06772198233344874,
+        "net_per_action": 0.7906250000000007,
+        "new_retained_confident_wrong": 0,
+        "queries": 32
+      },
+      "joint": {
+        "meaning_brier": 0.05710085014744292,
+        "net_per_action": 0.8245442708333343,
+        "new_retained_confident_wrong": 5,
+        "queries": 30
+      },
+      "neutral": {
+        "meaning_brier": 0.05340858870129493,
+        "net_per_action": 0.8500651041666677,
+        "new_retained_confident_wrong": 0,
+        "queries": 30
+      },
+      "scoped_rule": {
+        "meaning_brier": 0.075390625,
+        "net_per_action": 0.8139322916666677,
+        "new_retained_confident_wrong": 0,
+        "queries": 26
+      }
+    }
+  },
+  "per_regime_first_local_brier": {
+    "B-degraded": {
+      "frozen_v7": 0.14474237406032925,
+      "joint": 0.15524544833946516,
+      "neutral": 0.1579714845501473,
+      "scoped_rule": 0.19661458333333334
+    },
+    "reversed": {
+      "frozen_v7": 0.1826938555243027,
+      "joint": 0.14308448920072983,
+      "neutral": 0.1386439589562948,
+      "scoped_rule": 0.17708333333333334
+    },
+    "stationary": {
+      "frozen_v7": 0.1298657419438055,
+      "joint": 0.14247714582942564,
+      "neutral": 0.1398371873047955,
+      "scoped_rule": 0.17545572916666666
+    },
+    "within-epoch-source-switch": {
+      "frozen_v7": 0.18511583294447442,
+      "joint": 0.15841453188338248,
+      "neutral": 0.14344994960920535,
+      "scoped_rule": 0.17903645833333334
+    }
+  },
+  "per_seed_goal_net_action": {
+    "7": {
+      "frozen_v7": 0.8294921875000006,
+      "joint": 0.8342447916666677,
+      "neutral": 0.8531250000000009,
+      "scoped_rule": 0.8104166666666673
+    },
+    "11": {
+      "frozen_v7": 0.8238932291666674,
+      "joint": 0.8266927083333341,
+      "neutral": 0.8429036458333341,
+      "scoped_rule": 0.8190755208333341
+    },
+    "23": {
+      "frozen_v7": 0.8143229166666676,
+      "joint": 0.8257812500000007,
+      "neutral": 0.8403645833333342,
+      "scoped_rule": 0.7892578125000007
+    },
+    "37": {
+      "frozen_v7": 0.7953125000000006,
+      "joint": 0.8385416666666674,
+      "neutral": 0.8519531250000009,
+      "scoped_rule": 0.803515625000001
+    },
+    "53": {
+      "frozen_v7": 0.7906250000000007,
+      "joint": 0.8245442708333343,
+      "neutral": 0.8500651041666677,
+      "scoped_rule": 0.8139322916666677
+    }
+  },
+  "premature_confident_pairs": 0,
+  "source_mode_post": {
+    "correct_map_rate": 0.7213541666666666,
+    "mean_brier": 0.18557168140675576,
+    "mean_nll": 0.5503064405407175,
+    "true_switch_episodes": 384
+  },
+  "true_flip_first_brier": {
+    "frozen_v7": 0.24065540595828208,
+    "joint": 0.23777063352727676,
+    "neutral": 0.2199999553116884,
+    "scoped_rule": 0.29713541666666665
+  },
+  "version": "g5-v8-prospective-decision",
+  "worlds": 1920
+}
