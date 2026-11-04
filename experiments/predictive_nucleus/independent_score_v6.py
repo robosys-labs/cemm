@@ -132,6 +132,10 @@ def score(raw,law,seed,bank,trainfit):
     report={}
     for arm,counts in metrics.items():
         d=dict(counts)
+        # Empty counts are valid observations, not absent report fields.
+        for field in ('queries','question_cost_sum','query_after_beneficial_goal',
+                      'wrong_confident','abstained_95','gross_regret_sum'):
+            d.setdefault(field,0)
         d['mean_brier']=d['brier_sum']/d['belief_cases']
         d['mean_net_per_action']=d['utility_sum']/d['action_count']
         d['mean_gross_regret_per_action']=d['gross_regret_sum']/d['action_count']
@@ -140,6 +144,8 @@ def score(raw,law,seed,bank,trainfit):
         report[arm]=d
     for v,byarm in byview.items():
         for arm,count in byarm.items():
+            count.setdefault('wrong_confident',0)
+            count.setdefault('abstained_95',0)
             count['mean_brier']=count['brier_sum']/count['belief_cases']
     for src,count in bysource.items():
         count['mean_nll']=count['nll_sum']/count['observations']
