@@ -1,6 +1,6 @@
 # G5 v7 — source-conditioned temporal update; scientific development decision
 
-**2026-11-04 | \`REVISE_SOURCE_V7\` | 6/10 prospective gates pass |
+**2026-11-04 | `REVISE_SOURCE_V7` | 6/10 prospective gates pass |
 G5 scientific admission: NOT_ADMITTED.**
 **Retain the zero-parameter G5 v1 scoped-evidence rule** as bounded development
 baseline. Do not merge or activate v7 temporal memory in production,
@@ -10,14 +10,14 @@ retroactively change v6 gates, begin G6–G8, or claim general intelligence.
 
 [Protocol frozen before implementation at 4bf1e61](https://github.com/robosys-labs/cemm/commit/4bf1e61efd22c4789ee94dcd570c74e74b16c4a8)
 and [PR #93](https://github.com/robosys-labs/cemm/pull/93)
-compare source-aware \`(h,e_A,e_B)\` against an equally TRAIN-fitted
+compare source-aware `(h,e_A,e_B)` against an equally TRAIN-fitted
 physics-matched single-e temporal control, the literal frozen v6
 two-scalar update and a TRAIN-outcome-calibrated G5 rule.
 
 A pre-fit audit found that the physical simulator flips **binary
 observed payoffs**, whereas v6's likelihood mixes the two
 meaning-conditional payoff columns. All **8,640** TRAIN selected
-physical forecast matrices have \`a+b != 1\`; these likelihoods
+physical forecast matrices have `a+b != 1`; these likelihoods
 are not equivalent. Fixing the observation equation was necessary
 to avoid attributing a physics correction to source conditioning.
 The v7 fit reuses the unchanged two-state temporal recursion and
@@ -37,7 +37,7 @@ outcomes, source counts A=4,324/B=4,316:
 | TRAIN-smoothed G5 rule | delta=.20 | .5690398380 |
 
 [TRAIN fit sealed before TEST](results/independent-v7/train-fitted.json)
-at commit \`9dcb3e0be3b9090d0a7f57b60cc470744ad6c2c7\`.
+at commit `9dcb3e0be3b9090d0a7f57b60cc470744ad6c2c7`.
 
 New SHA-seeded v7 generator; held-out source conditions on both NAND and NOR:
 
@@ -58,14 +58,14 @@ is same-team internally prospective research, **not an external
 blind-world scientific admission**.
 
 [Raw sealed first](results/independent-v7/raw/manifest.json),
-commit \`79a62ce8dc25b5421672a0a0b77d8f1f27866dd3\`.
+commit `79a62ce8dc25b5421672a0a0b77d8f1f27866dd3`.
 The truth-blind collector emitted all 10 banks and passed **1,229
 historical/software tests**. The scoring driver was added **after**
 raw commit. First scorer
 [run 41889655202](https://github.com/robosys-labs/cemm/actions/runs/41889655202)
 emitted all 10 condition score reports, then failed while
 displaying unused zero-count subgroup counters. The repair at
-\`88fa9a8e59af169e6d618cf636223175d1b58214\`
+`88fa9a8e59af169e6d618cf636223175d1b58214`
 filters only the *display* comprehension. No raw forecast, fitted
 parameter, meaning score, question policy, gate or criterion
 changed. [Scoring erratum](SOURCE_CONDITIONED_SCORING_ERRATUM_V7.md).
@@ -151,7 +151,7 @@ bounded baseline, not a learned belief update.
 | Zero additional confident wrong parent/sentinel views | **FAIL: 53 new** |
 | Every seed's net/action nonregressing versus controls | **FAIL: 11 and 53** |
 
-**Formal decision: \`REVISE_SOURCE_V7\`; G5 NOT_ADMITTED.**
+**Formal decision: `REVISE_SOURCE_V7`; G5 NOT_ADMITTED.**
 Source-aware observation is informative, yet this exact candidate
 is not an acceptable durable meaning updater.
 

@@ -1,33 +1,32 @@
 # Active nucleus — G5 v7 source conditioning challenged; G5 baseline retained
 
-
 ## G5 v7: sealed source-conditioned challenge completed — no promotion (2026-11-04)
 
 [Draft PR #93](https://github.com/robosys-labs/cemm/pull/93) directly
 tests the failure attributed in PR #92 without altering G1–G4,
 v5/v6 evidence, production runtime or the existing G5 rule.
 The preregistered one-extra-scalar
-\`(h,e_A,e_B)\` model fixed a **physical observation-noise likelihood
+`(h,e_A,e_B)` model fixed a **physical observation-noise likelihood
 mismatch** discovered before TEST, retained the two-state temporal
 recursion and compared an equally TRAIN-fitted physics-matched
 two-scalar control. All fits used observed selected physical payoffs
 only; no gold meanings or participant labels.
 
-Frozen TRAIN fit: v7 \`h=.15,e_A=.03,e_B=.20\`, causal NLL
-**.49980**; neutral \`h=.15,e=.10\`, **.52251**; TRAIN-smoothed
-G5 rule \`delta=.20\`, **.56904**.
+Frozen TRAIN fit: v7 `h=.15,e_A=.03,e_B=.20`, causal NLL
+**.49980**; neutral `h=.15,e=.10`, **.52251**; TRAIN-smoothed
+G5 rule `delta=.20`, **.56904**.
 The [ten raw challenge banks](results/independent-v7/raw/manifest.json)
-were committed at \`79a62ce8dc25b5421672a0a0b77d8f1f27866dd3\`
+were committed at `79a62ce8dc25b5421672a0a0b77d8f1f27866dd3`
 **before evaluator scoring**: 1,920 distinct worlds, 28,800
 one-step payoff forecasts, 9,600 correlated scope views,
 no public-world-ID overlap with v6.
 [The scored decision](results/independent-v7/scored/decision.json)
 was independently rerun from frozen raw at
-\`41890264288\` with **1,230 tests passing**; a prior
+`41890264288` with **1,230 tests passing**; a prior
 formatting-only scorer failure and repair remain disclosed.
 
-**Decision: \`REVISE_SOURCE_V7\` (6/10 gates pass), G5
-\`NOT_ADMITTED\`.** The source-aware model improves five-view meaning
+**Decision: `REVISE_SOURCE_V7` (6/10 gates pass), G5
+`NOT_ADMITTED`.** The source-aware model improves five-view meaning
 Brier to **.04807** (neutral **.05221**; retained rule **.07211**),
 but has **148 vs 127** paid queries, **94.32% vs 94.87%**
 optimal actions, **152 vs 102** ≥95%-confident meaning errors
