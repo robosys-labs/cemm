@@ -1,0 +1,24 @@
+{
+  "version": "g5-v5-raw-sealed",
+  "status": "COLLECTED_UNSCORED",
+  "parent_commit": "eabfd43f9c279c4f6a1c6fb5ec9fafdc3a10ce6c",
+  "source_protocol": "1c60ac9ed32c9b8b6c9567ec0dcc361b7b44da65",
+  "fit_commit": "4fd21dee3be772c51c96e5aebdb516e481f981f6",
+  "hosted_run": 41840925863,
+  "completed_tests": 1216,
+  "scored": false,
+  "cases_per_condition": 192,
+  "payoffs_per_case": 15,
+  "files": {
+    "nand-11": "bf22261c1ffb1ede0dab2f9ce6634679d67527ff",
+    "nand-23": "3f365e8be7495407555f8314882db9f389a4c1c9",
+    "nand-37": "1fa55ce12dc7bf26138194342d6ebebd8ae5f1d4",
+    "nand-53": "a1ef9344bc184294fdd9aedaabdc53aebd7b593b",
+    "nand-7": "ae4c4a4cc3e821e541574ba6ce6303e8f85d6908",
+    "nor-11": "ed85577caca265ce1e4960ce63c8bd1c862dafd3",
+    "nor-23": "eb42a6805b4408a93642db04d1acca7b2cf2772d",
+    "nor-37": "95deb1335ea7fa719c27e82286e0e1edcffdd295",
+    "nor-53": "fdab4ebbddc47ff274103cc6e4e6b2486448d9bb",
+    "nor-7": "a88007913d08e43c12400f55920af04aff511dfb"
+  }
+}
