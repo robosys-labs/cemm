@@ -24,6 +24,7 @@ def collect(law,seed,bank,fitted):
     m=fitted['fit']
     d=fitted['rule']['delta']
     h,ea,eb=m['h'],m['e_A'],m['e_B']
+    nh,ne=fitted['neutral']['h'],fitted['neutral']['e']
     start=process_time()
     rows=[]
     seen=set()
@@ -36,7 +37,7 @@ def collect(law,seed,bank,fitted):
             history=mem.snapshot()
             cells.append((
                 source_probability(history,term,scope,h,ea,eb),
-                source_probability(history,term,scope,.15,.1,.1),
+                source_probability(history,term,scope,nh,ne,ne),
                 v6_probability(history,term,scope,.15,.1),
                 rule_probability(mem,term,scope,d),
                 mem.belief(term,scope),
@@ -46,7 +47,7 @@ def collect(law,seed,bank,fitted):
             'id':ep.uid,'record_hash':record_digest(ep.records),
             'lineage':ep.lineage,'beliefs':cells,
             'payoff_p':payoff_forecasts(ep.records,h,ea,eb),
-            'sensor_payoff_p':payoff_forecasts(ep.records,.15,.1,.1),
+            'sensor_payoff_p':payoff_forecasts(ep.records,nh,ne,ne),
             'v6_payoff_p':v6_forecasts(ep.records,.15,.1),
             'source_ids':ep.observed_sources,'goals':(g0,g1),'fee':fee})
     if len(rows)!=192 or len(seen)!=192 or any(
@@ -55,5 +56,5 @@ def collect(law,seed,bank,fitted):
         for r in rows):
         raise ValueError('incomplete v7 raw collection')
     return {'version':'g5-v7-raw','law':law,'seed':seed,
-            'split':'challenge','parameters':(h,ea,eb,d),
+            'split':'challenge','parameters':(h,ea,eb,d,nh,ne),
             'cpu_seconds':process_time()-start,'rows':rows}

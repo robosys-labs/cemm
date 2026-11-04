@@ -11,7 +11,7 @@ class V7BeforeSealPreflight(unittest.TestCase):
     def test_train_only_collection_and_evaluator(self):
         # Dummy prefit scalars exercise implementation, not training selection.
         freeze={'fit':{'h':.15,'e_A':.03,'e_B':.2},
-                'rule':{'delta':.1}}
+                'rule':{'delta':.1},'neutral':{'h':.15,'e':.1}}
         bank=catalogue('nand','train')
         with patch.object(collection,'episodes',side_effect=lambda law,seed,split,b:
                           episodes(law,seed,'train',b)):

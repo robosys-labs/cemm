@@ -28,10 +28,11 @@ def _add_payoff(out,p,y):
 
 def score(raw,law,seed,bank,freeze):
     m=freeze['fit'];d=freeze['rule']['delta']
+    neutral=freeze['neutral']
     if ((raw.get('version'),raw.get('law'),raw.get('seed'),raw.get('split'))
             !=('g5-v7-raw',law,seed,'challenge')):
         raise ValueError('incorrect sealed v7 condition')
-    if tuple(raw['parameters'])!=(m['h'],m['e_A'],m['e_B'],d):
+    if tuple(raw['parameters'])!=(m['h'],m['e_A'],m['e_B'],d,neutral['h'],neutral['e']):
         raise ValueError('changed fit after raw seal')
     episodes=inventory(law,seed,'challenge',bank)
     if len(episodes)!=len(raw['rows']) or len(episodes)!=192:

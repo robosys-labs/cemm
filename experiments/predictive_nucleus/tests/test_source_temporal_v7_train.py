@@ -65,9 +65,13 @@ class V7NoGoldTraining(unittest.TestCase):
         self.assertEqual(len(evidence),576)
         self.assertEqual(sum(samples.values()),8640)
         fit=source.fit(evidence)
+        neutral=source.fit_neutral(evidence)
         control=rule.fit(evidence)
         self.assertEqual(fit['outcomes'],8640)
         self.assertEqual(control['outcomes'],8640)
+        self.assertEqual(neutral['outcomes'],8640)
+        self.assertEqual(len(neutral['grid']),24)
+        self.assertIn(neutral['e'],source.NEUTRAL_E_GRID)
         self.assertEqual(len(fit['grid']),64)
         self.assertEqual(len(control['grid']),7)
         self.assertIn(fit['h'],source.H_GRID)
@@ -79,7 +83,7 @@ class V7NoGoldTraining(unittest.TestCase):
              'seeds':[7,11,23],'samples':samples,
              'noncomplementary_forecast_rows':noncomplementary,
              'same_meaning_forecast_rows':same_meaning_forecast,
-             'fit':fit,'rule':control,'no_oracle_labels':True},
+             'fit':fit,'neutral':neutral,'rule':control,'no_oracle_labels':True},
             separators=(',',':'),sort_keys=True),flush=True)
 
 if __name__=='__main__':

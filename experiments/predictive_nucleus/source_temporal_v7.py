@@ -67,3 +67,25 @@ def fit(tapes):
                 key=lambda z:(grid[f'{z[0]}:{z[1]}:{z[2]}'],*z))
     return {'h':h,'e_A':ea,'e_B':eb,'nll':grid[f'{h}:{ea}:{eb}'],
             'outcomes':n,'grid':grid}
+
+
+# Same physical likelihood and TRAIN tapes as v7, but a single shared e.
+NEUTRAL_E_GRID=(.01,.03,.05,.1,.2,.3)
+
+def fit_neutral(tapes):
+    tapes=tuple(tuple(r for r in tape) for tape in tapes)
+    grid={}
+    n=None
+    for e in NEUTRAL_E_GRID:
+        conditioned=tuple(tuple(_condition(r,e,e) for r in tape)
+                          for tape in tapes)
+        for h in H_GRID:
+            loss,count=_v6_nll(conditioned,h,0.)
+            if n is not None and n!=count:
+                raise ValueError('unmatched neutral/source training count')
+            n=count
+            grid[f'{h}:{e}']=loss
+    h,e=min(((h,e) for h in H_GRID for e in NEUTRAL_E_GRID),
+            key=lambda z:(grid[f'{z[0]}:{z[1]}'],*z))
+    return {'h':h,'e':e,'nll':grid[f'{h}:{e}'],
+            'outcomes':n,'grid':grid}

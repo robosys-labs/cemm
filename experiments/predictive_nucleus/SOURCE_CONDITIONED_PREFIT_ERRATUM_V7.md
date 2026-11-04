@@ -18,12 +18,18 @@ likelihood discrepancy *before accepting any v7 fit*:
   exception mixing. It still learns only h,e_A,e_B, with no gold
   meaning labels, from exactly the same selected-payoff tape.
 - To isolate the effect of source conditioning from correcting the
-  old emission equation, add the **fixed physics-matched, source-neutral
-  control** with h=.15, e_A=e_B=.1, and identical posterior/policy.
-  Frozen original v6 h=.15/e=.1 and TRAIN-calibrated G5 rule remain.
+  old emission equation AND from refitting on new outcomes, add a
+  **physics-matched, source-neutral two-scalar control**. Fit `h,e`
+  once on the identical NAND TRAIN selected-payoff histories with
+  `h=(.05,.15,.35,.5)`, `e=(.01,.03,.05,.1,.2,.3)`;
+  tie-break toward smaller values. No gold labels. That shared error
+  grid spans both source-specific grids and uses only 24 candidates
+  against the source model's 64. Frozen original v6 h=.15/e=.1
+  (uncorrected emission) and TRAIN-calibrated G5 rule remain.
   The same predeclared stationary NLL, immediate stable-B Brier,
-  goal utility and worst-seed metrics also compare the physics-matched
-  control. This ablation does not require an extra trained scalar.
+  net utility and worst-seed metrics compare the physics-matched
+  control. This is a capacity-matched negative control, not a new
+  target architecture or a post-test fit.
 
 The initial automated invariant run on the first implementation is
 **not an accepted fit** even if its software tests pass; any numbers from
