@@ -22,7 +22,9 @@ class JointTrustTrainOnly(unittest.TestCase):
             joint.state_after((r,TimedReceipt(
                 'r','qor',('x',),0,'sensor-A',(0.,0.),1,True,False)))
         with self.assertRaises(ValueError):
-            joint.state_after((r,),after_epoch=True)
+            joint.state_after((r,TimedReceipt(
+                'epoch','qor',('x',),1,'sensor-A',(1.,0.),1,True,True)),
+                after_epoch=True)
 
     def test_train_prefix_twins_and_causal_no_gold(self):
         self.assertNotIn('cemm-g5-v7-source-shift',NAMESPACE)
