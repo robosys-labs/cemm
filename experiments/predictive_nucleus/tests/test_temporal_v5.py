@@ -8,7 +8,7 @@ from experiments.predictive_nucleus.temporal_belief_v5 import (
     TimedReceipt, probability, decision, causal_nll, fit, GRID_E, GRID_H
 )
 from experiments.predictive_nucleus.temporal_task_v5 import (
-    episodes, inventory, LAWS, SEEDS
+    inventory, LAWS, SEEDS
 )
 
 
@@ -75,7 +75,7 @@ class TemporalModelInvariants(unittest.TestCase):
         with patch('experiments.predictive_nucleus.transfer_task.catalogue',
                    wraps=catalogue) as watched:
             for law in LAWS:
-                bank=catalogue(law,'train')
+                bank=watched(law,'train')
                 for seed in SEEDS:
                     episodes=inventory(law,seed,'train',bank)
                     self.assertEqual(len(episodes),192)
@@ -87,6 +87,7 @@ class TemporalModelInvariants(unittest.TestCase):
                     self.assertEqual(result['outcomes'],192*15)
                     fitted[f'{law}-{seed}']=result
         self.assertEqual(len(fitted),10)
+        self.assertEqual(len(watched.call_args_list),2)
         self.assertTrue(all(call.args[1]=='train' for call in watched.call_args_list))
         print('G5_V5_TRAIN_FITS '+json.dumps(fitted,sort_keys=True),flush=True)
 
