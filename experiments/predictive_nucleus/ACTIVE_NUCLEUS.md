@@ -1,7 +1,24 @@
-# Active nucleus — G4 source conventions retained, bounded G5 underway
+# Active nucleus — G5 scoped memory baseline retained; learned revision remains open
 
-Updated 2026-11-03. Tracking [#22](https://github.com/robosys-labs/cemm/issues/22),
-[PR #85](https://github.com/robosys-labs/cemm/pull/85).
+Updated 2026-11-04. Tracking [#22](https://github.com/robosys-labs/cemm/issues/22),
+[PR #85](https://github.com/robosys-labs/cemm/pull/85) and [PR #86](https://github.com/robosys-labs/cemm/pull/86).
+
+## G5 bounded result
+
+[Scoped correction v1](REVISION_DECISION_V1.md) kept a minimal
+provenance-preserving two-meaning memory. On 92,160 structured contexts across
+both laws and five inherited seeds, 76,800/76,800 resolved meanings and
+92,160/92,160 sentinel meanings were retained across simulated episode
+resets. With a cheap, useful clarification, final correctness was 95.83%
+with 7,680 requests, versus 75% with 46,080 requests when memory was
+discarded. All 1,204 hosted invariant tests pass.
+
+The scope hierarchy, two candidate meanings, evidence identity, verifier
+flag and query rule are supplied. This is a **rule-based baseline**, not a
+learned general belief updater, independent physical validation or formal
+G5 completion. The next experiment must learn when evidence warrants a
+durable correction, preserve a competing explanation when the outcome is
+unidentifiable, and beat or tie this simpler baseline without bloat.
 
 ## Latest G4 result
 
@@ -126,7 +143,7 @@ Accepted G1/G2 development gains and all historical source/data locks remain int
 | G2 | Accepted bounded composition, hidden propagation and supplied timing retained; no full scientific-admission claim. |
 | G3 | Bounded development COMPLETE by audited v3; v1 REVISE and v2 STOP_INCOMPLETE_EVIDENCE remain unchanged. |
 | G4 | Bounded matched-convention receiver retained. Broader conflict, delay, off-topic communication and formal admission remain open. |
-| G5 | Revision and reset preflight verified on TRAIN. Held-out durable correction and retention remain open. |
+| G5 | Held-out scoped evidence **baseline** retained; learned update/correction and independent scientific admission remain open. |
 | G6–G8 | Corpus bridge, measured Wikipedia utility and guarded integration remain open. |
 
 Independent custody, matched consumed compute, general calibration and formal
