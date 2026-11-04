@@ -1,0 +1,128 @@
+{
+  "decision": "REVISE_SOURCE_V7",
+  "g5_scientific_admission": false,
+  "gates": {
+    "net_vs_all_controls": true,
+    "optimal_actions_vs_frozen_v6": false,
+    "overall_brier_vs_calibrated_rule": true,
+    "query_budget_vs_frozen_v6": false,
+    "stable_B_brier_vs_physics_matched_two_scalar": true,
+    "stationary_nll_vs_physics_matched_two_scalar": true,
+    "stationary_payoff_nll_improved": true,
+    "stationary_stable_B_first_brier_improved": true,
+    "worst_seed_nonregression": false,
+    "zero_new_parent_sentinel_confident_errors": false
+  },
+  "limitations": "same-team challenge over previously opened G3 physical menus",
+  "means": {
+    "latest": {
+      "brier": 0.13166666666666665,
+      "net_per_action": 0.8181119791666676,
+      "new_retention_confident_wrong": 0,
+      "optimal_action_rate": 0.8997395833333334,
+      "queries": 0
+    },
+    "no_memory": {
+      "brier": 0.25,
+      "net_per_action": 0.7046614583333333,
+      "new_retention_confident_wrong": 0,
+      "optimal_action_rate": 0.7072916666666667,
+      "queries": 355
+    },
+    "rule_smoothed": {
+      "brier": 0.09259687500000092,
+      "net_per_action": 0.8363281250000004,
+      "new_retention_confident_wrong": 0,
+      "optimal_action_rate": 0.92109375,
+      "queries": 355
+    },
+    "scoped_rule": {
+      "brier": 0.072109375,
+      "net_per_action": 0.8320182291666676,
+      "new_retention_confident_wrong": 0,
+      "optimal_action_rate": 0.9119791666666667,
+      "queries": 100
+    },
+    "sensor_neutral": {
+      "brier": 0.0522061783701578,
+      "net_per_action": 0.8518098958333341,
+      "new_retention_confident_wrong": 0,
+      "optimal_action_rate": 0.9486979166666667,
+      "queries": 127
+    },
+    "source_temporal": {
+      "brier": 0.04807312994164247,
+      "net_per_action": 0.8525000000000008,
+      "new_retention_confident_wrong": 53,
+      "optimal_action_rate": 0.9432291666666667,
+      "queries": 148
+    },
+    "v6_frozen": {
+      "brier": 0.052207954136606054,
+      "net_per_action": 0.8518098958333341,
+      "new_retention_confident_wrong": 0,
+      "optimal_action_rate": 0.9486979166666667,
+      "queries": 127
+    }
+  },
+  "measurements_correlated_five_views": 9600,
+  "per_seed_net_action": {
+    "7": {
+      "latest": 0.8251953125000009,
+      "no_memory": 0.6957682291666666,
+      "rule_smoothed": 0.8397135416666673,
+      "scoped_rule": 0.8344401041666676,
+      "sensor_neutral": 0.853320312500001,
+      "source_temporal": 0.8576822916666677,
+      "v6_frozen": 0.853320312500001
+    },
+    "11": {
+      "latest": 0.8338541666666677,
+      "no_memory": 0.7106119791666665,
+      "rule_smoothed": 0.8445963541666671,
+      "scoped_rule": 0.8440104166666674,
+      "sensor_neutral": 0.8654296875000008,
+      "source_temporal": 0.8652994791666675,
+      "v6_frozen": 0.8654296875000008
+    },
+    "23": {
+      "latest": 0.8018229166666678,
+      "no_memory": 0.7059895833333334,
+      "rule_smoothed": 0.8273437500000006,
+      "scoped_rule": 0.8212239583333343,
+      "sensor_neutral": 0.844921875000001,
+      "source_temporal": 0.8582682291666677,
+      "v6_frozen": 0.844921875000001
+    },
+    "37": {
+      "latest": 0.8108072916666677,
+      "no_memory": 0.7185546875000001,
+      "rule_smoothed": 0.840885416666667,
+      "scoped_rule": 0.8332031250000007,
+      "sensor_neutral": 0.8423177083333341,
+      "source_temporal": 0.8501953125000008,
+      "v6_frozen": 0.8423177083333341
+    },
+    "53": {
+      "latest": 0.8188802083333343,
+      "no_memory": 0.6923828125,
+      "rule_smoothed": 0.8291015625000004,
+      "scoped_rule": 0.8272135416666675,
+      "sensor_neutral": 0.8530598958333342,
+      "source_temporal": 0.8310546875000006,
+      "v6_frozen": 0.8530598958333342
+    }
+  },
+  "stationary_nll": {
+    "sensor_neutral": 0.5227075056287612,
+    "source_temporal": 0.4998785901291896,
+    "v6_frozen": 0.5227120118558712
+  },
+  "stationary_stable_B_mid_brier": {
+    "sensor_neutral": 0.07424054062575905,
+    "source_temporal": 0.041545336204249814,
+    "v6_frozen": 0.07427442115553352
+  },
+  "version": "g5-v7-prespecified-decision",
+  "worlds": 1920
+}
