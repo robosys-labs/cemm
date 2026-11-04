@@ -1,4 +1,31 @@
-# Active nucleus — G5 scoped baseline retained; balanced objective diagnostic partially succeeds
+# Active nucleus — G5 baseline retained; scalar boundary diagnosed, no promotion
+
+## Latest G5 v4 review — stop switch-rate tuning
+
+[PR #89](https://github.com/robosys-labs/cemm/pull/89) extends the
+**TRAIN-only** switch grid without modifying the v2 one-scalar posterior,
+the v3 balanced objective, accepted physical models or production runtime.
+Across all ten law/seed conditions, **nine** have some jointly passing switch
+rate. **NOR seed 53 has none** among the 15 registered values; the best case
+still commits prematurely on **8/96** epistemically ambiguous pairs. No
+sampled rate passes all ten conditions. At the smallest rate, premature
+confidence worsens substantially instead of vanishing. Adding one
+non-discriminating later-time receipt changes 28 confidence decisions at the
+previous rate, exposing dependence on receipt timestamps rather than
+independent elapsed-time evidence.
+
+[Decision](REVISION_DECISION_V4.md) ·
+[complete rate table](results/revision-v4/train-boundary.json) ·
+[hosted 1,211-test CI](https://github.com/robosys-labs/cemm/actions/runs/41811098322).
+This is a post-hoc TRAIN diagnostic, not a blind challenge.
+**STOP_SWITCH_SWEEPS; KEEP G5 v1 rule; G5 admission NOT_ADMITTED.**
+Next: one minimal exception-versus-durable temporal hypothesis learned
+from observed payoffs, compared with the v1 rule on genuinely new noisy
+scope/reliability families. Retain uncertainty, prior abilities, source
+provenance, priced clarification and full adverse-case reporting. No
+new parser family or production cutover.
+
+
 
 ## Latest G5 v3 TRAIN result — seven joint passes, three NOR failures
 
