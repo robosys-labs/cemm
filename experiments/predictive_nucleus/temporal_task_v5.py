@@ -77,7 +77,7 @@ def episodes(law,seed,split,bank):
                     add(unit_site,'qor',unit,t,current)
                 records.append(TimedReceipt(
                     f'{token}-unverified','qor',unit,12,
-                    'unverified-witness',None,1-current,False,False))
+                    'unverified-witness',None,1-local,False,False))
                 yield Episode(token,tuple(records),root,region,unit,sibling,outside,
                               (base,regional,current,sentinel),variant)
 
@@ -92,6 +92,7 @@ def inventory(law,seed,split,bank):
                 or a.records[:13]!=b.records[:13]
                 or a.truth[2]==b.truth[2]
                 or a.records[13:15]==b.records[13:15]
+                or a.records[15]!=b.records[15]
                 or any(r.source=='unverified-witness' and r.physical for r in a.records)
                 or len(a.records)!=16 or len(b.records)!=16):
             raise ValueError('invalid matched exception/revision twins')
