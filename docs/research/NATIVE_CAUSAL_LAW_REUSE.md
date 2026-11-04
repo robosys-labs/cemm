@@ -22,8 +22,8 @@ An accepted system must solve all three without quietly treating a supplied onto
 
 Input: **"Ada claims that Ben stole the book."**
 
-- The utterance warrants an *observed/attributed claim event* with Ada as claimant, plus a **nested proposed theft proposition** containing Ben, the book and the alleged event.
-- It does **not** by itself warrant a committed physical theft, transfer of book ownership, or transition of Ben's world state.
+- What is directly observed is **the current speaker's utterance**. Its content reports that Ada made a claim, and embeds a **further unverified theft proposition** concerning Ben and the book. If Ada herself was directly heard speaking, her claim event can additionally be observed; a third-party report alone does not verify that Ada actually made the claim.
+- Neither layer by itself warrants a committed physical theft, transfer of the book, or transition of Ben's world state.
 - "Ada **CLAIMS**..." versus "Ada claims **BEN** stole..." may change focus, contrast and pragmatic confidence; it does **not** turn the embedded theft into an observed fact. Prosody is evidence that interacts with context, language and learned focus interpretation.
 - A later independent inspection, verified action trace or other physical observation may support or refute the proposition. Its connection to the claim is provenance, **not** automatic factual authority.
 - Likewise, event B occurring after A does not by itself mean A caused B; unobserved confounders and observationally equivalent mechanisms must remain plausible.
