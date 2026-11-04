@@ -1,4 +1,27 @@
-# Active nucleus — G5 scoped baseline retained; outcome-fitted v2 not promoted
+# Active nucleus — G5 scoped baseline retained; balanced objective diagnostic partially succeeds
+
+## Latest G5 v3 TRAIN result — seven joint passes, three NOR failures
+
+[PR #88](https://github.com/robosys-labs/cemm/pull/88) freezes a
+balanced selected-payoff loss and tests the **unchanged v2 one-scalar
+updater** against the retained rule on identical TRAIN histories.
+The corrected hosted run passes **1,210 tests** and historical locks.
+Previously unjustified confident answers on identical pre-payoff twins
+drop **864 → 54 out of 960 pairs**; after the physical probe, the
+candidate makes **1,916/1,920** correct confident choices, four abstentions,
+zero confident errors and **5,760/5,760** correct confident unrelated
+retentions. The simple G5 rule still meets every controlled TRAIN gate.
+
+All ten balanced fits select **the minimum grid rate 0.0025**.
+Seven conditions pass every frozen joint gate; NOR seeds 7, 37 and 53
+do not. No grid value passes in those three. **REVISE / DO NOT PROMOTE**:
+the result supports a training-objective defect but cannot rule out an
+untested lower switch rate or justify adding another architecture layer.
+[Decision](REVISION_DECISION_V3.md) ·
+[complete TRAIN grids](results/revision-v3/train-diagnosis.json).
+No G5 v3 held-out challenge was scored; formal admission remains open.
+
+
 
 ## Latest G5 v2 review — TRAIN-only failure, no challenge opened
 
