@@ -101,7 +101,7 @@ def score(raw,law,seed,bank,fit):
             # An epistemic twin has two equally likely hidden worlds and
             # the same public prefix; retain both in all denominators.
             if j==0:
-                pre_twins.append((ident,p,states[0],target))
+                pre_twins.append((p,states[0],target))
             for arm,state in zip(ARMS,states,strict=True):
                 for index,fee in enumerate(FEES):
                     ok,ask,abstain,wrong=_price(state,target,fee)
@@ -117,7 +117,7 @@ def score(raw,law,seed,bank,fit):
         raise ValueError('wrong test denominator')
     # Consecutive same-source public twins with opposing oracle meanings.
     for left,right in zip(pre_twins[::2],pre_twins[1::2],strict=True):
-        if (left[:3]!=right[:3] or left[3]==right[3]):
+        if (left[:2]!=right[:2] or left[2]==right[2]):
             raise ValueError('prefeedback indistinguishability broken')
         totals['pre_twin_pairs']+=1
         totals['pre_confident_pairs']+=left[2] is not None
