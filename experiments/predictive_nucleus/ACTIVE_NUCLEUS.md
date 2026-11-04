@@ -1,4 +1,52 @@
-# Active nucleus — G5 v5 temporal comparison reviewed; rule baseline retained
+# Active nucleus — G5 v6 source-trust failure attributed; G5 baseline retained
+
+## Latest G5 v6 scored and diagnosed — no promotion
+
+[PR #91](https://github.com/robosys-labs/cemm/pull/91) froze a two-scalar
+temporal learner on new, law/seed/world-distinct noise with no forced
+contradiction. One shared outcome-only TRAIN fit selected **h=.15, e=.10**
+from 576 NAND TRAIN worlds / 8,640 selected payoffs. Ten raw TEST
+banks were sealed **before** scoring at
+`3f0d247d88c51132ff63e1fde34dfca1b45747ab`.
+The scored ten conditions pass **1,224 software tests**; v6
+mean meaning Brier **.05593 vs .07430** for the zero-parameter
+scoped rule, net/action **.84167 vs .82947**, but bought **88 vs 73**
+clarifications and regressed NAND seeds 37/53. Formal G5
+scientific admission is still **NOT_ADMITTED**.
+
+[PR #92](https://github.com/robosys-labs/cemm/pull/92)'s read-only
+post-score attribution independently reproduces all **1,920**
+world IDs and policy utility totals. **1,225 hosted tests pass.**
+All 73 rule requests are shared; the temporal learner buys 15
+additional questions. Four are beneficial on their realized
+trajectories and eleven have no realized action benefit, for
+**+3.25 net utility units** from extra questions. The
+dominant failure subgroup is *stable meaning with source-B epoch
+observation*, **−34.95 net units** temporal-minus-rule. The
+unchanged filter ignores source identity and uses **e=.10** even
+though observed TEST inversion rates were **A 398/14,486 (2.75%)**
+and **B 3,470/14,314 (24.24%)**. Source-B NLL is .665 vs A .475.
+The first stable-B local prediction is worse than the scoped rule,
+but two later observations repair it. The old no-more-questions and
+worst-seed gates therefore **remain failed**.
+
+[Failure-attribution decision](V6_FAILURE_ATTRIBUTION_DECISION.md) ·
+[immutable post-score diagnostic](results/independent-v6/posthoc-attribution.json) ·
+[v6 scored manifest](results/independent-v6/scored/manifest.json).
+
+**Next highest-information tranche:** prospectively compare
+`(h,e_A,e_B)`—one extra source-reliability parameter—against the
+unchanged v6 two-scalar filter and a TRAIN-smoothed G5 rule using
+a *fresh, independently seeded challenge*. Fit only from observed
+selected payoffs. Score immediate and final meaning calibration,
+epoch flips/stable errors by source, high-confidence errors,
+actual question value, retained correctness and cost. Do not
+retroactively alter the opened v6 gate or increase neural layers
+without evidence. Real semantic scope inheritance and learned
+cross-process answer persistence remain unproven, and G6–G8
+and the inclusive 2,000-LOC target remain open.
+
+
 
 ## Latest G5 v5 — temporal alternatives, bounded development only
 

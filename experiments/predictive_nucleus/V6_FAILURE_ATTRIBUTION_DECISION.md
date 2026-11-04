@@ -172,3 +172,27 @@ necessary.
 Keep the implementation tiny and retain the accepted zero-scalar
 rule as selection baseline. The inclusive 2,000-LOC research
 objective remains unmet. **G5 NOT_ADMITTED.**
+
+## Hosted read-only reproduction and realized error counts
+
+The post-score attribution test was rerun from the unchanged sealed
+raw and saved evaluator results, without modifying the learner,
+the G5 task, or the older scoring artifacts. The initial hosted
+audit was interrupted by a malformed test assertion
+(`192 != (len(episodes) == 192)`); [that failed run](https://github.com/robosys-labs/cemm/actions/runs/41866833651)
+remains historical evidence. The correction changed only the
+assertion, and [final hosted run](https://github.com/robosys-labs/cemm/actions/runs/41868462118)
+passed **1,225 tests**, every original protocol/source lock,
+and the comparison preflight.
+
+The independent evaluator-only native reward reconstruction found
+**398 inversions / 14,486 A readings (2.75%)** and **3,470 /
+14,314 B readings (24.24%)**, matching the registered generator
+error mechanisms rather than merely repeating parameter values.
+All 1,920 source/world IDs and recorded policy net-utility totals
+were reproduced with no discrepancy.
+
+[Full saved case-level attribution, including all fifteen
+extra queries and adverse examples](results/independent-v6/posthoc-attribution.json).
+This is **opened-TEST root-cause evidence only**: no new calibration
+fit, optimized questions, scientific KEEP or G5 promotion follows.
