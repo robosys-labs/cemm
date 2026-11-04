@@ -73,7 +73,8 @@ class OpenedTestFailureAttribution(unittest.TestCase):
                 case_groups = defaultdict(_bucket)
                 source_triples = select_triples(bank, seed)
 
-                self.assertEqual(len(raw['rows']), len(episodes) == 192)
+                self.assertEqual(len(raw['rows']), len(episodes))
+                self.assertEqual(len(episodes), 192)
                 for i, (r, ep) in enumerate(zip(raw['rows'], episodes, strict=True)):
                     self.assertEqual(r['id'], ep.uid)
                     self.assertNotIn(ep.uid, world_ids)
