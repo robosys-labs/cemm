@@ -1,4 +1,4 @@
-# Active nucleus — G5 physical clarification qualified on TRAIN
+# Active nucleus — G5 TRAIN evidence recovery qualified
 
 ## Current handoff on November 6
 
@@ -43,9 +43,18 @@ All 960 policy cases were retained, and exhaustive Bayesian enumeration
 agreed within 2.22e−16. Eight synthetic checks cover the formula and edge
 conditions, including normalization drift and arithmetic overflow.
 
-Next, implement a receipt ledger with duplicate protection and cold-process
-recovery, then freeze a prospective transfer study using the learned G3
-mapping to align interpretations across fresh instances. Measure actual
+The [physical evidence ledger](PHYSICAL_LEDGER_RESULT_V1.md) now qualifies
+duplicate protection and cold-process recovery on the same TRAIN receipts.
+Both complete three-process invocations produced byte-identical reports.
+All 160 initial priors, 960 decisions and 120 purchased posteriors matched
+the uninterrupted and published references exactly. Every one of 320 duplicate
+deliveries was idempotent, and all 960 conflicting-ID attempts rejected
+atomically. Valid physical counterexamples with zero computed predictive mass
+remain retained with an explicitly unavailable belief. The full isolated suite
+ran 1,264 tests with zero failures and two intentional sealed-collector skips.
+
+Next, freeze a prospective transfer study using the learned G3 mapping to
+align interpretations across fresh instances. Measure actual
 correctness, calibration, correction and retained competence against reset,
 dated-evidence and matched unstructured controls on common realized
 histories. The current two lexical rows encode the same taught operation, so
@@ -417,7 +426,7 @@ Accepted G1/G2 development gains and all historical source/data locks remain int
 | G2 | Accepted bounded composition, hidden propagation and supplied timing retained; no full scientific-admission claim. |
 | G3 | Bounded development COMPLETE by audited v3; v1 REVISE and v2 STOP_INCOMPLETE_EVIDENCE remain unchanged. |
 | G4 | Bounded matched-convention receiver retained. Broader conflict, delay, off-topic communication and formal admission remain open. |
-| G5 | Held-out scoped evidence **baseline** retained; learned update/correction and independent scientific admission remain open. |
+| G5 | Scoped evidence baseline retained. Native TRAIN ledger recovery qualified. Learned correction and independent scientific admission remain open. |
 | G6–G8 | Corpus bridge, measured Wikipedia utility and guarded integration remain open. |
 
 Independent custody, matched consumed compute, general calibration and formal
