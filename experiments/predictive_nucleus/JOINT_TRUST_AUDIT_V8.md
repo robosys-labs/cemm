@@ -11,7 +11,7 @@ On November 4 the frozen scorer recorded `REVISE_JOINT_V8`. Six of 13 quantitati
 | Paid clarifications | 156 | 148 |
 | Wrong predictions at ≥95% confidence | 185 | 176 |
 
-The same histories, goals and fees were used for both arms in each world. The neutral control earned more on every seed. V8 did improve first-local Brier and utility against the fixed *source-aware v7* on the reversed and within-episode source-switch conditions.
+Both arms received identical evidence, goals and fees at each fixed-time meaning and decision checkpoint. The neutral control earned more on every seed. V8 did improve first-local Brier and utility against the fixed *source-aware v7* on the reversed and within-episode source-switch conditions.
 
 ## Where the utility went
 
@@ -40,6 +40,6 @@ A synthetic two-receipt witness shows why swapping saved columns is insufficient
 
 ## Roadmap consequence
 
-The generator supplies the scope slots, the source labels and a public change opportunity. The evidence supports a bounded diagnosis of source/meaning confusion. It does not demonstrate that the learner discovered those roles. For the next G5 transfer study, record the evidence ID and delivered-prefix digest with every arm's forecast, use informative as well as indistinguishable histories, and keep twin goals and fees matched when estimating causal utility. Measure whether an answered physical observation reduces paid clarification after an episode reset at matched correctness on fresh identities. Include the retained rule, a matched learner with its retained state cleared, and a matched unstructured learner on the same realized histories. Preserve the existing retention and worst-seed gates.
+The generator supplies the scope slots, the source labels and a public change opportunity. The evidence supports a bounded diagnosis of source/meaning confusion. Discovery of those roles remains an open gate. For the next G5 transfer study, record the evidence ID and delivered-prefix digest with every arm's forecast, use informative as well as indistinguishable histories, and keep twin goals and fees matched when estimating causal utility. Measure whether an answered physical observation reduces paid clarification after an episode reset at matched correctness on fresh identities. Include the retained rule, a matched learner with its retained state cleared, and a matched unstructured learner on the same realized histories. Preserve the existing retention and worst-seed gates.
 
 Reproduce locally with `python -m experiments.predictive_nucleus.audit_joint_v8` and `python -m unittest experiments.predictive_nucleus.tests.test_v8_postscore_order`. The audit imports neither the challenge generator nor the candidate. The [study](JOINT_TRUST_STUDY_V8.md), [raw manifest](results/independent-v8/raw/manifest.json), [frozen decision](results/independent-v8/scored/decision.json) and [scored manifest](results/independent-v8/scored/manifest.json) remain the historical record.
