@@ -85,16 +85,23 @@ The audit also identifies a receipt-order defect in the auxiliary payoff
 comparison and a fixed-hazard shortcut in the abstention threshold.
 
 The [G3 TRAIN intervention](../../experiments/predictive_nucleus/G3_TRAIN_COORDINATE_INTERVENTION.md)
-verifies that the fitted effect and role coordinates influence physical
-endpoint forecasts, with exact restoration of the archived objectives.
-The [next receipt qualification](../../experiments/predictive_nucleus/G3_G5_RECEIPT_PREFLIGHT.md)
-checks the existing native four-action interface and ambiguous observations
-before an answered-observation/restart transfer study. Its purpose is to
-measure retained learning using one grounded representation, with common
-realized histories, explicit receipt identity, preserved alternatives and
-fresh transfer instances. The [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md)
-records the current evidence and remaining gates. Corpus ingestion and
-Wikipedia utility follow completion of G5.
+verifies fitted effect and role influence on physical endpoint forecasts,
+with exact restoration of the archived objectives. The
+[native receipt qualification](../../experiments/predictive_nucleus/G3_G5_RECEIPT_PREFLIGHT_RESULT.md)
+preserves ambiguity and binds forecasts to evidence IDs and delivered-prefix
+digests. The [physical-query qualification](../../experiments/predictive_nucleus/PHYSICAL_QUERY_PREFLIGHT_RESULT_V1.md)
+computes information value from the actual endpoint distribution.
+Retaining a first observation led to 40 additional cheap questions across
+80 ordered TRAIN contexts, against 80 after discarding it. These are
+model-expected menu-identification decisions on the original teaching tape.
+
+The next bounded milestone is an evidence ledger with duplicate protection
+and cold-process recovery, followed by a prospective fresh-instance
+ask–revise–retain comparison with actual correctness, calibration and
+retention gates. The learned G3 mapping must support cross-context
+interpretation alignment. The [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md)
+records the evidence and remaining gates. Corpus ingestion and Wikipedia
+utility follow completion of G5.
 
 Independent custody, matched consumed compute, general calibration and formal
 scientific admission remain open. The inclusive **2,000-line objective remains

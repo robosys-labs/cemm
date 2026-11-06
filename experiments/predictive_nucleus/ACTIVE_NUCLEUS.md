@@ -1,4 +1,4 @@
-# Active nucleus — G5 v8 audited, native G3 receipt qualification next
+# Active nucleus — G5 physical clarification qualified on TRAIN
 
 ## Current handoff on November 6
 
@@ -26,14 +26,31 @@ Role influenced exactly the bit-changing observations. Each identity owns a
 separate row and both taught words represent the same operation, which
 bounds claims of shared learning.
 
-The next bounded work is the
-[native physical-receipt preflight](G3_G5_RECEIPT_PREFLIGHT.md). It qualifies
-the existing four-action forecast path on the observed TRAIN tape, carrying
-event IDs and public-prefix digests and testing current-outcome blindness.
-It precedes a prospective answered-observation/restart study using the same
-native representation. That study needs distinct-operation contrasts and
-fresh entity instances to measure reusable learning, calibrated ambiguity,
-clarification cost and retained competence.
+The [native receipt qualification](G3_G5_RECEIPT_PREFLIGHT_RESULT.md)
+retained all 16 teaching rows across five frozen worlds and reproduced twice
+byte-for-byte. Changing the current endpoint preserved every forecast and
+public-prefix digest. A single physical answer left two candidate
+interpretations nearly tied in every case.
+
+The [physical-query study](PHYSICAL_QUERY_PREFLIGHT_RESULT_V1.md) now computes
+the expected value of the actual endpoint distribution. It qualifies a
+one-observation decision with supplied menu-identification rewards. Across
+80 ordered TRAIN pairs, a retained first observation led to 40 additional
+cheap queries, against 80 with that observation discarded. The role-ambiguous
+all-ones cases received zero additional paid questions. Expensive,
+unavailable and indifferent-goal conditions also received zero queries.
+All 960 policy cases were retained, and exhaustive Bayesian enumeration
+agreed within 2.22e−16. Eight synthetic checks cover the formula and edge
+conditions, including normalization drift and arithmetic overflow.
+
+Next, implement a receipt ledger with duplicate protection and cold-process
+recovery, then freeze a prospective transfer study using the learned G3
+mapping to align interpretations across fresh instances. Measure actual
+correctness, calibration, correction and retained competence against reset,
+dated-evidence and matched unstructured controls on common realized
+histories. The current two lexical rows encode the same taught operation, so
+distinct-operation contrasts are needed for a shared-reuse claim. Current
+query counts describe expected menu identification on a shared TRAIN tape.
 
 The retained G5 baseline is the v1 scoped evidence rule. G5 learned
 ask–revise–retain and formal admission are open. G6 corpus acquisition, G7
