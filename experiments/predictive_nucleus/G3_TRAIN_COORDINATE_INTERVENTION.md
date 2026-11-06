@@ -1,0 +1,11 @@
+# G3 intervention on fitted lexical coordinates
+
+Frozen diagnostic on the existing G3 v3 TRAIN tape. The question is whether each stored coordinate affects the probability of an observed endpoint through the corresponding action marginal. The prior comparison masked the entire word. Synthetic tests checked the factorization on constructed weights.
+
+Use the published G3 v3 source and inputs at `2c5cdbe2` and grounded fits at `66a74921`. Read the 16 teaching events in `data/effect-role-v3/teach-inputs.json.xz`, the lexical registry, and the matching NAND world and grounded checkpoint for each seed (7, 11, 23, 37, 53). Keep both identities, all 16 rows, their original physical contexts and the four supplied action candidates. Eight distinct text strings recur across the 16 contexts. The five fits share this tape.
+
+For each frozen fit, score four conditions in order. First use the saved parameters. Then set the effect column of both new identity rows to zero, leaving role intact. Restore the rows and set only their role column to zero. Finally restore both columns. Reuse the same packed observed inputs and frozen world in every condition. No fitting, parser labels, challenge data or new cases enter this diagnostic.
+
+Record the mean observed endpoint NLL per condition and each intervention's paired NLL change per seed. Record the count of rows with higher/equal/lower NLL (absolute tolerance `1e-12`). Separately check the maximum absolute change in the unaffected action marginal across rows (role under effect ablation, family under role ablation). Check the ablated marginal returns to 0.5 and report its maximum absolute change from intact. Use the existing float64 model and native forecast path. Reject a comparison if any mean is nonfinite, a count differs from 16, intact mean NLL differs from the published TRAIN objective by more than `1e-10`, a marginal invariant differs by more than `1e-12`, or restored predictions or model fingerprints differ from intact.
+
+Report all directions, including zeros and improvements after ablation. An endpoint cost measures dependence on the fitted coordinate on the teaching examples. The factorization and action menu are supplied. G3 development status and scientific admission do not depend on this diagnostic.
