@@ -1,0 +1,134 @@
+{
+  "protocol_commit": "c2fddad",
+  "teaching_rows": 16,
+  "torch": "2.10.0+cpu",
+  "python": "3.13.5",
+  "scope": "G3 v3 observed TRAIN endpoints",
+  "seeds": {
+    "7": {
+      "archived_nll": 0.040882113148669005,
+      "intact_nll": 0.040882113148669005,
+      "zero_effect": {
+        "mean_nll": 0.521857958669497,
+        "mean_delta_nll": 0.480975845520828,
+        "higher": 12,
+        "equal": 0,
+        "lower": 4,
+        "ablated_marginal_max_change": 0.45049377127801216,
+        "other_marginal_max_change": 0.0,
+        "max_residual_from_half": 1.1102230246251565e-16
+      },
+      "zero_role": {
+        "mean_nll": 0.37392791844976914,
+        "mean_delta_nll": 0.3330458053011001,
+        "higher": 8,
+        "equal": 8,
+        "lower": 0,
+        "ablated_marginal_max_change": 0.4989906080020198,
+        "other_marginal_max_change": 1.1102230246251565e-16,
+        "max_residual_from_half": 0.0
+      },
+      "restored_nll": 0.040882113148669005
+    },
+    "11": {
+      "archived_nll": 0.04153964789469866,
+      "intact_nll": 0.04153964789469866,
+      "zero_effect": {
+        "mean_nll": 0.5222332146018394,
+        "mean_delta_nll": 0.48069356670714075,
+        "higher": 16,
+        "equal": 0,
+        "lower": 0,
+        "ablated_marginal_max_change": 0.45052573374832194,
+        "other_marginal_max_change": 0.0,
+        "max_residual_from_half": 1.1102230246251565e-16
+      },
+      "zero_role": {
+        "mean_nll": 0.3745283439232037,
+        "mean_delta_nll": 0.332988696028505,
+        "higher": 8,
+        "equal": 8,
+        "lower": 0,
+        "ablated_marginal_max_change": 0.49926042848507896,
+        "other_marginal_max_change": 0.0,
+        "max_residual_from_half": 0.0
+      },
+      "restored_nll": 0.04153964789469866
+    },
+    "23": {
+      "archived_nll": 0.041185039395332954,
+      "intact_nll": 0.041185039395332954,
+      "zero_effect": {
+        "mean_nll": 0.521621771175013,
+        "mean_delta_nll": 0.48043673177967994,
+        "higher": 16,
+        "equal": 0,
+        "lower": 0,
+        "ablated_marginal_max_change": 0.44999127014454143,
+        "other_marginal_max_change": 1.1102230246251565e-16,
+        "max_residual_from_half": 5.551115123125783e-17
+      },
+      "zero_role": {
+        "mean_nll": 0.37431960517659457,
+        "mean_delta_nll": 0.3331345657812616,
+        "higher": 8,
+        "equal": 8,
+        "lower": 0,
+        "ablated_marginal_max_change": 0.4991452623129766,
+        "other_marginal_max_change": 1.1102230246251565e-16,
+        "max_residual_from_half": 0.0
+      },
+      "restored_nll": 0.041185039395332954
+    },
+    "37": {
+      "archived_nll": 0.04181719729197232,
+      "intact_nll": 0.04181719729197232,
+      "zero_effect": {
+        "mean_nll": 0.5225147810122351,
+        "mean_delta_nll": 0.48069758372026283,
+        "higher": 12,
+        "equal": 0,
+        "lower": 4,
+        "ablated_marginal_max_change": 0.45072395183429137,
+        "other_marginal_max_change": 8.673617379884035e-19,
+        "max_residual_from_half": 0.0
+      },
+      "zero_role": {
+        "mean_nll": 0.3748052101169746,
+        "mean_delta_nll": 0.3329880128250024,
+        "higher": 8,
+        "equal": 8,
+        "lower": 0,
+        "ablated_marginal_max_change": 0.4989048506617887,
+        "other_marginal_max_change": 1.1102230246251565e-16,
+        "max_residual_from_half": 0.0
+      },
+      "restored_nll": 0.04181719729197232
+    },
+    "53": {
+      "archived_nll": 0.041291372135172894,
+      "intact_nll": 0.041291372135172894,
+      "zero_effect": {
+        "mean_nll": 0.5219510843432793,
+        "mean_delta_nll": 0.4806597122081065,
+        "higher": 12,
+        "equal": 0,
+        "lower": 4,
+        "ablated_marginal_max_change": 0.4505388122482803,
+        "other_marginal_max_change": 2.220446049250313e-16,
+        "max_residual_from_half": 0.0
+      },
+      "zero_role": {
+        "mean_nll": 0.3743604139925314,
+        "mean_delta_nll": 0.3330690418573585,
+        "higher": 8,
+        "equal": 8,
+        "lower": 0,
+        "ablated_marginal_max_change": 0.4985092441323704,
+        "other_marginal_max_change": 2.220446049250313e-16,
+        "max_residual_from_half": 0.0
+      },
+      "restored_nll": 0.041291372135172894
+    }
+  }
+}
