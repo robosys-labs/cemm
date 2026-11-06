@@ -36,8 +36,8 @@ The [physical-query study](PHYSICAL_QUERY_PREFLIGHT_RESULT_V1.md) now computes
 the expected value of the actual endpoint distribution. It qualifies a
 one-observation decision with supplied menu-identification rewards. Across
 80 ordered TRAIN pairs, a retained first observation led to 40 additional
-cheap queries, against 80 with that observation discarded. The role-ambiguous
-all-ones cases received zero additional paid questions. Expensive,
+cheap queries, against 80 with that observation discarded. The retained arm skipped
+the second paid question on the role-ambiguous all-ones cases. Expensive,
 unavailable and indifferent-goal conditions also received zero queries.
 All 960 policy cases were retained, and exhaustive Bayesian enumeration
 agreed within 2.22e−16. Eight synthetic checks cover the formula and edge
