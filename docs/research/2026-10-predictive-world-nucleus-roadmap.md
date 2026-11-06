@@ -95,13 +95,24 @@ Retaining a first observation led to 40 additional cheap questions across
 80 ordered TRAIN contexts, against 80 after discarding it. These are
 model-expected menu-identification decisions on the original teaching tape.
 
-The next bounded milestone is an evidence ledger with duplicate protection
-and cold-process recovery, followed by a prospective fresh-instance
-ask–revise–retain comparison with actual correctness, calibration and
-retention gates. The learned G3 mapping must support cross-context
-interpretation alignment. The [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md)
-records the evidence and remaining gates. Corpus ingestion and Wikipedia
-utility follow completion of G5.
+The [TRAIN evidence ledger](../../experiments/predictive_nucleus/PHYSICAL_LEDGER_RESULT_V1.md)
+qualifies duplicate protection and cold-process recovery. The subsequent
+[static transport qualification](../../experiments/predictive_nucleus/COORDINATE_TRANSPORT_RESULT_V1.md)
+records `KEEP_TRANSPORT_PREFLIGHT` across 1,536 fresh participant trials,
+five saved fits and two native laws. All ten intact retained conditions
+achieve 100% endpoint and local-action accuracy. Cheap-query retention buys
+4,320 answers against 5,760 for reset, with 100% against 71.875% final
+correctness and .971875 against .681250 mean net reward. All 80 frozen
+condition gates pass. Per-case probability and utility regressions
+are retained in the result.
+
+The next bounded requirement is persistence of the transformed hypothesis
+frame across cold processes. Temporal/scope correction, a new exposure-matched
+neural fit, new sentence families and durable competence after episode-memory
+clearing remain open. The static study uses existing words/layouts and four
+supplied coordinate transformations. Corpus ingestion and Wikipedia utility
+follow the G5 prerequisites. The current evidence is recorded in the
+[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md).
 
 Independent custody, matched consumed compute, general calibration and formal
 scientific admission remain open. The inclusive **2,000-line objective remains
