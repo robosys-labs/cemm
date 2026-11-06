@@ -31,3 +31,16 @@ class FrozenV8PayoffOrder(unittest.TestCase):
             prior, = source_temporal_v7.payoff_forecasts((qor,), *args)
             for history in ((qor, nav), revised):
                 self.assertEqual(source_temporal_v7.payoff_forecasts(history, *args)[0], prior)
+
+    def test_fixed_hazard_alone_guarantees_the_abstention_cutoff(self):
+        # A distribution over all 32 latent states is a mixture of these
+        # extremes, so this also bounds every possible pre-epoch posterior.
+        for state in range(joint_trust_v8.STATES):
+            weights = [0.] * joint_trust_v8.STATES
+            weights[state] = 1.
+            posterior = joint_trust_v8._transition(weights)
+            p = sum(weight for index, weight in enumerate(posterior)
+                    if index & joint_trust_v8.LOCAL)
+            expected = .85 if state & joint_trust_v8.LOCAL else .15
+            self.assertAlmostEqual(p, expected)
+            self.assertTrue(.05 < p < .95)
