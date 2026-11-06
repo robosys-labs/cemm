@@ -1,0 +1,35 @@
+{
+  "measured_commit": "b2f2f2287866490ebfc9079c7220d0bba2339b2f",
+  "clean_worktree": true,
+  "runtime": {
+    "python": "3.13.5",
+    "torch": "2.10.0+cpu",
+    "numpy": "2.3.5"
+  },
+  "suite_tests": 1248,
+  "suite_seconds": 149.77,
+  "suite_success": true,
+  "suite_skipped": 2,
+  "skip_reasons": [
+    "v7 raw challenge already sealed",
+    "v8 raw challenge already sealed"
+  ],
+  "snapshot_checks": 37,
+  "guarded_preflight_success": true,
+  "query_two_runs_byte_identical_to_committed_result": true,
+  "source_receipts_byte_identical_to_committed_result": true,
+  "ordered_contexts": 80,
+  "policy_evaluations": 960,
+  "max_enumeration_error": 2.220446049250313e-16,
+  "query_result_sha256": "769c7e83ce92c8e216a68c137e22624fa0d4e3ce4e34a62c13c25b5e84c94623",
+  "files": {
+    "cemm-b2f2f22-suite.out": "dd43ab837a5a30357cd130f9e918ab30c6b20b30fcf95643ce37fff1bf8b212c",
+    "cemm-b2f2f22-suite.err": "c9726b0bfb95b97002d883a34053c7a326efc844498c099b49b90e917e9b060f",
+    "cemm-b2f2f22-native-preflight.json": "0092ff2da73f310d3dc5422ddb7ff33f2ab7eb0848bc474938b9ad22686d8e7f",
+    "cemm-b2f2f22-protocol.json": "cadb9f2c91b7b2fdd3d13d2032b2b3e90b7d734e1ad8591fdc14857d8c03dcbf",
+    "cemm-b2f2f22-snapshots.log": "21d7c1d1a4f141e805e84d3422c6f721b5e0cd18b7c6c978c7d7d15aacff9d3b",
+    "cemm-b2f2f22-query-run1.json": "769c7e83ce92c8e216a68c137e22624fa0d4e3ce4e34a62c13c25b5e84c94623",
+    "cemm-b2f2f22-query-run2.json": "769c7e83ce92c8e216a68c137e22624fa0d4e3ce4e34a62c13c25b5e84c94623",
+    "cemm-b2f2f22-source-receipts.json": "90b8cc1d175efd11070c5549bceeba80154db30319faa30ba707852579df2363"
+  }
+}
