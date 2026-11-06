@@ -1,0 +1,89 @@
+{
+  "version": "cemm-connector-publication-v1",
+  "base_commit": "ac54fe7ac3651dcd8341ee16d05b5f4b46708025",
+  "original_local_head": "53ff726cc75fe364a0b3f2fdf3da2568d3e50088",
+  "remote_replay_head": "811e242ea9578b6751a2976dd6bd3f0a3ac3f574",
+  "identical_replay_tree": "47107a11f476d7630d995ea2ad460865bb94062d",
+  "explanation": "The shell lacked GitHub credentials. The connected GitHub publisher replayed the ordered commits with new commit metadata, verifying each complete tree against its original. The original local protocol and measured commit IDs remain in the source and are recoverable from the archived bundle. Publication occurred after the recorded local measurements.",
+  "local_validation_commit": "b2f2f2287866490ebfc9079c7220d0bba2339b2f",
+  "original_history": {
+    "path": "experiments/predictive_nucleus/results/publication-20261106/original-history.bundle",
+    "sha256": "6ad101ba53d5e8a1aacdf94621993d32b74de600266cc2e112ed3ef0bddceefc",
+    "git_blob_sha": "63e2f9ecb1dd1f20f52d1060a1fd757b7d837196",
+    "size": 58857,
+    "requires_commit": "ac54fe7ac3651dcd8341ee16d05b5f4b46708025",
+    "import_example": "git fetch experiments/predictive_nucleus/results/publication-20261106/original-history.bundle refs/heads/research/g5-v8-postscore-audit:refs/heads/research/g5-v8-original-local"
+  },
+  "commits": [
+    {
+      "local_sha": "c2fddad54d76c1cd8c625426098af45952847a3a",
+      "remote_sha": "bcdd4203f54687df8f55839f8e507f101f3a47c4",
+      "tree_sha": "88e323db2741f51d36e2fe53e6710170678407ad"
+    },
+    {
+      "local_sha": "3b002a9c20da2b14546bce0b2ceec6afb44920f9",
+      "remote_sha": "850eab5690b0fe2541b96a8b2eca5886d0bde84e",
+      "tree_sha": "d2261bb1250566990aaa396936ed228a37f0a510"
+    },
+    {
+      "local_sha": "5fbcaee4a25a49c00cece45842494c1716d99b15",
+      "remote_sha": "2428303f8400546293cddef6df1f932636f800d1",
+      "tree_sha": "f490481cbb37c8670998508f1a604bdb538aa4e6"
+    },
+    {
+      "local_sha": "c7663b678ace104b123a8b41697bbe66be2163ec",
+      "remote_sha": "d6ae83c9a8960e66eee82f115cb230a45fc3b770",
+      "tree_sha": "18989edd103d03a89c1f6747facb6f1ff06fc483"
+    },
+    {
+      "local_sha": "ad2bf33c8d0ae65b01900230b3e6604d9b75b97e",
+      "remote_sha": "6abc9f8958e4dda8e0223ef04b22cbce1d9e21f4",
+      "tree_sha": "d7dc16c8e4755302b09a78ec72a081e58040b33b"
+    },
+    {
+      "local_sha": "671d4b2e02e10a735834bcebcbeaf0aeef5e70e5",
+      "remote_sha": "b3a33501df8a2dc6b5b45c3893dd7fbf7decf905",
+      "tree_sha": "3e5680656a579ad6dda05935b8b6bcbdc576863d"
+    },
+    {
+      "local_sha": "1a4737ff8e270050a18433f07a06a1fa7b478ea0",
+      "remote_sha": "9426b800c8d977dd9de1359ca7d8bef9ddb9de2b",
+      "tree_sha": "fdf5a4f5b255d2c8513ad36870205c9797093d90"
+    },
+    {
+      "local_sha": "54a51d523016928a6cdd0d42e559635c6e4fd04d",
+      "remote_sha": "bfe18a2918b9d2164128ad3eefe4bede36b6bf6d",
+      "tree_sha": "852c802d3a409e1c8714e942731f248df9381d6f"
+    },
+    {
+      "local_sha": "8bbd710703c80b12680f682b5e94b9e05b50df5e",
+      "remote_sha": "366fb1affb5f18cccc26c489f6327f86987af8fd",
+      "tree_sha": "27022f9b92df3f65af2df4ef8d5dacc97bffb42d"
+    },
+    {
+      "local_sha": "ae0924e133e462d84e3e2437d1b6a16a9ab1d7b6",
+      "remote_sha": "de590db2b74d60cd83ec3961e155d1ca417d87b5",
+      "tree_sha": "12bd01ab0e0d7084c1f41c31b9bced06ac96c33c"
+    },
+    {
+      "local_sha": "82988e15accf506ae4acc969e64e40409fa59081",
+      "remote_sha": "d8ce9144e704a10712d516c08b75b1cad6872328",
+      "tree_sha": "7bb4f00453132b5365a343c4123f4043403f32fc"
+    },
+    {
+      "local_sha": "deac57c027202c0e578adf694a54444536d4d92f",
+      "remote_sha": "8f43a0fdf1a92ce447e71570e71baf1f8d2242b8",
+      "tree_sha": "7cd779e4fdd732993ce87051441c0b6a59ba1b40"
+    },
+    {
+      "local_sha": "b2f2f2287866490ebfc9079c7220d0bba2339b2f",
+      "remote_sha": "611cee6ea853dafe046fc0e073d1e3ca3311a521",
+      "tree_sha": "7ed51a6e5c848dd9b7cf2b45cb98447f16076b1a"
+    },
+    {
+      "local_sha": "53ff726cc75fe364a0b3f2fdf3da2568d3e50088",
+      "remote_sha": "811e242ea9578b6751a2976dd6bd3f0a3ac3f574",
+      "tree_sha": "47107a11f476d7630d995ea2ad460865bb94062d"
+    }
+  ]
+}
