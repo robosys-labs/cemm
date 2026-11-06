@@ -1,0 +1,123 @@
+{
+  "decision": "QUALIFIED_TRAIN_RECOVERY",
+  "failed_checks": [],
+  "independent_saved_artifact_audit": {
+    "checkpoint_files_checked": 560,
+    "complete_invocations": 2,
+    "exact_reference_matches": true,
+    "initial_priors_checked": 320,
+    "method": "Read-only validation of checkpoint bytes, provenance bindings, receipt payloads and independent Bayesian replay",
+    "policy_records_checked": 1920,
+    "purchased_posteriors_checked": 240,
+    "stage_report_hashes_checked": 6,
+    "status": "PASS"
+  },
+  "input_coverage": {
+    "ordered_routes": 80,
+    "query_occurrences": 80,
+    "seed_qualified_receipts": 80,
+    "teaching_episodes": 16,
+    "warmup_occurrences": 80,
+    "worlds": 5
+  },
+  "maximum_errors": {
+    "completed_delivery_order": 1.1102230246251565e-16,
+    "initial_prior_published": 0.0,
+    "initial_prior_uninterrupted": 0.0,
+    "policy_published": 0.0,
+    "policy_uninterrupted": 0.0,
+    "producer_prior": 0.0,
+    "purchased_posterior_pre_restart": 0.0,
+    "purchased_posterior_published": 0.0,
+    "purchased_posterior_uninterrupted": 0.0,
+    "uninterrupted_published_policy": 0.0
+  },
+  "measured_source_commit": "a0f222eb88885ec851259b46906c8496a2f6d0b9",
+  "per_invocation_counts": {
+    "accepted_receipt_occurrences": 320,
+    "atomic_conflict_rejections": 960,
+    "completed_order_comparisons": 20,
+    "conflict_attempts": 960,
+    "duplicate_attempts": 320,
+    "endpoint_complement_checks": 960,
+    "endpoint_conflict_rejections": 320,
+    "hold_branches": 840,
+    "idempotent_duplicates": 320,
+    "initial_reloads": 160,
+    "initial_snapshots": 160,
+    "likelihood_conflict_rejections": 320,
+    "policy_evaluations": 960,
+    "prefix_conflict_rejections": 320,
+    "purchased_reloads": 120,
+    "reset_purchases": 80,
+    "retained_purchases": 40
+  },
+  "protocol_commit": "c6f48f6cdda4ad2092931ee88901fdfebe1a4732",
+  "protocol_sha256": "30673cfbd9c22f955b2b0a607a8e122abe38f3c89873e6c8cfd472621187f1f8",
+  "remaining_g5_evidence": [
+    "Fresh-instance alignment",
+    "Correction",
+    "Actual correctness",
+    "Calibration",
+    "Retained competence against matched controls"
+  ],
+  "repeat": {
+    "artifact": "replay.json.xz",
+    "artifact_bytes": 18696,
+    "artifact_sha256": "fe268e3cb89ffb1f62a7f52c3e1443409dcc9c470558cc688539af946dd56957",
+    "byte_identical": true,
+    "complete_invocations": 2,
+    "executions": [
+      {
+        "all_workers_exited_zero": true,
+        "custody_file": "custody-1.json",
+        "custody_sha256": "2389000148a0a6de1e93b4e1f603f635601282bb2d40ec0f6f13f54e72a64ba0",
+        "run": 1,
+        "worker_launches": 3
+      },
+      {
+        "all_workers_exited_zero": true,
+        "custody_file": "custody-2.json",
+        "custody_sha256": "3eb037e5c337e244863c7485a9b0ed695b35702a60e24989697d2d7c0b5d40af",
+        "run": 2,
+        "worker_launches": 3
+      }
+    ],
+    "process_identity_note": "Each invocation used three distinct sequential child processes. Numeric PIDs repeated across separate execution environments.",
+    "uncompressed_bytes": 755169,
+    "uncompressed_sha256": "53c263720075d734a7375782f1912be249edf7e40922a58397014c5d96e15c5c"
+  },
+  "scope": "Successful single-writer checkpoints and process recovery on existing native TRAIN evidence",
+  "software_validation": {
+    "elapsed_seconds": 147.467,
+    "errors": 0,
+    "failures": 0,
+    "full_suite_total": 1264,
+    "guarded_comparison_preflight_passed": true,
+    "guarded_preflight_sha256": "090da75a76cea089fc5d639fb40bcfec7a86a4463203eb728b5a0868d39dce7f",
+    "historical_manifests_verified": 37,
+    "ledger_tests": 16,
+    "original_protocol_verified": true,
+    "python": "3.13.5",
+    "skip_reasons": [
+      "Sealed v7 challenge collection",
+      "Sealed v8 challenge collection"
+    ],
+    "skipped": 2,
+    "source_commit": "a0f222eb88885ec851259b46906c8496a2f6d0b9",
+    "suite_command": "python -m unittest discover -s experiments/predictive_nucleus/tests -v",
+    "suite_stderr_sha256": "c352ba2484901ef95bedc3e1ed67f5b5658b4c2dee97df7e118af15f1bc21557",
+    "torch": "2.10.0+cpu"
+  },
+  "source_sha256": {
+    "acceptance_contract.py": "e502cee5c68f44cc3d592d8536de9989b1eff1be5a7949b0eb16465570836368",
+    "continuation_run.py": "3a9a2048ce9188c4d176904bd0fa933b983c52d86bffd118b016927f531d9c05",
+    "domain_contract.py": "65716833bea1f3f8b242c7bb5eaa985c4eb277ed96cc6cc184f65cf2baf61a03",
+    "g3_train_coordinate_intervention.py": "9f76a19830d0b3e9201e337f37937061c803b2bcc1e9dec672e63aa716563166",
+    "joint_objective.py": "c00551ac3f0cff682b2dcd415929d8e8b7279f7fe92494fd07a2411a29ad1f4f",
+    "physical_ledger_preflight_v1.py": "61048df807f6fb39732adf93e13c275f393f528f72abbec89e95d57d3c8d1c82",
+    "physical_ledger_v1.py": "3e19c927733acbd0b121568ceb16c40309cce8683a77555a622e4991cd1a19ec",
+    "physical_query_preflight_v1.py": "3a6b106117d66d8a144a8f20ca3179b4a7511e26658560d3c344ae9c693b0dd6",
+    "physical_query_v1.py": "a5757708b1d0ee36e6d1ceef0be92c901999d648b9d5faa136743ef8ba1a9c02"
+  }
+}
