@@ -6,7 +6,7 @@
 **Implementation boundary:** independent experiment first; no root runtime or Hybrid cutover  
 **Companion foundation:** [draft PR #21](https://github.com/robosys-labs/cemm/pull/21)
 
-## Current development checkpoint — 2026-11-03
+## Current development checkpoint — 2026-11-06
 
 **Bounded development G3 is complete.** The
 [v3 decision](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V3.md),
@@ -76,16 +76,32 @@ neural receiver at 0.9125 net utility and is retained. Verification price
 and forecast-based query selection were supplied. Broader timing, focus
 and open-ended communication remain outside this bounded decision.
 
-**G5 is the next development priority.** A [TRAIN-only preflight](../../experiments/predictive_nucleus/revision_preflight.py)
-constructed identical observed histories under a lasting revision and a
-single exception. After a distinguishing physical probe and an episode reset,
-the latest distinct physically verified record by event time resolved 1,536
-of 1,536 decisions and preserved a second meaning. The last-arriving duplicate
-or the last unverified claim resolved only half. Freeze a held-out study of
-reduced clarification at matched final correctness that includes competing
-scopes, unresolved contradictions and a dated, scoped evidence baseline.
-The [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md)
-records the remaining gates. Corpus ingestion and Wikipedia utility follow G5.
+**G5 remains the development priority.** Its v1 scoped evidence baseline is
+retained. The [v8 post-score audit](../../experiments/predictive_nucleus/JOINT_TRUST_AUDIT_V8.md)
+confirms `REVISE_JOINT_V8` and diagnoses the current obstacle. Lower mean
+meaning Brier accompanied weaker first-action decisions on genuine changes,
+21 additional confident retained errors and lower utility on every seed.
+The audit also identifies a receipt-order defect in the auxiliary payoff
+comparison and a fixed-hazard shortcut in the abstention threshold.
+
+The [G3 TRAIN intervention](../../experiments/predictive_nucleus/G3_TRAIN_COORDINATE_INTERVENTION.md)
+verifies fitted effect and role influence on physical endpoint forecasts,
+with exact restoration of the archived objectives. The
+[native receipt qualification](../../experiments/predictive_nucleus/G3_G5_RECEIPT_PREFLIGHT_RESULT.md)
+preserves ambiguity and binds forecasts to evidence IDs and delivered-prefix
+digests. The [physical-query qualification](../../experiments/predictive_nucleus/PHYSICAL_QUERY_PREFLIGHT_RESULT_V1.md)
+computes information value from the actual endpoint distribution.
+Retaining a first observation led to 40 additional cheap questions across
+80 ordered TRAIN contexts, against 80 after discarding it. These are
+model-expected menu-identification decisions on the original teaching tape.
+
+The next bounded milestone is an evidence ledger with duplicate protection
+and cold-process recovery, followed by a prospective fresh-instance
+ask–revise–retain comparison with actual correctness, calibration and
+retention gates. The learned G3 mapping must support cross-context
+interpretation alignment. The [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md)
+records the evidence and remaining gates. Corpus ingestion and Wikipedia
+utility follow completion of G5.
 
 Independent custody, matched consumed compute, general calibration and formal
 scientific admission remain open. The inclusive **2,000-line objective remains

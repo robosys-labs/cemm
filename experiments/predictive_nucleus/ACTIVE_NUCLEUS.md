@@ -1,4 +1,62 @@
-# Active nucleus — G5 v7 source conditioning challenged; G5 baseline retained
+# Active nucleus — G5 physical clarification qualified on TRAIN
+
+## Current handoff on November 6
+
+The [v8 audit](JOINT_TRUST_AUDIT_V8.md) confirms the frozen
+`REVISE_JOINT_V8` decision. Six of 13 quantitative gates passed. The joint
+model achieved .06048 five-view meaning Brier against .06283 for the fitted
+neutral control, while its net utility was .82996 against .84768 and its
+paid queries were 156 against 148. All five seeds lost utility. Genuine
+meaning changes account for −87.75 reward, offset by +19.70 on stable
+meanings. The fixed-time decision metrics cover 1,920 worlds / 960 pairs.
+
+The auxiliary joint payoff comparison has an event-order defect. Sorting
+tied receipts changes their causal order, and a positional scoring join
+misattributes 11,520 of 28,800 forecasts. The accompanying synthetic test
+exposes both the wrong receipt identity and the changed observation history.
+The reported zero premature-confidence count is guaranteed by the fixed
+hazard, which bounds probabilities to [.15,.85]. On indistinguishable
+balanced twins, prefix Brier was .35638 against .25 for equal probabilities.
+
+The [G3 coordinate intervention](G3_TRAIN_COORDINATE_INTERVENTION.md) was
+frozen before execution and reproduced every archived training objective.
+Across five fits, mean endpoint NLL rose from .04134 to .52204 with effect
+removed, or .37439 with role removed. Restoration reproduced every forecast.
+Role influenced exactly the bit-changing observations. Each identity owns a
+separate row and both taught words represent the same operation, which
+bounds claims of shared learning.
+
+The [native receipt qualification](G3_G5_RECEIPT_PREFLIGHT_RESULT.md)
+retained all 16 teaching rows across five frozen worlds and reproduced twice
+byte-for-byte. Changing the current endpoint preserved every forecast and
+public-prefix digest. A single physical answer left two candidate
+interpretations nearly tied in every case.
+
+The [physical-query study](PHYSICAL_QUERY_PREFLIGHT_RESULT_V1.md) now computes
+the expected value of the actual endpoint distribution. It qualifies a
+one-observation decision with supplied menu-identification rewards. Across
+80 ordered TRAIN pairs, a retained first observation led to 40 additional
+cheap queries, against 80 with that observation discarded. The retained arm skipped
+the second paid question on the role-ambiguous all-ones cases. Expensive,
+unavailable and indifferent-goal conditions also received zero queries.
+All 960 policy cases were retained, and exhaustive Bayesian enumeration
+agreed within 2.22e−16. Eight synthetic checks cover the formula and edge
+conditions, including normalization drift and arithmetic overflow.
+
+Next, implement a receipt ledger with duplicate protection and cold-process
+recovery, then freeze a prospective transfer study using the learned G3
+mapping to align interpretations across fresh instances. Measure actual
+correctness, calibration, correction and retained competence against reset,
+dated-evidence and matched unstructured controls on common realized
+histories. The current two lexical rows encode the same taught operation, so
+distinct-operation contrasts are needed for a shared-reuse claim. Current
+query counts describe expected menu identification on a shared TRAIN tape.
+
+The retained G5 baseline is the v1 scoped evidence rule. G5 learned
+ask–revise–retain and formal admission are open. G6 corpus acquisition, G7
+measured Wikipedia utility and G8 guarded integration remain pending.
+
+## Historical v7 handoff
 
 ## G5 v7: sealed source-conditioned challenge completed — no promotion (2026-11-04)
 
