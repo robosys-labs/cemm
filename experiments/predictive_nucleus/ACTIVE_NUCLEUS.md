@@ -1,6 +1,28 @@
-# Active nucleus — G5 TRAIN evidence recovery qualified
+# Active nucleus — G5 static learned-coordinate transport qualified
 
 ## Current handoff on November 6
+
+The [static coordinate-transport qualification](COORDINATE_TRANSPORT_RESULT_V1.md)
+records `KEEP_TRANSPORT_PREFLIGHT`, with all 80 condition gates passing.
+The prospective bank contains 1,536 trials with fresh participant identities,
+evaluated through all five saved fits and both native laws. Every intact
+retained condition achieves 100% target-endpoint and local-action accuracy.
+Mean target Brier is .012301 against .562502 for reset, .287323 for latest
+only and .502294 with the learned layout response removed.
+
+Cheap clarification uses the second demonstration to predict a different
+target instance. Retained evidence buys 4,320 answers against 5,760 for
+reset, with 100% against 71.875% final correctness and .971875 against
+.681250 mean net reward. Both native runs and both scoring runs reproduced
+byte-for-byte. The full isolated suite ran 1,313 tests with zero failures
+and two intentional sealed-collector skips.
+
+The result retains 184 small Brier regressions against latest-only evidence
+and 480 cheap-query net regressions from additional fees. Retained ECE is
+.068927, with 28.125% confidence coverage at .95 and zero confident errors.
+Cycled layout produces 1,196 confident errors. This qualification uses two
+existing acquired words and four supplied transformations of their learned
+coordinates, within a finite static task.
 
 The [v8 audit](JOINT_TRUST_AUDIT_V8.md) confirms the frozen
 `REVISE_JOINT_V8` decision. Six of 13 quantitative gates passed. The joint
@@ -53,13 +75,13 @@ atomically. Valid physical counterexamples with zero computed predictive mass
 remain retained with an explicitly unavailable belief. The full isolated suite
 ran 1,264 tests with zero failures and two intentional sealed-collector skips.
 
-Next, freeze a prospective transfer study using the learned G3 mapping to
-align interpretations across fresh instances. Measure actual
-correctness, calibration, correction and retained competence against reset,
-dated-evidence and matched unstructured controls on common realized
-histories. The current two lexical rows encode the same taught operation, so
-distinct-operation contrasts are needed for a shared-reuse claim. Current
-query counts describe expected menu identification on a shared TRAIN tape.
+Next, qualify duplicate-safe cold-process persistence of the transformed
+hypothesis frame, then freeze temporal/scope correction and a prospectively
+matched neural comparison. The archived GRU parent received 1,024 events per
+update against 1,152 for the accepted coordinate parent, and the current
+text-only arm omits physical state. New sentence families, correction,
+contradictory sources, irreducible ambiguity and durable competence after
+episodic-memory clearing remain G5 requirements.
 
 The retained G5 baseline is the v1 scoped evidence rule. G5 learned
 ask–revise–retain and formal admission are open. G6 corpus acquisition, G7
@@ -426,7 +448,7 @@ Accepted G1/G2 development gains and all historical source/data locks remain int
 | G2 | Accepted bounded composition, hidden propagation and supplied timing retained; no full scientific-admission claim. |
 | G3 | Bounded development COMPLETE by audited v3; v1 REVISE and v2 STOP_INCOMPLETE_EVIDENCE remain unchanged. |
 | G4 | Bounded matched-convention receiver retained. Broader conflict, delay, off-topic communication and formal admission remain open. |
-| G5 | Scoped evidence baseline retained. Native TRAIN ledger recovery qualified. Learned correction and independent scientific admission remain open. |
+| G5 | Scoped evidence baseline retained. Static learned-coordinate transport qualified. Transformed-frame persistence, temporal correction and scientific admission are open. |
 | G6–G8 | Corpus bridge, measured Wikipedia utility and guarded integration remain open. |
 
 Independent custody, matched consumed compute, general calibration and formal

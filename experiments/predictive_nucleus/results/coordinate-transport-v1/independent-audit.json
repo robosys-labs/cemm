@@ -1,0 +1,186 @@
+{
+  "aggregate_native_checks": {
+    "all_frozen_flags_true": true,
+    "endpoint_complement_checks": 69120,
+    "frozen_language_and_world_check_pairs": 30,
+    "projection_checks": 276480,
+    "records": 69120,
+    "uniform_hypothesis_checks": 69120
+  },
+  "audit_source_edits": 0,
+  "counts": {
+    "hypothesis_distributions": 276480,
+    "policies": 138240,
+    "predictions": 92160,
+    "public_instances": 4608,
+    "public_trials": 1536,
+    "receipts": 69120,
+    "shards": 10,
+    "trial_views": 23040,
+    "unique_participants": 13824
+  },
+  "custody": {
+    "declared_source_files_verified": 16,
+    "g3_freeze_sha256": "5380210e7957c8b170c8e8ee39d8b4be130e32eb81dad52e9cff7d9f392b5922",
+    "grounded_checkpoints": [
+      {
+        "file_sha256": "757563df709396bc9912dfcee3d393570442cf40687e247fb7ea8b27ee04af8b",
+        "language_sha256": "364d86cb259dcc0bcc53641e784a18868ecec6178292716a49a0a86e6b4f3864",
+        "seed": 7
+      },
+      {
+        "file_sha256": "dc48caed91da466a345ee93e41f056c5847b94d54df0e971f5e2e163f877124b",
+        "language_sha256": "28fcc2be49abb750cee5b3ece362a4915ba8e84183b75dd12cb8698f51460a7e",
+        "seed": 11
+      },
+      {
+        "file_sha256": "f68d3de059460dacabda6a4f53518eadb781a8c15866aff45df0843838b08a03",
+        "language_sha256": "7de66abeb5a8ed655dfdaf72d90efa0decfadaf26232672a6fd6cf092ecacb4d",
+        "seed": 23
+      },
+      {
+        "file_sha256": "e425b81e17279430a11b6ce5241f1d11fd06940825300033c554de68e6779fc8",
+        "language_sha256": "25d91f06068c9a508072c3a1fc096e15793ec83fef85140db67006b324fe0f8b",
+        "seed": 37
+      },
+      {
+        "file_sha256": "d14437dd51068f643fc60baa329bf959ff221c76caf8531d09da5c9bf52c59da",
+        "language_sha256": "9af8ba786a01061d4bc05df0e4b027cb2eae7a2932b7fef8832def5c34b659bb",
+        "seed": 53
+      }
+    ],
+    "native_worlds": [
+      {
+        "file_sha256": "6d9736f12e4925ceeb2e1e813599bc0ac07e8ff533d808467423af61fda3ce25",
+        "law": "nand",
+        "seed": 7,
+        "world_sha256": "8fd8fcb122e1cc90d67fe18c808d57dc4602d35c1173e54d2d4247ca72b39bf8"
+      },
+      {
+        "file_sha256": "751000cd4b4a2a1931e1f2a1e5b791dd0489b0ab0e126fb518c60e26a85f44a9",
+        "law": "nor",
+        "seed": 7,
+        "world_sha256": "df2a54074934e48e503b5148cc1872a05ede0f81466710390a519bfc0aa85ddf"
+      },
+      {
+        "file_sha256": "62b2f723b3cdb94a75c1d0d1e520e9683e8350a1bb9685fb842f72a4ec64bb00",
+        "law": "nand",
+        "seed": 11,
+        "world_sha256": "c756736d975e7ec02483db08da795f6715b7fd376afc99dded774247fb0f3ca4"
+      },
+      {
+        "file_sha256": "5ee49acec55636992cd3b78b9e9d3595d610b3b0eb0977ebd40a8f09a7781cf1",
+        "law": "nor",
+        "seed": 11,
+        "world_sha256": "c417eea50aecfdecdd9b3303c086a9395ae523f976553753c1272e0535ff7035"
+      },
+      {
+        "file_sha256": "52756e5c92ec4a982dc715c7f095f6c13bbd8145ed4b3b80443e6ffedd2dae26",
+        "law": "nand",
+        "seed": 23,
+        "world_sha256": "8827f273fde53a1da91a02d6f65cc4c5120e34f2f2e5f1dcda76a86669f5e0a1"
+      },
+      {
+        "file_sha256": "d521752e4e85f980c935e7f60f722dcba8804be0bf2f9ba998924be7b1ea7a9e",
+        "law": "nor",
+        "seed": 23,
+        "world_sha256": "95656ddb27b1e89b91f70f5919238752b55d73173ded5134385b12bb93d9b5cb"
+      },
+      {
+        "file_sha256": "a3c4a902a00a787843d57df377b1c7f0a2236e628a64d4906744dac52b8f6088",
+        "law": "nand",
+        "seed": 37,
+        "world_sha256": "e69fc15dfeafecd24e0fe2033e9ba9c832a28f562071ff86f585c5fad4f9b1c9"
+      },
+      {
+        "file_sha256": "791337195f4286e55436ebd51e9ad6571c572b3af0888879f57f36e954d4e5ed",
+        "law": "nor",
+        "seed": 37,
+        "world_sha256": "c90f120cc57cf1a053cffe9433a937cde57e30fb6ac787cfa685a207cadb8faa"
+      },
+      {
+        "file_sha256": "3479c86707e82d5c60c5481e3f295023386653d70833d6639e305a6016e36965",
+        "law": "nand",
+        "seed": 53,
+        "world_sha256": "7ba21ce1f59bbcc39c4435f03c08bb600f4122e558ea856105f6fb99f7050a01"
+      },
+      {
+        "file_sha256": "9cf17d807d469b13b9d94907c24dd810ae46c62c2def27ba1b33079590815ff5",
+        "law": "nor",
+        "seed": 53,
+        "world_sha256": "5721ec6ce3ac5dc85e3f69e478e95be2469691a66f7a82847fd9d31c25105894"
+      }
+    ],
+    "published_raw_files_verified": 23,
+    "registry_content_sha256": "d661d959dd96702e52cbf00affb8dd83d0afcf599d0fd4a9668780ca639bbef2",
+    "registry_file_sha256": "314cc2e5dbac5ed657959a70bc3d53e6874288b2f50999c7713e29f9d86795b5",
+    "source_hash_inventory_sha256": "9be78b86edf5d0bf47c994315b58b66a368eb52f19c82486b7a0d69136a4e616",
+    "training_sha256": "766a8315d66e4a0bfca0079183d3966fbc7a0b4ed65c98177650d245a10671ed"
+  },
+  "evaluator_bytes_accessed": false,
+  "independently_recomputed_maximum_errors": {
+    "action_weighted_native_endpoint_projection": 4.440892098500626e-16,
+    "priced_policy_values_and_forecasts": 0.0,
+    "probability_normalization": 6.661338147750939e-16,
+    "public_evidence_posteriors": 0.0,
+    "saved_coefficient_action_probabilities": 1.1102230246251565e-16,
+    "target_forecast_mixtures": 0.0,
+    "uniform_hypothesis_action_average": 5.551115123125783e-17
+  },
+  "methods": [
+    "Matched each saved receipt to its published public evidence ID, prefix digest, roster, surface-derived local action menu, endpoint encoding and lexical frame.",
+    "Reconstructed every action distribution with scalar float64 arithmetic from saved acquired coordinates, learned layout responses, order weights, biases and ordered sign transforms.",
+    "Recomputed endpoint mixtures from saved action weights and native tables, uniform-hypothesis action averages and normalization for every receipt.",
+    "Reconstructed all four evidence-view posteriors and forecasts, and all six priced policy branches, using only delivered public demonstration endpoints.",
+    "Verified exact native endpoint tables across all three mapping interventions and checkpoint fingerprints against the pinned G3 chain.",
+    "Compared the actual two run directories byte-for-byte and matched their execution identities and hashes to the published replication receipt."
+  ],
+  "native_model_execution_performed": false,
+  "public_artifacts": {
+    "audit.json": {
+      "bytes": 1523,
+      "sha256": "3c519dfd4e058fb462693f5d5f2daa611d173ee93352d056b45f151e16d4075f"
+    },
+    "freeze.json": {
+      "bytes": 2021,
+      "sha256": "ad7ee2f1ec4c55ea8eb360a28acc003c3b3a18c8ac1101be6726c4dbf5fa8d9e"
+    },
+    "inputs.json.xz": {
+      "bytes": 284200,
+      "sha256": "4afb826fd3630b75b70791b21699a68af3720a2fae434ec8672f763909ea808a"
+    }
+  },
+  "publications": {
+    "implementation_commit": "64a3b038e2002d4c21594533057ebe1b0b8866ba",
+    "protocol_commit": "97ff1f00ed8f3f3ca330ea14f566bdc87a4d9028",
+    "protocol_sha256": "4ca02dfd87075d6d34bcf322cb9f542a418cc20b87f788fedb74e958368040e4",
+    "raw_publication": "da935850230e46a8c2c128a595479e58f087213e",
+    "source_data_commit": "6a56dd29d037c193a636d6996479300c3992cf2b"
+  },
+  "repetition": {
+    "compressed_shard_bytes_compared": 7026416,
+    "distinct_invocations": true,
+    "embedded_execution_and_manifest_receipts_match_actual_runs": true,
+    "manifest_bytes_identical": true,
+    "replication_sha256": "45f2e2c4c5511a483b5e3be271a6225f6ddb251542ae61450cff0963f57ca7b3",
+    "shards_byte_identical": 10
+  },
+  "result": "PASS_PUBLIC_CUSTODY_AND_RECEIPT_INVARIANTS",
+  "runs": [
+    {
+      "execution_sha256": "dd4a789eb0ab5be20c8a68375b4491bb21dadaf691461f57bd4936fdde3291b3",
+      "invocation_id": "caea8680cab44276824920b68c0b3cb8",
+      "label": "first",
+      "manifest_sha256": "dd2ec95a1fa621907152887cb42ffb3a225bd50485beca5272bdd192ba22c760"
+    },
+    {
+      "execution_sha256": "b0a7f83b976b4fdd6669007d7e0ac279b288841ea2bae43f8f3e76df1c338730",
+      "invocation_id": "da813ef5fb9b4dc1a52e60e853dcaa41",
+      "label": "independent_repeat",
+      "manifest_sha256": "dd2ec95a1fa621907152887cb42ffb3a225bd50485beca5272bdd192ba22c760"
+    }
+  ],
+  "scope": "Independent source, public-input, checkpoint, learned-frame, public-evidence inference and actual-directory repetition audit.",
+  "target_outcome_scoring_performed": false,
+  "version": "coordinate-transport-independent-audit-v1"
+}
