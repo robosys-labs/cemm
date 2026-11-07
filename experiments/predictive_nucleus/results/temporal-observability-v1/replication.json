@@ -1,0 +1,89 @@
+{
+  "byte_identical": true,
+  "identity_scope": "Two separate tool command sessions observed by the orchestrator. PIDs are namespace-local and repeat. The frozen runner did not record invocation UUIDs; session IDs are external execution evidence, not self-authenticating process provenance.",
+  "result_bytes": 566520,
+  "result_file": "results.json.xz",
+  "result_sha256": "3c7ecfe48708cad5dd1450c971876bc426114fd87002ffb4ac19f22c2486aaad",
+  "runs": [
+    {
+      "command": [
+        "python",
+        "-m",
+        "experiments.predictive_nucleus.temporal_observability_v1",
+        "--output",
+        "/workspace/scratch/e21db99b0f7d/temporal-validation/run-1"
+      ],
+      "execution": {
+        "cpu_seconds": 82.277048228,
+        "inclusive_python_lines": 67127,
+        "peak_rss_kib": 442560,
+        "pid": 5,
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+        "protocol_commit": "8d07a0082241dd9409492bf6343686ec8e633132",
+        "protocol_sha256": "06c1aec73bec7cd886ab30c3d23b9755b4666858f063d64a3575dd1a226b26b7",
+        "python": "3.13.5",
+        "result_bytes": 566520,
+        "result_sha256": "3c7ecfe48708cad5dd1450c971876bc426114fd87002ffb4ac19f22c2486aaad",
+        "source_commit": "94eaddd1bb07a58247660909b958158dbd7ddd67",
+        "source_lines": 366,
+        "source_sha256": {
+          "TEMPORAL_OBSERVABILITY_PROTOCOL_V1.md": "06c1aec73bec7cd886ab30c3d23b9755b4666858f063d64a3575dd1a226b26b7",
+          "bilingual_data.py": "9a92c435e147a829323ec3aba29048d290b389b563b7a7d14cae6f0f117f59b9",
+          "effect_role_data.py": "2bb91fe567adfafa319b336d616a2bfd609d922fb125c779e8db18f44caf09a5",
+          "multisource_law_oracle.py": "ffd55620598b27ec4682b1794736ffbc231cd0b21809a2691f97379bf0857e69",
+          "physical_query_v1.py": "a5757708b1d0ee36e6d1ceef0be92c901999d648b9d5faa136743ef8ba1a9c02",
+          "set_acquisition_data.py": "0c838b8bd3e3a766ae1346c0b84f44e31adac70e268e18587811fa069f056f36",
+          "temporal_observability_v1.py": "c2283865e0d855a40f70ae27b79bd333c2084af7eb7168965a53d9bd05658c8d",
+          "tests/test_temporal_observability_v1.py": "82a32f5170c0dc5eb1dfb130c02f86c7d0ff3aaf8d3f74d936e6238c09be7e66"
+        },
+        "test_lines": 115,
+        "version": "temporal-observability-v1",
+        "wall_seconds": 82.30535851100285
+      },
+      "execution_file": "execution-1.json",
+      "execution_sha256": "ba45e1931ba31fd8658a57f7dcac6e5339541e41c907c4e7a06b45ac9ce51ee2",
+      "external_tool_session_id": 40587
+    },
+    {
+      "command": [
+        "python",
+        "-m",
+        "experiments.predictive_nucleus.temporal_observability_v1",
+        "--output",
+        "/workspace/scratch/e21db99b0f7d/temporal-validation/run-2"
+      ],
+      "execution": {
+        "cpu_seconds": 80.79102888499999,
+        "inclusive_python_lines": 67127,
+        "peak_rss_kib": 442536,
+        "pid": 5,
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+        "protocol_commit": "8d07a0082241dd9409492bf6343686ec8e633132",
+        "protocol_sha256": "06c1aec73bec7cd886ab30c3d23b9755b4666858f063d64a3575dd1a226b26b7",
+        "python": "3.13.5",
+        "result_bytes": 566520,
+        "result_sha256": "3c7ecfe48708cad5dd1450c971876bc426114fd87002ffb4ac19f22c2486aaad",
+        "source_commit": "94eaddd1bb07a58247660909b958158dbd7ddd67",
+        "source_lines": 366,
+        "source_sha256": {
+          "TEMPORAL_OBSERVABILITY_PROTOCOL_V1.md": "06c1aec73bec7cd886ab30c3d23b9755b4666858f063d64a3575dd1a226b26b7",
+          "bilingual_data.py": "9a92c435e147a829323ec3aba29048d290b389b563b7a7d14cae6f0f117f59b9",
+          "effect_role_data.py": "2bb91fe567adfafa319b336d616a2bfd609d922fb125c779e8db18f44caf09a5",
+          "multisource_law_oracle.py": "ffd55620598b27ec4682b1794736ffbc231cd0b21809a2691f97379bf0857e69",
+          "physical_query_v1.py": "a5757708b1d0ee36e6d1ceef0be92c901999d648b9d5faa136743ef8ba1a9c02",
+          "set_acquisition_data.py": "0c838b8bd3e3a766ae1346c0b84f44e31adac70e268e18587811fa069f056f36",
+          "temporal_observability_v1.py": "c2283865e0d855a40f70ae27b79bd333c2084af7eb7168965a53d9bd05658c8d",
+          "tests/test_temporal_observability_v1.py": "82a32f5170c0dc5eb1dfb130c02f86c7d0ff3aaf8d3f74d936e6238c09be7e66"
+        },
+        "test_lines": 115,
+        "version": "temporal-observability-v1",
+        "wall_seconds": 80.84217510799499
+      },
+      "execution_file": "execution-2.json",
+      "execution_sha256": "624101efbd9b172e4c3d09d7f6c06581e42797f597ec1341ae0ebcc01d1d5401",
+      "external_tool_session_id": 97037
+    }
+  ],
+  "source_commit": "94eaddd1bb07a58247660909b958158dbd7ddd67",
+  "version": "temporal-observability-repetition-v1"
+}
