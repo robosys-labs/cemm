@@ -1,0 +1,17 @@
+{
+  "archive": {
+    "bytes": 6779876,
+    "file": "checkpoint-bank.tar.xz",
+    "sha256": "d8298c7b17232e4c9e580a746ecc3a6b5db35f3da7594c13fa16ff9735afa21b"
+  },
+  "archive_build_wall_seconds": 31.544544062002387,
+  "archive_verification_wall_seconds": 1.6342618650014629,
+  "checkpoint_files": 46080,
+  "checkpoint_payload_bytes": 215415310,
+  "coverage": "Every archived file was streamed back and its bytes/SHA256 verified against the completed runner report; both original banks were separately hashed and found byte-identical. One bank is stored without duplication.",
+  "expected_hash_inventory": "replay.json.xz: stages produce/resume -> records -> checkpoint",
+  "failed_checks": [],
+  "format": "XZ CRC64 preset6; USTAR sorted paths; mtime/uid/gid zero; mode0644; no directory or external-path entries",
+  "inventory_sha256": "a358cb739a46c8bb139c32870a7357fb1ac1b725f47458e662d7c7bb909507e4",
+  "status": "PASS"
+}

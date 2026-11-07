@@ -1,0 +1,974 @@
+{
+  "checkpoint_archive": {
+    "archive": {
+      "bytes": 6779876,
+      "file": "checkpoint-bank.tar.xz",
+      "sha256": "d8298c7b17232e4c9e580a746ecc3a6b5db35f3da7594c13fa16ff9735afa21b"
+    },
+    "archive_build_wall_seconds": 31.544544062002387,
+    "archive_verification_wall_seconds": 1.6342618650014629,
+    "checkpoint_files": 46080,
+    "checkpoint_payload_bytes": 215415310,
+    "coverage": "Every archived file was streamed back and its bytes/SHA256 verified against the completed runner report; both original banks were separately hashed and found byte-identical. One bank is stored without duplication.",
+    "expected_hash_inventory": "replay.json.xz: stages produce/resume -> records -> checkpoint",
+    "failed_checks": [],
+    "format": "XZ CRC64 preset6; USTAR sorted paths; mtime/uid/gid zero; mode0644; no directory or external-path entries",
+    "inventory_sha256": "a358cb739a46c8bb139c32870a7357fb1ac1b725f47458e662d7c7bb909507e4",
+    "status": "PASS"
+  },
+  "contexts_per_cell": 768,
+  "decision": "QUALIFIED_TRANSFORMED_FRAME_RECOVERY",
+  "environment": {
+    "executable": "/workspace/scratch/e21db99b0f7d/cemm-validation-venv/bin/python",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "python": "3.13.5",
+    "threads": {
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "PYTHONHASHSEED": "0"
+    },
+    "torch": "2.10.0+cpu"
+  },
+  "failed_checks": [],
+  "g5_scientific_admission": "NOT_ADMITTED",
+  "g6_g7_g8": "Gated by existing roadmap requirements",
+  "independent_audit": {
+    "actual_checkpoints_replayed": 180,
+    "actual_files_hashed": 92160,
+    "method": "Standard-library-only file/hash/inventory audit plus independent normalized Bayesian replay and policy reconstruction; no runner/ledger imports or evaluator reads",
+    "numerical_matches_exact": true,
+    "policies_reconstructed": 540,
+    "receipt": {
+      "bytes": 102534,
+      "file": "independent-audit.json",
+      "sha256": "af2e6f093d87546e8b210165c49784f293ee79ec5121b532b2c92779432c2ddd"
+    },
+    "sample_conditions": 30,
+    "sample_contexts": 90,
+    "sample_rule": "Sorted context indices 0, 384, 767 in every law/seed/view cell, selected before outputs were inspected"
+  },
+  "parameter_delta": 0,
+  "per_condition_counts": {
+    "nand/11/cycled_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3648,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 384,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/11/intact": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3648,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 384,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/11/zero_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 4608,
+        "policy_checks": 4608,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/23/cycled_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3648,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 384,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/23/intact": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3648,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 384,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/23/zero_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 4608,
+        "policy_checks": 4608,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/37/cycled_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3648,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 384,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/37/intact": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3648,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 384,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/37/zero_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 4608,
+        "policy_checks": 4608,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/53/cycled_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3648,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 384,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/53/intact": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3648,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 384,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/53/zero_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 4608,
+        "policy_checks": 4608,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/7/cycled_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3648,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 384,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/7/intact": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3648,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 384,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nand/7/zero_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 4608,
+        "policy_checks": 4608,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/11/cycled_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3552,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 480,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/11/intact": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3552,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 480,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/11/zero_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 4608,
+        "policy_checks": 4608,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/23/cycled_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3552,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 480,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/23/intact": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3552,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 480,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/23/zero_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 4608,
+        "policy_checks": 4608,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/37/cycled_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3552,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 480,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/37/intact": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3552,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 480,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/37/zero_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 4608,
+        "policy_checks": 4608,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/53/cycled_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3552,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 480,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/53/intact": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3552,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 480,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/53/zero_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 4608,
+        "policy_checks": 4608,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/7/cycled_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3552,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 480,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/7/intact": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 3552,
+        "policy_checks": 4608,
+        "reset_purchases": 576,
+        "retained_purchases": 480,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    },
+    "nor/7/zero_layout": {
+      "produce": {
+        "completed": 768,
+        "first_snapshots": 768,
+        "seen": 768
+      },
+      "recover": {
+        "checkpoint_roundtrips": 768,
+        "completed": 768,
+        "endpoint_conflict_rejections": 1536,
+        "idempotent_duplicates": 1536,
+        "prefix_conflict_rejections": 1536,
+        "retained_reloads": 768,
+        "roster_conflict_rejections": 1536,
+        "seen": 768
+      },
+      "resume": {
+        "completed": 768,
+        "first_reloads": 768,
+        "hold_branches": 4608,
+        "policy_checks": 4608,
+        "retained_snapshots": 768,
+        "seen": 768
+      }
+    }
+  },
+  "per_invocation_counts": {
+    "checkpoint_roundtrips": 23040,
+    "completed": 69120,
+    "endpoint_conflict_rejections": 46080,
+    "first_reloads": 23040,
+    "first_snapshots": 23040,
+    "hold_branches": 118080,
+    "idempotent_duplicates": 46080,
+    "policy_checks": 138240,
+    "prefix_conflict_rejections": 46080,
+    "reset_purchases": 11520,
+    "retained_purchases": 8640,
+    "retained_reloads": 23040,
+    "retained_snapshots": 23040,
+    "roster_conflict_rejections": 46080,
+    "seen": 69120
+  },
+  "protocol_commit": "cd2a54e18463960e47d477b26fded26ae1b58a1f",
+  "protocol_sha256": "aeb9c5d7d72e63684abb467a511332c16ccaeace529661c241eff3b97cc05f67",
+  "remaining_scientific_requirements": [
+    "Fresh temporal/scope distinction: durable correction versus transient exception versus conflicting source",
+    "Exposure-matched neural comparison on identical realized histories",
+    "New sentence families and uncertainty on indistinguishable evidence",
+    "Clarification savings at matched final correctness",
+    "Retained competence after episodic-memory clearing"
+  ],
+  "repeat": {
+    "checkpoint_banks_byte_identical": true,
+    "complete_invocations": 2,
+    "custody": [
+      {
+        "bytes": 2025,
+        "file": "custody-1.json",
+        "sha256": "0428b983c7c61ee19a9755a811cabb1c8d55bdc8ae073e51a7c55acee3fd0d98"
+      },
+      {
+        "bytes": 2030,
+        "file": "custody-2.json",
+        "sha256": "23d194a68de49713ed52a44eff78ae3645bbc2c6175553f69c99fb1ec0d4b578"
+      }
+    ],
+    "process_identity_note": "Two separately invoked execution environments may reuse numeric PIDs; each run has three distinct child PIDs, and all six worker invocation IDs and both parent invocation IDs are distinct",
+    "replay": {
+      "bytes": 9984208,
+      "file": "replay.json.xz",
+      "sha256": "3bc5eb798ca034f5e003a812a0f6a3d23e011fac02315915e0474c20917af14f"
+    },
+    "replay_uncompressed_bytes": 37297971,
+    "replay_uncompressed_sha256": "5f350dbea3f65942d9dc41e9bc0f8ce85b735672c480013d5bdbb7a96c5fefe7",
+    "reports_byte_identical": true,
+    "worker_invocations": 6
+  },
+  "resources": [
+    {
+      "measurement_scope": "Three worker processes; excludes parent serialization/compression and independent audit/package time",
+      "run": 1,
+      "sum_worker_wall_seconds": 451.5966842849957,
+      "worker_cpu_seconds": 389.340936754,
+      "worker_peak_rss_kib": 522540
+    },
+    {
+      "measurement_scope": "Three worker processes; excludes parent serialization/compression and independent audit/package time",
+      "run": 2,
+      "sum_worker_wall_seconds": 453.63065726999776,
+      "worker_cpu_seconds": 391.32702269699996,
+      "worker_peak_rss_kib": 522380
+    }
+  ],
+  "scope": "Successful explicit single-writer checkpoints and cold-process replay of an already opened native projection bank; not temporal correction, new learning, or G5 scientific admission",
+  "seed_law_view_cells": 30,
+  "separate_reviewer_spotcheck": {
+    "distinct_checkpoints_replayed": 6,
+    "files_read": 12,
+    "maximum_absolute_posterior_delta": 1.1102230246251565e-16,
+    "method": "80-digit Decimal replay; no CEMM imports",
+    "receipt": {
+      "bytes": 2050,
+      "file": "third-party-spotcheck.json",
+      "sha256": "710dba6b8a557a5e9b165e76a1194a68102ab8403ec5a722d8e2408417f84b61"
+    },
+    "status": "PASS"
+  },
+  "software_validation": {
+    "focused_tests": 23,
+    "guarded_preflight": {
+      "bytes": 26430,
+      "file": "guarded-preflight.json",
+      "sha256": "fd87fa81352d0f4e3aef1cb4cf2c55928af6bd47f1233bd43a2bd290359df77f"
+    },
+    "historical_manifests": 37,
+    "intentional_skips": 2,
+    "passed_after_targeted_resolution": 1334,
+    "receipt": {
+      "bytes": 11648,
+      "file": "validation.json",
+      "sha256": "080d43a3e262528d2d577877954cdc91ff75ca57cf9b2ec6bdd8ec97319f5382"
+    },
+    "source_changed": false,
+    "status": "PASS_AFTER_CHECKOUT_PREREQUISITES_REPAIRED",
+    "unique_suite_cases": 1336
+  },
+  "source_accounting": {
+    "adapter_lines": 119,
+    "archived_reviewer_script_lines": 50,
+    "implementation_additions": 521,
+    "inclusive_2000_line_target_met": false,
+    "inclusive_lines_including_archived_reviewer_script": 67016,
+    "measured_source_python_files": 405,
+    "measured_source_python_lines": 66646,
+    "measured_source_test_lines": 27171,
+    "published_auditor_lines": 320,
+    "published_tree_python_files": 406,
+    "published_tree_python_lines": 66966,
+    "published_tree_test_lines": 27171,
+    "runner_lines": 402,
+    "test_additions": 546
+  },
+  "source_commit": "9083c5c0f371c8d8a950abb4e8f748b95ff8d778",
+  "source_sha256": {
+    "acceptance_contract.py": "e502cee5c68f44cc3d592d8536de9989b1eff1be5a7949b0eb16465570836368",
+    "continuation_run.py": "3a9a2048ce9188c4d176904bd0fa933b983c52d86bffd118b016927f531d9c05",
+    "coordinate_ledger_v1.py": "c288558dcc5c728ca772635f27ac2753dd4e23427f0c5b402edecd14254fb98e",
+    "coordinate_persistence_run_v1.py": "331743b38965e24da085e67b6a9206e064389214b1aeb0acddf57a06ea910a8b",
+    "coordinate_transport_run_v1.py": "0cf4168bc27c9132f6f369ecb750e130811f8646d60401bc7e653e68fa509383",
+    "coordinate_transport_v1.py": "d4b9ae2bdffc7ad1057f351728f30ddb2e7b4c89a4ef7f05e3d4de19997ee2f5",
+    "physical_ledger_v1.py": "3e19c927733acbd0b121568ceb16c40309cce8683a77555a622e4991cd1a19ec",
+    "physical_query_v1.py": "a5757708b1d0ee36e6d1ceef0be92c901999d648b9d5faa136743ef8ba1a9c02"
+  },
+  "trial_view_contexts_per_invocation": 23040,
+  "version": "coordinate-persistence-qualification-v1"
+}

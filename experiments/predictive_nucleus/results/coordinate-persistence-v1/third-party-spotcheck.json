@@ -1,0 +1,49 @@
+{
+  "checks": [
+    {
+      "checkpoint_sha256": "54a9a40058e21a0e650cfc19ab6b1f137d071ce79d494e756b07b36e0749c111",
+      "key": "nand/11/cycled_layout/00ba239ca51e2c550a3c19d722f89dfb",
+      "max_abs_error_80_digit_decimal_vs_report": 5.551115123125783e-17,
+      "phase": "produce"
+    },
+    {
+      "checkpoint_sha256": "161b88ecdc9e9ab3e56cbcd06dcd7a78ed7b13094819caa3190cc014413172e4",
+      "key": "nand/11/cycled_layout/00ba239ca51e2c550a3c19d722f89dfb",
+      "max_abs_error_80_digit_decimal_vs_report": 1.3877787807814457e-17,
+      "phase": "resume"
+    },
+    {
+      "checkpoint_sha256": "a270bc71d0373592580462eea10035c04ee087646298af6bdb2febad2f6ad546",
+      "key": "nor/11/cycled_layout/0086e5a01db84ea23f1ea1618080f213",
+      "max_abs_error_80_digit_decimal_vs_report": 1.1102230246251565e-16,
+      "phase": "produce"
+    },
+    {
+      "checkpoint_sha256": "58215f5bfbd39f6a26cd597e06bff004e73619646de9250c4a3a724a046d5b15",
+      "key": "nor/11/cycled_layout/0086e5a01db84ea23f1ea1618080f213",
+      "max_abs_error_80_digit_decimal_vs_report": 1.1102230246251565e-16,
+      "phase": "resume"
+    },
+    {
+      "checkpoint_sha256": "1b3018e296cf8c5096e2b30e803dd0c904392f80674f7104ab1dba7df6f2f689",
+      "key": "nor/7/zero_layout/ffd8f9b25de14310fe5344e0529b9497",
+      "max_abs_error_80_digit_decimal_vs_report": 2.7755575615628914e-17,
+      "phase": "produce"
+    },
+    {
+      "checkpoint_sha256": "030ab2762b81b5bd903b1a621e47a80616adc7f9585c80de95a6bb15a39218ad",
+      "key": "nor/7/zero_layout/ffd8f9b25de14310fe5344e0529b9497",
+      "max_abs_error_80_digit_decimal_vs_report": 3.469446951953614e-18,
+      "phase": "resume"
+    }
+  ],
+  "distinct_checkpoints_replayed": 6,
+  "files_read": 12,
+  "selected_contexts": [
+    "nand/11/cycled_layout/00ba239ca51e2c550a3c19d722f89dfb",
+    "nor/11/cycled_layout/0086e5a01db84ea23f1ea1618080f213",
+    "nor/7/zero_layout/ffd8f9b25de14310fe5344e0529b9497"
+  ],
+  "source": "saved checkpoint bytes only; stdlib Decimal precision80; no CEMM imports",
+  "status": "PASS"
+}
