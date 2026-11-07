@@ -1,0 +1,261 @@
+{
+  "attempts": [
+    {
+      "checks": [
+        {
+          "command": [
+            "/workspace/scratch/e21db99b0f7d/cemm-validation-venv/bin/python",
+            "-m",
+            "experiments.predictive_nucleus.protocol",
+            "verify"
+          ],
+          "cwd": "/workspace/scratch/e21db99b0f7d/cemm-persistence",
+          "exit_status": 0,
+          "name": "original-protocol",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_sha256": "cadb9f2c91b7b2fdd3d13d2032b2b3e90b7d734e1ad8591fdc14857d8c03dcbf",
+          "wall_seconds": 0.03652646599948639
+        },
+        {
+          "command": [
+            "sha256sum",
+            "-c",
+            "snapshots/active_acceptance_protocol_v1.sha256",
+            "snapshots/alias_evidence_protocol_v1.sha256",
+            "snapshots/alias_evidence_protocol_v2.sha256",
+            "snapshots/bilingual_protocol_v1.sha256",
+            "snapshots/binding_protocol_v1.sha256",
+            "snapshots/centering_protocol_v1.sha256",
+            "snapshots/common_objective_comparison_protocol_v1.sha256",
+            "snapshots/context_protocol_v6.sha256",
+            "snapshots/continuation_protocol_v1.sha256",
+            "snapshots/coordinate_protocol_v1.sha256",
+            "snapshots/dev_composition_protocol_v1.sha256",
+            "snapshots/dev_composition_protocol_v2.sha256",
+            "snapshots/effect_role_protocol_v1.sha256",
+            "snapshots/effect_role_protocol_v2.sha256",
+            "snapshots/effect_role_protocol_v3.sha256",
+            "snapshots/epistemic_protocol_v2.sha256",
+            "snapshots/flat_protocol_v7.sha256",
+            "snapshots/flat_updates_protocol_v8.sha256",
+            "snapshots/full_sensor_paired_protocol_v1.sha256",
+            "snapshots/full_sensor_paired_protocol_v2.sha256",
+            "snapshots/full_sensor_posthoc_replay_protocol_v1.sha256",
+            "snapshots/guard_protocol_v5.sha256",
+            "snapshots/hidden_cycle_protocol_v1.sha256",
+            "snapshots/joint_correlation_protocol_v1.sha256",
+            "snapshots/lexical_protocol_v1.sha256",
+            "snapshots/mixed_composition_protocol_v1.sha256",
+            "snapshots/multisource_law_protocol_v1.sha256",
+            "snapshots/prospective_data_protocol_v1.sha256",
+            "snapshots/protocol.sha256",
+            "snapshots/saturation_protocol_v1.sha256",
+            "snapshots/sensor_transfer_implementation_v1.sha256",
+            "snapshots/sensor_transfer_protocol_v1.sha256",
+            "snapshots/set_acquisition_protocol_v1.sha256",
+            "snapshots/set_acquisition_protocol_v2.sha256",
+            "snapshots/stability_protocol_v4.sha256",
+            "snapshots/stress_protocol_v3.sha256",
+            "snapshots/timing_protocol_v1.sha256"
+          ],
+          "cwd": "/workspace/scratch/e21db99b0f7d/cemm-persistence/experiments/predictive_nucleus",
+          "exit_status": 0,
+          "manifest_files": 37,
+          "name": "historical-manifests",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_sha256": "21d7c1d1a4f141e805e84d3422c6f721b5e0cd18b7c6c978c7d7d15aacff9d3b",
+          "verified_entries": 37,
+          "wall_seconds": 0.003948464000131935
+        },
+        {
+          "command": [
+            "/workspace/scratch/e21db99b0f7d/cemm-validation-venv/bin/python",
+            "-m",
+            "unittest",
+            "experiments.predictive_nucleus.tests.test_coordinate_ledger_v1",
+            "experiments.predictive_nucleus.tests.test_coordinate_persistence_run_v1",
+            "-v"
+          ],
+          "cwd": "/workspace/scratch/e21db99b0f7d/cemm-persistence",
+          "exit_status": 0,
+          "name": "focused-tests",
+          "stderr_sha256": "d53891b1c6650aff27c36a020d33869ff4a77b39223c0276babbb7bc9a5d77f3",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "test_seconds": 6.044,
+          "tests": 23,
+          "wall_seconds": 7.418253405994619
+        },
+        {
+          "command": [
+            "/workspace/scratch/e21db99b0f7d/cemm-validation-venv/bin/python",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "experiments/predictive_nucleus/tests",
+            "-v"
+          ],
+          "cwd": "/workspace/scratch/e21db99b0f7d/cemm-persistence",
+          "exit_status": 1,
+          "name": "all-invariants",
+          "stderr_sha256": "410c055a6805ae526f31a31e9807b7ee00322a16cdb084012fc7d55771b08c5f",
+          "stdout_sha256": "b4a84476ce64aa14e77179a337066149739d439ff9afa27e0908fc1863e92376",
+          "test_seconds": 179.162,
+          "tests": 1336,
+          "wall_seconds": 184.7748114499991
+        },
+        {
+          "command": [
+            "/workspace/scratch/e21db99b0f7d/cemm-validation-venv/bin/python",
+            "-m",
+            "experiments.predictive_nucleus.comparison_execution",
+            "--preflight"
+          ],
+          "cwd": "/workspace/scratch/e21db99b0f7d/cemm-persistence",
+          "exit_status": 1,
+          "name": "guarded-preflight",
+          "stderr_sha256": "665fdcc34a9511d17308873d8f364285c4f20ab49d21c5b88cebd8490866d694",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "wall_seconds": 1.2380923419987084
+        }
+      ],
+      "environment": {
+        "executable": "/workspace/scratch/e21db99b0f7d/cemm-validation-venv/bin/python",
+        "numpy": "2.3.5",
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+        "python": "3.13.5",
+        "threads": {
+          "MKL_NUM_THREADS": "1",
+          "OMP_NUM_THREADS": "1",
+          "PYTHONHASHSEED": "0"
+        },
+        "torch": "2.10.0+cpu"
+      },
+      "failed_checks": [
+        "all-invariants",
+        "guarded-preflight"
+      ],
+      "source_commit": "9083c5c0f371c8d8a950abb4e8f748b95ff8d778",
+      "tracked_status": "",
+      "version": "coordinate-persistence-validation-v1"
+    },
+    {
+      "checks": [
+        {
+          "command": [
+            "/workspace/scratch/e21db99b0f7d/cemm-validation-venv/bin/python",
+            "-m",
+            "unittest",
+            "experiments.predictive_nucleus.tests.test_comparison_execution.PreflightTests.test_real_frozen_preflight_in_complete_checkout",
+            "-v"
+          ],
+          "exit_status": 1,
+          "name": "historical-preflight-test-after-full-history",
+          "stderr_sha256": "51b593d973de2f6e8c82fd4791cf64c70dee44f9be16492a4b5544c3a9b63308",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "wall_seconds": 2.4458987090038136
+        },
+        {
+          "command": [
+            "/workspace/scratch/e21db99b0f7d/cemm-validation-venv/bin/python",
+            "-m",
+            "experiments.predictive_nucleus.comparison_execution",
+            "--preflight"
+          ],
+          "exit_status": 1,
+          "name": "guarded-preflight-after-full-history",
+          "stderr_sha256": "d49643615926d63565d9c0b5cb2e15a16bd880da027cdc08a1cb99995c70d99f",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "wall_seconds": 1.176061734004179
+        }
+      ],
+      "failed_checks": [
+        "historical-preflight-test-after-full-history",
+        "guarded-preflight-after-full-history"
+      ],
+      "prior_validation_sha256": "fbde19e2d2d277e0f2d2ed02b0943c789bdc4f53b8029ab432741a91047d438c",
+      "reason": "Initial suite and guarded preflight encountered the same shallow-history guard; fetched complete Git history without changing source or HEAD, then reran only the failed test and exact preflight. All other tests retain their original outcomes.",
+      "shallow_repository": "false",
+      "source_commit": "9083c5c0f371c8d8a950abb4e8f748b95ff8d778",
+      "tracked_status": "",
+      "version": "coordinate-persistence-history-resolution-v1"
+    },
+    {
+      "checks": [
+        {
+          "command": [
+            "/workspace/scratch/e21db99b0f7d/cemm-validation-venv/bin/python",
+            "-m",
+            "unittest",
+            "experiments.predictive_nucleus.tests.test_comparison_execution.PreflightTests.test_real_frozen_preflight_in_complete_checkout",
+            "-v"
+          ],
+          "exit_status": 0,
+          "name": "historical-preflight-test-complete-checkout",
+          "stderr_sha256": "bb9dfe982a2f9abcf88fbca4923a355731d795c2b9063453b9938b3fc4d2ce8c",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "wall_seconds": 4.3268698989995755
+        },
+        {
+          "command": [
+            "/workspace/scratch/e21db99b0f7d/cemm-validation-venv/bin/python",
+            "-m",
+            "experiments.predictive_nucleus.comparison_execution",
+            "--preflight"
+          ],
+          "exit_status": 0,
+          "name": "guarded-preflight-complete-checkout",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_sha256": "fd87fa81352d0f4e3aef1cb4cf2c55928af6bd47f1233bd43a2bd290359df77f",
+          "wall_seconds": 3.1161045340049895
+        }
+      ],
+      "failed_checks": [],
+      "initial_validation_sha256": "fbde19e2d2d277e0f2d2ed02b0943c789bdc4f53b8029ab432741a91047d438c",
+      "prior_history_resolution_sha256": "20cedd8665a0380bd51fe05d7772cae12b023f58d07963ea1b93e2aef897b339",
+      "reason": "Fetched complete Git history and materialized every tracked file without changing source or HEAD; reran only the historical preflight test and exact guarded preflight after both checkout prerequisites were satisfied. Original suite outcomes and both environmental failures remain recorded.",
+      "shallow_repository": "false",
+      "source_commit": "9083c5c0f371c8d8a950abb4e8f748b95ff8d778",
+      "sparse_checkout": "false",
+      "tracked_status": "",
+      "version": "coordinate-persistence-checkout-resolution-v1"
+    }
+  ],
+  "environment": {
+    "executable": "/workspace/scratch/e21db99b0f7d/cemm-validation-venv/bin/python",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "python": "3.13.5",
+    "threads": {
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "PYTHONHASHSEED": "0"
+    },
+    "torch": "2.10.0+cpu"
+  },
+  "failed_checks": [],
+  "focused_tests": 23,
+  "full_suite_seconds": 179.162,
+  "historical_manifest_entries_verified": 37,
+  "historical_manifests_verified": 37,
+  "initial_suite_result": {
+    "cause": "shallow checkout; after full history, sparse checkout still violated the same preflight contract",
+    "error": "test_comparison_execution.PreflightTests.test_real_frozen_preflight_in_complete_checkout",
+    "errors": 1,
+    "passed": 1333,
+    "skipped": 2
+  },
+  "intentional_skips": 2,
+  "original_protocol_verified": true,
+  "skip_reasons": [
+    "v7 challenge already sealed; no raw recollection",
+    "v8 raw TEST already sealed; never regenerate"
+  ],
+  "source_changed": false,
+  "source_commit": "9083c5c0f371c8d8a950abb4e8f748b95ff8d778",
+  "status": "PASS_AFTER_CHECKOUT_PREREQUISITES_REPAIRED",
+  "targeted_resolution": "Fetch complete history and materialize all tracked files; rerun only the failed test and guarded preflight. Both pass; no source or gate changes. All other original outcomes retained.",
+  "unique_cases_passed_after_targeted_resolution": 1334,
+  "unique_suite_cases": 1336,
+  "version": "coordinate-persistence-complete-validation-v1"
+}
