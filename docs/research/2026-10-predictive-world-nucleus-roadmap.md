@@ -118,7 +118,8 @@ implements a learned native temporal updater and similarly sized flat decoder
 on identical realized histories, with supplied-rule and cleared-answer
 controls. The 2,048-history TRAIN and 12,288-case TEST bank is prepared and
 software validation passes. All ten 256-update fits are complete with matched
-exposure; held-out collection and scoring are next. The
+exposure. All 15 held-out raw banks are collected; publication and saved-record
+scoring are next. The
 [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) gives the
 one executable continuation and stage manifests. Completed persistence and
 support qualifications are not prerequisites to rerun.

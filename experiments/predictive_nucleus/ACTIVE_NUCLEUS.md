@@ -2,7 +2,7 @@
 
 ## Current handoff on November 8
 
-**Current state: all ten fixed-budget fits complete; TEST not yet collected.**
+**Current state: all fits and held-out collection complete; raw publication precedes scoring.**
 The [completed temporal result](TEMPORAL_OBSERVABILITY_RESULT_V1.md) closes
 PR #100 and records the restricted-input audit. Both PR #99 persistence and
 PR #100 observation-support results are present on this branch. Continue from
@@ -16,7 +16,9 @@ not learned performance.
 All ten checkpoints are saved in `data/temporal-native-fit-v1/manifest.json`.
 Every fit completed exactly 256 updates. Native and flat minibatch digests and
 all exposure counts match within each seed. Publish these checkpoints before
-collection; the next executable stage is `collect`, not another fit.
+collection. All 15 raw banks now contain the complete 12,288-case inventory,
+with ordered-prefix provenance and pre-answer decisions. After their publication,
+the next executable stage is the saved-record scorer. Do not refit or recollect.
 
 The prepared bank contains 2,048 TRAIN histories and 12,288 held-out cases.
 Its manifest SHA-256 is `6467823ca1238718d06fd3a39483d54339ccd614ab0e1cfb58b8cb6f6384c6d3`.
