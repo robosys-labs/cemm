@@ -1,6 +1,22 @@
-# Active nucleus — G5 static learned-coordinate transport qualified
+# Active nucleus — G5 transformed-frame recovery qualified
 
-## Current handoff on November 6
+## Current handoff on November 7
+
+The [transformed-frame recovery result](COORDINATE_PERSISTENCE_RESULT_V1.md)
+records `QUALIFIED_TRANSFORMED_FRAME_RECOVERY`. Both complete executions at
+`9083c5c0f371c8d8a950abb4e8f748b95ff8d778` reproduce all 46,080 checkpoints,
+138,240 query-policy branches, and 138,240 conflict rejections per invocation.
+Their reports and checkpoint banks match byte for byte. The published evidence
+includes the complete checkpoint archive, source bindings, separate execution
+receipts, and independent file/numerical audits. This recovery tranche is closed;
+continue from its artifacts instead of rerunning it without a new defect.
+
+The next bounded task is the temporal observation-support preflight in
+[PR #100](https://github.com/robosys-labs/cemm/pull/100), followed by one
+prospectively exposure-matched temporal/scope learner comparison. G5 learned
+correction and scientific admission remain open; G6–G8 keep their dependencies.
+
+## Previous handoff on November 6
 
 The [static coordinate-transport qualification](COORDINATE_TRANSPORT_RESULT_V1.md)
 records `KEEP_TRANSPORT_PREFLIGHT`, with all 80 condition gates passing.
@@ -448,7 +464,7 @@ Accepted G1/G2 development gains and all historical source/data locks remain int
 | G2 | Accepted bounded composition, hidden propagation and supplied timing retained; no full scientific-admission claim. |
 | G3 | Bounded development COMPLETE by audited v3; v1 REVISE and v2 STOP_INCOMPLETE_EVIDENCE remain unchanged. |
 | G4 | Bounded matched-convention receiver retained. Broader conflict, delay, off-topic communication and formal admission remain open. |
-| G5 | Scoped evidence baseline retained. Static learned-coordinate transport qualified. Transformed-frame persistence, temporal correction and scientific admission are open. |
+| G5 | Scoped evidence baseline retained. Static learned-coordinate transport and transformed-frame recovery qualified. Temporal correction and scientific admission remain open. |
 | G6–G8 | Corpus bridge, measured Wikipedia utility and guarded integration remain open. |
 
 Independent custody, matched consumed compute, general calibration and formal
