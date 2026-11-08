@@ -6,7 +6,7 @@
 **Implementation boundary:** independent experiment first; no root runtime or Hybrid cutover  
 **Companion foundation:** [draft PR #21](https://github.com/robosys-labs/cemm/pull/21)
 
-## Current development checkpoint — 2026-11-06
+## Current development checkpoint — 2026-11-08
 
 **Bounded development G3 is complete.** The
 [v3 decision](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V3.md),
@@ -106,13 +106,25 @@ correctness and .971875 against .681250 mean net reward. All 80 frozen
 condition gates pass. Per-case probability and utility regressions
 are retained in the result.
 
-The next bounded requirement is persistence of the transformed hypothesis
-frame across cold processes. Temporal/scope correction, a new exposure-matched
-neural fit, new sentence families and durable competence after episode-memory
-clearing remain open. The static study uses existing words/layouts and four
-supplied coordinate transformations. Corpus ingestion and Wikipedia utility
-follow the G5 prerequisites. The current evidence is recorded in the
-[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md).
+The [transformed-frame persistence result](../../experiments/predictive_nucleus/COORDINATE_PERSISTENCE_RESULT_V1.md)
+is complete: both invocations reproduce all 46,080 checkpoints. The
+[temporal observation-support result](../../experiments/predictive_nucleus/TEMPORAL_OBSERVABILITY_RESULT_V1.md)
+is also complete. Its post hoc restricted-input audit removes the target and
+spectator-toggle shortcut, retains 448 unresolved group/target cells per menu,
+and establishes a finite 249/256 full-menu accuracy ceiling.
+
+The [next fixed-budget comparison](../../experiments/predictive_nucleus/TEMPORAL_NATIVE_TRANSFER_PROTOCOL_V1.md)
+implements a learned native temporal updater and similarly sized flat decoder
+on identical realized histories, with supplied-rule and cleared-answer
+controls. Preparation, fitting and TEST have not yet run. The
+[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) gives the
+one executable continuation and stage manifests. Completed persistence and
+support qualifications are not prerequisites to rerun.
+
+New sentence families, durable competence after complete episodic-memory
+clearing, matched final-correctness clarification savings and the rest of G5
+remain open. G6 corpus acquisition, G7 Wikipedia utility and G8 integration
+retain their dependency gates.
 
 Independent custody, matched consumed compute, general calibration and formal
 scientific admission remain open. The inclusive **2,000-line objective remains

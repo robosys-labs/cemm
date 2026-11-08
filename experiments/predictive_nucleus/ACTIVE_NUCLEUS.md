@@ -1,6 +1,41 @@
-# Active nucleus — G5 transformed-frame recovery qualified
+# Active nucleus — G5 matched native temporal updater
 
-## Current handoff on November 7
+## Current handoff on November 8
+
+**Current state: implementation complete; preparation/fitting not yet run.**
+The [completed temporal result](TEMPORAL_OBSERVABILITY_RESULT_V1.md) closes
+PR #100 and records the restricted-input audit. Both PR #99 persistence and
+PR #100 observation-support results are present on this branch. Continue from
+their saved artifacts; do not repeat either completed qualification.
+
+The restricted-input audit retains 448 unidentifiable group/target cells per
+menu and gives a full-menu ceiling of 249/256. This prevents a false 100% gate
+from triggering another model-tuning loop. It is a post hoc information audit,
+not learned performance.
+
+The [frozen next study](TEMPORAL_NATIVE_TRANSFER_PROTOCOL_V1.md) is executable
+in `temporal_native_transfer_v1.py`: native versus flat readout with identical
+realized training histories, five seeds, 256 updates, and no target-equivalent
+query. The supplied four-way rule and cleared-first-answer controls remain
+visible. Exact conditional bounds are calculated for its own fixed schedule.
+
+Execute stages once, in this order, publishing each stage before starting the
+next. Inspect the stage manifest before continuing; an existing complete stage
+must not be repeated just because a new chat began.
+
+```bash
+python -m experiments.predictive_nucleus.temporal_native_transfer_v1 prepare --output experiments/predictive_nucleus/data/temporal-native-transfer-v1
+python -m experiments.predictive_nucleus.temporal_native_transfer_v1 fit --prepared experiments/predictive_nucleus/data/temporal-native-transfer-v1 --output experiments/predictive_nucleus/data/temporal-native-fit-v1
+python -m experiments.predictive_nucleus.temporal_native_transfer_v1 collect --prepared experiments/predictive_nucleus/data/temporal-native-transfer-v1 --fitted experiments/predictive_nucleus/data/temporal-native-fit-v1 --output experiments/predictive_nucleus/results/temporal-native-transfer-v1/raw
+python -m experiments.predictive_nucleus.temporal_native_score_v1 --prepared experiments/predictive_nucleus/data/temporal-native-transfer-v1 --raw experiments/predictive_nucleus/results/temporal-native-transfer-v1/raw --output experiments/predictive_nucleus/results/temporal-native-transfer-v1/scored
+```
+
+Read the single scored decision and retain every failed gate; do not extend
+training, sweep hazards, reopen old banks or add another generic preflight.
+This is a bounded learned-update comparison. New sentence-family acquisition,
+full episodic-memory-cleared retention, G5 admission and G6–G8 remain open.
+
+## Historical handoff on November 7
 
 The [transformed-frame recovery result](COORDINATE_PERSISTENCE_RESULT_V1.md)
 records `QUALIFIED_TRANSFORMED_FRAME_RECOVERY`. Both complete executions at
