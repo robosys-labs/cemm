@@ -2,7 +2,7 @@
 
 ## Current handoff on November 8
 
-**Current state: implementation complete; preparation/fitting not yet run.**
+**Current state: preparation complete; fitting and TEST not yet run.**
 The [completed temporal result](TEMPORAL_OBSERVABILITY_RESULT_V1.md) closes
 PR #100 and records the restricted-input audit. Both PR #99 persistence and
 PR #100 observation-support results are present on this branch. Continue from
@@ -12,6 +12,11 @@ The restricted-input audit retains 448 unidentifiable group/target cells per
 menu and gives a full-menu ceiling of 249/256. This prevents a false 100% gate
 from triggering another model-tuning loop. It is a post hoc information audit,
 not learned performance.
+
+The prepared bank contains 2,048 TRAIN histories and 12,288 held-out cases.
+Its manifest SHA-256 is `6467823ca1238718d06fd3a39483d54339ccd614ab0e1cfb58b8cb6f6384c6d3`.
+The full isolated suite passed 1,366 cases with two intentional skips; all 37
+historical manifests, original protocol and guarded preflight pass.
 
 The [frozen next study](TEMPORAL_NATIVE_TRANSFER_PROTOCOL_V1.md) is executable
 in `temporal_native_transfer_v1.py`: native versus flat readout with identical

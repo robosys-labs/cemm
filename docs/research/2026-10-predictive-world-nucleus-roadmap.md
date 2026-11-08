@@ -116,7 +116,8 @@ and establishes a finite 249/256 full-menu accuracy ceiling.
 The [next fixed-budget comparison](../../experiments/predictive_nucleus/TEMPORAL_NATIVE_TRANSFER_PROTOCOL_V1.md)
 implements a learned native temporal updater and similarly sized flat decoder
 on identical realized histories, with supplied-rule and cleared-answer
-controls. Preparation, fitting and TEST have not yet run. The
+controls. The 2,048-history TRAIN and 12,288-case TEST bank is prepared and
+software validation passes; fitting and TEST have not yet run. The
 [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) gives the
 one executable continuation and stage manifests. Completed persistence and
 support qualifications are not prerequisites to rerun.
