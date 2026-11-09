@@ -1,0 +1,26 @@
+name: St Gabriel binary asset import
+on:
+  push:
+    branches: [assets/st-gabriel-estate]
+    paths: [.github/workflows/st-gabriel-asset-import.yml]
+permissions:
+  contents: write
+concurrency:
+  group: st-gabriel-binary-asset-import
+  cancel-in-progress: false
+jobs:
+  import-assets:
+    if: github.ref == 'refs/heads/assets/st-gabriel-estate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out the isolated game branch
+        uses: actions/checkout@v4
+        with:
+          ref: assets/st-gabriel-estate
+          fetch-depth: 1
+          sparse-checkout: |
+            projects/st-gabriel-estate
+          sparse-checkout-cone-mode: true
+      - name: Verify sources and commit actual binary game files
+        run: python3 projects/st-gabriel-estate/import_archives.py
