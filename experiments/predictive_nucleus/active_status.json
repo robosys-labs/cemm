@@ -366,62 +366,56 @@
       "work": "Resolve numerical language retention and complete failure reporting in a new prospective native-set study. Preserve the stopped v1 attempt; freeze the comparison rule, runtime, fresh challenge lineage and full gates before any new fit or collection. Keep the 562-parameter world and 68-scalar update mask unless new evidence justifies a change."
     },
     {
-      "stage": "G4\u2013G5",
+      "stage": "G4–G5",
       "work": "Implement learned communication, durable acquisition, correction, restart and retention in dependency order."
     },
     {
-      "stage": "G6\u2013G8",
+      "stage": "G6–G8",
       "work": "Implement corpus bridge, measured Wikipedia utility and guarded technical integration."
     }
   ],
   "external_issue_55": "Independent challenge custody/review remains required for scientific admission. Retained KEEP decisions establish bounded capabilities under supplied structure; continuation-v1 STOP and alias-v1 REVISE remain unchanged. Historical models and scientific collections were not rerun. Lexical-v1 explicitly uses the opened bilingual bank for updated-encoder retention against archived forecasts, not fresh generalization.",
   "line_counts": {
-    "study_source": 911,
-    "audit_source": 331,
-    "tests": 464,
-    "added_total": 1706,
-    "retained_research_python": 43556,
-    "retained_test_lines": 18574,
+    "study_source": 517,
+    "audit_source": 68,
+    "tests": 225,
+    "added_total": 810,
+    "continuation_added_source": 724,
+    "continuation_added_audit": 307,
+    "continuation_added_tests": 225,
+    "continuation_added_total": 1256,
+    "retained_research_python": 42751,
+    "retained_test_lines": 27822,
     "inclusive_size_goal_met": false,
     "learned_parameter_delta": 0,
-    "new_tests": 25,
-    "scope": "Physical Python lines including blank lines. Frozen study plus tests adds 1375 lines; post-stop reproducible arithmetic auditors add 331. All historical research remains retained."
+    "new_tests": 12,
+    "scope": "Physical Python lines including blank lines. Current comparison: train/evaluate 240, score 277, independent audit 68, tests 225. Continuation since ec62c25 also adds trace 207 and trace audit 239. Retained counts cover every .py under experiments/predictive_nucleus; tests are files below tests/ or named test_*. No inherited-core reduction."
   },
   "verification": {
-    "scope": "Published source software validation and saved-record integrity; scoring aborted on exact retention.",
-    "isolated_suite_tests": 979,
-    "new_tests": 25,
-    "protocol_manifest_locks": 33,
-    "initial_local_suite": {
-      "tests": 979,
-      "passed": 978,
-      "errors": 1,
-      "reason": "Shallow Git history blocked the existing frozen preflight. Exact failed test passed after full history fetch, with no implementation change."
-    },
-    "published_source_commit": "23acab3e0f269906e0803e41673a3b3132e95d22",
-    "published_tree": "800b178c34c59170b7643655b7466b5a423fadac",
-    "published_tree_matches_tested_tree": true,
-    "invariant_ci_run": 41416804302,
+    "scope": "Completed prefix-protection TRAIN feasibility; software checks and saved-record verification, not scientific admission.",
+    "focused_synthetic_tests": 12,
+    "focused_failures": 0,
+    "focused_errors": 0,
+    "published_source_commit": "0811a82daf926e32a333def21320ffb688795be6",
+    "invariant_ci_run": 42612987658,
     "invariant_ci_conclusion": "success",
-    "invariant_ci_tests": 979,
-    "invariant_ci_seconds": 103.194,
-    "source_ci_run": 41416804346,
+    "source_ci_run": 42612987863,
     "source_ci_conclusion": "success",
-    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/77/checks",
-    "final_result_head_checks_scope": "Live PR check link; recorded success above is for the source commit.",
-    "pre_score_audits": "results/set-acquisition-pre-score-audits-v1.json",
-    "fit_integrity_checks": 178,
-    "raw_integrity_checks": 1792861,
-    "integrity_discrepancies": 0,
-    "independent_scientific_custody": false,
-    "scientific_runs_retried": false,
+    "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/101/checks",
+    "final_result_head_checks_scope": "Live PR link; recorded CI successes refer to the published implementation commit.",
+    "independent_gate_decisions_compared": 70,
+    "independent_gate_discrepancies": 0,
+    "read_only_report_relationships_verified": 1044,
+    "fit_receipts_verified": 10,
+    "raw_banks_verified": 10,
+    "candidate_fit_invocations": 1,
+    "candidate_evaluation_invocations": 1,
     "new_fits": 10,
     "completed_training_updates": 2560,
-    "source_bindings": 37,
-    "historical_bindings": 84,
-    "result_traces": 90,
-    "post_stop_diagnostics_use_models_or_original_scorer": false,
-    "post_stop_arithmetic_reproduced": true,
+    "historical_fits_or_trace_rerun": false,
+    "scientific_runs_retried": false,
+    "held_out_execution": false,
+    "independent_scientific_custody": false,
     "scientific_acceptance_completed": false
   },
   "limits": [
@@ -993,6 +987,47 @@
         "historical_baseline_comparison": "historical_continuation_comparison_scope",
         "independent_scientific_admission": false
       }
+    },
+    {
+      "scope": "Historical native SET v1 verification; superseded only as the current handoff.",
+      "report": "SET_ACQUISITION_DECISION_V1.md",
+      "verification": {
+        "scope": "Published source software validation and saved-record integrity; scoring aborted on exact retention.",
+        "isolated_suite_tests": 979,
+        "new_tests": 25,
+        "protocol_manifest_locks": 33,
+        "initial_local_suite": {
+          "tests": 979,
+          "passed": 978,
+          "errors": 1,
+          "reason": "Shallow Git history blocked the existing frozen preflight. Exact failed test passed after full history fetch, with no implementation change."
+        },
+        "published_source_commit": "23acab3e0f269906e0803e41673a3b3132e95d22",
+        "published_tree": "800b178c34c59170b7643655b7466b5a423fadac",
+        "published_tree_matches_tested_tree": true,
+        "invariant_ci_run": 41416804302,
+        "invariant_ci_conclusion": "success",
+        "invariant_ci_tests": 979,
+        "invariant_ci_seconds": 103.194,
+        "source_ci_run": 41416804346,
+        "source_ci_conclusion": "success",
+        "final_result_head_checks": "https://github.com/robosys-labs/cemm/pull/77/checks",
+        "final_result_head_checks_scope": "Live PR check link; recorded success above is for the source commit.",
+        "pre_score_audits": "results/set-acquisition-pre-score-audits-v1.json",
+        "fit_integrity_checks": 178,
+        "raw_integrity_checks": 1792861,
+        "integrity_discrepancies": 0,
+        "independent_scientific_custody": false,
+        "scientific_runs_retried": false,
+        "new_fits": 10,
+        "completed_training_updates": 2560,
+        "source_bindings": 37,
+        "historical_bindings": 84,
+        "result_traces": 90,
+        "post_stop_diagnostics_use_models_or_original_scorer": false,
+        "post_stop_arithmetic_reproduced": true,
+        "scientific_acceptance_completed": false
+      }
     }
   ],
   "acceptance_version": "active-acceptance-v1",
@@ -1216,6 +1251,9 @@
   },
   "progress_control": {
     "last_learned_results": [
+      "TEMPORAL_NATIVE_TRANSFER_RESULT_V1.md",
+      "TEMPORAL_TRAIN_TRACE_RESULT_V1.md",
+      "PREFIX_PROTECTION_TRAIN_RESULT_V1.md",
       "SET_ACQUISITION_DECISION_V1.md",
       "COORDINATE_DECISION_V1.md",
       "LEXICAL_DECISION_V1.md",
@@ -1224,17 +1262,16 @@
       "ALIAS_EVIDENCE_DECISION_V2.md"
     ],
     "invariant_count_is_scientific_gate_progress": false,
-    "next_deliverable": "Resolve numerical language retention and complete failure reporting in a new prospective native-set study. Preserve the stopped v1 attempt; freeze the comparison rule, runtime, fresh challenge lineage and full gates before any new fit or collection. Keep the 562-parameter world and 68-scalar update mask unless new evidence justifies a change.",
-    "another_preparation_only_tranche_requires": "Concrete blocker is demonstrated: exact archived language-order equality fails at floating-point scale and aborts all score reporting. Resolve only numerical-retention/reporting behavior before a new frozen attempt.",
-    "further_refactor_scope": "Only a demonstrated execution blocker or later release packaging milestone.",
+    "next_deliverable": "Freeze one bounded learned selective recurrent-update contract on prospectively new, counterbalanced two-meaning histories, with explicit budgets, a matched unstructured control and per-condition correction/retention criteria. No opened-bank loss-schedule retry.",
+    "further_refactor_scope": "Only the selected bounded successor or a demonstrated execution defect; completed studies stay closed.",
     "historical_learned_results": [
       "ALIAS_EVIDENCE_DECISION_V1.md",
       "CONTINUATION_DECISION_V1.md",
       "COMMON_OBJECTIVE_DECISION.md",
       "SENSOR_TRANSFER_DECISION.md"
     ],
-    "last_frozen_decision": "REVISE_NATIVE_SET_ACQUISITION",
-    "execution_and_artifact_collection_complete": false,
+    "last_frozen_decision": "REVISE_PREFIX_OBJECTIVE",
+    "execution_and_artifact_collection_complete": true,
     "participant_complete_run": true,
     "latest_frozen_weight_results": [
       "TIMING_DECISION_V1.md",
@@ -1242,41 +1279,35 @@
       "JOINT_CORRELATION_DECISION_V1.md",
       "G1_G2_PROGRESS_REVIEW.md"
     ],
-    "next_bounded_representation_extension": "Effect-and-role language remains deferred until native acquisition acceptance; 88 parameters is a prospective target.",
+    "next_bounded_representation_extension": "Design only: shared learned selective writes/reads over bounded generic memory; state/parameter budget not yet frozen.",
     "new_generic_runner_planned": false,
-    "bounded_model_architecture_extension_selected": false,
+    "bounded_model_architecture_extension_selected": true,
     "last_structural_transfer_decision": "KEEP_LAYOUT_COORDINATES_BOUNDED_SCOPE_FULL_G3_OPEN",
-    "last_frozen_decision_origin": "POST_STOP_REVIEW_NOT_RUNNER",
+    "last_frozen_decision_origin": "FROZEN_PROTOCOL",
     "fitting_and_collection_complete": true,
-    "scoring_complete": false
+    "scoring_complete": true
   },
   "selected_next_task": {
-    "status": "SELECTED_REVISION_NOT_IMPLEMENTED_OR_FROZEN",
-    "stage": "G3",
-    "work": "Resolve numerical language retention and complete failure reporting in a new prospective native-set study. Preserve the stopped v1 attempt; freeze the comparison rule, runtime, fresh challenge lineage and full gates before any new fit or collection. Keep the 562-parameter world and 68-scalar update mask unless new evidence justifies a change.",
-    "details": "SET_ACQUISITION_DECISION_V1.md#selected-next-step",
+    "status": "DESIGN_NOT_FROZEN",
+    "stage": "G5",
+    "work": "Freeze one bounded learned selective recurrent-update contract on prospectively new, counterbalanced two-meaning histories, with explicit budgets, a matched unstructured control and per-condition correction/retention criteria. No opened-bank loss-schedule retry.",
+    "details": "ACTIVE_NUCLEUS.md",
+    "completed_previous_task": "Prefix protection TRAIN comparison closed: REVISE_PREFIX_OBJECTIVE; 42/70 checks; all ten native final protected accuracy/Brier cells deteriorate.",
+    "completed_result": "PREFIX_PROTECTION_TRAIN_RESULT_V1.md",
+    "candidate_fit_invocations": 1,
+    "candidate_evaluation_invocations": 1,
     "same_bank_retry_permitted": false,
     "current_study_source_mutation_permitted": false,
-    "world_architecture_change_selected": false,
-    "new_generic_runner_planned": false,
-    "language_training_unlocked": false,
-    "later_language_target_parameters": 88,
-    "later_language_target_feasibility_established": false,
-    "later_language_task": "After native acquisition passes, freeze worlds and learn effect selection plus roles from outcomes without gold action-kind/order labels.",
-    "supervision": "Observed native before/action/after outcomes only; no gold future state or language semantics supplied to fitting.",
-    "freshness": "Freeze a new challenge lineage; opened v1 records remain diagnostics/regressions, never a retuned acceptance bank.",
-    "preserve_checkpoints": "All historical and v1 checkpoint bytes and frozen sources remain unchanged.",
-    "completed_previous_task": "Coordinate v1 KEEP; native set v1 fitting/collection complete but scoring aborted.",
     "historical_decisions_unchanged": true,
     "scientific_admission_unchanged": true,
-    "new_open_loop_gate_added": false,
-    "new_physics_or_workspace_added": false
+    "candidate_design_scope": "One shared learned soft write/read mechanism over bounded generic memory slots; no protected flag, word-indexed slots, identity-based hard masks or copied answers.",
+    "fresh_challenge_requirements": "New observable histories/structures, challenged/protected role counterbalancing, either/both meanings changing, interleaved receipts, prospective challenge custody."
   },
-  "current_pr": 77,
-  "continuation_pr": 62,
-  "current_study_decision": "REVISE_NATIVE_SET_ACQUISITION",
+  "current_pr": 101,
+  "continuation_pr": 101,
+  "current_study_decision": "REVISE_PREFIX_OBJECTIVE",
   "g1_development_readiness": "PROCEED_TO_G2",
-  "current_development_stage": "G3",
+  "current_development_stage": "G5",
   "mixed_composition_study": {
     "version": "mixed-composition-v1",
     "formal_decision": "KEEP_MIXED_COMPOSITION",
@@ -2061,7 +2092,7 @@
     "next_lexical_contrast_completed_by": "lexical-v1 KEEP_LEXICAL_GROUNDING; structural transfer remains open"
   },
   "bilingual_pr": 68,
-  "g3_development_readiness": "BOUNDED_LAYOUT_TRANSFER_ACCEPTED_NATIVE_SET_RETENTION_REVISION_REQUIRED",
+  "g3_development_readiness": "DEVELOPMENT_G3_COMPLETE",
   "lexical_study": {
     "version": "lexical-v1",
     "stage": "COMPLETE",
@@ -2276,10 +2307,10 @@
     "historical_baseline_comparison": "historical_continuation_comparison_scope",
     "independent_scientific_admission": false
   },
-  "current_study_decision_origin": "POST_STOP_REVIEW_NOT_RUNNER",
-  "current_study_execution_status": "SCORING_ABORTED",
-  "current_study_execution_complete": false,
-  "current_study_runner_decision": null,
+  "current_study_decision_origin": "FROZEN_PREFIX_PROTECTION_TRAIN_PROTOCOL_V1",
+  "current_study_execution_status": "COMPLETE_TRAIN_FEASIBILITY",
+  "current_study_execution_complete": true,
+  "current_study_runner_decision": "REVISE_PREFIX_OBJECTIVE",
   "coordinate_study": {
     "pr": 76,
     "formal_decision": "KEEP_LAYOUT_COORDINATES",
@@ -2374,5 +2405,40 @@
     "scientific_gate_admitted": false,
     "g3_complete": false
   },
-  "set_acquisition_pr": 77
+  "set_acquisition_pr": 77,
+  "continuation_handoff": "ACTIVE_NUCLEUS.md",
+  "current_study_report": "PREFIX_PROTECTION_TRAIN_RESULT_V1.md",
+  "current_study_code_commit": "0811a82daf926e32a333def21320ffb688795be6",
+  "prefix_protection_train_study": {
+    "version": "prefix-protection-train-v1",
+    "status": "CLOSED",
+    "decision": "REVISE_PREFIX_OBJECTIVE",
+    "passed_checks": 42,
+    "total_checks": 70,
+    "all_checks_passed_cells": 0,
+    "protocol": "PREFIX_PROTECTION_TRAIN_PROTOCOL_V1.md",
+    "report": "PREFIX_PROTECTION_TRAIN_RESULT_V1.md",
+    "results": "results/prefix-protection-train-v1",
+    "input_sha256": "660bb412f2d165295c30d2248daa2ae7a334c56d4fa95fe324f80aa356b7063f",
+    "publications": {
+      "protocol": "caee7dd730a6d6e661a5d0a2b5af7a6bebc0a2b5",
+      "implementation": "0811a82daf926e32a333def21320ffb688795be6",
+      "fits": "d59e7021de6bc562940b86ba68b0210b68c60543",
+      "raw": "1242323074f49bf6dc44e4379348bc32f36cb812"
+    },
+    "native_final_target_correct": [
+      8527,
+      8680
+    ],
+    "native_final_protected_correct": [
+      9532,
+      8985
+    ],
+    "count_each": 10240,
+    "native_final_protected_regressions": 630,
+    "native_final_protected_repairs": 83,
+    "held_out_execution": false,
+    "g5_admission": false,
+    "same_bank_retry_permitted": false
+  }
 }

@@ -1,0 +1,73 @@
+{
+  "artifacts": [
+    {
+      "bytes": 8738,
+      "path": "COORDINATE_PERSISTENCE_RESULT_V1.md",
+      "sha256": "eda5e81cc8a3b49ac0fb1ba09c338122c5bbff0002318641cf18b5f1091abc10"
+    },
+    {
+      "bytes": 925,
+      "path": "results/coordinate-persistence-v1/checkpoint-archive-audit.json",
+      "sha256": "a72dcd33117fef25ab7be2fa6cda70dab3414f52280e30438fd18967b63c61fc"
+    },
+    {
+      "bytes": 6779876,
+      "path": "results/coordinate-persistence-v1/checkpoint-bank.tar.xz",
+      "sha256": "d8298c7b17232e4c9e580a746ecc3a6b5db35f3da7594c13fa16ff9735afa21b"
+    },
+    {
+      "bytes": 2025,
+      "path": "results/coordinate-persistence-v1/custody-1.json",
+      "sha256": "0428b983c7c61ee19a9755a811cabb1c8d55bdc8ae073e51a7c55acee3fd0d98"
+    },
+    {
+      "bytes": 2030,
+      "path": "results/coordinate-persistence-v1/custody-2.json",
+      "sha256": "23d194a68de49713ed52a44eff78ae3645bbc2c6175553f69c99fb1ec0d4b578"
+    },
+    {
+      "bytes": 26430,
+      "path": "results/coordinate-persistence-v1/guarded-preflight.json",
+      "sha256": "fd87fa81352d0f4e3aef1cb4cf2c55928af6bd47f1233bd43a2bd290359df77f"
+    },
+    {
+      "bytes": 102534,
+      "path": "results/coordinate-persistence-v1/independent-audit.json",
+      "sha256": "af2e6f093d87546e8b210165c49784f293ee79ec5121b532b2c92779432c2ddd"
+    },
+    {
+      "bytes": 20104,
+      "path": "results/coordinate-persistence-v1/independent-audit.py",
+      "sha256": "e12386efbcde37baa5e4d5b9c3a602712eb88db660051a739d2c4f71c4a8fcff"
+    },
+    {
+      "bytes": 28924,
+      "path": "results/coordinate-persistence-v1/qualification.json",
+      "sha256": "d3b3fb5016bc1540a09732d4bc2d4f3ef2086bf4596fe7414c07b611eb4ac61d"
+    },
+    {
+      "bytes": 9984208,
+      "path": "results/coordinate-persistence-v1/replay.json.xz",
+      "sha256": "3bc5eb798ca034f5e003a812a0f6a3d23e011fac02315915e0474c20917af14f"
+    },
+    {
+      "bytes": 2050,
+      "path": "results/coordinate-persistence-v1/third-party-spotcheck.json",
+      "sha256": "710dba6b8a557a5e9b165e76a1194a68102ab8403ec5a722d8e2408417f84b61"
+    },
+    {
+      "bytes": 517536,
+      "path": "results/coordinate-persistence-v1/validation-logs.tar.xz",
+      "sha256": "67b144b719f6d4f4825700b76b3e24859e3f90a99073431cd4b144cd16e63001"
+    },
+    {
+      "bytes": 11648,
+      "path": "results/coordinate-persistence-v1/validation.json",
+      "sha256": "080d43a3e262528d2d577877954cdc91ff75ca57cf9b2ec6bdd8ec97319f5382"
+    }
+  ],
+  "measured_source_commit": "9083c5c0f371c8d8a950abb4e8f748b95ff8d778",
+  "paths_relative_to": "experiments/predictive_nucleus",
+  "self_excluded": true,
+  "version": "coordinate-persistence-artifact-manifest-v1"
+}

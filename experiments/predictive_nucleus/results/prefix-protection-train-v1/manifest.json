@@ -1,0 +1,69 @@
+{
+  "artifacts": {
+    "PREFIX_PROTECTION_TRAIN_RESULT_V1.md": {
+      "bytes": 12674,
+      "sha256": "461399607bc1116ecb1788b8ee64b409e29a37c08e78751b8d3f39b9108a838e"
+    },
+    "data/prefix-protection-fit-v1/execution.json": {
+      "bytes": 98,
+      "sha256": "e9b14e1017487c475d41374b38c5ef43e3c816b55fc2b2ef60d07850fc925828"
+    },
+    "data/prefix-protection-fit-v1/manifest.json": {
+      "bytes": 3572,
+      "sha256": "33611bb26131c794b1ee7cd8057491ad790efe8631e857e26b3001923beca84d"
+    },
+    "results/prefix-protection-train-v1/independent-gate-audit.json": {
+      "bytes": 16140,
+      "sha256": "361e4d68391bebeb56343662e0b94689a633c444cd967b00c98050de43c61aca"
+    },
+    "results/prefix-protection-train-v1/independent_gate_audit.py": {
+      "bytes": 3700,
+      "sha256": "e6c964b56f733f1dae3e96bb72da1543cc58b00f6e8007d2ae08fd0def768993"
+    },
+    "results/prefix-protection-train-v1/preflight-tests.log.xz": {
+      "bytes": 684,
+      "sha256": "565feeae1bddc0c4b22a974ccfcd97cf0e408aa587f84a952f4bb74f0351e56d"
+    },
+    "results/prefix-protection-train-v1/preflight.json": {
+      "bytes": 1012,
+      "sha256": "12aa68ea25962566fa45fb846804ac68f122ef5f5acfecd5062c001679ef5083"
+    },
+    "results/prefix-protection-train-v1/raw/execution.json": {
+      "bytes": 103,
+      "sha256": "8b51a321bc3f78f2feda7c19743ced1b4e7d5a36a39280b20f335dc617bb65ce"
+    },
+    "results/prefix-protection-train-v1/raw/manifest.json": {
+      "bytes": 3920,
+      "sha256": "5746a5602102f073274ffcc407bac17a999ba1ea5c1ee1f92ffa024fdf74f9b2"
+    },
+    "results/prefix-protection-train-v1/review.json": {
+      "bytes": 715,
+      "sha256": "5ab3fe0eabc144d87f4ae3a45d926ab6e42c239e04ee10af0bc931d0ee94b589"
+    },
+    "results/prefix-protection-train-v1/scored/decision.json": {
+      "bytes": 19661,
+      "sha256": "85c14804151634ab4b7c5c7fe22a32b5c0a00f9f94c8703c9a9502f90295c690"
+    },
+    "results/prefix-protection-train-v1/scored/manifest.json": {
+      "bytes": 1147,
+      "sha256": "db3162a128d8e7b6ca6a9583a2b4c4951a99db3737d6d260cfd945be1a1f8219"
+    },
+    "results/prefix-protection-train-v1/scored/score.json.xz": {
+      "bytes": 281884,
+      "sha256": "009c4ee385e8fc135923e129476187d938f0e08d3dee00ce7d7c4133717cd21f"
+    }
+  },
+  "decision": "REVISE_PREFIX_OBJECTIVE",
+  "passed_checks": 42,
+  "paths_relative_to": "experiments/predictive_nucleus",
+  "publications": {
+    "fits": "d59e7021de6bc562940b86ba68b0210b68c60543",
+    "implementation": "0811a82daf926e32a333def21320ffb688795be6",
+    "protocol": "caee7dd730a6d6e661a5d0a2b5af7a6bebc0a2b5",
+    "raw": "1242323074f49bf6dc44e4379348bc32f36cb812"
+  },
+  "scope": "Previously observed TRAIN development comparison only; no G5 admission.",
+  "status": "CLOSED",
+  "total_checks": 70,
+  "version": "prefix-protection-train-result-v1"
+}

@@ -1,0 +1,34 @@
+{
+  "errors": 0,
+  "failures": 0,
+  "guarded_preflight": "passed",
+  "historical_manifests": 37,
+  "invocation_corrections": [
+    "Protocol module initially invoked from experiment subdirectory; corrected to repository root.",
+    "Standalone preflight first omitted PYTHONHASHSEED; corrected to PYTHONHASHSEED=0. No source or gate changed."
+  ],
+  "logs": {
+    "guarded-preflight.json": {
+      "bytes": 26429,
+      "sha256": "a2639ca2f5bcffd1c8cf84fbadb9ace16c2974a194d7ee8ebe1fb5838316c3f8"
+    },
+    "historical-manifests.log": {
+      "bytes": 1265,
+      "sha256": "21d7c1d1a4f141e805e84d3422c6f721b5e0cd18b7c6c978c7d7d15aacff9d3b"
+    },
+    "invariants.log": {
+      "bytes": 4005106,
+      "sha256": "13aca6774c37dee843c19ffc1828d9c460eb44d2cb0b36002c7a70c5800e35bd"
+    },
+    "protocol-verify.json": {
+      "bytes": 166,
+      "sha256": "cadb9f2c91b7b2fdd3d13d2032b2b3e90b7d734e1ad8591fdc14857d8c03dcbf"
+    }
+  },
+  "passed": 1364,
+  "protocol_verified": true,
+  "seconds": 164.474,
+  "skipped": 2,
+  "source_commit": "cd8f2f6b650b315a71797338b9d43374b71d1631",
+  "tests": 1366
+}

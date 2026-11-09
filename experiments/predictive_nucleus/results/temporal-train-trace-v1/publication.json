@@ -1,0 +1,16 @@
+{
+  "method": "Authenticated GitHub connector; shell has no GitHub credentials. Commit metadata changes; exact full source trees are preserved.",
+  "approved_commits": [
+    {
+      "local": "24da4c73c49006aa1d4e2a41304c3c59924e238a",
+      "published": "d446ede2e5d62a057be18ae9403503bcae087ebf",
+      "tree": "522b578f54a4ecb948e2cebb15d8a2aa55dcdb21"
+    },
+    {
+      "local": "b49c36e48fed1b219de6dd73cf477787c7e6546d",
+      "published": "eb8c4879f72a7da1f65dec50ef104032d4487872",
+      "tree": "ce769dc52a84e18c79350ec6fe7eeddcdce6cf6b"
+    }
+  ],
+  "published_source_verified_before_trace": true
+}

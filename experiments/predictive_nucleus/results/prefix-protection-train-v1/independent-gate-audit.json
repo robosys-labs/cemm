@@ -1,0 +1,810 @@
+{
+  "cells": {
+    "11/nand": {
+      "baseline": {
+        "claim/protected": [
+          1003,
+          0.07045628751716916
+        ],
+        "claim/target": [
+          753,
+          0.3383804409785723
+        ],
+        "first/protected": [
+          967,
+          0.09519668304175331
+        ],
+        "first/target": [
+          829,
+          0.24185553988677602
+        ],
+        "second/protected": [
+          940,
+          0.11302692525428142
+        ],
+        "second/target": [
+          859,
+          0.20145343502182472
+        ],
+        "teaching/protected": [
+          1017,
+          0.019363017299508695
+        ],
+        "teaching/target": [
+          746,
+          0.4524503273018365
+        ]
+      },
+      "candidate": {
+        "claim/protected": [
+          1007,
+          0.04822582839999722
+        ],
+        "claim/target": [
+          748,
+          0.34296573941392305
+        ],
+        "first/protected": [
+          940,
+          0.12172164281014387
+        ],
+        "first/target": [
+          835,
+          0.235641229678822
+        ],
+        "second/protected": [
+          888,
+          0.19346930923994365
+        ],
+        "second/target": [
+          881,
+          0.17940051939637383
+        ],
+        "teaching/protected": [
+          1017,
+          0.01677607196602433
+        ],
+        "teaching/target": [
+          746,
+          0.44355805637795676
+        ]
+      },
+      "checks": [
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "count": 1017
+    },
+    "11/nor": {
+      "baseline": {
+        "claim/protected": [
+          1025,
+          0.07355917931056927
+        ],
+        "claim/target": [
+          716,
+          0.39648949157096386
+        ],
+        "first/protected": [
+          994,
+          0.08932303615429346
+        ],
+        "first/target": [
+          797,
+          0.30285943087955686
+        ],
+        "second/protected": [
+          984,
+          0.09577355927102042
+        ],
+        "second/target": [
+          820,
+          0.2636416153449521
+        ],
+        "teaching/protected": [
+          1031,
+          0.01717102674486262
+        ],
+        "teaching/target": [
+          715,
+          0.5084156412205523
+        ]
+      },
+      "candidate": {
+        "claim/protected": [
+          1023,
+          0.06258028138263774
+        ],
+        "claim/target": [
+          719,
+          0.39926030788587885
+        ],
+        "first/protected": [
+          970,
+          0.11303372406519349
+        ],
+        "first/target": [
+          781,
+          0.303140052859465
+        ],
+        "second/protected": [
+          911,
+          0.17755361926647126
+        ],
+        "second/target": [
+          852,
+          0.23073988489467945
+        ],
+        "teaching/protected": [
+          1031,
+          0.018753355695864407
+        ],
+        "teaching/target": [
+          716,
+          0.5013240222564503
+        ]
+      },
+      "checks": [
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        false
+      ],
+      "count": 1031
+    },
+    "23/nand": {
+      "baseline": {
+        "claim/protected": [
+          1011,
+          0.06622159125875657
+        ],
+        "claim/target": [
+          753,
+          0.33584048241580655
+        ],
+        "first/protected": [
+          953,
+          0.10152296107612316
+        ],
+        "first/target": [
+          864,
+          0.22888135768330123
+        ],
+        "second/protected": [
+          963,
+          0.09176698542033075
+        ],
+        "second/target": [
+          868,
+          0.19798864308324482
+        ],
+        "teaching/protected": [
+          1017,
+          0.011864613467786082
+        ],
+        "teaching/target": [
+          746,
+          0.441968978444437
+        ]
+      },
+      "candidate": {
+        "claim/protected": [
+          1013,
+          0.03384797356233069
+        ],
+        "claim/target": [
+          754,
+          0.33441518938655806
+        ],
+        "first/protected": [
+          963,
+          0.08445022780477733
+        ],
+        "first/target": [
+          852,
+          0.23134584987612367
+        ],
+        "second/protected": [
+          929,
+          0.13402060410907132
+        ],
+        "second/target": [
+          880,
+          0.18608661265506882
+        ],
+        "teaching/protected": [
+          1017,
+          0.010899725295503149
+        ],
+        "teaching/target": [
+          746,
+          0.45108404539401037
+        ]
+      },
+      "checks": [
+        true,
+        true,
+        false,
+        false,
+        true,
+        true,
+        true
+      ],
+      "count": 1017
+    },
+    "23/nor": {
+      "baseline": {
+        "claim/protected": [
+          1028,
+          0.06431303629856366
+        ],
+        "claim/target": [
+          710,
+          0.3957334275029855
+        ],
+        "first/protected": [
+          974,
+          0.0925716774829065
+        ],
+        "first/target": [
+          822,
+          0.2839848063892032
+        ],
+        "second/protected": [
+          986,
+          0.07905712010949492
+        ],
+        "second/target": [
+          835,
+          0.258665974918033
+        ],
+        "teaching/protected": [
+          1031,
+          0.017058448800392947
+        ],
+        "teaching/target": [
+          715,
+          0.50487420058508
+        ]
+      },
+      "candidate": {
+        "claim/protected": [
+          1031,
+          0.035862060620779415
+        ],
+        "claim/target": [
+          712,
+          0.39769578526636035
+        ],
+        "first/protected": [
+          992,
+          0.07005903941763388
+        ],
+        "first/target": [
+          785,
+          0.29627346268589755
+        ],
+        "second/protected": [
+          963,
+          0.11163004533762165
+        ],
+        "second/target": [
+          841,
+          0.24708039755023606
+        ],
+        "teaching/protected": [
+          1031,
+          0.0116964309665332
+        ],
+        "teaching/target": [
+          715,
+          0.5066859260617562
+        ]
+      },
+      "checks": [
+        true,
+        true,
+        false,
+        false,
+        true,
+        true,
+        true
+      ],
+      "count": 1031
+    },
+    "37/nand": {
+      "baseline": {
+        "claim/protected": [
+          938,
+          0.1390727004071251
+        ],
+        "claim/target": [
+          725,
+          0.3575826083173504
+        ],
+        "first/protected": [
+          930,
+          0.13269613304469285
+        ],
+        "first/target": [
+          850,
+          0.23231322206376542
+        ],
+        "second/protected": [
+          939,
+          0.12403645415381681
+        ],
+        "second/target": [
+          875,
+          0.193419865830073
+        ],
+        "teaching/protected": [
+          973,
+          0.05956158112808251
+        ],
+        "teaching/target": [
+          728,
+          0.4593155725205499
+        ]
+      },
+      "candidate": {
+        "claim/protected": [
+          1000,
+          0.06977564824478087
+        ],
+        "claim/target": [
+          749,
+          0.3393463996014582
+        ],
+        "first/protected": [
+          914,
+          0.1440763215031462
+        ],
+        "first/target": [
+          844,
+          0.23463156524001824
+        ],
+        "second/protected": [
+          862,
+          0.2093323001321192
+        ],
+        "second/target": [
+          884,
+          0.17675254145792493
+        ],
+        "teaching/protected": [
+          1004,
+          0.021720546589737898
+        ],
+        "teaching/target": [
+          746,
+          0.44625726489520706
+        ]
+      },
+      "checks": [
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "count": 1017
+    },
+    "37/nor": {
+      "baseline": {
+        "claim/protected": [
+          901,
+          0.173238576151083
+        ],
+        "claim/target": [
+          710,
+          0.4041676429590524
+        ],
+        "first/protected": [
+          939,
+          0.14412308459040726
+        ],
+        "first/target": [
+          818,
+          0.281471983184707
+        ],
+        "second/protected": [
+          950,
+          0.1218883405582704
+        ],
+        "second/target": [
+          839,
+          0.2421384075431257
+        ],
+        "teaching/protected": [
+          1031,
+          0.02292649986167826
+        ],
+        "teaching/target": [
+          716,
+          0.505429669117583
+        ]
+      },
+      "candidate": {
+        "claim/protected": [
+          1007,
+          0.07786604931659268
+        ],
+        "claim/target": [
+          706,
+          0.40226544362983885
+        ],
+        "first/protected": [
+          954,
+          0.12742870809747028
+        ],
+        "first/target": [
+          801,
+          0.29954328865575075
+        ],
+        "second/protected": [
+          888,
+          0.19146215950961376
+        ],
+        "second/target": [
+          867,
+          0.2250953300382215
+        ],
+        "teaching/protected": [
+          1031,
+          0.013560748031364825
+        ],
+        "teaching/target": [
+          716,
+          0.5044834468840185
+        ]
+      },
+      "checks": [
+        true,
+        true,
+        false,
+        false,
+        true,
+        true,
+        true
+      ],
+      "count": 1031
+    },
+    "53/nand": {
+      "baseline": {
+        "claim/protected": [
+          896,
+          0.1557712920951651
+        ],
+        "claim/target": [
+          750,
+          0.3457046170787099
+        ],
+        "first/protected": [
+          924,
+          0.16179526193136656
+        ],
+        "first/target": [
+          857,
+          0.23547501653072814
+        ],
+        "second/protected": [
+          930,
+          0.1450582677516896
+        ],
+        "second/target": [
+          868,
+          0.20504021062768044
+        ],
+        "teaching/protected": [
+          1017,
+          0.02665030898019207
+        ],
+        "teaching/target": [
+          734,
+          0.4420097658945142
+        ]
+      },
+      "candidate": {
+        "claim/protected": [
+          1010,
+          0.05270219120254984
+        ],
+        "claim/target": [
+          742,
+          0.34239563032498677
+        ],
+        "first/protected": [
+          919,
+          0.14393449630300678
+        ],
+        "first/target": [
+          853,
+          0.24173837252175948
+        ],
+        "second/protected": [
+          876,
+          0.20512537203526507
+        ],
+        "second/target": [
+          861,
+          0.19355743966453923
+        ],
+        "teaching/protected": [
+          1017,
+          0.013617291904543529
+        ],
+        "teaching/target": [
+          746,
+          0.42399447936719353
+        ]
+      },
+      "checks": [
+        false,
+        true,
+        false,
+        false,
+        true,
+        true,
+        true
+      ],
+      "count": 1017
+    },
+    "53/nor": {
+      "baseline": {
+        "claim/protected": [
+          954,
+          0.15007801051593891
+        ],
+        "claim/target": [
+          699,
+          0.4205086285992422
+        ],
+        "first/protected": [
+          945,
+          0.14663846823606164
+        ],
+        "first/target": [
+          788,
+          0.32094466454403225
+        ],
+        "second/protected": [
+          965,
+          0.11282239689339904
+        ],
+        "second/target": [
+          799,
+          0.2859419506778039
+        ],
+        "teaching/protected": [
+          1031,
+          0.02254205938203853
+        ],
+        "teaching/target": [
+          715,
+          0.4857556555566894
+        ]
+      },
+      "candidate": {
+        "claim/protected": [
+          1027,
+          0.0518185715242154
+        ],
+        "claim/target": [
+          712,
+          0.4203007130948956
+        ],
+        "first/protected": [
+          969,
+          0.10862235616771325
+        ],
+        "first/target": [
+          778,
+          0.3359147466752413
+        ],
+        "second/protected": [
+          919,
+          0.1516812321342129
+        ],
+        "second/target": [
+          814,
+          0.27668057878558777
+        ],
+        "teaching/protected": [
+          1031,
+          0.011964661428735035
+        ],
+        "teaching/target": [
+          716,
+          0.4826275608150948
+        ]
+      },
+      "checks": [
+        true,
+        true,
+        false,
+        false,
+        true,
+        true,
+        true
+      ],
+      "count": 1031
+    },
+    "7/nand": {
+      "baseline": {
+        "claim/protected": [
+          1002,
+          0.09665345796555833
+        ],
+        "claim/target": [
+          731,
+          0.3465710918147922
+        ],
+        "first/protected": [
+          931,
+          0.13031280927514421
+        ],
+        "first/target": [
+          853,
+          0.2189346225597959
+        ],
+        "second/protected": [
+          925,
+          0.13379413868286003
+        ],
+        "second/target": [
+          894,
+          0.17635982009852108
+        ],
+        "teaching/protected": [
+          1017,
+          0.012795010032828022
+        ],
+        "teaching/target": [
+          746,
+          0.44632908950915473
+        ]
+      },
+      "candidate": {
+        "claim/protected": [
+          986,
+          0.09147626545150514
+        ],
+        "claim/target": [
+          734,
+          0.3445707278838173
+        ],
+        "first/protected": [
+          901,
+          0.16248171337263054
+        ],
+        "first/target": [
+          866,
+          0.2194276004285038
+        ],
+        "second/protected": [
+          864,
+          0.22493751270191703
+        ],
+        "second/target": [
+          902,
+          0.1682718191824715
+        ],
+        "teaching/protected": [
+          1017,
+          0.016630480895155775
+        ],
+        "teaching/target": [
+          746,
+          0.4480838724182438
+        ]
+      },
+      "checks": [
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        false
+      ],
+      "count": 1017
+    },
+    "7/nor": {
+      "baseline": {
+        "claim/protected": [
+          1020,
+          0.09520168129156562
+        ],
+        "claim/target": [
+          712,
+          0.4077290426074522
+        ],
+        "first/protected": [
+          960,
+          0.12348880766271338
+        ],
+        "first/target": [
+          843,
+          0.2708922357808897
+        ],
+        "second/protected": [
+          950,
+          0.115215334920163
+        ],
+        "second/target": [
+          870,
+          0.2199133918852594
+        ],
+        "teaching/protected": [
+          1031,
+          0.015450902523624143
+        ],
+        "teaching/target": [
+          716,
+          0.5108550981283639
+        ]
+      },
+      "candidate": {
+        "claim/protected": [
+          1026,
+          0.0826354116943191
+        ],
+        "claim/target": [
+          716,
+          0.40716100461944604
+        ],
+        "first/protected": [
+          934,
+          0.14532168392113973
+        ],
+        "first/target": [
+          840,
+          0.27927088264371713
+        ],
+        "second/protected": [
+          885,
+          0.20699559836007503
+        ],
+        "second/target": [
+          898,
+          0.20907689440975288
+        ],
+        "teaching/protected": [
+          1031,
+          0.0143585639042605
+        ],
+        "teaching/target": [
+          716,
+          0.5129228142549296
+        ]
+      },
+      "checks": [
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "count": 1031
+    }
+  },
+  "decision": "REVISE_PREFIX_OBJECTIVE",
+  "input_sha256": "660bb412f2d165295c30d2248daa2ae7a334c56d4fa95fe324f80aa356b7063f",
+  "passed_checks": 42,
+  "scope": "Scalar saved-TRAIN-array arithmetic; no learner or primary scorer imported.",
+  "script_sha256": "e6c964b56f733f1dae3e96bb72da1543cc58b00f6e8007d2ae08fd0def768993",
+  "total_checks": 70
+}

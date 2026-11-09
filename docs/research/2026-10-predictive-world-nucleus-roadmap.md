@@ -6,7 +6,7 @@
 **Implementation boundary:** independent experiment first; no root runtime or Hybrid cutover  
 **Companion foundation:** [draft PR #21](https://github.com/robosys-labs/cemm/pull/21)
 
-## Current development checkpoint — 2026-11-06
+## Current development checkpoint — 2026-11-09
 
 **Bounded development G3 is complete.** The
 [v3 decision](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V3.md),
@@ -106,13 +106,54 @@ correctness and .971875 against .681250 mean net reward. All 80 frozen
 condition gates pass. Per-case probability and utility regressions
 are retained in the result.
 
-The next bounded requirement is persistence of the transformed hypothesis
-frame across cold processes. Temporal/scope correction, a new exposure-matched
-neural fit, new sentence families and durable competence after episode-memory
-clearing remain open. The static study uses existing words/layouts and four
-supplied coordinate transformations. Corpus ingestion and Wikipedia utility
-follow the G5 prerequisites. The current evidence is recorded in the
-[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md).
+The [transformed-frame persistence result](../../experiments/predictive_nucleus/COORDINATE_PERSISTENCE_RESULT_V1.md)
+is complete: both invocations reproduce all 46,080 checkpoints. The
+[temporal observation-support result](../../experiments/predictive_nucleus/TEMPORAL_OBSERVABILITY_RESULT_V1.md)
+is also complete. Its post hoc restricted-input audit removes the target and
+spectator-toggle shortcut, retains 448 unresolved group/target cells per menu,
+and establishes a finite 249/256 full-menu accuracy ceiling.
+
+The [fixed-budget temporal comparison](../../experiments/predictive_nucleus/TEMPORAL_NATIVE_TRANSFER_RESULT_V1.md)
+is **CLOSED: REVISE_NATIVE_TEMPORAL_UPDATER**, with 52/80 cell gates passing.
+All ten 256-update fits and fifteen raw banks were published before scoring;
+two saved-record scores are byte-identical, and separate arithmetic and custody
+audits reproduce the decision. Native after-both accuracy is 82.50% versus
+flat's 74.80%, but every cell fails attainable accuracy and excess Brier; eight
+fail protected retention. Retaining the first answer produces 2,534 net target
+repairs while introducing 1,620 net protected-word errors. The next bounded
+continuation has completed its [TRAIN receipt trace](../../experiments/predictive_nucleus/TEMPORAL_TRAIN_TRACE_RESULT_V1.md).
+Across 10,240 native TRAIN evaluations, protected accuracy falls from 99.57%
+after teaching to 93.09% after both answers. There are 696 initially correct
+protected predictions still wrong at final: their earliest losses are the claim
+(147), first answer (312) and second answer (237). The single trace and 5,358
+saved-array audit checks are complete.
+
+The [objective-only TRAIN comparison](../../experiments/predictive_nucleus/PREFIX_PROTECTION_TRAIN_RESULT_V1.md)
+is now **CLOSED: REVISE_PREFIX_OBJECTIVE**, with 42/70 checks passing. Its ten
+fits retained original initializations, minibatches, models, observations,
+256 updates and six loss terms per sample. Native protection after the claim
+improves from 95.49% to 98.93%, but final protection falls from 93.09% to 87.74%
+(630 regressions, 83 repairs). Final protected accuracy and Brier worsen in all
+ten law/seed cells. Final target accuracy improves from 83.27% to 84.77% pooled,
+while NAND/53 regresses. Mean protected prefix Brier also worsens. The fixed
+allocation is rejected; the experiment does not establish hidden-state loss,
+insufficient capacity or a general inability to learn preservation.
+
+The next task is one bounded contract for learned selective recurrent updates
+on prospectively new, counterbalanced two-meaning histories, with explicit
+budgets and a matched unstructured control. Either or both meanings must be
+challenged; no protected flag, word-indexed slot or identity-based hard write
+mask may supply retention. Freeze the successor before implementation or fitting.
+This is a design hypothesis, not G5 admission. The
+[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) is the
+single continuation entry point. Completed studies, traces, fits, collection,
+scoring and audits are not prerequisites to rerun; do not search another loss
+schedule or budget on the opened bank.
+
+New sentence families, durable competence after complete episodic-memory
+clearing, matched final-correctness clarification savings and the rest of G5
+remain open. G6 corpus acquisition, G7 Wikipedia utility and G8 integration
+retain their dependency gates.
 
 Independent custody, matched consumed compute, general calibration and formal
 scientific admission remain open. The inclusive **2,000-line objective remains
