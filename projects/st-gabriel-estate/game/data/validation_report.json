@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "asset_count": 438,
+  "animation_count": 15,
+  "runtime_png_count": 301,
+  "svg_sources": 91,
+  "counts_by_kind": {
+    "concept-extract": 120,
+    "reference": 17,
+    "icon": 44,
+    "nine-slice": 16,
+    "tile": 28,
+    "overlay": 14,
+    "animation-frame": 180,
+    "atlas": 15,
+    "sprite": 4
+  },
+  "errors": []
+}

@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "transport": "in-memory local assets; direct file and localhost navigation unavailable in this runtime",
+  "checks": [
+    "demo first render",
+    "all DOM images loaded",
+    "resident selection",
+    "spiritual overlay toggle",
+    "animation pause toggle",
+    "catalog batch filtering",
+    "catalog search"
+  ],
+  "errors": []
+}

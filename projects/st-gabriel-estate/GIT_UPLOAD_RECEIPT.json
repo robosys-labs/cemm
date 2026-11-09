@@ -1,0 +1,3477 @@
+{
+  "files": [
+    {
+      "path": "projects/st-gabriel-estate/game/.gitattributes",
+      "bytes": 123,
+      "sha256": "74f903b77a47d5f47e0bcfe2d3dc7359e807da5da93f1fdc8c4e1c7d351ba6f4",
+      "git_blob_sha1": "7e45500178f45764312b386419ecccaa68b2b246"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/.gitignore",
+      "bytes": 105,
+      "sha256": "7964867561434024650dd93b1b4ebc0f97f3b02d6bc3bd898cfad0e29aac4679",
+      "git_blob_sha1": "de7bc4409be8b53deb8101bdf5cb2f0623cb8afd"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/README.md",
+      "bytes": 4755,
+      "sha256": "99d1011b98737db797faffd1abf6f212a86f511c3d9a0d17c93856a904771c43",
+      "git_blob_sha1": "2b685aa2535bfb4d483f35dca425b7fe63f99f47"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/SHA256SUMS.txt",
+      "bytes": 52967,
+      "sha256": "725244556785f1ecccdefd20956344a4b75d22afeeb9e4ff114e4dcc0184d820",
+      "git_blob_sha1": "dea3639f211eef9dde63317252cf645c11cfe303"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/community/charity_center.png",
+      "bytes": 174350,
+      "sha256": "3393d9e077921b2588276e0e3ab8c9a944f72e77ad22c2cddd27ffcbf393445f",
+      "git_blob_sha1": "cb53632f57fb2465e825d00637377206454d4d32"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/community/clinic.png",
+      "bytes": 154785,
+      "sha256": "73d89594a8e5f5679b9a9b0e3100136f1cb2a0e9634a89bfe58bf554b25f2ca7",
+      "git_blob_sha1": "3e1e218dae79b43194a9202b8e67beda764e941e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/community/community_hall.png",
+      "bytes": 194488,
+      "sha256": "559d35fa29d675ff969dcc84bf989af451122839d1735016fa864e80e3aa8e04",
+      "git_blob_sha1": "82297c96967e8bc2b035cb3659d2efdb836b9b02"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/homes/home_family.png",
+      "bytes": 130955,
+      "sha256": "bab2e04039e7b11dfdfb582977505c2d3a84766814eef66d1c202c3a3d8d72c0",
+      "git_blob_sha1": "0a28c9911a59b1843418c200d1dade4e4ee5d2b3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/homes/home_hosting_neighbors.png",
+      "bytes": 133291,
+      "sha256": "85a414e7b177e9888893382e5714e3c6640f80a6adcf43b1d9b3cbec83c50196",
+      "git_blob_sha1": "699145413774fdb6d0d51845a0f3463875f0d920"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/homes/home_modest.png",
+      "bytes": 120285,
+      "sha256": "c65c1d791b07e73b9e691dd125c9ffcf6b3951ab15b989bfae6f6db7c2e276f5",
+      "git_blob_sha1": "1bc0adcb404b63c1e64259a03cc736229cd83818"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/homes/home_quiet.png",
+      "bytes": 121241,
+      "sha256": "24a1029b6263ebdef30cdb09ba1d6cd5602a1422278d2b34b259fa3ffcfb4b23",
+      "git_blob_sha1": "ea07426055536eb69f3566661210b71d7f9a5afe"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/parish/parish_dim.png",
+      "bytes": 154985,
+      "sha256": "413d121d2430e56d7d0503dfbe704f381be4d1bc8cf6a85ba25adfc9bf153289",
+      "git_blob_sha1": "70243492cdc9f7702348c310819fe73359e856b0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/parish/parish_healthy.png",
+      "bytes": 158179,
+      "sha256": "ccd406c8ceeffd3f8833291fc56e26a951f8034ea36f138bb152524ab6dc5bc8",
+      "git_blob_sha1": "f06c7d4230bbdbe8456fa219a23a18728ee635aa"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/parish/parish_radiant.png",
+      "bytes": 169517,
+      "sha256": "70c4ba87fc4c1e4697db9c2f9ed76ef2bf879bcdc984cd10be54bcfd6b06d62d",
+      "git_blob_sha1": "2ecfa5e48f83b79dfe79241d83d01e6f150453bc"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/services/estate_gate.png",
+      "bytes": 211577,
+      "sha256": "61aaaf02aec638738a9f7988e9e3c2fd333fd447159a060fe5f4c21ddd7671e6",
+      "git_blob_sha1": "4ac552460def07c7adf47e50b0655d9bb021f59d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/services/neighborhood_kiosk.png",
+      "bytes": 141373,
+      "sha256": "48b87a1f147f6d9b88db317fd17b5946b0b031d9babc2570ad71ac902e9e31bd",
+      "git_blob_sha1": "382a9a6a6f44615b49deac6fd8e1f8f91ff3f8c1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/buildings/services/parking_lot.png",
+      "bytes": 123293,
+      "sha256": "81ba9694226c6b7d5eb3d883d07de352790d9479cd17177b425072a8ef2e13e1",
+      "git_blob_sha1": "ab5a1215fbf913370f6f4949c3b6f20769b5d298"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/characters/angels/angel_prayer_wingless.png",
+      "bytes": 75029,
+      "sha256": "e8b71271a096da41aa50d5b3f8db4de9e74b8e118c02043eb4f8a68038b3fa16",
+      "git_blob_sha1": "5f0511785d3b6bc0c9c0d871b99afc58ccc04db7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/characters/angels/angel_ribbon_wingless.png",
+      "bytes": 63292,
+      "sha256": "993f977282dca3b87d523dc61e058686c7a9f68e8f5b925a09575abb7947e101",
+      "git_blob_sha1": "c2955cd8bcfa8231a902cf16846fc4ab0a244f83"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/characters/influences/deceiver_lollipop.png",
+      "bytes": 71019,
+      "sha256": "612649008f4444cd52ad8bfed366761262d85b31a8562e447b085644f5e0fd2d",
+      "git_blob_sha1": "6e384cffa496146d6c9b0328153fef1e75baff73"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/characters/residents/elder_woman.png",
+      "bytes": 31033,
+      "sha256": "a73935437f86ec3647f6bc2fd1621eaef34f18feb90c11b73bc904f54a08ebea",
+      "git_blob_sha1": "ea9b16a42ba6e66942aafbe0af0463e3b3839cfa"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/characters/residents/maintenance_worker.png",
+      "bytes": 29590,
+      "sha256": "d5096164d8fd6536fa912c2a3a55a4ea502bc3261cc334303900dc665f435345",
+      "git_blob_sha1": "187adcf5d2c7b5903e6c574f99181a1549c57a50"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/characters/residents/office_worker.png",
+      "bytes": 33126,
+      "sha256": "21d52b8d5fdb6bd2265028e7fa41a2e86892b04048b25555d1bc511e7891e200",
+      "git_blob_sha1": "5e4df01e4c3e305e48d1c06f59af8c6acd0b802c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/characters/residents/parish_volunteer.png",
+      "bytes": 26292,
+      "sha256": "dd67af9309b77514f296d655fa9fd1a1ebd7bc560e3636b223cdd4a3aeda5867",
+      "git_blob_sha1": "45b4499eb92cca031ff5f26c839140aebc2ce39d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/characters/residents/schoolboy.png",
+      "bytes": 23701,
+      "sha256": "45225533e0b17b3f06a162669d5c13724201f5656d5573a6d29d0f240ce6d98e",
+      "git_blob_sha1": "1fe051110e10e155bcb55703d3d79cf487378b40"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/characters/residents/street_vendor.png",
+      "bytes": 53336,
+      "sha256": "1c7ad6edde8fb35a07333a1324dd146ec97e6f2fd45ad40644c0fa7365f95054",
+      "git_blob_sha1": "80ed22418adb2f5201a578a692779640c1cc059b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/characters/residents/student_male.png",
+      "bytes": 32737,
+      "sha256": "ffa7a6dd5fb6f2c7355e2b9cf4ea0795e79de25514d557051b3fa35b1b3cba2d",
+      "git_blob_sha1": "f74cdc17c1acc303e3a3aec470f9e40ac7012436"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/characters/residents/young_woman.png",
+      "bytes": 32534,
+      "sha256": "ca98f252bdbc58a5ae042f2871b7ffe7890531dd0365b780ddc79b6f3fff91b4",
+      "git_blob_sha1": "c1ad58971cc831230e1b38bd287683c79cd3cc73"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/angels/angel_concerned_portrait.png",
+      "bytes": 15824,
+      "sha256": "62caf09c352017cd21bc189d27a11d1069b79f7209257aaf4c0fe65eb6e00d70",
+      "git_blob_sha1": "3dd99be6ce3634e109de6939a787ff4f6d448408"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/angels/angel_encouraging_portrait.png",
+      "bytes": 12319,
+      "sha256": "52da3dfdf52278c53ddac39b40766a7c56617f2070652c1cd0357d16f37d3a6e",
+      "git_blob_sha1": "92e48205415cb0a8591ae0e2edbcffe1f5d90997"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/halo_states/resident_halo_bright.png",
+      "bytes": 50472,
+      "sha256": "4f794278d8f98bf3e1034c588753210e53038b71d417d53e717ffb47451f092e",
+      "git_blob_sha1": "972107391a5454e249f453379fd31b929d193d90"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/halo_states/resident_halo_dark.png",
+      "bytes": 41419,
+      "sha256": "82467edefce12d614ab81ac81b71af8674b199c7b2c1c5233c66de327ee61810",
+      "git_blob_sha1": "831290f32bc91dac30c10bca5c047dab66a2b76b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/halo_states/resident_halo_fading.png",
+      "bytes": 47505,
+      "sha256": "9254a3ff761e6db060f8bc0d99ebc5019c557e42d9188a252797eadf10710f88",
+      "git_blob_sha1": "b076d0b3fa44fca935464139bf1b600f3871c1d6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/halo_states/resident_halo_radiant.png",
+      "bytes": 63272,
+      "sha256": "d7cebb300654811c4e7d929f08aadca83defcf95fe42f563cf429425c53f15b7",
+      "git_blob_sha1": "fe2a81d372b778c7e6bd0db4255c0c232a48dc15"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/influences/deceiver_lollipop_portrait.png",
+      "bytes": 60160,
+      "sha256": "a07d29c7bab1c9d6be607c6d55ac10f5cabbe234b3172c97c7e98df5ce4f6f62",
+      "git_blob_sha1": "289b650c1f3f195cc671a7e2df3aff033986bd08"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/influences/shadow_red_portrait.png",
+      "bytes": 30528,
+      "sha256": "9fbd8f7ad9d208a3a2e0a9215f3da511959dab19606715d6ba28f1a46f83a74f",
+      "git_blob_sha1": "2f707cf370651be38e016500d598ea72c53b4e6d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/influences/shadow_violet_portrait.png",
+      "bytes": 27558,
+      "sha256": "00252354bea5797bd3fcf897466f908ec69cb3e0ad97360b17250fc7c9652bbf",
+      "git_blob_sha1": "e74ffee86e0335a279fd2b666319fd427a9f9797"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/residents/elder_woman_portrait.png",
+      "bytes": 29143,
+      "sha256": "b1381588565bc609362025c6cd00394392deb4bfa1cb69c9a125e3549a56cea4",
+      "git_blob_sha1": "4510ea3ce89c3164c9bada67f79cb6b851fa0ffc"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/residents/maintenance_worker_portrait.png",
+      "bytes": 30014,
+      "sha256": "2134b44d517e4351c3b76842dbef279fd238acbbf8bca227db84f89c84ca7ab8",
+      "git_blob_sha1": "ef6b4891e75117fe12a85fde421451501f19a740"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/residents/office_worker_portrait.png",
+      "bytes": 29167,
+      "sha256": "a11dc8cf31052d45b782888ffcb40d5cab30b0e846619adfd005b38c46736d93",
+      "git_blob_sha1": "39a61b0208f816b31af9af9e1e005d708866d728"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/residents/parish_volunteer_portrait.png",
+      "bytes": 29592,
+      "sha256": "a64ca895f9a35f71ad8d121e44b5ad3bfd3bf8844bd1fbd1c96d6f226e994c76",
+      "git_blob_sha1": "d0541440a1f8ed6c5304398176ab416447bf3220"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/residents/schoolboy_portrait.png",
+      "bytes": 27937,
+      "sha256": "a4f0dc3305e1eab354cbc8671c9dafd27e95a1931ebe6a9ee59b0a01e9cbde48",
+      "git_blob_sha1": "e78a721b08edb60b3f492d59ef25690470e1f9be"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/residents/selected_resident_portrait.png",
+      "bytes": 258309,
+      "sha256": "76e2992cec08eeeac5f7878d8ee7e530453a84d78b199c9cedbdd53f8e8d08b5",
+      "git_blob_sha1": "fe2d2950419bd4b98f3d9ee286cf973feb088b54"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/residents/street_vendor_portrait.png",
+      "bytes": 30892,
+      "sha256": "5eae61d473158fd53c03d327d96a6b6f02b5d106dc0a56f413accac9e57133d5",
+      "git_blob_sha1": "dadac470b522cde788630c2048b88e4fb72cea39"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/residents/student_male_portrait.png",
+      "bytes": 29490,
+      "sha256": "7b8d6cdbf1bce591d3fbab8fd3f52fabdaa57f6fd4a21e7ea5b3bedfb0f18450",
+      "git_blob_sha1": "829b42ae36efe3a2703f30da0e878f5961b5a079"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/portraits/residents/young_woman_portrait.png",
+      "bytes": 29674,
+      "sha256": "f68e01453b473cdd50633bd94cd782fac0c8435c0819cd2d9ad93653cffa4ec4",
+      "git_blob_sha1": "33f906d1dde2e34ada4dc21c1df699c7e74797d2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/interactions/assist_elder_crossing.png",
+      "bytes": 172335,
+      "sha256": "14daed55ec64fa768f3f20686db19412531016202adbd25e085b3a115d245d84",
+      "git_blob_sha1": "b26e1b128cea559169a9c349a2db817f7f88a73e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/interactions/guardian_consolation_pair.png",
+      "bytes": 85555,
+      "sha256": "b739a3641ed9ad5be4959506f2075f1eaf8ac1e91f676888c72beb9b2737bd72",
+      "git_blob_sha1": "99a172ce5e41b57b457d9af3bc8da7e7fdf2f17f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/interactions/guardian_encouragement_pair.png",
+      "bytes": 97979,
+      "sha256": "25fdeb3fad5dc2c6e5831ffb01418c3e5e4da49d985a6e550911792b6f050a39",
+      "git_blob_sha1": "5596b07bfd6e5f7eca077d7250a1673eb2195803"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/interactions/help_flat_tire.png",
+      "bytes": 175329,
+      "sha256": "360d46bf48c19216e3088f8fe1da0abafe9f0a28ced07fa9b9c004ad9d07e288",
+      "git_blob_sha1": "981c6b5d8974155d4d55456bf88f065888411d68"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/interactions/household_under_pressure.png",
+      "bytes": 147633,
+      "sha256": "f0a9533318dd5ad90ff86789f36e0741255ccafab41c6a1f6b2e6bdb7158c28d",
+      "git_blob_sha1": "eca517422fd82092f8f754e57885655c07477155"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/interactions/prevent_near_collision.png",
+      "bytes": 205566,
+      "sha256": "b7c0e89f3d05df609dbc93cc04cf5ca5741f5b6ee2fb6fb7c77f50147adbcd84",
+      "git_blob_sha1": "21c265aa855a09121e52916537f1783330bc122b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/interactions/protect_child_crossing.png",
+      "bytes": 211602,
+      "sha256": "90eb386d94a64b07915f870a2d2c47cd69833dd822823206e0ad1cac0333a848",
+      "git_blob_sha1": "0c46edd55cacaa8d4ec9ea2ba2732de86d54b06b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/interactions/protect_pedestrian.png",
+      "bytes": 218218,
+      "sha256": "1393ca36a77e565649ef87214ecaf13cf33c5a761e4286111a933ab127fd96bd",
+      "git_blob_sha1": "6a2559f0367791646093d217229f905fff5db390"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/interactions/stress_and_isolation.png",
+      "bytes": 159704,
+      "sha256": "9c636e700f26ec7fee5b97410f1e8c40524068f93c6370f4484913adddaabbb1",
+      "git_blob_sha1": "1726fb87827904ffb9b5ac646ad53d277b208db9"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/interactions/targeted_pressure_man.png",
+      "bytes": 157970,
+      "sha256": "492642d679a4064a3f451d217e11c109651fa352d3417285b22be995134168de",
+      "git_blob_sha1": "457b99caa2f427fd7fbcee4f19a2be700df028a0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/interactions/targeted_pressure_woman.png",
+      "bytes": 150098,
+      "sha256": "44d4ceaee3261dc4633157b2630bbdee362c38bfa18ca327289992ed2a817e49",
+      "git_blob_sha1": "fb402d74a0b681e78867c7ef625defccb8bfe1d1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/systems/temple_neighborhood_high_charity.png",
+      "bytes": 84296,
+      "sha256": "46dff7bcf6f29ec83f286d0e2cef2652922a49b104bb981729b5ca0a790f6e98",
+      "git_blob_sha1": "6d30cd147c7f1443c1237fb030e38041713854e1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/references/systems/temple_neighborhood_low_charity.png",
+      "bytes": 76108,
+      "sha256": "727316495a649d368df64451820bb0192decc369915412bf3cda273d3e8922a2",
+      "git_blob_sha1": "ee704a33dcb49906f8367c0dcb208c9cd4520ec7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/charity_link.png",
+      "bytes": 46321,
+      "sha256": "e4a17ce2a71f6125ad00e69ee86d7a5c153f2856cf604cfe20093bfb66f79c06",
+      "git_blob_sha1": "f0c6da82eef8789fd63acba5e09e59423d56c014"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/person_bright.png",
+      "bytes": 48090,
+      "sha256": "3b7916ba590582d4f718c51dbb1381e4f385805beae413a7262a4234ce3a7ad5",
+      "git_blob_sha1": "6f1e5a680575b137009f314dddbf202eed2c20ae"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/person_dark.png",
+      "bytes": 75270,
+      "sha256": "012cbf605c5a835267b88acab23008a47132570f406980f043ad978fd5afa9c6",
+      "git_blob_sha1": "e29836b1a043b9ca8be92d8e0c7d3bdb2acda5f7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/person_fading.png",
+      "bytes": 43223,
+      "sha256": "2c0630ee4b013b5d6407c1cc10f1d5ac3539b17c514b98074aca0375c7068ae2",
+      "git_blob_sha1": "77df747cb857c6a7dab0434eaa4ea20b54d79e02"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/person_faint.png",
+      "bytes": 33457,
+      "sha256": "f12b192ab31e2794306f2964d345a155d616ca8815cb5b1185f7d15360fd97a0",
+      "git_blob_sha1": "db5f0a0b8bd4c0f698f07de8f1812e7d7d60b451"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/person_radiant.png",
+      "bytes": 77834,
+      "sha256": "9937a5806c47198f8ae724f91011788b16da4e96b5b05f983d29824a47100c1a",
+      "git_blob_sha1": "1416002c1564e7dff3d08914563a77be52873c75"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/protection.png",
+      "bytes": 74388,
+      "sha256": "7f213f5738b588752e285f66c8256525edc201555f9f2dca54a2d1dbcdcc9e95",
+      "git_blob_sha1": "49518ce4975fdaa52159668f2d84468abfdfbb72"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/targeted_whisper.png",
+      "bytes": 46327,
+      "sha256": "cbabf19c1c9731603863611232bd25ae6dd53203ec4ad2de547a29c4fc0930f1",
+      "git_blob_sha1": "c71c123834bf798770e5256d6acd488b47ce3df3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/temple_dim.png",
+      "bytes": 150105,
+      "sha256": "9a4e377002c1a4a5ea8c07664ce2b1ae42fc17c3948ad202b8f5b3ac0f653c8d",
+      "git_blob_sha1": "b3658231ae681b4633fff0243050c1aead6063bc"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/temple_healthy.png",
+      "bytes": 248741,
+      "sha256": "60bc4d19495e8f34905437176913a1feeaf99aa4189ce3b5f8b7d89b607f340f",
+      "git_blob_sha1": "588f9cdb15c5824189ace0eb1ae6d07b5aae10a5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/temple_radiant.png",
+      "bytes": 404657,
+      "sha256": "af10b0bb4721660a2ccf2f3644654f94cbe77160f4e8c6e809d432ead9c41837",
+      "git_blob_sha1": "b0264d740f99bd1ebe0866b380a544810d7dfcde"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/wingless_prayer_concerned.png",
+      "bytes": 383448,
+      "sha256": "551092dc3bc9e90a5a04368c0c6b539772c54712be9af40a0eb851d4f5245913",
+      "git_blob_sha1": "c43af5a2475280881f67fa82969acf5add658a4f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/wingless_prayer_encouraging.png",
+      "bytes": 402601,
+      "sha256": "e0c449af18ae05cc1beb5ccde2739488731bd0b516c553f378ab11d17e7e865d",
+      "git_blob_sha1": "d70bf614d769f2d477369dd4cb9b051407591c76"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/wingless_ribbon_concerned.png",
+      "bytes": 375416,
+      "sha256": "bcc6a5fdf5c1bffb115e267c62e7dc24905d675decd8b8dc766e0ce78b2b8807",
+      "git_blob_sha1": "b24831eb74b61149eaf44d3ea204f31561749250"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/atlases/wingless_ribbon_encouraging.png",
+      "bytes": 371732,
+      "sha256": "df7196211c97a95e3e5a96d60bd44990e693a8ed314e3ecd4837d21a66858cf3",
+      "git_blob_sha1": "20df894869b5c6338692e9fadbd4b50ae25888e8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned/wingless_prayer_concerned_00.png",
+      "bytes": 57079,
+      "sha256": "686a3c7e55e9ff212904f66c1e36f809963d8d91832b283c82d33d6fc509754f",
+      "git_blob_sha1": "910c8201bce86dfdd6bffe40662b8651cf47b3c7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned/wingless_prayer_concerned_01.png",
+      "bytes": 57059,
+      "sha256": "172fd59d75b1d0bccf0b53934aae917b328bb21736b534786c276c9650db684b",
+      "git_blob_sha1": "b7c1053c79c364e346f422f0a2d817145025f458"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned/wingless_prayer_concerned_02.png",
+      "bytes": 56948,
+      "sha256": "c6e18ab0b778afdb2b4b2006f6ca98bbfb7f0c81a0bd80bf9ccb9240a6856a9a",
+      "git_blob_sha1": "248b9a33941c314afb1bcc5c7a0bfc5a05009c00"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned/wingless_prayer_concerned_03.png",
+      "bytes": 56707,
+      "sha256": "23cc679be0d8ef3ddd6bdb65156fcf4bdb34b17a874ce7b03d440e4a4d32371a",
+      "git_blob_sha1": "181c6d3d76b0118e81b88252fc3db699cbcbc4c5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned/wingless_prayer_concerned_04.png",
+      "bytes": 56432,
+      "sha256": "759ad65e1b7418739560b1972b987ff6b83be4f388301c90149164d38d87f173",
+      "git_blob_sha1": "3c286bbae7c8174f792aba8658f0ceac8f1c4741"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned/wingless_prayer_concerned_05.png",
+      "bytes": 56267,
+      "sha256": "a708bf3719dadebb12fdb69dec0a0eae8267424917fd928065779d8d9278c0cf",
+      "git_blob_sha1": "3fe6c60523dc3e53c9c05ea358882a3d19cf52c5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned/wingless_prayer_concerned_06.png",
+      "bytes": 56100,
+      "sha256": "f4e03ce369b75de58d1da58c32bebfba9185cb0b9ff701e872520a00fbface7f",
+      "git_blob_sha1": "9ea37dcd1ee0e7b0efa2c821b4b0055b522d45e5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned/wingless_prayer_concerned_07.png",
+      "bytes": 56246,
+      "sha256": "d9e104bd0a81e3cc2b429d009a508310e11b5edb87edf75487b787e9a2ccc3e8",
+      "git_blob_sha1": "2ba84be35c9ff40c322db94bc53350ccbb9da265"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned/wingless_prayer_concerned_08.png",
+      "bytes": 56417,
+      "sha256": "9d1b653df2148a12387a89c974d8184698f2e014beac5b17f99c13f294659639",
+      "git_blob_sha1": "425bceef83f80f563e70d0bf3c605c5f7889679e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned/wingless_prayer_concerned_09.png",
+      "bytes": 56684,
+      "sha256": "0841eff5113956bbaadd56e5ed4fc141d2df24cf5840c50e05d0bfd0dd405ccc",
+      "git_blob_sha1": "3ba942b5f859775ec2202ec4c7106aadb04ff86c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned/wingless_prayer_concerned_10.png",
+      "bytes": 56936,
+      "sha256": "22ef6af23a225c6742b6af6097fa9d1944a7f6bb0b5fa719355e7e8df5aecbf9",
+      "git_blob_sha1": "0fd116298d0c0b6d91b908b46a89786fd979656c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned/wingless_prayer_concerned_11.png",
+      "bytes": 57051,
+      "sha256": "5c670f931c139cb1114a6cafb9ab8efbb2c9e6122f0aa833369d50dfc8ab8191",
+      "git_blob_sha1": "c505cfe9c9085744f2bf432930734828b8684578"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_concerned.png",
+      "bytes": 57079,
+      "sha256": "686a3c7e55e9ff212904f66c1e36f809963d8d91832b283c82d33d6fc509754f",
+      "git_blob_sha1": "910c8201bce86dfdd6bffe40662b8651cf47b3c7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging/wingless_prayer_encouraging_00.png",
+      "bytes": 61207,
+      "sha256": "b4bd513d5bc622b611de6db809f4e710bb5086ed865cabe6e3d827369c300b7b",
+      "git_blob_sha1": "e23d95ecc74e4e1e31ca1d573f788f88e1f93025"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging/wingless_prayer_encouraging_01.png",
+      "bytes": 61177,
+      "sha256": "ead39fcb797f2f1b8c02be24329a8093ae60e0754692b5ceffc1cc448294b03c",
+      "git_blob_sha1": "207db22e8add79a17f802b9cb44196b0b83e3663"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging/wingless_prayer_encouraging_02.png",
+      "bytes": 61075,
+      "sha256": "b39933991fef12ee099bfab13110fd15c2d0f2ed9ebaa0827e091dd4f02c9df4",
+      "git_blob_sha1": "990472085d388e40e582b198d17906afe80cba33"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging/wingless_prayer_encouraging_03.png",
+      "bytes": 60901,
+      "sha256": "6860d486648601a6b295ca8b999e947a10815e90bbf210777be311b4c38e6178",
+      "git_blob_sha1": "62f4875b6dde3ced2650e5d88b7db4f992b88db5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging/wingless_prayer_encouraging_04.png",
+      "bytes": 60688,
+      "sha256": "06f2371483200593181d18aca464c35b9c095516a7158acc8b0451154c38cc1b",
+      "git_blob_sha1": "a10aa017a89f4df01bceee128d51a10f2e6a4a1f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging/wingless_prayer_encouraging_05.png",
+      "bytes": 60559,
+      "sha256": "77c3c4cc9046c2481feeebe12be3a2cb145390eacee580943c73f4ac3ac92944",
+      "git_blob_sha1": "60cbaedf93db3d42c6824d44057952b95c49a24a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging/wingless_prayer_encouraging_06.png",
+      "bytes": 60492,
+      "sha256": "6914e81112b8c6c05683b3f13282a2a36b6c392b8492108fa1bf90d5d7778b45",
+      "git_blob_sha1": "ed665fda567ca4b9c86fbe4cc9802796e4d913d8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging/wingless_prayer_encouraging_07.png",
+      "bytes": 60561,
+      "sha256": "ac62e952f088c3b3ab9f9c9b84fb638f0ea9c61f6e7a456ba2b51759205c8550",
+      "git_blob_sha1": "3663267eee6c4ec3a1221352e77273c878785cfb"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging/wingless_prayer_encouraging_08.png",
+      "bytes": 60692,
+      "sha256": "36373664e4fb2a146fcee299df326cac2c505b928017418329e278711f97cda7",
+      "git_blob_sha1": "4010cf582a84df222a8894a264c9e8b1631d8964"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging/wingless_prayer_encouraging_09.png",
+      "bytes": 60903,
+      "sha256": "9e0e60a6f355ff0054e193aa50a3f230f313b0ff50e184ec1d433a30382c7a99",
+      "git_blob_sha1": "dd6d7e86a6343247d4326d7f3e9841560c7f1a43"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging/wingless_prayer_encouraging_10.png",
+      "bytes": 61078,
+      "sha256": "2e1f7855c99c8ea850376c04c79e110359efc7e5d8741e4324d00196a935d22d",
+      "git_blob_sha1": "f251c0caf8415cb088f5cb1ef0674e6c3d4745c1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging/wingless_prayer_encouraging_11.png",
+      "bytes": 61178,
+      "sha256": "b2af158fa214d92eeeaa2f809fe7cd0ddfab0d68769eaed9c3a1b76dd604315e",
+      "git_blob_sha1": "1bf07b6b3f4ece2bacc6b5c7b40601096a169e83"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_prayer_encouraging.png",
+      "bytes": 61207,
+      "sha256": "b4bd513d5bc622b611de6db809f4e710bb5086ed865cabe6e3d827369c300b7b",
+      "git_blob_sha1": "e23d95ecc74e4e1e31ca1d573f788f88e1f93025"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned/wingless_ribbon_concerned_00.png",
+      "bytes": 55850,
+      "sha256": "c101059dbcdbbe0518b6c747e48ee1fd4e32ee7418159a2d4dae0e6b35903f66",
+      "git_blob_sha1": "aa7d74a45c6893bca7ed2993fbc82ffa0bcfd0e2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned/wingless_ribbon_concerned_01.png",
+      "bytes": 55833,
+      "sha256": "9542e89e3e39ee0510490af5a3f525a63afbba49de0adc867ad303d7209a176a",
+      "git_blob_sha1": "16bf9e52c96f0b168a5200b115ea24ade75ce2a7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned/wingless_ribbon_concerned_02.png",
+      "bytes": 55725,
+      "sha256": "284b446f363ecce5d01f5403a03749543125ceb58d100fb72cc720314438fae2",
+      "git_blob_sha1": "67f2c36abfa1ca9186c927e65045334d0054a8ef"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned/wingless_ribbon_concerned_03.png",
+      "bytes": 55523,
+      "sha256": "a7e05ceb8985bf7d594f639354cf75f8e175864c182d11aba9b94e4d10c42805",
+      "git_blob_sha1": "205c436fa9fef1834f3ea120547effd81b3e2235"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned/wingless_ribbon_concerned_04.png",
+      "bytes": 55265,
+      "sha256": "c75a47d435aacda24f8d763c2dbc92f28c4a7b6e8935054dd1b915789963c13c",
+      "git_blob_sha1": "704c3d7a3a3e4c66b54d665e310f027ea24ec502"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned/wingless_ribbon_concerned_05.png",
+      "bytes": 55155,
+      "sha256": "4122cfc1759c87d220b4352be1635618a26369e3710a8e213c1904d4004e6780",
+      "git_blob_sha1": "88c67fffce94ca8e57976b78c9789075156e59a3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned/wingless_ribbon_concerned_06.png",
+      "bytes": 54914,
+      "sha256": "cfb2fbe80026b3e82a6826a7dd0cee1a308495cfa87e57df172cfc301a8e8286",
+      "git_blob_sha1": "b04da93487ba100456870f01051acc31255c8c14"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned/wingless_ribbon_concerned_07.png",
+      "bytes": 55146,
+      "sha256": "5f0e0b5777035f3f326a462538475123934ffe2e705f0ece70a49a057d927590",
+      "git_blob_sha1": "069097a81a05ae8888642194a95b55765f019a96"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned/wingless_ribbon_concerned_08.png",
+      "bytes": 55249,
+      "sha256": "b1d37f3c2f55394c1ef59a126b68fe18fe9ea6d8bcb9eccfcfdae11ce3259ce9",
+      "git_blob_sha1": "f0a6e00fa93ccb419142b0adab77cc048bb1ee74"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned/wingless_ribbon_concerned_09.png",
+      "bytes": 55511,
+      "sha256": "0171183590d8bace0775c9edc99d743c27f91585878d62c74235a1354b1629f0",
+      "git_blob_sha1": "ae554baf592308b3c62be113a853bfdb05615956"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned/wingless_ribbon_concerned_10.png",
+      "bytes": 55718,
+      "sha256": "b35839ea892f6b3783ef212629f284219140106280e2791c146975c661450456",
+      "git_blob_sha1": "9a8554c991aafdeff40e44c297a1b70225e9ac38"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned/wingless_ribbon_concerned_11.png",
+      "bytes": 55827,
+      "sha256": "2dff1f0f4641b095b2e4f021fcc261d740958cba369be8f43fd30d0b74007379",
+      "git_blob_sha1": "3bf92c3568e0c67f5cb6b297caa04618ac9359ad"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_concerned.png",
+      "bytes": 55850,
+      "sha256": "c101059dbcdbbe0518b6c747e48ee1fd4e32ee7418159a2d4dae0e6b35903f66",
+      "git_blob_sha1": "aa7d74a45c6893bca7ed2993fbc82ffa0bcfd0e2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging/wingless_ribbon_encouraging_00.png",
+      "bytes": 58057,
+      "sha256": "9a1979907976bb33b24fa861f0a78476a67c280430cba8165e7fd382ac58506e",
+      "git_blob_sha1": "22c06baa17333815aadb1beff8fd5be02d7512d7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging/wingless_ribbon_encouraging_01.png",
+      "bytes": 58050,
+      "sha256": "009cd7ff6b202e323a49db9700eff0810966a2977369b601109d2d01ce0c5dd5",
+      "git_blob_sha1": "df78d37d6175b922c8a4b3d922ecd8f89ef2d1c0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging/wingless_ribbon_encouraging_02.png",
+      "bytes": 57928,
+      "sha256": "c03bf22b04927434e18be5e4ca99ba76d04d58f0608aa49344a42800d22512cd",
+      "git_blob_sha1": "15c0e1a3b80eeed11f67a46caf455736db820f6d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging/wingless_ribbon_encouraging_03.png",
+      "bytes": 57781,
+      "sha256": "03b156f89f08efeaa978434e907d96289011f9132e7612a902ea52c950571804",
+      "git_blob_sha1": "2c8a1f6d6c69956125fdf055cfeef88fa8bbf8d6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging/wingless_ribbon_encouraging_04.png",
+      "bytes": 57596,
+      "sha256": "f65e372c88b229299b50a8594e821d742e9ca35ed80d7cd4ee3885d2b987dec7",
+      "git_blob_sha1": "69f51fa441b2fdd1bd93fbeb1f2c33233564b683"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging/wingless_ribbon_encouraging_05.png",
+      "bytes": 57497,
+      "sha256": "15d338a27eb49e4f7d507b176516aa8de397d73d82275879ec8b677c33f4ca0e",
+      "git_blob_sha1": "154f4b4e60bebc6b9ca17ab884f079212c5409c6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging/wingless_ribbon_encouraging_06.png",
+      "bytes": 57377,
+      "sha256": "1c2e64f0e8450ee85f56a1a7c3e77d2083bad4dbab14ebf72d8a54906882934b",
+      "git_blob_sha1": "a8ff9456891a2beeabd8bfdd2f3791a174735408"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging/wingless_ribbon_encouraging_07.png",
+      "bytes": 57496,
+      "sha256": "4a92fead0e1967301acc21b44420632f5f4651ab913864fc5ae38f009ccf7853",
+      "git_blob_sha1": "4fd2eb85dde8d84f38af52f7d316c9e24e17ff85"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging/wingless_ribbon_encouraging_08.png",
+      "bytes": 57595,
+      "sha256": "822d28d76ac96ad442aae1c00fc09fe93dad240fd937ca55a0f2c6bed9f70165",
+      "git_blob_sha1": "faa85041a38ac79ea44da9021f9ab3916342d6e2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging/wingless_ribbon_encouraging_09.png",
+      "bytes": 57779,
+      "sha256": "292e5c5135e9545d24a681b9c5938f1594ffeff13b7e07084adc351bb5e376ce",
+      "git_blob_sha1": "0b26b0d337dac2b97e8f35491c40547c0b6e0627"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging/wingless_ribbon_encouraging_10.png",
+      "bytes": 57926,
+      "sha256": "68e0b99817be041c35c5e4eca339d9d5044ff137393ccacb2fed8b63aab10bd9",
+      "git_blob_sha1": "66edbfa05b0178892bd5bef83325ba1ae10dea3c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging/wingless_ribbon_encouraging_11.png",
+      "bytes": 58048,
+      "sha256": "67f608f5c5dfc01f77501080b776e0f5c98ecb71cf5a7a487881bf9c1800e15f",
+      "git_blob_sha1": "ba2221aa172b4df3d8c2d5d8eeab39a6459139e2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/companions/wingless_ribbon_encouraging.png",
+      "bytes": 58057,
+      "sha256": "9a1979907976bb33b24fa861f0a78476a67c280430cba8165e7fd382ac58506e",
+      "git_blob_sha1": "22c06baa17333815aadb1beff8fd5be02d7512d7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright/person_bright_00.png",
+      "bytes": 5117,
+      "sha256": "9a913b5dd2c28585a910d45aa1ba4f5a9d7f89f86a31a8b78a45de6ff6c1a8f3",
+      "git_blob_sha1": "3f512d815f63a4e3ab8aaa78083c6b8906745162"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright/person_bright_01.png",
+      "bytes": 5119,
+      "sha256": "e53c053853d8a0f9c6a6b09796d35a1659452c5fbfaf8368f5e7b37775f6c61b",
+      "git_blob_sha1": "8470f188d465d63b4509b3c13eff622a782a1f00"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright/person_bright_02.png",
+      "bytes": 4956,
+      "sha256": "c0e8fe6594c94eded0dab2d5dacded56e7956e9533689c090b5ab947da43b170",
+      "git_blob_sha1": "dfc210bcabaceff55bc38a34677959bd963a9899"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright/person_bright_03.png",
+      "bytes": 4805,
+      "sha256": "cd47282e5f1d3f0984e0e5e77a8aca6acff0a7d29bf8bdbd6ee778579eabefc3",
+      "git_blob_sha1": "254c2ac6e4a0a6304c455313cf1a54013105a33b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright/person_bright_04.png",
+      "bytes": 4575,
+      "sha256": "146afee5d9daad2cde0bab2cf697865507a958824e3f2694d4014db010c70311",
+      "git_blob_sha1": "af74154457d1ba3e5261bee22028f108dcb7e2d9"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright/person_bright_05.png",
+      "bytes": 4417,
+      "sha256": "b91232f89150b86fce6d57bf1073deb97652c1d994aef67e60641827a1ab2247",
+      "git_blob_sha1": "8b81f0483149c4f3b3b84c64d2d3c367cbfc4815"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright/person_bright_06.png",
+      "bytes": 4313,
+      "sha256": "c53a830df8c97310234f74f1fb0a1b8144c93ad3f2dfefc8386ce99b4af9e46c",
+      "git_blob_sha1": "d242dd399d7e2e434bbd2a170f6d6a9ff5e67444"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright/person_bright_07.png",
+      "bytes": 4417,
+      "sha256": "b91232f89150b86fce6d57bf1073deb97652c1d994aef67e60641827a1ab2247",
+      "git_blob_sha1": "8b81f0483149c4f3b3b84c64d2d3c367cbfc4815"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright/person_bright_08.png",
+      "bytes": 4575,
+      "sha256": "146afee5d9daad2cde0bab2cf697865507a958824e3f2694d4014db010c70311",
+      "git_blob_sha1": "af74154457d1ba3e5261bee22028f108dcb7e2d9"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright/person_bright_09.png",
+      "bytes": 4805,
+      "sha256": "cd47282e5f1d3f0984e0e5e77a8aca6acff0a7d29bf8bdbd6ee778579eabefc3",
+      "git_blob_sha1": "254c2ac6e4a0a6304c455313cf1a54013105a33b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright/person_bright_10.png",
+      "bytes": 4956,
+      "sha256": "c0e8fe6594c94eded0dab2d5dacded56e7956e9533689c090b5ab947da43b170",
+      "git_blob_sha1": "dfc210bcabaceff55bc38a34677959bd963a9899"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright/person_bright_11.png",
+      "bytes": 5119,
+      "sha256": "e53c053853d8a0f9c6a6b09796d35a1659452c5fbfaf8368f5e7b37775f6c61b",
+      "git_blob_sha1": "8470f188d465d63b4509b3c13eff622a782a1f00"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_bright.png",
+      "bytes": 5117,
+      "sha256": "9a913b5dd2c28585a910d45aa1ba4f5a9d7f89f86a31a8b78a45de6ff6c1a8f3",
+      "git_blob_sha1": "3f512d815f63a4e3ab8aaa78083c6b8906745162"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark/person_dark_00.png",
+      "bytes": 7355,
+      "sha256": "2a7503b7e5eb1962c89d75fb3781b54ad257cc01d27aef3f0a26fc1d207bf063",
+      "git_blob_sha1": "26f561491e272646257633fd7e26abfafcb42818"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark/person_dark_01.png",
+      "bytes": 7262,
+      "sha256": "8309e99c4dae31b03f7e941355ab6f6d9bb15b21c10710a3d0dce91ccbfc7803",
+      "git_blob_sha1": "e23c54458908a1035c3670d392103a8626e66450"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark/person_dark_02.png",
+      "bytes": 7054,
+      "sha256": "35922b1147fb1bf6e643e0b8cbc7cdec15f0238e6e880550e2bac0b458a81a56",
+      "git_blob_sha1": "cb62880222d15e5773f40e84f0ca4b3278b97024"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark/person_dark_03.png",
+      "bytes": 6852,
+      "sha256": "ca06fe94eea05b342bb6cfa9a69e40307657f9b87de5434d65796d855f6a167d",
+      "git_blob_sha1": "2fc59b64532688e762ea64cfae08419352f1e05a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark/person_dark_04.png",
+      "bytes": 6537,
+      "sha256": "2ebffe213c200e83148f41fa1a6eb8c0eda544fada12fe712b7823207046fb08",
+      "git_blob_sha1": "4f6a78662f2f2e2c4b2e827eced408f66e42699e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark/person_dark_05.png",
+      "bytes": 6307,
+      "sha256": "0f4b872a562a487b04d24adf3b4cbc3c07d01bebbafd8c3708bf7850dcbf76bb",
+      "git_blob_sha1": "2e776b34b7099f0a050d0e9a40db6c59a1a11ccd"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark/person_dark_06.png",
+      "bytes": 6322,
+      "sha256": "68883c115f348cafbd9edbb70981f1bc7cdcebfd84fbd049e1f2931757eec834",
+      "git_blob_sha1": "c0b80cc920a715ecfc41ad0eeb5d096341a7de2d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark/person_dark_07.png",
+      "bytes": 6433,
+      "sha256": "0c24f6930591edd5eb570bc0d233960e59c4c7edd98de1d37d3eaf13fe7971d8",
+      "git_blob_sha1": "5e56be264e2b1b958bd72cdf9e88938c648d637d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark/person_dark_08.png",
+      "bytes": 6674,
+      "sha256": "990fac8f0b6c63c75939bd53e2f05206e9b951b820d3cc7f80c7c51accda3938",
+      "git_blob_sha1": "bceb477e8260f1476ff92bfdc65805aeadfc2041"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark/person_dark_09.png",
+      "bytes": 7141,
+      "sha256": "d42f2b73e6d4b6cf17b7a65efb05be9a495b24f9d1e0fabc84c9b801ced990c9",
+      "git_blob_sha1": "42a3125803718d85b9441801703a3c415fcf6e8b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark/person_dark_10.png",
+      "bytes": 7284,
+      "sha256": "c3553c7e301e3cdff510c7ae751ab6c32c012c2121b7cc8100fa479ee1fa7028",
+      "git_blob_sha1": "b2c9a4e48b7cad0c8d0380d56eadd531bc17613b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark/person_dark_11.png",
+      "bytes": 7449,
+      "sha256": "c0e2990a97491171bfa89fb02b85153fbd2b3cb8ece90c146b69f8894ee7b792",
+      "git_blob_sha1": "21eac414f0c937e0978a9be192acdb7940523619"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_dark.png",
+      "bytes": 7355,
+      "sha256": "2a7503b7e5eb1962c89d75fb3781b54ad257cc01d27aef3f0a26fc1d207bf063",
+      "git_blob_sha1": "26f561491e272646257633fd7e26abfafcb42818"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading/person_fading_00.png",
+      "bytes": 4499,
+      "sha256": "f6af3f835eb4ba540f477808d2e3977a312ce3586c3250d746190ba9d54d5c91",
+      "git_blob_sha1": "8e8d3692dfacc043d07421f1d18e60709b6b8f3e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading/person_fading_01.png",
+      "bytes": 4482,
+      "sha256": "f85d2b34f25e0fd7c75160d046a0e9f5447e47d75020f906b8516b36fb9211ff",
+      "git_blob_sha1": "555aceccd2761290d304f9335db31e46d9eac6da"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading/person_fading_02.png",
+      "bytes": 4373,
+      "sha256": "ae6eac9a1f804a6d88639cd6d1a03921ff6eeb30bced0bfe44fa5fad773b11fb",
+      "git_blob_sha1": "f3038ccd066ed32817b91785d83a4ff656e863ed"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading/person_fading_03.png",
+      "bytes": 4171,
+      "sha256": "f66d6715be790a52acbc6a917270a8e8e355f67309d9b6a1100239821f327ac0",
+      "git_blob_sha1": "0a7cda806ee05bb96540ee4d7257734294afff86"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading/person_fading_04.png",
+      "bytes": 3977,
+      "sha256": "5f689e222dbc2248871ed6cca3d7e226cb492455cad71d5caf20f0d50c23d746",
+      "git_blob_sha1": "6277416806cb80927da9ffff0f00c849553dd897"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading/person_fading_05.png",
+      "bytes": 3795,
+      "sha256": "dfcd78320027a0ef53ed260eb486e21b8a3cb54eec45af670a09d3682b25f4d7",
+      "git_blob_sha1": "d2f645ad8ba5fefd4e8e387b1394937134e585b3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading/person_fading_06.png",
+      "bytes": 3695,
+      "sha256": "c1efd55096b1788ed44a6b97026d21b20ec96e8281b3b7e27bf6867740aee687",
+      "git_blob_sha1": "ef4bd14d545f1387139a755de2dd421ccfcb508e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading/person_fading_07.png",
+      "bytes": 3781,
+      "sha256": "468063e6612bfaed92ed4b0789193eb62655f6f1a14fbae83857debd05fc186f",
+      "git_blob_sha1": "d3d96f374196a3d54475a31846d6e49f352181ac"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading/person_fading_08.png",
+      "bytes": 4022,
+      "sha256": "a0578f51f744ae288be471d93925cd5f786c6b7b386968b52eead388ea554a07",
+      "git_blob_sha1": "015be040650840227372c4a6672b7f3298a9b747"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading/person_fading_09.png",
+      "bytes": 4146,
+      "sha256": "2ab8a796b8f9d793efa88001a6d188cea747d43941aaf2464246f2755cfa4543",
+      "git_blob_sha1": "61a55f95b206307ab3519f94d1bb74f407a76025"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading/person_fading_10.png",
+      "bytes": 4374,
+      "sha256": "869d54cf6aed979a372c41c204babcf23bb21d0e7643766e5e052aebcdd94778",
+      "git_blob_sha1": "b7ee256475774262f5550bfb2c656bb0a6a08f8c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading/person_fading_11.png",
+      "bytes": 4492,
+      "sha256": "f6678205c28ed80ab350a85aa53a0746273faf0472d2d1eb71280e34246a4fdd",
+      "git_blob_sha1": "3b5715459d167686f222dffa17073b52490760ee"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_fading.png",
+      "bytes": 4499,
+      "sha256": "f6af3f835eb4ba540f477808d2e3977a312ce3586c3250d746190ba9d54d5c91",
+      "git_blob_sha1": "8e8d3692dfacc043d07421f1d18e60709b6b8f3e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint/person_faint_00.png",
+      "bytes": 3747,
+      "sha256": "e8fd562eef3cd0781fe5b801d7636edfccb368ac97c594ef8d5deea9b033dcbb",
+      "git_blob_sha1": "a2ef8da0b7bdc961d525b54cb3ab55911b18f55b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint/person_faint_01.png",
+      "bytes": 3622,
+      "sha256": "f09ba81329c63973ce5e34183a858ad159cc5ca4098779f51a480a9b9906a038",
+      "git_blob_sha1": "f1e64d70d8013346e5240beaa35f50360f858daa"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint/person_faint_02.png",
+      "bytes": 3550,
+      "sha256": "5d0fad6b005489ddb2e8296e694922c28b91d3b430ae664c9b4fb19518e1c4b5",
+      "git_blob_sha1": "baae79ddd15417a02a21fa3070bbeb436dc0b6bb"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint/person_faint_03.png",
+      "bytes": 3458,
+      "sha256": "ef003a6431bb24159cb3b34420469b07c248df7b3b39fcb5bc48ed491b846474",
+      "git_blob_sha1": "776cbcc3eff2944f73270679992c34b806c52e76"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint/person_faint_04.png",
+      "bytes": 3236,
+      "sha256": "36f775e285233c93dc7923b17d2bfe7ebe08790624595ec6d6f47548ea69f155",
+      "git_blob_sha1": "0f8040cf3666489dcebc9cceedc33342fe895bda"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint/person_faint_05.png",
+      "bytes": 3115,
+      "sha256": "91a0b47cffef623ddaca8b5bb0a5084d46e7c4a1d6d00c66c8e929156bf834f5",
+      "git_blob_sha1": "7477543c63eaee6da98b53768ea4ed8e08c4a623"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint/person_faint_06.png",
+      "bytes": 3074,
+      "sha256": "75c70d06021e99a10ba755e524c8e44d3854582bca41d345de76e36812e35e51",
+      "git_blob_sha1": "82b46bf967066a94d5e0fe8068a0f52af534820f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint/person_faint_07.png",
+      "bytes": 3115,
+      "sha256": "91a0b47cffef623ddaca8b5bb0a5084d46e7c4a1d6d00c66c8e929156bf834f5",
+      "git_blob_sha1": "7477543c63eaee6da98b53768ea4ed8e08c4a623"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint/person_faint_08.png",
+      "bytes": 3236,
+      "sha256": "36f775e285233c93dc7923b17d2bfe7ebe08790624595ec6d6f47548ea69f155",
+      "git_blob_sha1": "0f8040cf3666489dcebc9cceedc33342fe895bda"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint/person_faint_09.png",
+      "bytes": 3458,
+      "sha256": "ef003a6431bb24159cb3b34420469b07c248df7b3b39fcb5bc48ed491b846474",
+      "git_blob_sha1": "776cbcc3eff2944f73270679992c34b806c52e76"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint/person_faint_10.png",
+      "bytes": 3550,
+      "sha256": "5d0fad6b005489ddb2e8296e694922c28b91d3b430ae664c9b4fb19518e1c4b5",
+      "git_blob_sha1": "baae79ddd15417a02a21fa3070bbeb436dc0b6bb"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint/person_faint_11.png",
+      "bytes": 3622,
+      "sha256": "f09ba81329c63973ce5e34183a858ad159cc5ca4098779f51a480a9b9906a038",
+      "git_blob_sha1": "f1e64d70d8013346e5240beaa35f50360f858daa"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_faint.png",
+      "bytes": 3747,
+      "sha256": "e8fd562eef3cd0781fe5b801d7636edfccb368ac97c594ef8d5deea9b033dcbb",
+      "git_blob_sha1": "a2ef8da0b7bdc961d525b54cb3ab55911b18f55b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant/person_radiant_00.png",
+      "bytes": 7404,
+      "sha256": "4c1866d9a9c319c8241e8bc1ec53502460b25b27f40a356791de1ac20df99491",
+      "git_blob_sha1": "77c9a9271afd0cfdcc6604926dd97924167eaa21"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant/person_radiant_01.png",
+      "bytes": 7437,
+      "sha256": "1869033e82851ad8e245f8fe6abb9e2d886a92f2f5eee25a074460e7f7fcbcdb",
+      "git_blob_sha1": "9553e7449ff2f9a3c606bd7bb661ec7eba9074f7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant/person_radiant_02.png",
+      "bytes": 7193,
+      "sha256": "62cc0b21b20d7a00526e5bc05fea5c5d21b1a32f4ed6fd77aa149fd852e803e9",
+      "git_blob_sha1": "c244fe7d63b3d8826578b2a8a468053b67caefe1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant/person_radiant_03.png",
+      "bytes": 7199,
+      "sha256": "e6e25749ef9e9aeefceb0bf0a76c200e8077b9b276d3219bd4a9c25c5ae7ae83",
+      "git_blob_sha1": "8183dabfd954be653c8259b6c6535ac4993dbc7a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant/person_radiant_04.png",
+      "bytes": 6887,
+      "sha256": "f415446b391cb59ad6416fb5dccf6f121eb278b60812960a95b5d7e40bf81b6b",
+      "git_blob_sha1": "39ffbe2e02d7856c3f36b06d148e302e71cd57cd"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant/person_radiant_05.png",
+      "bytes": 6693,
+      "sha256": "f44f90ef7733cfe96db18d3d14d7edc1544b4a2f222db95fcd6dc9cccb058ef9",
+      "git_blob_sha1": "78c79518ea0eb17ad27ee75cad49fb1a112c1e8c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant/person_radiant_06.png",
+      "bytes": 6605,
+      "sha256": "2a2f03ead2cf707e46fb7d94d57a5218e862c529d2c9e7de88933f621def9256",
+      "git_blob_sha1": "b38c0b697742f2e25bad4cb872ca2881e58372f4"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant/person_radiant_07.png",
+      "bytes": 6797,
+      "sha256": "1ea070a46c3a7f73146bcb1a5aa6e18ae77a5addd217f968a5dc5c59b0935231",
+      "git_blob_sha1": "eb9301793f0e721a7333b94b478ca05332d7adca"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant/person_radiant_08.png",
+      "bytes": 7018,
+      "sha256": "c1fc69cd1823e66f4bcc3c946c86e45fb5b8de3cdfceb6a05849381660c10e81",
+      "git_blob_sha1": "c490b87d3fabe7f60760e3066e5feda7ea96f766"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant/person_radiant_09.png",
+      "bytes": 7227,
+      "sha256": "11b0c1c697792f0d17866ddc84d22e79777db7b4ef1fa8270f04137d402af610",
+      "git_blob_sha1": "2bb77f6ecedbcf2d5f0fc22db8371538bd8b76fe"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant/person_radiant_10.png",
+      "bytes": 7488,
+      "sha256": "8e04402b97caabd2d84c05c7fbd46423c89e1fbc9e77dce190abf6d4d2f0da2f",
+      "git_blob_sha1": "558693fed77126bb0170e8193f11a997c1475de7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant/person_radiant_11.png",
+      "bytes": 7636,
+      "sha256": "92efff76d5e5e440aa380b772854faef6553102689d13e03008c9a19947ed696",
+      "git_blob_sha1": "3c17f80ff75cda7881599591853c65f1885bfc5e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/halos/person_radiant.png",
+      "bytes": 7404,
+      "sha256": "4c1866d9a9c319c8241e8bc1ec53502460b25b27f40a356791de1ac20df99491",
+      "git_blob_sha1": "77c9a9271afd0cfdcc6604926dd97924167eaa21"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link/charity_link_00.png",
+      "bytes": 4138,
+      "sha256": "c4d6deb8b5e3ee9a9250f41923e28ab1bfac41e64388ef6ffab321578b663840",
+      "git_blob_sha1": "91b1436caa974ec1093efae274d713d23841d4f8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link/charity_link_01.png",
+      "bytes": 4622,
+      "sha256": "7fe759c39086d53215b2f324a2511e427fe71aaa2bf0a462a66b42c0be17ee7e",
+      "git_blob_sha1": "4a49ceb63a21f5ea04f0834de950f4121f63f5a7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link/charity_link_02.png",
+      "bytes": 4454,
+      "sha256": "d25cf1ecc03a33c827400633f31b27e314acd1ac93c8fed49bcffe4c5ed66b64",
+      "git_blob_sha1": "dbd45842395e8bb8b89144fdbefce38eaacd8f3a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link/charity_link_03.png",
+      "bytes": 4224,
+      "sha256": "5e4fc6dd38483de7abfc578ed95d8be64944021c2e752d3afd92fd205647fb00",
+      "git_blob_sha1": "b84ef67bf53813c064c1392f86198082b3719db0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link/charity_link_04.png",
+      "bytes": 4547,
+      "sha256": "5085c0fb3b1b11945d2adca5b725f9e077a1b52d819f705ca0d52c415013d822",
+      "git_blob_sha1": "8d6da1d7c5f6a88d473c199c028a9d3d9abb7d51"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link/charity_link_05.png",
+      "bytes": 4552,
+      "sha256": "98f8c14ab7075f7cebb03bcbca3adf14d8ba8e241804a1088784b07d99f8c806",
+      "git_blob_sha1": "3984f232927bad14294660b8dbb40272baf911eb"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link/charity_link_06.png",
+      "bytes": 4228,
+      "sha256": "78e883dececb7216bbaa819e2a75bc2942e009896984e9bd0c77a5a5789fb95a",
+      "git_blob_sha1": "e573eadd872fb2e6c5a04b8a72fef26462114d9a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link/charity_link_07.png",
+      "bytes": 4547,
+      "sha256": "b9fe45fa32fc5c7863ca7249ebf53dda2cfde85a8f12b6eace4eb349f58b92fc",
+      "git_blob_sha1": "8552ce95fd7249124e02c369502cb204804dce97"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link/charity_link_08.png",
+      "bytes": 4441,
+      "sha256": "cba0018b37b559630f026ee06ba531d988a31a967b5256fd85bdbbd356aba29a",
+      "git_blob_sha1": "2340adb39c0828ffa6e73fd3d71ed9caaecf37ff"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link/charity_link_09.png",
+      "bytes": 4190,
+      "sha256": "588b91b057e90ab1dde3ed76bf59e9b93e31cb028314a44a9ceff84b653c6ec4",
+      "git_blob_sha1": "62a796f643e3b74bdcb0b53c205e1da9f591fdfe"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link/charity_link_10.png",
+      "bytes": 4541,
+      "sha256": "ae44e0939f0b5ed164964cf4a3609b98bd7684b8fff0a0f8b820e1e856ab75e9",
+      "git_blob_sha1": "937b3b3e33dd78211303354a576b9534d2acb2fc"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link/charity_link_11.png",
+      "bytes": 4580,
+      "sha256": "639cfe3a12347a889644854cedfece8f5f81bff6b1c3d2c645b532d91a386ad9",
+      "git_blob_sha1": "b23fa0bfbafbaae4e06cacf15e433401462d576e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/charity_link.png",
+      "bytes": 4138,
+      "sha256": "c4d6deb8b5e3ee9a9250f41923e28ab1bfac41e64388ef6ffab321578b663840",
+      "git_blob_sha1": "91b1436caa974ec1093efae274d713d23841d4f8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection/protection_00.png",
+      "bytes": 10238,
+      "sha256": "d33d21b60e8ec24876758f2ebeb011fd68c72976aedac10bcf1f1c1ad6ce2460",
+      "git_blob_sha1": "b10fc3e498a3b15cfd7fb597d49071304243b0d8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection/protection_01.png",
+      "bytes": 10064,
+      "sha256": "6e1d176b05f7bee0acb7741163fec66ed5a2a7610af72942d93acfa4acdb693b",
+      "git_blob_sha1": "1d4b094d76023b1919783c4b5ecf0ef548af7566"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection/protection_02.png",
+      "bytes": 10123,
+      "sha256": "171d459cdf79fb82b05422ecd1b8f33a7e549e3560beb153b82caa3332bc9369",
+      "git_blob_sha1": "fcd815c985b44dd1129fd7ddc8e5bc240fb576bc"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection/protection_03.png",
+      "bytes": 10017,
+      "sha256": "caaa17b0bb2b190e986f4ee64062342fb1e8837ab0f31cfeed4ee7d64af2ca56",
+      "git_blob_sha1": "738a1da7a5d9750368b17d2297ef93b403277d05"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection/protection_04.png",
+      "bytes": 10238,
+      "sha256": "d33d21b60e8ec24876758f2ebeb011fd68c72976aedac10bcf1f1c1ad6ce2460",
+      "git_blob_sha1": "b10fc3e498a3b15cfd7fb597d49071304243b0d8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection/protection_05.png",
+      "bytes": 10064,
+      "sha256": "6e1d176b05f7bee0acb7741163fec66ed5a2a7610af72942d93acfa4acdb693b",
+      "git_blob_sha1": "1d4b094d76023b1919783c4b5ecf0ef548af7566"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection/protection_06.png",
+      "bytes": 10123,
+      "sha256": "171d459cdf79fb82b05422ecd1b8f33a7e549e3560beb153b82caa3332bc9369",
+      "git_blob_sha1": "fcd815c985b44dd1129fd7ddc8e5bc240fb576bc"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection/protection_07.png",
+      "bytes": 10017,
+      "sha256": "caaa17b0bb2b190e986f4ee64062342fb1e8837ab0f31cfeed4ee7d64af2ca56",
+      "git_blob_sha1": "738a1da7a5d9750368b17d2297ef93b403277d05"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection/protection_08.png",
+      "bytes": 10238,
+      "sha256": "d33d21b60e8ec24876758f2ebeb011fd68c72976aedac10bcf1f1c1ad6ce2460",
+      "git_blob_sha1": "b10fc3e498a3b15cfd7fb597d49071304243b0d8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection/protection_09.png",
+      "bytes": 10064,
+      "sha256": "6e1d176b05f7bee0acb7741163fec66ed5a2a7610af72942d93acfa4acdb693b",
+      "git_blob_sha1": "1d4b094d76023b1919783c4b5ecf0ef548af7566"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection/protection_10.png",
+      "bytes": 10164,
+      "sha256": "99619e7bd16fe84dbddb99de589caa2f7f35033f62adc6d6084ae223feb26d88",
+      "git_blob_sha1": "3494da44f158401195f245289a67e07f986c7ddd"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection/protection_11.png",
+      "bytes": 10017,
+      "sha256": "caaa17b0bb2b190e986f4ee64062342fb1e8837ab0f31cfeed4ee7d64af2ca56",
+      "git_blob_sha1": "738a1da7a5d9750368b17d2297ef93b403277d05"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/protection.png",
+      "bytes": 10238,
+      "sha256": "d33d21b60e8ec24876758f2ebeb011fd68c72976aedac10bcf1f1c1ad6ce2460",
+      "git_blob_sha1": "b10fc3e498a3b15cfd7fb597d49071304243b0d8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper/targeted_whisper_00.png",
+      "bytes": 4192,
+      "sha256": "80834af869e976d678a141a2d0109f438b8789ce9d626b9edb5fc0d0621ef80a",
+      "git_blob_sha1": "adf9b34a9190c9600cd91b87b6aebe4fc2da4310"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper/targeted_whisper_01.png",
+      "bytes": 4644,
+      "sha256": "b6ce046452bba1b8454bd2620bd45410885a4dc19f1c47fa041b1717c437fb35",
+      "git_blob_sha1": "627f1716a7d031f3cd95300ba5bf2c5682930e72"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper/targeted_whisper_02.png",
+      "bytes": 4456,
+      "sha256": "fac257ec6b6b46d0c71d3d2a68d1761eb0c93094b4d0117091e07c387eca801d",
+      "git_blob_sha1": "ab37bc1dce36a344658a629e860f8f82a4559399"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper/targeted_whisper_03.png",
+      "bytes": 4259,
+      "sha256": "c032bf6a8d1e4d7247a89cc6fdaa6817201f787fe53fd0183901a205ee3ffce6",
+      "git_blob_sha1": "cf9eb01ee57d670394a14354e0023c2ac92c6f0f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper/targeted_whisper_04.png",
+      "bytes": 4547,
+      "sha256": "35a2086bc000593a8268033c3184e7739e170571c7e95a3e5f8b54d99ffbef1e",
+      "git_blob_sha1": "fb92e78324380b3b21928e8b28fd2918bacc86c1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper/targeted_whisper_05.png",
+      "bytes": 4595,
+      "sha256": "62ba95cf079a0739935ff33f0fbb307c5441c4b44003a759bf7f5bd84e15a7da",
+      "git_blob_sha1": "35d74b1e927969e3eabe1c72a5ed2fdedd93c327"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper/targeted_whisper_06.png",
+      "bytes": 4260,
+      "sha256": "dfa61d08a7073dabdd32d9e2eeb4e8f6e777f30b6089ad0f3497b7fbf113a418",
+      "git_blob_sha1": "d6d150db05fc82d5b155e335a029da3a0605ccff"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper/targeted_whisper_07.png",
+      "bytes": 4578,
+      "sha256": "e903e2a885e6d4917674da4ae303ebd87f20601f16bb62ef516a18dd8f474428",
+      "git_blob_sha1": "af4910faf9cdc78b456420da4515499e43c81323"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper/targeted_whisper_08.png",
+      "bytes": 4465,
+      "sha256": "b571524cb7810d3793a5e4773f294410ec77c22c1310637a239d03e01da1faa3",
+      "git_blob_sha1": "aa2b6e4c1091cf307a1f6db638b46746f98782c0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper/targeted_whisper_09.png",
+      "bytes": 4191,
+      "sha256": "d7f8f1e904b6e2394ac79e79f3143785cbff8587424fb6d8ec8d488836046cb8",
+      "git_blob_sha1": "8030f4e317d29dcae1d9f127dc81b42cc284cb03"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper/targeted_whisper_10.png",
+      "bytes": 4544,
+      "sha256": "578fdd895d1cd7ac1b1ac3f4565d082bca752944e3c4d9fa4a3fb2aa075d802f",
+      "git_blob_sha1": "a92efb85d7ad99381fd53768241d46e91e6f1c20"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper/targeted_whisper_11.png",
+      "bytes": 4594,
+      "sha256": "daf788c1666de974c67d460b82ab983020a881e24de37965e3ce88a0ea8a8ccb",
+      "git_blob_sha1": "c36188503754767ccc2c3c03c30ce1330fc5974d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/interventions/targeted_whisper.png",
+      "bytes": 4192,
+      "sha256": "80834af869e976d678a141a2d0109f438b8789ce9d626b9edb5fc0d0621ef80a",
+      "git_blob_sha1": "adf9b34a9190c9600cd91b87b6aebe4fc2da4310"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim/temple_dim_00.png",
+      "bytes": 14384,
+      "sha256": "534efb5e96beb195d5fe6faccba5656dfa23ac36b335ebf384c3c3de2e21f7d3",
+      "git_blob_sha1": "71cedb2aa7edbc811c6355078224b18f56231c36"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim/temple_dim_01.png",
+      "bytes": 14024,
+      "sha256": "5c9c505e133e583cc4542d29c87d2f6fddd9a2aa064f50b513a3e65dda162f38",
+      "git_blob_sha1": "d80cc85295fcdafa96589b109c454b10213cab70"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim/temple_dim_02.png",
+      "bytes": 13983,
+      "sha256": "20f6fdfcf7fa78441db7d1292153802d15dfed52160562d2d8f3359a989120cf",
+      "git_blob_sha1": "baa96ad2aacd42b204bccfa33398efc44fc7b502"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim/temple_dim_03.png",
+      "bytes": 12422,
+      "sha256": "f23a169061b13521b72b05e43f23c858a561b57611859245b248a66b8c5b5f95",
+      "git_blob_sha1": "17b77515e5d7c65b4cc3845e4e339e2e3dccec7d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim/temple_dim_04.png",
+      "bytes": 12004,
+      "sha256": "9f8d579cd57f23cf1495425c2bccd979c946372d0a00a9f8f5f1d3cfafcdb233",
+      "git_blob_sha1": "7ee088d0742f061efa63a2e6406696f3914781c9"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim/temple_dim_05.png",
+      "bytes": 11590,
+      "sha256": "46a30f046257d7242476c0f6e9406a50c11d77c4cd44e70fdd761a4f739df104",
+      "git_blob_sha1": "034066eac4bdfa38430c2962ab54bce53bea87b1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim/temple_dim_06.png",
+      "bytes": 11466,
+      "sha256": "52258a7c2c0e2bb9467a0d408b241557d9a54e99b072e397904aad76cb4b28f2",
+      "git_blob_sha1": "0b35b005e3e5e74bf7be578bb5c1902bb26c70ed"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim/temple_dim_07.png",
+      "bytes": 11590,
+      "sha256": "46a30f046257d7242476c0f6e9406a50c11d77c4cd44e70fdd761a4f739df104",
+      "git_blob_sha1": "034066eac4bdfa38430c2962ab54bce53bea87b1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim/temple_dim_08.png",
+      "bytes": 12004,
+      "sha256": "9f8d579cd57f23cf1495425c2bccd979c946372d0a00a9f8f5f1d3cfafcdb233",
+      "git_blob_sha1": "7ee088d0742f061efa63a2e6406696f3914781c9"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim/temple_dim_09.png",
+      "bytes": 12422,
+      "sha256": "f23a169061b13521b72b05e43f23c858a561b57611859245b248a66b8c5b5f95",
+      "git_blob_sha1": "17b77515e5d7c65b4cc3845e4e339e2e3dccec7d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim/temple_dim_10.png",
+      "bytes": 13983,
+      "sha256": "20f6fdfcf7fa78441db7d1292153802d15dfed52160562d2d8f3359a989120cf",
+      "git_blob_sha1": "baa96ad2aacd42b204bccfa33398efc44fc7b502"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim/temple_dim_11.png",
+      "bytes": 14024,
+      "sha256": "5c9c505e133e583cc4542d29c87d2f6fddd9a2aa064f50b513a3e65dda162f38",
+      "git_blob_sha1": "d80cc85295fcdafa96589b109c454b10213cab70"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_dim.png",
+      "bytes": 14384,
+      "sha256": "534efb5e96beb195d5fe6faccba5656dfa23ac36b335ebf384c3c3de2e21f7d3",
+      "git_blob_sha1": "71cedb2aa7edbc811c6355078224b18f56231c36"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy/temple_healthy_00.png",
+      "bytes": 24110,
+      "sha256": "2a89386130e4b8f42d1e845bab8cac97ca161397fe2c903113ac6ddc45d6151a",
+      "git_blob_sha1": "0bdb93430b04126bd141596a51085dd542e61de8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy/temple_healthy_01.png",
+      "bytes": 23585,
+      "sha256": "89745dd841a4c8d56062e39ee0c03d10a6646601cb203197f13e5fb6325ea3c3",
+      "git_blob_sha1": "409492c14069458ec9c2f4978e822e704a81f7b0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy/temple_healthy_02.png",
+      "bytes": 22807,
+      "sha256": "6634ffe80b7bdd212622353dbb1617e15fe1dafd6e9238e04b2e17e1093ac3cb",
+      "git_blob_sha1": "36ecf50f469dce0bbea66af01ba17497ac019bb9"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy/temple_healthy_03.png",
+      "bytes": 21720,
+      "sha256": "d2503b5dc2da1293124240ca048902580ebcd7d77a6ff28ccb5742a910338f67",
+      "git_blob_sha1": "1089a4445b312795994c9d5ac3a7679cce2f8cfa"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy/temple_healthy_04.png",
+      "bytes": 21301,
+      "sha256": "a3de07d5d94b34b32b13575db855a23d3cefa74713653fbfa1f99c9ed2f343d6",
+      "git_blob_sha1": "0f58b75bbbd796508612d3019f723972a36eb8a6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy/temple_healthy_05.png",
+      "bytes": 20338,
+      "sha256": "cd7e07390670f09d98218820db26782a48b1c508b0acc4dd46a49da561726251",
+      "git_blob_sha1": "cb737ddd4a79dc173911c0f08449195b7d79e319"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy/temple_healthy_06.png",
+      "bytes": 19873,
+      "sha256": "ff19502972ad672d1823d207612bfb85d3db7f928870b34ba88fdcb373e50a40",
+      "git_blob_sha1": "b40e61f82ce48d8e5988bb8b91ea2047c6563c39"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy/temple_healthy_07.png",
+      "bytes": 20338,
+      "sha256": "cd7e07390670f09d98218820db26782a48b1c508b0acc4dd46a49da561726251",
+      "git_blob_sha1": "cb737ddd4a79dc173911c0f08449195b7d79e319"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy/temple_healthy_08.png",
+      "bytes": 21301,
+      "sha256": "a3de07d5d94b34b32b13575db855a23d3cefa74713653fbfa1f99c9ed2f343d6",
+      "git_blob_sha1": "0f58b75bbbd796508612d3019f723972a36eb8a6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy/temple_healthy_09.png",
+      "bytes": 21720,
+      "sha256": "d2503b5dc2da1293124240ca048902580ebcd7d77a6ff28ccb5742a910338f67",
+      "git_blob_sha1": "1089a4445b312795994c9d5ac3a7679cce2f8cfa"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy/temple_healthy_10.png",
+      "bytes": 22807,
+      "sha256": "6634ffe80b7bdd212622353dbb1617e15fe1dafd6e9238e04b2e17e1093ac3cb",
+      "git_blob_sha1": "36ecf50f469dce0bbea66af01ba17497ac019bb9"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy/temple_healthy_11.png",
+      "bytes": 23585,
+      "sha256": "89745dd841a4c8d56062e39ee0c03d10a6646601cb203197f13e5fb6325ea3c3",
+      "git_blob_sha1": "409492c14069458ec9c2f4978e822e704a81f7b0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_healthy.png",
+      "bytes": 24110,
+      "sha256": "2a89386130e4b8f42d1e845bab8cac97ca161397fe2c903113ac6ddc45d6151a",
+      "git_blob_sha1": "0bdb93430b04126bd141596a51085dd542e61de8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant/temple_radiant_00.png",
+      "bytes": 37787,
+      "sha256": "bd953cd3b9fbdb63a3a3a0effde046aecda02fa99eff2f96d2e68fc4c1fa28cd",
+      "git_blob_sha1": "b5e74fca550e7209742b2ded9e49afc9d94d9732"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant/temple_radiant_01.png",
+      "bytes": 37094,
+      "sha256": "6e7f924cd933fc2aadedbf6c2fffadd204600a4bacb2cb37f43d455ef738c1ca",
+      "git_blob_sha1": "3867756d0614cd846dcc863b354588e926169b55"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant/temple_radiant_02.png",
+      "bytes": 36305,
+      "sha256": "e0a0daf22dce355081f090cfa7c1ea5195d99c41266c364bac4089caa2567fe0",
+      "git_blob_sha1": "9a58c6b58bda7c4baf414ae96c7149f108ead71f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant/temple_radiant_03.png",
+      "bytes": 34702,
+      "sha256": "fc1dbd29104671ed9289d52d23c4e74091fc192a7d1493b0898a140d0df42410",
+      "git_blob_sha1": "6b1bfab2878b8004753639b831b25a4a1639f071"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant/temple_radiant_04.png",
+      "bytes": 33437,
+      "sha256": "aa01d14abad0c1ae002586e0540aa96c29aad17c6ac25cd907c1016eff1cfa6c",
+      "git_blob_sha1": "9e0ae2cc9afe35dbfd8e44f29103ca1c5cc43f3c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant/temple_radiant_05.png",
+      "bytes": 32141,
+      "sha256": "2d84249ca9f4dfed5012b7d8c7f0bb8f26609c4ab8801b1207b2f18d7e343e8f",
+      "git_blob_sha1": "bf1268904ab00976d5ce77f17c93fd05d256ac3c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant/temple_radiant_06.png",
+      "bytes": 31903,
+      "sha256": "9eeb86a17d256b8818dd116db02d6da079b5d7a730efe359c4e23b6fe79e1aea",
+      "git_blob_sha1": "66c8459fc9c046495247172320980316d25e19fb"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant/temple_radiant_07.png",
+      "bytes": 32896,
+      "sha256": "d2ed484826e4744ae6b4ae43be8d307d1c6648473e613e1f464dac52534621d1",
+      "git_blob_sha1": "34ca11107b507fe94f0a975f9ab1ebfc5b5a0d59"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant/temple_radiant_08.png",
+      "bytes": 34171,
+      "sha256": "69e69d34ffe30efeccd481d61fb43125603ce83970a9d04a63ea3cf61ee6319f",
+      "git_blob_sha1": "c2266a6855c0fb7277b71e1f5abb7d2e8b1040a8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant/temple_radiant_09.png",
+      "bytes": 35735,
+      "sha256": "9c9171d573c89cddb29a8dbf9472a46b062674a2ada45297426f61be4e680644",
+      "git_blob_sha1": "a2671e01858b995115f3671614fd72b056a6947c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant/temple_radiant_10.png",
+      "bytes": 37506,
+      "sha256": "83d634e00d359a208015f1406847998bdabc942c3014324604e3c1491fec9b9f",
+      "git_blob_sha1": "2774ad23893992d042eef2b0bc86338d44bf8bfb"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant/temple_radiant_11.png",
+      "bytes": 37006,
+      "sha256": "18d000191c6d580b97ff5ff2a6f58ceea4fd844b46805aa33c216368eaa81470",
+      "git_blob_sha1": "b0ef656cdc2cb5dde35d714b6a1e98d204ff864a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/effects/temple/temple_radiant.png",
+      "bytes": 37787,
+      "sha256": "bd953cd3b9fbdb63a3a3a0effde046aecda02fa99eff2f96d2e68fc4c1fa28cd",
+      "git_blob_sha1": "b5e74fca550e7209742b2ded9e49afc9d94d9732"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/markers/tile_assignment.png",
+      "bytes": 11558,
+      "sha256": "d67d763487211bd0e2e5e19da87f83e34a42ea7c93bb9bad6129f2f02ffae4e6",
+      "git_blob_sha1": "ca8ce99761f9eb8d59d1ce0210017878b9303159"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/markers/tile_risk.png",
+      "bytes": 11475,
+      "sha256": "6803e7e3cb0dca90109a45941ee74ea407cd48b3d21e7723db840ac5d42ae26b",
+      "git_blob_sha1": "eddc22d58e16f52a299df474049d6419d2af6c60"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/markers/tile_selected.png",
+      "bytes": 11433,
+      "sha256": "c595e075e0b64ae7bf4fd4d86032276bc0f5067c1309f0b479ee85a45de05f58",
+      "git_blob_sha1": "7d23208b5c282ac471a22bac638d9222c0f8ba35"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_00_isolated.png",
+      "bytes": 6082,
+      "sha256": "2167cc77843e238e232565bddbcc9521857f2c26489bdb96f013efe0178e186c",
+      "git_blob_sha1": "bd75b7d3acf57775303321fa0674fda459901440"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_01_end_n.png",
+      "bytes": 3495,
+      "sha256": "944dbeee442f203aef0525cbccaa6a0a2b7244c396b32f1e10048e785f6665dd",
+      "git_blob_sha1": "332d49487db6a2ea97f57f97278ce513de0cbd64"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_02_end_e.png",
+      "bytes": 3471,
+      "sha256": "a8f5847475edbb930b8dcb4a62df9d9213995ff929bdc938f8b63ddc78e16e7d",
+      "git_blob_sha1": "b98ca59fb02b71b340cef03b4020ca1d79232bc6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_03_corner_ne.png",
+      "bytes": 3835,
+      "sha256": "63cf515facbd0d60d58adf593d14de9ddda566c7915774391e3cf8b5f7bf56ae",
+      "git_blob_sha1": "57f7d9951619208cf70177c1223eb17ee3cdbf31"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_04_end_s.png",
+      "bytes": 3500,
+      "sha256": "72736d5a76ca86bbdfcd1d0aeab67748b9cebd517acf918f6d72a4f547747987",
+      "git_blob_sha1": "19bde5780e5cb2ebb0187ffcb0f4e32f52e6d0f0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_05_straight_ns.png",
+      "bytes": 3640,
+      "sha256": "89b9691413f1d669e51e774c89e5acbf53785d784659e1e72f902fb02a6d3788",
+      "git_blob_sha1": "c10f8b3b1b8591a70e74d8bbe35d985d7875c5e4"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_06_corner_es.png",
+      "bytes": 4197,
+      "sha256": "594a93480ab82a925e19c52b41ee81cfb507ff2d4ad5a4cb7c9fdc91642fbe24",
+      "git_blob_sha1": "73e46b0178554fcdbab2b310fe03a9a37effe5b1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_07_tee_nes.png",
+      "bytes": 4411,
+      "sha256": "0bb3347ab866e5fb094683b095572dafcc4c64a67c34e977c79f385f703ae156",
+      "git_blob_sha1": "64118b114d23065a93f31d93799de9d39f6be495"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_08_end_w.png",
+      "bytes": 3701,
+      "sha256": "429288b3bf51a3d8b3c0ea31e96f53d22a9a8ca7b855ea10a434b8d45113bdef",
+      "git_blob_sha1": "af0d53e840cc79bcf99144b17596706e006f2ddd"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_09_corner_nw.png",
+      "bytes": 4196,
+      "sha256": "ece2b8e6624477d7daaba2837fdf276cc8bc6adaf8533045b29205f04f8e75a1",
+      "git_blob_sha1": "4d07e9c69696d9c01bbd95e600b3306964bd71d1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_10_straight_ew.png",
+      "bytes": 3810,
+      "sha256": "28b22a180932b3e88fdacc1da848c35c8bab31d8fd7687282924ddf7f7b32863",
+      "git_blob_sha1": "c5d41d915256d7abd626d6fe04d5a336794e4cf2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_11_tee_new.png",
+      "bytes": 4425,
+      "sha256": "a91276b99050e71d5982319d1baec86c09d1df87e3f359ed24326b854385613e",
+      "git_blob_sha1": "3b82a96fd66787f44d199876196124db50bd7b0c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_12_corner_sw.png",
+      "bytes": 4046,
+      "sha256": "5a5336b9a278076896ce249b9359dbdd19f9505c01999a664f167ff5ad9643b1",
+      "git_blob_sha1": "38a3a95dbdc55bf81a14340c9f8056ed70be2de6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_13_tee_nsw.png",
+      "bytes": 4459,
+      "sha256": "d1c8a46eefefc98a3577381507a51ebf2e0031abcb7ccf9fe8e95b0c83d33e04",
+      "git_blob_sha1": "caebb0bac6fe7d72476ea725271dfc77d42271f2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_14_tee_esw.png",
+      "bytes": 4576,
+      "sha256": "1c531496466801997f4d0a743ddd121ce533fe7636db91876fde01bec0f36744",
+      "git_blob_sha1": "b5cf2658bff53bd495c0d41daee1e5f30cbd85cb"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_15_cross.png",
+      "bytes": 5196,
+      "sha256": "7a44fe8b1ccd509cc20e541c6d6ad3fbf6d185dcc91577d85a90c344ad4299a2",
+      "git_blob_sha1": "1ded01864978a2ebd229431c28454048f7b25e3b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_ns_crosswalk.png",
+      "bytes": 5100,
+      "sha256": "0068a2bb79360727f3faab146158224b2b34cdf22f8638ce261e6636ae6142ff",
+      "git_blob_sha1": "c80b4952705c002f25eda151a626c719f1bd21c6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_ns_pothole.png",
+      "bytes": 5271,
+      "sha256": "5efdb883ef8093714c6f8c9a98a2d943509ca23a6c3c1b3181fde5229d6cd36b",
+      "git_blob_sha1": "fd4eb9f226603e2fa9246d4c8fa2f8390843f98d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_ns_speed_bump.png",
+      "bytes": 5121,
+      "sha256": "f16d0cfa60ca21ecaa91314b8947ce038b15ee0d4dbbf222ab02fac9c996b0cc",
+      "git_blob_sha1": "5a847281e6d9f8f8aa67ce623a82c29a8905d3e3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/roads/road_ns_stop_line.png",
+      "bytes": 3959,
+      "sha256": "a6eb0fb9b2a9f0255254e1ae1eb463d332a6b2348685a7812efb71fc8471cd26",
+      "git_blob_sha1": "043dbeba7abfb3a51db10e95fbed33b22d778db2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/terrain/asphalt.png",
+      "bytes": 4132,
+      "sha256": "2f4b79ce0b704f6137050231399cb461b303e81c3effe060a314f344eddfdb54",
+      "git_blob_sha1": "5f814f4839039278e123975655019b4e68d578a5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/terrain/concrete.png",
+      "bytes": 3863,
+      "sha256": "da598bff2ff22289308b38f5a3bc9281241278ee8d8c555564fa182f66040c60",
+      "git_blob_sha1": "6de36e608ebb0afccacf8496527493a734d42f42"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/terrain/earth.png",
+      "bytes": 4302,
+      "sha256": "16a5c730c7be86d8ca0b5c2b68bf5f1dbfc536347a6c4054350f714eda66c35a",
+      "git_blob_sha1": "bcd605f82878b90aec2ac8eeac8d8a533244ef55"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/terrain/garden.png",
+      "bytes": 4049,
+      "sha256": "8ffba4a439b99ee724a8698fb40b8fdcd2cd5bb38075003a241e9631d51c490e",
+      "git_blob_sha1": "540fd2cb970fe84d008ad36096789a23df2fd0ba"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/terrain/grass.png",
+      "bytes": 4098,
+      "sha256": "2d3e21bc76c67c979c7edf0121539f42cc8343f39a108809d9f03462dfa4d415",
+      "git_blob_sha1": "2f217cff5d063cfcaa00b9a2d867151a12d3624c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/terrain/grass_dry.png",
+      "bytes": 4217,
+      "sha256": "b923e690d5e94add7f3378bed7be929f0aea6970933e517b5ac6e3421a178f54",
+      "git_blob_sha1": "5c3f0c9d7a7db60108595aeda0941801118f5753"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/terrain/pavers.png",
+      "bytes": 2376,
+      "sha256": "a32e4791e39f05a38e1dfe53a4bb327cbda8d329809e1fd0030dd510c07ec5c3",
+      "git_blob_sha1": "791b9af8552b54ddd1db8ad9bdc997b36fe8f9d2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/terrain/water.png",
+      "bytes": 2963,
+      "sha256": "9798d204f770657dbea1df7bd87ce478f66eb8bcf6b7a8a7942dcfccdb52678e",
+      "git_blob_sha1": "f9f1985ea9b17bb9e4f1900b87025ce8956968f5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/button_default.png",
+      "bytes": 3560,
+      "sha256": "393ae1ea4238429ecc253368567e6f122ff82b1a92ffca33faf8360d98720a17",
+      "git_blob_sha1": "992fcb3731bf9c111387c7c90408edb33049ebe4"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/button_disabled.png",
+      "bytes": 3015,
+      "sha256": "677df689ede10ee966f719cae62327a080dada0c528b8857974458d6060989d7",
+      "git_blob_sha1": "18e1004423d473ca221f2d0ca862f43a6ca53a20"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/button_hover.png",
+      "bytes": 3811,
+      "sha256": "dd9a47971cbf060759983ab7fdbab7d64df1e071a58b4c9c57d945028fed84a5",
+      "git_blob_sha1": "3a13959fe67c92d7226e0f32b5dd6e2d292ecad5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/button_pressed.png",
+      "bytes": 3701,
+      "sha256": "9656e65e84cf103787098717cccfcd699dd0904ba263fbcac890603d71e48f26",
+      "git_blob_sha1": "69a1764b7b8f873e0828714eeb1d1cd1ee1a5d0f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/hud_tile.png",
+      "bytes": 3910,
+      "sha256": "05542f35eed7d7927bfd881bca95f450c2c00c83a984c022ffd5606acb8339a7",
+      "git_blob_sha1": "b2dc3f666ec8c86244e292612f5fcd0f6eac3ce1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/meter_fill_care.png",
+      "bytes": 795,
+      "sha256": "0fc4dc8e05872bf475356e6d8fa3440651a4aced0c55261b90b5db3287f508f6",
+      "git_blob_sha1": "ba534aa322557d02a3f03665783e5ab56ebc1ea6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/meter_fill_light.png",
+      "bytes": 762,
+      "sha256": "18477506ee8635cef3a1dd3a792cdf781654d47a70e9189a94332ec1bcb7928d",
+      "git_blob_sha1": "eae9442580834cc6bf754b0a795c76262d112fbd"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/meter_fill_risk.png",
+      "bytes": 758,
+      "sha256": "df699dc7669e9f4c58f46e2df9e5053117fd105cb0b8e9da1711e9afafc6df65",
+      "git_blob_sha1": "b0cb5058d37deddaca8984c6bda87e862d305f03"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/meter_track.png",
+      "bytes": 856,
+      "sha256": "70d5b6c5c2fb408be049f5550d89e5fa202b3a3b6402a40eb9e39cf8f64d70f2",
+      "git_blob_sha1": "e0c69a4fa4fd2343c09bda4055e51b70e968ad99"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/notification_care.png",
+      "bytes": 3802,
+      "sha256": "11a91769748dabf163bda4594e8b5df179d98ae12c0cee295b7d28db3b1d5707",
+      "git_blob_sha1": "7d6f285c22ff7415499255d2e1cc6cac976247c0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/notification_warning.png",
+      "bytes": 3889,
+      "sha256": "5ad6f148ddc5bfa2e0ef468d6d6d844a4e991d2af8f7808ff93462f117b154c9",
+      "git_blob_sha1": "6d412e1be27f8b823263d6e2222998f316016dd6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/panel_dark.png",
+      "bytes": 5233,
+      "sha256": "7a8660607150f3c8235a7462c804e9761f535fb077b43318d89a2d79ebc09239",
+      "git_blob_sha1": "7477d75b3facc5e3f0c9cf317c16580cba5eec70"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/panel_parchment.png",
+      "bytes": 5569,
+      "sha256": "9bee39e60916bc4737192ee1c1d4a21ed2d6517e94e96129a0a5188a96eaa147",
+      "git_blob_sha1": "dff8761838edb16028662892e741d75dd38fe252"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/tab_default.png",
+      "bytes": 3018,
+      "sha256": "b6e750ac839adc35d38309f271af93e2687ace1bda3e6b0d283e2a940e9d6dc2",
+      "git_blob_sha1": "d2b4bd56a9809fe6588b5134e9cb3864441db23b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/tab_selected.png",
+      "bytes": 3197,
+      "sha256": "a47aad703fadd9325d6e8618e58bb091bd9094c5a0549200819dbd00cfe901f2",
+      "git_blob_sha1": "4c7ce6567855cbfa7c4c414010bfe7925af08f53"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/components/tooltip.png",
+      "bytes": 3825,
+      "sha256": "a248b28b91824d28c3b5648244532600ae611a4574425753276edcf8829d866a",
+      "git_blob_sha1": "26ea12c552c1de0a03b29b2614d9700c70ac364e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/age.png",
+      "bytes": 1776,
+      "sha256": "b3939a0d98c5fa21de6684ab5e44fc1ea84eee69a20fccc9ea3b931fac06eacd",
+      "git_blob_sha1": "45acacea3e5963cc8fd30ab2adb16734714c7e61"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/calendar.png",
+      "bytes": 2221,
+      "sha256": "74b83e0a1ebb2197293c67b88822fd99562305f782eb4265936bfaa83fd53c7c",
+      "git_blob_sha1": "7e893a30770da90a10bd0b0f7279a445bcbf2611"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/candle.png",
+      "bytes": 1861,
+      "sha256": "7bc66a5839ab00c73fc79f51b4f1fbfe0c973264982df73ea56d597e05aa2429",
+      "git_blob_sha1": "546f36fe87d84dbe3f939bbd4cb810bbe84f4bfc"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/car.png",
+      "bytes": 2298,
+      "sha256": "d32ea92e3743123d636f189c7ffe1748fa966a8d03ce7b07174d2aded0fdac05",
+      "git_blob_sha1": "a8560eff645756d65af4890b549c4b7f794d79bc"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/celebration.png",
+      "bytes": 3230,
+      "sha256": "dcbce17cdca3d731fb03826b383b2f472f65c6bb39ac7fb86d953ddfd504e692",
+      "git_blob_sha1": "8cd531875fca22e93c1bf32dbe23576ebb1a077b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/charity.png",
+      "bytes": 3672,
+      "sha256": "3ff1273829fe1cb79c2767265935e45a3a3dc4a1ac6b425413c7ed417a942a19",
+      "git_blob_sha1": "cdceda5e87d72503ffa3171150912d8d7d1b44d3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/close.png",
+      "bytes": 902,
+      "sha256": "f8e2422262e37bb473592b0453f00fdb0e7e783f9194e59990b97c52c65e9826",
+      "git_blob_sha1": "66e43b883bdd50f447d3ad8e38745d35a1a4788a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/comfort.png",
+      "bytes": 3258,
+      "sha256": "24ea5c21e6b274aca2823aa91d888c2d90435aab5d88ecf4cbefeaab227f0f4f",
+      "git_blob_sha1": "dae7264095bcfd3622d05322a636ce7cd3dd4859"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/concern.png",
+      "bytes": 4379,
+      "sha256": "8611d5ec66e8cc5e1d49f031c28a59a34c84365e5a4a7f526b94b917eb0b35c9",
+      "git_blob_sha1": "122d9238c8a3a883b5458effac6129d14049c21c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/crossing.png",
+      "bytes": 3094,
+      "sha256": "fe7ba90702897f33e818704633fa6d78829effbe9d1ddb6d340ec6abaa44cb97",
+      "git_blob_sha1": "07498a486ee4b3884bcacf2423a0725bff36bced"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/danger.png",
+      "bytes": 2463,
+      "sha256": "8f738eb5bc0e28be4cd4272b64ccdbd36677defeeb1a129f3ab11ddae582a3b8",
+      "git_blob_sha1": "860a50d62e87f3464ded5e12f0bbbe4262cbb288"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/education.png",
+      "bytes": 2749,
+      "sha256": "8bb862ad2c3692c51f14381682900d85e4fedcca041268d76a4dc5ad79260521",
+      "git_blob_sha1": "14a550471cdacb36845b22cfcc778694b58a6ca7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/faith.png",
+      "bytes": 881,
+      "sha256": "a63b57c8d1879decefee0114592152cf367ae602415302603fbdf04a9b3b74f0",
+      "git_blob_sha1": "c9a1224b46cd265e13374d98e86eee8e878953ff"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/family.png",
+      "bytes": 3619,
+      "sha256": "9475903534888f01ec4f2e1258697f5c5367d65c70613807d900f2ba66c4fc63",
+      "git_blob_sha1": "e4bfb685b34fcfd2dbc466c97f0ac34a3ca13c4c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/fast_forward.png",
+      "bytes": 1890,
+      "sha256": "9d9dccd2592ba326ca186bdf6875b60f4ecb07592be47764790b3738f5b66e37",
+      "git_blob_sha1": "c6a0657434633317edad251f08be9f72adc829c5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/food.png",
+      "bytes": 3796,
+      "sha256": "d2cc6ccedc96166f1df9c4305c26e80b0baf908b8585eaed0a2cc8ae821bdd0c",
+      "git_blob_sha1": "b41011abb3a9073f0c55514c2744780996c7327d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/grace.png",
+      "bytes": 4132,
+      "sha256": "337e6b8a2c16193bce5d8f33d9bdaa00118c83424cd45a4a603dec4057c8194a",
+      "git_blob_sha1": "27c9a6b48b18e50f94c929a5b7f3c926e2d9a37f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/guardian.png",
+      "bytes": 4495,
+      "sha256": "74e6bfaec03d8b0fb1f92c6623942789fb1df14f8733756540e16378a939cfcc",
+      "git_blob_sha1": "55de74ede0675c0116b9042ff4f3096537e9f9ab"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/halo.png",
+      "bytes": 3303,
+      "sha256": "4e46b8629adf3afed768fe3f66b619ff24fe6e9e2494c1f2f60c9088ceb8fce8",
+      "git_blob_sha1": "e608b0f02782ce4443927010a4bc74bf74084913"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/halo_dark.png",
+      "bytes": 3430,
+      "sha256": "03bce87075e4835e6ebdead70d5ade424a2a85550168c8216bb7c6dc05d38df4",
+      "git_blob_sha1": "5b0db14d8f7e32ce2b6d9d5ce0e9b030c517d831"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/halo_fading.png",
+      "bytes": 2408,
+      "sha256": "9f9ce6acaf94a57fe6fd7ca98e146a55a29f83b95abf9cd8b46848fa4cd38905",
+      "git_blob_sha1": "79d619e42f63e9152c9eacc0b2acd95e2767c5d0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/happiness.png",
+      "bytes": 4029,
+      "sha256": "c9243ae44b842d413a63cf0332b5315efcb1a76cd66407c3100bfe0739400995",
+      "git_blob_sha1": "8380c21eeb5cb29d0902a7eda79137e35c801904"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/health.png",
+      "bytes": 822,
+      "sha256": "6eabd30fb1a9f55b25a9e36cc7ef0310eaa9444c26af90f3b12f07a6e89550b2",
+      "git_blob_sha1": "6b66a8f657f6a7ce4b39344b47ed0498f33cc3ab"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/history.png",
+      "bytes": 3763,
+      "sha256": "9453cae285e50459d3607faea773f0d675d389d3f43ba43b274c406a643e2b94",
+      "git_blob_sha1": "37adc61ab84532e61f63bf7e9a6ca14076dfbb15"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/home.png",
+      "bytes": 2537,
+      "sha256": "c48278f5b435515b12c94a6eda9d29147188a8bb637cacca44a7f6638d765276",
+      "git_blob_sha1": "7794d9aecc4e1e71bc6498cc0de53230682dc89f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/influence.png",
+      "bytes": 2707,
+      "sha256": "44077f6b1705143c01cdf0296a97703e63d58fb9b937fe4ec7e4b152ce5c7ddc",
+      "git_blob_sha1": "7c3208c50c7b723d3dccaddd82e3300bcc0504bf"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/information.png",
+      "bytes": 3836,
+      "sha256": "5ee9c386fd6a20d3a6376ba15a0fec8842f97e032543a727f83c683c721d4cac",
+      "git_blob_sha1": "9f5e38d199d8de87909039bdd4ef5092ffe02334"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/lifespan.png",
+      "bytes": 2593,
+      "sha256": "0bac2ac8e3efc759ddd93585edc959a8955d948d542e09038f5276290db7382d",
+      "git_blob_sha1": "ae17c1b47feae37702d68b968087735687c10040"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/light.png",
+      "bytes": 2737,
+      "sha256": "fbdcfea4a48a68f065d4f0e0a773d413ca80c321738572713cd3820f05f231a2",
+      "git_blob_sha1": "d7d88603fe553db655303a40650a095df7d3343f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/novena.png",
+      "bytes": 4744,
+      "sha256": "b2509926c792b5d8b61c9677de1582b65c96aeb447f75a90e6d2797c0d363e05",
+      "git_blob_sha1": "1fd302cf4bc0578c9598cc3435205a02ad8670e0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/pause.png",
+      "bytes": 731,
+      "sha256": "5d65c31a5778d168aa7dbd2d46d29bb09f1c120abfb178d6d021df89787e9561",
+      "git_blob_sha1": "a74089a75458bbb08ef4dd3779b1071e6f79ddce"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/play.png",
+      "bytes": 2014,
+      "sha256": "d4597013317d6e9f5863eff4ec09ef4ac0c4d580fd607d350bed54c4e7d8aab0",
+      "git_blob_sha1": "584ec74ece358519c6010b596e330534c6bb6636"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/prayer.png",
+      "bytes": 3775,
+      "sha256": "fca92404fbe6ed922fea88b1ba4efff2cb0d983d12249379af2f69a4ac520a1a",
+      "git_blob_sha1": "85dbfb8697c457336809878accb8742a9c314a6f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/priest.png",
+      "bytes": 3437,
+      "sha256": "817d75d51b883cb0f845c0cfa83fd278383f11149b74a7995a4eb95b5cff381b",
+      "git_blob_sha1": "fe9c979c5316662852f41805753b36c9fb4e3bf0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/protection.png",
+      "bytes": 3312,
+      "sha256": "e3c663a1f74894063135415e6180f48e168a2f2a05080378bd1ce3e9d357d3d1",
+      "git_blob_sha1": "6d31867925c3531a7c2758e8d1389ac5855732c5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/relationships.png",
+      "bytes": 2881,
+      "sha256": "0667ae9d0f3a0562686efdb972dc1a6443b2b3d97148b76acb3a7ca7937bf416",
+      "git_blob_sha1": "f5d34a817a6a3a7288ef4cc4808e2e4f84babc96"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/rest.png",
+      "bytes": 1234,
+      "sha256": "c1c6fa88e4786214a5bfc3482026d3701748b7a4a58407936ce0643968235681",
+      "git_blob_sha1": "a0534e96055012ce40b1109e0df3d75f39334738"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/settings.png",
+      "bytes": 5394,
+      "sha256": "4ba5185dd4f8cc13c2b2e46d0955a30abb0d968716407509e83bf961f34d9893",
+      "git_blob_sha1": "241e18d620bf9089e694b5788b053ef308532e37"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/targeted_pressure.png",
+      "bytes": 3920,
+      "sha256": "84af1ae73db53988facbd2b7a112c28d4082a940513995b3d515641c37389e3d",
+      "git_blob_sha1": "76abdb5d4b66c5022c7533d814391c97b582f085"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/temple.png",
+      "bytes": 2551,
+      "sha256": "e8d653308c353424b6ecb0f80e024bdc0f0f51e6c2196e66f284d6d9d31d37de",
+      "git_blob_sha1": "3cd2ba5fd6ef6c5845019627e5289ade86314722"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/vocation.png",
+      "bytes": 5217,
+      "sha256": "9c8f3696938257da6ef9c089da3aee8ed1ebb78f09e0fa8ced128797a20bc450",
+      "git_blob_sha1": "5a49c5dcb94f52d20a45bfef3baf43614136aef2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/water.png",
+      "bytes": 3906,
+      "sha256": "57aa28dcfacb5c156b7d294e66d8ffe6f55d0a41e28dc2029c21e86e1a7eba45",
+      "git_blob_sha1": "39f19d5ec5dea2106d2baffae6cc8a0fb807536e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/welcome.png",
+      "bytes": 1934,
+      "sha256": "15528cdcd2c7422a6a85dfab6aac18f8881a3abb0cc35b69e12f95137105a98e",
+      "git_blob_sha1": "65d0d0a569b91662e1f4948e237b92773b040e3e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/runtime/ui/icons/work.png",
+      "bytes": 2801,
+      "sha256": "a7782a808f317c77b971543ff6368c9368a275c01699a3e5785a667858e03baa",
+      "git_blob_sha1": "8a80d41322ddcc1124cbcd2a0281652977a230d1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/streets/bus_stop.png",
+      "bytes": 43835,
+      "sha256": "71b78fa13435f0cb7e59abecc6b387580a5762b5be55572a9b42646bd2ada353",
+      "git_blob_sha1": "021f5efbbcb93d2effad6d1281004bf0d710db64"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/streets/crosswalk.png",
+      "bytes": 34309,
+      "sha256": "7af4738ee15de8e00fec052cd7d5273868b2c20c7188161d1378fb0e5f852d9b",
+      "git_blob_sha1": "9276cdc25c4fde662c22b65f88536e2ab6887974"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/streets/fence.png",
+      "bytes": 35769,
+      "sha256": "90b382669df902d423b964e539ae00797f8bc2947a97aabc580e0cb521032d26",
+      "git_blob_sha1": "c130889e9a443090bedbf2c368e639b32486bc15"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/streets/power_pole.png",
+      "bytes": 14221,
+      "sha256": "10470e9190f9466b835385813c165296ecb39d46f4bbd0c98b176317161f6d43",
+      "git_blob_sha1": "c495718c6edf169e04bebb2dfb78f796d6120425"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/streets/road_straight.png",
+      "bytes": 31037,
+      "sha256": "8016579cb717915ae00fbbb3c923196b672b8ad4fbea2f857fa803245d963de4",
+      "git_blob_sha1": "ce61fa2ba38d7c50f93ca471d9cf929422cfbb1d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/streets/roadside_gutter.png",
+      "bytes": 23255,
+      "sha256": "84089305a095f892e7fc9040cbf66f303c47ee2abee4adf4b22d3bdb0be329d2",
+      "git_blob_sha1": "cdb21254e8d6b6a2b8b11fc97c5283bc17db6b07"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/streets/school_crossing_sign.png",
+      "bytes": 8432,
+      "sha256": "0e6c55fecd75414ef9b781ebeb525338cf128db423517dcdf85747caa7d2d314",
+      "git_blob_sha1": "488d1b4cb29d115aa595e40d7110223cbe275814"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/streets/speed_bump.png",
+      "bytes": 22241,
+      "sha256": "ec978acf9673d11d7b5ab25318f866c6169d0e23fe6b3f9146d3896c106c9f92",
+      "git_blob_sha1": "9b7d2fd3d7385a184d05dcffd4f5749a08158857"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/streets/street_lamp.png",
+      "bytes": 7650,
+      "sha256": "5e62bcd0cc63a13f545fafd8470aeeb18a244c891d065a76750565e2cd5a794f",
+      "git_blob_sha1": "d6d2e5230e6ca93aa55a94458ff6c4188f386780"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/streets/t_junction.png",
+      "bytes": 30017,
+      "sha256": "5262637423ca92c81861379ff93835ea74900050276fe65ae87b75a9dad93844",
+      "git_blob_sha1": "fb6ef04519ccc40a80d39e89ee2d0a6b05309b66"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/streets/utility_box.png",
+      "bytes": 11885,
+      "sha256": "7117c4f4d9fc8e5fa810a03cb8542811aa08f8b1854984a1beb89bdbd736dec2",
+      "git_blob_sha1": "32be3ad7ed5e849e82433b35565ad513df59a1c8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/buttons/button_assign_guide.png",
+      "bytes": 20909,
+      "sha256": "e3e36fd377d5f5f361434987b555f06074a18c058a80558d242f711978a84ae2",
+      "git_blob_sha1": "057886f09ad33c9ee223b053edb0c24d44a44d63"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/buttons/button_default.png",
+      "bytes": 5398,
+      "sha256": "d3e838d8891f0b843ff2f698a9324d3be785fa0736932ba2dad047e5ddf5ab5e",
+      "git_blob_sha1": "ca443b8275905f123990db296a6377038017350a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/buttons/button_hover.png",
+      "bytes": 5691,
+      "sha256": "73d84167f77e6be8823eb5deb48098089786adb1ad59862e6db9eaa79d96f0af",
+      "git_blob_sha1": "c7094e79a6b32d4c46072af637bd5f9c19fdad2d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/buttons/button_offer_help.png",
+      "bytes": 19348,
+      "sha256": "26cd29ad4908702c6ab5ce828b4b0287c81aab5b75fe68c8e1504f8270239171",
+      "git_blob_sha1": "68be8f8a14c06d8b139ff508a7d0232690574f19"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/buttons/button_pressed.png",
+      "bytes": 5782,
+      "sha256": "3f4f70473d09e1a3c37828a7a539868e1328e9b42e6d4e96bc3b74dc89e0bf14",
+      "git_blob_sha1": "54425a6dde40f5c9002aa17f1c8f0b3900a9d6d9"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/buttons/button_prevent_harm.png",
+      "bytes": 19712,
+      "sha256": "5c2b4e2517b6108195d8565339b9a5fe80f792f299c26458994d22879dcc2582",
+      "git_blob_sha1": "591acc48dbfff87726b835b9c81cbb157e2139b6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/hud_tiles/hud_community_light.png",
+      "bytes": 32353,
+      "sha256": "f39d3a4f7316612b739044285b52add3335f25135dcdf68a9df7461c587c26fe",
+      "git_blob_sha1": "7d5845b056c3acc0beb62a0775d4f5d4edf3ebeb"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/hud_tiles/hud_families.png",
+      "bytes": 15383,
+      "sha256": "6fa8ad2f09a0e3e7d4da274ac7504cec24824602e17a499bfbe020e1e8adeb5a",
+      "git_blob_sha1": "2c9831c947173ae7a921c140d070ea2450291d0c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/hud_tiles/hud_health.png",
+      "bytes": 14926,
+      "sha256": "a90ec9bd4a4267aeadbc6ba9cc5083c3796bb39bb0cb3f8f0af95189d1324fd8",
+      "git_blob_sha1": "ad7c8b2a8f7183cb97002584ed1afe15411a08fd"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/hud_tiles/hud_living_conditions.png",
+      "bytes": 20304,
+      "sha256": "ee0fb9c4d4c549d14ef7878258becd590858f42e68b7e550a4cc390238ee9f36",
+      "git_blob_sha1": "0ae1b405127f436e57bd050165470b5799e765ec"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/hud_tiles/hud_next_events.png",
+      "bytes": 41815,
+      "sha256": "d80b436703bde2f1cdb548f3a2d93fc6acc37e17377d315d824803e5c7ef2d09",
+      "git_blob_sha1": "7a3427dab76f11d5d82d80cf1ce2caeece4bf3fa"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/hud_tiles/hud_safety.png",
+      "bytes": 15202,
+      "sha256": "b4b2bb09a01ce93062ef0604bf6badd3b97fc2c2d2fb03cbe3b7da6e2b159c85",
+      "git_blob_sha1": "f9fd064b2b6f6b4f38a5a16c477595daae6c93a8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/hud_tiles/hud_stability.png",
+      "bytes": 16936,
+      "sha256": "05dbd9057d4c5cc054b3d5a199cfd246b28a0d35db42ca02d3170f571fac9999",
+      "git_blob_sha1": "639f6e877ee8636b0e475c3958f69400a86936a1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/hud_tiles/hud_temple_network.png",
+      "bytes": 25767,
+      "sha256": "637fac04b2f2e4c4b9e01d56bdba04ef5d8c6b50d826174a972d35212486ac6d",
+      "git_blob_sha1": "61d2debc593d3d428be0b52cc923b2e9c4ed1cd0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_charity.png",
+      "bytes": 2409,
+      "sha256": "6ef5ac19775bf090916186dd9ab5b5acaa1c9b861493cbf1b229d722cf4684b4",
+      "git_blob_sha1": "de3e9911046a26d43152e19b93efbc2539f91542"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_charity_large.png",
+      "bytes": 4977,
+      "sha256": "94ad668133ee2f40a44170fe2a26afde99a8f6b7a5a0c8a54c04fbba885e79b7",
+      "git_blob_sha1": "542e0b57f27b280b2b722db9bbf6ae36ea41188d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_charity_medium.png",
+      "bytes": 3632,
+      "sha256": "e5fe86640ad88855443add95e7cff425200fe3a1850e5f0bbc19cc5d65c007ea",
+      "git_blob_sha1": "cc9c6d0b5a628ffc9159051826b93b2616e432a8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_charity_small.png",
+      "bytes": 3190,
+      "sha256": "9fabf6f57da594ca6b8a29ae5c23d65a18ac31ff64b5312ccafe7c73dad775e2",
+      "git_blob_sha1": "14250c825dc3d4871ab76a595fd54d96d84388a9"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_community_light.png",
+      "bytes": 4031,
+      "sha256": "657a9e38c47a21302ee3e5f54f542e3cb5a023cded9f8bfde258ead1026a0fe9",
+      "git_blob_sha1": "29d00169d0839238091e2c68344afcb52a439861"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_faith_high.png",
+      "bytes": 5627,
+      "sha256": "a57a44389acf1893093642cf9801845187ba3747fc4acdb98e904e73f6c10417",
+      "git_blob_sha1": "a6ea8735ca11ad0a976801633c72d1d22144d880"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_faith_low.png",
+      "bytes": 1822,
+      "sha256": "dac76dab192a411c63af9e13311a2527c3942dc12da1e51a68498a042af719a4",
+      "git_blob_sha1": "24b3edc85567b66f38ed3d00fc74cba1f1d80d1b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_faith_mid.png",
+      "bytes": 3203,
+      "sha256": "abd9cd90a6d978850522fb54c15f1ca8e3db55be2b3896e2e35be06eabc74a8d",
+      "git_blob_sha1": "a82cac16bccf4f527271d489b18c4377d0b7b10d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_fast_forward.png",
+      "bytes": 1348,
+      "sha256": "1f5c43488aac7562011457acc71364edc59d794c819d9ca31a19067079147f8a",
+      "git_blob_sha1": "af98f0549833cbb184a050469e78e7352341b191"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_faster_forward.png",
+      "bytes": 1568,
+      "sha256": "ae8b493a2e0316e5037c285e1a95598ec7f38b48257890dd2e22aab3b6c17208",
+      "git_blob_sha1": "a2d22720b8d98a7cda41ea7d042a774f7e261a58"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_grace_high.png",
+      "bytes": 5625,
+      "sha256": "5a1124c56168bb3d37dd5c1e182b3425874a4b347ea8673987a9e511a92846ab",
+      "git_blob_sha1": "137ee321c8434c9ea425f8b594d3e6f89f334a5b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_grace_low.png",
+      "bytes": 2486,
+      "sha256": "33c999723f73eed6ceafbf48739065c7f3c291010c362c2da3afd0a9e178d6af",
+      "git_blob_sha1": "3086eb7da419f68017f9edb152f4761e62a2c03a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_grace_mid.png",
+      "bytes": 3663,
+      "sha256": "c4cd065ca9631bd0b158f37b34ef3bd311700e55a8969d83fdf6b18f2550763a",
+      "git_blob_sha1": "d8029b47cd7405388cd97064d265e7a007b26e9b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_halo_bright.png",
+      "bytes": 3478,
+      "sha256": "4976727d87386ddff2b048c440803470dc448c01a3e8a4afa45eee31eb68c7fa",
+      "git_blob_sha1": "eac7d1b5f1d560685846aafd4b614cff93fb4141"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_halo_faint.png",
+      "bytes": 2884,
+      "sha256": "fceb68b09964bcda1270af60e1e295ce055c904d4c15d413e4f5d1fdb6ae4f11",
+      "git_blob_sha1": "fe4e39b8c857b18df626115f3d1d509c7335a70f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_halo_none.png",
+      "bytes": 2184,
+      "sha256": "cd2adaae67443f20c83e98777e2eff869f7e4375ade27a16aecea5acd5f8d005",
+      "git_blob_sha1": "143b8bdd507f6bff8310b2857f3bd8d2277ac04f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_halo_radiant.png",
+      "bytes": 5698,
+      "sha256": "8df26c8ed901baf52fe46b72f429d3ce812475f94ec20ea6cc8623e3e19dff33",
+      "git_blob_sha1": "47a688942bc25a30bd7e99ddb14eca379d2cbbf9"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_happiness_high.png",
+      "bytes": 4849,
+      "sha256": "1ac264c62c4866c225385a779b01370490fb63964d954300aa6bc0653f6a6c3d",
+      "git_blob_sha1": "e4b9af227cbfd3d41f07421c02da1263812ad872"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_happiness_low.png",
+      "bytes": 3179,
+      "sha256": "e1322516e571a944f0edb6ebafd6db0246c6d38a6046a354bb4f39be5b9d4144",
+      "git_blob_sha1": "9fb83a3f36467df1b1bf7fd1aa56b72b210cd38e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_happiness_mid.png",
+      "bytes": 3140,
+      "sha256": "761563dfe4d3db006915ac20af769bddf927d6b483fc7ad19b4b2d8fff432d0d",
+      "git_blob_sha1": "44bbf8aebec56962a6e9cad2702875c80567a38e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_intervention_guide.png",
+      "bytes": 4116,
+      "sha256": "b9d5d6c7679ee8514cd4dcaa33a6482bf9c84407538073019f4c11fb3247457d",
+      "git_blob_sha1": "56de1ce5cc686dba9c8f70b85020545d1fe68f43"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_intervention_nudge.png",
+      "bytes": 3165,
+      "sha256": "a403bc11a3253848e8d605fe995f4977d6520807c5a97fa2d29ce9d18d211136",
+      "git_blob_sha1": "7f33af420457e25617905e9c902121909e5fb607"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_intervention_protect.png",
+      "bytes": 4798,
+      "sha256": "faf2f719c81e233dd59b794a5539bae65d8cc8286da2ee78cbf9bc9748c120d3",
+      "git_blob_sha1": "03c4d2cd4c57d4c93f6f9182549f63178538e99c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_pause.png",
+      "bytes": 805,
+      "sha256": "8d612e3312433085c854631e6e93c6a66e5e9595bd54479399354917549c141a",
+      "git_blob_sha1": "12a9de667a7bf988b85cbbeb8a63e0d8ce2b7ca2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_play.png",
+      "bytes": 906,
+      "sha256": "6a43d37edcb3275cf92051aa52eb6e4df0aad5e77c4844db694c1f48ad0b063a",
+      "git_blob_sha1": "44ba621b6bf1cd6435ab129a64906c5d3d539ad1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_population.png",
+      "bytes": 2478,
+      "sha256": "00a1baff714854b32f077f3401d03373feed8b20f84801954b19ad5de1af69a5",
+      "git_blob_sha1": "74558124bb37da52f8bf31f3de1c70dc96bf8f3d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_prayer.png",
+      "bytes": 2074,
+      "sha256": "b434a8c0ff72cd2511a6a39695fccaa0d13a021360067a4ba88983e4208481dd",
+      "git_blob_sha1": "4645316fe9acc647bbfab86d3588056b64c8c59a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_prayer_community.png",
+      "bytes": 5008,
+      "sha256": "24864c3b3efa34ddc1743d4f3ab6b179032e1af054872a6f3dd81a450ab417d5",
+      "git_blob_sha1": "8c2447caad43320acc8054960aafaa3bf714a133"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_prayer_daily.png",
+      "bytes": 3741,
+      "sha256": "8c2b7d2bea5c540b097577625ef4f9534e6298ad625738aa6732367caf80bb6d",
+      "git_blob_sha1": "94b69abe97cb28fd1cd26f8ef5f6f080e32ce577"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_prayer_novena.png",
+      "bytes": 4784,
+      "sha256": "c9a67c23f90406ad18b6470d2c3a04af6c16e6f646713ef0427908899e66df78",
+      "git_blob_sha1": "aed72fcad425d2f32f3f026abeaff26553b98a48"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_prayer_retreat.png",
+      "bytes": 5896,
+      "sha256": "50a0b62b2689538218b7017aa5f8a34b5e54ba28425b1836015ed36a784b6369",
+      "git_blob_sha1": "b4e69a6b518d48cf4682d62212b30f6d4ed84bfa"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_risk_high.png",
+      "bytes": 4202,
+      "sha256": "e5f5a55fcbf0c67d314733e9f6ba2ea825e80485f633be5f4dda8f065c1a3179",
+      "git_blob_sha1": "c5bcd2f481f8f2e9e32307e331530fd537aecb2d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_risk_low.png",
+      "bytes": 4113,
+      "sha256": "16e3b4c143a2dd908b030723bd7f174af6b5f8a72b3802d8483213358bb916e8",
+      "git_blob_sha1": "8798defd00f36f08c0da5e487a9c134dbe6b6c49"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_risk_moderate.png",
+      "bytes": 3651,
+      "sha256": "4f71805fe05b134989824d417901f6ce5a2eae84908331a8a78c8fe2bc096fcd",
+      "git_blob_sha1": "8891aef0d07d5f021c9c60ca36d6442a996738fa"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_temple.png",
+      "bytes": 2970,
+      "sha256": "eac40f625fe5009d3866ae85a1fe225375c6cba248c9193332f39a3c68dca9a6",
+      "git_blob_sha1": "a1b955cd94822e7783641ade49a180ab393f7380"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_temple_beacon.png",
+      "bytes": 5307,
+      "sha256": "e223bbbf07c216693e2999848b2117f67e560a083049b27d52b4e9e2ca79a4a3",
+      "git_blob_sha1": "d0ebe336420d83cd68e3f6fe7acca3215c761040"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_temple_inactive.png",
+      "bytes": 2060,
+      "sha256": "5f55d44076596a4d2d0594eccb349775a088d38d96ae1c74b70615ba1e776a3e",
+      "git_blob_sha1": "be8b4db719cb0927506713027c2b90f3ee52b297"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_temple_lit.png",
+      "bytes": 3526,
+      "sha256": "41a3911c5e441f44910faa35c15ff37a60711c21e22fd3e36eb816ed26d99226",
+      "git_blob_sha1": "8c8d1b41185d48390d123bbf6ee6a350f5ab83d6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_temple_vibrant.png",
+      "bytes": 4119,
+      "sha256": "f7848e6413b577b12cf8bef1d3f86dc92a5859d1b8b5bb5695abac44584c2a01",
+      "git_blob_sha1": "21c28db4a90a441be3eafbf2e15fdbfc2f9b8b8b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_vehicle_caution.png",
+      "bytes": 4838,
+      "sha256": "5f45db428243b55e9330c64468f60ca50e023986de70d1cf376b81f5a6e5a6fe",
+      "git_blob_sha1": "63d6999ae6b7ef0f39727656785f6a0015b7e386"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_vehicle_danger.png",
+      "bytes": 4872,
+      "sha256": "065b39bb1257004bb2cff9603026f99b93103fee7e8ab944fa0d9449262e3e93",
+      "git_blob_sha1": "3030d6edbc464515700489ac0ffb98589e4c0c3e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/icons/icon_vehicle_safe.png",
+      "bytes": 4851,
+      "sha256": "9480c95d6a767a2c2397e6e8b4be4c70ae11256b57d3dc5731cb8486269656f9",
+      "git_blob_sha1": "3dec5c33895a4b8933bde7a2df64e33284777959"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/panels/angel_command_menu.png",
+      "bytes": 86419,
+      "sha256": "82a03674deeb1a3dc10a297941ce2608b2e3188352a3fb5b646bc59f0f0595fa",
+      "git_blob_sha1": "d470dbe7a40e350f670db07be96e59fe8d9ed7b0"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/panels/resident_panel.png",
+      "bytes": 338974,
+      "sha256": "8a9950fdd89eaef0433f5bf260d24ffd3ddfd44d221f0ddbc024933888201f3d",
+      "git_blob_sha1": "e18d1af7c5d5d89fab60a81270fbd41c900c1997"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/panels/resident_panel_full.png",
+      "bytes": 459686,
+      "sha256": "a58c5f521aadfbb5ab847a6a8a2f8723c9230e6fa5928b3078c6184291b672c7",
+      "git_blob_sha1": "6a25cbfeb79da7995d626fcb83eefb38d0de7d84"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/panels/resource_bar.png",
+      "bytes": 142120,
+      "sha256": "1f7537b8664875ab384829aad66bbee9f9957e71856e40b3d64ce2f6c3a486e1",
+      "git_blob_sha1": "31c67d340dc20a21d00a2a92c84fb451139363e2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/tabs/tab_history.png",
+      "bytes": 4115,
+      "sha256": "caba1a9c012f24e4d22428c58d389198c3ea4192d46cf18467b4f78d4424a54d",
+      "git_blob_sha1": "537deb7af483aaca4ba0d6f4ec6a830ce3e73b5a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/tabs/tab_influences.png",
+      "bytes": 4491,
+      "sha256": "2cbb7492ace5b6dd56c526a4283b91dac259b60ed93baf6ae013e4943368e3c6",
+      "git_blob_sha1": "816b86fdadc95d4e5ec26437e84e1d47077f029a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/tabs/tab_life.png",
+      "bytes": 3109,
+      "sha256": "81ba5ffaf3c5b88b2359bb3971e0135744b3127812ca908f37339f0e88ab63ef",
+      "git_blob_sha1": "38fc902ceb081c05c938083092ac16b0122dce7f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/tabs/tab_overview.png",
+      "bytes": 5279,
+      "sha256": "c535d1d63b85eebd7546c0c5eee51cb8702acf40a0b8e016011c7da13415325a",
+      "git_blob_sha1": "7f8530203dce7c9957bcdca557d664d664b0f20e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/ui/tabs/tab_relations.png",
+      "bytes": 4609,
+      "sha256": "3be13cb9f9fe052407da4245cf956a5c530c69d05149c7b32e51a65d352128db",
+      "git_blob_sha1": "027058beac9f61dd77f2556dcb9248acdf482192"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/vehicles/delivery_van.png",
+      "bytes": 42106,
+      "sha256": "179c86c9be02325ce4586d69c053b03047e75e226c857f832fc13b832800b58b",
+      "git_blob_sha1": "c6e46d08347253f2833993a5cc24020489ff2e31"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/vehicles/hatchback_red.png",
+      "bytes": 30523,
+      "sha256": "dc2d6c8cbda1838deb424f045a02a1162e1678924ca4ca7f4ad55069d5860f2f",
+      "git_blob_sha1": "c75a1eff5e049c13d86b5cce5751510d65a09bc3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/vehicles/minibus.png",
+      "bytes": 52534,
+      "sha256": "e06a9fc9a4cb5c056c0b722a2736407b1a934bff6900d0b7f0ecb9033b40a059",
+      "git_blob_sha1": "ff8e2c6e9192cf60dca4385c49ded8f90649ce7a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/vehicles/motorcycle.png",
+      "bytes": 24121,
+      "sha256": "b1295cafb48877e66f2cd8997bd77ba4c958cc09b44d95baf8d9282eacee4f2b",
+      "git_blob_sha1": "2d5e039914e926cb9943bec4bebcb6aab192e09f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/vehicles/sedan_blue.png",
+      "bytes": 33571,
+      "sha256": "043f098f216f0d11524fe7a2ec348a4f8976362e1ed05327c89193fb3ba60952",
+      "git_blob_sha1": "e6919d34aa7deeec76f9946cb162734a9132a270"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/assets/vehicles/station_wagon.png",
+      "bytes": 40253,
+      "sha256": "ad2a17e65fdac78d172cc0dcd49c8fea669b82cd7bab971446fb92e433cfb224",
+      "git_blob_sha1": "3bb0528185beaa0cd0d00b9ca22055d9a7d2eaad"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/data/animations.json",
+      "bytes": 22943,
+      "sha256": "235c6403d00f14d5fb67fa09b1bed778c96f102144ac2b1970b3284fa2c1e78e",
+      "git_blob_sha1": "389b3d8dc87db6e2c3bb7d346196eb7d2a72c25c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/data/assets.js",
+      "bytes": 254412,
+      "sha256": "d3e95a12bc8e4290685360ed903dfbbfc107e0753dcb47e862fcc6346972bf2c",
+      "git_blob_sha1": "b5cdfe5530d24e1d0704c62e6bf2d0bbb865efd3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/data/browser_validation.json",
+      "bytes": 357,
+      "sha256": "24c7c3a4ba28b0490b215d648967d12bb41d88347864bc7e7940c03326baa8e6",
+      "git_blob_sha1": "59604340758971950817b9864f66f3022f098963"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/data/manifest_v1.json",
+      "bytes": 75458,
+      "sha256": "257a0578e66ce022534a45a81788b7498f23ca5e206d8003f8a5a835622838b7",
+      "git_blob_sha1": "2a3f87927028196ccfa25e2916883339899129c8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/data/residents.js",
+      "bytes": 1765,
+      "sha256": "31cbf1acad7c50c616a05219490697665fd33ccab1d58a3a52aa5e545e354e04",
+      "git_blob_sha1": "4c72c79a68347b121f7c729588b5152ecd73978e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/data/runtime_manifest.json",
+      "bytes": 224424,
+      "sha256": "3b503469b46039c235a6a6e56c951b894f5c4bc193b20f620bf00f6f17ac950d",
+      "git_blob_sha1": "339c77f3719f32fdaf8ff1f9f615cd0286109b10"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/data/validation_report.json",
+      "bytes": 343,
+      "sha256": "fca84ee86af323a77236288e8c9e666df2537c40140fc050db683bd40ceab1f0",
+      "git_blob_sha1": "2ea41c8f685b44f529b86d081466517d7c8f0a75"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/demo/app.js",
+      "bytes": 6439,
+      "sha256": "944ae76e597e9b3ab3c9b12c56fb8280bfc768a24a27df70fa3868d83b9af588",
+      "git_blob_sha1": "ae20c6d60d5d9bd30f5b32f150d7bcee9db93d86"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/demo/index.html",
+      "bytes": 1362,
+      "sha256": "1133fc9959189ebb59fb42b2f9caeabedb8ad9283d9b5f93f50e87f21ea6583c",
+      "git_blob_sha1": "34d2c218376d387123a01f6612e9ee1cafd3fa55"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/demo/style.css",
+      "bytes": 3542,
+      "sha256": "f40dfb6e6b9559d9a0c03b2cafa34fe41ddb2e7ba8b40df8f3b84872b88304b0",
+      "git_blob_sha1": "c96140ec77469214bf23394474350e194a5cccee"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/docs/ASSET_STATUS.md",
+      "bytes": 3554,
+      "sha256": "9c6220048a15e80eec830669f0ad3cf66480de277cf55e2be3280105fdc349b6",
+      "git_blob_sha1": "5fc386eb7b73469f2bd08d5053d1871358defaa6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/docs/IMPORT_CONVENTIONS.md",
+      "bytes": 2578,
+      "sha256": "47d4865d401f4e21c8289a140b8cb3d499cda4aa10d3c9ed0757d5ce8c8da2a0",
+      "git_blob_sha1": "ba9053b2804c68e694d554fed61242eb53dbf28b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/docs/ORIGINAL_PACK.md",
+      "bytes": 3367,
+      "sha256": "2cac12441ab43dc500a6457a18badfd509457577540d7cadf2308b41687a2f8e",
+      "git_blob_sha1": "87037347fc515109529cde3dcf741cb372e3e5ab"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/docs/PUBLISH.md",
+      "bytes": 1777,
+      "sha256": "c12a347441410a9fc23a68f61c4a5fea2313ca5f6e40accedd1228979ddebc5c",
+      "git_blob_sha1": "bdaace9ce59bd5c0383466a5d0d4a6edacbdd505"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/docs/VALIDATION.md",
+      "bytes": 1248,
+      "sha256": "2cd189d2bcbce135e23ed5c54e4a3c10dc4cfbe584ef8bb883909674673c6b4e",
+      "git_blob_sha1": "47350029a8b09cdd5474c7b2071dccb3c714b9d3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/index.html",
+      "bytes": 5648,
+      "sha256": "c4ad83be61b29b73d8217f7d6a73bd25644b22fe5546971eadb0f92d5d567a32",
+      "git_blob_sha1": "d96f3b7c1b898b23caa92fcae366b7cd9e07d308"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/manifest.json",
+      "bytes": 313600,
+      "sha256": "0f7ab2709fdc70b00a6f8f672f5375615c08c1f6afe185130ffd57a58399fea5",
+      "git_blob_sha1": "3a6151afaa7efa2acc0294706f65851699d574b7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/original-catalog.html",
+      "bytes": 62536,
+      "sha256": "4d116438816ff14280951271eb70b5b31b163bde25bb12e9fb0e168689f8d6a7",
+      "git_blob_sha1": "598c01ad84dea808388aac4a3785ce1d502706a1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/previews/buildings.jpg",
+      "bytes": 210749,
+      "sha256": "dcfe048d201b3041845a61a8b91ed10a831c6892e3709aa543eefc9a959ce31f",
+      "git_blob_sha1": "8ab3afad8f10f27adf3ec30a0e77db215e93a3fb"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/previews/characters.jpg",
+      "bytes": 136728,
+      "sha256": "688be473b85a7c811b651df82787ac019cf994411500f6042920550310ebf504",
+      "git_blob_sha1": "9b523ab6e78b018b50eda91027e2dfe1099bed97"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/previews/runtime_catalog.png",
+      "bytes": 222193,
+      "sha256": "edcb6cece632105a8a2e8046ac919b777a7b45a6873edcb7756e9f6de2c0cf67",
+      "git_blob_sha1": "ee466da2f4bad26ba9d9e2163fd54844a08c199e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/previews/runtime_effects.jpg",
+      "bytes": 82481,
+      "sha256": "242aadf4e79ac06f4ae9dcef1ef3f0f31215ac1179106cb8348add1f8f8dfd96",
+      "git_blob_sha1": "e1a415f7f84e40eb52db34f69cd7c1fd571db762"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/previews/runtime_integration.png",
+      "bytes": 893240,
+      "sha256": "9c0e9d07127c42b72315ab322a87b280298ea748ef6ebf11394a7c69728bc9dd",
+      "git_blob_sha1": "4f3a4f8183b02915605b9517e453476bb6337199"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/previews/runtime_tiles.jpg",
+      "bytes": 171623,
+      "sha256": "5a0d19ec6b793df9d4d4b99d77d9f18a27bc4069f6e3357022af2dc5433f7ed9",
+      "git_blob_sha1": "6ddc5af89cca8daf413b1517f361e9314c465c98"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/previews/runtime_ui.jpg",
+      "bytes": 278476,
+      "sha256": "659f2c037bd5a4c75c24463196497fdd3c86f0e5810766a8e73cb6a048330a23",
+      "git_blob_sha1": "32f0580f900632c44f50950a8bf32e6412e7d8b4"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/previews/streets.jpg",
+      "bytes": 124256,
+      "sha256": "2dbae92fbd0a82828dae1a1fcd7efaf9ab975bdde4025d091a366153000ec41b",
+      "git_blob_sha1": "b1c434083fff1c10c87d1d99ddef40c34f0a58e3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/previews/ui_icons.jpg",
+      "bytes": 170030,
+      "sha256": "de052d0212c2fa5fd6573670a2d09b3c9b7e2cefd00d467dbbfb81443e8db493",
+      "git_blob_sha1": "2952f0efd22ab316dffa22af411bee82560067f6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/previews/vehicles.jpg",
+      "bytes": 80068,
+      "sha256": "bfa6b92a9faf13d87f6006915376dad833828f38286f074ee381169573f82e49",
+      "git_blob_sha1": "baf79e2a0ac151e463c9de2e1850b424e4e5fc10"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/references/source_boards/buildings.png",
+      "bytes": 3124869,
+      "sha256": "be7674937136cb36b0b8e46c34d5135b52515c10ecf382bf3492ab7c7a664a49",
+      "git_blob_sha1": "149234e3ae2167a5c7c9bf04227039faef3299c6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/references/source_boards/characters.png",
+      "bytes": 2455470,
+      "sha256": "e2c54bc918b572812ce29e2fa89689d2e94b9a21c0349eaf612e9e4b047b8a2c",
+      "git_blob_sha1": "a7a4b8f87a463b94b3864ab5611ef93f53ebfbc3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/references/source_boards/mobility.png",
+      "bytes": 2765486,
+      "sha256": "1d00a090637cd2c2a5fb8294bd339fb59f80cffa2b9613ae8d76b5b726b56795",
+      "git_blob_sha1": "30956bdece6521bf25caacf32c4d37609feaddc7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/references/source_boards/scene.png",
+      "bytes": 3035852,
+      "sha256": "55e3a46a1f7dcf45849ec3c36315e59ea11c5ba66a436f2d12f28d8ece484b90",
+      "git_blob_sha1": "10462cbd3e2e34a647e5132af2388761f21d472d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/references/source_boards/ui.png",
+      "bytes": 2587191,
+      "sha256": "6c5a9d3f3d31ec49886e00d30237e53e1438c265dab2f46489c7ce9c2827c7e0",
+      "git_blob_sha1": "44c347539480c579693cf82f610fb2e45c01b640"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/releases/St_Gabriel_Estate_Individual_Assets.zip",
+      "bytes": 21436863,
+      "sha256": "aa1f156ff5b0bb13da883713fc679035d50f34c0df1bb78afc3d60c72077f969",
+      "git_blob_sha1": "609c57456661843ef41efcbe8d1aa452ce953ee3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/requirements-build.txt",
+      "bytes": 37,
+      "sha256": "e83931809c750b61e4a6e5851e447cbe8a8cd19365d57754ffa956ce248e704c",
+      "git_blob_sha1": "6617f9675d750d07d91b21390e8dfc532f445307"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/requirements-test.txt",
+      "bytes": 43,
+      "sha256": "41dc1e61cf27a5fe81cf0bae97a3e3e5a68d37fa414f39cb69e9349035e96563",
+      "git_blob_sha1": "85be3edd651151eef42eab4517f476b6a5143ddd"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/markers/tile_assignment.svg",
+      "bytes": 224,
+      "sha256": "0ee79680383602eb34fb97c6b567824199d9293ded78e906884975306ce10415",
+      "git_blob_sha1": "0aaa7434de9adf68325b2d2e28b2563ff87138be"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/markers/tile_risk.svg",
+      "bytes": 224,
+      "sha256": "38a3c72271bbfb3f0cb70f3eab55c40af8f7c0a7d1c40312aa5de3015090d211",
+      "git_blob_sha1": "f231e2c4b7dc7b9b9c61453b1b3b625b25de71ca"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/markers/tile_selected.svg",
+      "bytes": 224,
+      "sha256": "f1b9384b945714bf0ca55fb0049556d1929c4c9190ceb213b2c8d5e310d01412",
+      "git_blob_sha1": "4ce490a81f29aad018ce845388a90116b257da39"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_00_isolated.svg",
+      "bytes": 385,
+      "sha256": "f7c49bca723897869f94e8a476b0e7fe9723955d7a6d9820075ef88398ed421e",
+      "git_blob_sha1": "5bf3e6c3628acefaae2df116fbecab7d19d25268"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_01_end_n.svg",
+      "bytes": 676,
+      "sha256": "812dff222bcbb7d1a2fcd50f0d37c6a79bc8cf01506096f9a687ed991a04502a",
+      "git_blob_sha1": "a87346fb26c369bff084b563b489ead55567e322"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_02_end_e.svg",
+      "bytes": 683,
+      "sha256": "6690b4bba5b2a1c435b211b96408618c9c5209367d9adeef94b321c239be6df7",
+      "git_blob_sha1": "c374b363e644078d8bb0772d557449a396a22cd5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_03_corner_ne.svg",
+      "bytes": 813,
+      "sha256": "066cd9df4e24563bca254881b6481b0815045455dd015fe8faff375190ac0e6b",
+      "git_blob_sha1": "5b5949a31c69ab1230e266221d1bab287507e3ee"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_04_end_s.svg",
+      "bytes": 683,
+      "sha256": "45f5abd61e222998631f992ac343936f97ac0ff5205cbd7ac716b891dade57bb",
+      "git_blob_sha1": "7c96766ea0327699deada431cc297e65c25d06b6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_05_straight_ns.svg",
+      "bytes": 813,
+      "sha256": "21a55b80a4b05f9a90d97c1395fd2996f41b8bf34751ae32eb9f65ae5bba8984",
+      "git_blob_sha1": "a9f132d4a346878a30d093d68c16dd4ada4628b3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_06_corner_es.svg",
+      "bytes": 820,
+      "sha256": "d4c8be71ace9772cf0b56e9bb76d301746d1032419b5a45383fb9766a52a7ca2",
+      "git_blob_sha1": "3305871370bb08638f8bfca2c08c844c183cd451"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_07_tee_nes.svg",
+      "bytes": 950,
+      "sha256": "68d80567df81fdda7120b39531301a6ece76d9edf9b94367a8498369f7fe079f",
+      "git_blob_sha1": "c5ae2bbcc73d140c3eb6f5da3a25678e0f1c53a5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_08_end_w.svg",
+      "bytes": 676,
+      "sha256": "c30ccfa8a52fc536557bfc25b47187434cb0133e74fd4f37d000e0aa7cbb67c5",
+      "git_blob_sha1": "67f5f74b4d1eaae977cd55d68cae22eb64e9aa37"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_09_corner_nw.svg",
+      "bytes": 806,
+      "sha256": "234df0a5a3dd95b9964807c1e44678bb57cf27649261e9ad3c1841ba759e2a6a",
+      "git_blob_sha1": "168ca97c180731672a872129557a1d18cd8b16b4"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_10_straight_ew.svg",
+      "bytes": 813,
+      "sha256": "468efe6638e8b65d9d8095991b940658f0c5b3001c1e5b287fe68b32329129d4",
+      "git_blob_sha1": "91f4cd33152759a6a1d15c44ed86e6d5fefe26c8"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_11_tee_new.svg",
+      "bytes": 943,
+      "sha256": "0f2150f529b6eed6577e9417ada2802f97db6bfb06f749abeb8de68ad8bec996",
+      "git_blob_sha1": "3f2a09de73a979699c034fb8871b9306e0a2bdbd"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_12_corner_sw.svg",
+      "bytes": 813,
+      "sha256": "1b99d328bc8d7edc045adba8e8ff82f17704f6aeafdf001f0519607536b4988f",
+      "git_blob_sha1": "640a68defefec726f56bb6662b0d983287fcee07"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_13_tee_nsw.svg",
+      "bytes": 943,
+      "sha256": "ad0a4fcf74f4e1a8ed75dee870cbcaf9a2d20534f57ec3bd95c62e77181d6f92",
+      "git_blob_sha1": "56ce69a60d0d5ecbed9a5619c78642043f3b2313"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_14_tee_esw.svg",
+      "bytes": 950,
+      "sha256": "31f6b2f416268f6717cb5dafa65adf512efc90cfaa6fbf1a945693d020d8cd80",
+      "git_blob_sha1": "c343d0004f67eff3175842c5ea6a450908cd7df9"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_15_cross.svg",
+      "bytes": 1080,
+      "sha256": "17b11c4ef4d808e4f2c12badc53c19414ce8d90007ed701dac56995b6c722874",
+      "git_blob_sha1": "93e8733a6981122ada79c2ebfc3ab8397b6b8e4b"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_ns_crosswalk.svg",
+      "bytes": 1238,
+      "sha256": "89fd3d13efc30170b3c16ab54282647b86ab31e39db04380f88a20458295a039",
+      "git_blob_sha1": "10a03ea06af39dc82722827732d2dcf308c2e0c1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_ns_pothole.svg",
+      "bytes": 920,
+      "sha256": "ce627f17e88bc9d531883b49c82d969fb394d4bac361bf2396261f7d6f274f71",
+      "git_blob_sha1": "c906d0d1a8fb22d288e0854aa730ee242d8fd4a7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_ns_speed_bump.svg",
+      "bytes": 1080,
+      "sha256": "609d7debf0dc5735f8c314b688b3833d12dcdfcc3896f2dab39e527ca689e45e",
+      "git_blob_sha1": "57d5f2c967d886bce25a04b718b1ab33484b83c6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/roads/road_ns_stop_line.svg",
+      "bytes": 873,
+      "sha256": "895147181a53b04bd01d6ccd260ad9fbcfbae54271d9b938f998b48c11c8996f",
+      "git_blob_sha1": "e432950772f4f348c78a32c19e8aed22c6e483c2"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/terrain/asphalt.svg",
+      "bytes": 15574,
+      "sha256": "8d5816d95f0d930f02107f03c2dbd4d9a9ec5bbbcd21dc02237e5cbc5c20245f",
+      "git_blob_sha1": "872575e011d3033a16c4dcc5475aaa0d3387441e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/terrain/concrete.svg",
+      "bytes": 15581,
+      "sha256": "dd3eafd75da3d303d4f03dab97111b0feae82d551ae7f8787f87f3c4ec0adbca",
+      "git_blob_sha1": "26a7a875669d274cba9a85f8f5c623f40b39bbd5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/terrain/earth.svg",
+      "bytes": 15609,
+      "sha256": "250352435ce6a47445376136956010bd12fc2980e96f67c315ecae0b8e5cf085",
+      "git_blob_sha1": "ed9382cadf221f2676bc84e31f9d34d12aff3aed"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/terrain/garden.svg",
+      "bytes": 15578,
+      "sha256": "8697a5c2e2a354b14d6a8d090ab1ca2391ebf5b90105e844f8402144b87d66d0",
+      "git_blob_sha1": "ef05d3c6c6d958fa2eddb819b4c7bfc6c7360430"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/terrain/grass.svg",
+      "bytes": 15582,
+      "sha256": "e874bfc7b10959a507000711e72b40eb4490bb8a261baa3b7187b8bf29246d55",
+      "git_blob_sha1": "5006ce0cb63a9f9a0aa988fb31f9ef5ddcfab7c1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/terrain/grass_dry.svg",
+      "bytes": 15558,
+      "sha256": "8c6a10b2a6a1fb488c9aed82ef0e23a6e20efcadf69861fb12354c2509fa8e57",
+      "git_blob_sha1": "d813aa2c93186935912d13caa1c8c1b183592839"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/terrain/pavers.svg",
+      "bytes": 530,
+      "sha256": "ed323e63e3a137345a958df9d3517de5eccb2130cd1e99c5042ec41c49482841",
+      "git_blob_sha1": "8603c12671e606734d3a3b58c9c695a2d68a4e05"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/terrain/water.svg",
+      "bytes": 1713,
+      "sha256": "c6aef32f5deab85e25d227b3adab6b7e569bda4e5421c5ce800382efd7e62abc",
+      "git_blob_sha1": "82bde0285a571c697a5e893d204039e9d0b8269a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/button_default.svg",
+      "bytes": 576,
+      "sha256": "991b5d26c5cb9a4a8de31f80ffc7b09882e805345a7aa582d6966f35a3f1f209",
+      "git_blob_sha1": "2772880904991d538040d687709b26e0085500b1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/button_disabled.svg",
+      "bytes": 576,
+      "sha256": "825a89256d97c3d434ad9b58475323cfe6b269629800b6729fa6243d50528599",
+      "git_blob_sha1": "22904c2003e6ca8cf157ac07b11998c8d0cbfff4"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/button_hover.svg",
+      "bytes": 576,
+      "sha256": "fb622d921ec6aeed678e25e6e20bfcca9e1bb9a2315abcc22a90ba80f80ccc51",
+      "git_blob_sha1": "946639c9b8bc67db3f224ab36ce78895f5762ac1"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/button_pressed.svg",
+      "bytes": 576,
+      "sha256": "80e53209d650ff2f6f1b6525ccbc1e3a80ba57a29e463f329aa658ec84ae6721",
+      "git_blob_sha1": "a33c32a71b56853c8e4fec6a10d55add78e15792"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/hud_tile.svg",
+      "bytes": 582,
+      "sha256": "01719fe548cf6594fd4e4dab1170a93489bf962b52f96a3a16fc7c1dd71643a2",
+      "git_blob_sha1": "f3fefbded42a193c81570b4c0334b8fcd9b05dc3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/meter_fill_care.svg",
+      "bytes": 190,
+      "sha256": "e321474de961589c0716e3b5b8992f4e69a2b4451b85a4d6ce0896fcee84444f",
+      "git_blob_sha1": "a245f0a560c07d2c342fb2ac5e48523fa5782dfc"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/meter_fill_light.svg",
+      "bytes": 190,
+      "sha256": "bfa5147f3cdb2fdca329e00340f4a18d41d49a08d401a7937f8aaa59f0101de2",
+      "git_blob_sha1": "0b8410e6f5804119aebcf4eb3d04353ab1f237ee"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/meter_fill_risk.svg",
+      "bytes": 190,
+      "sha256": "ac4e32ec56f21d1aa8154e75686fba068e3a1e1cd5dee1c643bfc225caab30a1",
+      "git_blob_sha1": "32da91b6493ae61d682e07c79180d695f764d404"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/meter_track.svg",
+      "bytes": 190,
+      "sha256": "03e075abde0d7cf7bcaf98fbe9f5fc62d03e98a9b41c4d12b729cd6dae3a321d",
+      "git_blob_sha1": "9f369c0c35f34350e854cb7b4a24e345f4fb0722"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/notification_care.svg",
+      "bytes": 579,
+      "sha256": "14dd798a56eccf3b00bc6df87ebdd6bcedde0ed540955a420d0cbf563896d486",
+      "git_blob_sha1": "64fa34a71c953ac55a5a91da18f1179297a1e6ac"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/notification_warning.svg",
+      "bytes": 579,
+      "sha256": "b5c21abe2cc20e275312041bf440334aa3baede6d442ec9d1bb12a8323c52a82",
+      "git_blob_sha1": "2fef6017a65a1a4a67abcc763a159c79d3bc2cce"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/panel_dark.svg",
+      "bytes": 584,
+      "sha256": "721c70bf1d1511e8180843d6178fd7d3455a0921578dd214dee657d9da378e7f",
+      "git_blob_sha1": "1b2f7ee1d165b07b38c8d95929dd574913be4249"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/panel_parchment.svg",
+      "bytes": 584,
+      "sha256": "86a193435903ab328fccf333f5c3e2a1cccb6436e274681e40d70adf893f422e",
+      "git_blob_sha1": "8361c4207f0b80ac3b774ce0d6c24b47480dbf0a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/tab_default.svg",
+      "bytes": 576,
+      "sha256": "a7e23a1274ef3b82556811c805dcb7de029ef1903022db06eb72c8558812bb26",
+      "git_blob_sha1": "1cb8fb499c29bd290f48f65e30f3a90da1a9d14c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/tab_selected.svg",
+      "bytes": 576,
+      "sha256": "a79bedff2fc8782f1c19d075e9618bb15ed04ed841fe5fe4ff6a149e5e478d4e",
+      "git_blob_sha1": "c38f18c0774d6b954e9fe1d90d3f96a517adc083"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/components/tooltip.svg",
+      "bytes": 584,
+      "sha256": "6c21ab40b7e7dae5a6f1170ad48524bbdd378a914431b3df226f82a6b0b7d05c",
+      "git_blob_sha1": "ecfcddd01afcb23989f45db0ffb19fd23e843f18"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/age.svg",
+      "bytes": 307,
+      "sha256": "bc47e8f9f9e98dda60c0974596c88b604fac822b4d9a9387c79bf6b0d0daec63",
+      "git_blob_sha1": "4fe7bdc5721f13baec0204575fc32fe04ad1dd2f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/calendar.svg",
+      "bytes": 296,
+      "sha256": "4726fdca53b52aa119087673a6eef20042eb88cdfa60f458f4a28a924aab714b",
+      "git_blob_sha1": "fdcccf6494a86041fe3374d0353a768a75dd6a86"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/candle.svg",
+      "bytes": 268,
+      "sha256": "2db188b0aa4bc176fdc50efefca537af403961edb8015cdf2be6963e1b1c5481",
+      "git_blob_sha1": "68c5f995999dbbfe48b4d539a4a15925efe11c2d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/car.svg",
+      "bytes": 287,
+      "sha256": "e8c110c8eb639dce67b157e76599592790c2579a338209e22a0982ac74c9eece",
+      "git_blob_sha1": "b8a0c2070a5b40a2897123a31312d1bf7e30c411"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/celebration.svg",
+      "bytes": 298,
+      "sha256": "c153db32db47a49c2ac691a96105ba3057ca11580446c9e7b7e65405c1e5e481",
+      "git_blob_sha1": "209e7224a62d9e3c0cebc7fccd6e1eb073549636"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/charity.svg",
+      "bytes": 353,
+      "sha256": "0215226138d18d3de0e0833697967063a3dcca7ae008c903973e52f259273983",
+      "git_blob_sha1": "6b68378ca78055d22d675c138ceed35f612e140c"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/close.svg",
+      "bytes": 227,
+      "sha256": "041f9af79da821b045f10a2ab75a14077f598c012eb6b7908178a55c28ca1a26",
+      "git_blob_sha1": "869ae1615959aa740e814940b76541ec1cddecbc"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/comfort.svg",
+      "bytes": 297,
+      "sha256": "de3830ed0b18fe31da4a1ccb982d27a7ffc8e33249e1b32f12a1e0b297c59f76",
+      "git_blob_sha1": "972f194d27b2c8802baffb9f7bebe22cd1f1f5da"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/concern.svg",
+      "bytes": 271,
+      "sha256": "221bdf47bddf41ac3c274f5fb3601c8511be1b68559487f1b5aba991d79c0511",
+      "git_blob_sha1": "871d8808e0a64a05fc5ce35082b347f9d22d3c45"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/crossing.svg",
+      "bytes": 300,
+      "sha256": "e740d85697030fa720f964e58846a88da7e55879e2aa91b1062a3c744c12d39b",
+      "git_blob_sha1": "490f1a66248104c276409708118327a952aea7eb"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/danger.svg",
+      "bytes": 232,
+      "sha256": "7ca840eb47ef64553cd75b563be73bcb387a3b02088575c37ba579539db81742",
+      "git_blob_sha1": "eb43a2e749ae88e84d4f859596f02df8eb7babce"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/education.svg",
+      "bytes": 259,
+      "sha256": "50287ea591db5a5816f8a41fbb40fe52737f95d1992826fec8667eed0457408f",
+      "git_blob_sha1": "2171410c41f22553456614ab5fe66096d7d7abcc"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/faith.svg",
+      "bytes": 240,
+      "sha256": "70f25fc8f889f28ec0e9a9b7af182106d3e1e216fa3f4de4416f2980c42252ee",
+      "git_blob_sha1": "5e18ffd077d0805c4f3e5c1341def5879aaab0d5"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/family.svg",
+      "bytes": 370,
+      "sha256": "2c19a55556e6b3e9663c07bf5c8bef38a35ae64e6bc44c23329f6470a658e158",
+      "git_blob_sha1": "da3599d55b1227db46c8241d2304a3cb90b97783"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/fast_forward.svg",
+      "bytes": 234,
+      "sha256": "0c6ec2a9df3856f07ffc36885f25c8e1465e25e3a92265ead61e5a7c67acd4a3",
+      "git_blob_sha1": "55e61a7aa32503e245eeff26507a2d05060b668e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/food.svg",
+      "bytes": 292,
+      "sha256": "046648d8ffc618a4c689a18acddfe9af20e555b297a834ba01af905024b44014",
+      "git_blob_sha1": "dfbbba8b396c721eca79536071fb07e63e22a0df"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/grace.svg",
+      "bytes": 302,
+      "sha256": "74a76ffd78178150fef04edc8390185b675f32aa75fbc53ecfef1f6abbd737d7",
+      "git_blob_sha1": "7a351c22ffa70929dc4991d6352af0f69dbbc853"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/guardian.svg",
+      "bytes": 324,
+      "sha256": "e3da2d9f1373beec8615760d50baa2dc63b73cc33bdd88002ccd66d6cd723d85",
+      "git_blob_sha1": "d53d365b5169e9e6fcc05dbab3f7a8afd69c35dd"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/halo.svg",
+      "bytes": 274,
+      "sha256": "9bb7ef382d8c96362ed3a5fa701cd18d5dd6a131492a63afb9e0992ad59c2e98",
+      "git_blob_sha1": "5d640defecee53cd3aff10cf62325581e1b5ef28"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/halo_dark.svg",
+      "bytes": 293,
+      "sha256": "46d7dc467493f7bf69b713a7481e5003b94fb43920c67f8ac23b287da3305be2",
+      "git_blob_sha1": "551cbd445ee573ac561a66cacb835f204dd09d67"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/halo_fading.svg",
+      "bytes": 257,
+      "sha256": "0c25ffb3995d7d4723034acfce6a9f9473a0fb97c78a902bdb78cb22025d9323",
+      "git_blob_sha1": "a1417a3c533bd4d570e90ecf4215f25c9db5dc2f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/happiness.svg",
+      "bytes": 267,
+      "sha256": "3918030781cc32bc40559c09cf6145e8672f7f8167639e9b7d2118ad68e99796",
+      "git_blob_sha1": "bfecb24fb4c8a2f4d1c372cb56cb7c14957de88a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/health.svg",
+      "bytes": 241,
+      "sha256": "048e8ce18a06128d4a50e24186460cc21070fa1fb08f9fdf7e5f77de1f4ba336",
+      "git_blob_sha1": "a0e87e3339e4368c752df3f0a77f35dc20623ef4"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/history.svg",
+      "bytes": 258,
+      "sha256": "043881b1083208bc8d40e3edf0082a714c9ce9c4f216ac3b22c685adef1ccc46",
+      "git_blob_sha1": "0defa313a354f111cc73c7391b3e9cfa9442c6d9"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/home.svg",
+      "bytes": 264,
+      "sha256": "2abc421d8ad6e4416d31a4ea0258e8845178c3810c15182c620a2b17aeb4a639",
+      "git_blob_sha1": "b69e67830946f68e1cf7e4d0ca7b1880f3fd8dc6"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/influence.svg",
+      "bytes": 329,
+      "sha256": "0860719d16bc4b52b4cdab8687a29d42dcd93e27e69e4ae038e41c554f16537a",
+      "git_blob_sha1": "03fee415713935b5af96197491ad587ae030702e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/information.svg",
+      "bytes": 268,
+      "sha256": "91b95eaf77e0c45601c63e43aee363016378ec91d162452fedd62248f6673867",
+      "git_blob_sha1": "75ebb87eae7080e3cf1d6e9c6742ba4e9a43b890"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/lifespan.svg",
+      "bytes": 292,
+      "sha256": "9607ef276f237710bcfd4bf8227b96b9faea986d7b65c27b5c3f3e4acf2032cd",
+      "git_blob_sha1": "3cbe2481fbdbd0467ca5b709364d6f52bdc9c73e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/light.svg",
+      "bytes": 303,
+      "sha256": "0aeafb0bc431c9fa7ea0e1177776a469e1fb8e0faa3f47b0d60199f97313c786",
+      "git_blob_sha1": "f71e2e83ea11c3e68e7412f27a1c52c927da53ec"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/novena.svg",
+      "bytes": 571,
+      "sha256": "73e9c336f7cad25234d8ce47a34f8fe106f6442e9c57b1d39f783e57d39d16a7",
+      "git_blob_sha1": "57cafaaf8487785eb38f0b2b19c97bfcfee22313"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/pause.svg",
+      "bytes": 291,
+      "sha256": "57afacc781d6e96fd58a00ddf4c23086cf3672b189ea82c13e7e5e4b469dbf84",
+      "git_blob_sha1": "7c3ace58e6fb9d5a8a77a9455b4f6ef7b0fc006f"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/play.svg",
+      "bytes": 219,
+      "sha256": "0057f1cc27292303d6aed70c61e94b989640619dcfe8977d2da59627ed33c803",
+      "git_blob_sha1": "3aa38ce737d2e2d43e045e15811b738e0afcc6da"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/prayer.svg",
+      "bytes": 301,
+      "sha256": "bf4b3cf898662c4b310a3ee0267534c5d7b04ce4e4098bf286b1b08a023e3566",
+      "git_blob_sha1": "a15ec05bfd39ed9f81cb443aedd2ea753b1aa199"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/priest.svg",
+      "bytes": 294,
+      "sha256": "6bda4a8ee7ee2c09f91081448ad232b968965e03f28a73f37c15f1d6f701fa05",
+      "git_blob_sha1": "32f37ebf259592e465e751d7144579eee9be04ba"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/protection.svg",
+      "bytes": 265,
+      "sha256": "06e0784f14526bddcde495ec88121ba7ca3d0a32da6c6d4ed8869e07582265d5",
+      "git_blob_sha1": "b5ef2a6971130be8e2f1b222d2fbd8f5dbe4db92"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/relationships.svg",
+      "bytes": 332,
+      "sha256": "565c60e9986f9a4b2ef2b0e0d8e253d9f2376aab576acd52b1395b0ff4f7b0e9",
+      "git_blob_sha1": "a997625020f67cb6144b06b88b76b6f22532fc48"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/rest.svg",
+      "bytes": 274,
+      "sha256": "354e8c2426dfe13b8c141033f7b9b862b56a73a66a5f3fa6d57f3557ac0574ff",
+      "git_blob_sha1": "991a6bcb8dd7c2685db4b6eefaca25df5d9f23ae"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/settings.svg",
+      "bytes": 375,
+      "sha256": "4dd963802fff5dab03e8ea75e8742177cd4895bb7d9c6dd7a8345b1512c1311c",
+      "git_blob_sha1": "b888d042e44d6ed9355c168b8b5f484007eecec7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/targeted_pressure.svg",
+      "bytes": 288,
+      "sha256": "4c5c04b04e047d774c9e0175dec440f539011e5bd7b43de8c19d457e5cf60bd7",
+      "git_blob_sha1": "089ed7e55d1de716371ee5a9ee8abe22ff25dd44"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/temple.svg",
+      "bytes": 289,
+      "sha256": "b4cf477fcdbd4a19aef96a5b475fb325ea246ed7dbfbcc855ae78dee4b51eb1f",
+      "git_blob_sha1": "c46cd7b0bb40f3ea7327ca2d17dbb967b6e47c94"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/vocation.svg",
+      "bytes": 288,
+      "sha256": "48e19fdbb13a53ad51b2805af7400be9272abb23ca0d8fa4ca7ecd7b6558fc44",
+      "git_blob_sha1": "f5ef6d2f9f33d263ef484232da67a9c73e0f37a7"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/water.svg",
+      "bytes": 271,
+      "sha256": "d00f7ba6bcc23437b70997daaa2102cc91697658a54a70053b811321f6e04026",
+      "git_blob_sha1": "c7580d8f3b44899bf8a3929ece589f843a179e6e"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/welcome.svg",
+      "bytes": 266,
+      "sha256": "d0973c8e11d55791a7991b29b8df550bc3770e494e0829c57c1fe19bac370387",
+      "git_blob_sha1": "c558560468e73cefc33092f63229276636dc44de"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/sources/runtime/ui/icons/work.svg",
+      "bytes": 296,
+      "sha256": "3d365243143502c4733f78f05a87e8eac4b7e654a7d678600f1b2ff0e4a85f09",
+      "git_blob_sha1": "4f9344e16d42b9ccd2c43dbe3f285031333b9039"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/tests/browser_smoke.py",
+      "bytes": 3529,
+      "sha256": "898cae3fc402f20ed90db695f856f2381bdfe412f98117676c0ba88c9fa0efe9",
+      "git_blob_sha1": "f284597a9659c0c876c1048b256b9813f1cea583"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/tools/build_catalog.py",
+      "bytes": 1076,
+      "sha256": "d499f932f252357681656ac79d0057f8fcff16dfed8db48d0707eee21c7c439c",
+      "git_blob_sha1": "0b42d318a7bd2a3ba03241efbc6db09ec910884a"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/tools/generate_runtime_assets.py",
+      "bytes": 21159,
+      "sha256": "123979a7f1cd46a8d704cc16dbbdc729a0a829225ef18ae40473348987aa3f8b",
+      "git_blob_sha1": "9cf6327f6211810bd9dd73eb224df05c6f06bb33"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/tools/publish_github.py",
+      "bytes": 3169,
+      "sha256": "0f86389c20f5fbf0bbc639721e07e68456e8e66c332edfb62ce212cb5f87795f",
+      "git_blob_sha1": "1458dc0627e9f9c0b622ad3bc96581e7e35b2d63"
+    },
+    {
+      "path": "projects/st-gabriel-estate/game/tools/validate_assets.py",
+      "bytes": 3126,
+      "sha256": "a649fd4922eb1eedaf25f0aabfd40f2b1c1b462fcefa56f2fd24c6eb40c636ee",
+      "git_blob_sha1": "3d57a74901757c737fb33bccc825e9d85172cc8d"
+    },
+    {
+      "path": "projects/st-gabriel-estate/downloads/St_Gabriel_Estate_Individual_Assets.zip",
+      "bytes": 21436863,
+      "sha256": "aa1f156ff5b0bb13da883713fc679035d50f34c0df1bb78afc3d60c72077f969",
+      "git_blob_sha1": "609c57456661843ef41efcbe8d1aa452ce953ee3"
+    },
+    {
+      "path": "projects/st-gabriel-estate/downloads/St_Gabriel_Estate_Repository.zip",
+      "bytes": 52019946,
+      "sha256": "e707f1782ca79c313bb938d69e1547974468ded44723004b4aebcc4da81a10a5",
+      "git_blob_sha1": "4f5d91f57e517c8fcacda7bcea53cf52a6769f87"
+    }
+  ],
+  "file_count": 576,
+  "sources_imported": [
+    "repository"
+  ],
+  "sources_remaining": [
+    "concept_community",
+    "concept_estate",
+    "concept_halos",
+    "concept_isometric",
+    "concept_lagos",
+    "concept_lollipop",
+    "concept_stewardship",
+    "concept_whisper",
+    "git_bundle",
+    "runtime_pack"
+  ],
+  "total_bytes": 127252033
+}
