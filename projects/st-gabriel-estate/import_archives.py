@@ -2,12 +2,12 @@
 """Import only the named game packages; never execute downloaded content."""
 import hashlib
 import json
-import os
 from pathlib import Path, PurePosixPath
 import stat
 import subprocess
 import tempfile
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
@@ -88,7 +88,8 @@ def download(source_id, url, directory):
 def publish(records, completed):
     receipt = {'files': records, 'file_count': len(records), 'sources_imported': sorted(completed),
                'sources_remaining': sorted(set(SOURCES) - completed),
-               'total_bytes': sum(item['bytes'] for item in records)}
+               'total_bytes': sum(item['bytes'] for item in records),
+               'status': 'complete' if completed == set(SOURCES) else 'partial'}
     (ROOT / 'GIT_UPLOAD_RECEIPT.json').write_text(json.dumps(receipt, indent=2) + '\n')
     git('add', '--', str(ROOT))
     names = git('diff', '--cached', '--name-only').splitlines()
@@ -109,20 +110,47 @@ def publish(records, completed):
     print('Remote commit verified:', head, 'Files:', len(records), flush=True)
 
 
+def resume():
+    receipt_path = ROOT / 'GIT_UPLOAD_RECEIPT.json'
+    if not receipt_path.exists():
+        return [], set()
+    receipt = json.loads(receipt_path.read_text())
+    records = receipt['files']
+    for item in records:
+        path = Path(item['path'])
+        if not path.is_relative_to(ROOT) or '..' in path.parts or path.is_symlink():
+            raise ValueError('Unsafe resume path')
+        data = path.read_bytes()
+        if len(data) != item['bytes'] or sha(data) != item['sha256']:
+            raise ValueError('Previously imported file changed')
+    completed = set(receipt['sources_imported'])
+    if not completed <= set(SOURCES):
+        raise ValueError('Unknown resume source')
+    print('Resuming after verification of', len(records), 'existing files', flush=True)
+    return records, completed
+
+
 def main():
     if git('branch', '--show-current') != BRANCH:
         raise ValueError('Unexpected branch')
     git('config', 'user.name', 'St Gabriel Asset Import')
     git('config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com')
     git('config', 'core.autocrlf', 'false')
-    records, completed, processed = [], set(), set()
+    records, completed = resume()
+    processed = set()
     deadline = time.monotonic() + 1800
     with tempfile.TemporaryDirectory(prefix='estate-files-') as directory:
         while time.monotonic() < deadline and completed != set(SOURCES):
-            with urllib.request.urlopen(ISSUE_URL, timeout=30) as response:
-                body = json.load(response).get('body') or ''
+            try:
+                request = urllib.request.Request(ISSUE_URL, headers={'User-Agent': 'St-Gabriel-Asset-Import'})
+                with urllib.request.urlopen(request, timeout=30) as response:
+                    body = json.load(response).get('body') or ''
+            except urllib.error.HTTPError as exc:
+                print('Source index temporarily unavailable:', exc.code, flush=True)
+                time.sleep(60)
+                continue
             if MARKER not in body:
-                time.sleep(10)
+                time.sleep(30)
                 continue
             payload = json.loads(body.split(MARKER, 1)[1].split('```json', 1)[1].split('```', 1)[0])
             old_count = len(completed)
@@ -139,8 +167,12 @@ def main():
                 completed.add(source_id)
             if len(completed) > old_count:
                 publish(records, completed)
+            if completed != set(SOURCES):
+                time.sleep(30)
         if completed != set(SOURCES):
             raise TimeoutError('Some source files remain; earlier verified commits are preserved')
+        if len(records) != PLAN['expected_total_files']:
+            raise ValueError('Final file count mismatch')
         print('ALL PINNED SOURCES COMMITTED', flush=True)
 
 
