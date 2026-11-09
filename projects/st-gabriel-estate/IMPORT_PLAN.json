@@ -1,11 +1,20 @@
 {
-  "destination_branch": "assets/st-gabriel-estate",
-  "destination_directory": "projects/st-gabriel-estate",
-  "expected_original_project_files": 574,
-  "main_branch_changes": false,
-  "archives": [
+  "destination_branch":"assets/st-gabriel-estate",
+  "destination_directory":"projects/st-gabriel-estate",
+  "expected_original_project_files":574,
+  "expected_total_files":586,
+  "main_branch_changes":false,
+  "archives":[
     {"id":"repository","name":"St_Gabriel_Estate_Repository.zip","bytes":52019946,"sha256":"e707f1782ca79c313bb938d69e1547974468ded44723004b4aebcc4da81a10a5"},
     {"id":"runtime_pack","name":"St_Gabriel_Estate_Runtime_Assets_Batch_02.zip","bytes":8016468,"sha256":"7c7d00bc733e94aff3a76a391c55a0c1e8554877bd2276c4fdd52c7b77670adb"},
-    {"id":"git_bundle","name":"st-gabriel-estate.bundle","bytes":51234431,"sha256":"3334b5c022f3f7df256bfca6e4e7c036d7203738083c836ad898dfdd1d90cb60"}
+    {"id":"git_bundle","name":"st-gabriel-estate.bundle","bytes":51234431,"sha256":"3334b5c022f3f7df256bfca6e4e7c036d7203738083c836ad898dfdd1d90cb60"},
+    {"id":"concept_lollipop","name":"lollipop_whisper_bread_and_choice.png","bytes":2751793,"sha256":"f768f3dc819f11e44216f97d6b68adf171c4c2cbba3f0d6030a9e2fe9c8ad378"},
+    {"id":"concept_whisper","name":"whispering_lollipop_guiding_spirits.png","bytes":2750198,"sha256":"8777d0bd56dbc19d62b2609cb2cc36ba27d6ad4aaa2272283840cc0a3ff9dec8"},
+    {"id":"concept_isometric","name":"isometric_town_with_hidden_influences.png","bytes":4102656,"sha256":"0b3ec9b37bef477231afe530954307072d16fd47d756f3211945e404ef2afb4c"},
+    {"id":"concept_community","name":"golden_community_light_in_a_mediterranean_village.png","bytes":3959983,"sha256":"d20f1a44597c95d2e5bcd15f2cdf9ab4c083856e5ee12174b17c0a34d2e0f06f"},
+    {"id":"concept_halos","name":"haloed_mediterranean_town_of_charity.png","bytes":4050735,"sha256":"004075d3b530709ad1a7a8aafbbe6f9aefcf22c3f0ff802ee74afa8d3ca18c29"},
+    {"id":"concept_estate","name":"a_highly_detailed_game_ui_screenshot_an_isometric.png","bytes":3053533,"sha256":"e23fd7b327f7b9899f0636e624f700c7830f9c5993ec53c86e60281b636dcd4c"},
+    {"id":"concept_lagos","name":"a_highly_detailed_isometric_video_game_style_inter.png","bytes":3757353,"sha256":"65912b4b95fbc5680deede35a20f23cb466ec597bedc4a7f260564e7b8a88554"},
+    {"id":"concept_stewardship","name":"a_highly_detailed_game_ui_screenshot_isometric_c.png","bytes":3552516,"sha256":"17894531fd5d3003893a33df972b43f0204dfe00849f3bfb83258a2f223c6c34"}
   ]
 }
