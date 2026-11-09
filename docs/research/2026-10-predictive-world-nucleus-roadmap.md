@@ -6,7 +6,7 @@
 **Implementation boundary:** independent experiment first; no root runtime or Hybrid cutover  
 **Companion foundation:** [draft PR #21](https://github.com/robosys-labs/cemm/pull/21)
 
-## Current development checkpoint — 2026-11-08
+## Current development checkpoint — 2026-11-09
 
 **Bounded development G3 is complete.** The
 [v3 decision](../../experiments/predictive_nucleus/EFFECT_ROLE_DECISION_V3.md),
@@ -113,16 +113,19 @@ is also complete. Its post hoc restricted-input audit removes the target and
 spectator-toggle shortcut, retains 448 unresolved group/target cells per menu,
 and establishes a finite 249/256 full-menu accuracy ceiling.
 
-The [next fixed-budget comparison](../../experiments/predictive_nucleus/TEMPORAL_NATIVE_TRANSFER_PROTOCOL_V1.md)
-implements a learned native temporal updater and similarly sized flat decoder
-on identical realized histories, with supplied-rule and cleared-answer
-controls. The 2,048-history TRAIN and 12,288-case TEST bank is prepared and
-software validation passes. All ten 256-update fits are complete with matched
-exposure. All 15 held-out raw banks are collected; publication and saved-record
-scoring are next. The
-[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) gives the
-one executable continuation and stage manifests. Completed persistence and
-support qualifications are not prerequisites to rerun.
+The [fixed-budget temporal comparison](../../experiments/predictive_nucleus/TEMPORAL_NATIVE_TRANSFER_RESULT_V1.md)
+is **CLOSED: REVISE_NATIVE_TEMPORAL_UPDATER**, with 52/80 cell gates passing.
+All ten 256-update fits and fifteen raw banks were published before scoring;
+two saved-record scores are byte-identical, and separate arithmetic and custody
+audits reproduce the decision. Native after-both accuracy is 82.50% versus
+flat's 74.80%, but every cell fails attainable accuracy and excess Brier; eight
+fail protected retention. Retaining the first answer produces 2,534 net target
+repairs while introducing 1,620 net protected-word errors. The next bounded
+continuation traces existing TRAIN receipts through frozen checkpoints to
+locate the earliest damaging update, without fitting or TEST access. The
+[active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) is the
+single continuation entry point. Completed persistence, observability, fitting,
+collection and scoring are not prerequisites to rerun.
 
 New sentence families, durable competence after complete episodic-memory
 clearing, matched final-correctness clarification savings and the rest of G5

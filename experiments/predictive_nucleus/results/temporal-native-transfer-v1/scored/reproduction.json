@@ -1,0 +1,33 @@
+{
+  "byte_identical": true,
+  "compressed_bytes": 3936016,
+  "compressed_sha256": "749772ac40b6fc242eea1d76b7728b39ebaaa4262f209121fd64684a3aa1e7f3",
+  "invocation_note": "The optional /usr/bin/time wrapper was unavailable; it ran no scorer. A Python subprocess/resource wrapper measured the second complete scoring invocation.",
+  "models_executed": 0,
+  "optimizer_updates": 0,
+  "recollections": 0,
+  "runs": 2,
+  "second_run_resources": {
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "-m",
+      "experiments.predictive_nucleus.temporal_native_score_v1",
+      "--prepared",
+      "experiments/predictive_nucleus/data/temporal-native-transfer-v1",
+      "--raw",
+      "experiments/predictive_nucleus/results/temporal-native-transfer-v1/raw",
+      "--output",
+      "/workspace/scratch/9eae5be53d6f/scored-repeat"
+    ],
+    "cpu_system_seconds": 1.211851,
+    "cpu_user_seconds": 51.311273,
+    "peak_rss_kib": 583028,
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "{\"cells\": 10, \"decision\": \"REVISE_NATIVE_TEMPORAL_UPDATER\", \"score_sha256\": \"9dc1e5b7c4b1955af1b84aba1e3fe1763194426e1427366e086058022ed7b806\"}",
+    "wall_seconds": 52.574351922999995
+  },
+  "stage": "saved-record-rescoring",
+  "uncompressed_bytes": 55139219,
+  "uncompressed_sha256": "9dc1e5b7c4b1955af1b84aba1e3fe1763194426e1427366e086058022ed7b806"
+}
