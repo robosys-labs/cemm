@@ -1,0 +1,4 @@
+# Local restoration output is kept separate from this publishing handoff.
+/restored/
+__pycache__/
+*.pyc
