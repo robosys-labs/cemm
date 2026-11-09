@@ -126,13 +126,29 @@ Across 10,240 native TRAIN evaluations, protected accuracy falls from 99.57%
 after teaching to 93.09% after both answers. There are 696 initially correct
 protected predictions still wrong at final: their earliest losses are the claim
 (147), first answer (312) and second answer (237). The single trace and 5,358
-saved-array audit checks are complete. One [objective-only TRAIN feasibility
-comparison](../../experiments/predictive_nucleus/PREFIX_PROTECTION_TRAIN_PROTOCOL_V1.md)
-now distributes the existing protected loss across update prefixes at the same
-model, observation, update and loss-term budgets. It is not G5 admission. The
+saved-array audit checks are complete.
+
+The [objective-only TRAIN comparison](../../experiments/predictive_nucleus/PREFIX_PROTECTION_TRAIN_RESULT_V1.md)
+is now **CLOSED: REVISE_PREFIX_OBJECTIVE**, with 42/70 checks passing. Its ten
+fits retained original initializations, minibatches, models, observations,
+256 updates and six loss terms per sample. Native protection after the claim
+improves from 95.49% to 98.93%, but final protection falls from 93.09% to 87.74%
+(630 regressions, 83 repairs). Final protected accuracy and Brier worsen in all
+ten law/seed cells. Final target accuracy improves from 83.27% to 84.77% pooled,
+while NAND/53 regresses. Mean protected prefix Brier also worsens. The fixed
+allocation is rejected; the experiment does not establish hidden-state loss,
+insufficient capacity or a general inability to learn preservation.
+
+The next task is one bounded contract for learned selective recurrent updates
+on prospectively new, counterbalanced two-meaning histories, with explicit
+budgets and a matched unstructured control. Either or both meanings must be
+challenged; no protected flag, word-indexed slot or identity-based hard write
+mask may supply retention. Freeze the successor before implementation or fitting.
+This is a design hypothesis, not G5 admission. The
 [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) is the
-single continuation entry point. Completed persistence, observability, fitting,
-collection and scoring are not prerequisites to rerun.
+single continuation entry point. Completed studies, traces, fits, collection,
+scoring and audits are not prerequisites to rerun; do not search another loss
+schedule or budget on the opened bank.
 
 New sentence families, durable competence after complete episodic-memory
 clearing, matched final-correctness clarification savings and the rest of G5

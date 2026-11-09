@@ -1,0 +1,18 @@
+{
+  "version": "prefix-protection-read-only-review-v1",
+  "scope": "Internal independent code/receipt/saved-array review. No additional learner, inference or primary-scorer run. Not separate scientific custody.",
+  "gate_comparisons": 70,
+  "gate_discrepancies": 0,
+  "report_relationship_comparisons": 1044,
+  "report_relationship_discrepancies": 0,
+  "candidate_fit_receipts": 10,
+  "candidate_raw_banks": 10,
+  "forecast_distributions": 163840,
+  "optimizer_updates_during_evaluation": 0,
+  "original_initializations_match": true,
+  "original_minibatches_match": true,
+  "paired_arm_tensor_and_horizon_exposure_match": true,
+  "decision": "REVISE_PREFIX_OBJECTIVE",
+  "passed_checks": 42,
+  "total_checks": 70
+}
