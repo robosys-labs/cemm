@@ -1,0 +1,35 @@
+{
+  "version": "temporal-train-trace-preflight-v1",
+  "date": "2026-11-09",
+  "status": "PASS_READY_NOT_EXECUTED",
+  "source_commit": "24da4c73c49006aa1d4e2a41304c3c59924e238a",
+  "runtime": {
+    "python": "3.12.14",
+    "torch": "2.10.0+cpu",
+    "numpy": "2.3.5"
+  },
+  "focused_tests": {
+    "run": 14,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 0.959,
+    "log": "preflight-tests.log.xz",
+    "log_sha256": "67d237f3b3167b05a57417b4a5c431fcf669834d7eab4726a81e07d4a7dfe720"
+  },
+  "source_hashes_verified": 16,
+  "checkpoint_hashes_verified": 10,
+  "tracer_import_loads_no_torch": true,
+  "synthetic_summary_and_paired_id_checks": "PASS",
+  "source_review": "No blocking defect; earliest attribution is post-teaching only and cannot distinguish recurrent-state damage from readout error.",
+  "independent_audit_syntax": "PASS",
+  "independent_checkpoint_fingerprints_verified": 10,
+  "input_sha256": "660bb412f2d165295c30d2248daa2ae7a334c56d4fa95fe324f80aa356b7063f",
+  "input_bytes": 529892,
+  "histories": 2048,
+  "native_keys_per_seed": 104,
+  "real_checkpoint_trace_executions": 0,
+  "real_fit_updates": 0,
+  "publication_status": "BLOCKED_AUTOMATIC_APPROVAL_REVIEW",
+  "publication_block_reason": "Explicit approval is required for publishing the new diagnostic payload to the public repository."
+}

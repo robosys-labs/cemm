@@ -43,6 +43,54 @@ The current evidence does not justify a larger model, additional hypotheses,
 longer training or threshold tuning. A later candidate requires its own frozen
 contract and fresh challenge; the opened v1 bank is never training material.
 
+### Prepared continuation — November 9, 2026
+
+**State: READY, NOT EXECUTED; publication approval blocked.** Local commit
+`24da4c73c49006aa1d4e2a41304c3c59924e238a` contains the
+[trace protocol](TEMPORAL_TRAIN_TRACE_PROTOCOL_V1.md),
+[tracer](temporal_train_trace_v1.py), and the exact
+[TRAIN projection](data/temporal-train-trace-v1/input.json.xz).
+The projection contains all 2,048 existing TRAIN histories and 104 required
+native keys per seed. Its SHA-256 is
+`660bb412f2d165295c30d2248daa2ae7a334c56d4fa95fe324f80aa356b7063f`.
+
+The [independent saved-array audit](results/temporal-train-trace-v1/independent_trace_audit.py)
+is also implemented. It separates predictions already wrong after teaching
+from their earliest later regression, retains subsequent repairs and final
+errors, and checks every reported metric and paired case ID. The
+[preflight receipt](results/temporal-train-trace-v1/preflight.json) records
+14 passing focused tests, synthetic transition checks, and verification of all
+16 frozen source hashes and ten checkpoint hashes. No real checkpoint trace
+or fit was executed.
+
+Automatic approval review rejected the push because it requires explicit
+authorization to publish this new payload to the public repository. This
+remained blocked after confirming repository admin access and verifying that
+the projection exactly selects already-public synthetic source artifacts.
+The frozen protocol requires publication before inference. Do not treat the
+local source commit as published, rerun the original study, or recreate this
+preparation. After authorization, publish this branch, verify its remote head,
+and execute the following once with the existing pinned numerical dependencies:
+
+```bash
+python -m experiments.predictive_nucleus.temporal_train_trace_v1 trace \
+  --root experiments/predictive_nucleus \
+  --prepared experiments/predictive_nucleus/data/temporal-native-transfer-v1 \
+  --fitted experiments/predictive_nucleus/data/temporal-native-fit-v1 \
+  --input experiments/predictive_nucleus/data/temporal-train-trace-v1/input.json.xz \
+  --output experiments/predictive_nucleus/results/temporal-train-trace-v1/raw
+
+python experiments/predictive_nucleus/results/temporal-train-trace-v1/independent_trace_audit.py \
+  --input experiments/predictive_nucleus/data/temporal-train-trace-v1/input.json.xz \
+  --trace experiments/predictive_nucleus/results/temporal-train-trace-v1/raw \
+  --fitted experiments/predictive_nucleus/data/temporal-native-fit-v1 \
+  --output experiments/predictive_nucleus/results/temporal-train-trace-v1/audit.json
+```
+
+Both output destinations must be new. Close the diagnostic with its full
+saved-array evidence and a single bounded next action; do not repeat model
+execution to obtain a preferred result.
+
 ## Closed evidence and publication
 
 | Stage | Durable evidence |

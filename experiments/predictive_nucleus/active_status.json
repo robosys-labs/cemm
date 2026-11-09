@@ -1251,28 +1251,23 @@
     "scoring_complete": false
   },
   "selected_next_task": {
-    "status": "SELECTED_REVISION_NOT_IMPLEMENTED_OR_FROZEN",
-    "stage": "G3",
-    "work": "Resolve numerical language retention and complete failure reporting in a new prospective native-set study. Preserve the stopped v1 attempt; freeze the comparison rule, runtime, fresh challenge lineage and full gates before any new fit or collection. Keep the 562-parameter world and 68-scalar update mask unless new evidence justifies a change.",
-    "details": "SET_ACQUISITION_DECISION_V1.md#selected-next-step",
+    "status": "READY_NOT_RUN_PUBLICATION_BLOCKED",
+    "stage": "G5",
+    "work": "Publish the prepared TRAIN-only receipt tracer and existing synthetic TRAIN projection, then execute it once on all 2048 histories and ten frozen fits. Audit saved forecasts to locate the earliest post-teaching protected-meaning regression.",
+    "details": "ACTIVE_NUCLEUS.md#prepared-continuation--november-9-2026",
+    "source_commit": "24da4c73c49006aa1d4e2a41304c3c59924e238a",
+    "protocol": "TEMPORAL_TRAIN_TRACE_PROTOCOL_V1.md",
+    "input": "data/temporal-train-trace-v1/input.json.xz",
+    "preflight": "results/temporal-train-trace-v1/preflight.json",
+    "trace_executions": 0,
+    "real_fit_updates": 0,
     "same_bank_retry_permitted": false,
     "current_study_source_mutation_permitted": false,
-    "world_architecture_change_selected": false,
-    "new_generic_runner_planned": false,
-    "language_training_unlocked": false,
-    "later_language_target_parameters": 88,
-    "later_language_target_feasibility_established": false,
-    "later_language_task": "After native acquisition passes, freeze worlds and learn effect selection plus roles from outcomes without gold action-kind/order labels.",
-    "supervision": "Observed native before/action/after outcomes only; no gold future state or language semantics supplied to fitting.",
-    "freshness": "Freeze a new challenge lineage; opened v1 records remain diagnostics/regressions, never a retuned acceptance bank.",
-    "preserve_checkpoints": "All historical and v1 checkpoint bytes and frozen sources remain unchanged.",
-    "completed_previous_task": "Coordinate v1 KEEP; native set v1 fitting/collection complete but scoring aborted.",
     "historical_decisions_unchanged": true,
     "scientific_admission_unchanged": true,
-    "new_open_loop_gate_added": false,
-    "new_physics_or_workspace_added": false
+    "completed_previous_task": "Temporal native transfer v1 closed with REVISE_NATIVE_TEMPORAL_UPDATER; scoring and audits already published at ec62c25."
   },
-  "current_pr": 77,
+  "current_pr": 101,
   "continuation_pr": 62,
   "current_study_decision": "REVISE_NATIVE_SET_ACQUISITION",
   "g1_development_readiness": "PROCEED_TO_G2",
@@ -2374,5 +2369,6 @@
     "scientific_gate_admitted": false,
     "g3_complete": false
   },
-  "set_acquisition_pr": 77
+  "set_acquisition_pr": 77,
+  "continuation_handoff": "ACTIVE_NUCLEUS.md"
 }
