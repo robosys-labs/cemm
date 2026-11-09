@@ -1,0 +1,26 @@
+{
+  "version": "temporal-train-trace-completed-v1",
+  "decision": "LOCALIZED_POST_TEACHING_INTERFERENCE",
+  "trace_invocations": 1,
+  "optimizer_updates": 0,
+  "audit_checks": 5358,
+  "audit_uncompressed_sha256": "bc190ef797c83ae62376186d9b4e63328bb6111b5460252a5905325ae3a807ea",
+  "artifacts": {
+    "execution.json": {
+      "bytes": 705,
+      "sha256": "2a1d72fbf0dc80614c9d4c0cf1f90fcd2178296225bb0994ea7b4ba26cf70c20"
+    },
+    "audit.json.xz": {
+      "bytes": 103340,
+      "sha256": "79651b2ad113b14c19463e69b654cc6b48b8f75eefd3e5eb72619f111ea7bb50"
+    },
+    "publication.json": {
+      "bytes": 609,
+      "sha256": "9e5579fd796433ba8f9c216375515ce265620bb8158bef5fc80a0ff2a3352825"
+    },
+    "raw/manifest.json": {
+      "bytes": 2181,
+      "sha256": "027a9ecdc1676902cd64f5c8d355572a71f6f5ea31e76dd1636efd831984fe2c"
+    }
+  }
+}

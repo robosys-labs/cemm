@@ -1,0 +1,18 @@
+{
+  "version": "temporal-train-trace-execution-v1",
+  "source_commit": "eb8c4879f72a7da1f65dec50ef104032d4487872",
+  "started_utc": "2026-11-09T11:41:40.412450+00:00",
+  "finished_utc": "2026-11-09T11:42:04.988615+00:00",
+  "exit_code": 0,
+  "wall_seconds": 24.576172971001142,
+  "cpu_seconds": 24.572369000000002,
+  "peak_rss_kib": 377208,
+  "single_trace_invocations": 1,
+  "stdout": "{\"manifest_sha256\": \"027a9ecdc1676902cd64f5c8d355572a71f6f5ea31e76dd1636efd831984fe2c\", \"status\": \"COMPLETE_POST_HOC_TRAIN_TRACE\"}\n",
+  "stderr": "",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "dtype": "float64",
+  "device": "cpu",
+  "torch_threads": 1,
+  "optimizer_updates": 0
+}

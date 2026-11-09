@@ -1251,21 +1251,17 @@
     "scoring_complete": false
   },
   "selected_next_task": {
-    "status": "READY_NOT_RUN_PUBLICATION_BLOCKED",
+    "status": "PROTOCOL_FROZEN_IMPLEMENTATION_PENDING",
     "stage": "G5",
-    "work": "Publish the prepared TRAIN-only receipt tracer and existing synthetic TRAIN projection, then execute it once on all 2048 histories and ten frozen fits. Audit saved forecasts to locate the earliest post-teaching protected-meaning regression.",
-    "details": "ACTIVE_NUCLEUS.md#prepared-continuation--november-9-2026",
-    "source_commit": "24da4c73c49006aa1d4e2a41304c3c59924e238a",
-    "protocol": "TEMPORAL_TRAIN_TRACE_PROTOCOL_V1.md",
-    "input": "data/temporal-train-trace-v1/input.json.xz",
-    "preflight": "results/temporal-train-trace-v1/preflight.json",
-    "trace_executions": 0,
-    "real_fit_updates": 0,
+    "work": "One TRAIN-only prefix-protection objective comparison, retaining original models, initializations, minibatches, 256 updates and six loss terms. No held-out execution.",
+    "details": "PREFIX_PROTECTION_TRAIN_PROTOCOL_V1.md",
+    "completed_previous_task": "TRAIN receipt trace complete: LOCALIZED_POST_TEACHING_INTERFERENCE; one inference run, 5358 audit checks pass.",
+    "completed_result": "TEMPORAL_TRAIN_TRACE_RESULT_V1.md",
+    "trace_executions": 1,
     "same_bank_retry_permitted": false,
     "current_study_source_mutation_permitted": false,
     "historical_decisions_unchanged": true,
-    "scientific_admission_unchanged": true,
-    "completed_previous_task": "Temporal native transfer v1 closed with REVISE_NATIVE_TEMPORAL_UPDATER; scoring and audits already published at ec62c25."
+    "scientific_admission_unchanged": true
   },
   "current_pr": 101,
   "continuation_pr": 62,

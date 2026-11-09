@@ -121,8 +121,15 @@ audits reproduce the decision. Native after-both accuracy is 82.50% versus
 flat's 74.80%, but every cell fails attainable accuracy and excess Brier; eight
 fail protected retention. Retaining the first answer produces 2,534 net target
 repairs while introducing 1,620 net protected-word errors. The next bounded
-continuation traces existing TRAIN receipts through frozen checkpoints to
-locate the earliest damaging update, without fitting or TEST access. The
+continuation has completed its [TRAIN receipt trace](../../experiments/predictive_nucleus/TEMPORAL_TRAIN_TRACE_RESULT_V1.md).
+Across 10,240 native TRAIN evaluations, protected accuracy falls from 99.57%
+after teaching to 93.09% after both answers. There are 696 initially correct
+protected predictions still wrong at final: their earliest losses are the claim
+(147), first answer (312) and second answer (237). The single trace and 5,358
+saved-array audit checks are complete. One [objective-only TRAIN feasibility
+comparison](../../experiments/predictive_nucleus/PREFIX_PROTECTION_TRAIN_PROTOCOL_V1.md)
+now distributes the existing protected loss across update prefixes at the same
+model, observation, update and loss-term budgets. It is not G5 admission. The
 [active handoff](../../experiments/predictive_nucleus/ACTIVE_NUCLEUS.md) is the
 single continuation entry point. Completed persistence, observability, fitting,
 collection and scoring are not prerequisites to rerun.
