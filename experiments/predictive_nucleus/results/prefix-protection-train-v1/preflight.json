@@ -1,0 +1,37 @@
+{
+  "version": "prefix-protection-preflight-v1",
+  "protocol_commit": "caee7dd730a6d6e661a5d0a2b5af7a6bebc0a2b5",
+  "focused_tests": 12,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "synthetic_only": true,
+  "real_fits": 0,
+  "source_review": "No remaining blockers; source/scorer/checkpoint bindings independently reviewed.",
+  "baseline_tensor_fingerprints_verified": 10,
+  "baseline_sampler_digests_verified": 10,
+  "horizon_counts": [
+    10923,
+    10923,
+    10922
+  ],
+  "parameters": {
+    "native": 1108,
+    "flat": 1144
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "torch": "2.10.0+cpu",
+    "numpy": "2.3.5"
+  },
+  "source_lines": {
+    "prefix_protection_train_v1.py": 240,
+    "prefix_protection_score_v1.py": 277,
+    "results/prefix-protection-train-v1/independent_gate_audit.py": 68
+  },
+  "test_lines": {
+    "test_prefix_protection_train_v1.py": 82,
+    "test_prefix_protection_score_v1.py": 143
+  },
+  "log_sha256": "565feeae1bddc0c4b22a974ccfcd97cf0e408aa587f84a952f4bb74f0351e56d"
+}
