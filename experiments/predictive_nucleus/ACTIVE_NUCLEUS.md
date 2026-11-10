@@ -2,7 +2,8 @@
 
 ## Current checkpoint — November 10, 2026
 
-Continue on branch `research/g5-selective-memory-v1`, based on PR #101 at
+Continue on [PR #103](https://github.com/robosys-labs/cemm/pull/103), branch
+`research/g5-selective-memory-v1`, based on PR #101 at
 `a32c0e81281b4d272a03781ae4415e9a77978c29`. This file is the sole continuation
 handoff. Older next-action sections are historical and must not restart work.
 
@@ -13,20 +14,20 @@ native and dense flat controls, new counterbalanced two-meaning histories,
 separate challenge predictions and saved-array scoring. Model parameters are
 2,188 / 2,244 / 2,280, with 16 recurrent values each. No slot is assigned to a word.
 
-Current execution stage: **implementation published; no real fits yet**.
+Current execution stage: **all 15 fixed-budget fits complete; challenge not collected**.
+Implementation: `58fa61ea96aa729fe65ce3c8ae0b2c30d1854dbd`. Prepared observations:
+`52138070c0b51ec17727f95c2bccccf59cac26b3`. Each arm/seed ran once; samples
+and all 256 updates matched. Checkpoints are in `data/selective-memory-fit-v1/`.
 
 ## One next action
 
-Run the published runner's `prepare` stage once, publish prepared observations,
-then `fit` once (three arms, five seeds, 256 updates each). Publish every checkpoint
-before `collect`; publish all raw forecasts before `score`. The runner enforces
-source, data, checkpoint and publication hashes. Source may not change between
-preparation and the result. Read any existing stage manifest before executing;
-output directories are create-only, so completed work cannot silently restart.
+Publish the completed fifteen checkpoints, then run `collect` once; publish all
+raw forecasts before `score`. The runner enforces source, data, checkpoint and
+publication hashes. Source may not change between preparation and the result.
+Preparation and fitting are complete: do not rerun them. Output directories are
+create-only, and existing manifests identify completed stages.
 
 ```bash
-python -m experiments.predictive_nucleus.selective_memory_run_v1 prepare
-python -m experiments.predictive_nucleus.selective_memory_run_v1 fit
 python -m experiments.predictive_nucleus.selective_memory_run_v1 collect
 python -m experiments.predictive_nucleus.selective_memory_run_v1 score
 ```
