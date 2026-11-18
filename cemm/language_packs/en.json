@@ -702,6 +702,23 @@
       ]
     },
     {
+      "ref": "en:response:unknown-query",
+      "when": {
+        "action": "report_target_uncertainty"
+      },
+      "template": "I do not have enough evidence to answer that question.",
+      "required_slots": [],
+      "semantic_slots": [
+        "query_ref",
+        "query_kind",
+        "subject_ref",
+        "property_ref",
+        "relation_ref",
+        "object_surface",
+        "target_ref"
+      ]
+    },
+    {
       "ref": "en:response:relation-unknown",
       "when": {
         "action": "report_target_uncertainty",
@@ -1160,5 +1177,5 @@
     "your",
     "yours"
   ],
-  "pack_hash": "b9989a41d4f91c6a31deb752105e2b4baf7621a454fc5f0042fd80a765509d5a"
+  "pack_hash": "1aee567cced82b819ee19b4862dddeaacaca15ebff1a7fac42162ec74272f4ad"
 }

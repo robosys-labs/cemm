@@ -761,6 +761,12 @@ class RecursiveCompositionChart:
             # recursive graph boundary.
             if cls._is_predicate(unit):
                 continue
+            # A possessive reference designates the owner of an argument
+            # (e.g. "my" in "my name"), not the unexpressed
+            # experiencer/actor of a neighbouring event. Role assignment
+            # must honor grammatical evidence before proximity.
+            if role_ref in {"role:actor", "role:experiencer"} and cls._features(unit).get("possessive"):
+                continue
             atom_kind = str(getattr(unit, "atom_kind", ""))
             if not filler_kinds or "atom" in filler_kinds or atom_kind in filler_kinds:
                 output.append(unit)
