@@ -164,6 +164,62 @@ def test_recursive_query_uses_app_valued_content_not_sentence_family(tmp_path):
     ]
     assert app_values
     assert all(item.get("application_ref") for item in restrictions)
+    events = {
+        item["args"]["role:type"]: item["args"]
+        for item in restrictions
+        if item["operator"] == "op:event" and "role:type" in item["args"]
+    }
+    # The embedded knower is the second-person addressee, not the
+    # first-person possessor of the name. Verify native roles, not surface.
+    assert events["event:know"]["role:actor"] == "participant:system"
+    assert events["event:want"]["role:actor"] == "participant:system"
+    assert result["response_csir"]["action"] == "report_target_uncertainty"
+    assert result["response"]
+    assert result["realization_proof"]["verified"]
+    assert result["realization_proof"]["response_equivalence"]["equivalent"]
+
+
+def test_atomic_actor_role_rejects_possessive_reference_even_when_closer():
+    from types import SimpleNamespace
+    from cemm.composition import RecursiveCompositionChart
+
+    actor = SimpleNamespace(
+        unit_ref="u:you", kind="anchor", semantic_ref="participant:system",
+        atom_kind="participant", token_start=1, token_end=2, score=0.0,
+        features={"category": "reference", "possessive": False},
+    )
+    possessor = SimpleNamespace(
+        unit_ref="u:my", kind="anchor", semantic_ref="participant:user",
+        atom_kind="participant", token_start=5, token_end=6, score=1.0,
+        features={"category": "reference", "possessive": True},
+    )
+    predicate = SimpleNamespace(unit_ref="u:event", token_start=4, token_end=5)
+    for role_ref in ("role:actor", "role:experiencer"):
+        candidates = RecursiveCompositionChart._role_candidates(
+            {"role_ref": role_ref, "filler_kinds": ["participant"]},
+            (actor, possessor), predicate, set(), False,
+        )
+        assert [item.unit_ref for item in candidates] == ["u:you"]
+    # An explicitly licensed possessive argument remains available.
+    subject = RecursiveCompositionChart._role_candidates(
+        {"role_ref": "role:subject", "filler_kinds": ["participant"]},
+        (possessor,), predicate, set(), False,
+    )
+    assert [item.unit_ref for item in subject] == ["u:my"]
+
+
+def test_embedded_control_reverses_under_a_different_participant_frame(tmp_path):
+    runtime = build_runtime(tmp_path)
+    result = runtime.process("Do I want to know your name?", mode="read_only")
+    assert result["interpretation"]["status"] == "resolved"
+    events = {
+        item["args"]["role:type"]: item["args"]
+        for item in result["packet"]["query"]["restrictions"]
+        if item["operator"] == "op:event" and "role:type" in item["args"]
+    }
+    assert events["event:know"]["role:actor"] == "participant:user"
+    assert events["event:want"]["role:actor"] == "participant:user"
+    assert result["response"] and result["realization_proof"]["verified"]
 
 
 def test_compiler_rejects_unlicensed_app_role(tmp_path):
